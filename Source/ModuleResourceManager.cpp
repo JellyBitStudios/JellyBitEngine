@@ -10,6 +10,7 @@
 #include "ShaderImporter.h"
 #include "BoneImporter.h"
 #include "AnimationImporter.h"
+#include "ModuleAnimation.h"
 
 #include "ResourceTypes.h"
 #include "Resource.h"
@@ -408,6 +409,9 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 					App->animImporter->Load(animation_files[i].data(), data, anim_data);
 
 					resource = CreateResource(ResourceTypes::AnimationResource, data, &anim_data, uuid);
+
+					App->animation->SetAnimationGos((ResourceAnimation*)resource);
+
 					if (resource != nullptr)
 						animation_uuids.push_back(uuid);
 				}
@@ -950,7 +954,7 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 
 	case ResourceTypes::ScriptResource:
 	{
-		//resource = App->scripting->ImportScriptResource(file); // TODO
+		resource = App->scripting->ImportScriptResource(file);
 	}
 	break;
 
