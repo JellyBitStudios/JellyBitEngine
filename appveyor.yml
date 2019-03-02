@@ -71,6 +71,7 @@ for:
     - cmd: XCOPY /E "%APPVEYOR_BUILD_FOLDER%\Game\*.*" %APPVEYOR_BUILD_FOLDER%\ToPublish\Alita_JellyBit /EXCLUDE:gameExcluded.md
     - cmd: move %APPVEYOR_BUILD_FOLDER%\README.md %APPVEYOR_BUILD_FOLDER%\ToPublish\Alita_JellyBit
     - cmd: move "%APPVEYOR_BUILD_FOLDER%\LICENSE" %APPVEYOR_BUILD_FOLDER%\ToPublish\Alita_JellyBit
+    - cmd: move "%APPVEYOR_BUILD_FOLDER%\Release\NekoEngine.exe" %APPVEYOR_BUILD_FOLDER%\ToPublish\Alita_JellyBit
     - 7z a Alita_JellyBit.zip %APPVEYOR_BUILD_FOLDER%\ToPublish\Alita_JellyBit
     
   artifacts:  
