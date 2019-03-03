@@ -12,7 +12,7 @@ public class AreaAttk : JellyScript
     int damage = 20;
 
     Animator animator = null;
-    
+
     // Raycast
     public LayerMask terrainMask = new LayerMask();
     public LayerMask enemyMask = new LayerMask();
@@ -59,7 +59,7 @@ public class AreaAttk : JellyScript
     public override void Start()
     {
         agent = gameObject.GetComponent<NavMeshAgent>();
-        smoke = gameObject.GetComponent<ParticleEmitter>();
+        smoke2 = particleGO.GetComponent<ParticleEmitter>();
         animator = gameObject.GetComponent<Animator>();
     }
 
@@ -75,6 +75,9 @@ public class AreaAttk : JellyScript
             animator = gameObject.GetComponent<Animator>();
             animator.PlayAnimation("Running");
         }
+
+        if (smoke2 == null)
+            smoke2 = particleGO.GetComponent<ParticleEmitter>();
 
         CheckState();
         CheckForMouseClick();
@@ -252,6 +255,14 @@ public class AreaAttk : JellyScript
         {
             if (enemy != null && enemy_unit != null)
             {
+                if (enemy.name == "Netman")
+                {
+                    Debug.Log("BLOOOD");
+                    if (blood == null)
+                        blood = enemyParticle.GetComponent<Blood>();
+                    blood.PartEmit();
+                }
+
                 enemy_unit.Hit(damage);
                 Debug.Log("ENEMY HIT");
 
@@ -280,18 +291,13 @@ public class AreaAttk : JellyScript
             }
         }
 
-        if (smoke == null)
-            smoke = gameObject.GetComponent<ParticleEmitter>();
-        smoke.Play();
-
-
-       // if (smoke2 == null)
-       //     smoke2 = gameObject.GetComponent<ParticleEmitter>();
-       // smoke2.Play();
+        if (smoke2 == null)
+            smoke2 = gameObject.GetComponent<ParticleEmitter>();
+        smoke2.Play();
     }
 
     private void TimerDecal()
-    {
+    { 
         dectimer += Time.deltaTime;
 
         if(dectimer >= TIM)
@@ -303,4 +309,3 @@ public class AreaAttk : JellyScript
 
     }
 }
-
