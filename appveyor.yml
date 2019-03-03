@@ -68,6 +68,7 @@ for:
   after_build:
     - cmd: mkdir %APPVEYOR_BUILD_FOLDER%\ToPublish
     - cmd: mkdir %APPVEYOR_BUILD_FOLDER%\ToPublish\Alita_JellyBit
+    - cmd: copy "%APPVEYOR_BUILD_FOLDER%\Release\NekoEngine.exe" %APPVEYOR_BUILD_FOLDER%\ToPublish\Alita_JellyBit
     - cmd: XCOPY /E "%APPVEYOR_BUILD_FOLDER%\Game\*.*" %APPVEYOR_BUILD_FOLDER%\ToPublish\Alita_JellyBit /EXCLUDE:gameExcluded.md
     - cmd: move %APPVEYOR_BUILD_FOLDER%\docs\README.md %APPVEYOR_BUILD_FOLDER%\ToPublish\Alita_JellyBit
     - cmd: move "%APPVEYOR_BUILD_FOLDER%\LICENSE" %APPVEYOR_BUILD_FOLDER%\ToPublish\Alita_JellyBit
