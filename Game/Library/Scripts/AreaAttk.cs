@@ -3,12 +3,16 @@ using JellyBitEngine;
 
 public class AreaAttk : JellyScript
 {
+    float dectimer = 0.0f;
+    float TIM = 1.0f;
+    bool decbool = true;
+
     //Alita propeties
     public int life = 50;
     int damage = 20;
 
     Animator animator = null;
-
+    
     // Raycast
     public LayerMask terrainMask = new LayerMask();
     public LayerMask enemyMask = new LayerMask();
@@ -21,6 +25,11 @@ public class AreaAttk : JellyScript
 
     //Particles
     ParticleEmitter smoke = null;
+    public GameObject particleGO;
+    public GameObject decal;
+    public GameObject enemyParticle;
+    private Blood blood = null;
+    ParticleEmitter smoke2 = null;
 
     //Alita states
     private enum Alita_State
@@ -57,6 +66,9 @@ public class AreaAttk : JellyScript
     //Called every frame
     public override void Update()
     {
+        if (decbool)
+            TimerDecal();
+
 
         if (animator == null)
         {
@@ -217,10 +229,14 @@ public class AreaAttk : JellyScript
         {
             state = Alita_State.AREA_ATTK;
             isAreaActive = false;
+            decal.active = false;
             areaCircle.active = false;
 
             if (agent == null)
                 agent = gameObject.GetComponent<NavMeshAgent>();
+            decal.active = true;
+            decbool = true;
+
         }
     }
 
@@ -268,7 +284,23 @@ public class AreaAttk : JellyScript
             smoke = gameObject.GetComponent<ParticleEmitter>();
         smoke.Play();
 
+
+       // if (smoke2 == null)
+       //     smoke2 = gameObject.GetComponent<ParticleEmitter>();
+       // smoke2.Play();
     }
 
+    private void TimerDecal()
+    {
+        dectimer += Time.deltaTime;
+
+        if(dectimer >= TIM)
+        {
+            decal.active = false;
+            dectimer = 0.0f;
+            decbool = false;
+        }
+
+    }
 }
 
