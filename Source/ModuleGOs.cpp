@@ -123,6 +123,11 @@ void ModuleGOs::OnSystemEvent(System_Event event)
 			break;
 		case ComponentTypes::CanvasRendererComponent:
 			go->cmp_canvasRenderer = nullptr;
+		case ComponentTypes::AudioListenerComponent:
+			go->cmp_audioListener = 0;
+			break;
+		case ComponentTypes::AudioSourceComponent:
+			go->cmp_audioSource = 0;
 			break;
 		}
 		break;
@@ -239,9 +244,7 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 				ComponentAnimation* anim_co = (ComponentAnimation*)gos[i]->GetComponent(ComponentTypes::AnimationComponent);
 				if (anim_co) {
 					ResourceAnimation* anim = (ResourceAnimation*)App->res->GetResource(anim_co->res);
-					App->animation->SetUpAnimations();
-					/*if (anim)
-						App->animation->SetAnimationGos(anim);*/
+					App->animation->StartAttachingBones(); App->animation->SetUpAnimations();
 				}
 			}
 		}
@@ -252,6 +255,8 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 	}
 	else
 		App->ui->LinkAllRectsTransform();
+
+	
 
 	return newGameObject;
 }
@@ -445,6 +450,10 @@ bool ModuleGOs::LoadScene(char*& buffer, size_t sizeBuffer, bool navmesh)
 	// Discuss if this should be a resource
 	if (navmesh)
 		App->navigation->LoadNavmesh(cursor);
+
+	//App->animation->SetUpAnimations();
+	
+	//StartAttachingBones(); SetUpAnimations();
 
 	System_Event event;
 	event.type = System_Event_Type::LoadFinished;

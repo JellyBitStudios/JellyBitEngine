@@ -122,7 +122,7 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 			ret = false;
 		}
 
-		directionalLight.direction = math::float3(-0.2f, -1.0f, -0.2);
+		directionalLight.direction = math::float3(-0.4f, -1.0f, -0.5f);
 		directionalLight.ambient = math::float3(0.25f, 0.25f, 0.25f);
 		directionalLight.diffuse = math::float3(0.5f, 0.5f, 0.5f);
 		directionalLight.specular = math::float3(1.0f, 1.0f, 1.0f);
@@ -208,6 +208,8 @@ update_status ModuleRenderer3D::PostUpdate()
 	// 1. Level geometry
 	App->scene->Draw();
 
+	//App->debugDrawer->DebugDrawLine(-directionalLight.direction, -directionalLight.direction * 100.0f, Yellow);
+
 	if (currentCamera != nullptr)
 	{
 		for (uint i = 0; i < cameraComponents.size(); ++i)
@@ -229,13 +231,14 @@ update_status ModuleRenderer3D::PostUpdate()
 
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
-			if (projectorComponents[i]->IsActive())
+			if (projectorComponents[i]->GetParent()->IsActive() && projectorComponents[i]->IsActive())
 				DrawProjectors(projectorComponents[i]);
 		}
 
 		for (uint i = 0; i < meshComponents.size(); ++i)
 		{
-			if (meshComponents[i]->IsActive() && meshComponents[i]->GetParent()->seenLastFrame)
+			if (meshComponents[i]->GetParent()->IsActive() && meshComponents[i]->IsActive() 
+				&& meshComponents[i]->GetParent()->seenLastFrame)
 				DrawMesh(meshComponents[i]);
 		}
 	}
@@ -418,13 +421,17 @@ update_status ModuleRenderer3D::PostUpdate()
 		App->debugDrawer->EndDebugDraw();
 	}
 
+	if (App->ui->GetUIMode())
+		App->ui->DrawCanvas();
+
 	// 3. Editor
 	App->gui->Draw();
-
+#else
 	//UIOnEditor
 	if (App->ui->GetUIMode())
 		App->ui->DrawCanvas();
 #endif // GAME
+
 
 	// 4. Swap buffers
 	SDL_GL_MakeCurrent(App->window->window, context);

@@ -14,6 +14,7 @@
 #include "ComponentTransform.h"
 #include "ComponentCamera.h"
 #include "ComponentMesh.h"
+#include "ModuleNavigation.h"
 
 // TODO_G : delete this
 #include "ModuleAnimation.h"
@@ -55,10 +56,13 @@ bool ModuleScene::Start()
 update_status ModuleScene::Update()
 {
 	if (App->input->GetKey(SDL_SCANCODE_J) == KEY_DOWN) {
-		App->animation->SetCurrentAnimation("HipHopDancing");
+		App->animation->SetCurrentAnimation("Idle");
 	}
 	if (App->input->GetKey(SDL_SCANCODE_K) == KEY_DOWN) {
-		App->animation->SetCurrentAnimation("MacarenaDance");
+		App->animation->SetCurrentAnimation("Running");
+	}
+	if (App->input->GetKey(SDL_SCANCODE_L) == KEY_DOWN) {
+		App->animation->SetCurrentAnimation("Kick");
 	}
 
 #ifndef GAMEMODE
@@ -133,6 +137,9 @@ void ModuleScene::OnSystemEvent(System_Event event)
 
 			App->renderer3D->SetCurrentCamera();
 			App->renderer3D->OnResize(App->window->GetWindowWidth(), App->window->GetWindowHeight());
+
+			// Initialize detour with the previous loaded navmesh
+			App->navigation->InitDetour();
 
 			System_Event newEvent;
 			newEvent.type = System_Event_Type::RecreateQuadtree;

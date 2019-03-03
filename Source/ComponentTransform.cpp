@@ -28,6 +28,8 @@ ComponentTransform::ComponentTransform(const ComponentTransform& componentTransf
 ComponentTransform::~ComponentTransform()
 {
 	parent->transform = nullptr;
+	parent->originalBoundingBox.SetNegativeInfinity();
+	parent->boundingBox.SetNegativeInfinity();
 }
 
 void ComponentTransform::Update() {}
@@ -143,14 +145,17 @@ math::float4x4& ComponentTransform::GetGlobalMatrix() const
 {
 	std::list<GameObject*> aux_list;
 
-	GameObject* globalParent = this->GetParent()->GetParent();
-
-	while (globalParent != nullptr && globalParent->GetParent() != nullptr)
+	if (parent)
 	{
-		aux_list.push_back(globalParent);
-		globalParent = globalParent->GetParent();
+		GameObject* globalParent = parent->GetParent();
+
+		while (globalParent != nullptr && globalParent->GetParent() != nullptr)
+		{
+			aux_list.push_back(globalParent);
+			globalParent = globalParent->GetParent();
+		}
 	}
-	
+
 	math::float4x4 globalMatrix = math::float4x4::identity;
 
 	for (std::list<GameObject*>::const_reverse_iterator it = aux_list.rbegin(); it != aux_list.rend(); it++)

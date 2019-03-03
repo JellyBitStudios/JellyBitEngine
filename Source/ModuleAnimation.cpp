@@ -10,7 +10,8 @@
 #include "ModuleTimeManager.h"
 #include "ModuleGOs.h"
 #include "ComponentTransform.h"
-
+#include "ModuleEvents.h"
+#include "EventSystem.h"
 #include "ModuleInput.h"
 
 //#include ".h" //TODO: delete this
@@ -40,7 +41,7 @@ bool ModuleAnimation::Awake(JSON_Object* config)
 bool ModuleAnimation::Start()
 {
 	// Call here to attach bones and everytime that we reimport things
-	StartAttachingBones();
+	//StartAttachingBones();
 
 	if (current_anim) {
 		current_anim->interpolate = true;
@@ -61,8 +62,21 @@ bool ModuleAnimation::CleanUp()
 
 update_status ModuleAnimation::Update()
 {
+
+	if (App->GetEngineState() != engine_states::ENGINE_PLAY)
+		return update_status::UPDATE_CONTINUE;
+
+	if (stop_all)
+		return update_status::UPDATE_CONTINUE;
 	if (current_anim == nullptr)
 		return update_status::UPDATE_CONTINUE;
+
+	float dt = 0.0f;
+	dt = App->GetDt();
+#ifdef GAMEMODE
+	dt = App->timeManager->GetDt();
+#endif // GAMEMODE
+
 
 	if (current_anim->anim_timer >= current_anim->duration && current_anim->duration > 0.0f)
 	{
@@ -75,7 +89,7 @@ update_status ModuleAnimation::Update()
 	switch (anim_state)
 	{
 	case AnimationState::PLAYING:
-		current_anim->anim_timer += App->GetDt() * current_anim->anim_speed;
+		current_anim->anim_timer += dt * current_anim->anim_speed;
 		MoveAnimationForward(current_anim->anim_timer, current_anim);
 		break;
 
@@ -89,9 +103,9 @@ update_status ModuleAnimation::Update()
 		break;
 
 	case AnimationState::BLENDING:
-		last_anim->anim_timer += App->GetDt() * last_anim->anim_speed;
-		current_anim->anim_timer += App->GetDt() * current_anim->anim_speed;
-		blend_timer += App->GetDt();
+		last_anim->anim_timer += dt * last_anim->anim_speed;
+		current_anim->anim_timer += dt * current_anim->anim_speed;
+		blend_timer += dt;
 		float blend_percentage = blend_timer / BLEND_TIME;
 		MoveAnimationForward(last_anim->anim_timer, last_anim);
 		MoveAnimationForward(current_anim->anim_timer, current_anim, blend_percentage);
@@ -128,6 +142,8 @@ update_status ModuleAnimation::Update()
 
 bool ModuleAnimation::StartAttachingBones()
 {
+	if (stop_all)
+		return true;
 	std::vector<GameObject*>gos;
 	App->GOs->GetGameobjects(gos);
 
@@ -148,8 +164,8 @@ bool ModuleAnimation::StartAttachingBones()
 				ResourceMesh* res = (ResourceMesh*)App->res->GetResource(mesh_co->res);
 				
 				
-					res->DuplicateMesh(res);
-					res->GenerateAndBindDeformableMesh();
+				res->DuplicateMesh(res);
+				res->GenerateAndBindDeformableMesh();
 				
 
 				for (std::vector<ComponentBone*>::iterator it = mesh_co->attached_bones.begin(); it != mesh_co->attached_bones.end(); ++it)
@@ -200,6 +216,8 @@ void ModuleAnimation::DetachBones(GameObject * go)
 
 void ModuleAnimation::SetUpAnimations()
 {
+	if (stop_all)
+		return;
 	for (uint i = 0u; i < animations.size(); i++)
 	{
 		Animation* it_anim = animations[i];
@@ -207,17 +225,51 @@ void ModuleAnimation::SetUpAnimations()
 		{
 			RecursiveGetAnimableGO(App->scene->root, &it_anim->anim_res_data.boneKeys[j], it_anim);
 		}
-		
+	}
+}
+
+void ModuleAnimation::OnSystemEvent(System_Event event)
+{
+	switch (event.type)
+	{
+
+	case System_Event_Type::GameObjectDestroyed: {
+		GameObject* go = event.goEvent.gameObject;
+		for (uint i = 0u; i < animations.size(); i++)
+		{
+			Animation* it_anim = animations[i];
+			for (uint j = 0u; j < it_anim->animable_gos.size(); j++)
+			{
+				if (it_anim->animable_gos[j] == go) {
+					current_anim = nullptr;
+					stop_all = true;
+					CleanAnimableGOS();
+				}
+			}
+		}
+	}
+		break;
+	case System_Event_Type::LoadGMScene:
+	case System_Event_Type::LoadFinished:
+	{
+		App->animation->StartAttachingBones(); App->animation->SetUpAnimations();
+	}
+	break;
 	}
 }
 
 void ModuleAnimation::SetAnimationGos(ResourceAnimation * res)
 {
+	if (stop_all)
+		return;
 	Animation* animation = new Animation();
 	animation->name = res->animationData.name;
 	animation->anim_res_data = res->animationData;
-	//for (uint i = 0; i < res->animationData.numKeys; ++i)
-		//RecursiveGetAnimableGO(App->scene->root, &res->animationData.boneKeys[i], animation);
+
+#ifdef  GAMEMODE
+	for (uint i = 0; i < res->animationData.numKeys; ++i)
+		RecursiveGetAnimableGO(App->scene->root, &res->animationData.boneKeys[i], animation);
+#endif //  GAMEMODE
 
 	animation->duration = res->animationData.duration;
 
@@ -229,6 +281,8 @@ void ModuleAnimation::SetAnimationGos(ResourceAnimation * res)
 
 void ModuleAnimation::RecursiveGetAnimableGO(GameObject * go, BoneTransformation* bone_transformation, Animation* anim)
 {
+	if (stop_all)
+		return;
 	std::vector<GameObject*> all_gos;
 	App->GOs->GetGameobjects(all_gos);
 
@@ -236,12 +290,11 @@ void ModuleAnimation::RecursiveGetAnimableGO(GameObject * go, BoneTransformation
 	{
 		GameObject* current_go = all_gos.at(i);
 
-		if (bone_transformation->bone_name.compare(current_go->GetName()) == 0)
+		if (strcmp(bone_transformation->bone_name.data(), current_go->GetName()) == 0)
 		{
 			if (/*!go->to_destroy*/1 /* TODO_G */) {
 				anim->animable_data_map.insert(std::pair<GameObject*, BoneTransformation*>(current_go, bone_transformation));
 				anim->animable_gos.push_back(current_go);
-				return;
 			}
 		}
 	}
@@ -251,7 +304,8 @@ void ModuleAnimation::RecursiveGetAnimableGO(GameObject * go, BoneTransformation
 
 void ModuleAnimation::MoveAnimationForward(float time, Animation* current_animation, float blend)
 {
-
+	if (stop_all)
+		return;
 	for (uint i = 0; i < current_animation->animable_gos.size(); ++i)
 	{
 		BoneTransformation* transform = current_animation->animable_data_map.find(current_animation->animable_gos[i])->second;
@@ -464,12 +518,16 @@ ModuleAnimation::Animation* ModuleAnimation::GetCurrentAnimation() const
 
 void ModuleAnimation::SetCurrentAnimationTime(float time)
 {
+	if (stop_all)
+		return;
 	current_anim->anim_timer = time;
 	MoveAnimationForward(current_anim->anim_timer, current_anim);
 }
 
 bool ModuleAnimation::SetCurrentAnimation(const char* anim_name)
 {
+	if (stop_all)
+		return true;
 	for (uint i = 0u; i < animations.size(); i++)
 	{
 		Animation* it_anim = animations[i];
@@ -488,6 +546,8 @@ bool ModuleAnimation::SetCurrentAnimation(const char* anim_name)
 
 void ModuleAnimation::CleanAnimableGOS()
 {
+	if (stop_all)
+		return;
 	for (uint i = 0; i < animations.size(); ++i)
 	{
 		animations.at(i)->animable_gos.clear();
