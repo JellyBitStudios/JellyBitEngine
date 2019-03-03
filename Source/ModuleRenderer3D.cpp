@@ -466,8 +466,10 @@ void ModuleRenderer3D::OnSystemEvent(System_Event event)
 	switch (event.type)
 	{
 	case System_Event_Type::Play:
+		CalculateProjectionMatrix();
 		break;
 	case System_Event_Type::Stop:
+		CalculateProjectionMatrix();
 #ifndef GAMEMODE
 		currentCamera = App->camera->camera;
 #endif // GAME
