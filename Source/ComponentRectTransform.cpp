@@ -313,11 +313,8 @@ void ComponentRectTransform::OnUniqueEditor()
 	ImGui::Text("Rect Transform");
 	ImGui::Spacing();
 
-	uint screen_height = 0;
-	uint screen_width = 0;
-
-	uint min_xpos = 0;
-	uint min_ypos = 0;
+	uint r_height = 0;
+	uint r_width = 0;
 
 	uint max_xpos = 0;
 	uint max_ypos = 0;
@@ -325,43 +322,63 @@ void ComponentRectTransform::OnUniqueEditor()
 	uint max_xdist = 0;
 	uint max_ydist = 0;
 
+	uint x_editor = 0;
+	uint y_editor = 0;
+
 	if (rectParent != nullptr)
 	{
-		min_xpos = rectParent[Rect::X];
-		min_ypos = rectParent[Rect::Y];
+		r_width = rectParent[Rect::XDIST];
+		r_height = rectParent[Rect::YDIST];
 
-		screen_width = rectParent[Rect::X] + rectParent[Rect::XDIST];
-		screen_height = rectParent[Rect::Y] + rectParent[Rect::YDIST];
+		max_xpos = r_width - rectTransform[Rect::XDIST];
+		max_ypos = r_height - rectTransform[Rect::YDIST];
 
-		max_xpos = screen_width - rectTransform[Rect::XDIST];
-		max_ypos = screen_height - rectTransform[Rect::YDIST];
+		x_editor = rectTransform[Rect::X] - rectParent[Rect::X];
+		y_editor = rectTransform[Rect::Y] - rectParent[Rect::Y];
 
-		max_xdist = screen_width - rectTransform[Rect::X];
-		max_ydist = screen_height - rectTransform[Rect::Y];
+		max_xdist = r_width - x_editor;
+		max_ydist = r_height - y_editor;
 	}
 	else
 	{
-		screen_height = ui_rect[ModuleUI::Screen::HEIGHT];
-		screen_width = ui_rect[ModuleUI::Screen::WIDTH];
+		r_height = ui_rect[ModuleUI::Screen::HEIGHT];
+		r_width = ui_rect[ModuleUI::Screen::WIDTH];
 
-		max_xpos = screen_width - rectTransform[Rect::XDIST];
-		max_ypos = screen_height - rectTransform[Rect::YDIST];
+		max_xpos = r_width - rectTransform[Rect::XDIST];
+		max_ypos = r_height - rectTransform[Rect::YDIST];
 
-		max_xdist = screen_width - rectTransform[Rect::X];
-		max_ydist = screen_height - rectTransform[Rect::Y];
+		x_editor = rectTransform[Rect::X];
+		y_editor = rectTransform[Rect::Y];
+
+		max_xdist = r_width - x_editor;
+		max_ydist = r_height - y_editor;
 	}
+
 	bool needed_recalculate = false;
 	bool size_changed = false;
 
 	ImGui::PushItemWidth(50.0f);
 
 	ImGui::Text("Positions X & Y");
-	if (ImGui::DragScalar("##PosX", ImGuiDataType_U32, (void*)&rectTransform[Rect::X], 1, &min_xpos, &max_xpos, "%u", 1.0f))
-		needed_recalculate = true;
-	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-	if (ImGui::DragScalar("##PosY", ImGuiDataType_U32, (void*)&rectTransform[Rect::Y], 1, &min_ypos, &max_ypos, "%u", 1.0f))
-		needed_recalculate = true;
+	if (ImGui::DragScalar("##PosX", ImGuiDataType_U32, &x_editor, 1, 0, &max_xpos, "%u", 1.0f))
+	{
+		if (rectParent != nullptr)
+			rectTransform[Rect::X] = x_editor + rectParent[Rect::X];
+		else
+			rectTransform[Rect::X] = x_editor;
 
+		needed_recalculate = true;
+	}
+	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+	if (ImGui::DragScalar("##PosY", ImGuiDataType_U32, &y_editor, 1, 0, &max_ypos, "%u", 1.0f))
+	{
+		if (rectParent != nullptr)
+			rectTransform[Rect::Y] = y_editor + rectParent[Rect::Y];
+		else
+			rectTransform[Rect::Y] = y_editor;
+
+		needed_recalculate = true;
+	}
 	ImGui::Text("Size X & Y");
 	if (ImGui::DragScalar("##SizeX", ImGuiDataType_U32, (void*)&rectTransform[Rect::XDIST], 1, 0, &max_xdist, "%u", 1.0f))
 	{
