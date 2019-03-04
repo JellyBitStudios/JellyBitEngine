@@ -8,43 +8,69 @@
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
 
-ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::RectTransformComponent)
+ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTypes componentType, RectFrom rF) : Component(parent, ComponentTypes::RectTransformComponent)
 {
 	App->ui->componentsUI.push_back(this);
-	ui_rect = App->ui->GetRectUI();
+
+	rFrom = rF;
 
 	Component* rect = nullptr;
-	if (parent->GetParent() != nullptr && (rect = parent->GetParent()->GetComponent(ComponentTypes::RectTransformComponent)) != nullptr)
+	switch (rFrom)
 	{
-		rectParent = ((ComponentRectTransform*)rect)->GetRect();
+	case RectFrom::RECT:
+		ui_rect = App->ui->GetRectUI();
+		if (parent->GetParent() != nullptr && (rect = parent->GetParent()->GetComponent(ComponentTypes::RectTransformComponent)) != nullptr)
+		{
+			rectParent = ((ComponentRectTransform*)rect)->GetRect();
 
-		ParentChanged();
+			ParentChanged();
+		}
+
+		RecaculateAnchors();
+		RecaculatePercentage();
+		break;
+
+	case RectFrom::WORLD:
+		break;
+
+	case RectFrom::RECT_WORLD:
+		break;
 	}
-
-	RecaculateAnchors();
-	RecaculatePercentage();
 }
 
 ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & componentRectTransform, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::RectTransformComponent)
 {
 	if(!includeComponents)
 		App->ui->componentsUI.push_back(this);
-	ui_rect = App->ui->GetRectUI();
 
 	memcpy(rectTransform, componentRectTransform.rectTransform, sizeof(uint) * 4);
 	memcpy(anchor, componentRectTransform.anchor, sizeof(uint) * 4);
 	memcpy(anchor_flags, componentRectTransform.anchor_flags, sizeof(bool) * 4);
 	use_margin = componentRectTransform.use_margin;
 
+	rFrom = componentRectTransform.rFrom;
+
 	Component* rect = nullptr;
-	if (parent->GetParent() != nullptr && (rect = parent->GetParent()->GetComponent(ComponentTypes::RectTransformComponent)) != nullptr)
+	switch (rFrom)
 	{
-		rectParent = ((ComponentRectTransform*)rect)->GetRect();
+	case RectFrom::RECT:
+		ui_rect = App->ui->GetRectUI();
+		if (parent->GetParent() != nullptr && (rect = parent->GetParent()->GetComponent(ComponentTypes::RectTransformComponent)) != nullptr)
+		{
+			rectParent = ((ComponentRectTransform*)rect)->GetRect();
 
-		ParentChanged();
+			ParentChanged();
 
-		RecaculateAnchors();
-		RecaculatePercentage();
+			RecaculateAnchors();
+			RecaculatePercentage();
+		}
+		break;
+
+	case RectFrom::WORLD:
+		break;
+
+	case RectFrom::RECT_WORLD:
+		break;
 	}
 }
 

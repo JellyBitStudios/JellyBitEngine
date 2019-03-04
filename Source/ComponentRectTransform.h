@@ -48,11 +48,12 @@ public:
 	enum RectFrom
 	{
 		RECT,
-		WORLD
+		WORLD,
+		RECT_WORLD
 	};
 
 public:
-	ComponentRectTransform(GameObject* parent, ComponentTypes componentType = ComponentTypes::RectTransformComponent);
+	ComponentRectTransform(GameObject* parent, ComponentTypes componentType = ComponentTypes::RectTransformComponent, RectFrom rF = RectFrom::RECT);
 	ComponentRectTransform(const ComponentRectTransform& componentRectTransform, GameObject* parent, bool includeComponents = true);
 	~ComponentRectTransform();
 
