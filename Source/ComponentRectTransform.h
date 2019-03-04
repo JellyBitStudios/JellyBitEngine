@@ -12,14 +12,9 @@
 
 #include "Globals.h"
 
-#include "MathGeoLib/include/Math/float2.h"
-
 class ComponentRectTransform : public Component
 {
 public:
-	ComponentRectTransform(GameObject* parent, ComponentTypes componentType = ComponentTypes::RectTransformComponent);
-	ComponentRectTransform(const ComponentRectTransform& componentRectTransform, GameObject* parent, bool includeComponents = true);
-
 	enum Rect
 	{
 		X,
@@ -57,8 +52,8 @@ public:
 	};
 
 public:
-	ComponentRectTransform(GameObject* parent, ComponentTypes componentType = ComponentTypes::RectTransformComponent, bool from_world = false);
-	ComponentRectTransform(const ComponentRectTransform& componentRectTransform, GameObject* parent, bool includeComponents = true, bool from_world = false);
+	ComponentRectTransform(GameObject* parent, ComponentTypes componentType = ComponentTypes::RectTransformComponent);
+	ComponentRectTransform(const ComponentRectTransform& componentRectTransform, GameObject* parent, bool includeComponents = true);
 	~ComponentRectTransform();
 
 	void Update();

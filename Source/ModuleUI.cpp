@@ -215,13 +215,13 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 	float w_height = ui_size_draw[UI_HEIGHTRECT];
 
 	math::float2 pos;
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[X_RECT], (float)rect_points[Y_RECT] }, w_width, w_height);
+	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
 	setFloat(ui_shader, "topLeft", pos.x, pos.y);
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[X_RECT] + (float)rect_points[XDIST_RECT], (float)rect_points[Y_RECT] }, w_width, w_height);
+	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
 	setFloat(ui_shader, "topRight", pos.x, pos.y);
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[X_RECT], (float)rect_points[Y_RECT] + (float)rect_points[YDIST_RECT] }, w_width, w_height);
+	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
 	setFloat(ui_shader, "bottomLeft", pos.x, pos.y);
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[X_RECT] + (float)rect_points[XDIST_RECT], (float)rect_points[Y_RECT] + (float)rect_points[YDIST_RECT] }, w_width, w_height);
+	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
 	setFloat(ui_shader, "bottomRight", pos.x, pos.y);
 }
 
@@ -262,10 +262,10 @@ void ModuleUI::LinkAllRectsTransform()
 #ifdef GAMEMODE
 	ComponentRectTransform* cmp_rect = (ComponentRectTransform*)canvas->GetComponent(ComponentTypes::RectTransformComponent);
 	uint* rect = cmp_rect->GetRect();
-	rect[X_RECT] = 0;
-	rect[Y_RECT] = 0;
-	rect[XDIST_RECT] = ui_size_draw[UI_WIDTHRECT];
-	rect[YDIST_RECT] = ui_size_draw[UI_HEIGHTRECT];
+	rect[ComponentRectTransform::Rect::X] = 0;
+	rect[ComponentRectTransform::Rect::Y] = 0;
+	rect[ComponentRectTransform::Rect::XDIST] = ui_size_draw[UI_WIDTHRECT];
+	rect[ComponentRectTransform::Rect::YDIST] = ui_size_draw[UI_HEIGHTRECT];
 #endif // GAMEMODE
 
 	std::vector<GameObject*> gos;
@@ -297,8 +297,8 @@ bool ModuleUI::MouseInScreen()
 				uint mouseX = App->input->GetMouseX();
 				uint mouseY = App->input->GetMouseY();
 
-				if (mouseX > rect[X_RECT] && mouseX < rect[X_RECT] + rect[XDIST_RECT]
-					&& mouseY > rect[Y_RECT] && mouseY < rect[Y_RECT] + rect[YDIST_RECT])
+				if (mouseX > rect[ComponentRectTransform::Rect::X] && mouseX < rect[ComponentRectTransform::Rect::X] + rect[ComponentRectTransform::Rect::XDIST]
+					&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST])
 					return true;
 			}
 		}
