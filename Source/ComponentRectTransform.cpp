@@ -64,10 +64,10 @@ void ComponentRectTransform::OnEditor()
 
 void ComponentRectTransform::SetRect(uint x, uint y, uint x_dist, uint y_dist)
 {
-	rectTransform[X_RECT] = x;
-	rectTransform[Y_RECT] = y;
-	rectTransform[XDIST_RECT] = x_dist;
-	rectTransform[YDIST_RECT] = y_dist;
+	rectTransform[Rect::X] = x;
+	rectTransform[Rect::Y] = y;
+	rectTransform[Rect::XDIST] = x_dist;
+	rectTransform[Rect::YDIST] = y_dist;
 
 	RecaculateAnchors();
 	RecaculatePercentage();
@@ -116,47 +116,29 @@ void ComponentRectTransform::ParentChanged(bool size_changed)
 {
 	if (size_changed)
 	{
-		rectTransform[X_RECT] = (uint)(anchor_percenatges[X0_PERCENTAGE] * (float)rectParent[XDIST_RECT]) + rectParent[X_RECT];
-		rectTransform[XDIST_RECT] = rectParent[XDIST_RECT] - ((rectTransform[X_RECT] - rectParent[X_RECT]) + (uint)(anchor_percenatges[X1_PERCENTAGE] * (float)rectParent[XDIST_RECT]));
-		rectTransform[Y_RECT] = (uint)(anchor_percenatges[Y0_PERCENTAGE] * (float)rectParent[YDIST_RECT]) + rectParent[Y_RECT];
-		rectTransform[YDIST_RECT] = rectParent[YDIST_RECT] - ((rectTransform[Y_RECT] - rectParent[Y_RECT]) + (uint)(anchor_percenatges[Y1_PERCENTAGE] * (float)rectParent[YDIST_RECT]));
+		rectTransform[Rect::X] = (uint)(anchor_percenatges[RectPercentage::X0] * (float)rectParent[Rect::XDIST]) + rectParent[Rect::X];
+		rectTransform[Rect::XDIST] = rectParent[Rect::XDIST] - ((rectTransform[Rect::X] - rectParent[Rect::X]) + (uint)(anchor_percenatges[RectPercentage::X1] * (float)rectParent[Rect::XDIST]));
+		rectTransform[Rect::Y] = (uint)(anchor_percenatges[RectPercentage::Y0] * (float)rectParent[Rect::YDIST]) + rectParent[Rect::Y];
+		rectTransform[Rect::YDIST] = rectParent[Rect::YDIST] - ((rectTransform[Rect::Y] - rectParent[Rect::Y]) + (uint)(anchor_percenatges[RectPercentage::Y1] * (float)rectParent[Rect::YDIST]));
 	
 		RecaculateAnchors();
 	}
 	else
 	{
-		if (anchor_flags[LEFT_RECT] == TOPLEFT_ANCHOR)
+		if (anchor_flags[Anchor::LEFT] == RectPrivot::TOPLEFT)
 		{
-			rectTransform[X_RECT] = anchor[LEFT_RECT] + rectParent[X_RECT];
-			rectTransform[Y_RECT] = anchor[TOP_RECT] + rectParent[Y_RECT];
-			anchor[RIGHT_RECT] = rectParent[XDIST_RECT] - (rectTransform[X_RECT] + rectTransform[XDIST_RECT]);
-			anchor[BOTTOM_RECT] = rectParent[YDIST_RECT] - (rectTransform[Y_RECT] + rectTransform[YDIST_RECT]);
+			rectTransform[Rect::X] = anchor[Anchor::LEFT] + rectParent[Rect::X];
+			rectTransform[Rect::Y] = anchor[Anchor::TOP] + rectParent[Rect::Y];
+			anchor[Anchor::RIGHT] = rectParent[Rect::XDIST] - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
+			anchor[Anchor::BOTTOM] = rectParent[Rect::YDIST] - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
 		}
 		else
 		{
-			rectTransform[X_RECT] = (rectParent[X_RECT] + rectParent[XDIST_RECT]) - anchor[RIGHT_RECT] - rectTransform[XDIST_RECT];
-			rectTransform[Y_RECT] = (rectParent[Y_RECT] + rectParent[YDIST_RECT]) - anchor[BOTTOM_RECT] - rectTransform[YDIST_RECT];
-			anchor[LEFT_RECT] = (rectTransform[X_RECT] + rectTransform[XDIST_RECT]) + anchor[RIGHT_RECT];
-			anchor[TOP_RECT] = (rectTransform[Y_RECT] + rectTransform[YDIST_RECT]) + anchor[BOTTOM_RECT];
+			rectTransform[Rect::X] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - anchor[Anchor::RIGHT] - rectTransform[Rect::XDIST];
+			rectTransform[Rect::Y] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - anchor[Anchor::BOTTOM] - rectTransform[Rect::YDIST];
+			anchor[Anchor::LEFT] = (rectTransform[Rect::X] + rectTransform[Rect::XDIST]) + anchor[Anchor::RIGHT];
+			anchor[Anchor::TOP] = (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]) + anchor[Anchor::BOTTOM];
 		}
-		/*
-		if (anchor_flags[LEFT_RECT] == TOPLEFT_ANCHOR)
-			rectTransform[X_RECT] = rectParent[X_RECT] + anchor[LEFT_RECT];
-		else
-			rectTransform[X_RECT] = rectParent[X_RECT] + rectParent[XDIST_RECT] - anchor[LEFT_RECT];
-		if (anchor_flags[TOP_RECT] == TOPLEFT_ANCHOR)
-			rectTransform[Y_RECT] = rectParent[Y_RECT] + anchor[TOP_RECT];
-		else
-			rectTransform[Y_RECT] = rectParent[Y_RECT] + rectParent[YDIST_RECT] - anchor[TOP_RECT];
-		if (anchor_flags[RIGHT_RECT] == TOPLEFT_ANCHOR)
-			rectTransform[XDIST_RECT] = rectParent[X_RECT] + anchor[RIGHT_RECT] - rectTransform[X_RECT];
-		else
-			rectTransform[XDIST_RECT] = rectParent[X_RECT] + rectParent[XDIST_RECT] - anchor[RIGHT_RECT] - rectTransform[X_RECT];
-		if (anchor_flags[BOTTOM_RECT] == TOPLEFT_ANCHOR)
-			rectTransform[YDIST_RECT] = rectParent[Y_RECT] + anchor[BOTTOM_RECT] - rectTransform[Y_RECT];
-		else
-			rectTransform[YDIST_RECT] = rectParent[Y_RECT] + rectParent[YDIST_RECT] - anchor[BOTTOM_RECT] - rectTransform[Y_RECT];
-			*/
 		RecaculatePercentage();
 	}
 }
@@ -179,84 +161,84 @@ void ComponentRectTransform::RecaculateAnchors()
 {
 	if (rectParent != nullptr)
 	{
-		if (anchor_flags[LEFT_RECT] == TOPLEFT_ANCHOR)
-			anchor[LEFT_RECT] = rectTransform[X_RECT] - rectParent[X_RECT];
+		if (anchor_flags[Anchor::LEFT] == RectPrivot::TOPLEFT)
+			anchor[Anchor::LEFT] = rectTransform[Rect::X] - rectParent[Rect::X];
 		else
-			anchor[LEFT_RECT] = (rectParent[X_RECT] + rectParent[XDIST_RECT]) - rectTransform[X_RECT];
+			anchor[Anchor::LEFT] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - rectTransform[Rect::X];
 
-		if (anchor_flags[TOP_RECT] == TOPLEFT_ANCHOR)
-			anchor[TOP_RECT] = rectTransform[Y_RECT] - rectParent[UI_YRECT];
+		if (anchor_flags[Anchor::TOP] == RectPrivot::TOPLEFT)
+			anchor[Anchor::TOP] = rectTransform[Rect::Y] - rectParent[UI_YRECT];
 		else
-			anchor[TOP_RECT] = (rectParent[Y_RECT] + rectParent[YDIST_RECT]) - rectTransform[Y_RECT];
+			anchor[Anchor::TOP] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - rectTransform[Rect::Y];
 
-		if (anchor_flags[RIGHT_RECT] == TOPLEFT_ANCHOR)
-			anchor[RIGHT_RECT] = (rectTransform[X_RECT] + rectTransform[XDIST_RECT]) - rectParent[X_RECT];
+		if (anchor_flags[Anchor::RIGHT] == RectPrivot::TOPLEFT)
+			anchor[Anchor::RIGHT] = (rectTransform[Rect::X] + rectTransform[Rect::XDIST]) - rectParent[Rect::X];
 		else
-			anchor[RIGHT_RECT] = (rectParent[X_RECT] + rectParent[XDIST_RECT]) - (rectTransform[X_RECT] + rectTransform[XDIST_RECT]);
+			anchor[Anchor::RIGHT] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
 
-		if (anchor_flags[BOTTOM_RECT] == TOPLEFT_ANCHOR)
-			anchor[BOTTOM_RECT] = (rectTransform[Y_RECT] + rectTransform[YDIST_RECT]) - rectParent[Y_RECT];
+		if (anchor_flags[Anchor::BOTTOM] == RectPrivot::TOPLEFT)
+			anchor[Anchor::BOTTOM] = (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]) - rectParent[Rect::Y];
 		else
-			anchor[BOTTOM_RECT] = (rectParent[Y_RECT] + rectParent[YDIST_RECT]) - (rectTransform[Y_RECT] + rectTransform[YDIST_RECT]);
+			anchor[Anchor::BOTTOM] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
 	}
 	else
 	{
-		if (anchor_flags[LEFT_RECT] == TOPLEFT_ANCHOR)
-			anchor[LEFT_RECT] = rectTransform[X_RECT] - ui_rect[UI_XRECT];
+		if (anchor_flags[Anchor::LEFT] == RectPrivot::TOPLEFT)
+			anchor[Anchor::LEFT] = rectTransform[Rect::X] - ui_rect[UI_XRECT];
 		else
-			anchor[LEFT_RECT] = ui_rect[UI_WIDTHRECT] - rectTransform[X_RECT];
+			anchor[Anchor::LEFT] = ui_rect[UI_WIDTHRECT] - rectTransform[Rect::X];
 
-		if (anchor_flags[TOP_RECT] == TOPLEFT_ANCHOR)
-			anchor[TOP_RECT] = rectTransform[Y_RECT] - ui_rect[UI_YRECT];
+		if (anchor_flags[Anchor::TOP] == RectPrivot::TOPLEFT)
+			anchor[Anchor::TOP] = rectTransform[Rect::Y] - ui_rect[UI_YRECT];
 		else
-			anchor[TOP_RECT] = ui_rect[UI_HEIGHTRECT] - rectTransform[Y_RECT];
+			anchor[Anchor::TOP] = ui_rect[UI_HEIGHTRECT] - rectTransform[Rect::Y];
 
-		if (anchor_flags[RIGHT_RECT] == TOPLEFT_ANCHOR)
-			anchor[RIGHT_RECT] = (rectTransform[X_RECT] + rectTransform[XDIST_RECT]) - ui_rect[UI_XRECT];
+		if (anchor_flags[Anchor::RIGHT] == RectPrivot::TOPLEFT)
+			anchor[Anchor::RIGHT] = (rectTransform[Rect::X] + rectTransform[Rect::XDIST]) - ui_rect[UI_XRECT];
 		else
-			anchor[RIGHT_RECT] = ui_rect[UI_WIDTHRECT] - (rectTransform[X_RECT] + rectTransform[XDIST_RECT]);
+			anchor[Anchor::RIGHT] = ui_rect[UI_WIDTHRECT] - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
 
-		if (anchor_flags[BOTTOM_RECT] == TOPLEFT_ANCHOR)
-			anchor[BOTTOM_RECT] = (rectTransform[Y_RECT] + rectTransform[YDIST_RECT]) - ui_rect[UI_XRECT];
+		if (anchor_flags[Anchor::BOTTOM] == RectPrivot::TOPLEFT)
+			anchor[Anchor::BOTTOM] = (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]) - ui_rect[UI_XRECT];
 		else
-			anchor[BOTTOM_RECT] = ui_rect[UI_HEIGHTRECT] - (rectTransform[Y_RECT] + rectTransform[YDIST_RECT]);
+			anchor[Anchor::BOTTOM] = ui_rect[UI_HEIGHTRECT] - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
 	}
 }
 
 void ComponentRectTransform::RecaculateAnchors(int type)
 {
-	if (TOPLEFT_ANCHOR == type)
+	if (RectPrivot::TOPLEFT == type)
 	{
 		if (rectParent != nullptr)
 		{
-			rectTransform[X_RECT] = anchor[LEFT_RECT] + rectParent[X_RECT];
-			rectTransform[Y_RECT] = anchor[TOP_RECT] + rectParent[Y_RECT];
-			anchor[RIGHT_RECT] = rectParent[XDIST_RECT] - (rectTransform[X_RECT] + rectTransform[XDIST_RECT]);
-			anchor[BOTTOM_RECT] = rectParent[YDIST_RECT] - (rectTransform[Y_RECT] + rectTransform[YDIST_RECT]);
+			rectTransform[Rect::X] = anchor[Anchor::LEFT] + rectParent[Rect::X];
+			rectTransform[Rect::Y] = anchor[Anchor::TOP] + rectParent[Rect::Y];
+			anchor[Anchor::RIGHT] = rectParent[Rect::XDIST] - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
+			anchor[Anchor::BOTTOM] = rectParent[Rect::YDIST] - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
 		}
 		else
 		{
-			rectTransform[X_RECT] = anchor[LEFT_RECT] + ui_rect[UI_XRECT];
-			rectTransform[Y_RECT] = anchor[TOP_RECT] + ui_rect[UI_YRECT];
-			anchor[RIGHT_RECT] = ui_rect[UI_WIDTHRECT] - (rectTransform[X_RECT] + rectTransform[XDIST_RECT]);
-			anchor[BOTTOM_RECT] = ui_rect[UI_HEIGHTRECT] - (rectTransform[Y_RECT] + rectTransform[YDIST_RECT]);
+			rectTransform[Rect::X] = anchor[Anchor::LEFT] + ui_rect[UI_XRECT];
+			rectTransform[Rect::Y] = anchor[Anchor::TOP] + ui_rect[UI_YRECT];
+			anchor[Anchor::RIGHT] = ui_rect[UI_WIDTHRECT] - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
+			anchor[Anchor::BOTTOM] = ui_rect[UI_HEIGHTRECT] - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
 		}
 	}
-	else if (BOTTOMRIGHT_ANCHOR == type)
+	else if (RectPrivot::BOTTOMRIGHT == type)
 	{
 		if (rectParent != nullptr)
 		{
-			rectTransform[X_RECT] = (rectParent[X_RECT] + rectParent[XDIST_RECT]) - anchor[RIGHT_RECT] - rectTransform[XDIST_RECT];
-			rectTransform[Y_RECT] = (rectParent[Y_RECT] + rectParent[YDIST_RECT]) - anchor[BOTTOM_RECT] - rectTransform[YDIST_RECT];
-			anchor[LEFT_RECT] = (rectTransform[X_RECT] + rectTransform[XDIST_RECT]) + anchor[RIGHT_RECT];
-			anchor[TOP_RECT] = (rectTransform[Y_RECT] + rectTransform[YDIST_RECT]) + anchor[BOTTOM_RECT];
+			rectTransform[Rect::X] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - anchor[Anchor::RIGHT] - rectTransform[Rect::XDIST];
+			rectTransform[Rect::Y] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - anchor[Anchor::BOTTOM] - rectTransform[Rect::YDIST];
+			anchor[Anchor::LEFT] = (rectTransform[Rect::X] + rectTransform[Rect::XDIST]) + anchor[Anchor::RIGHT];
+			anchor[Anchor::TOP] = (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]) + anchor[Anchor::BOTTOM];
 		}
 		else
 		{
-			rectTransform[X_RECT] = (ui_rect[UI_WIDTHRECT] + ui_rect[UI_XRECT]) - anchor[RIGHT_RECT] - rectTransform[XDIST_RECT];
-			rectTransform[Y_RECT] = (ui_rect[UI_HEIGHTRECT] + ui_rect[UI_YRECT]) - anchor[BOTTOM_RECT] - rectTransform[YDIST_RECT];
-			anchor[LEFT_RECT] = (rectTransform[X_RECT] + rectTransform[XDIST_RECT]) + anchor[RIGHT_RECT];
-			anchor[TOP_RECT] = (rectTransform[Y_RECT] + rectTransform[YDIST_RECT]) + anchor[BOTTOM_RECT];
+			rectTransform[Rect::X] = (ui_rect[UI_WIDTHRECT] + ui_rect[UI_XRECT]) - anchor[Anchor::RIGHT] - rectTransform[Rect::XDIST];
+			rectTransform[Rect::Y] = (ui_rect[UI_HEIGHTRECT] + ui_rect[UI_YRECT]) - anchor[Anchor::BOTTOM] - rectTransform[Rect::YDIST];
+			anchor[Anchor::LEFT] = (rectTransform[Rect::X] + rectTransform[Rect::XDIST]) + anchor[Anchor::RIGHT];
+			anchor[Anchor::TOP] = (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]) + anchor[Anchor::BOTTOM];
 		}
 	}
 
@@ -267,17 +249,17 @@ void ComponentRectTransform::RecaculatePercentage()
 {
 	if (rectParent != nullptr)
 	{
-		anchor_percenatges[X0_PERCENTAGE] = (float)(rectTransform[X_RECT] - rectParent[X_RECT]) / (float)rectParent[XDIST_RECT];
-		anchor_percenatges[X1_PERCENTAGE] = (float)((rectParent[X_RECT] + rectParent[XDIST_RECT]) - (rectTransform[X_RECT] + rectTransform[XDIST_RECT])) / (float)rectParent[XDIST_RECT];
-		anchor_percenatges[Y0_PERCENTAGE] = (float)(rectTransform[Y_RECT] - rectParent[Y_RECT]) / (float)rectParent[YDIST_RECT];
-		anchor_percenatges[Y1_PERCENTAGE] = (float)((rectParent[Y_RECT] + rectParent[YDIST_RECT]) - (rectTransform[Y_RECT] + rectTransform[YDIST_RECT])) / (float)rectParent[YDIST_RECT];
+		anchor_percenatges[RectPercentage::X0] = (float)(rectTransform[Rect::X] - rectParent[Rect::X]) / (float)rectParent[Rect::XDIST];
+		anchor_percenatges[RectPercentage::X1] = (float)((rectParent[Rect::X] + rectParent[Rect::XDIST]) - (rectTransform[Rect::X] + rectTransform[Rect::XDIST])) / (float)rectParent[Rect::XDIST];
+		anchor_percenatges[RectPercentage::Y0] = (float)(rectTransform[Rect::Y] - rectParent[Rect::Y]) / (float)rectParent[Rect::YDIST];
+		anchor_percenatges[RectPercentage::Y1] = (float)((rectParent[Rect::Y] + rectParent[Rect::YDIST]) - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST])) / (float)rectParent[Rect::YDIST];
 	}
 	else
 	{
-		anchor_percenatges[X0_PERCENTAGE] = (float)(rectTransform[X_RECT] - ui_rect[UI_XRECT]) / (float)ui_rect[UI_WIDTHRECT];
-		anchor_percenatges[X1_PERCENTAGE] = (float)((ui_rect[UI_XRECT] + ui_rect[UI_WIDTHRECT]) - (rectTransform[X_RECT] + rectTransform[XDIST_RECT])) / (float)ui_rect[UI_WIDTHRECT];
-		anchor_percenatges[Y0_PERCENTAGE] = (float)(rectTransform[Y_RECT] - ui_rect[UI_YRECT]) / (float)ui_rect[UI_HEIGHTRECT];
-		anchor_percenatges[Y1_PERCENTAGE] = (float)((ui_rect[UI_YRECT] + ui_rect[UI_HEIGHTRECT]) - (rectTransform[Y_RECT] + rectTransform[YDIST_RECT])) / (float)ui_rect[UI_HEIGHTRECT];
+		anchor_percenatges[RectPercentage::X0] = (float)(rectTransform[Rect::X] - ui_rect[UI_XRECT]) / (float)ui_rect[UI_WIDTHRECT];
+		anchor_percenatges[RectPercentage::X1] = (float)((ui_rect[UI_XRECT] + ui_rect[UI_WIDTHRECT]) - (rectTransform[Rect::X] + rectTransform[Rect::XDIST])) / (float)ui_rect[UI_WIDTHRECT];
+		anchor_percenatges[RectPercentage::Y0] = (float)(rectTransform[Rect::Y] - ui_rect[UI_YRECT]) / (float)ui_rect[UI_HEIGHTRECT];
+		anchor_percenatges[RectPercentage::Y1] = (float)((ui_rect[UI_YRECT] + ui_rect[UI_HEIGHTRECT]) - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST])) / (float)ui_rect[UI_HEIGHTRECT];
 	}
 }
 
@@ -345,28 +327,28 @@ void ComponentRectTransform::OnUniqueEditor()
 
 	if (rectParent != nullptr)
 	{
-		min_xpos = rectParent[X_RECT];
-		min_ypos = rectParent[Y_RECT];
+		min_xpos = rectParent[Rect::X];
+		min_ypos = rectParent[Rect::Y];
 
-		screen_width = rectParent[X_RECT] + rectParent[XDIST_RECT];
-		screen_height = rectParent[Y_RECT] + rectParent[YDIST_RECT];
+		screen_width = rectParent[Rect::X] + rectParent[Rect::XDIST];
+		screen_height = rectParent[Rect::Y] + rectParent[Rect::YDIST];
 
-		max_xpos = screen_width - rectTransform[XDIST_RECT];
-		max_ypos = screen_height - rectTransform[YDIST_RECT];
+		max_xpos = screen_width - rectTransform[Rect::XDIST];
+		max_ypos = screen_height - rectTransform[Rect::YDIST];
 
-		max_xdist = screen_width - rectTransform[X_RECT];
-		max_ydist = screen_height - rectTransform[Y_RECT];
+		max_xdist = screen_width - rectTransform[Rect::X];
+		max_ydist = screen_height - rectTransform[Rect::Y];
 	}
 	else
 	{
 		screen_height = ui_rect[UI_HEIGHTRECT];
 		screen_width = ui_rect[UI_WIDTHRECT];
 
-		max_xpos = screen_width - rectTransform[XDIST_RECT];
-		max_ypos = screen_height - rectTransform[YDIST_RECT];
+		max_xpos = screen_width - rectTransform[Rect::XDIST];
+		max_ypos = screen_height - rectTransform[Rect::YDIST];
 
-		max_xdist = screen_width - rectTransform[X_RECT];
-		max_ydist = screen_height - rectTransform[Y_RECT];
+		max_xdist = screen_width - rectTransform[Rect::X];
+		max_ydist = screen_height - rectTransform[Rect::Y];
 	}
 	bool needed_recalculate = false;
 	bool size_changed = false;
@@ -374,20 +356,20 @@ void ComponentRectTransform::OnUniqueEditor()
 	ImGui::PushItemWidth(50.0f);
 
 	ImGui::Text("Positions X & Y");
-	if (ImGui::DragScalar("##PosX", ImGuiDataType_U32, (void*)&rectTransform[X_RECT], 1, &min_xpos, &max_xpos, "%u", 1.0f))
+	if (ImGui::DragScalar("##PosX", ImGuiDataType_U32, (void*)&rectTransform[Rect::X], 1, &min_xpos, &max_xpos, "%u", 1.0f))
 		needed_recalculate = true;
 	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-	if (ImGui::DragScalar("##PosY", ImGuiDataType_U32, (void*)&rectTransform[Y_RECT], 1, &min_ypos, &max_ypos, "%u", 1.0f))
+	if (ImGui::DragScalar("##PosY", ImGuiDataType_U32, (void*)&rectTransform[Rect::Y], 1, &min_ypos, &max_ypos, "%u", 1.0f))
 		needed_recalculate = true;
 
 	ImGui::Text("Size X & Y");
-	if (ImGui::DragScalar("##SizeX", ImGuiDataType_U32, (void*)&rectTransform[XDIST_RECT], 1, 0, &max_xdist, "%u", 1.0f))
+	if (ImGui::DragScalar("##SizeX", ImGuiDataType_U32, (void*)&rectTransform[Rect::XDIST], 1, 0, &max_xdist, "%u", 1.0f))
 	{
 		needed_recalculate = true;
 		size_changed = true;
 	}
 	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-	if (ImGui::DragScalar("##SizeY", ImGuiDataType_U32, (void*)&rectTransform[YDIST_RECT], 1, 0, &max_ydist, "%u", 1.0f))
+	if (ImGui::DragScalar("##SizeY", ImGuiDataType_U32, (void*)&rectTransform[Rect::YDIST], 1, 0, &max_ydist, "%u", 1.0f))
 	{
 		needed_recalculate = true;
 		size_changed = true;
@@ -411,36 +393,36 @@ void ComponentRectTransform::OnUniqueEditor()
 		ImGui::Text("Anchor");
 		ImGui::PushItemWidth(50.0f);
 
-		int current_anchor_flag = (int)anchor_flags[LEFT_RECT];
+		int current_anchor_flag = (int)anchor_flags[Anchor::LEFT];
 		ImGui::Text("Reference points");
 		ImGui::Text("Begin - Top/Left");
 		ImGui::Text("End - Bottom/Right");
 		if (ImGui::Combo("Using: ", &current_anchor_flag, ANCHORS_POINTS_STR))
 		{
-			anchor_flags[LEFT_RECT] = current_anchor_flag;
-			anchor_flags[TOP_RECT] = current_anchor_flag;
-			anchor_flags[RIGHT_RECT] = current_anchor_flag;
-			anchor_flags[BOTTOM_RECT] = current_anchor_flag;
+			anchor_flags[Anchor::LEFT] = current_anchor_flag;
+			anchor_flags[Anchor::TOP] = current_anchor_flag;
+			anchor_flags[Anchor::RIGHT] = current_anchor_flag;
+			anchor_flags[Anchor::BOTTOM] = current_anchor_flag;
 
 			RecaculateAnchors();
 		}
 		/*
-		current_anchor_flag = (int)anchor_flags[TOP_RECT];
-		if (ImGui::Combo(TOP_RECT_STR, (int*)&current_anchor_flag, ANCHORS_POINTS_STR))
+		current_anchor_flag = (int)anchor_flags[Anchor::TOP];
+		if (ImGui::Combo(Anchor::TOP_STR, (int*)&current_anchor_flag, ANCHORS_POINTS_STR))
 		{
-			anchor_flags[TOP_RECT] = current_anchor_flag;
+			anchor_flags[Anchor::TOP] = current_anchor_flag;
 			needed_recalculate = true;
 		}
-		current_anchor_flag = (int)anchor_flags[RIGHT_RECT];
-		if (ImGui::Combo(RIGHT_RECT_STR, (int*)&current_anchor_flag, ANCHORS_POINTS_STR))
+		current_anchor_flag = (int)anchor_flags[Anchor::RIGHT];
+		if (ImGui::Combo(Anchor::RIGHT_STR, (int*)&current_anchor_flag, ANCHORS_POINTS_STR))
 		{
-			anchor_flags[RIGHT_RECT] = current_anchor_flag;
+			anchor_flags[Anchor::RIGHT] = current_anchor_flag;
 			needed_recalculate = true;
 		}
-		current_anchor_flag = (int)anchor_flags[BOTTOM_RECT];
-		if (ImGui::Combo(BOTTOM_RECT_STR, (int*)&current_anchor_flag, ANCHORS_POINTS_STR))
+		current_anchor_flag = (int)anchor_flags[Anchor::BOTTOM];
+		if (ImGui::Combo(Anchor::BOTTOM_STR, (int*)&current_anchor_flag, ANCHORS_POINTS_STR))
 		{
-			anchor_flags[BOTTOM_RECT] = current_anchor_flag;
+			anchor_flags[Anchor::BOTTOM] = current_anchor_flag;
 			needed_recalculate = true;
 		}
 		if (needed_recalculate)
@@ -453,30 +435,30 @@ void ComponentRectTransform::OnUniqueEditor()
 		ImGui::PushItemWidth(50.0f);
 
 		ImGui::Text("Margin");
-		if (current_anchor_flag == TOPLEFT_ANCHOR)
+		if (current_anchor_flag == RectPrivot::TOPLEFT)
 		{
 			uint max_leftAnhor = 0;
 			uint max_topAnchor = 0;
 			if (rectParent)
 			{
-				max_leftAnhor = rectParent[XDIST_RECT] - rectTransform[XDIST_RECT];
-				max_topAnchor = rectParent[YDIST_RECT] - rectTransform[YDIST_RECT];
+				max_leftAnhor = rectParent[Rect::XDIST] - rectTransform[Rect::XDIST];
+				max_topAnchor = rectParent[Rect::YDIST] - rectTransform[Rect::YDIST];
 			}
 			else
 			{
-				max_leftAnhor = ui_rect[UI_WIDTHRECT] - rectTransform[XDIST_RECT];
-				max_topAnchor = ui_rect[UI_HEIGHTRECT] - rectTransform[YDIST_RECT];
+				max_leftAnhor = ui_rect[UI_WIDTHRECT] - rectTransform[Rect::XDIST];
+				max_topAnchor = ui_rect[UI_HEIGHTRECT] - rectTransform[Rect::YDIST];
 			}
 
 			ImGui::Text("Left/Top");
-			if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[LEFT_RECT], 1, 0, &max_leftAnhor, "%u", 1.0f))
+			if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_leftAnhor, "%u", 1.0f))
 				needed_recalculate = true;
 			ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-			if (ImGui::DragScalar("##MTop", ImGuiDataType_U32, (void*)&anchor[TOP_RECT], 1, 0, &max_topAnchor, "%u", 1.0f))
+			if (ImGui::DragScalar("##MTop", ImGuiDataType_U32, (void*)&anchor[Anchor::TOP], 1, 0, &max_topAnchor, "%u", 1.0f))
 				needed_recalculate = true;
 
 			if (needed_recalculate)
-				RecaculateAnchors(TOPLEFT_ANCHOR);
+				RecaculateAnchors(RectPrivot::TOPLEFT);
 		}
 		else
 		{
@@ -485,24 +467,24 @@ void ComponentRectTransform::OnUniqueEditor()
 
 			if (rectParent)
 			{
-				max_rightAnhor = rectParent[XDIST_RECT] - rectTransform[XDIST_RECT];
-				max_bottomAnchor = rectParent[YDIST_RECT] - rectTransform[YDIST_RECT];
+				max_rightAnhor = rectParent[Rect::XDIST] - rectTransform[Rect::XDIST];
+				max_bottomAnchor = rectParent[Rect::YDIST] - rectTransform[Rect::YDIST];
 			}
 			else
 			{
-				max_rightAnhor = ui_rect[UI_WIDTHRECT] - rectTransform[XDIST_RECT];
-				max_bottomAnchor = ui_rect[UI_HEIGHTRECT] - rectTransform[YDIST_RECT];
+				max_rightAnhor = ui_rect[UI_WIDTHRECT] - rectTransform[Rect::XDIST];
+				max_bottomAnchor = ui_rect[UI_HEIGHTRECT] - rectTransform[Rect::YDIST];
 			}
 
 			ImGui::Text("Right/Bottom");
-			if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[RIGHT_RECT], 1, 0, &max_rightAnhor, "%u", 1.0f))
+			if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_rightAnhor, "%u", 1.0f))
 				needed_recalculate = true;
 			ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-			if (ImGui::DragScalar("##MBottom", ImGuiDataType_U32, (void*)&anchor[BOTTOM_RECT], 1, 0, &max_bottomAnchor, "%u", 1.0f))
+			if (ImGui::DragScalar("##MBottom", ImGuiDataType_U32, (void*)&anchor[Anchor::BOTTOM], 1, 0, &max_bottomAnchor, "%u", 1.0f))
 				needed_recalculate = true;
 
 			if (needed_recalculate)
-				RecaculateAnchors(BOTTOMRIGHT_ANCHOR);
+				RecaculateAnchors(RectPrivot::BOTTOMRIGHT);
 		}
 	}
 
