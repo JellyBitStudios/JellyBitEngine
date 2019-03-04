@@ -79,10 +79,10 @@ bool ModuleUI::Start()
 	//Shader
 	ui_shader = App->resHandler->UIShaderProgram;
 
-	ui_size_draw[UI_XRECT] = 0;
-	ui_size_draw[UI_YRECT] = 0;
-	ui_size_draw[UI_WIDTHRECT] = App->window->GetWindowWidth();
-	ui_size_draw[UI_HEIGHTRECT] = App->window->GetWindowHeight();
+	ui_size_draw[Screen::X] = 0;
+	ui_size_draw[Screen::Y] = 0;
+	ui_size_draw[Screen::WIDTH] = App->window->GetWindowWidth();
+	ui_size_draw[Screen::HEIGHT] = App->window->GetWindowHeight();
 
 #ifdef GAMEMODE
 	uiMode = true;
@@ -211,8 +211,8 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 {
 	const uint* rect_points = rect->GetRect();
 
-	float w_width = ui_size_draw[UI_WIDTHRECT];
-	float w_height = ui_size_draw[UI_HEIGHTRECT];
+	float w_width = ui_size_draw[Screen::WIDTH];
+	float w_height = ui_size_draw[Screen::HEIGHT];
 
 	math::float2 pos;
 	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
@@ -242,8 +242,8 @@ void ModuleUI::SetUIMode(bool stat)
 
 void ModuleUI::OnWindowResize(uint width, uint height)
 {
-	ui_size_draw[UI_WIDTHRECT] = width;
-	ui_size_draw[UI_HEIGHTRECT] = height;
+	ui_size_draw[Screen::WIDTH] = width;
+	ui_size_draw[Screen::HEIGHT] = height;
 
 #ifdef GAMEMODE
 	LinkAllRectsTransform();
@@ -264,8 +264,8 @@ void ModuleUI::LinkAllRectsTransform()
 	uint* rect = cmp_rect->GetRect();
 	rect[ComponentRectTransform::Rect::X] = 0;
 	rect[ComponentRectTransform::Rect::Y] = 0;
-	rect[ComponentRectTransform::Rect::XDIST] = ui_size_draw[UI_WIDTHRECT];
-	rect[ComponentRectTransform::Rect::YDIST] = ui_size_draw[UI_HEIGHTRECT];
+	rect[ComponentRectTransform::Rect::XDIST] = ui_size_draw[Screen::WIDTH];
+	rect[ComponentRectTransform::Rect::YDIST] = ui_size_draw[Screen::HEIGHT];
 #endif // GAMEMODE
 
 	std::vector<GameObject*> gos;

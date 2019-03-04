@@ -167,7 +167,7 @@ void ComponentRectTransform::RecaculateAnchors()
 			anchor[Anchor::LEFT] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - rectTransform[Rect::X];
 
 		if (anchor_flags[Anchor::TOP] == RectPrivot::TOPLEFT)
-			anchor[Anchor::TOP] = rectTransform[Rect::Y] - rectParent[UI_YRECT];
+			anchor[Anchor::TOP] = rectTransform[Rect::Y] - rectParent[ModuleUI::Screen::Y];
 		else
 			anchor[Anchor::TOP] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - rectTransform[Rect::Y];
 
@@ -184,24 +184,24 @@ void ComponentRectTransform::RecaculateAnchors()
 	else
 	{
 		if (anchor_flags[Anchor::LEFT] == RectPrivot::TOPLEFT)
-			anchor[Anchor::LEFT] = rectTransform[Rect::X] - ui_rect[UI_XRECT];
+			anchor[Anchor::LEFT] = rectTransform[Rect::X] - ui_rect[ModuleUI::Screen::X];
 		else
-			anchor[Anchor::LEFT] = ui_rect[UI_WIDTHRECT] - rectTransform[Rect::X];
+			anchor[Anchor::LEFT] = ui_rect[ModuleUI::Screen::WIDTH] - rectTransform[Rect::X];
 
 		if (anchor_flags[Anchor::TOP] == RectPrivot::TOPLEFT)
-			anchor[Anchor::TOP] = rectTransform[Rect::Y] - ui_rect[UI_YRECT];
+			anchor[Anchor::TOP] = rectTransform[Rect::Y] - ui_rect[ModuleUI::Screen::Y];
 		else
-			anchor[Anchor::TOP] = ui_rect[UI_HEIGHTRECT] - rectTransform[Rect::Y];
+			anchor[Anchor::TOP] = ui_rect[ModuleUI::Screen::HEIGHT] - rectTransform[Rect::Y];
 
 		if (anchor_flags[Anchor::RIGHT] == RectPrivot::TOPLEFT)
-			anchor[Anchor::RIGHT] = (rectTransform[Rect::X] + rectTransform[Rect::XDIST]) - ui_rect[UI_XRECT];
+			anchor[Anchor::RIGHT] = (rectTransform[Rect::X] + rectTransform[Rect::XDIST]) - ui_rect[ModuleUI::Screen::X];
 		else
-			anchor[Anchor::RIGHT] = ui_rect[UI_WIDTHRECT] - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
+			anchor[Anchor::RIGHT] = ui_rect[ModuleUI::Screen::WIDTH] - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
 
 		if (anchor_flags[Anchor::BOTTOM] == RectPrivot::TOPLEFT)
-			anchor[Anchor::BOTTOM] = (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]) - ui_rect[UI_XRECT];
+			anchor[Anchor::BOTTOM] = (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]) - ui_rect[ModuleUI::Screen::X];
 		else
-			anchor[Anchor::BOTTOM] = ui_rect[UI_HEIGHTRECT] - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
+			anchor[Anchor::BOTTOM] = ui_rect[ModuleUI::Screen::HEIGHT] - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
 	}
 }
 
@@ -218,10 +218,10 @@ void ComponentRectTransform::RecaculateAnchors(int type)
 		}
 		else
 		{
-			rectTransform[Rect::X] = anchor[Anchor::LEFT] + ui_rect[UI_XRECT];
-			rectTransform[Rect::Y] = anchor[Anchor::TOP] + ui_rect[UI_YRECT];
-			anchor[Anchor::RIGHT] = ui_rect[UI_WIDTHRECT] - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
-			anchor[Anchor::BOTTOM] = ui_rect[UI_HEIGHTRECT] - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
+			rectTransform[Rect::X] = anchor[Anchor::LEFT] + ui_rect[ModuleUI::Screen::X];
+			rectTransform[Rect::Y] = anchor[Anchor::TOP] + ui_rect[ModuleUI::Screen::Y];
+			anchor[Anchor::RIGHT] = ui_rect[ModuleUI::Screen::WIDTH] - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
+			anchor[Anchor::BOTTOM] = ui_rect[ModuleUI::Screen::HEIGHT] - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
 		}
 	}
 	else if (RectPrivot::BOTTOMRIGHT == type)
@@ -235,8 +235,8 @@ void ComponentRectTransform::RecaculateAnchors(int type)
 		}
 		else
 		{
-			rectTransform[Rect::X] = (ui_rect[UI_WIDTHRECT] + ui_rect[UI_XRECT]) - anchor[Anchor::RIGHT] - rectTransform[Rect::XDIST];
-			rectTransform[Rect::Y] = (ui_rect[UI_HEIGHTRECT] + ui_rect[UI_YRECT]) - anchor[Anchor::BOTTOM] - rectTransform[Rect::YDIST];
+			rectTransform[Rect::X] = (ui_rect[ModuleUI::Screen::WIDTH] + ui_rect[ModuleUI::Screen::X]) - anchor[Anchor::RIGHT] - rectTransform[Rect::XDIST];
+			rectTransform[Rect::Y] = (ui_rect[ModuleUI::Screen::HEIGHT] + ui_rect[ModuleUI::Screen::Y]) - anchor[Anchor::BOTTOM] - rectTransform[Rect::YDIST];
 			anchor[Anchor::LEFT] = (rectTransform[Rect::X] + rectTransform[Rect::XDIST]) + anchor[Anchor::RIGHT];
 			anchor[Anchor::TOP] = (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]) + anchor[Anchor::BOTTOM];
 		}
@@ -256,10 +256,10 @@ void ComponentRectTransform::RecaculatePercentage()
 	}
 	else
 	{
-		anchor_percenatges[RectPercentage::X0] = (float)(rectTransform[Rect::X] - ui_rect[UI_XRECT]) / (float)ui_rect[UI_WIDTHRECT];
-		anchor_percenatges[RectPercentage::X1] = (float)((ui_rect[UI_XRECT] + ui_rect[UI_WIDTHRECT]) - (rectTransform[Rect::X] + rectTransform[Rect::XDIST])) / (float)ui_rect[UI_WIDTHRECT];
-		anchor_percenatges[RectPercentage::Y0] = (float)(rectTransform[Rect::Y] - ui_rect[UI_YRECT]) / (float)ui_rect[UI_HEIGHTRECT];
-		anchor_percenatges[RectPercentage::Y1] = (float)((ui_rect[UI_YRECT] + ui_rect[UI_HEIGHTRECT]) - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST])) / (float)ui_rect[UI_HEIGHTRECT];
+		anchor_percenatges[RectPercentage::X0] = (float)(rectTransform[Rect::X] - ui_rect[ModuleUI::Screen::X]) / (float)ui_rect[ModuleUI::Screen::WIDTH];
+		anchor_percenatges[RectPercentage::X1] = (float)((ui_rect[ModuleUI::Screen::X] + ui_rect[ModuleUI::Screen::WIDTH]) - (rectTransform[Rect::X] + rectTransform[Rect::XDIST])) / (float)ui_rect[ModuleUI::Screen::WIDTH];
+		anchor_percenatges[RectPercentage::Y0] = (float)(rectTransform[Rect::Y] - ui_rect[ModuleUI::Screen::Y]) / (float)ui_rect[ModuleUI::Screen::HEIGHT];
+		anchor_percenatges[RectPercentage::Y1] = (float)((ui_rect[ModuleUI::Screen::Y] + ui_rect[ModuleUI::Screen::HEIGHT]) - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST])) / (float)ui_rect[ModuleUI::Screen::HEIGHT];
 	}
 }
 
@@ -341,8 +341,8 @@ void ComponentRectTransform::OnUniqueEditor()
 	}
 	else
 	{
-		screen_height = ui_rect[UI_HEIGHTRECT];
-		screen_width = ui_rect[UI_WIDTHRECT];
+		screen_height = ui_rect[ModuleUI::Screen::HEIGHT];
+		screen_width = ui_rect[ModuleUI::Screen::WIDTH];
 
 		max_xpos = screen_width - rectTransform[Rect::XDIST];
 		max_ypos = screen_height - rectTransform[Rect::YDIST];
@@ -406,29 +406,6 @@ void ComponentRectTransform::OnUniqueEditor()
 
 			RecaculateAnchors();
 		}
-		/*
-		current_anchor_flag = (int)anchor_flags[Anchor::TOP];
-		if (ImGui::Combo(Anchor::TOP_STR, (int*)&current_anchor_flag, ANCHORS_POINTS_STR))
-		{
-			anchor_flags[Anchor::TOP] = current_anchor_flag;
-			needed_recalculate = true;
-		}
-		current_anchor_flag = (int)anchor_flags[Anchor::RIGHT];
-		if (ImGui::Combo(Anchor::RIGHT_STR, (int*)&current_anchor_flag, ANCHORS_POINTS_STR))
-		{
-			anchor_flags[Anchor::RIGHT] = current_anchor_flag;
-			needed_recalculate = true;
-		}
-		current_anchor_flag = (int)anchor_flags[Anchor::BOTTOM];
-		if (ImGui::Combo(Anchor::BOTTOM_STR, (int*)&current_anchor_flag, ANCHORS_POINTS_STR))
-		{
-			anchor_flags[Anchor::BOTTOM] = current_anchor_flag;
-			needed_recalculate = true;
-		}
-		if (needed_recalculate)
-			RecaculateAnchors();
-		*/
-
 
 		needed_recalculate = false;
 
@@ -446,8 +423,8 @@ void ComponentRectTransform::OnUniqueEditor()
 			}
 			else
 			{
-				max_leftAnhor = ui_rect[UI_WIDTHRECT] - rectTransform[Rect::XDIST];
-				max_topAnchor = ui_rect[UI_HEIGHTRECT] - rectTransform[Rect::YDIST];
+				max_leftAnhor = ui_rect[ModuleUI::Screen::WIDTH] - rectTransform[Rect::XDIST];
+				max_topAnchor = ui_rect[ModuleUI::Screen::HEIGHT] - rectTransform[Rect::YDIST];
 			}
 
 			ImGui::Text("Left/Top");
@@ -472,8 +449,8 @@ void ComponentRectTransform::OnUniqueEditor()
 			}
 			else
 			{
-				max_rightAnhor = ui_rect[UI_WIDTHRECT] - rectTransform[Rect::XDIST];
-				max_bottomAnchor = ui_rect[UI_HEIGHTRECT] - rectTransform[Rect::YDIST];
+				max_rightAnhor = ui_rect[ModuleUI::Screen::WIDTH] - rectTransform[Rect::XDIST];
+				max_bottomAnchor = ui_rect[ModuleUI::Screen::HEIGHT] - rectTransform[Rect::YDIST];
 			}
 
 			ImGui::Text("Right/Bottom");
