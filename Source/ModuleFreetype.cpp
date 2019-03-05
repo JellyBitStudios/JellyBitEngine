@@ -1,5 +1,5 @@
 #include "ModuleFreetype.h"
-#include "freetype/ft2build.h"
+#include "Freetype/ft2build.h"
 #include "Freetype/freetype.h"
 
 #include <stdio.h>
@@ -20,10 +20,6 @@ ModuleFreetype::~ModuleFreetype()
 
 bool ModuleFreetype::Start() {
 
-	FT_Library  library;   /* handle to library     */
-	FT_Face     face;      /* handle to face object */
-	FT_Error	error;
-
 	FT_Init_FreeType(&library);
 
 	error = FT_New_Face(library, "../Game/Assets/Textures/Font/ariali.ttf", 0, &face);
@@ -42,6 +38,14 @@ bool ModuleFreetype::Start() {
 update_status ModuleFreetype::Update()
 {
 
+	slot = face->glyph;
+
+	/* set up matrix */
+	/*matrix.xx = (FT_Fixed)(cos(angle) * 0x10000L);
+	matrix.xy = (FT_Fixed)(-sin(angle) * 0x10000L);
+	matrix.yx = (FT_Fixed)(sin(angle) * 0x10000L);
+	matrix.yy = (FT_Fixed)(cos(angle) * 0x10000L);
+	*/
 	return UPDATE_CONTINUE;
 }
 
