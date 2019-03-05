@@ -233,6 +233,13 @@ uint ResourceMesh::CreateMeta(const char* file, ResourceMeshImportSettings& mesh
 	bytes = sizeof(float);
 	memcpy(cursor, &meshImportSettings.scale, bytes);
 
+	cursor += bytes;
+
+	bytes = sizeof(uint);
+	memcpy(cursor, &meshImportSettings.attributes, bytes);
+
+	cursor += bytes;
+
 	// --------------------------------------------------
 
 	// Build the path of the meta file and save it
@@ -329,6 +336,13 @@ bool ResourceMesh::ReadMeta(const char* metaFile, int64_t& lastModTime, Resource
 
 		bytes = sizeof(float);
 		memcpy(&meshImportSettings.scale, cursor, bytes);
+
+		cursor += bytes;
+
+		bytes = sizeof(uint);
+		memcpy(&meshImportSettings.attributes, cursor, bytes);
+
+		cursor += bytes;
 
 		CONSOLE_LOG(LogTypes::Normal, "Resource Mesh: Successfully loaded meta '%s'", metaFile);
 		RELEASE_ARRAY(buffer);
@@ -435,7 +449,8 @@ uint ResourceMesh::SetMeshImportSettingsToMeta(const char* metaFile, const Resou
 
 		sizeof(int) +
 		sizeof(uint) +
-		sizeof(float);
+		sizeof(float) +
+		sizeof(uint);
 
 	char* data = new char[size];
 	char* cursor = data;
@@ -500,6 +515,9 @@ uint ResourceMesh::SetMeshImportSettingsToMeta(const char* metaFile, const Resou
 	bytes = sizeof(float);
 	memcpy(cursor, &meshImportSettings.scale, bytes);
 
+	bytes = sizeof(uint);
+	memcpy(cursor, &meshImportSettings.attributes, bytes);
+
 	// --------------------------------------------------
 
 	// Save the meta file
@@ -562,7 +580,7 @@ void ResourceMesh::GenerateAndBindDeformableMesh()
 
 	App->sceneImporter->GenerateVBO(DVBO, deformableMeshData.vertices, deformableMeshData.verticesSize);
 	App->sceneImporter->GenerateIBO(DIBO, deformableMeshData.indices, deformableMeshData.indicesSize);
-	App->sceneImporter->GenerateVAO(DVAO, DVBO);
+	App->sceneImporter->GenerateVAO(DVAO, DVBO, deformableMeshData.meshImportSettings.attributes);
 }
 
 void ResourceMesh::DuplicateMesh(ResourceMesh * mesh)
@@ -676,6 +694,13 @@ bool ResourceMesh::ReadMeshImportSettingsFromMeta(const char* metaFile, Resource
 		bytes = sizeof(float);
 		memcpy(&meshImportSettings.scale, cursor, bytes);
 
+		cursor += bytes;
+
+		bytes = sizeof(uint);
+		memcpy(&meshImportSettings.attributes, cursor, bytes);
+
+		cursor += bytes;
+
 		CONSOLE_LOG(LogTypes::Normal, "Resource Mesh: Successfully loaded meta '%s'", metaFile);
 		RELEASE_ARRAY(buffer);
 	}
@@ -695,7 +720,7 @@ bool ResourceMesh::LoadInMemory()
 
 	App->sceneImporter->GenerateVBO(VBO, meshData.vertices, meshData.verticesSize);
 	App->sceneImporter->GenerateIBO(IBO, meshData.indices, meshData.indicesSize);
-	App->sceneImporter->GenerateVAO(VAO, VBO);
+	App->sceneImporter->GenerateVAO(VAO, VBO, meshData.meshImportSettings.attributes);
 
 	return true;
 }

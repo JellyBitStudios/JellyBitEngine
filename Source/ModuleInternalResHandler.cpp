@@ -184,7 +184,41 @@ void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, c
 		defaultShaderProgram = prog->GetUuid();
 	else if (type == ShaderProgramTypes::Particles)
 		defaultParticleShaderProgram = prog->GetUuid();
+}
 
+void ModuleInternalResHandler::CreateDeferredShaderProgram()
+{
+	ResourceData vertexData;
+	ResourceShaderObjectData vertexShaderData;
+	vertexData.name = "UI vertex object";
+	vertexData.internal = true;
+	vertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
+	vertexShaderData.SetSource(vDEFERREDSHADING, strlen(vDEFERREDSHADING));
+	ResourceShaderObject* vObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &vertexShaderData);
+	if (vObj->Compile())
+		vObj->isValid = false;
+
+	ResourceData fragmentData;
+	ResourceShaderObjectData fragmentShaderData;
+	fragmentData.name = "UI fragment object";
+	fragmentData.internal = true;
+	fragmentShaderData.shaderObjectType = ShaderObjectTypes::FragmentType;
+	fragmentShaderData.SetSource(fDEFERREDSHADING, strlen(fDEFERREDSHADING));
+	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &fragmentShaderData);
+	if (fObj->Compile())
+		fObj->isValid = false;
+
+	ResourceData shaderData;
+	ResourceShaderProgramData programShaderData;
+	shaderData.name = "UI shader program";
+	shaderData.internal = true;
+	programShaderData.shaderObjects.push_back(vObj);
+	programShaderData.shaderObjects.push_back(fObj);
+	programShaderData.shaderProgramType = ShaderProgramTypes::UI;
+	ResourceShaderProgram* pShader = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DEFERRED_SHADER_PROGRAM_UUID);
+	if (pShader->Link())
+		pShader->isValid = false;
+	deferredShaderProgram = pShader->shaderProgram;
 }
 
 void ModuleInternalResHandler::CreateUIShaderProgram()

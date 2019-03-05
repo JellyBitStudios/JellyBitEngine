@@ -34,7 +34,7 @@ public:
 
 	void GenerateVBO(uint& VBO, Vertex* vertices, uint verticesSize) const;
 	void GenerateIBO(uint& IBO, uint* indices, uint indicesSize) const;
-	void GenerateVAO(uint& VAO, uint& VBO) const;
+	void GenerateVAO(uint& VAO, uint& VBO, uint attrFlag) const;
 
 	void DeleteBufferObject(uint& name) const;
 	void DeleteVertexArrayObject(uint& name) const;

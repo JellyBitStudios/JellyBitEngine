@@ -1,5 +1,4 @@
 
-
 #include "SceneImporter.h"
 
 #include "Application.h"
@@ -677,7 +676,7 @@ void SceneImporter::GenerateIBO(uint& IBO, uint* indices, uint indicesSize) cons
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void SceneImporter::GenerateVAO(uint& VAO, uint& VBO) const
+void SceneImporter::GenerateVAO(uint& VAO, uint& VBO, uint attrFlag) const
 {
 	// Vertex Array Object
 
@@ -690,29 +689,48 @@ void SceneImporter::GenerateVAO(uint& VAO, uint& VBO) const
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
 	// Set the vertex attributes pointers
+
 	// 1. Position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, position)));
-	glEnableVertexAttribArray(0);
+	if (attrFlag & ResourceMeshImportSettings::ATTR_POSITION)
+	{
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, position)));
+		glEnableVertexAttribArray(0);
+	}
 
 	// 2. Normal
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, normal)));
-	glEnableVertexAttribArray(1);
+	if (attrFlag & ResourceMeshImportSettings::ATTR_NORMAL)
+	{
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, normal)));
+		glEnableVertexAttribArray(1);
+	}
 
 	// 3. Color
-	glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)(offsetof(Vertex, color)));
-	glEnableVertexAttribArray(2);
+	if (attrFlag & ResourceMeshImportSettings::ATTR_COLOR)
+	{
+		glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)(offsetof(Vertex, color)));
+		glEnableVertexAttribArray(2);
+	}
 
 	// 4. Tex coords
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, texCoord)));
-	glEnableVertexAttribArray(3);
+	if (attrFlag & ResourceMeshImportSettings::ATTR_TEXCOORD)
+	{
+		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, texCoord)));
+		glEnableVertexAttribArray(3);
+	}
 
 	// 5. Tangents
-	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, tangent)));
-	glEnableVertexAttribArray(4);
+	if (attrFlag & ResourceMeshImportSettings::ATTR_TANGENT)
+	{
+		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, tangent)));
+		glEnableVertexAttribArray(4);
+	}
 
 	// 6. Bitangents
-	glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, bitangent)));
-	glEnableVertexAttribArray(5);
+	if (attrFlag & ResourceMeshImportSettings::ATTR_BITANGENT)
+	{
+		glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, bitangent)));
+		glEnableVertexAttribArray(5);
+	}
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -876,7 +894,9 @@ void SceneImporter::LoadPrimitivePlane()
 	GLuint VBO = 0;
 	GenerateVBO(VBO, vertices, verticesSize);
 	GenerateIBO(defaultPlaneIBO, indices, defaultPlaneIndicesSize);
-	GenerateVAO(defaultPlaneVAO, VBO);
+	GenerateVAO(defaultPlaneVAO, VBO, ResourceMeshImportSettings::ATTR_POSITION |
+									  ResourceMeshImportSettings::ATTR_NORMAL |
+									  ResourceMeshImportSettings::ATTR_TEXCOORD);
 }
 
 void SceneImporter::GetDefaultPlane(uint& defaultPlaneVAO, uint& defaultPlaneIBO, uint& defaultPlaneIndicesSize) const

@@ -517,6 +517,15 @@ void PanelInspector::ShowMeshImportSettingsInspector()
 	ImGui::Text("Scale"); ImGui::PushItemWidth(50.0f);
 	ImGui::DragFloat("##Scale", &m_is.scale, 0.01f, 0.0f, FLT_MAX, "%.2f", 1.0f);
 
+	// IBO ATR
+	ImGui::Text("IBO Attributes");
+	ImGui::CheckboxFlags("Positions", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_POSITION);
+	ImGui::CheckboxFlags("Normals", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_NORMAL);
+	ImGui::CheckboxFlags("Colors", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_COLOR);
+	ImGui::CheckboxFlags("Texture coordinates", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_TEXCOORD);
+	ImGui::CheckboxFlags("Tangents", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_TANGENT);
+	ImGui::CheckboxFlags("Bitangents", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_BITANGENT);
+
 	const char* postProcessConfiguration[] = { "Target Realtime Fast", "Target Realtime Quality", "Target Realtime Max Quality", "Custom" };
 	
 	ImGui::PushItemWidth(100.0f);

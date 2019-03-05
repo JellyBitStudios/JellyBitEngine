@@ -12,10 +12,12 @@ public:
 	bool Start();
 	bool CleanUp();
 
-	void LoadGBuffer();
+	void LoadGBuffer(uint width, uint height);
+	void UnloadGBuffer();
+	void ResizeGBuffer(uint width, uint height);
 	void BindGBuffer();
 	void DrawGBufferToScreen() const;
-	void MergeDepthBuffer();
+	void MergeDepthBuffer(uint width, uint height);
 
 public:
 
