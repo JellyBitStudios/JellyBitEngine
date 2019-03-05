@@ -1,6 +1,6 @@
 #include "ModuleFreetype.h"
 #include "freetype/ft2build.h"
-#include FT_FREETYPE_H
+#include "Freetype/freetype.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -19,6 +19,11 @@ ModuleFreetype::~ModuleFreetype()
 bool ModuleFreetype::Start() {
 
 
+
+	return true;
+}
+update_status ModuleFreetype::Update()
+{
 	FT_Library  library;   /* handle to library     */
 	FT_Face     face;      /* handle to face object */
 	FT_Error	error;
@@ -32,11 +37,6 @@ bool ModuleFreetype::Start() {
 	else if (error)
 		CONSOLE_LOG(LogTypes::Error, "The font file couldn't be opened or read, or it's a broken format");
 		*/
-
-	return true;
-}
-update_status ModuleFreetype::Update()
-{
 
 	return UPDATE_CONTINUE;
 }

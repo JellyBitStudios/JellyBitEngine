@@ -18,7 +18,7 @@
 #ifndef __SVCID_H__
 #define __SVCID_H__
 
-#include FT_INTERNAL_SERVICE_H
+#include "../ftserv.h"
 
 
 FT_BEGIN_HEADER

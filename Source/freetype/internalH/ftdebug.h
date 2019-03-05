@@ -25,9 +25,9 @@
 #define __FTDEBUG_H__
 
 
-#include <ft2build.h>
-#include FT_CONFIG_CONFIG_H
-#include FT_FREETYPE_H
+#include "../ft2build.h"
+#include "../config/ftconfig.h"
+#include "../freetype.h"
 
 
 FT_BEGIN_HEADER

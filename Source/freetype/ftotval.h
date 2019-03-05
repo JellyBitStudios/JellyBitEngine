@@ -30,7 +30,7 @@
 #ifndef FTOTVAL_H_
 #define FTOTVAL_H_
 
-#include <ft2build.h>
+#include "ft2build.h"
 #include FT_FREETYPE_H
 
 #ifdef FREETYPE_H

@@ -19,7 +19,7 @@
 #ifndef __SVBDF_H__
 #define __SVBDF_H__
 
-#include FT_BDF_H
+#include "../../ftbdf.h"
 #include FT_INTERNAL_SERVICE_H
 
 

@@ -22,9 +22,9 @@
 #define __PSHINTS_H__
 
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
-#include FT_TYPE1_TABLES_H
+#include "../ft2build.h"
+#include "../freetype.h"
+#include "../t1tables.h"
 
 
 FT_BEGIN_HEADER

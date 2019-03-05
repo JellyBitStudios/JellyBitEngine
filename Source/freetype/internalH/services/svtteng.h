@@ -19,8 +19,8 @@
 #ifndef __SVTTENG_H__
 #define __SVTTENG_H__
 
+#include "../../ftmodapi.h"
 #include FT_INTERNAL_SERVICE_H
-#include FT_MODULE_H
 
 
 FT_BEGIN_HEADER

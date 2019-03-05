@@ -19,8 +19,8 @@
 #ifndef __SVKERN_H__
 #define __SVKERN_H__
 
+#include "../../tttables.h"
 #include FT_INTERNAL_SERVICE_H
-#include FT_TRUETYPE_TABLES_H
 
 
 FT_BEGIN_HEADER

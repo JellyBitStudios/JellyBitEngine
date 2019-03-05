@@ -21,12 +21,12 @@
 #define __TTTYPES_H__
 
 
-#include <ft2build.h>
-#include FT_TRUETYPE_TABLES_H
+#include "../ft2build.h"
+#include "../tttables.h"
 #include FT_INTERNAL_OBJECTS_H
 
 #ifdef TT_CONFIG_OPTION_GX_VAR_SUPPORT
-#include FT_MULTIPLE_MASTERS_H
+#include "../ftmm.h"
 #endif
 
 

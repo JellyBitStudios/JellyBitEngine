@@ -21,8 +21,8 @@
 #define __T1TYPES_H__
 
 
-#include <ft2build.h>
-#include FT_TYPE1_TABLES_H
+#include "../ft2build.h"
+#include "../t1tables.h"
 #include FT_INTERNAL_POSTSCRIPT_HINTS_H
 #include FT_INTERNAL_SERVICE_H
 #include FT_SERVICE_POSTSCRIPT_CMAPS_H

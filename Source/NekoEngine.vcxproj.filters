@@ -202,9 +202,6 @@
     <Filter Include="Sources\3rd Party\Freetype\Internal">
       <UniqueIdentifier>{532b6f59-1292-4044-94a2-7db2c66b7193}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\3rd Party\Freetype\Internal\Services">
-      <UniqueIdentifier>{890a2475-59d5-4cf7-9351-b45b44aa248d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Sources\Modules\GO&amp;Components\Components\Audio">
       <UniqueIdentifier>{1c4c10b4-b638-4d14-81e1-ba4fbb1116cb}</UniqueIdentifier>
     </Filter>
@@ -1785,9 +1782,6 @@
     <ClInclude Include="Freetype\internalH\ftrfork.h">
       <Filter>Sources\3rd Party\Freetype\Internal</Filter>
     </ClInclude>
-    <ClInclude Include="Freetype\internalH\ftserv.h">
-      <Filter>Sources\3rd Party\Freetype\Internal</Filter>
-    </ClInclude>
     <ClInclude Include="Freetype\internalH\ftstream.h">
       <Filter>Sources\3rd Party\Freetype\Internal</Filter>
     </ClInclude>
@@ -1817,57 +1811,6 @@
     </ClInclude>
     <ClInclude Include="Freetype\internalH\tttypes.h">
       <Filter>Sources\3rd Party\Freetype\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svkern.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svmm.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svotval.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svpfr.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svpostnm.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svpscmap.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svpsinfo.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svsfnt.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svttcmap.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svtteng.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svttglyf.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svwinfnt.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svxf86nm.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svbdf.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svcid.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svgldict.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\internalH\services\svgxval.h">
-      <Filter>Sources\3rd Party\Freetype\Internal\Services</Filter>
     </ClInclude>
     <ClInclude Include="ModuleAudio.h">
       <Filter>Sources\Modules</Filter>
