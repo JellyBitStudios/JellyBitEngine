@@ -216,20 +216,35 @@ void ModuleUI::DrawUITexture(ComponentRectTransform * rect, uint id_texture, flo
 
 void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 {
-	const uint* rect_points = rect->GetRect();
-
-	float w_width = ui_size_draw[Screen::WIDTH];
-	float w_height = ui_size_draw[Screen::HEIGHT];
-
+	uint* rect_points = nullptr;
 	math::float2 pos;
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
-	setFloat(ui_shader, "topLeft", pos.x, pos.y);
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
-	setFloat(ui_shader, "topRight", pos.x, pos.y);
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
-	setFloat(ui_shader, "bottomLeft", pos.x, pos.y);
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
-	setFloat(ui_shader, "bottomRight", pos.x, pos.y);
+
+	switch (rect->GetFrom())
+	{
+	case ComponentRectTransform::RectFrom::RECT:
+		rect_points = rect->GetRect();
+
+		float w_width = ui_size_draw[Screen::WIDTH];
+		float w_height = ui_size_draw[Screen::HEIGHT];
+
+		pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
+		setFloat(ui_shader, "topLeft", pos.x, pos.y);
+		pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
+		setFloat(ui_shader, "topRight", pos.x, pos.y);
+		pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
+		setFloat(ui_shader, "bottomLeft", pos.x, pos.y);
+		pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
+		setFloat(ui_shader, "bottomRight", pos.x, pos.y);
+		break;
+
+	case ComponentRectTransform::RectFrom::WORLD:
+
+
+		break;
+
+	default:
+		break;
+	}
 }
 
 bool ModuleUI::IsUIHovered()

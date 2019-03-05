@@ -12,6 +12,8 @@
 
 #include "Globals.h"
 
+class ComponentTransform;
+
 class ComponentRectTransform : public Component
 {
 public:
@@ -69,12 +71,21 @@ public:
 
 	void ChangeChildsRect(bool its_me = false, bool size_changed = false);
 
+	RectFrom GetFrom() const;
+
 private:
 
 	RectFrom rFrom = RectFrom::RECT;
 
+	//From Rect
 	//x, y, x_dist, y_dist
 	uint rectTransform[4] = { 0, 0, 100, 100 };
+	uint* ui_rect = nullptr;
+	uint* rectParent = nullptr;
+
+	//FromWorld
+	ComponentTransform* transformParent = nullptr;
+	float rectWorld[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 	//True, references top-left. False, refernces bottom-right. For every point of rect.
 	bool use_margin = false;
@@ -83,12 +94,11 @@ private:
 	float anchor_percenatges[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 private:
+	void CalculateRectFromWorld();
+
 	void RecaculateAnchors();
 	void RecaculateAnchors(int type);
 	void RecaculatePercentage();
-
-	uint* ui_rect = nullptr;
-	uint* rectParent = nullptr;
 
 	void ParentChanged(bool size_changed = false);
 	void UseMarginChanged(bool useMargin);

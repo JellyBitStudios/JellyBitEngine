@@ -4,6 +4,8 @@
 #include "ModuleUI.h"
 
 #include "GameObject.h"
+#include "ComponentTransform.h"
+
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -65,7 +67,6 @@ uint* ComponentRectTransform::GetRect()
 void ComponentRectTransform::CheckParentRect()
 {
 	Component* rect = nullptr;
-
 	switch (rFrom)
 	{
 	case ComponentRectTransform::RECT:
@@ -83,6 +84,9 @@ void ComponentRectTransform::CheckParentRect()
 		RecaculatePercentage();
 		break;
 	case ComponentRectTransform::WORLD:
+		transformParent = (ComponentTransform*)parent->GetComponent(ComponentTypes::TransformComponent);
+
+		CalculateRectFromWorld();
 		break;
 	case ComponentRectTransform::RECT_WORLD:
 		break;
@@ -107,6 +111,11 @@ void ComponentRectTransform::ChangeChildsRect(bool its_me, bool size_changed)
 		if (c_go != parent)
 			((ComponentRectTransform*)c_go->GetComponent(ComponentTypes::RectTransformComponent))->ChangeChildsRect(false, size_changed);
 	}
+}
+
+ComponentRectTransform::RectFrom ComponentRectTransform::GetFrom() const
+{
+	return rFrom;
 }
 
 void ComponentRectTransform::ParentChanged(bool size_changed)
@@ -153,6 +162,27 @@ void ComponentRectTransform::UseMarginChanged(bool useMargin)
 			((ComponentRectTransform*)c_go->GetComponent(ComponentTypes::RectTransformComponent))->UseMarginChanged(useMargin);
 	}
 }
+
+void ComponentRectTransform::CalculateRectFromWorld()
+{
+	math::float4 topLeft;
+	math::float4 topRight;
+	math::float4 bootomleft;
+	math::float4 bottomRight;
+	math::float4x4 globalmatrix;
+
+	globalmatrix = transformParent->GetGlobalMatrix();
+
+	topLeft = globalmatrix * math::float4(-0.5f, 0.5f, 0.0f, 1.0f);
+	topRight = globalmatrix * math::float4(0.5f, 0.5f, 0.0f, 1.0f);
+	bootomleft = globalmatrix * math::float4(0.5f, -0.5f, 0.0f, 1.0f);
+	bottomRight = globalmatrix * math::float4(-0.5f, -0.5f, 0.0f, 1.0f);
+
+	rectWorld[Rect::X] = topLeft.x;
+	rectWorld[Rect::Y] = topLeft.y;
+	rectWorld[Rect::XDIST] = abs(topRight.x - topLeft.x);
+	rectWorld[Rect::YDIST] = abs(bootomleft.y - topLeft.y);
+}	
 
 void ComponentRectTransform::RecaculateAnchors()
 {
@@ -307,6 +337,9 @@ void ComponentRectTransform::OnUniqueEditor()
 {
 #ifndef GAMEMODE
 
+	if (rFrom != RectFrom::RECT)
+		return;
+
 	ImGui::Text("Rect Transform");
 	ImGui::Spacing();
 
@@ -322,33 +355,43 @@ void ComponentRectTransform::OnUniqueEditor()
 	uint x_editor = 0;
 	uint y_editor = 0;
 
-	if (rectParent != nullptr)
+	switch (rFrom)
 	{
-		r_width = rectParent[Rect::XDIST];
-		r_height = rectParent[Rect::YDIST];
+	case ComponentRectTransform::RECT:
+		if (rectParent != nullptr)
+		{
+			r_width = rectParent[Rect::XDIST];
+			r_height = rectParent[Rect::YDIST];
 
-		max_xpos = r_width - rectTransform[Rect::XDIST];
-		max_ypos = r_height - rectTransform[Rect::YDIST];
+			max_xpos = r_width - rectTransform[Rect::XDIST];
+			max_ypos = r_height - rectTransform[Rect::YDIST];
 
-		x_editor = rectTransform[Rect::X] - rectParent[Rect::X];
-		y_editor = rectTransform[Rect::Y] - rectParent[Rect::Y];
+			x_editor = rectTransform[Rect::X] - rectParent[Rect::X];
+			y_editor = rectTransform[Rect::Y] - rectParent[Rect::Y];
 
-		max_xdist = r_width - x_editor;
-		max_ydist = r_height - y_editor;
-	}
-	else
-	{
-		r_height = ui_rect[ModuleUI::Screen::HEIGHT];
-		r_width = ui_rect[ModuleUI::Screen::WIDTH];
+			max_xdist = r_width - x_editor;
+			max_ydist = r_height - y_editor;
+		}
+		else
+		{
+			r_height = ui_rect[ModuleUI::Screen::HEIGHT];
+			r_width = ui_rect[ModuleUI::Screen::WIDTH];
 
-		max_xpos = r_width - rectTransform[Rect::XDIST];
-		max_ypos = r_height - rectTransform[Rect::YDIST];
+			max_xpos = r_width - rectTransform[Rect::XDIST];
+			max_ypos = r_height - rectTransform[Rect::YDIST];
 
-		x_editor = rectTransform[Rect::X];
-		y_editor = rectTransform[Rect::Y];
+			x_editor = rectTransform[Rect::X];
+			y_editor = rectTransform[Rect::Y];
 
-		max_xdist = r_width - x_editor;
-		max_ydist = r_height - y_editor;
+			max_xdist = r_width - x_editor;
+			max_ydist = r_height - y_editor;
+		}
+		break;
+	case ComponentRectTransform::WORLD:
+
+		break;
+	case ComponentRectTransform::RECT_WORLD:
+		break;
 	}
 
 	bool needed_recalculate = false;

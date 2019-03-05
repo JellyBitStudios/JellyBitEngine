@@ -80,6 +80,13 @@ bool PanelHierarchy::Draw()
 				go->cmp_mesh->SetResource(App->resHandler->plane);
 				SELECT(go);
 			}
+			if (ImGui::Selectable("Create World Canvas"))
+			{
+				GameObject* go = App->GOs->CreateGameObject("WoldCanvas", root);
+				ComponentRectTransform* new_rect = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::WORLD);
+				go->AddComponent(go->cmp_rectTransform = new_rect);
+				SELECT(go);
+			}
 
 			ImGui::EndPopup();
 		}
@@ -230,6 +237,13 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 					App->scene->selectedObject = CurrentSelection::SelectedType::null;
 				App->GOs->DeleteGameObject(child);
 				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Create World Canvas"))
+			{
+				GameObject* go = App->GOs->CreateGameObject("WoldCanvas", child);
+				ComponentRectTransform* new_rect = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::WORLD);
+				go->AddComponent(go->cmp_rectTransform = new_rect);
+				SELECT(go);
 			}
 		}
 
