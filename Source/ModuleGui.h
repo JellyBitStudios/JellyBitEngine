@@ -1,7 +1,7 @@
 #ifndef __MODULE_GUI_H__
 #define __MODULE_GUI_H__
 
-#include "GameMode.h"
+
 
 #ifndef GAMEMODE
 
@@ -57,7 +57,6 @@ public:
 	class PanelEdit*			panelEdit = nullptr;
 	class PanelCodeEditor*		panelCodeEditor = nullptr;
 	class PanelShaderEditor*	panelShaderEditor = nullptr;
-	class PanelSkybox*			panelSkybox = nullptr;
 	class PanelNavigation*		panelNavigation = nullptr;
 	class PanelSimulatedTime*	panelSimulatedTime = nullptr;
 	class PanelLayers*			panelLayers = nullptr;

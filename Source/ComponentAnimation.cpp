@@ -66,10 +66,9 @@ bool ComponentAnimation::SetResource(uint resource) //check all this
 	return true;
 }
 
-bool ComponentAnimation::PlayAnimation(uint anim_name)
+bool ComponentAnimation::PlayAnimation(const char* anim_name)
 {
-	// mimimi
-	return true;
+	return App->animation->SetCurrentAnimation(anim_name);
 }
 
 void ComponentAnimation::OnEditor()
@@ -90,7 +89,7 @@ void ComponentAnimation::OnUniqueEditor()
 		if (resource != nullptr)
 			fileName = resource->GetName();
 
-		ImGui::Text("Animation name: %s", resource->animationData.name);
+		ImGui::Text("Animation name: %s", resource->animationData.name.data());
 		ImGui::Text("Animation numKeys: %i", resource->animationData.numKeys);
 		ImGui::Text("Animation UUID: %i", resource->GetUuid());
 

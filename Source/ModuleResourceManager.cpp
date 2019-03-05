@@ -10,6 +10,7 @@
 #include "ShaderImporter.h"
 #include "BoneImporter.h"
 #include "AnimationImporter.h"
+#include "ModuleAnimation.h"
 
 #include "ResourceTypes.h"
 #include "Resource.h"
@@ -55,6 +56,13 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 	{
 		// 1. Import file
 		ImportFile(event.fileEvent.file);
+	}
+	break;
+
+	case System_Event_Type::ImportLibraryFile:
+	{
+		// 1. Import Library file
+		ImportLibraryFile(event.fileEvent.file);
 	}
 	break;
 
@@ -167,6 +175,7 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 
 	case System_Event_Type::FileRemoved:
 	{
+		return;
 		// 1. Delete meta
 
 		// Search for the meta associated to the file
@@ -292,6 +301,16 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 		}
 	}
 	break;
+
+	case System_Event_Type::GenerateLibraryFiles:
+	{
+		for (std::unordered_map<uint, Resource*>::const_iterator it = resources.begin(); it != resources.end(); ++it)
+		{
+			if (!it->second->GetData().internal)
+				it->second->GenerateLibraryFiles();
+		}
+	}
+	break;
 	}
 }
 
@@ -390,6 +409,9 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 					App->animImporter->Load(animation_files[i].data(), data, anim_data);
 
 					resource = CreateResource(ResourceTypes::AnimationResource, data, &anim_data, uuid);
+
+					App->animation->SetAnimationGos((ResourceAnimation*)resource);
+
 					if (resource != nullptr)
 						animation_uuids.push_back(uuid);
 				}
@@ -489,6 +511,8 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 					shaderObjectData.shaderObjectType = ShaderObjectTypes::VertexType;
 				else if (IS_FRAGMENT_SHADER(extension.data()))
 					shaderObjectData.shaderObjectType = ShaderObjectTypes::FragmentType;
+				else if (IS_GEOMETRY_SHADER(extension.data()))
+					shaderObjectData.shaderObjectType = ShaderObjectTypes::GeometryType;
 
 				uint shaderObject = 0;
 				bool success = ResourceShaderObject::LoadFile(file, shaderObjectData, shaderObject);
@@ -651,7 +675,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 	case ResourceTypes::PrefabResource:
 	{
 		resource = ResourcePrefab::ImportFile(file);
-		this->resources[resource->GetUuid()] = resource;
+		resources[resource->GetUuid()] = resource;
 		break;
 	}
 
@@ -771,7 +795,6 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		ResourceData data;
 		ResourceMeshData meshData;
 		data.exportedFile = file;
-		data.name = fileName.data();
 
 		App->sceneImporter->Load(file, data, meshData);
 
@@ -789,7 +812,6 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		ResourceData data;
 		ResourceTextureData textureData;
 		data.exportedFile = file;
-		data.name = fileName.data();
 
 		// Search for the meta associated to the file
 		char metaFile[DEFAULT_BUF_SIZE];
@@ -932,14 +954,14 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 
 	case ResourceTypes::ScriptResource:
 	{
-		//resource = App->scripting->ImportScriptResource(file); // TODO
+		resource = App->scripting->ImportScriptResource(file);
 	}
 	break;
 
 	case ResourceTypes::PrefabResource:
 	{
-		//resource = ResourcePrefab::ImportFile(file);
-		//this->resources[resource->GetUuid()] = resource; // TODO
+		resource = ResourcePrefab::ImportFile(file);
+		resources[resource->GetUuid()] = resource;
 	}
 	break;
 
@@ -953,9 +975,9 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		ResourceData data;
 		ResourceBoneData boneData;
 		data.file = file;
-		data.name = fileName.data();
 
-		ResourceBone::LoadFile(file, boneData);
+		App->boneImporter->Load(file, data, boneData);
+		//ResourceBone::LoadFile(file, boneData);
 
 		resource = CreateResource(ResourceTypes::BoneResource, data, &boneData, uuid);
 	}
@@ -971,11 +993,11 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		ResourceData data;
 		ResourceAnimationData animationData;
 		data.file = file;
-		data.name = fileName.data();
 
 		ResourceAnimation::LoadFile(file, animationData);
 
 		resource = CreateResource(ResourceTypes::AnimationResource, data, &animationData, uuid);
+		App->animation->SetAnimationGos((ResourceAnimation*)resource);
 	}
 	break;
 	}
@@ -1223,6 +1245,10 @@ void ModuleResourceManager::RecursiveDeleteUnusedEntries(const char* dir, std::s
 				continue;
 			ResourceTypes type = GetResourceTypeByExtension(extension.data());
 
+			//TODO: INSPECT WHY THIS ERROR HAPPENS
+			if (type == ResourceTypes::NoResourceType)
+				continue;
+
 			uint resourceUuid = 0;
 			if (!GetResourceUuidByExportedFile(path.data(), resourceUuid))
 				App->fs->DeleteFileOrDir(path.data());
@@ -1334,6 +1360,7 @@ ResourceTypes ModuleResourceManager::GetResourceTypeByExtension(const char* exte
 		break;
 	case ASCIIvsh: case ASCIIVSH:
 	case ASCIIfsh: case ASCIIFSH:
+	case ASCIIgsh: case ASCIIGSH:
 		return ResourceTypes::ShaderObjectResource;
 		break;
 	case ASCIIpsh: case ASCIIPSH:

@@ -18,8 +18,6 @@
 
 #include <vector>
 
-//#include "pcg-c-basic-0.9/pcg_basic.h"
-
 Particle::Particle(math::float3 pos, StartValues data)
 {}
 
@@ -126,7 +124,7 @@ bool Particle::Update(float dt)
 		angle += angularVelocity * dt;
 		transform.rotation = transform.rotation.Mul(math::Quat::RotateZ(angle));
 
-		if (isParticleAnimated)
+		if (isParticleAnimated && textureRows > 1 && textureColumns > 1)
 		{
 			animationTime += dt;
 			if (animationTime > animationSpeed)
@@ -230,15 +228,6 @@ void Particle::Draw()
 		glUniform2f(location, currMinUVCoord.x, currMinUVCoord.y);
 		location = glGetUniformLocation(shaderProgram, "isAnimated");
 		glUniform1i(location, isParticleAnimated);
-
-		location = glGetUniformLocation(shaderProgram, "light.direction");
-		glUniform3fv(location, 1, App->renderer3D->directionalLight.direction.ptr());
-		location = glGetUniformLocation(shaderProgram, "light.ambient");
-		glUniform3fv(location, 1, App->renderer3D->directionalLight.ambient.ptr());
-		location = glGetUniformLocation(shaderProgram, "light.diffuse");
-		glUniform3fv(location, 1, App->renderer3D->directionalLight.diffuse.ptr());
-		location = glGetUniformLocation(shaderProgram, "light.specular");
-		glUniform3fv(location, 1, App->renderer3D->directionalLight.specular.ptr());
 
 		// Unknown uniforms
 		uint textureUnit = 0;

@@ -22,7 +22,7 @@ public:
 	bool CleanUp();
 
 	void OnSystemEvent(System_Event e);
-
+	void InitDetour();
 	void Draw() const;
 	void AddComponent(class ComponentNavAgent*);
 	void EraseComponent(class ComponentNavAgent*);
@@ -37,6 +37,8 @@ public:
 	void RemoveAgent(int indx) const;
 	void SetDestination(const float* p, int indx) const;
 	bool IsWalking(int index) const;
+	void RequestMoveVelocity(int index, const float* vel);
+	void ResetMoveTarget(int index);
 
 	static void calcVel(float* vel, const float* pos, const float* tgt, const float speed);
 

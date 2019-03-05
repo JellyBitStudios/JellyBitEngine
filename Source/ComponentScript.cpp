@@ -428,6 +428,7 @@ void ComponentScript::OnUniqueEditor()
 			{
 				//This field is public and not static.
 				//Show the field, check the type and adapt the gui to it.
+				
 				MonoType* type = mono_field_get_type(field);
 
 				std::string typeName = mono_type_full_name(type);
@@ -952,6 +953,82 @@ void ComponentScript::OnUniqueEditor()
 						ImGui::PopItemWidth();
 					}
 				}
+
+				else if(flags & MONO_TYPE_ENUM)
+				{
+					//A public enum
+				
+					//Get the saved value, as int and as string
+					MonoClass* enumClass = mono_get_enum_class();
+
+					int32_t enumValue;
+					mono_field_get_value(classInstance, field, &enumValue);
+
+					MonoObject* enumOBJ = mono_field_get_value_object(App->scripting->domain, field, classInstance);
+
+					MonoMethodDesc* ToStringDesc = mono_method_desc_new("Enum::ToString", false);
+					MonoMethod* ToStringMethod = mono_method_desc_search_in_class(ToStringDesc, enumClass);
+					mono_method_desc_free(ToStringDesc);
+
+					MonoObject* ret = mono_runtime_invoke(ToStringMethod, enumOBJ, NULL, NULL);
+					MonoString* monoString = mono_object_to_string(ret, NULL);
+					
+					char* string = mono_string_to_utf8(monoString);
+
+					//Create the combo
+					if (ImGui::BeginCombo((fieldName + std::string("##") + std::to_string(UUID)).data(), string))
+					{
+						//ImGui::TextColored({ 1,0,0,1 }, "IN PROGRESS");
+
+						//Get the number of values this enum has
+
+						MonoMethodDesc* GetValuesDesc = mono_method_desc_new("Enum::GetValues", false);
+						MonoMethod* GetValuesMethod = mono_method_desc_search_in_class(GetValuesDesc, enumClass);
+						mono_method_desc_free(GetValuesDesc);
+
+						MonoMethodDesc* GetTypeDesc = mono_method_desc_new("object::GetType", false);
+						MonoMethod* GetTypeMethod = mono_method_desc_search_in_class(GetTypeDesc, mono_get_object_class());
+						mono_method_desc_free(GetTypeDesc);
+
+						MonoMethodDesc* ParseDesc = mono_method_desc_new("Enum::Parse", false);
+						MonoMethod* ParseMethod = mono_method_desc_search_in_class(ParseDesc, enumClass);
+						mono_method_desc_free(ParseDesc);
+
+						MonoObject* enumType = mono_runtime_invoke(GetTypeMethod, enumOBJ, NULL, NULL);
+						
+						void* params[1];
+						params[0] = enumType;
+
+						MonoArray* values = (MonoArray*)mono_runtime_invoke(GetValuesMethod, NULL, params, NULL);
+						
+						uint numValues = mono_array_length(values);						
+							
+						for (int i = 0; i < numValues; ++i)
+						{
+							void* nameParams[2];
+							nameParams[0] = enumType;
+							nameParams[1] = mono_string_new(App->scripting->domain, std::to_string(i).data());
+
+							MonoObject* stringOBJ = mono_runtime_invoke(ParseMethod, NULL, nameParams, NULL);
+
+							MonoString* stringCS = mono_object_to_string(stringOBJ, NULL);
+
+							char* stringcpp = mono_string_to_utf8(stringCS);
+
+							if (ImGui::Selectable(stringcpp))
+							{
+								mono_field_set_value(classInstance, field, &i);
+							}
+
+							mono_free(stringcpp);
+						}
+
+						ImGui::EndCombo();
+					}
+
+
+					mono_free(string);
+				}
 			}
 
 			field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
@@ -1146,6 +1223,13 @@ uint ComponentScript::GetPublicVarsSerializationBytes() const
 				uint nameLenght = fieldName.length();
 				bytes += (sizeof(varType) + sizeof(uint) + nameLenght + sizeof(uint32_t));
 			}
+			else if (flags & MONO_TYPE_ENUM)
+			{
+				varType = VarType::ENUM;
+
+				uint nameLenght = fieldName.length();
+				bytes += (sizeof(varType) + sizeof(uint) + nameLenght + sizeof(uint32_t));
+			}
 		}
 		field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
 	}
@@ -1264,7 +1348,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::INT:
 		{
 			bytes = sizeof(int);
-			bool var;
+			int32_t var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1359,6 +1443,15 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 
 			break;
 		}
+		case VarType::ENUM:
+		{
+			//DeSerialize the var value
+			bytes = sizeof(uint32_t);
+			uint32_t var;
+			memcpy(&var, cursor, bytes);
+			totalSize += bytes;
+			cursor += bytes;
+		}
 		default:
 			break;
 		}
@@ -1382,6 +1475,28 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 		uint32_t flags = mono_field_get_flags(field);
 		if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
 		{
+			MonoType* type = mono_field_get_type(field);
+			std::string typeName = mono_type_full_name(type);
+
+			if(	typeName == "bool"							||
+				typeName == "single"						||
+				typeName == "double"						||
+				typeName == "sbyte"							||
+				typeName == "byte"							||
+				typeName == "int16"							||
+				typeName == "uint16"						||
+				typeName == "int"							||
+				typeName == "uint"							||
+				typeName == "long"							||
+				typeName == "ulong"							||
+				typeName == "char"							||
+				typeName == "string"						||
+				typeName == "JellyBitEngine.GameObject"		||
+				typeName == "JellyBitEngine.Transform"		||
+				typeName == "JellyBitEngine.LayerMask"		||
+				flags & MONO_TYPE_ENUM)
+
+			//Only count the serializable ones
 			numVars++;
 		}
 		field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
@@ -1851,6 +1966,35 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 				memcpy(cursor, &varState, bytes);
 				cursor += bytes;
 			}
+			else if (flags & MONO_TYPE_ENUM)
+			{
+				varType = VarType::ENUM;
+
+				//Serialize the varType
+				bytes = sizeof(varType);
+				memcpy(cursor, &varType, bytes);
+				cursor += bytes;
+
+				//Serialize the varName (length + string)
+
+				bytes = sizeof(uint);
+				uint nameLenght = fieldName.length();
+				memcpy(cursor, &nameLenght, bytes);
+				cursor += bytes;
+
+				bytes = nameLenght;
+				memcpy(cursor, fieldName.c_str(), bytes);
+				cursor += bytes;
+
+				//Serialize the var value
+
+				int32_t value;
+				mono_field_get_value(classInstance, field, &value);
+
+				bytes = sizeof(uint32_t);
+				memcpy(cursor, &value, bytes);
+				cursor += bytes;
+			}
 		}
 		field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
 	}
@@ -1952,7 +2096,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 		case VarType::DOUBLE:
 		{
 			bytes = sizeof(double);
-			bool var;
+			double var;
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
@@ -1979,8 +2123,8 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 		}
 		case VarType::INT8:
 		{
-			bytes = sizeof(signed char);
-			bool var;
+			bytes = sizeof(int8_t);
+			int8_t var;
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
@@ -2007,8 +2151,8 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 		}
 		case VarType::UINT8:
 		{
-			bytes = sizeof(unsigned char);
-			bool var;
+			bytes = sizeof(uint8_t);
+			uint8_t var;
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
@@ -2035,8 +2179,8 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 		}
 		case VarType::INT16:
 		{
-			bytes = sizeof(short);
-			bool var;
+			bytes = sizeof(int16_t);
+			int16_t var;
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
@@ -2063,8 +2207,8 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 		}
 		case VarType::UINT16:
 		{
-			bytes = sizeof(unsigned short);
-			bool var;
+			bytes = sizeof(uint16_t);
+			uint16_t var;
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
@@ -2091,8 +2235,8 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 		}
 		case VarType::INT:
 		{
-			bytes = sizeof(int);
-			bool var;
+			bytes = sizeof(int32_t);
+			int32_t var;
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
@@ -2119,8 +2263,8 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 		}
 		case VarType::UINT:
 		{
-			bytes = sizeof(uint);
-			bool var;
+			bytes = sizeof(uint32_t);
+			uint32_t var;
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
@@ -2147,8 +2291,8 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 		}
 		case VarType::INT64:
 		{
-			bytes = sizeof(long long);
-			bool var;
+			bytes = sizeof(int64_t);
+			int64_t var;
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
@@ -2175,8 +2319,8 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 		}
 		case VarType::UINT64:
 		{
-			bytes = sizeof(unsigned long long);
-			bool var;
+			bytes = sizeof(uint64_t);
+			uint64_t var;
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
@@ -2204,7 +2348,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 		case VarType::CHAR:
 		{
 			bytes = sizeof(char);
-			bool var;
+			char var;
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
@@ -2407,6 +2551,39 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 						mono_field_set_value(layerMask, mono_class_get_field_from_name(mono_object_get_class(layerMask), "masks"), &var);
 						break;
 					}
+				}
+				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+			}
+			break;
+		}
+		case VarType::ENUM:
+		{
+			//DeSerialize the var value
+			bytes = sizeof(uint32_t);
+			uint32_t var;
+			memcpy(&var, cursor, bytes);
+			cursor += bytes;
+
+			void* iterator = 0;
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+
+			while (field != nullptr)
+			{
+				uint32_t flags = mono_field_get_flags(field);
+				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
+				{
+					if (flags & MONO_TYPE_ENUM)
+					{
+						MonoType* type = mono_field_get_type(field);
+						std::string typeName = mono_type_full_name(type);
+						std::string fieldName = mono_field_get_name(field);
+
+						if (fieldName == varName)
+						{						
+							mono_field_set_value(classInstance, field, &var);
+							break;
+						}
+					}				
 				}
 				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
 			}

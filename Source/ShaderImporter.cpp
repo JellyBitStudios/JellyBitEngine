@@ -7,7 +7,7 @@
 #include "ResourceShaderProgram.h"
 // TODO ERASE THIS
 #include "ModuleInternalResHandler.h"
-
+#include "Shaders.h"
 #include <assert.h>
 
 ShaderImporter::ShaderImporter() {}
@@ -54,6 +54,9 @@ bool ShaderImporter::SaveShaderObject(const void* buffer, uint size, ShaderObjec
 		break;
 	case ShaderObjectTypes::FragmentType:
 		fileType = FileTypes::FragmentShaderObjectFile;
+		break;
+	case ShaderObjectTypes::GeometryType:
+		fileType = FileTypes::GeometryShaderObjectFile;
 		break;
 	}
 
@@ -220,15 +223,6 @@ void ShaderImporter::LoadDefaultShader()
 	defaultVertexShaderObject = LoadDefaultShaderObject(ShaderObjectTypes::VertexType);
 	defaultFragmentShaderObject = LoadDefaultShaderObject(ShaderObjectTypes::FragmentType);
 	defaultShaderProgram = LoadShaderProgram(defaultVertexShaderObject, defaultFragmentShaderObject);
-}
-
-void ShaderImporter::LoadCubemapShader()
-{
-	uint cubemapVertexShaderObject = ResourceShaderObject::Compile(cubemapvShader, ShaderObjectTypes::VertexType);
-	uint cubemapFragmentShaderObject = ResourceShaderObject::Compile(cubemapfShader, ShaderObjectTypes::FragmentType);
-	cubemapShaderProgram = LoadShaderProgram(cubemapVertexShaderObject, cubemapFragmentShaderObject);
-	ResourceShaderObject::DeleteShaderObject(cubemapVertexShaderObject);
-	ResourceShaderObject::DeleteShaderObject(cubemapFragmentShaderObject);
 }
 
 uint ShaderImporter::LoadDefaultShaderObject(ShaderObjectTypes shaderType) const

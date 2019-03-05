@@ -70,43 +70,46 @@ void ComponentButton::OnSystemEvent(System_Event event)
 
 void ComponentButton::Update()
 {
-	const uint* rect = parent->cmp_rectTransform->GetRect();
-
-	if (App->input->GetKey(button_blinded) == KEY_DOWN)
-		KeyPressed();
-
-	switch (state)
+	if (isActive)
 	{
-	case IDLE:
-		if (MouseInScreen(rect))
-		{
-			state = HOVERED;
-		}
-		break;
-	case HOVERED:
-		if (!MouseInScreen(rect))
-		{
-			state = IDLE;
-		}
-		else if (App->input->GetMouseButton(SDL_BUTTON_RIGHT) == KEY_DOWN)
-		{
-			state = R_CLICK;
-			RightClickPressed();
-		}
-		else if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_DOWN)
-		{
-			state = L_CLICK;
+		const uint* rect = parent->cmp_rectTransform->GetRect();
+
+		if (App->input->GetKey(button_blinded) == KEY_DOWN)
 			KeyPressed();
+
+		switch (state)
+		{
+		case IDLE:
+			if (MouseInScreen(rect))
+			{
+				state = HOVERED;
+			}
+			break;
+		case HOVERED:
+			if (!MouseInScreen(rect))
+			{
+				state = IDLE;
+			}
+			else if (App->input->GetMouseButton(SDL_BUTTON_RIGHT) == KEY_DOWN)
+			{
+				state = R_CLICK;
+				RightClickPressed();
+			}
+			else if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_DOWN)
+			{
+				state = L_CLICK;
+				KeyPressed();
+			}
+			break;
+		case R_CLICK:
+			state = HOVERED;
+			break;
+		case L_CLICK:
+			state = HOVERED;
+			break;
+		default:
+			break;
 		}
-		break;
-	case R_CLICK:
-		state = HOVERED;
-		break;
-	case L_CLICK:
-		state = HOVERED;
-		break;
-	default:
-		break;
 	}
 }
 
@@ -300,8 +303,13 @@ void ComponentButton::OnUniqueEditor()
 
 	if (ImGui::InputText("Blind key", &input), ImGuiInputTextFlags_EnterReturnsTrue)
 	{
-		input[1] = '\0';
-		button_blinded = (uint)SDL_GetScancodeFromKey(SDL_GetKeyFromName(input.data()));
+		if (input[0] != '\0')
+		{
+			input[1] = '\0';
+			button_blinded = (uint)SDL_GetScancodeFromKey(SDL_GetKeyFromName(input.data()));
+		}
+		else
+			button_blinded = 0;
 	}
 
 	ImGui::Text(SDL_GetKeyName(SDL_GetKeyFromScancode((SDL_Scancode)button_blinded)));

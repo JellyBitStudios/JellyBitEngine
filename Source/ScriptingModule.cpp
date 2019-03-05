@@ -33,6 +33,8 @@
 #include "ModuleUI.h"
 
 #include "MathGeoLib/include/MathGeoLib.h"
+#include "Brofiler/Brofiler.h"
+
 
 #define NAVMESHAGENT_ASCII 1299603790
 
@@ -83,33 +85,37 @@ bool ScriptingModule::Init(JSON_Object* data)
 
 	CreateDomain();
 
+	if (!internalAssembly)
+		return true;
+
 	char* args[1];
 	args[0] == "InternalAssembly";
 	mono_jit_exec(domain, internalAssembly, 1, args);
-
-	if (!internalAssembly)
-		return false;
 
 	return true;
 }
 
 bool ScriptingModule::Start()
 {
+
+#ifndef GAMEMODE
 	CreateScriptingProject();
 	IncludeCSFiles();
+#endif
+
 	return true;
 }
 
 update_status ScriptingModule::PreUpdate()
 {
-	if (App->input->GetKey(SDL_SCANCODE_F5) == KEY_DOWN)
-		CreateInternalCSProject();
-
 	return UPDATE_CONTINUE;
 }
 
 update_status ScriptingModule::Update()
 {
+#ifndef GAMEMODE
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+#endif
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
 	{
 		UpdateMethods();
@@ -120,11 +126,37 @@ update_status ScriptingModule::Update()
 
 update_status ScriptingModule::PostUpdate()
 {
+#ifndef GAMEMODE
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+#endif // !GAMEMODE
 	if (someScriptModified || engineOpened)
 	{
+#ifndef GAMEMODE
 		RecompileScripts();
 		someScriptModified = false;
 		engineOpened = false;
+#else
+		//Engine opened recently, import the .dll if found
+
+		/*System_Event event;
+		event.type = System_Event_Type::ScriptingDomainReloaded;
+		App->PushSystemEvent(event);
+
+		App->scripting->CreateDomain();
+		App->scripting->UpdateScriptingReferences();
+
+		std::vector<Resource*> scriptResources = App->res->GetResourcesByType(ResourceTypes::ScriptResource);
+		for (int i = 0; i < scriptResources.size(); ++i)
+		{
+			ResourceScript* scriptRes = (ResourceScript*)scriptResources[i];
+			scriptRes->referenceMethods();
+		}
+
+		App->scripting->ReInstance();
+
+		engineOpened = false;*/
+
+#endif
 	}
 
 	return UPDATE_CONTINUE;
@@ -280,6 +312,32 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 					}						
 				}
 			}
+			break;
+		}
+
+		case System_Event_Type::LoadGMScene:
+		{
+			//Engine opened recently, import the .dll if found
+			if (engineOpened)
+			{
+				System_Event event;
+				event.type = System_Event_Type::ScriptingDomainReloaded;
+				App->PushSystemEvent(event);
+
+				App->scripting->CreateDomain();
+				App->scripting->UpdateScriptingReferences();
+
+				std::vector<Resource*> scriptResources = App->res->GetResourcesByType(ResourceTypes::ScriptResource);
+				for (int i = 0; i < scriptResources.size(); ++i)
+				{
+					ResourceScript* scriptRes = (ResourceScript*)scriptResources[i];
+					scriptRes->referenceMethods();
+				}
+
+				App->scripting->ReInstance();
+
+				engineOpened = false;
+			}		
 			break;
 		}
 	}
@@ -477,6 +535,11 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine.UI", "Button"));
 			break;
 		}
+		case ComponentTypes::ImageComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine.UI", "Image"));
+			break;
+		}
 	}
 
 	if (!monoComponent)
@@ -669,19 +732,19 @@ void ScriptingModule::ClearMap()
 	monoObjectHandles.clear();
 }
 
-Resource* ScriptingModule::ImportScriptResource(const char* fileAssets)
+Resource* ScriptingModule::ImportScriptResource(const char* file)
 {
 	//May be new file or generic file event
 
-	std::string file = fileAssets;
-	std::string metaFile = file + ".meta";
+	std::string fileString = file;
+	std::string metaFile = fileString + ".meta";
 
-	std::string scriptName = file.substr(file.find_last_of("/") + 1);
+	std::string scriptName = fileString.substr(fileString.find_last_of("/") + 1);
 	scriptName = scriptName.substr(0, scriptName.find_last_of("."));
 
 	ResourceData data;
 	data.name = scriptName;
-	data.file = "Assets/Scripts/" + scriptName + ".cs";
+	data.file = file;
 	data.exportedFile = "";
 
 	ResourceScript* scriptRes = nullptr;
@@ -698,7 +761,7 @@ Resource* ScriptingModule::ImportScriptResource(const char* fileAssets)
 		char* cursor = buffer;
 		scriptRes->SerializeToMeta(cursor);
 
-		App->fs->Save(file + ".meta", buffer, bytes);
+		App->fs->Save(fileString + ".meta", buffer, bytes);
 
 		delete[] buffer;
 	}
@@ -716,7 +779,7 @@ Resource* ScriptingModule::ImportScriptResource(const char* fileAssets)
 			uint uid;
 			memcpy(&uid, cursor, sizeof(uint));
 
-			int64_t lastModTime = App->fs->GetLastModificationTime(fileAssets);
+			int64_t lastModTime = App->fs->GetLastModificationTime(file);
 			
 			scriptModified = lastSavedModTime != lastModTime;
 
@@ -1144,63 +1207,6 @@ MonoArray* RotateAxisAngle(MonoArray* axis, float deg)
 	return ret;
 }
 
-MonoArray* GetGlobalPos(MonoObject* monoObject)
-{
-	GameObject* gameObject = nullptr;
-
-	int address;
-	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
-
-	gameObject = (GameObject*)address;
-
-	if (!gameObject)
-		return nullptr;
-
-	if (!gameObject->transform)
-		return nullptr;
-
-	math::float3 position, scale;
-	math::Quat rotation;
-
-	gameObject->transform->GetGlobalMatrix().Decompose(position, rotation, scale);
-
-	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_int32_class(), 3);
-	mono_array_set(ret, float, 0, position.x);
-	mono_array_set(ret, float, 1, position.y);
-	mono_array_set(ret, float, 2, position.z);
-
-	return ret;
-}
-
-MonoArray* GetGlobalRotation(MonoObject* monoObject)
-{
-	GameObject* gameObject = nullptr;
-
-	int address;
-	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
-
-	gameObject = (GameObject*)address;
-
-	if (!gameObject)
-		return nullptr;
-
-	if (!gameObject->transform)
-		return nullptr;
-
-	math::float3 position, scale;
-	math::Quat rotation;
-
-	gameObject->transform->GetGlobalMatrix().Decompose(position, rotation, scale);
-
-	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_int32_class(), 4);
-	mono_array_set(ret, float, 0, rotation.x);
-	mono_array_set(ret, float, 1, rotation.y);
-	mono_array_set(ret, float, 2, rotation.z);
-	mono_array_set(ret, float, 3, rotation.w);
-
-	return ret;
-}
-
 MonoString* GetGOName(MonoObject* monoObject)
 {
 	int address;
@@ -1371,6 +1377,148 @@ void SetLocalScale(MonoObject* monoObject, MonoArray* scale)
 	gameObject->transform->scale.z = mono_array_get(scale, float, 2);
 }
 
+MonoArray* GetGlobalPos(MonoObject* monoObject)
+{
+	GameObject* gameObject = nullptr;
+
+	int address;
+	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
+
+	gameObject = (GameObject*)address;
+
+	if (!gameObject)
+		return nullptr;
+
+	if (!gameObject->transform)
+		return nullptr;
+
+	math::float3 position, scale;
+	math::Quat rotation;
+
+	math::float4x4 global = gameObject->transform->GetGlobalMatrix();
+	global.Decompose(position, rotation, scale);
+
+	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_int32_class(), 3);
+	mono_array_set(ret, float, 0, position.x);
+	mono_array_set(ret, float, 1, position.y);
+	mono_array_set(ret, float, 2, position.z);
+
+	return ret;
+}
+
+MonoArray* GetGlobalRotation(MonoObject* monoObject)
+{
+	GameObject* gameObject = nullptr;
+
+	int address;
+	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
+
+	gameObject = (GameObject*)address;
+
+	if (!gameObject)
+		return nullptr;
+
+	if (!gameObject->transform)
+		return nullptr;
+
+	math::float3 position, scale;
+	math::Quat rotation;
+
+	math::float4x4 global = gameObject->transform->GetGlobalMatrix();
+	global.Decompose(position, rotation, scale);
+
+	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_int32_class(), 4);
+	mono_array_set(ret, float, 0, rotation.x);
+	mono_array_set(ret, float, 1, rotation.y);
+	mono_array_set(ret, float, 2, rotation.z);
+	mono_array_set(ret, float, 3, rotation.w);
+
+	return ret;
+}
+
+MonoArray* GetGlobalScale(MonoObject* monoObject)
+{
+	GameObject* gameObject = nullptr;
+
+	int address;
+	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
+
+	gameObject = (GameObject*)address;
+
+	if (!gameObject)
+		return nullptr;
+
+	if (!gameObject->transform)
+		return nullptr;
+
+	math::float3 position, scale;
+	math::Quat rotation;
+
+	math::float4x4 global = gameObject->transform->GetGlobalMatrix();
+	global.Decompose(position, rotation, scale);
+
+	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_int32_class(), 3);
+	mono_array_set(ret, float, 0, scale.x);
+	mono_array_set(ret, float, 1, scale.y);
+	mono_array_set(ret, float, 2, scale.z);
+
+	return ret;
+}
+
+void SetGlobalPos(MonoObject* monoObject, MonoArray* globalPos)
+{
+	math::float3 position, scale, newGlobalPos;
+	math::Quat rotation;
+
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	if (!gameObject || !gameObject->transform)
+		return;
+
+	math::float4x4 global = gameObject->transform->GetGlobalMatrix();
+	global.Decompose(position, rotation, scale);
+
+	newGlobalPos = {mono_array_get(globalPos, float, 0), mono_array_get(globalPos, float, 1), mono_array_get(globalPos, float, 2)};
+
+	math::float4x4 newGlobal = math::float4x4::FromTRS(newGlobalPos, rotation, scale);
+	gameObject->transform->SetMatrixFromGlobal(newGlobal);
+}
+
+void SetGlobalRot(MonoObject* monoObject, MonoArray* globalRot)
+{
+	math::float3 position, scale;
+	math::Quat rotation, newGlobalRot;
+
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	if (!gameObject || !gameObject->transform)
+		return;
+
+	math::float4x4 global = gameObject->transform->GetGlobalMatrix();
+	global.Decompose(position, rotation, scale);
+
+	newGlobalRot = { mono_array_get(globalRot, float, 0), mono_array_get(globalRot, float, 1), mono_array_get(globalRot, float, 2),  mono_array_get(globalRot, float, 3)};
+
+	math::float4x4 newGlobal = math::float4x4::FromTRS(position, newGlobalRot, scale);
+	gameObject->transform->SetMatrixFromGlobal(newGlobal);
+}
+
+void SetGlobalScale(MonoObject* monoObject, MonoArray* globalScale)
+{
+	math::float3 position, scale, newGlobalScale;
+	math::Quat rotation;
+
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	if (!gameObject || !gameObject->transform)
+		return;
+
+	math::float4x4 global = gameObject->transform->GetGlobalMatrix();
+	global.Decompose(position, rotation, scale);
+
+	newGlobalScale = { mono_array_get(globalScale, float, 0), mono_array_get(globalScale, float, 1), mono_array_get(globalScale, float, 2) };
+
+	math::float4x4 newGlobal = math::float4x4::FromTRS(position, rotation, newGlobalScale);
+	gameObject->transform->SetMatrixFromGlobal(newGlobal);
+}
+
 MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 {
 	MonoObject* monoComp = nullptr;
@@ -1442,15 +1590,37 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 
 		return App->scripting->MonoComponentFrom(comp);
 	}
+	else if (className == "Image")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::ImageComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
 	else
 	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
 		//Find a script named as this class
 
-		for (int i = 0; i < App->scripting->scripts.size(); ++i)
+		for (int i = 0; i < gameObject->components.size(); ++i)
 		{
-			if (App->scripting->scripts[i]->scriptName == className)
+			Component* comp = gameObject->components[i];
+			if (comp->GetType() == ComponentTypes::ScriptComponent)
 			{
-				return App->scripting->scripts[i]->classInstance;
+				ComponentScript* script = (ComponentScript*)comp;
+				if (script->scriptName == className)
+				{
+					return script->classInstance;
+				}
 			}
 		}
 	}
@@ -1630,10 +1800,28 @@ void SetCompActive(MonoObject* monoComponent, bool active)
 	component->IsActive() != active ? component->ToggleIsActive() : void();
 }
 
-bool PlayAnimation(MonoObject* animatorComp, uint animUUID)
+void SetGameObjectActive(MonoObject* monoObject, bool active)
 {
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	gameObject->IsActive() != active ? gameObject->ToggleIsActive() : void();
+}
+
+bool GetGameObjectActive(MonoObject* monoObject, bool active)
+{
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	return gameObject->IsActive();
+}
+
+bool PlayAnimation(MonoObject* animatorComp, MonoString* animUUID)
+{
+	char* anim = mono_string_to_utf8(animUUID);
+
 	ComponentAnimation* animator = (ComponentAnimation*)App->scripting->ComponentFrom(animatorComp);
-	return animator->PlayAnimation(animUUID);
+	bool ret = animator->PlayAnimation(anim);
+	
+	mono_free(anim);
+
+	return ret;
 }
 
 void ParticleEmitterPlay(MonoObject* particleComp)
@@ -1758,8 +1946,6 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Quaternion::quatVec3", (const void*)&QuatVec3);
 	mono_add_internal_call("JellyBitEngine.Quaternion::toEuler", (const void*)&ToEuler);
 	mono_add_internal_call("JellyBitEngine.Quaternion::RotateAxisAngle", (const void*)&RotateAxisAngle);
-	mono_add_internal_call("JellyBitEngine.Transform::getGlobalPos", (const void*)&GetGlobalPos);
-	mono_add_internal_call("JellyBitEngine.Transform::getGlobalRotation", (const void*)&GetGlobalRotation);
 	mono_add_internal_call("JellyBitEngine.GameObject::getName", (const void*)&GetGOName);
 	mono_add_internal_call("JellyBitEngine.GameObject::setName", (const void*)&SetGOName);
 	mono_add_internal_call("JellyBitEngine.Time::getDeltaTime", (const void*)&GetDeltaTime);
@@ -1772,6 +1958,12 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Transform::setLocalRotation", (const void*)&SetLocalRotation);
 	mono_add_internal_call("JellyBitEngine.Transform::getLocalScale", (const void*)&GetLocalScale);
 	mono_add_internal_call("JellyBitEngine.Transform::setLocalScale", (const void*)&SetLocalScale);
+	mono_add_internal_call("JellyBitEngine.Transform::getGlobalPos", (const void*)&GetGlobalPos);
+	mono_add_internal_call("JellyBitEngine.Transform::getGlobalRotation", (const void*)&GetGlobalRotation);
+	mono_add_internal_call("JellyBitEngine.Transform::getGlobalScale", (const void*)&GetGlobalScale);
+	mono_add_internal_call("JellyBitEngine.Transform::setGlobalPos", (const void*)&SetGlobalPos);
+	mono_add_internal_call("JellyBitEngine.Transform::setGlobalRotation", (const void*)&SetGlobalRot);
+	mono_add_internal_call("JellyBitEngine.Transform::setGlobalScale", (const void*)&SetGlobalScale);
 	mono_add_internal_call("JellyBitEngine.GameObject::GetComponentByType", (const void*)&GetComponentByType);
 	mono_add_internal_call("JellyBitEngine.Camera::getMainCamera", (const void*)&GetGameCamera);
 	mono_add_internal_call("JellyBitEngine.Physics::_ScreenToRay", (const void*)&ScreenToRay);
@@ -1788,6 +1980,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.RectTransform::SetRect", (const void*)&RectTransform_SetRect);
 	mono_add_internal_call("JellyBitEngine.UI.Button::SetKey", (const void*)&ButtonSetKey);
 	mono_add_internal_call("JellyBitEngine.UI.Button::GetState", (const void*)&ButtonGetState);
+	mono_add_internal_call("JellyBitEngine.GameObject::GetActive", (const void*)&GetGameObjectActive);
+	mono_add_internal_call("JellyBitEngine.GameObject::SetActive", (const void*)&SetGameObjectActive);
 
 	ClearMap();
 

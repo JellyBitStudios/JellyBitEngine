@@ -4,6 +4,7 @@
 #include "ModuleInput.h"
 #include "ModuleScene.h"
 #include "ModuleRenderer3D.h"
+#include "ModuleFBOManager.h"
 #include "ModuleCameraEditor.h"
 #include "ModuleGui.h"
 #include "ModuleFileSystem.h"
@@ -26,6 +27,8 @@
 #include "ModuleUI.h"
 #include "ModuleAnimation.h"
 #include "ModuleLayers.h"
+#include "ModuleAudio.h"
+#include "ModuleLayers.h"
 
 #include "parson\parson.h"
 #include "PCG\entropy.h"
@@ -36,6 +39,7 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	input = new ModuleInput();
 	scene = new ModuleScene();
 	renderer3D = new ModuleRenderer3D();
+	fbo = new ModuleFBOManager();
 	fs = new ModuleFileSystem();
 	GOs = new ModuleGOs();
 	timeManager = new ModuleTimeManager();
@@ -55,6 +59,8 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	animation = new ModuleAnimation();
 	layers = new ModuleLayers();
 	ui = new ModuleUI();
+	audio = new ModuleAudio();
+	layers = new ModuleLayers();
 
 #ifndef GAMEMODE
 	camera = new ModuleCameraEditor();
@@ -79,20 +85,27 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	AddModule(particle);
 	AddModule(physics);
 	AddModule(ui);
-	AddModule(animation);
+	AddModule(audio);
 	AddModule(GOs);
 	AddModule(fs);
 	AddModule(window);
 	AddModule(input);
 	AddModule(scene);
 	AddModule(scripting);
+	AddModule(animation);
 	AddModule(navigation);
+	AddModule(fbo);
 
 	// Renderer last!
 	AddModule(renderer3D);
 
-	//No, I'm last ;)
+	// No, I'm last ;)
 	AddModule(events);
+
+#ifdef GAMEMODE
+	engineState = engine_states::ENGINE_PLAY;
+#endif // GAMEMODE
+
 }
 
 Application::~Application()

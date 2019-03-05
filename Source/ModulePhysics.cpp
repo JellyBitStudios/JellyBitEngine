@@ -9,10 +9,14 @@
 #include "ModuleWindow.h"
 #include "ModuleInput.h"
 #include "ModuleCameraEditor.h"
+#include "ModuleResourceManager.h"
+#include "ModuleScene.h"
+#include "ModuleGOs.h"
 #include "ModuleGui.h"
 #include "ComponentCamera.h"
 #include "ComponentTransform.h"
 #include "DebugDrawer.h"
+#include "ResourcePrefab.h"
 
 #include "MathGeoLib\include\Geometry\Frustum.h"
 #include "MathGeoLib\include\Geometry\LineSegment.h"
@@ -40,6 +44,8 @@
 #include <assert.h>
 
 #include "MathGeoLib\include\Math\float2.h"
+#include "Brofiler/Brofiler.h"
+
 
 #ifdef _DEBUG
 #pragma comment(lib, "physx\\libx86\\debugx86\\PhysX_32.lib")
@@ -193,6 +199,9 @@ update_status ModulePhysics::PreUpdate()
 
 update_status ModulePhysics::Update()
 {
+#ifndef GAMEMODE
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+#endif // !GAMEMODE
 	update_status updateStatus = update_status::UPDATE_CONTINUE;
 
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY
@@ -238,6 +247,7 @@ update_status ModulePhysics::FixedUpdate()
 #endif
 
 	//Debug();
+	DestroyChest();
 
 	return UPDATE_CONTINUE;
 }
@@ -435,6 +445,202 @@ void ModulePhysics::Debug()
 			{
 				if (touchesInfo[i].GetGameObject() != nullptr)
 					CONSOLE_LOG(LogTypes::Normal, "The overlap touched the game object '%s'", touchesInfo[i].GetGameObject()->GetName());
+			}
+		}
+	}
+}
+
+void ModulePhysics::DrawColliders() const
+{
+	Color collidersColor = Green;
+
+	std::vector<ComponentCollider*> colliderComponents = GetColliderComponents();
+	for (uint i = 0; i < colliderComponents.size(); ++i)
+	{
+		if (colliderComponents[i]->GetParent()->cmp_rigidActor == nullptr)
+			continue;
+
+		physx::PxShape* gShape = colliderComponents[i]->GetShape();
+		if (gShape == nullptr)
+			continue;
+
+		physx::PxTransform actorGlobalPose = gShape->getActor()->getGlobalPose();
+		physx::PxTransform shapeLocalPose = gShape->getLocalPose();
+		physx::PxTransform globalPose = actorGlobalPose * shapeLocalPose;
+
+		math::float4x4 globalMatrix(math::Quat(globalPose.q.x, globalPose.q.y, globalPose.q.z, globalPose.q.w),
+			math::float3(globalPose.p.x, globalPose.p.y, globalPose.p.z));
+
+		switch (gShape->getGeometryType())
+		{
+		case physx::PxGeometryType::Enum::eSPHERE:
+		{
+			physx::PxSphereGeometry gSphereGeometry;
+			gShape->getSphereGeometry(gSphereGeometry);
+
+			App->debugDrawer->DebugDrawSphere(gSphereGeometry.radius, collidersColor, globalMatrix);
+		}
+		break;
+		case physx::PxGeometryType::Enum::eCAPSULE:
+		{
+			physx::PxCapsuleGeometry gCapsuleGeometry;
+			gShape->getCapsuleGeometry(gCapsuleGeometry);
+
+			App->debugDrawer->DebugDrawCapsule(gCapsuleGeometry.radius, gCapsuleGeometry.halfHeight, collidersColor, globalMatrix);
+		}
+		break;
+		case physx::PxGeometryType::Enum::eBOX:
+		{
+			physx::PxBoxGeometry gBoxGeometry;
+			gShape->getBoxGeometry(gBoxGeometry);
+
+			App->debugDrawer->DebugDrawBox(math::float3(gBoxGeometry.halfExtents.x, gBoxGeometry.halfExtents.y, gBoxGeometry.halfExtents.z), collidersColor, globalMatrix);
+		}
+		break;
+		case physx::PxGeometryType::Enum::ePLANE:
+			App->debugDrawer->DebugDrawBox(math::float3(0.0f, 10.0f, 10.0f), collidersColor, globalMatrix);
+			break;
+		}
+	}
+}
+
+void ModulePhysics::DrawRigidActors() const
+{
+	Color rigidActorsColor = Red;
+
+	std::vector<ComponentRigidActor*> rigidActorComponents = App->physics->GetRigidActorComponents();
+	for (uint i = 0; i < rigidActorComponents.size(); ++i)
+	{
+		physx::PxRigidActor* gActor = rigidActorComponents[i]->GetActor();
+
+		physx::PxShape* gShape = nullptr;
+		gActor->getShapes(&gShape, 1);
+		if (gShape == nullptr)
+			continue;
+
+		if (rigidActorComponents[i]->GetType() == ComponentTypes::RigidStaticComponent)
+			rigidActorsColor = Orange;
+		else if (rigidActorComponents[i]->GetType() == ComponentTypes::RigidDynamicComponent
+			&& !((ComponentRigidDynamic*)rigidActorComponents[i])->IsSleeping())
+			rigidActorsColor = DarkRed;
+		else
+			rigidActorsColor = Red;
+
+		physx::PxTransform transform = gActor->getGlobalPose();
+		math::float4x4 globalMatrix(math::Quat(transform.q.x, transform.q.y, transform.q.z, transform.q.w),
+			math::float3(transform.p.x, transform.p.y, transform.p.z));
+
+		switch (gShape->getGeometryType())
+		{
+		case physx::PxGeometryType::Enum::eSPHERE:
+		{
+			physx::PxSphereGeometry gSphereGeometry;
+			gShape->getSphereGeometry(gSphereGeometry);
+
+			App->debugDrawer->DebugDrawSphere(gSphereGeometry.radius, rigidActorsColor, globalMatrix);
+		}
+		break;
+		case physx::PxGeometryType::Enum::eCAPSULE:
+		{
+			physx::PxCapsuleGeometry gCapsuleGeometry;
+			gShape->getCapsuleGeometry(gCapsuleGeometry);
+
+			App->debugDrawer->DebugDrawCapsule(gCapsuleGeometry.radius, gCapsuleGeometry.halfHeight, rigidActorsColor, globalMatrix);
+		}
+		break;
+		case physx::PxGeometryType::Enum::eBOX:
+		{
+			physx::PxBoxGeometry gBoxGeometry;
+			gShape->getBoxGeometry(gBoxGeometry);
+
+			App->debugDrawer->DebugDrawBox(math::float3(gBoxGeometry.halfExtents.x, gBoxGeometry.halfExtents.y, gBoxGeometry.halfExtents.z), rigidActorsColor, globalMatrix);
+		}
+		break;
+		case physx::PxGeometryType::Enum::ePLANE:
+			App->debugDrawer->DebugDrawBox(math::float3(0.0f, 100.0f, 100.0f), rigidActorsColor, globalMatrix);
+			break;
+		}
+	}
+}
+
+void ModulePhysics::DestroyChest()
+{
+	if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_DOWN)
+	{
+		// Raycast
+		RaycastHit hitInfo;
+		std::vector<RaycastHit> touchesInfo;
+		math::Ray ray = App->renderer3D->GetCurrentCamera()->ScreenToRay(math::float2(App->input->GetMouseX(), App->input->GetMouseY()));
+
+		// Layer
+		Layer* chestLayer = App->layers->GetLayer(App->layers->NameToNumber("Destructibles"));
+		uint filterGroup = chestLayer->GetFilterGroup();
+
+		if (Raycast(ray.pos, ray.dir, hitInfo, FLT_MAX, filterGroup))
+		{
+			GameObject* gameObject = hitInfo.GetGameObject();
+
+			// Hit
+			if (gameObject != nullptr)
+			{
+				// 1. Destroy game object (original mesh)
+				gameObject->GetParent()->Destroy();
+
+				// 2. Instantiate game object (broken mesh)
+				ResourcePrefab* prefab = nullptr;
+
+				std::vector<Resource*> prefabs = App->res->GetResourcesByType(ResourceTypes::PrefabResource);
+				for (uint i = 0; i < prefabs.size(); ++i)
+				{
+					if (strcmp(prefabs[i]->GetName(), "BrokenChestFinal.pfb") == 0)
+					{
+						prefab = (ResourcePrefab*)prefabs[i];
+						break;
+					}
+				}
+
+				if (prefab != nullptr)
+				{
+					App->res->SetAsUsed(prefab->GetUuid());
+
+					GameObject* brokenChest = prefab->GetRoot();
+
+					if (brokenChest != nullptr)
+					{
+						GameObject* brokenChestInstance = App->GOs->Instanciate(brokenChest, App->scene->root);
+
+						if (brokenChestInstance != nullptr)
+						{
+							App->res->SetAsUnused(prefab->GetUuid());
+
+							// a) Move broken mesh to original mesh
+							math::float4x4 globalMatrix = gameObject->transform->GetGlobalMatrix();
+							brokenChestInstance->transform->SetMatrixFromGlobal(globalMatrix);
+
+							// b) Apply forces to broken mesh
+							std::vector<GameObject*> go;
+							brokenChestInstance->GetChildrenVector(go, false);
+
+							for (uint i = 0; i < go.size(); ++i)
+							{
+								ComponentRigidDynamic* rigidDynamic = (ComponentRigidDynamic*)go[i]->cmp_rigidActor;
+								
+								if (rigidDynamic != nullptr)
+								{
+									float force = 10.0f;
+									int max = 1;
+									int min = -1;
+
+									float forceX = force * ((rand() % (max - min)) + min);
+									float forceY = force * ((rand() % (max - min)) + min);
+									float forceZ = force * ((rand() % (max - min)) + min);
+
+									rigidDynamic->AddForce(math::float3(forceX, forceY, forceZ), physx::PxForceMode::eIMPULSE);
+								}
+							}
+						}					
+					}
+				}
 			}
 		}
 	}

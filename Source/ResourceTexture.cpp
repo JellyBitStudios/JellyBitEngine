@@ -350,6 +350,45 @@ uint ResourceTexture::SetTextureImportSettingsToMeta(const char* metaFile, const
 	return lastModTime;
 }
 
+bool ResourceTexture::GenerateLibraryFiles() const
+{
+	assert(data.file.data() != nullptr);
+
+	// Search for the meta associated to the file
+	char metaFile[DEFAULT_BUF_SIZE];
+	strcpy_s(metaFile, strlen(data.file.data()) + 1, data.file.data()); // file
+	strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
+
+	// 1. Copy meta
+	if (App->fs->Exists(metaFile))
+	{
+		// Read the info of the meta
+		char* buffer;
+		uint size = App->fs->Load(metaFile, &buffer);
+		if (size > 0)
+		{
+			// Create a new name for the meta
+			std::string extension = metaFile;
+
+			uint found = extension.find_first_of(".");
+			if (found != std::string::npos)
+				extension = extension.substr(found, extension.size());
+
+			char newMetaFile[DEFAULT_BUF_SIZE];
+			sprintf_s(newMetaFile, "%s/%u%s", DIR_LIBRARY_TEXTURES, uuid, extension.data());
+
+			// Save the new meta (info + new name)
+			size = App->fs->Save(newMetaFile, buffer, size);
+			if (size > 0)
+				return true;
+
+			RELEASE_ARRAY(buffer);
+		}		
+	}
+
+	return false;
+}
+
 // ----------------------------------------------------------------------------------------------------
 
 uint ResourceTexture::GetId() const

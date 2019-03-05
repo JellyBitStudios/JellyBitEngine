@@ -31,7 +31,8 @@ enum class VarType
 	STRING,
 	GAMEOBJECT,
 	TRANSFORM,
-	LAYERMASK
+	LAYERMASK, 
+	ENUM
 };
 
 class ResourceScript : public Resource
@@ -45,6 +46,8 @@ public:
 	bool UnloadFromMemory() override { return true; }
 
 	void OnPanelAssets();
+
+	bool GenerateLibraryFiles() const;
 
 public:
 

@@ -10,9 +10,11 @@
 #include "ModuleTimeManager.h"
 #include "ModuleGOs.h"
 #include "ComponentTransform.h"
-
+#include "ModuleEvents.h"
+#include "EventSystem.h"
 #include "ModuleInput.h"
 
+#include "Brofiler/Brofiler.h"
 //#include ".h" //TODO: delete this
 
 #include "ComponentBone.h"
@@ -39,9 +41,8 @@ bool ModuleAnimation::Awake(JSON_Object* config)
 
 bool ModuleAnimation::Start()
 {
-
 	// Call here to attach bones and everytime that we reimport things
-	StartAttachingBones();
+	//StartAttachingBones();
 
 	if (current_anim) {
 		current_anim->interpolate = true;
@@ -62,8 +63,24 @@ bool ModuleAnimation::CleanUp()
 
 update_status ModuleAnimation::Update()
 {
+#ifndef GAMEMODE
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+#endif // GAMEMODE
+
+	if (App->GetEngineState() != engine_states::ENGINE_PLAY)
+		return update_status::UPDATE_CONTINUE;
+
+	if (stop_all)
+		return update_status::UPDATE_CONTINUE;
 	if (current_anim == nullptr)
 		return update_status::UPDATE_CONTINUE;
+
+	float dt = 0.0f;
+	dt = App->GetDt();
+#ifdef GAMEMODE
+	dt = App->timeManager->GetDt();
+#endif // GAMEMODE
+
 
 	if (current_anim->anim_timer >= current_anim->duration && current_anim->duration > 0.0f)
 	{
@@ -76,7 +93,7 @@ update_status ModuleAnimation::Update()
 	switch (anim_state)
 	{
 	case AnimationState::PLAYING:
-		current_anim->anim_timer += App->GetDt() * current_anim->anim_speed;
+		current_anim->anim_timer += dt * current_anim->anim_speed;
 		MoveAnimationForward(current_anim->anim_timer, current_anim);
 		break;
 
@@ -90,9 +107,9 @@ update_status ModuleAnimation::Update()
 		break;
 
 	case AnimationState::BLENDING:
-		last_anim->anim_timer += App->GetDt() * last_anim->anim_speed;
-		current_anim->anim_timer += App->GetDt() * current_anim->anim_speed;
-		blend_timer += App->GetDt();
+		last_anim->anim_timer += dt * last_anim->anim_speed;
+		current_anim->anim_timer += dt * current_anim->anim_speed;
+		blend_timer += dt;
 		float blend_percentage = blend_timer / BLEND_TIME;
 		MoveAnimationForward(last_anim->anim_timer, last_anim);
 		MoveAnimationForward(current_anim->anim_timer, current_anim, blend_percentage);
@@ -119,10 +136,8 @@ update_status ModuleAnimation::Update()
 			DeformMesh(bone);
 			ResourceMesh*res = (ResourceMesh*)App->res->GetResource(bone->attached_mesh->res);
 
-			if (App->input->GetKey(SDL_SCANCODE_J) == KEY_REPEAT) {
-				res->GenerateAndBindDeformableMesh();
-			}
-			
+			res->UnloadDeformableMeshFromMemory();
+			res->GenerateAndBindDeformableMesh();
 		}
 	}
 
@@ -131,6 +146,8 @@ update_status ModuleAnimation::Update()
 
 bool ModuleAnimation::StartAttachingBones()
 {
+	if (stop_all)
+		return true;
 	std::vector<GameObject*>gos;
 	App->GOs->GetGameobjects(gos);
 
@@ -150,11 +167,10 @@ bool ModuleAnimation::StartAttachingBones()
 
 				ResourceMesh* res = (ResourceMesh*)App->res->GetResource(mesh_co->res);
 				
-				if (res->deformableMeshData.verticesSize == 0)
-				{
-					res->DuplicateMesh(res);
-					res->GenerateAndBindDeformableMesh();
-				}
+				
+				res->DuplicateMesh(res);
+				res->GenerateAndBindDeformableMesh();
+				
 
 				for (std::vector<ComponentBone*>::iterator it = mesh_co->attached_bones.begin(); it != mesh_co->attached_bones.end(); ++it)
 					(*it)->attached_mesh = mesh_co;
@@ -202,12 +218,62 @@ void ModuleAnimation::DetachBones(GameObject * go)
 	//RELEASE(res->deformable);
 }
 
+void ModuleAnimation::SetUpAnimations()
+{
+	if (stop_all)
+		return;
+	for (uint i = 0u; i < animations.size(); i++)
+	{
+		Animation* it_anim = animations[i];
+		for (uint j = 0u; j < it_anim->anim_res_data.numKeys; j++)
+		{
+			RecursiveGetAnimableGO(App->scene->root, &it_anim->anim_res_data.boneKeys[j], it_anim);
+		}
+	}
+}
+
+void ModuleAnimation::OnSystemEvent(System_Event event)
+{
+	switch (event.type)
+	{
+
+	case System_Event_Type::GameObjectDestroyed: {
+		GameObject* go = event.goEvent.gameObject;
+		for (uint i = 0u; i < animations.size(); i++)
+		{
+			Animation* it_anim = animations[i];
+			for (uint j = 0u; j < it_anim->animable_gos.size(); j++)
+			{
+				if (it_anim->animable_gos[j] == go) {
+					current_anim = nullptr;
+					stop_all = true;
+					CleanAnimableGOS();
+				}
+			}
+		}
+	}
+		break;
+	case System_Event_Type::LoadGMScene:
+	case System_Event_Type::LoadFinished:
+	{
+		App->animation->StartAttachingBones(); App->animation->SetUpAnimations();
+	}
+	break;
+	}
+}
+
 void ModuleAnimation::SetAnimationGos(ResourceAnimation * res)
 {
+	if (stop_all)
+		return;
 	Animation* animation = new Animation();
 	animation->name = res->animationData.name;
+	animation->anim_res_data = res->animationData;
+
+#ifdef  GAMEMODE
 	for (uint i = 0; i < res->animationData.numKeys; ++i)
 		RecursiveGetAnimableGO(App->scene->root, &res->animationData.boneKeys[i], animation);
+#endif //  GAMEMODE
 
 	animation->duration = res->animationData.duration;
 
@@ -219,6 +285,8 @@ void ModuleAnimation::SetAnimationGos(ResourceAnimation * res)
 
 void ModuleAnimation::RecursiveGetAnimableGO(GameObject * go, BoneTransformation* bone_transformation, Animation* anim)
 {
+	if (stop_all)
+		return;
 	std::vector<GameObject*> all_gos;
 	App->GOs->GetGameobjects(all_gos);
 
@@ -226,12 +294,11 @@ void ModuleAnimation::RecursiveGetAnimableGO(GameObject * go, BoneTransformation
 	{
 		GameObject* current_go = all_gos.at(i);
 
-		if (bone_transformation->bone_name.compare(current_go->GetName()) == 0)
+		if (strcmp(bone_transformation->bone_name.data(), current_go->GetName()) == 0)
 		{
 			if (/*!go->to_destroy*/1 /* TODO_G */) {
 				anim->animable_data_map.insert(std::pair<GameObject*, BoneTransformation*>(current_go, bone_transformation));
 				anim->animable_gos.push_back(current_go);
-				return;
 			}
 		}
 	}
@@ -241,7 +308,8 @@ void ModuleAnimation::RecursiveGetAnimableGO(GameObject * go, BoneTransformation
 
 void ModuleAnimation::MoveAnimationForward(float time, Animation* current_animation, float blend)
 {
-
+	if (stop_all)
+		return;
 	for (uint i = 0; i < current_animation->animable_gos.size(); ++i)
 	{
 		BoneTransformation* transform = current_animation->animable_data_map.find(current_animation->animable_gos[i])->second;
@@ -454,21 +522,36 @@ ModuleAnimation::Animation* ModuleAnimation::GetCurrentAnimation() const
 
 void ModuleAnimation::SetCurrentAnimationTime(float time)
 {
+	if (stop_all)
+		return;
 	current_anim->anim_timer = time;
 	MoveAnimationForward(current_anim->anim_timer, current_anim);
 }
 
-void ModuleAnimation::SetCurrentAnimation(int i)
+bool ModuleAnimation::SetCurrentAnimation(const char* anim_name)
 {
-	anim_state = BLENDING;
-	blend_timer = 0.0f;
-	last_anim = current_anim;
-	current_anim = animations.at(i);
-	SetCurrentAnimationTime(0.0f);
+	if (stop_all)
+		return true;
+	for (uint i = 0u; i < animations.size(); i++)
+	{
+		Animation* it_anim = animations[i];
+		if (strcmp(it_anim->name.c_str(), anim_name) == 0) {
+			anim_state = BLENDING;
+			blend_timer = 0.0f;
+			last_anim = current_anim;
+			current_anim = it_anim;
+			SetCurrentAnimationTime(0.0f);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void ModuleAnimation::CleanAnimableGOS()
 {
+	if (stop_all)
+		return;
 	for (uint i = 0; i < animations.size(); ++i)
 	{
 		animations.at(i)->animable_gos.clear();
@@ -529,45 +612,28 @@ void ModuleAnimation::StepForward()
 
 void ModuleAnimation::DeformMesh(ComponentBone* component_bone)
 {
-	ComponentMesh* mesh = component_bone->attached_mesh;
+	ComponentMesh* mesh_co = component_bone->attached_mesh;
 
-	ResourceMesh* mesh_res = (ResourceMesh*)App->res->GetResource(mesh->res);
-	
-	if (mesh_res != nullptr)
+	if (mesh_co != nullptr)
 	{
-		const ResourceBone* rbone = (const ResourceBone*)App->res->GetResource(component_bone->res);
-		ResourceMesh* roriginal = mesh_res;
-		ResourceMesh* tmp_mesh = mesh_res;
-		
+		ResourceBone* rbone = (ResourceBone*)App->res->GetResource(component_bone->res);
+		ResourceMesh* mesh = (ResourceMesh*)App->res->GetResource(mesh_co->res);
 
-		math::float4x4 trans = component_bone->GetParent()->transform->GetMatrix();
-		trans = trans * component_bone->attached_mesh->GetParent()->transform->GetMatrix().Inverted();
+		math::float4x4 trans = component_bone->GetParent()->transform->GetGlobalMatrix();
+		trans = trans * component_bone->attached_mesh->GetParent()->transform->GetGlobalMatrix().Inverse();
 
 		trans = trans * rbone->boneData.offset_matrix;
 
 		for (uint i = 0; i < rbone->boneData.bone_weights_size; ++i)
 		{
-			/*
-			uint index = rbone->bone_weights_indices[i];
-			float3 original(&roriginal->vertices[index * 3]);
-
-			float3 vertex = trans.TransformPos(original);
-
-			rmesh->vertices[index * 3] += vertex.x * rbone->bone_weights[i] * SCALE;
-			rmesh->vertices[index * 3 + 1] += vertex.y * rbone->bone_weights[i] * SCALE;
-			rmesh->vertices[index * 3 + 2] += vertex.z * rbone->bone_weights[i] * SCALE;
-			*/
-
 			uint index = rbone->boneData.bone_weights_indices[i];
-			
-			math::float3 original(roriginal->GetSpecificData().vertices[index].position);
+			math::float3 original(mesh->GetSpecificData().vertices[index].position);
 
 			math::float3 vertex = trans.TransformPos(original);
 
-			tmp_mesh->deformableMeshData.vertices[index].position[0] = vertex.x * rbone->boneData.bone_weights[i];
-			tmp_mesh->deformableMeshData.vertices[index].position[1] = vertex.y * rbone->boneData.bone_weights[i];
-			tmp_mesh->deformableMeshData.vertices[index].position[2] = vertex.z * rbone->boneData.bone_weights[i];
-			
+			mesh->deformableMeshData.vertices[index].position[0] += vertex.x * rbone->boneData.bone_weights[i] * SCALE;
+			mesh->deformableMeshData.vertices[index].position[1] += vertex.y * rbone->boneData.bone_weights[i] * SCALE;
+			mesh->deformableMeshData.vertices[index].position[2] += vertex.z * rbone->boneData.bone_weights[i] * SCALE;
 		}
 	}
 }
@@ -584,8 +650,12 @@ void ModuleAnimation::ResetMesh(ComponentBone * component_bone)
 		{
 			memset(original->deformableMeshData.vertices[i].position, 0, 3 * sizeof(float));
 			//memset(original->deformableMeshData.vertices, 0, original->GetSpecificData().verticesSize * sizeof(float));
+			//memset(original->deformable->vertices, 0, original->vertex_size * sizeof(float));
 		}
+		//memcpy(original->deformableMeshData.vertices, original->GetSpecificData().vertices, original->GetSpecificData().verticesSize);
 		//original->GenerateAndBindDeformableMesh();
 	}
+
+	int a = 0;
 		
 }

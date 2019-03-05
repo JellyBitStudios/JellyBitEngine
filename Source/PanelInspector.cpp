@@ -281,6 +281,18 @@ void PanelInspector::ShowGameObjectInspector() const
 				}
 			}
 		}
+		if (gameObject->cmp_audioListener == nullptr) {
+			if (ImGui::Selectable("Audio Listener")) {
+				gameObject->AddComponent(ComponentTypes::AudioListenerComponent);
+				ImGui::CloseCurrentPopup();
+			}
+		}
+		if (gameObject->cmp_audioSource == nullptr) {
+			if (ImGui::Selectable("Audio Source")) {
+				gameObject->AddComponent(ComponentTypes::AudioSourceComponent);
+				ImGui::CloseCurrentPopup();
+			}
+		}
 		ImGui::EndPopup();
 	}
 
@@ -626,6 +638,9 @@ void PanelInspector::ShowShaderObjectInspector() const
 	case ShaderObjectTypes::FragmentType:
 		ImGui::Text("Fragment Shader Object");
 		break;
+	case ShaderObjectTypes::GeometryType:
+		ImGui::Text("Geometry Shader Object");
+		break;
 	}
 	ImGui::Separator();
 	ImGui::Spacing();
@@ -780,7 +795,8 @@ void PanelInspector::ShowMaterialInspector() const
 	ImGui::TextColored(BLUE, "%s", material->GetFile());
 	ImGui::Text("UUID:"); ImGui::SameLine();
 	ImGui::TextColored(BLUE, "%u", material->GetUuid());
-
+	ImGui::Text("References:"); ImGui::SameLine();
+	ImGui::TextColored(BLUE, "%u", material->GetReferencesCount());
 	ImGui::Spacing();
 
 	char id[DEFAULT_BUF_SIZE];

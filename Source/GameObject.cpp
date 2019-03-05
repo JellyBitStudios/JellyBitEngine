@@ -33,8 +33,11 @@
 #include "ComponentLight.h"
 #include "ComponentProjector.h"
 #include "ComponentAnimation.h"
+#include "ComponentAudioListener.h"
+#include "ComponentAudioSource.h"
 
 #include "MathGeoLib\include\Geometry\OBB.h"
+#include "Brofiler/Brofiler.h"
 
 GameObject::GameObject(const char* name, GameObject* parent, bool disableTransform) : parent(parent)
 {
@@ -126,32 +129,32 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			components.push_back(cmp_projector);
 			break;
 		case ComponentTypes::RigidStaticComponent:
-			cmp_rigidActor = new ComponentRigidStatic(*(ComponentRigidStatic*)gameObject.cmp_rigidActor);
+			cmp_rigidActor = new ComponentRigidStatic(*(ComponentRigidStatic*)gameObject.cmp_rigidActor, this);
 			cmp_rigidActor->SetParent(this);
 			components.push_back(cmp_rigidActor);
 			break;
 		case ComponentTypes::RigidDynamicComponent:
-			cmp_rigidActor = new ComponentRigidDynamic(*(ComponentRigidDynamic*)gameObject.cmp_rigidActor);
+			cmp_rigidActor = new ComponentRigidDynamic(*(ComponentRigidDynamic*)gameObject.cmp_rigidActor, this);
 			cmp_rigidActor->SetParent(this);
 			components.push_back(cmp_rigidActor);
 			break;
 		case ComponentTypes::BoxColliderComponent:
-			cmp_collider = new ComponentBoxCollider(*(ComponentBoxCollider*)gameObject.cmp_collider);
+			cmp_collider = new ComponentBoxCollider(*(ComponentBoxCollider*)gameObject.cmp_collider, this);
 			cmp_collider->SetParent(this);
 			components.push_back(cmp_collider);
 			break;
 		case ComponentTypes::SphereColliderComponent:
-			cmp_collider = new ComponentSphereCollider(*(ComponentSphereCollider*)gameObject.cmp_collider);
+			cmp_collider = new ComponentSphereCollider(*(ComponentSphereCollider*)gameObject.cmp_collider, this);
 			cmp_collider->SetParent(this);
 			components.push_back(cmp_collider);
 			break;
 		case ComponentTypes::CapsuleColliderComponent:
-			cmp_collider = new ComponentCapsuleCollider(*(ComponentCapsuleCollider*)gameObject.cmp_collider);
+			cmp_collider = new ComponentCapsuleCollider(*(ComponentCapsuleCollider*)gameObject.cmp_collider, this);
 			cmp_collider->SetParent(this);
 			components.push_back(cmp_collider);
 			break;
 		case ComponentTypes::PlaneColliderComponent:
-			cmp_collider = new ComponentPlaneCollider(*(ComponentPlaneCollider*)gameObject.cmp_collider);
+			cmp_collider = new ComponentPlaneCollider(*(ComponentPlaneCollider*)gameObject.cmp_collider, this);
 			cmp_collider->SetParent(this);
 			components.push_back(cmp_collider);
 			break;
@@ -187,9 +190,18 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			components.push_back(script);
 			break;
 		}
+		case ComponentTypes::AudioListenerComponent:
+			cmp_audioListener = new ComponentAudioListener(*gameObject.cmp_audioListener);
+			cmp_audioListener->SetParent(this);
+			components.push_back(cmp_audioListener);
+			break;
+		case ComponentTypes::AudioSourceComponent:
+			cmp_audioSource = new ComponentAudioSource(*gameObject.cmp_audioSource);
+			cmp_audioSource->SetParent(this);
+			components.push_back(cmp_audioSource);
+			break;
 		}
 	}
-
 
 	children.reserve(gameObject.children.size());
 	for (int i = 0; i < gameObject.children.size(); ++i)
@@ -278,6 +290,12 @@ void GameObject::ToggleIsStatic()
 	App->GOs->RecalculateVector(this);
 }
 
+void GameObject::ForceStaticNoVector()
+{
+	assert(isStatic == false);
+	isStatic = true;
+}
+
 bool GameObject::IsActive() const
 {
 	return isActive;
@@ -308,16 +326,23 @@ void GameObject::OnDisable()
 
 void GameObject::RecursiveRecalculateBoundingBoxes()
 {
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 	// Get the OBB from the mesh original AABB (no translation, rotation or scale)
-	math::OBB obb = originalBoundingBox.ToOBB();
+	if (originalBoundingBox.IsFinite())
+	{
+		if (transform)
+		{
+			math::OBB obb = originalBoundingBox.ToOBB();
 
-	// Transform the obb using the GameObject transform
-	math::float4x4 transformMatrix = transform->GetGlobalMatrix();
-	obb.Transform(transformMatrix);
+			// Transform the obb using the GameObject transform
+			math::float4x4 transformMatrix = transform->GetGlobalMatrix();
+			obb.Transform(transformMatrix);
 
-	// Calculate the minimal enclosing AABB from the transformed OBB
-	if (obb.IsFinite())
-		boundingBox = obb.MinimalEnclosingAABB();
+			// Calculate the minimal enclosing AABB from the transformed OBB
+			if (obb.IsFinite())
+				boundingBox = obb.MinimalEnclosingAABB();
+		}
+	}
 
 	for (uint i = 0; i < children.size(); ++i)
 		children[i]->RecursiveRecalculateBoundingBoxes();
@@ -576,7 +601,13 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		if(includeInModules)
 			App->scripting->AddScriptComponent((ComponentScript*)newComponent);
 		break;
-	}
+		}
+	case ComponentTypes::AudioListenerComponent:
+		newComponent = cmp_audioListener = new ComponentAudioListener(this);
+		break;
+	case ComponentTypes::AudioSourceComponent:
+		newComponent = cmp_audioSource = new ComponentAudioSource(this);
+		break;
 	}
 
 	components.push_back(newComponent);

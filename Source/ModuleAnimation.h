@@ -31,12 +31,14 @@ public:
 		std::vector<GameObject*> animable_gos;
 		std::map<GameObject*, BoneTransformation*> animable_data_map;
 
-		bool loop = false;
+		bool loop = true;
 		bool interpolate = false;
 		float anim_speed = 1.0f;
 
 		float anim_timer = 0.0f;
 		float duration = 0.0f;
+
+		ResourceAnimationData anim_res_data;
 	};
 
 	std::vector<Animation*> animations;
@@ -46,6 +48,8 @@ public:
 	ModuleAnimation();
 	~ModuleAnimation();
 
+	void OnSystemEvent(System_Event event);
+
 	// Called before render is available
 	bool Awake(JSON_Object* config = nullptr);
 
@@ -53,12 +57,12 @@ public:
 	bool Start();
 	bool CleanUp();
 	update_status Update();
-	bool Update(float dt);
 
 	bool StartAttachingBones();
 	void RecursiveFindBones(const GameObject * go, std::vector<ComponentBone*>& found) const;
 	void DetachBones(GameObject* go);
 
+	void SetUpAnimations();
 	void SetAnimationGos(ResourceAnimation* res);
 	void DeformMesh(ComponentBone* component_bone);
 	void ResetMesh(ComponentBone* component_bone);
@@ -69,7 +73,7 @@ public:
 	Animation* GetCurrentAnimation() const;
 
 	void SetCurrentAnimationTime(float time);
-	void SetCurrentAnimation(int i);
+	bool SetCurrentAnimation(const char* anim_name);
 
 	void CleanAnimableGOS();
 
@@ -88,12 +92,13 @@ private:
 
 	Animation* current_anim = nullptr;
 	Animation* last_anim = nullptr;
+	bool stop_all = false;
 
 	float blend_timer = 0.0f;
 	std::vector<ResourceAnimation*> available_animations;
 
 public:
-	AnimationState anim_state = AnimationState::NOT_DEF_STATE;
+	AnimationState anim_state = AnimationState::PLAYING;
 
 };
 

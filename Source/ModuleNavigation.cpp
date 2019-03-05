@@ -21,6 +21,8 @@
 
 #include "Globals.h"
 
+#include "Brofiler/Brofiler.h"
+
 #include "MathGeoLib/include/Math/MathAll.h"
 #include <math.h>
 
@@ -47,6 +49,9 @@ bool ModuleNavigation::Init(JSON_Object* jObject)
 
 update_status ModuleNavigation::Update()
 {
+#ifndef GAMEMODE
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+#endif // !GAMEMODE
 	if (m_navMesh && m_crowd)
 	{
 		m_crowd->update(App->timeManager->GetDt(), 0);
@@ -64,6 +69,11 @@ update_status ModuleNavigation::Update()
 				// Set new gameobject's position
 				ComponentTransform* trm = agent->GetParent()->transform;
 				memcpy(&trm->position, ag->npos, sizeof(float) * 3);
+
+				// Add the offset to obtain the real gameobject position
+				trm->position[0] += ag->offsetPos[0];
+				trm->position[1] += ag->offsetPos[1];
+				trm->position[2] += ag->offsetPos[2];
 
 				// Face gameobject to velocity dir
 				// vel equals to current velocity, nvel equals to desired velocity
@@ -90,6 +100,18 @@ update_status ModuleNavigation::Update()
 
 bool ModuleNavigation::CleanUp()
 {
+#ifndef GAMEMODE
+	if (m_navMesh)
+	{
+		for each (ComponentNavAgent* ag in c_agents)
+			RemoveAgent(ag->GetIndex());
+
+		dtFreeCrowd(m_crowd);
+		dtFreeNavMeshQuery(m_navQuery);
+		m_crowd = 0;
+		m_navQuery = 0;
+	}
+#endif
 	cleanup();
 	return true;
 }
@@ -100,25 +122,7 @@ void ModuleNavigation::OnSystemEvent(System_Event e)
 	{
 	case System_Event_Type::Play:
 	{
-		if (!m_navMesh)
-			return;
-
-		m_navQuery = dtAllocNavMeshQuery();
-
-		dtStatus status;
-
-		status = m_navQuery->init(m_navMesh, 2048);
-		if (dtStatusFailed(status))
-		{
-			DEPRECATED_LOG("Could not init Detour navmesh query");
-			return;
-		}
-
-		InitCrowd();
-
-		for each (ComponentNavAgent* ag in c_agents)
-			ag->AddAgent();
-
+		InitDetour();
 		break;
 	}
 	case System_Event_Type::Stop:
@@ -136,6 +140,28 @@ void ModuleNavigation::OnSystemEvent(System_Event e)
 	}
 		break;
 	}
+}
+
+void ModuleNavigation::InitDetour()
+{
+	if (!m_navMesh)
+		return;
+
+	m_navQuery = dtAllocNavMeshQuery();
+
+	dtStatus status;
+
+	status = m_navQuery->init(m_navMesh, 2048);
+	if (dtStatusFailed(status))
+	{
+		DEPRECATED_LOG("Could not init Detour navmesh query");
+		return;
+	}
+
+	InitCrowd();
+
+	for each (ComponentNavAgent* ag in c_agents)
+		ag->AddAgent();
 }
 
 void ModuleNavigation::InitCrowd()
@@ -262,7 +288,7 @@ int ModuleNavigation::AddAgent(const float* p, float radius, float height, float
 
 bool ModuleNavigation::UpdateAgentParams(int indx, float radius, float height, float maxAcc, float maxSpeed, float collQueryRange, float pathOptimRange, unsigned char updateFlags, unsigned char obstacleAvoidanceType) const
 {
-	if (!m_crowd->getAgent(indx))
+	if (!m_crowd || !m_crowd->getAgent(indx))
 		return false;
 
 	dtCrowdAgentParams params;
@@ -303,6 +329,16 @@ bool ModuleNavigation::IsWalking(int index) const
 {
 	const dtCrowdAgent* ag = m_crowd->getAgent(index);
 	return ag->state == DT_CROWDAGENT_STATE_WALKING;
+}
+
+void ModuleNavigation::RequestMoveVelocity(int index, const float* vel)
+{
+	m_crowd->requestMoveVelocity(index, vel);
+}
+
+void ModuleNavigation::ResetMoveTarget(int index)
+{
+	m_crowd->resetMoveTarget(index);
 }
 
 void ModuleNavigation::calcVel(float* vel, const float* pos, const float* tgt, const float speed)

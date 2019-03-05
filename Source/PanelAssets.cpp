@@ -22,6 +22,8 @@
 #include "ResourceShaderProgram.h"
 #include "ResourcePrefab.h"
 
+#include "Shaders.h"
+
 PanelAssets::PanelAssets(const char* name) : Panel(name) {}
 
 PanelAssets::~PanelAssets() {}
@@ -42,6 +44,15 @@ bool PanelAssets::Draw()
 			System_Event event;
 			event.type = System_Event_Type::DeleteUnusedFiles;
 			App->PushSystemEvent(event);
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Generate Library Files"))
+		{
+			System_Event newEvent;
+			newEvent.type = System_Event_Type::GenerateLibraryFiles;
+			App->PushSystemEvent(newEvent);
 		}
 
 		bool treeNodeOpened = ImGui::TreeNodeEx(DIR_ASSETS);
@@ -127,7 +138,7 @@ bool PanelAssets::Draw()
 void PanelAssets::RecursiveDrawAssetsDir(const Directory& directory)
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::Orchid);
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 #endif
 
 	//TODO: ORGANIZE THIS LOGIC INTO THE OWN ONPANELASSETS METHOD:
@@ -385,6 +396,9 @@ void PanelAssets::CreateResourceConfirmationPopUp()
 					break;
 				case ShaderObjectTypes::FragmentType:
 					shaderObjectData.SetSource(fShaderTemplate, strlen(fShaderTemplate));
+					break;
+				case ShaderObjectTypes::GeometryType:
+					shaderObjectData.SetSource(fShaderTemplate, strlen(fShaderTemplate)); // TODO GEOM GEOMETRY TEMPLATE
 					break;
 				}
 

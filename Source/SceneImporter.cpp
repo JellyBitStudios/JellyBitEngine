@@ -1,4 +1,4 @@
-#include "GameMode.h"
+
 
 #include "SceneImporter.h"
 
@@ -162,7 +162,7 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 		RecursivelyImportNodes(scene, rootNode, rootGameObject, nullptr, mesh_files, bone_files/*not needed but ok*/, dummyForcedUuids);
 		rootGameObject->transform->scale *= importSettings.scale;
 		RecursiveProcessBones(scene, scene->mRootNode, bone_files,forced_bones_uuids);	
-		ImportAnimations(scene, anim_files, forced_anim_uuids);
+		ImportAnimations(scene, anim_files, prefabName, forced_anim_uuids);
 
 		root_bone = nullptr; // c: 
 
@@ -263,7 +263,7 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 		if (!broken)
 		{
 			gameObject->AddComponent(ComponentTypes::MeshComponent);
-			gameObject->ToggleIsStatic();
+			gameObject->ForceStaticNoVector();
 			if (forcedUuids.size() > 0)
 			{
 				gameObject->cmp_mesh->res = forcedUuids.front();
@@ -915,6 +915,7 @@ void SceneImporter::RecursiveProcessBones(mutable const aiScene * scene,
 		data.file = outputFile;
 
 		ResourceBoneData res_data;
+		res_data.name = bone->mName.data;
 		res_data.mesh_uid = mesh_bone[bone];
 		res_data.bone_weights_size = bone->mNumWeights;
 		memcpy(res_data.offset_matrix.v, &bone->mOffsetMatrix.a1, sizeof(float) * 16);
@@ -940,11 +941,11 @@ void SceneImporter::RecursiveProcessBones(mutable const aiScene * scene,
 	}
 
 	for (uint i = 0; i < node->mNumChildren; ++i)
-		RecursiveProcessBones(scene, node->mChildren[i],bone_files);
+		RecursiveProcessBones(scene, node->mChildren[i],bone_files, forcedUuids);
 }
 
 void SceneImporter::ImportAnimations(mutable const aiScene * scene
-	, std::vector<std::string>& anim_files, std::vector<uint>& forcedUuids)const
+	, std::vector<std::string>& anim_files, const char* anim_name, std::vector<uint>& forcedUuids)const
 {
 	for (uint i = 0; i < scene->mNumAnimations; ++i)
 	{
@@ -972,10 +973,9 @@ void SceneImporter::ImportAnimations(mutable const aiScene * scene
 
 			ResourceAnimationData res_data;
 			
-
-			static int take_count = 1;
-			std::string filename = "Take00";
-			filename.append(std::to_string(take_count++));
+			//static int take_count = 1;
+			std::string filename = anim_name;
+			//filename.append(std::to_string(take_count++));
 			res_data.name = filename;
 
 			res_data.ticksPerSecond= anim->mTicksPerSecond != 0 ? anim->mTicksPerSecond : 24;
