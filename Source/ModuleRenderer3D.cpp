@@ -313,7 +313,6 @@ void ModuleRenderer3D::OnSystemEvent(System_Event event)
 void ModuleRenderer3D::SaveStatus(JSON_Object* jObject) const
 {
 	json_object_set_boolean(jObject, "vSync", vsync);
-
 	json_object_set_boolean(jObject, "debugDraw", debugDraw);
 	json_object_set_boolean(jObject, "drawBoundingBoxes", drawBoundingBoxes);
 	json_object_set_boolean(jObject, "drawCamerasFrustum", drawFrustums);
@@ -322,7 +321,6 @@ void ModuleRenderer3D::SaveStatus(JSON_Object* jObject) const
 void ModuleRenderer3D::LoadStatus(const JSON_Object* jObject)
 {
 	SetVSync(json_object_get_boolean(jObject, "vSync"));
-
 	debugDraw = json_object_get_boolean(jObject, "debugDraw");
 	drawBoundingBoxes = json_object_get_boolean(jObject, "drawBoundingBoxes");
 	drawFrustums = json_object_get_boolean(jObject, "drawCamerasFrustum");

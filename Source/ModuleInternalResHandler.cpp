@@ -25,6 +25,7 @@ bool ModuleInternalResHandler::Start()
 	// Shader resources
 	CreateDefaultShaderProgram(vShaderTemplate, fShaderTemplate, ShaderProgramTypes::Standard);
 	CreateDefaultShaderProgram(Particle_vShaderTemplate, Particle_fShaderTemplate, ShaderProgramTypes::Particles);
+	CreateDeferredShaderProgram();
 	CreateUIShaderProgram();
 
 	// Material resources
