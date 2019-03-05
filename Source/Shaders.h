@@ -225,6 +225,8 @@
 "layout(location = 0) in vec2 vertex; // <vec2 position, vec2 texCoords>\n" \
 "layout(location = 1) in vec2 texture_coords; // <vec2 position, vec2 texCoords>\n" \
 "out vec2 TexCoords;\n" \
+"uniform int isScreen;\n" \
+"uniform mat4 mvp_matrix;\n" \
 "uniform vec2 topRight;\n" \
 "uniform vec2 topLeft;\n" \
 "uniform vec2 bottomLeft;\n" \
@@ -241,7 +243,10 @@
 "	else if (vertex.x < 0.0 && vertex.y < 0.0)\n" \
 "		position = bottomLeft;\n" \
 "	TexCoords = texture_coords;\n" \
-"	gl_Position = vec4(position, 0.0, 1.0);\n" \
+"	if(isScreen == 1)\n"\
+"		gl_Position = vec4(position, 0.0, 1.0);\n" \
+"	else\n"\
+"		gl_Position = mvp_matrix * vec4(position, 0.0, 1.0);\n" \
 "}"
 
 #define uifShader \

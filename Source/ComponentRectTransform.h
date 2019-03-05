@@ -66,7 +66,7 @@ public:
 	void SetRect(uint x, uint y, uint x_dist, uint y_dist);
 
 	uint* GetRect();
-
+	float* GetRectWorld();
 	void CheckParentRect();
 
 	void ChangeChildsRect(bool its_me = false, bool size_changed = false);

@@ -41,6 +41,18 @@ ComponentRectTransform::~ComponentRectTransform()
 
 void ComponentRectTransform::Update()
 {
+	switch (rFrom)
+	{
+	case ComponentRectTransform::RECT:
+		break;
+	case ComponentRectTransform::WORLD:
+		CalculateRectFromWorld();
+		break;
+	case ComponentRectTransform::RECT_WORLD:
+		break;
+	default:
+		break;
+	}
 }
 
 void ComponentRectTransform::OnEditor()
@@ -62,6 +74,11 @@ void ComponentRectTransform::SetRect(uint x, uint y, uint x_dist, uint y_dist)
 uint* ComponentRectTransform::GetRect()
 {
 	return rectTransform;
+}
+
+float * ComponentRectTransform::GetRectWorld()
+{
+	return rectWorld;
 }
 
 void ComponentRectTransform::CheckParentRect()
@@ -180,8 +197,8 @@ void ComponentRectTransform::CalculateRectFromWorld()
 
 	rectWorld[Rect::X] = topLeft.x;
 	rectWorld[Rect::Y] = topLeft.y;
-	rectWorld[Rect::XDIST] = abs(topRight.x - topLeft.x);
-	rectWorld[Rect::YDIST] = abs(bootomleft.y - topLeft.y);
+	rectWorld[Rect::XDIST] = topRight.x - topLeft.x; //made abs when display on RectTransform conponent
+	rectWorld[Rect::YDIST] = bootomleft.y - topLeft.y;
 }	
 
 void ComponentRectTransform::RecaculateAnchors()

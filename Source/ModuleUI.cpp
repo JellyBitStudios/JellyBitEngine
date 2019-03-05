@@ -35,6 +35,28 @@ ModuleUI::~ModuleUI()
 
 void ModuleUI::DrawCanvas()
 {
+
+	for (std::list<Component*>::iterator iteratorUI = componentsRendererUI.begin(); iteratorUI != componentsRendererUI.end(); ++iteratorUI)
+	{
+		ComponentCanvasRenderer* renderer = (ComponentCanvasRenderer*)*iteratorUI;
+		ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
+		while (rend != nullptr)
+		{
+			switch (rend->GetType())
+			{
+			case ComponentCanvasRenderer::RenderTypes::COLOR_VECTOR:
+				DrawUIColor((ComponentRectTransform*)renderer->GetParent()->GetComponent(ComponentTypes::RectTransformComponent), rend->GetColor());
+				break;
+			case ComponentCanvasRenderer::RenderTypes::TEXTURE:
+				DrawUITexture((ComponentRectTransform*)renderer->GetParent()->GetComponent(ComponentTypes::RectTransformComponent), rend->GetTexture());
+				break;
+			}
+
+			rend = renderer->GetDrawAvaiable();
+		}
+	
+	}
+	/*
 	if (App->GOs->ExistCanvas())
 	{
 		GameObject* canvas = App->GOs->GetCanvas();
@@ -66,6 +88,7 @@ void ModuleUI::DrawCanvas()
 			}
 		}
 	}
+	*/
 }
 
 bool ModuleUI::Init(JSON_Object * jObject)
@@ -217,15 +240,22 @@ void ModuleUI::DrawUITexture(ComponentRectTransform * rect, uint id_texture, flo
 void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 {
 	uint* rect_points = nullptr;
+	float* rect_world = nullptr;
 	math::float2 pos;
+	float w_width;
+	float w_height;
+	math::float4x4 view = math::float4x4::identity;
+	math::float4x4 projection = math::float4x4::identity;
+	math::float4x4 mvp = math::float4x4::identity;
 
 	switch (rect->GetFrom())
 	{
 	case ComponentRectTransform::RectFrom::RECT:
 		rect_points = rect->GetRect();
+		setBool(ui_shader, "isScreen", 1);
 
-		float w_width = ui_size_draw[Screen::WIDTH];
-		float w_height = ui_size_draw[Screen::HEIGHT];
+		w_width = ui_size_draw[Screen::WIDTH];
+		w_height = ui_size_draw[Screen::HEIGHT];
 
 		pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
 		setFloat(ui_shader, "topLeft", pos.x, pos.y);
@@ -238,8 +268,18 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 		break;
 
 	case ComponentRectTransform::RectFrom::WORLD:
+		rect_world = rect->GetRectWorld();
+		setBool(ui_shader, "isScreen", 0);
+		view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
+		projection = ((ComponentCamera*)App->camera->camera)->GetOpenGLProjectionMatrix();
+		mvp = view * projection;
+		
+		setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
 
-
+		setFloat(ui_shader, "topLeft", rect_world[ComponentRectTransform::Rect::X], rect_world[ComponentRectTransform::Rect::Y]);
+		setFloat(ui_shader, "topRight", rect_world[ComponentRectTransform::Rect::X] + rect_world[ComponentRectTransform::Rect::XDIST], rect_world[ComponentRectTransform::Rect::Y]);
+		setFloat(ui_shader, "bottomLeft", rect_world[ComponentRectTransform::Rect::X], rect_world[ComponentRectTransform::Rect::Y] + rect_world[ComponentRectTransform::Rect::YDIST]);
+		setFloat(ui_shader, "bottomRight", rect_world[ComponentRectTransform::Rect::X] + rect_world[ComponentRectTransform::Rect::XDIST], rect_world[ComponentRectTransform::Rect::Y] + rect_world[ComponentRectTransform::Rect::YDIST]);
 		break;
 
 	default:
