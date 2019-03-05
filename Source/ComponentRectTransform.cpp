@@ -14,28 +14,7 @@ ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTyp
 
 	rFrom = rF;
 
-	Component* rect = nullptr;
-	switch (rFrom)
-	{
-	case RectFrom::RECT:
-		ui_rect = App->ui->GetRectUI();
-		if (parent->GetParent() != nullptr && (rect = parent->GetParent()->GetComponent(ComponentTypes::RectTransformComponent)) != nullptr)
-		{
-			rectParent = ((ComponentRectTransform*)rect)->GetRect();
-
-			ParentChanged();
-		}
-
-		RecaculateAnchors();
-		RecaculatePercentage();
-		break;
-
-	case RectFrom::WORLD:
-		break;
-
-	case RectFrom::RECT_WORLD:
-		break;
-	}
+	CheckParentRect();
 }
 
 ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & componentRectTransform, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::RectTransformComponent)
@@ -50,28 +29,7 @@ ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & co
 
 	rFrom = componentRectTransform.rFrom;
 
-	Component* rect = nullptr;
-	switch (rFrom)
-	{
-	case RectFrom::RECT:
-		ui_rect = App->ui->GetRectUI();
-		if (parent->GetParent() != nullptr && (rect = parent->GetParent()->GetComponent(ComponentTypes::RectTransformComponent)) != nullptr)
-		{
-			rectParent = ((ComponentRectTransform*)rect)->GetRect();
-
-			ParentChanged();
-
-			RecaculateAnchors();
-			RecaculatePercentage();
-		}
-		break;
-
-	case RectFrom::WORLD:
-		break;
-
-	case RectFrom::RECT_WORLD:
-		break;
-	}
+	CheckParentRect();
 }
 
 ComponentRectTransform::~ComponentRectTransform()
@@ -107,15 +65,28 @@ uint* ComponentRectTransform::GetRect()
 void ComponentRectTransform::CheckParentRect()
 {
 	Component* rect = nullptr;
-	if (parent->GetParent() != nullptr && (rect = parent->GetParent()->GetComponent(ComponentTypes::RectTransformComponent)) != nullptr)
+
+	switch (rFrom)
 	{
-		rectParent = ((ComponentRectTransform*)rect)->GetRect();
+	case ComponentRectTransform::RECT:
 
-		ParentChanged();
+		ui_rect = App->ui->GetRectUI();
+
+		if (parent->GetParent() != nullptr && (rect = parent->GetParent()->GetComponent(ComponentTypes::RectTransformComponent)) != nullptr)
+		{
+			rectParent = ((ComponentRectTransform*)rect)->GetRect();
+
+			ParentChanged();
+		}
+
+		RecaculateAnchors();
+		RecaculatePercentage();
+		break;
+	case ComponentRectTransform::WORLD:
+		break;
+	case ComponentRectTransform::RECT_WORLD:
+		break;
 	}
-
-	RecaculateAnchors();
-	RecaculatePercentage();
 }
 
 void ComponentRectTransform::ChangeChildsRect(bool its_me, bool size_changed)
