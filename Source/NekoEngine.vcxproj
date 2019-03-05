@@ -22,7 +22,7 @@
     <ProjectGuid>{746CC4C3-787F-4B0E-AA66-E388FE3FF4F6}</ProjectGuid>
     <RootNamespace>SDLGame</RootNamespace>
     <ProjectName>NekoEngine</ProjectName>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -297,6 +297,7 @@
     <ClInclude Include="ComponentRectTransform.h" />
     <ClInclude Include="ComponentRevoluteJoint.h" />
     <ClInclude Include="ComponentSphericalJoint.h" />
+    <ClInclude Include="ModuleFBOManager.h" />
     <ClInclude Include="Freetype\freetype\config\ftheader.h" />
     <ClInclude Include="Freetype\ft2build.h" />
     <ClInclude Include="ModuleAnimation.h" />
@@ -432,7 +433,6 @@
     <ClInclude Include="PanelSimulatedTime.h" />
     <ClInclude Include="PanelPhysics.h" />
     <ClInclude Include="PanelShaderEditor.h" />
-    <ClInclude Include="PanelSkybox.h" />
     <ClInclude Include="Particle.h" />
     <ClInclude Include="physx\include\characterkinematic\PxBoxController.h" />
     <ClInclude Include="physx\include\characterkinematic\PxCapsuleController.h" />
@@ -719,6 +719,7 @@
     <ClCompile Include="ComponentRectTransform.cpp" />
     <ClCompile Include="ComponentRevoluteJoint.cpp" />
     <ClCompile Include="ComponentSphericalJoint.cpp" />
+    <ClCompile Include="ModuleFBOManager.cpp" />
     <ClCompile Include="ModuleAnimation.cpp" />
     <ClCompile Include="ModuleAudio.cpp" />
     <ClCompile Include="ModuleFreetype.cpp" />
@@ -806,7 +807,6 @@
     <ClCompile Include="PanelSimulatedTime.cpp" />
     <ClCompile Include="PanelPhysics.cpp" />
     <ClCompile Include="PanelShaderEditor.cpp" />
-    <ClCompile Include="PanelSkybox.cpp" />
     <ClCompile Include="Particle.cpp" />
     <ClCompile Include="pugui\pugixml.cpp" />
     <ClCompile Include="Raycaster.cpp" />
