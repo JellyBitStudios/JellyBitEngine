@@ -445,13 +445,13 @@ void PanelInspector::ShowMeshResourceInspector() const
 	ImGui::TextColored(BLUE, "%u", resourceMesh->GetVBO());
 	ImGui::Text(""); ImGui::SameLine(); ImGui::Text("Vertices:"); ImGui::SameLine();
 	float nVerts = resourceMesh->GetVerticesCount();
-	ImGui::TextColored(BLUE, "%u", nVerts);
+	ImGui::TextColored(BLUE, "%f", nVerts);
 	ImGui::Text(""); ImGui::SameLine(); ImGui::Text("Normals:"); ImGui::SameLine();
-	ImGui::TextColored(BLUE, "%u", nVerts);
+	ImGui::TextColored(BLUE, "Not available yet");
 	ImGui::Text(""); ImGui::SameLine(); ImGui::Text("Colors:"); ImGui::SameLine();
-	ImGui::TextColored(BLUE, "%u", nVerts);
+	ImGui::TextColored(BLUE, "Not available yet");
 	ImGui::Text(""); ImGui::SameLine(); ImGui::Text("Texture Coordinates:"); ImGui::SameLine();
-	ImGui::TextColored(BLUE, "%u", nVerts);
+	ImGui::TextColored(BLUE, "Not available yet");
 
 	ImGui::Spacing();
 
@@ -464,12 +464,12 @@ void PanelInspector::ShowMeshResourceInspector() const
 	ImGui::TextColored(BLUE, "%u", resourceMesh->GetIBO());
 	float nIndices = resourceMesh->GetIndicesCount();
 	ImGui::Text(""); ImGui::SameLine(); ImGui::Text("Indices:"); ImGui::SameLine();
-	ImGui::TextColored(BLUE, "%u", nIndices);
+	ImGui::TextColored(BLUE, "%f", nIndices);
 
 	ImGui::Spacing();
 
 	ImGui::Text("Triangles:"); ImGui::SameLine();
-	ImGui::TextColored(BLUE, "%u", nIndices / 3);
+	ImGui::TextColored(BLUE, "%f", nIndices / 3);
 }
 
 void PanelInspector::ShowTextureResourceInspector() const

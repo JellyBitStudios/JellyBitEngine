@@ -167,7 +167,8 @@ uint ResourceMesh::CreateMeta(const char* file, ResourceMeshImportSettings& mesh
 
 		sizeof(int) +
 		sizeof(uint) +
-		sizeof(float);
+		sizeof(float) +
+		sizeof(uint);
 
 	char* data = new char[size];
 	char* cursor = data;
@@ -515,8 +516,13 @@ uint ResourceMesh::SetMeshImportSettingsToMeta(const char* metaFile, const Resou
 	bytes = sizeof(float);
 	memcpy(cursor, &meshImportSettings.scale, bytes);
 
+	cursor += bytes;
+
 	bytes = sizeof(uint);
 	memcpy(cursor, &meshImportSettings.attributes, bytes);
+
+	cursor += bytes;
+
 
 	// --------------------------------------------------
 
