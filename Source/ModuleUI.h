@@ -71,7 +71,9 @@ private:
 
 public:
 	std::list<Component*> componentsUI;
-	std::list<Component*> componentsRendererUI;
+	std::list<Component*> componentsWorldUI;
+	std::list<Component*> componentsScreenRendererUI;
+	std::list<Component*> componentsWorldRendererUI;
 
 private:
 	uint ui_size_draw[4];

@@ -12,6 +12,8 @@
 
 #include "Globals.h"
 
+#include "MathGeoLib/include/Math/float3.h"
+
 class ComponentTransform;
 
 class ComponentRectTransform : public Component
@@ -22,7 +24,12 @@ public:
 		X,
 		Y,
 		XDIST,
-		YDIST
+		YDIST,
+		//Corners
+		RTOPLEFT = 0,
+		RTOPRIGHT,
+		RBOTTOMLEFT,
+		RBOTTOMRIGHT
 	};
 
 	enum Anchor
@@ -66,7 +73,7 @@ public:
 	void SetRect(uint x, uint y, uint x_dist, uint y_dist);
 
 	uint* GetRect();
-	float* GetRectWorld();
+	math::float3* GetCorners();
 	void CheckParentRect();
 
 	void ChangeChildsRect(bool its_me = false, bool size_changed = false);
@@ -85,8 +92,9 @@ private:
 
 	//FromWorld
 	ComponentTransform* transformParent = nullptr;
-	float rectWorld[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-
+	math::float3 corners[4] = { math::float3::zero, math::float3::zero, math::float3::zero, math::float3::zero };
+	math::float3* parentCorners = nullptr;
+		
 	//True, references top-left. False, refernces bottom-right. For every point of rect.
 	bool use_margin = false;
 	uint anchor[4] = {0,0,0,0};
@@ -95,6 +103,7 @@ private:
 
 private:
 	void CalculateRectFromWorld();
+	void CalculateCornersFromRect();
 
 	void RecaculateAnchors();
 	void RecaculateAnchors(int type);

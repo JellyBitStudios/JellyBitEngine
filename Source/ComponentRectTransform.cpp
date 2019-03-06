@@ -10,19 +10,29 @@
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
 
+#define WORLDTORECT 100.0f
+
 ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTypes componentType, RectFrom rF) : Component(parent, ComponentTypes::RectTransformComponent)
 {
-	App->ui->componentsUI.push_back(this);
-
 	rFrom = rF;
+
+	if(rFrom == RectFrom::WORLD)
+		App->ui->componentsWorldUI.push_back(this);
+	else
+		App->ui->componentsUI.push_back(this);
 
 	CheckParentRect();
 }
 
 ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & componentRectTransform, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::RectTransformComponent)
 {
-	if(!includeComponents)
-		App->ui->componentsUI.push_back(this);
+	if (!includeComponents)
+	{
+		if (rFrom == RectFrom::WORLD)
+			App->ui->componentsWorldUI.push_back(this);
+		else
+			App->ui->componentsUI.push_back(this);
+	}
 
 	memcpy(rectTransform, componentRectTransform.rectTransform, sizeof(uint) * 4);
 	memcpy(anchor, componentRectTransform.anchor, sizeof(uint) * 4);
@@ -36,7 +46,10 @@ ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & co
 
 ComponentRectTransform::~ComponentRectTransform()
 {
-	App->ui->componentsUI.remove(this);
+	if (rFrom == RectFrom::WORLD)
+		App->ui->componentsWorldUI.remove(this);
+	else
+		App->ui->componentsUI.remove(this);
 }
 
 void ComponentRectTransform::Update()
@@ -76,9 +89,9 @@ uint* ComponentRectTransform::GetRect()
 	return rectTransform;
 }
 
-float * ComponentRectTransform::GetRectWorld()
+math::float3 * ComponentRectTransform::GetCorners()
 {
-	return rectWorld;
+	return corners;
 }
 
 void ComponentRectTransform::CheckParentRect()
@@ -106,6 +119,15 @@ void ComponentRectTransform::CheckParentRect()
 		CalculateRectFromWorld();
 		break;
 	case ComponentRectTransform::RECT_WORLD:
+
+		parentCorners = parent->GetParent()->cmp_rectTransform->GetCorners();
+		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+		ParentChanged();
+
+		RecaculateAnchors();
+		RecaculatePercentage();
+
+		CalculateCornersFromRect();
 		break;
 	}
 }
@@ -164,6 +186,9 @@ void ComponentRectTransform::ParentChanged(bool size_changed)
 		}
 		RecaculatePercentage();
 	}
+
+	if (rFrom == RectFrom::RECT_WORLD)
+		CalculateCornersFromRect();
 }
 
 void ComponentRectTransform::UseMarginChanged(bool useMargin)
@@ -182,24 +207,33 @@ void ComponentRectTransform::UseMarginChanged(bool useMargin)
 
 void ComponentRectTransform::CalculateRectFromWorld()
 {
-	math::float4 topLeft;
-	math::float4 topRight;
-	math::float4 bootomleft;
-	math::float4 bottomRight;
 	math::float4x4 globalmatrix;
 
 	globalmatrix = transformParent->GetGlobalMatrix();
 
-	topLeft = globalmatrix * math::float4(-0.5f, 0.5f, 0.0f, 1.0f);
-	topRight = globalmatrix * math::float4(0.5f, 0.5f, 0.0f, 1.0f);
-	bootomleft = globalmatrix * math::float4(0.5f, -0.5f, 0.0f, 1.0f);
-	bottomRight = globalmatrix * math::float4(-0.5f, -0.5f, 0.0f, 1.0f);
+	corners[Rect::RTOPLEFT] = math::float4(globalmatrix * math::float4(-0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
+	corners[Rect::RTOPRIGHT] = math::float4(globalmatrix * math::float4(0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
+	corners[Rect::RBOTTOMLEFT] = math::float4(globalmatrix * math::float4(-0.5f, -0.5f, 0.0f, 1.0f)).Float3Part();
+	corners[Rect::RBOTTOMRIGHT] = math::float4(globalmatrix * math::float4(0.5f, -0.5f, 0.0f, 1.0f)).Float3Part();
 
-	rectWorld[Rect::X] = topLeft.x;
-	rectWorld[Rect::Y] = topLeft.y;
-	rectWorld[Rect::XDIST] = topRight.x - topLeft.x; //made abs when display on RectTransform conponent
-	rectWorld[Rect::YDIST] = bootomleft.y - topLeft.y;
-}	
+	rectTransform[Rect::X] = 0;
+	rectTransform[Rect::Y] = 0;
+	rectTransform[Rect::XDIST] = abs(math::Distance(corners[Rect::RTOPRIGHT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
+	rectTransform[Rect::YDIST] = abs(math::Distance(corners[Rect::RBOTTOMLEFT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
+
+	ChangeChildsRect(true);
+}
+void ComponentRectTransform::CalculateCornersFromRect()
+{
+	math::float3 xDirection = (parentCorners[Rect::RTOPRIGHT] - parentCorners[Rect::RTOPLEFT]).Normalized();
+	math::float3 yDirection = (parentCorners[Rect::RBOTTOMLEFT] - parentCorners[Rect::RTOPLEFT]).Normalized();
+
+	corners[Rect::RTOPLEFT] = parentCorners[Rect::RTOPLEFT] + (xDirection * ((float)(rectTransform[Rect::X] - rectParent[Rect::X]) / WORLDTORECT)) + (yDirection * ((float)(rectTransform[Rect::Y] - rectParent[Rect::Y]) / WORLDTORECT));
+	corners[Rect::RTOPRIGHT] = corners[Rect::RTOPLEFT] + (xDirection * ((float)rectTransform[Rect::XDIST] / WORLDTORECT));
+	corners[Rect::RBOTTOMLEFT] = corners[Rect::RTOPLEFT] + (yDirection * ((float)rectTransform[Rect::YDIST] / WORLDTORECT));
+	corners[Rect::RBOTTOMRIGHT] = corners[Rect::RBOTTOMLEFT] + (xDirection * ((float)rectTransform[Rect::XDIST] / WORLDTORECT));
+}
+
 
 void ComponentRectTransform::RecaculateAnchors()
 {
@@ -354,9 +388,6 @@ void ComponentRectTransform::OnUniqueEditor()
 {
 #ifndef GAMEMODE
 
-	if (rFrom != RectFrom::RECT)
-		return;
-
 	ImGui::Text("Rect Transform");
 	ImGui::Spacing();
 
@@ -405,9 +436,28 @@ void ComponentRectTransform::OnUniqueEditor()
 		}
 		break;
 	case ComponentRectTransform::WORLD:
+		ImGui::Text("Modify Transforfm For change RectTransform");
+		ImGui::Text("World|Rect difference: %i", WORLDTORECT);
 
-		break;
+		ImGui::Text("Info about Rect:");
+		ImGui::Text("Positions X & Y");
+		ImGui::Text("X: %u | Y: %u", rectTransform[Rect::X], rectTransform[Rect::Y]);
+		ImGui::Text("Dist X & Y");
+		ImGui::Text("Dist X: %u | Dist Y: %u", rectTransform[Rect::XDIST], rectTransform[Rect::YDIST]);
+
+		return;
 	case ComponentRectTransform::RECT_WORLD:
+		r_width = rectParent[Rect::XDIST];
+		r_height = rectParent[Rect::YDIST];
+
+		max_xpos = r_width - rectTransform[Rect::XDIST];
+		max_ypos = r_height - rectTransform[Rect::YDIST];
+
+		x_editor = rectTransform[Rect::X] - rectParent[Rect::X];
+		y_editor = rectTransform[Rect::Y] - rectParent[Rect::Y];
+
+		max_xdist = r_width - x_editor;
+		max_ydist = r_height - y_editor;
 		break;
 	}
 

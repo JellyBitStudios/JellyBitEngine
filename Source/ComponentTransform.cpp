@@ -10,6 +10,7 @@
 #include "ComponentCamera.h"
 #include "ComponentProjector.h"
 #include "ComponentRigidActor.h"
+#include "ComponentRectTransform.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -38,7 +39,8 @@ void ComponentTransform::Update() {}
 // Redefined cause there is no way that a transform component could be erased or moved.
 void ComponentTransform::OnEditor()
 {
-	OnUniqueEditor();
+	if(parent->cmp_rectTransform == nullptr || parent->cmp_rectTransform->GetFrom() != ComponentRectTransform::RectFrom::RECT_WORLD)
+		OnUniqueEditor();
 }
 
 void ComponentTransform::OnUniqueEditor()

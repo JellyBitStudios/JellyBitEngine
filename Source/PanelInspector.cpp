@@ -23,6 +23,7 @@
 #include "ComponentScript.h"
 #include "ComponentRigidActor.h"
 #include "ComponentCollider.h"
+#include "ComponentRectTransform.h"
 
 #include "Resource.h"
 #include "ResourceMesh.h"
@@ -190,11 +191,14 @@ void PanelInspector::ShowGameObjectInspector() const
 					gameObject->AddComponent(ComponentTypes::ImageComponent);
 					ImGui::CloseCurrentPopup();
 				}
-			if (gameObject->cmp_button == nullptr)
-				if (ImGui::Selectable("Button UI")) {
-					gameObject->AddComponent(ComponentTypes::ButtonComponent);
-					ImGui::CloseCurrentPopup();
-				}
+			if (gameObject->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
+			{
+				if (gameObject->cmp_button == nullptr)
+					if (ImGui::Selectable("Button UI")) {
+						gameObject->AddComponent(ComponentTypes::ButtonComponent);
+						ImGui::CloseCurrentPopup();
+					}
+			}
 			if (gameObject->cmp_label == nullptr)
 				if (ImGui::Selectable("Text UI")) {
 					gameObject->AddComponent(ComponentTypes::LabelComponent);

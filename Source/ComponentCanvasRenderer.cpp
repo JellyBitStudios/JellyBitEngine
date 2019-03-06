@@ -6,13 +6,19 @@
 #include "GameObject.h"
 
 #include "ComponentImage.h"
+#include "ComponentRectTransform.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
 
 ComponentCanvasRenderer::ComponentCanvasRenderer(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::CanvasRendererComponent)
 {
-	App->ui->componentsRendererUI.push_back(this);
+
+	if(parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
+		App->ui->componentsScreenRendererUI.push_back(this);
+	else
+		App->ui->componentsWorldRendererUI.push_back(this);
+
 	rend_queue.push_back(new ToUIRend());
 	rend_queue.push_back(new ToUIRend());
 }
@@ -21,7 +27,11 @@ ComponentCanvasRenderer::ComponentCanvasRenderer(const ComponentCanvasRenderer &
 {
 	if (includeComponents)
 	{
-		App->ui->componentsRendererUI.push_back(this);
+		if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
+			App->ui->componentsScreenRendererUI.push_back(this);
+		else
+			App->ui->componentsWorldRendererUI.push_back(this);
+
 		rend_queue.push_back(new ToUIRend());
 		rend_queue.push_back(new ToUIRend());
 	}
@@ -29,7 +39,10 @@ ComponentCanvasRenderer::ComponentCanvasRenderer(const ComponentCanvasRenderer &
 
 ComponentCanvasRenderer::~ComponentCanvasRenderer()
 {
-	App->ui->componentsRendererUI.remove(this);
+	if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
+		App->ui->componentsScreenRendererUI.remove(this);
+	else
+		App->ui->componentsWorldRendererUI.remove(this);
 
 	for (ToUIRend* rend : rend_queue)
 		RELEASE(rend);

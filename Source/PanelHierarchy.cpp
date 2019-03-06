@@ -219,31 +219,44 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 		}
 		else
 		{
-			if (ImGui::Selectable("Create Empty"))
+			if (child->cmp_rectTransform == nullptr)
 			{
-				App->GOs->CreateGameObject("GameObject", child);
-				ImGui::CloseCurrentPopup();
+				if (ImGui::Selectable("Create Empty"))
+				{
+					App->GOs->CreateGameObject("GameObject", child);
+					ImGui::CloseCurrentPopup();
+				}
+				if (ImGui::Selectable("Create Cube"))
+				{
+					GameObject* go = App->GOs->CreateGameObject("Cube", child);
+					go->AddComponent(ComponentTypes::MeshComponent);
+					go->cmp_mesh->SetResource(App->resHandler->cube);
+					ImGui::CloseCurrentPopup();
+				}
+				if (ImGui::Selectable("Delete"))
+				{
+					if (child->EqualsToChildrenOrThis(App->scene->selectedObject.Get()))
+						App->scene->selectedObject = CurrentSelection::SelectedType::null;
+					App->GOs->DeleteGameObject(child);
+					ImGui::CloseCurrentPopup();
+				}
+				if (ImGui::Selectable("Create World Canvas"))
+				{
+					GameObject* go = App->GOs->CreateGameObject("WorldCanvas", child);
+					ComponentRectTransform* new_rect = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::WORLD);
+					go->AddComponent(go->cmp_rectTransform = new_rect);
+					SELECT(go);
+				}
 			}
-			if (ImGui::Selectable("Create Cube"))
+			else
 			{
-				GameObject* go = App->GOs->CreateGameObject("Cube", child);
-				go->AddComponent(ComponentTypes::MeshComponent);
-				go->cmp_mesh->SetResource(App->resHandler->cube);
-				ImGui::CloseCurrentPopup();
-			}
-			if (ImGui::Selectable("Delete"))
-			{
-				if (child->EqualsToChildrenOrThis(App->scene->selectedObject.Get()))
-					App->scene->selectedObject = CurrentSelection::SelectedType::null;
-				App->GOs->DeleteGameObject(child);
-				ImGui::CloseCurrentPopup();
-			}
-			if (ImGui::Selectable("Create World Canvas"))
-			{
-				GameObject* go = App->GOs->CreateGameObject("WoldCanvas", child);
-				ComponentRectTransform* new_rect = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::WORLD);
-				go->AddComponent(go->cmp_rectTransform = new_rect);
-				SELECT(go);
+				if (ImGui::Selectable("Create Empty"))
+				{
+					GameObject* go = App->GOs->CreateGameObject("ChildWorldCanvas", child);
+					ComponentRectTransform* new_rect = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::RECT_WORLD);
+					go->AddComponent(go->cmp_rectTransform = new_rect);
+					SELECT(go);
+				}
 			}
 		}
 

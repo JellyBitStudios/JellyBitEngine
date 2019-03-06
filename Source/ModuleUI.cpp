@@ -36,7 +36,7 @@ ModuleUI::~ModuleUI()
 void ModuleUI::DrawCanvas()
 {
 
-	for (std::list<Component*>::iterator iteratorUI = componentsRendererUI.begin(); iteratorUI != componentsRendererUI.end(); ++iteratorUI)
+	for (std::list<Component*>::iterator iteratorUI = componentsWorldRendererUI.begin(); iteratorUI != componentsWorldRendererUI.end(); ++iteratorUI)
 	{
 		ComponentCanvasRenderer* renderer = (ComponentCanvasRenderer*)*iteratorUI;
 		ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
@@ -54,41 +54,27 @@ void ModuleUI::DrawCanvas()
 
 			rend = renderer->GetDrawAvaiable();
 		}
-	
 	}
-	/*
-	if (App->GOs->ExistCanvas())
+
+	for (std::list<Component*>::iterator iteratorUI = componentsScreenRendererUI.begin(); iteratorUI != componentsScreenRendererUI.end(); ++iteratorUI)
 	{
-		GameObject* canvas = App->GOs->GetCanvas();
-
-		std::vector<GameObject*> gos;
-		canvas->GetChildrenAndThisVectorFromLeaf(gos);
-		std::reverse(gos.begin(), gos.end());
-
-		for (GameObject* go_rend : gos)
+		ComponentCanvasRenderer* renderer = (ComponentCanvasRenderer*)*iteratorUI;
+		ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
+		while (rend != nullptr)
 		{
-			ComponentCanvasRenderer* ui_rend = (ComponentCanvasRenderer*)go_rend->GetComponent(ComponentTypes::CanvasRendererComponent);
-			if (ui_rend)
+			switch (rend->GetType())
 			{
-				ComponentCanvasRenderer::ToUIRend* rend = ui_rend->GetDrawAvaiable();
-				while (rend != nullptr)
-				{
-					switch (rend->GetType())
-					{
-					case ComponentCanvasRenderer::RenderTypes::COLOR_VECTOR:
-						DrawUIColor((ComponentRectTransform*)go_rend->GetComponent(ComponentTypes::RectTransformComponent), rend->GetColor());
-						break;
-					case ComponentCanvasRenderer::RenderTypes::TEXTURE:
-						DrawUITexture((ComponentRectTransform*)go_rend->GetComponent(ComponentTypes::RectTransformComponent), rend->GetTexture());
-						break;
-					}
-
-					rend = ui_rend->GetDrawAvaiable();
-				}
+			case ComponentCanvasRenderer::RenderTypes::COLOR_VECTOR:
+				DrawUIColor((ComponentRectTransform*)renderer->GetParent()->GetComponent(ComponentTypes::RectTransformComponent), rend->GetColor());
+				break;
+			case ComponentCanvasRenderer::RenderTypes::TEXTURE:
+				DrawUITexture((ComponentRectTransform*)renderer->GetParent()->GetComponent(ComponentTypes::RectTransformComponent), rend->GetTexture());
+				break;
 			}
+
+			rend = renderer->GetDrawAvaiable();
 		}
 	}
-	*/
 }
 
 bool ModuleUI::Init(JSON_Object * jObject)
@@ -129,7 +115,11 @@ update_status ModuleUI::Update()
 #ifndef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 #endif // !GAMEMODE
-	for (std::list<Component*>::iterator iteratorUI = componentsRendererUI.begin(); iteratorUI != componentsRendererUI.end(); ++iteratorUI)
+	for (std::list<Component*>::iterator iteratorUI = componentsScreenRendererUI.begin(); iteratorUI != componentsScreenRendererUI.end(); ++iteratorUI)
+		(*iteratorUI)->Update();
+	for (std::list<Component*>::iterator iteratorUI = componentsWorldRendererUI.begin(); iteratorUI != componentsWorldRendererUI.end(); ++iteratorUI)
+		(*iteratorUI)->Update();
+	for (std::list<Component*>::iterator iteratorUI = componentsWorldUI.begin(); iteratorUI != componentsWorldUI.end(); ++iteratorUI)
 		(*iteratorUI)->Update();
 
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
@@ -240,7 +230,7 @@ void ModuleUI::DrawUITexture(ComponentRectTransform * rect, uint id_texture, flo
 void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 {
 	uint* rect_points = nullptr;
-	float* rect_world = nullptr;
+	math::float3* rect_world = nullptr;
 	math::float2 pos;
 	float w_width;
 	float w_height;
@@ -258,17 +248,17 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 		w_height = ui_size_draw[Screen::HEIGHT];
 
 		pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
-		setFloat(ui_shader, "topLeft", pos.x, pos.y);
+		setFloat(ui_shader, "topLeft", pos.x, pos.y, 0.0f);
 		pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
-		setFloat(ui_shader, "topRight", pos.x, pos.y);
+		setFloat(ui_shader, "topRight", pos.x, pos.y, 0.0f);
 		pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
-		setFloat(ui_shader, "bottomLeft", pos.x, pos.y);
+		setFloat(ui_shader, "bottomLeft", pos.x, pos.y, 0.0f);
 		pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
-		setFloat(ui_shader, "bottomRight", pos.x, pos.y);
+		setFloat(ui_shader, "bottomRight", pos.x, pos.y, 0.0f);
 		break;
 
 	case ComponentRectTransform::RectFrom::WORLD:
-		rect_world = rect->GetRectWorld();
+		rect_world = rect->GetCorners();
 		setBool(ui_shader, "isScreen", 0);
 		view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
 		projection = ((ComponentCamera*)App->camera->camera)->GetOpenGLProjectionMatrix();
@@ -276,13 +266,25 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 		
 		setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
 
-		setFloat(ui_shader, "topLeft", rect_world[ComponentRectTransform::Rect::X], rect_world[ComponentRectTransform::Rect::Y]);
-		setFloat(ui_shader, "topRight", rect_world[ComponentRectTransform::Rect::X] + rect_world[ComponentRectTransform::Rect::XDIST], rect_world[ComponentRectTransform::Rect::Y]);
-		setFloat(ui_shader, "bottomLeft", rect_world[ComponentRectTransform::Rect::X], rect_world[ComponentRectTransform::Rect::Y] + rect_world[ComponentRectTransform::Rect::YDIST]);
-		setFloat(ui_shader, "bottomRight", rect_world[ComponentRectTransform::Rect::X] + rect_world[ComponentRectTransform::Rect::XDIST], rect_world[ComponentRectTransform::Rect::Y] + rect_world[ComponentRectTransform::Rect::YDIST]);
+		setFloat(ui_shader, "topLeft", rect_world[ComponentRectTransform::Rect::RTOPLEFT]);
+		setFloat(ui_shader, "topRight", rect_world[ComponentRectTransform::Rect::RTOPRIGHT]);
+		setFloat(ui_shader, "bottomLeft", rect_world[ComponentRectTransform::Rect::RBOTTOMLEFT]);
+		setFloat(ui_shader, "bottomRight", rect_world[ComponentRectTransform::Rect::RBOTTOMRIGHT]);
 		break;
 
-	default:
+	case ComponentRectTransform::RectFrom::RECT_WORLD:
+		rect_world = rect->GetCorners();
+		setBool(ui_shader, "isScreen", 0);
+		view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
+		projection = ((ComponentCamera*)App->camera->camera)->GetOpenGLProjectionMatrix();
+		mvp = view * projection;
+
+		setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
+
+		setFloat(ui_shader, "topLeft", rect_world[ComponentRectTransform::Rect::RTOPLEFT]);
+		setFloat(ui_shader, "topRight", rect_world[ComponentRectTransform::Rect::RTOPRIGHT]);
+		setFloat(ui_shader, "bottomLeft", rect_world[ComponentRectTransform::Rect::RBOTTOMLEFT]);
+		setFloat(ui_shader, "bottomRight", rect_world[ComponentRectTransform::Rect::RBOTTOMRIGHT]);
 		break;
 	}
 }
