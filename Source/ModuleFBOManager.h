@@ -1,5 +1,5 @@
-#ifndef __FBOMANAGER
-#define __FBOMANAGER
+#ifndef __MODULE_FBO_MANAGER_H__
+#define __MODULE_FBO_MANAGER_H__
 
 #include "Module.h"
 

@@ -352,7 +352,7 @@ void ModuleInternalResHandler::CreateDefaultMaterial()
 		{
 		case Uniforms_Values::Sampler2U_value:
 		{
-			if (strcmp(uniform.common.name, "material.albedo") == 0)
+			if (strcmp(uniform.common.name, "diffuse") == 0)
 			{
 				uniform.sampler2DU.value.uuid = defaultTexture;
 				uniform.sampler2DU.value.id = ((ResourceTexture*)App->res->GetResource(defaultTexture))->GetId();

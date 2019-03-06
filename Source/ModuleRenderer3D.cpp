@@ -23,11 +23,8 @@
 #include "ComponentTransform.h"
 #include "ComponentMaterial.h"
 #include "ComponentCamera.h"
-#include "ComponentRigidActor.h"
-#include "ComponentRigidDynamic.h"
-#include "ComponentCollider.h"
-#include "ComponentEmitter.h"
 #include "ComponentProjector.h"
+#include "ModuleFBOManager.h"
 
 #include "ResourceMesh.h"
 #include "ResourceTexture.h"
@@ -187,6 +184,8 @@ update_status ModuleRenderer3D::PostUpdate()
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::Orchid);
 #endif
 
+	App->fbo->BindGBuffer();
+
 	App->scene->Draw();
 
 	if (currentCamera != nullptr)
@@ -196,21 +195,22 @@ update_status ModuleRenderer3D::PostUpdate()
 			if (cameraComponents[i]->IsActive())
 				cameraComponents[i]->UpdateTransform();
 		}
-
+		/*
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
 			if (projectorComponents[i]->IsActive())
 				projectorComponents[i]->UpdateTransform();
 		}
-
+		*/
 		if (currentCamera->HasFrustumCulling())
 			FrustumCulling();
-
+		/*
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
 			if (projectorComponents[i]->GetParent()->IsActive() && projectorComponents[i]->IsActive())
 				DrawProjectors(projectorComponents[i]);
 		}
+		*/
 
 		for (uint i = 0; i < meshComponents.size(); ++i)
 		{
@@ -220,10 +220,15 @@ update_status ModuleRenderer3D::PostUpdate()
 		}
 	}
 
-	App->particle->Draw();
+	App->fbo->DrawGBufferToScreen();
+
+	App->fbo->MergeDepthBuffer(App->window->GetWindowWidth(), App->window->GetWindowHeight());
+
+//	App->particle->Draw();
 
 #ifndef GAMEMODE
 
+	/*
 	if (debugDraw)
 	{
 		App->navigation->Draw();
@@ -265,7 +270,7 @@ update_status ModuleRenderer3D::PostUpdate()
 
 	if (App->ui->GetUIMode())
 		App->ui->DrawCanvas();
-
+		*/
 	// 3. Editor
 	App->gui->Draw();
 #else
