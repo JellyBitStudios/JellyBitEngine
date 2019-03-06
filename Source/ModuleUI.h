@@ -6,6 +6,8 @@
 #include "MathGeoLib/include/Math/float4.h"
 #include <list>
 
+class GameObject;
+
 //Possible Solution
 //https://stackoverflow.com/questions/47026863/opengl-geometry-shader-with-orthographic-projection
 
@@ -75,6 +77,7 @@ public:
 	std::list<Component*> componentsWorldUI;
 	std::list<Component*> componentsScreenRendererUI;
 	std::list<Component*> componentsWorldRendererUI;
+	std::list<GameObject*> GOsWorldCanvas;
 
 private:
 	uint ui_size_draw[4];

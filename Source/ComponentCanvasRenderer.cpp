@@ -17,7 +17,10 @@ ComponentCanvasRenderer::ComponentCanvasRenderer(GameObject * parent, ComponentT
 	if(parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
 		App->ui->componentsScreenRendererUI.push_back(this);
 	else
+	{
 		App->ui->componentsWorldRendererUI.push_back(this);
+		fromWorld = true;
+	}
 
 	rend_queue.push_back(new ToUIRend());
 	rend_queue.push_back(new ToUIRend());
@@ -30,7 +33,10 @@ ComponentCanvasRenderer::ComponentCanvasRenderer(const ComponentCanvasRenderer &
 		if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
 			App->ui->componentsScreenRendererUI.push_back(this);
 		else
+		{
 			App->ui->componentsWorldRendererUI.push_back(this);
+			fromWorld = true;
+		}
 
 		rend_queue.push_back(new ToUIRend());
 		rend_queue.push_back(new ToUIRend());
@@ -39,7 +45,7 @@ ComponentCanvasRenderer::ComponentCanvasRenderer(const ComponentCanvasRenderer &
 
 ComponentCanvasRenderer::~ComponentCanvasRenderer()
 {
-	if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
+	if (!fromWorld)
 		App->ui->componentsScreenRendererUI.remove(this);
 	else
 		App->ui->componentsWorldRendererUI.remove(this);

@@ -232,7 +232,7 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 	}
 
 
-	if (newGameObject->GetLayer() != UILAYER)
+	if (newGameObject->GetLayer() != UILAYER && newGameObject->cmp_rectTransform == nullptr)
 	{
 		if (copy->GetParent() == nullptr)
 		{

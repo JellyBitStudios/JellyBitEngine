@@ -66,6 +66,8 @@ private:
 	void OnUniqueEditor();
 
 	std::vector<ToUIRend* > rend_queue;
+
+	bool fromWorld = false;
 };
 
 #endif

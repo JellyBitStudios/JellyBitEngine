@@ -17,8 +17,11 @@ ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTyp
 {
 	rFrom = rF;
 
-	if(rFrom == RectFrom::WORLD)
+	if (rFrom == RectFrom::WORLD)
+	{
 		App->ui->componentsWorldUI.push_back(this);
+		App->ui->GOsWorldCanvas.push_back(parent);
+	}
 	else
 		App->ui->componentsUI.push_back(this);
 
@@ -30,7 +33,10 @@ ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & co
 	if (!includeComponents)
 	{
 		if (rFrom == RectFrom::WORLD)
+		{
 			App->ui->componentsWorldUI.push_back(this);
+			App->ui->GOsWorldCanvas.push_back(parent);
+		}
 		else
 			App->ui->componentsUI.push_back(this);
 	}
@@ -48,7 +54,10 @@ ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & co
 ComponentRectTransform::~ComponentRectTransform()
 {
 	if (rFrom == RectFrom::WORLD)
+	{
 		App->ui->componentsWorldUI.remove(this);
+		App->ui->GOsWorldCanvas.remove(parent);
+	}
 	else
 		App->ui->componentsUI.remove(this);
 }
@@ -102,7 +111,6 @@ void ComponentRectTransform::CheckParentRect()
 	switch (rFrom)
 	{
 	case ComponentRectTransform::RECT:
-
 		ui_rect = App->ui->GetRectUI();
 
 		if (parent->GetParent() != nullptr && (rect = parent->GetParent()->GetComponent(ComponentTypes::RectTransformComponent)) != nullptr)
@@ -121,23 +129,30 @@ void ComponentRectTransform::CheckParentRect()
 		RecaculatePercentage();
 		break;
 	case ComponentRectTransform::WORLD:
-		transformParent = (ComponentTransform*)parent->GetComponent(ComponentTypes::TransformComponent);
+		if (parent != nullptr && (rect = parent->GetComponent(ComponentTypes::TransformComponent)) != nullptr)
+		{
+			transformParent = (ComponentTransform*)rect;
 
-		CalculateRectFromWorld();
+			CalculateRectFromWorld();
+		}
 		break;
 	case ComponentRectTransform::RECT_WORLD:
-		parentCorners = parent->GetParent()->cmp_rectTransform->GetCorners();
-		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
-		z = parent->GetParent()->cmp_rectTransform->GetZ() + ZSEPARATOR;
-		if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
-			rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
-		if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
-			rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
+		if (parent->GetParent() != nullptr && (rect = parent->GetParent()->GetComponent(ComponentTypes::RectTransformComponent)) != nullptr)
+		{
+			ComponentRectTransform* r = (ComponentRectTransform*)rect;
+			parentCorners = r->GetCorners();
+			rectParent = r->GetRect();
+			z = r->GetZ() + ZSEPARATOR;
+			if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
+				rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
+			if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
+				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
 
-		ParentChanged();
+			ParentChanged();
 
-		RecaculateAnchors();
-		RecaculatePercentage();
+			RecaculateAnchors();
+			RecaculatePercentage();
+		}
 		break;
 	}
 }

@@ -36,6 +36,7 @@ ModuleUI::~ModuleUI()
 void ModuleUI::DrawCanvas()
 {
 	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
 	glDisable(GL_LIGHTING);
 	for (std::list<Component*>::iterator iteratorUI = componentsScreenRendererUI.begin(); iteratorUI != componentsScreenRendererUI.end(); ++iteratorUI)
 	{
@@ -57,6 +58,7 @@ void ModuleUI::DrawCanvas()
 		}
 	}
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
 	glEnable(GL_LIGHTING);
 }
 
@@ -183,7 +185,6 @@ void ModuleUI::initRenderData()
 
 void ModuleUI::DrawUIColor(ComponentRectTransform* rect, math::float4& color, float rotation)
 {
-
 	use(ui_shader);
 	SetRectToShader(rect);
 	setBool(ui_shader, "use_color", true);
@@ -308,27 +309,40 @@ void ModuleUI::OnWindowResize(uint width, uint height)
 	return ui_size_draw;
 }
 
-void ModuleUI::LinkAllRectsTransform()
-{
-	GameObject* canvas = App->GOs->GetCanvas();
-	
+ void ModuleUI::LinkAllRectsTransform()
+ {
+	 std::vector<GameObject*> gos;
+	 GameObject* canvas = App->GOs->GetCanvas();
+	 if (canvas)
+	 {
 #ifdef GAMEMODE
-	ComponentRectTransform* cmp_rect = (ComponentRectTransform*)canvas->GetComponent(ComponentTypes::RectTransformComponent);
-	uint* rect = cmp_rect->GetRect();
-	rect[ComponentRectTransform::Rect::X] = 0;
-	rect[ComponentRectTransform::Rect::Y] = 0;
-	rect[ComponentRectTransform::Rect::XDIST] = ui_size_draw[Screen::WIDTH];
-	rect[ComponentRectTransform::Rect::YDIST] = ui_size_draw[Screen::HEIGHT];
+		 ComponentRectTransform* cmp_rect = (ComponentRectTransform*)canvas->GetComponent(ComponentTypes::RectTransformComponent);
+		 uint* rect = cmp_rect->GetRect();
+		 rect[ComponentRectTransform::Rect::X] = 0;
+		 rect[ComponentRectTransform::Rect::Y] = 0;
+		 rect[ComponentRectTransform::Rect::XDIST] = ui_size_draw[Screen::WIDTH];
+		 rect[ComponentRectTransform::Rect::YDIST] = ui_size_draw[Screen::HEIGHT];
 #endif // GAMEMODE
 
-	std::vector<GameObject*> gos;
-	canvas->GetChildrenAndThisVectorFromLeaf(gos);
-	std::reverse(gos.begin(), gos.end());
-	for (GameObject* go_rect : gos)
-	{
-		ComponentRectTransform* cmp_rect = (ComponentRectTransform*)go_rect->GetComponent(ComponentTypes::RectTransformComponent);
-		cmp_rect->CheckParentRect();
-	}
+		 canvas->GetChildrenAndThisVectorFromLeaf(gos);
+		 std::reverse(gos.begin(), gos.end());
+		 for (GameObject* go_rect : gos)
+		 {
+			 ComponentRectTransform* cmp_rect = (ComponentRectTransform*)go_rect->GetComponent(ComponentTypes::RectTransformComponent);
+			 cmp_rect->CheckParentRect();
+		 }
+		 gos.clear();
+	 }
+	 for (GameObject* world_canvas : GOsWorldCanvas)
+	 {
+		 world_canvas->GetChildrenAndThisVectorFromLeaf(gos);
+		 for (GameObject* go_rect : gos)
+		 {
+			 ComponentRectTransform* cmp_rect = (ComponentRectTransform*)go_rect->GetComponent(ComponentTypes::RectTransformComponent);
+			 cmp_rect->CheckParentRect();
+		 }
+		 gos.clear();
+	 }
 }
 
 bool ModuleUI::MouseInScreen()

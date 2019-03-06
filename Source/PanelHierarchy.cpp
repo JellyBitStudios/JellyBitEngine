@@ -203,15 +203,15 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 			if (ImGui::Selectable("Create Empty"))
 			{
 				GameObject* go = nullptr;
-				if (child->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::WORLD)
+				if (child->cmp_rectTransform->GetFrom() != ComponentRectTransform::RectFrom::RECT)
 				{
+					go = App->GOs->CreateGameObject("ChildWorldCanvas", child, true);
 					go->AddComponent(go->cmp_rectTransform = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::RECT_WORLD));
-					App->GOs->CreateGameObject("ChildScreenCanvas", child, true);
 				}
 				else
 				{
+					go = App->GOs->CreateGameObject("ChildScreenCanvas", child, true);
 					go->AddComponent(ComponentTypes::RectTransformComponent);
-					App->GOs->CreateGameObject("ChildWorldCanvas", child, true);
 				}
 				go->SetLayer(UILAYER);
 				ImGui::CloseCurrentPopup();
@@ -261,18 +261,18 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 					SELECT(go);
 				}
 			}
+			if (ImGui::Selectable("Delete"))
+			{
+				if (child->EqualsToChildrenOrThis(App->scene->selectedObject.Get()))
+					App->scene->selectedObject = CurrentSelection::SelectedType::null;
+				App->GOs->DeleteGameObject(child);
+				ImGui::CloseCurrentPopup();
+			}
 		}
 
 		if (ImGui::Selectable("Duplicate at same parent"))
 		{
 			App->GOs->Instanciate(child, child->GetParent());
-			ImGui::CloseCurrentPopup();
-		}
-		if (ImGui::Selectable("Delete"))
-		{
-			if (child->EqualsToChildrenOrThis(App->scene->selectedObject.Get()))
-				App->scene->selectedObject = CurrentSelection::SelectedType::null;
-			App->GOs->DeleteGameObject(child);
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::EndPopup();
