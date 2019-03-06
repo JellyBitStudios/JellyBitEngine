@@ -186,8 +186,6 @@ update_status ModuleRenderer3D::PostUpdate()
 
 	App->fbo->BindGBuffer();
 
-	App->scene->Draw();
-
 	if (currentCamera != nullptr)
 	{
 		for (uint i = 0; i < cameraComponents.size(); ++i)
@@ -223,6 +221,8 @@ update_status ModuleRenderer3D::PostUpdate()
 	App->fbo->DrawGBufferToScreen();
 
 	App->fbo->MergeDepthBuffer(App->window->GetWindowWidth(), App->window->GetWindowHeight());
+
+	App->scene->Draw();
 
 //	App->particle->Draw();
 
@@ -622,6 +622,8 @@ void ModuleRenderer3D::FrustumCulling() const
 		seen[i]->seenLastFrame = true;
 }
 
+#include "ModuleInternalResHandler.h"
+
 void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 {
 	if (toDraw->res == 0)
@@ -634,8 +636,8 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	uint shaderUuid = resourceMaterial->GetShaderUuid();
 	const ResourceShaderProgram* resourceShaderProgram = (const ResourceShaderProgram*)App->res->GetResource(shaderUuid);
 	GLuint shader = resourceShaderProgram->shaderProgram;
-
-	glUseProgram(shader);
+	const ResourceShaderProgram* d = (ResourceShaderProgram*)App->res->GetResource(App->resHandler->defaultShaderProgram);
+	glUseProgram(d->shaderProgram);
 
 	// 1. Generic uniforms
 	LoadGenericUniforms(shader);
@@ -664,10 +666,9 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	// Mesh
 	const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(toDraw->res);
 
-	glBindVertexArray((mesh->deformableMeshData.indicesSize == 0) ? mesh->GetVAO() : mesh->DVAO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, (mesh->deformableMeshData.indicesSize == 0) ? mesh->GetIBO() : mesh->DIBO);
-	glDrawElements(GL_TRIANGLES, (mesh->deformableMeshData.indicesSize == 0) ? 
-		mesh->GetIndicesCount() : mesh->deformableMeshData.indicesSize, GL_UNSIGNED_INT, NULL);
+	glBindVertexArray(mesh->GetVAO());
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIBO());
+	glDrawElements(GL_TRIANGLES, mesh->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 

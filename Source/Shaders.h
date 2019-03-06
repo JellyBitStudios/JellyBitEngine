@@ -3,49 +3,41 @@
 
 #pragma region ShaderDefault
 
-#define vShaderTemplate \
-"#version 330 core\n" \
-"layout(location = 0) in vec3 position;\n" \
-"layout(location = 1) in vec3 normal;\n" \
-"layout(location = 2) in vec4 color;\n" \
-"layout(location = 3) in vec2 texCoord;\n" \
-"uniform mat4 model_matrix;\n" \
-"uniform mat4 mvp_matrix;\n" \
-"uniform mat3 normal_matrix;\n" \
-"out vec3 fPosition;\n" \
-"out vec3 fNormal;\n" \
-"out vec4 fColor;\n"\
-"out vec2 fTexCoord;\n" \
-"void main()\n" \
-"{\n" \
-"	fPosition = vec3(model_matrix * vec4(position, 1.0));\n" \
-"	fNormal = normalize(normal_matrix * normal);\n" \
-"	fColor = color;\n" \
-"	fTexCoord = texCoord;\n" \
-"	gl_Position = mvp_matrix * vec4(position, 1.0);\n" \
+#define vShaderTemplate											\
+"#version 330 core\n"											\
+"layout(location = 0) in vec3 position;\n"						\
+"layout(location = 1) in vec3 normal;\n"						\
+"layout(location = 2) in vec4 color;\n"							\
+"layout(location = 3) in vec2 texCoord;\n"						\
+"uniform mat4 model_matrix;\n"									\
+"uniform mat4 mvp_matrix;\n"									\
+"uniform mat3 normal_matrix;\n"									\
+"out vec3 fPosition;\n"											\
+"out vec3 fNormal;\n"											\
+"out vec2 fTexCoord;\n"											\
+"void main()\n"													\
+"{\n"															\
+"	//fPosition = vec3(model_matrix * vec4(position, 1.0));\n"	\
+"	fNormal = normalize(normal_matrix * normal);\n"				\
+"	fTexCoord = texCoord;\n"									\
+"	gl_Position = mvp_matrix * vec4(position, 1.0);\n"			\
 "}"
 
-#define fShaderTemplate \
-"#version 330 core\n" \
-"layout(location = 0) out vec3 gPosition;\n" \
-"layout(location = 1) out vec3 gNormal;\n" \
-"layout(location = 2) out vec4 gAlbedoSpec;\n" \
-"in vec2 fTexCoord;\n" \
-"in vec3 fPosition;\n" \
-"in vec3 fNormal;\n" \
-"uniform sampler2D diffuse;\n" \
-"void main()\n" \
-"{\n" \
-"	// store the fragment position vector in the first gbuffer texture\n" \
-"	gPosition = fPosition;\n" \
-"	// also store the per-fragment normals into the gbuffer\n" \
-"	gNormal = normalize(fNormal);\n" \
-"	// and the diffuse per-fragment color\n" \
-"	 gAlbedoSpec.rgb = texture(diffuse, fTexCoord);\n" \
-"	// store specular intensity in gAlbedoSpec's alpha component\n" \
-"	// gAlbedoSpec.a = texture(texture_specular1, fTexCoord).r\n;" \
+#define fShaderTemplate															\
+"#version 330 core\n"															\
+"layout(location = 0) out vec3 gPosition;\n"									\
+"layout(location = 1) out vec3 gNormal;\n"										\
+"layout(location = 2) out vec4 gAlbedoSpec;\n"									\
+"in vec2 fTexCoord;\n"															\
+"in vec3 fPosition;\n"															\
+"in vec3 fNormal;\n"															\
+"uniform sampler2D diffuse;\n"													\
+"void main()\n"																	\
+"{\n"																			\
+"	gPosition = fPosition;\n"													\
+"	gNormal = normalize(fNormal);\n"											\
+"	gAlbedoSpec.rgb = vec3(1.0,0.0,0.0);\n"										\
 "}"
-
 
 #pragma endregion
 
@@ -76,9 +68,8 @@
 "	// retrieve data from gbuffer\n"							\
 "	vec3 FragPos = texture(gPosition, TexCoords).rgb;\n"		\
 "	vec3 Normal = texture(gNormal, TexCoords).rgb;\n"			\
-"	vec3 diffuse = texture(gAlbedoSpec, TexCoords).rgb;\n"		\
-"	//float Specular = texture(gAlbedoSpec, TexCoords).a;\n"	\
-"	FragColor = vec4(diffuse, 1.0);\n"							\
+"	vec3 diffuse = texture(gAlbedoSpec, TexCoords).rgb; \n"		\
+"	FragColor = vec4(Normal, 1.0);\n"							\
 "}"
 
 #pragma endregion

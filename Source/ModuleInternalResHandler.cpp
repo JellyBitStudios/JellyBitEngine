@@ -43,36 +43,27 @@ void ModuleInternalResHandler::CreatePlane()
 
 	float verticesPosition[12]
 	{
-		-0.5f, -0.5f, 0.0f, // a
-		 0.5f, -0.5f, 0.0f, // b
-		-0.5f,  0.5f, 0.0f, // c
-		 0.5f,  0.5f, 0.0f, // d
+		-1.0f,  1.0f, 0.0f, // a
+		-1.0f, -1.0f, 0.0f, // b
+		 1.0f,  1.0f, 0.0f, // c
+		 1.0f, -1.0f, 0.0f, // d
 	};
 
 	uint textCordsSize = 8;
 	float textCordsPosition[8]
 	{
-		 0.0f,  0.0f, // a
-		 1.0f,  0.0f, // b
-		 0.0f,  1.0f, // c
-		 1.0f,  1.0f, // d
-	};
-
-	uint normalSize = 12;
-	float normalPosition[12]
-	{
-		0.0f, 1.0f, 0.0f, // a
-		0.0f, 1.0f, 0.0f, // a
-		0.0f, 1.0f, 0.0f, // a
-		0.0f, 1.0f, 0.0f, // a
+		 0.0f,  1.0f, // a
+		 0.0f,  0.0f, // b
+		 1.0f,  1.0f, // c
+		 1.0f,  0.0f, // d
 	};
 
 	specificData.indicesSize = 6;
 	specificData.indices = new uint[specificData.indicesSize]
 	{
 		// Front
-		2, 1, 0, // ABC
-		2, 3, 1, // BDC
+		0, 1, 2, // ABC
+		2, 1, 3, // BDC
 	};
 
 	// Vertices
@@ -81,14 +72,6 @@ void ModuleInternalResHandler::CreatePlane()
 	for (uint i = 0; i < specificData.verticesSize; ++i)
 	{
 		memcpy(specificData.vertices[i].position, cursor, sizeof(float) * 3);
-		cursor += 3;
-	}
-
-	///Normals
-	cursor = normalPosition;
-	for (uint i = 0; i < normalSize / 3; ++i)
-	{
-		memcpy(specificData.vertices[i].normal, cursor, sizeof(float) * 3);
 		cursor += 3;
 	}
 
@@ -102,9 +85,11 @@ void ModuleInternalResHandler::CreatePlane()
 
 	ResourceData data;
 	data.name = "Default Plane";
-	data.internal = true;
 
 	plane = App->res->CreateResource(ResourceTypes::MeshResource, data, &specificData, PLANE_UUID)->GetUuid();
+
+	// need this for deferred shading
+	App->res->SetAsUsed(plane);
 }
 
 void ModuleInternalResHandler::CreateCube()
@@ -240,7 +225,7 @@ void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, c
 	fragmentData.internal = true;
 	fragmentShaderData.shaderObjectType = ShaderObjectTypes::FragmentType;
 	fragmentShaderData.SetSource(fShader, strlen(fShader));
-	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &fragmentShaderData);
+	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, fragmentData, &fragmentShaderData);
 	if (!fObj->Compile())
 		fObj->isValid = false;
 
@@ -269,35 +254,35 @@ void ModuleInternalResHandler::CreateDeferredShaderProgram()
 {
 	ResourceData vertexData;
 	ResourceShaderObjectData vertexShaderData;
-	vertexData.name = "UI vertex object";
+	vertexData.name = "Deferred vertex object";
 	vertexData.internal = true;
 	vertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
 	vertexShaderData.SetSource(vDEFERREDSHADING, strlen(vDEFERREDSHADING));
 	ResourceShaderObject* vObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &vertexShaderData);
-	if (vObj->Compile())
+	if (!vObj->Compile())
 		vObj->isValid = false;
 
 	ResourceData fragmentData;
 	ResourceShaderObjectData fragmentShaderData;
-	fragmentData.name = "UI fragment object";
+	fragmentData.name = "Deferred fragment object";
 	fragmentData.internal = true;
 	fragmentShaderData.shaderObjectType = ShaderObjectTypes::FragmentType;
 	fragmentShaderData.SetSource(fDEFERREDSHADING, strlen(fDEFERREDSHADING));
-	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &fragmentShaderData);
-	if (fObj->Compile())
+	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, fragmentData, &fragmentShaderData);
+	if (!fObj->Compile())
 		fObj->isValid = false;
 
 	ResourceData shaderData;
 	ResourceShaderProgramData programShaderData;
-	shaderData.name = "UI shader program";
+	shaderData.name = "Deferred shader program";
 	shaderData.internal = true;
 	programShaderData.shaderObjectsUuids.push_back(vObj->GetUuid());
 	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
 	programShaderData.shaderProgramType = ShaderProgramTypes::UI;
 	ResourceShaderProgram* pShader = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DEFERRED_SHADER_PROGRAM_UUID);
-	if (pShader->Link())
+	if (!pShader->Link())
 		pShader->isValid = false;
-	deferredShaderProgram = pShader->shaderProgram;
+	deferredShaderProgram = pShader->GetUuid();
 }
 
 void ModuleInternalResHandler::CreateUIShaderProgram()
@@ -309,7 +294,7 @@ void ModuleInternalResHandler::CreateUIShaderProgram()
 	vertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
 	vertexShaderData.SetSource(uivShader, strlen(uivShader));
 	ResourceShaderObject* vObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &vertexShaderData);
-	if (vObj->Compile())
+	if (!vObj->Compile())
 		vObj->isValid = false;
 	UIVertexShaderObject = vObj->shaderObject;
 
@@ -319,8 +304,8 @@ void ModuleInternalResHandler::CreateUIShaderProgram()
 	fragmentData.internal = true;
 	fragmentShaderData.shaderObjectType = ShaderObjectTypes::FragmentType;
 	fragmentShaderData.SetSource(uifShader, strlen(uifShader));
-	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &fragmentShaderData);
-	if (fObj->Compile())
+	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, fragmentData, &fragmentShaderData);
+	if (!fObj->Compile())
 		fObj->isValid = false;
 	UIFragmentShaderObject = fObj->shaderObject;
 
@@ -332,7 +317,7 @@ void ModuleInternalResHandler::CreateUIShaderProgram()
 	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
 	programShaderData.shaderProgramType = ShaderProgramTypes::UI;
 	ResourceShaderProgram* pShader = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DEFAULT_SHADER_PROGRAM_UI_UUID);
-	if (pShader->Link())
+	if (!pShader->Link())
 		pShader->isValid = false;
 	UIShaderProgram = pShader->shaderProgram;
 }
