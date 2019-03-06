@@ -23,6 +23,9 @@ bool ModuleFBOManager::CleanUp()
 	return true;
 }
 
+void ModuleFBOManager::OnSystemEvent(System_Event event)
+{}
+
 void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 {
 	// DEFERRED SHADING G BUFFER

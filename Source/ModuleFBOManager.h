@@ -11,11 +11,12 @@ public:
 	~ModuleFBOManager();
 	bool Start();
 	bool CleanUp();
+	void OnSystemEvent(System_Event event);
 
 	void LoadGBuffer(uint width, uint height);
 	void UnloadGBuffer();
 	void ResizeGBuffer(uint width, uint height);
-	void BindGBuffer();
+	void BindGBuffer(); 
 	void DrawGBufferToScreen() const;
 	void MergeDepthBuffer(uint width, uint height);
 
