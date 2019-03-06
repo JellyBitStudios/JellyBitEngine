@@ -40,6 +40,7 @@ public:
 	~ModuleUI();
 
 	void DrawCanvas();
+	void DrawWorldCanvas();
 
 	bool GetUIMode() const;
 	void SetUIMode(bool stat);

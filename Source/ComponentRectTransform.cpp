@@ -11,6 +11,7 @@
 #include "imgui\imgui_internal.h"
 
 #define WORLDTORECT 100.0f
+#define ZSEPARATOR 0.001f
 
 ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTypes componentType, RectFrom rF) : Component(parent, ComponentTypes::RectTransformComponent)
 {
@@ -60,6 +61,7 @@ void ComponentRectTransform::Update()
 		break;
 	case ComponentRectTransform::WORLD:
 		CalculateRectFromWorld();
+		ChangeChildsRect(true);
 		break;
 	case ComponentRectTransform::RECT_WORLD:
 		break;
@@ -107,6 +109,11 @@ void ComponentRectTransform::CheckParentRect()
 		{
 			rectParent = ((ComponentRectTransform*)rect)->GetRect();
 
+			if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
+				rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
+			if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
+				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
+
 			ParentChanged();
 		}
 
@@ -119,15 +126,18 @@ void ComponentRectTransform::CheckParentRect()
 		CalculateRectFromWorld();
 		break;
 	case ComponentRectTransform::RECT_WORLD:
-
 		parentCorners = parent->GetParent()->cmp_rectTransform->GetCorners();
 		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+		z = parent->GetParent()->cmp_rectTransform->GetZ() + ZSEPARATOR;
+		if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
+			rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
+		if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
+			rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
+
 		ParentChanged();
 
 		RecaculateAnchors();
 		RecaculatePercentage();
-
-		CalculateCornersFromRect();
 		break;
 	}
 }
@@ -223,17 +233,23 @@ void ComponentRectTransform::CalculateRectFromWorld()
 
 	ChangeChildsRect(true);
 }
+
 void ComponentRectTransform::CalculateCornersFromRect()
 {
-	math::float3 xDirection = (parentCorners[Rect::RTOPRIGHT] - parentCorners[Rect::RTOPLEFT]).Normalized();
+	math::float3 xDirection = (parentCorners[Rect::RTOPLEFT] - parentCorners[Rect::RTOPRIGHT]).Normalized();
 	math::float3 yDirection = (parentCorners[Rect::RBOTTOMLEFT] - parentCorners[Rect::RTOPLEFT]).Normalized();
 
-	corners[Rect::RTOPLEFT] = parentCorners[Rect::RTOPLEFT] + (xDirection * ((float)(rectTransform[Rect::X] - rectParent[Rect::X]) / WORLDTORECT)) + (yDirection * ((float)(rectTransform[Rect::Y] - rectParent[Rect::Y]) / WORLDTORECT));
-	corners[Rect::RTOPRIGHT] = corners[Rect::RTOPLEFT] + (xDirection * ((float)rectTransform[Rect::XDIST] / WORLDTORECT));
+	corners[Rect::RTOPRIGHT] = parentCorners[Rect::RTOPRIGHT] + (xDirection * ((float)(rectTransform[Rect::X] - rectParent[Rect::X]) / WORLDTORECT)) + (yDirection * ((float)(rectTransform[Rect::Y] - rectParent[Rect::Y]) / WORLDTORECT));
+	corners[Rect::RTOPLEFT] = corners[Rect::RTOPRIGHT] + (xDirection * ((float)rectTransform[Rect::XDIST] / WORLDTORECT));
 	corners[Rect::RBOTTOMLEFT] = corners[Rect::RTOPLEFT] + (yDirection * ((float)rectTransform[Rect::YDIST] / WORLDTORECT));
-	corners[Rect::RBOTTOMRIGHT] = corners[Rect::RBOTTOMLEFT] + (xDirection * ((float)rectTransform[Rect::XDIST] / WORLDTORECT));
-}
+	corners[Rect::RBOTTOMRIGHT] = corners[Rect::RBOTTOMLEFT] - (xDirection * ((float)rectTransform[Rect::XDIST] / WORLDTORECT));
 
+	corners[Rect::RTOPRIGHT].z -= z;
+	corners[Rect::RTOPLEFT].z -= z;
+	corners[Rect::RBOTTOMLEFT].z -= z;
+	corners[Rect::RBOTTOMRIGHT].z -= z;
+	
+}
 
 void ComponentRectTransform::RecaculateAnchors()
 {
@@ -343,7 +359,7 @@ void ComponentRectTransform::RecaculatePercentage()
 
 uint ComponentRectTransform::GetInternalSerializationBytes()
 {
-	return sizeof(uint) * 8 + sizeof(bool) * 5;
+	return sizeof(uint) * 8 + sizeof(bool) * 5 + sizeof(RectFrom);
 }
 
 void ComponentRectTransform::OnInternalSave(char *& cursor)
@@ -363,6 +379,10 @@ void ComponentRectTransform::OnInternalSave(char *& cursor)
 	bytes = sizeof(bool);
 	memcpy(cursor, &use_margin, bytes);
 	cursor += bytes;
+
+	bytes = sizeof(RectFrom);
+	memcpy(cursor, &rFrom, bytes);
+	cursor += bytes;
 }
 
 void ComponentRectTransform::OnInternalLoad(char *& cursor)
@@ -381,6 +401,10 @@ void ComponentRectTransform::OnInternalLoad(char *& cursor)
 
 	bytes = sizeof(bool);
 	memcpy(&use_margin, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(RectFrom);
+	memcpy(&rFrom, cursor, bytes);
 	cursor += bytes;
 }
 
@@ -402,7 +426,7 @@ void ComponentRectTransform::OnUniqueEditor()
 
 	uint x_editor = 0;
 	uint y_editor = 0;
-
+	int i = 0;
 	switch (rFrom)
 	{
 	case ComponentRectTransform::RECT:
@@ -437,7 +461,7 @@ void ComponentRectTransform::OnUniqueEditor()
 		break;
 	case ComponentRectTransform::WORLD:
 		ImGui::Text("Modify Transforfm For change RectTransform");
-		ImGui::Text("World|Rect difference: %i", WORLDTORECT);
+		ImGui::Text("World|Rect difference: %i", i = WORLDTORECT);
 
 		ImGui::Text("Info about Rect:");
 		ImGui::Text("Positions X & Y");
@@ -469,6 +493,9 @@ void ComponentRectTransform::OnUniqueEditor()
 	ImGui::Text("Positions X & Y");
 	if (ImGui::DragScalar("##PosX", ImGuiDataType_U32, &x_editor, 1, 0, &max_xpos, "%u", 1.0f))
 	{
+		if (x_editor > max_xpos)
+			x_editor = max_xpos;
+
 		if (rectParent != nullptr)
 			rectTransform[Rect::X] = x_editor + rectParent[Rect::X];
 		else
@@ -479,6 +506,9 @@ void ComponentRectTransform::OnUniqueEditor()
 	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
 	if (ImGui::DragScalar("##PosY", ImGuiDataType_U32, &y_editor, 1, 0, &max_ypos, "%u", 1.0f))
 	{
+		if (y_editor > max_ypos)
+			y_editor = max_ypos;
+
 		if (rectParent != nullptr)
 			rectTransform[Rect::Y] = y_editor + rectParent[Rect::Y];
 		else
@@ -489,12 +519,18 @@ void ComponentRectTransform::OnUniqueEditor()
 	ImGui::Text("Size X & Y");
 	if (ImGui::DragScalar("##SizeX", ImGuiDataType_U32, (void*)&rectTransform[Rect::XDIST], 1, 0, &max_xdist, "%u", 1.0f))
 	{
+		if (rectTransform[Rect::XDIST] > max_xdist)
+			rectTransform[Rect::XDIST] = max_xdist;
+
 		needed_recalculate = true;
 		size_changed = true;
 	}
 	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
 	if (ImGui::DragScalar("##SizeY", ImGuiDataType_U32, (void*)&rectTransform[Rect::YDIST], 1, 0, &max_ydist, "%u", 1.0f))
 	{
+		if (rectTransform[Rect::YDIST] > max_ydist)
+			rectTransform[Rect::YDIST] = max_ydist;
+
 		needed_recalculate = true;
 		size_changed = true;
 	}
@@ -590,4 +626,9 @@ void ComponentRectTransform::OnUniqueEditor()
 	}
 
 #endif
+}
+
+float ComponentRectTransform::GetZ() const
+{
+	return z;
 }

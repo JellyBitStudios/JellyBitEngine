@@ -39,8 +39,7 @@ void ComponentTransform::Update() {}
 // Redefined cause there is no way that a transform component could be erased or moved.
 void ComponentTransform::OnEditor()
 {
-	if(parent->cmp_rectTransform == nullptr || parent->cmp_rectTransform->GetFrom() != ComponentRectTransform::RectFrom::RECT_WORLD)
-		OnUniqueEditor();
+	OnUniqueEditor();
 }
 
 void ComponentTransform::OnUniqueEditor()

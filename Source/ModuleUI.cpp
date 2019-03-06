@@ -35,27 +35,8 @@ ModuleUI::~ModuleUI()
 
 void ModuleUI::DrawCanvas()
 {
-
-	for (std::list<Component*>::iterator iteratorUI = componentsWorldRendererUI.begin(); iteratorUI != componentsWorldRendererUI.end(); ++iteratorUI)
-	{
-		ComponentCanvasRenderer* renderer = (ComponentCanvasRenderer*)*iteratorUI;
-		ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
-		while (rend != nullptr)
-		{
-			switch (rend->GetType())
-			{
-			case ComponentCanvasRenderer::RenderTypes::COLOR_VECTOR:
-				DrawUIColor((ComponentRectTransform*)renderer->GetParent()->GetComponent(ComponentTypes::RectTransformComponent), rend->GetColor());
-				break;
-			case ComponentCanvasRenderer::RenderTypes::TEXTURE:
-				DrawUITexture((ComponentRectTransform*)renderer->GetParent()->GetComponent(ComponentTypes::RectTransformComponent), rend->GetTexture());
-				break;
-			}
-
-			rend = renderer->GetDrawAvaiable();
-		}
-	}
-
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
 	for (std::list<Component*>::iterator iteratorUI = componentsScreenRendererUI.begin(); iteratorUI != componentsScreenRendererUI.end(); ++iteratorUI)
 	{
 		ComponentCanvasRenderer* renderer = (ComponentCanvasRenderer*)*iteratorUI;
@@ -75,6 +56,33 @@ void ModuleUI::DrawCanvas()
 			rend = renderer->GetDrawAvaiable();
 		}
 	}
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_LIGHTING);
+}
+
+void ModuleUI::DrawWorldCanvas()
+{
+	glDisable(GL_LIGHTING);
+	for (std::list<Component*>::iterator iteratorUI = componentsWorldRendererUI.begin(); iteratorUI != componentsWorldRendererUI.end(); ++iteratorUI)
+	{
+		ComponentCanvasRenderer* renderer = (ComponentCanvasRenderer*)*iteratorUI;
+		ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
+		while (rend != nullptr)
+		{
+			switch (rend->GetType())
+			{
+			case ComponentCanvasRenderer::RenderTypes::COLOR_VECTOR:
+				DrawUIColor((ComponentRectTransform*)renderer->GetParent()->GetComponent(ComponentTypes::RectTransformComponent), rend->GetColor());
+				break;
+			case ComponentCanvasRenderer::RenderTypes::TEXTURE:
+				DrawUITexture((ComponentRectTransform*)renderer->GetParent()->GetComponent(ComponentTypes::RectTransformComponent), rend->GetTexture());
+				break;
+			}
+
+			rend = renderer->GetDrawAvaiable();
+		}
+	}
+	glEnable(GL_LIGHTING);
 }
 
 bool ModuleUI::Init(JSON_Object * jObject)
@@ -175,10 +183,6 @@ void ModuleUI::initRenderData()
 
 void ModuleUI::DrawUIColor(ComponentRectTransform* rect, math::float4& color, float rotation)
 {
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
-	//glDisable(GL_TEXTURE_2D);
-	glDisable(GL_LIGHTING);
 
 	use(ui_shader);
 	SetRectToShader(rect);
@@ -190,21 +194,11 @@ void ModuleUI::DrawUIColor(ComponentRectTransform* rect, math::float4& color, fl
 
 	glBindVertexArray(0);
 
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	//glEnable(GL_TEXTURE_2D);
-	glEnable(GL_LIGHTING);
-
 	use(0);
 }
 
 void ModuleUI::DrawUITexture(ComponentRectTransform * rect, uint id_texture, float rotation)
 {
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
-	//glDisable(GL_TEXTURE_2D);
-	glDisable(GL_LIGHTING);
-
 	use(ui_shader);
 	SetRectToShader(rect);
 	setBool(ui_shader, "use_color", false);
@@ -218,11 +212,6 @@ void ModuleUI::DrawUITexture(ComponentRectTransform * rect, uint id_texture, flo
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glBindVertexArray(0);
-
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	//glEnable(GL_TEXTURE_2D);
-	glEnable(GL_LIGHTING);
 
 	use(0);
 }

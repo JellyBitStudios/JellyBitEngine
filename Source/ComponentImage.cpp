@@ -141,6 +141,7 @@ void ComponentImage::OnUniqueEditor()
 		float color_g = color[COLOR_G] * 255.f;
 		float color_b = color[COLOR_B] * 255.f;
 
+		ImGui::PushItemWidth(50.0f);
 		ImGui::Text("Color RGB with alpha");
 		if (ImGui::DragScalar("##ColorR", ImGuiDataType_Float, (void*)&color_r, 1.0f, &min, &max_color, "%1.f", 1.0f))
 			color[COLOR_R] = color_r / 255.f;

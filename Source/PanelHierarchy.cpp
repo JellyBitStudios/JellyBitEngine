@@ -202,8 +202,17 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 		{
 			if (ImGui::Selectable("Create Empty"))
 			{
-				GameObject* go = App->GOs->CreateGameObject("GameObjectCanvas", child, true);
-				go->AddComponent(ComponentTypes::RectTransformComponent);
+				GameObject* go = nullptr;
+				if (child->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::WORLD)
+				{
+					go->AddComponent(go->cmp_rectTransform = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::RECT_WORLD));
+					App->GOs->CreateGameObject("ChildScreenCanvas", child, true);
+				}
+				else
+				{
+					go->AddComponent(ComponentTypes::RectTransformComponent);
+					App->GOs->CreateGameObject("ChildWorldCanvas", child, true);
+				}
 				go->SetLayer(UILAYER);
 				ImGui::CloseCurrentPopup();
 			}
@@ -233,13 +242,6 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 					go->cmp_mesh->SetResource(App->resHandler->cube);
 					ImGui::CloseCurrentPopup();
 				}
-				if (ImGui::Selectable("Delete"))
-				{
-					if (child->EqualsToChildrenOrThis(App->scene->selectedObject.Get()))
-						App->scene->selectedObject = CurrentSelection::SelectedType::null;
-					App->GOs->DeleteGameObject(child);
-					ImGui::CloseCurrentPopup();
-				}
 				if (ImGui::Selectable("Create World Canvas"))
 				{
 					GameObject* go = App->GOs->CreateGameObject("WorldCanvas", child);
@@ -252,9 +254,10 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 			{
 				if (ImGui::Selectable("Create Empty"))
 				{
-					GameObject* go = App->GOs->CreateGameObject("ChildWorldCanvas", child);
+					GameObject* go = App->GOs->CreateGameObject("ChildWorldCanvas", child, true);
 					ComponentRectTransform* new_rect = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::RECT_WORLD);
 					go->AddComponent(go->cmp_rectTransform = new_rect);
+					go->SetLayer(UILAYER);
 					SELECT(go);
 				}
 			}
@@ -265,7 +268,13 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 			App->GOs->Instanciate(child, child->GetParent());
 			ImGui::CloseCurrentPopup();
 		}
-
+		if (ImGui::Selectable("Delete"))
+		{
+			if (child->EqualsToChildrenOrThis(App->scene->selectedObject.Get()))
+				App->scene->selectedObject = CurrentSelection::SelectedType::null;
+			App->GOs->DeleteGameObject(child);
+			ImGui::CloseCurrentPopup();
+		}
 		ImGui::EndPopup();
 	}
 }

@@ -94,7 +94,8 @@ private:
 	ComponentTransform* transformParent = nullptr;
 	math::float3 corners[4] = { math::float3::zero, math::float3::zero, math::float3::zero, math::float3::zero };
 	math::float3* parentCorners = nullptr;
-		
+	float z = 0.0f;
+
 	//True, references top-left. False, refernces bottom-right. For every point of rect.
 	bool use_margin = false;
 	uint anchor[4] = {0,0,0,0};
@@ -116,6 +117,8 @@ private:
 	virtual void OnInternalSave(char*& cursor);
 	virtual void OnInternalLoad(char*& cursor);
 	void OnUniqueEditor();
+
+	float GetZ() const;
 };
 
 #endif
