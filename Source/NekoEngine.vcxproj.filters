@@ -1854,6 +1854,9 @@
     <ClInclude Include="Shaders.h">
       <Filter>Sources\Containers</Filter>
     </ClInclude>
+    <ClInclude Include="Lights.h">
+      <Filter>Sources\Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ModuleInput.cpp">
@@ -2398,6 +2401,9 @@
     </ClCompile>
     <ClCompile Include="ModuleFBOManager.cpp">
       <Filter>Sources\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="Lights.cpp">
+      <Filter>Sources\Helpers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

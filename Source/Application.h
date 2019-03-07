@@ -117,6 +117,7 @@ public:
 	class ModuleAnimation*				animation;
 	class ModuleAudio*					audio;
 	class DebugDrawer*					debugDrawer;
+	class Lights*						lights;
 	class ModuleNavigation*				navigation;
 	class ModuleLayers*					layers;
 

@@ -22,7 +22,7 @@
     <ProjectGuid>{746CC4C3-787F-4B0E-AA66-E388FE3FF4F6}</ProjectGuid>
     <RootNamespace>SDLGame</RootNamespace>
     <ProjectName>NekoEngine</ProjectName>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -297,6 +297,7 @@
     <ClInclude Include="ComponentRectTransform.h" />
     <ClInclude Include="ComponentRevoluteJoint.h" />
     <ClInclude Include="ComponentSphericalJoint.h" />
+    <ClInclude Include="Lights.h" />
     <ClInclude Include="ModuleFBOManager.h" />
     <ClInclude Include="Freetype\freetype\config\ftheader.h" />
     <ClInclude Include="Freetype\ft2build.h" />
@@ -720,6 +721,7 @@
     <ClCompile Include="ComponentRectTransform.cpp" />
     <ClCompile Include="ComponentRevoluteJoint.cpp" />
     <ClCompile Include="ComponentSphericalJoint.cpp" />
+    <ClCompile Include="Lights.cpp" />
     <ClCompile Include="ModuleFBOManager.cpp" />
     <ClCompile Include="ModuleAnimation.cpp" />
     <ClCompile Include="ModuleAudio.cpp" />

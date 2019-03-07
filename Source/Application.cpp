@@ -29,6 +29,7 @@
 #include "ModuleLayers.h"
 #include "ModuleAudio.h"
 #include "ModuleLayers.h"
+#include "Lights.h"
 
 #include "parson\parson.h"
 #include "PCG\entropy.h"
@@ -61,6 +62,8 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	ui = new ModuleUI();
 	audio = new ModuleAudio();
 	layers = new ModuleLayers();
+
+	lights = new Lights();
 
 #ifndef GAMEMODE
 	camera = new ModuleCameraEditor();
@@ -119,7 +122,7 @@ Application::~Application()
 #ifndef GAMEMODE
 	RELEASE(raycaster);
 #endif
-
+	RELEASE(lights);
 	RELEASE(debugDrawer);
 	RELEASE(materialImporter);
 	RELEASE(boneImporter);

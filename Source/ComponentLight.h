@@ -17,10 +17,12 @@ public:
 	uint GetInternalSerializationBytes();
 	virtual void OnInternalSave(char*& cursor);
 	virtual void OnInternalLoad(char*& cursor);
-
+	float color[3];
 private:
+
 	LightTypes lightType = LightTypes::DirectionalLight;
 	int intensity = 1;
+
 };
 
 #endif
