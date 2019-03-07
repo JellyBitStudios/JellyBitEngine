@@ -3,6 +3,9 @@
 
 #include "Module.h"
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 class ModuleFreetype : public Module
 {
 
@@ -20,6 +23,9 @@ private:
 	FT_Error error;
 	FT_GlyphSlot slot;
 	FT_Matrix matrix;
+	FT_Vector pen;
+	float angle;
+	int num_chars;
 };
 
 #endif //__MODULE_FREETYPE_H__
