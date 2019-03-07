@@ -540,6 +540,11 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine.UI", "Image"));
 			break;
 		}
+		case ComponentTypes::RigidDynamicComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Rigidbody"));
+			break;
+		}
 	}
 
 	if (!monoComponent)
@@ -1629,6 +1634,19 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 			return nullptr;
 
 		Component* comp = gameObject->GetComponent(ComponentTypes::ImageComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
+	else if (className == "Rigidbody")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::RigidDynamicComponent);
 
 		if (!comp)
 			return nullptr;

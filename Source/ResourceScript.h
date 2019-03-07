@@ -77,6 +77,12 @@ public:
 	_MonoMethod* disableMethod = nullptr;
 	_MonoMethod* stopMethod = nullptr;
 	_MonoMethod* fixedUpdateMethod = nullptr;
+	_MonoMethod* OnCollisionEnterMethod = nullptr;
+	_MonoMethod* OnCollisionStayMethod = nullptr;
+	_MonoMethod* OnCollisionExitMethod = nullptr;
+	_MonoMethod* OnTriggerEnterMethod = nullptr;
+	_MonoMethod* OnTriggerStayMethod = nullptr;
+	_MonoMethod* OnTriggerExitMethod = nullptr;
 
 private:
 	static std::vector<std::string> scriptNames;
