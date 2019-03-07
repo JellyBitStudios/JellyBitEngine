@@ -97,14 +97,42 @@ bool ModuleFileSystem::Init(JSON_Object * data)
 bool ModuleFileSystem::Start()
 {
 #ifndef GAMEMODE
-	rootAssets = RecursiveGetFilesFromDir("Assets");
+	rootDir = RecursiveGetFilesFromDir("Assets");
 #else
 	rootAssets = RecursiveGetFilesFromDir("Library");
 #endif
 
+	ImportMainDir();
+
+#ifdef GAMEMODE
+	System_Event event;
+	event.type = System_Event_Type::LoadGMScene;
+	App->PushSystemEvent(event);
+#endif
+	
+
+#ifndef GAMEMODE
+	System_Event event;
+	event.type = System_Event_Type::DeleteUnusedFiles;
+	App->PushSystemEvent(event);
+#endif
+
+	return true;
+}
+
+bool ModuleFileSystem::CleanUp()
+{
+	DEPRECATED_LOG("Freeing File System subsystem");
+	PHYSFS_deinit();
+
+	return true;
+}
+
+void ModuleFileSystem::ImportMainDir()
+{
 	std::vector<std::string> lateEvents;
 	std::vector<std::string> lateLateEvents;
-	ImportFilesEvents(rootAssets, lateEvents, lateLateEvents);
+	ImportFilesEvents(rootDir, lateEvents, lateLateEvents);
 
 	for (int i = 0; i < lateEvents.size(); ++i)
 	{
@@ -131,29 +159,6 @@ bool ModuleFileSystem::Start()
 		strcpy(event.fileEvent.file, lateLateEvents[i].data());
 		App->PushSystemEvent(event);
 	}
-
-#ifdef GAMEMODE
-	System_Event event;
-	event.type = System_Event_Type::LoadGMScene;
-	App->PushSystemEvent(event);
-#endif
-	
-
-#ifndef GAMEMODE
-	System_Event event;
-	event.type = System_Event_Type::DeleteUnusedFiles;
-	App->PushSystemEvent(event);
-#endif
-
-	return true;
-}
-
-bool ModuleFileSystem::CleanUp()
-{
-	DEPRECATED_LOG("Freeing File System subsystem");
-	PHYSFS_deinit();
-
-	return true;
 }
 
 void ModuleFileSystem::OnSystemEvent(System_Event event)
@@ -706,10 +711,10 @@ void ModuleFileSystem::UpdateAssetsDir()
 {
 	Directory newAssetsDir = RecursiveGetFilesFromDir("Assets");
 
-	if (newAssetsDir != rootAssets)
+	if (newAssetsDir != rootDir)
 	{
 		SendEvents(newAssetsDir);
-		rootAssets = newAssetsDir;
+		rootDir = newAssetsDir;
 	}
 }
 
@@ -860,24 +865,34 @@ bool ModuleFileSystem::deleteFile(const std::string& filePath) const
 	return PHYSFS_delete(filePath.c_str()) != 0;
 }
 
-bool ModuleFileSystem::deleteFiles(const std::string& root, const std::string& extension) const
+bool ModuleFileSystem::deleteFiles(const std::string& root, const std::string& extension, bool deleteDir) const
 {
+	bool ret = true;
+
 	Directory directory = RecursiveGetFilesFromDir((char*)root.c_str());
 
 	for (int i = 0; i < directory.files.size(); ++i)
 	{
 		std::string fileExt; GetExtension(directory.files[i].name.data(), fileExt);
 
-		if (fileExt == extension)
-			PHYSFS_delete(std::string(directory.fullPath + "/" + directory.files[i].name).c_str());
+		if (extension.empty() || fileExt == extension)
+			ret = PHYSFS_delete(std::string(directory.fullPath + "/" + directory.files[i].name).c_str()) != 0;
+
+		if (ret)
+			PHYSFS_delete(directory.fullPath.data());
+		else
+			return false;
 	}
 
 	for (int i = 0; i < directory.directories.size(); ++i)
 	{
-		deleteFiles(directory.directories[i].fullPath, extension);
+		ret = deleteFiles(directory.directories[i].fullPath, extension, deleteDir);
+
+		if (ret == false)
+			return false;
 	}
 
-	return true;
+	return ret;
 }
 
 void ModuleFileSystem::SendEvents(const Directory& newAssetsDir)
@@ -890,12 +905,12 @@ void ModuleFileSystem::SendEvents(const Directory& newAssetsDir)
 	std::vector<std::string> newFullPaths;
 	std::vector<std::string> oldFullPaths;
 	newAssetsDir.getFullPaths(newFullPaths);
-	rootAssets.getFullPaths(oldFullPaths);
+	rootDir.getFullPaths(oldFullPaths);
 
 	//Get the file names, without the path, for each file contained in the directory
 	std::vector<File> newFiles;
 	std::vector<File> oldFiles;
-	rootAssets.getFiles(oldFiles);
+	rootDir.getFiles(oldFiles);
 	newAssetsDir.getFiles(newFiles);
 
 	//Check for deleted files

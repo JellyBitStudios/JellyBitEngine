@@ -277,6 +277,8 @@ public:
 	bool Start();
 	bool CleanUp();
 
+	void ImportMainDir();
+
 	void OnSystemEvent(System_Event event);
 
 	bool CreateDir(const char* dirName) const;
@@ -314,7 +316,7 @@ public:
 	bool CopyDirectoryAndContentsInto(const std::string& origin, const std::string& destination, bool keepRoot = true);
 	Directory RecursiveGetFilesFromDir(char* dir) const;
 	bool deleteFile(const std::string& filePath) const;
-	bool deleteFiles(const std::string& rootDirectory, const std::string& extension) const;
+	bool deleteFiles(const std::string& rootDirectory, const std::string& extension, bool deleteRoot = false) const;
 	void SendEvents(const Directory& newAssetsDir);
 
 	void ImportFilesEvents(const Directory& newDir, std::vector<std::string>& lateEvents = std::vector<std::string>(), std::vector<std::string>& lateLateEvents = std::vector<std::string>());
@@ -326,7 +328,7 @@ public:
 	bool SetWriteDir(std::string writeDir) const;
 
 public:
-	Directory rootAssets;
+	Directory rootDir;
 
 private:
 	float updateAssetsRate = 1.0f;	

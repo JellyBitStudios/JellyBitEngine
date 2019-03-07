@@ -39,7 +39,7 @@ bool PanelAssets::Draw()
 		{
 			App->scripting->CreateDomain();
 
-			App->fs->ForceReImport(App->fs->rootAssets);
+			App->fs->ForceReImport(App->fs->rootDir);
 
 			System_Event event;
 			event.type = System_Event_Type::DeleteUnusedFiles;
@@ -48,8 +48,21 @@ bool PanelAssets::Draw()
 
 		ImGui::SameLine();
 
-		if (ImGui::Button("Generate Library Files"))
+		if (ImGui::Button("Build"))
 		{
+			//1. Delete Library
+			//2. Export everything in Assets
+			//3. GenerateLibraryFiles event
+			//4. Copy library, the readme, the dlls, (Settings?) and AudioFolder (temp) to a new Build folder and make a zip with it.
+
+			//Delete library
+			bool ret = App->fs->deleteFiles("Library", "", true);
+			if (ret == false)
+				return false;
+
+			//Export everything in Assets
+			App->fs->ForceReImport(App->fs->rootDir);
+
 			System_Event newEvent;
 			newEvent.type = System_Event_Type::GenerateLibraryFiles;
 			App->PushSystemEvent(newEvent);
@@ -88,7 +101,7 @@ bool PanelAssets::Draw()
 
 		if (treeNodeOpened)
 		{
-			RecursiveDrawAssetsDir(App->fs->rootAssets);
+			RecursiveDrawAssetsDir(App->fs->rootDir);
 			ImGui::TreePop();
 		}
 	}
