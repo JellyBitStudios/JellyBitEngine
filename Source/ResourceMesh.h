@@ -112,9 +112,6 @@ public:
 
 private:
 
-	static bool ReadMeshesUuidsFromMeta(const char* metaFile, std::vector<uint>& meshesUuids);
-	static bool ReadMeshImportSettingsFromMeta(const char* metaFile, ResourceMeshImportSettings& meshImportSettings);
-
 	bool LoadInMemory();
 	bool UnloadFromMemory();
 

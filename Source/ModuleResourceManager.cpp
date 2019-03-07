@@ -1321,7 +1321,7 @@ Resource* ModuleResourceManager::GetResource(uint uuid) const
 
 	if (it != resources.end())
 		return it->second;
-
+	 
 	return nullptr;
 }
 
@@ -1354,7 +1354,7 @@ ResourceTypes ModuleResourceManager::GetResourceTypeByExtension(const char* exte
 {
 	union
 	{
-		char ext[4];
+		char ext[4] = { '.', 'a', 'v', 'a' };
 		uint32_t asciiValue;
 	} asciiUnion;
 

@@ -210,7 +210,8 @@ uint ResourceMaterial::CreateMeta(const char* file, uint materialUuid, std::stri
 		sizeof(uint) +
 		sizeof(uint) * uuidsSize +
 
-		sizeof(char) * nameSize;
+		sizeof(uint) + // name size
+		sizeof(char) * nameSize; // name
 
 	char* data = new char[size];
 	char* cursor = data;
@@ -340,7 +341,8 @@ uint ResourceMaterial::SetNameToMeta(const char* metaFile, const std::string& na
 		sizeof(uint) +
 		sizeof(uint) * uuidsSize +
 
-		sizeof(char) * nameSize;
+		sizeof(uint) + // name size
+		sizeof(char) * nameSize; // name
 
 	char* data = new char[size];
 	char* cursor = data;
