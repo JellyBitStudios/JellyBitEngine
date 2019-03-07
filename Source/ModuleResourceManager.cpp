@@ -24,6 +24,8 @@
 #include "ResourcePrefab.h"
 #include "ResourceMaterial.h"
 #include "ResourceScene.h"
+#include "ResourceAnimator.h"
+
 
 #include <assert.h>
 
@@ -680,6 +682,48 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 	}
 	break;
 
+	case ResourceTypes::AnimatorResource:
+	{
+		std::string outputFile;
+		std::string name;
+		if (ResourceAnimator::ImportFile(file, name, outputFile))
+		{
+			std::vector<uint> resourcesUuids;
+			if (!GetResourcesUuidsByFile(file, resourcesUuids))
+			{
+				// Create the resources
+				CONSOLE_LOG(LogTypes::Normal, "RESOURCE MANAGER: The animator file '%s' has resources that need to be created", file);
+
+				// 1. Animator
+				uint uuid = outputFile.empty() ? App->GenerateRandomNumber() : strtoul(outputFile.data(), NULL, 0);
+				assert(uuid > 0);
+				resourcesUuids.push_back(uuid);
+				resourcesUuids.shrink_to_fit();
+
+				ResourceData data;
+				ResourceAnimatorData animatorData;
+				data.file = file;
+				if (name.empty())
+					App->fs->GetFileName(file, data.name);
+				else
+					data.name = name.data();
+				ResourceAnimator::LoadFile(file, animatorData);
+
+				resource = CreateResource(ResourceTypes::AnimatorResource, data, &animatorData, uuid);
+			}
+			else
+				resource = GetResource(resourcesUuids.front());
+
+			// 2. Meta
+			// TODO: only create meta if any of its fields has been modificated
+			std::string outputMetaFile;
+			std::string name = resource->GetName();
+			int64_t lastModTime = ResourceAnimator::CreateMeta(file, resourcesUuids.front(), name, outputMetaFile);
+			assert(lastModTime > 0);
+		}
+	}
+	break;
+
 	case ResourceTypes::ScriptResource:
 	{
 		resource = App->scripting->ImportScriptResource(file);
@@ -1140,6 +1184,9 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 			break;
 		case ResourceTypes::AnimationResource:
 			resource = new ResourceAnimation(ResourceTypes::AnimationResource, uuid, data, *(ResourceAnimationData*)specificData);
+			break;
+		case ResourceTypes::AnimatorResource:
+			resource = new ResourceAnimator(ResourceTypes::AnimatorResource, uuid, data, *(ResourceAnimatorData*)specificData);
 			break;
 		case ResourceTypes::SceneResource:
 			resource = new ResourceScene(uuid, data, *(SceneData*)specificData);

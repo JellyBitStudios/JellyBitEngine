@@ -551,6 +551,11 @@ uint ModuleFileSystem::SaveInGame(char* buffer, uint size, FileTypes fileType, s
 			outputFile.insert(strlen(DIR_ASSETS_PREFAB), "/");
 			outputFile.append(EXTENSION_PREFAB);
 			break;
+		case FileTypes::AnimatorFile:
+			outputFile.insert(0, DIR_ASSETS_ANIMATOR);
+			outputFile.insert(strlen(DIR_ASSETS_ANIMATOR), "/");
+			outputFile.append(EXTENSION_ANIMATOR);
+			break;
 		case FileTypes::SceneFile:
 			outputFile.insert(0, DIR_ASSETS_SCENES);
 			outputFile.insert(strlen(DIR_ASSETS_SCENES), "/");
