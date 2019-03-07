@@ -8,6 +8,7 @@
 #include "ModuleWindow.h"
 #include "ModuleCameraEditor.h"
 #include "ModuleInput.h"
+#include "ModuleScene.h"
 
 #include "GameObject.h"
 
@@ -151,6 +152,16 @@ bool ModuleUI::CleanUp()
 
 void ModuleUI::OnSystemEvent(System_Event event)
 {
+	if (event.type == System_Event_Type::LoadFinished)
+	{
+		std::vector<GameObject*> children;
+		App->scene->root->GetChildrenVector(children);
+		for each (GameObject* child in children)
+			if (std::strcmp(child->GetName(), "Canvas") == 0)
+				App->GOs->SetCanvas(child);
+
+		LinkAllRectsTransform();
+	}
 }
 
 void ModuleUI::initRenderData()

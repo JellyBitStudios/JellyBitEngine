@@ -119,6 +119,8 @@ private:
 	void OnUniqueEditor();
 
 	float GetZ() const;
+
+	void LinkToUIModule();
 };
 
 #endif

@@ -223,6 +223,8 @@ void ComponentButton::OnInternalLoad(char *& cursor)
 	tempBuffer = new char[bytesOnClick];
 	memcpy(tempBuffer, cursor, bytesOnClick);
 	cursor += bytesOnClick;
+
+	LinkToUIModule();
 }
 
 void ComponentButton::OnLoadOnClick(char*& tempBuffer)
@@ -460,6 +462,11 @@ bool ComponentButton::MouseInScreen(const uint* rect) const
 
 	return mouseX > rect[ComponentRectTransform::Rect::X] && mouseX < rect[ComponentRectTransform::Rect::X] + rect[ComponentRectTransform::Rect::XDIST]
 		&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST];
+}
+
+void ComponentButton::LinkToUIModule()
+{
+	App->ui->componentsUI.push_back(this);
 }
 
 void ComponentButton::SetNewKey(const char * key)

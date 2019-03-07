@@ -122,6 +122,7 @@ void ComponentImage::OnInternalLoad(char *& cursor)
 
 		App->res->SetAsUsed(res_image);
 	}
+	LinkToUIModule();
 }
 
 void ComponentImage::OnUniqueEditor()
@@ -181,4 +182,10 @@ void ComponentImage::OnUniqueEditor()
 		}
 	}
 #endif
+}
+
+void ComponentImage::LinkToUIModule()
+{
+	App->ui->componentsUI.push_back(this);
+
 }

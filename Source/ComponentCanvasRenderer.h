@@ -65,6 +65,8 @@ private:
 	void OnInternalLoad(char*& cursor);
 	void OnUniqueEditor();
 
+	void LinkToUIModule();
+
 	std::vector<ToUIRend* > rend_queue;
 
 	bool fromWorld = false;

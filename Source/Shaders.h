@@ -235,16 +235,34 @@
 "{\n" \
 "	vec3 position = topRight;\n" \
 "	if (vertex.x > 0.0 && vertex.y > 0.0)\n" \
+"	{\n" \
 "		position = topRight;\n" \
+"		if (isScreen == 0)\n" \
+"			TexCoords = vec2(0.0, 1.0);\n" \
+"	}"\
 "	else if (vertex.x > 0.0 && vertex.y < 0.0)\n" \
+"	{\n" \
 "		position = bottomRight;\n" \
+"		if (isScreen == 0)\n" \
+"			TexCoords = vec2(0.0,0.0);\n" \
+"	}"\
 "	else if (vertex.x < 0.0 && vertex.y > 0.0)\n" \
+"	{\n" \
 "		position = topLeft;\n" \
+"		if (isScreen == 0)\n" \
+"			TexCoords = vec2(1.0,1.0);\n" \
+"	}"\
 "	else if (vertex.x < 0.0 && vertex.y < 0.0)\n" \
+"	{\n" \
 "		position = bottomLeft;\n" \
-"	TexCoords = texture_coords;\n" \
+"		if (isScreen == 0)\n" \
+"			TexCoords = vec2(1.0,0.0);\n" \
+"	}"\
 "	if(isScreen == 1)\n"\
+"	{\n" \
 "		gl_Position = vec4(position, 1.0);\n" \
+"		TexCoords = texture_coords;\n" \
+"	}"\
 "	else\n"\
 "		gl_Position = mvp_matrix * vec4(position, 1.0);\n" \
 "}"

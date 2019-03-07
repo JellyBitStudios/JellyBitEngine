@@ -30,7 +30,9 @@ ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTyp
 
 ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & componentRectTransform, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::RectTransformComponent)
 {
-	if (!includeComponents)
+	rFrom = componentRectTransform.rFrom;
+
+	if (includeComponents)
 	{
 		if (rFrom == RectFrom::WORLD)
 		{
@@ -45,8 +47,6 @@ ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & co
 	memcpy(anchor, componentRectTransform.anchor, sizeof(uint) * 4);
 	memcpy(anchor_flags, componentRectTransform.anchor_flags, sizeof(bool) * 4);
 	use_margin = componentRectTransform.use_margin;
-
-	rFrom = componentRectTransform.rFrom;
 
 	CheckParentRect();
 }
@@ -263,7 +263,6 @@ void ComponentRectTransform::CalculateCornersFromRect()
 	corners[Rect::RTOPLEFT].z -= z;
 	corners[Rect::RBOTTOMLEFT].z -= z;
 	corners[Rect::RBOTTOMRIGHT].z -= z;
-	
 }
 
 void ComponentRectTransform::RecaculateAnchors()
@@ -421,6 +420,8 @@ void ComponentRectTransform::OnInternalLoad(char *& cursor)
 	bytes = sizeof(RectFrom);
 	memcpy(&rFrom, cursor, bytes);
 	cursor += bytes;
+
+	LinkToUIModule();
 }
 
 void ComponentRectTransform::OnUniqueEditor()
@@ -646,4 +647,15 @@ void ComponentRectTransform::OnUniqueEditor()
 float ComponentRectTransform::GetZ() const
 {
 	return z;
+}
+
+void ComponentRectTransform::LinkToUIModule()
+{
+	if (rFrom == RectFrom::WORLD)
+	{
+		App->ui->componentsWorldUI.push_back(this);
+		App->ui->GOsWorldCanvas.push_back(parent);
+	}
+	else
+		App->ui->componentsUI.push_back(this);
 }

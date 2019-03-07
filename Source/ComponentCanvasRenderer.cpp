@@ -108,6 +108,7 @@ void ComponentCanvasRenderer::OnInternalSave(char *& cursor)
 
 void ComponentCanvasRenderer::OnInternalLoad(char *& cursor)
 {
+	LinkToUIModule();
 }
 
 void ComponentCanvasRenderer::OnUniqueEditor()
@@ -115,6 +116,20 @@ void ComponentCanvasRenderer::OnUniqueEditor()
 #ifndef GAMEMODE
 	ImGui::Text("Canvas Renderer");
 #endif
+}
+
+void ComponentCanvasRenderer::LinkToUIModule()
+{
+	if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
+		App->ui->componentsScreenRendererUI.push_back(this);
+	else
+	{
+		App->ui->componentsWorldRendererUI.push_back(this);
+		fromWorld = true;
+	}
+
+	rend_queue.push_back(new ToUIRend());
+	rend_queue.push_back(new ToUIRend());
 }
 
 //Rend Queue Struct
