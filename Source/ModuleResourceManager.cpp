@@ -23,6 +23,7 @@
 #include "ResourceScript.h"
 #include "ResourcePrefab.h"
 #include "ResourceMaterial.h"
+#include "ResourceScene.h"
 
 #include <assert.h>
 
@@ -692,6 +693,13 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 		break;
 	}
 
+	case ResourceTypes::SceneResource:
+	{
+		resource = ResourceScene::ImportFile(file);
+		resources[resource->GetUuid()] = resource;
+		break;
+	}
+
 	case ResourceTypes::BoneResource:
 	{
 		std::string outputFile;
@@ -825,6 +833,8 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		ResourceData data;
 		ResourceTextureData textureData;
 		data.exportedFile = file;
+
+		App->materialImporter->Load(file, data, textureData);
 
 		// Search for the meta associated to the file
 		char metaFile[DEFAULT_BUF_SIZE];
@@ -962,6 +972,13 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 	case ResourceTypes::PrefabResource:
 	{
 		resource = ResourcePrefab::ImportFile(file);
+		resources[resource->GetUuid()] = resource;
+	}
+	break;
+
+	case ResourceTypes::SceneResource:
+	{
+		resource = ResourceScene::ImportFile(file);
 		resources[resource->GetUuid()] = resource;
 	}
 	break;
@@ -1124,6 +1141,8 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 		case ResourceTypes::AnimationResource:
 			resource = new ResourceAnimation(ResourceTypes::AnimationResource, uuid, data, *(ResourceAnimationData*)specificData);
 			break;
+		case ResourceTypes::SceneResource:
+			resource = new ResourceScene(uuid, data, *(SceneData*)specificData);
 	}
 
 	assert(resource != nullptr);
@@ -1239,12 +1258,13 @@ void ModuleResourceManager::RecursiveDeleteUnusedEntries(const char* dir, std::s
 			std::string extension;
 			App->fs->GetExtension(*it, extension);
 			if (strcmp(extension.data(), EXTENSION_SCRIPT) == 0)
-				continue;
-			ResourceTypes type = GetResourceTypeByExtension(extension.data());
+			{
+				uint found = path.rfind(*it);
+				if (found != std::string::npos)
+					path = path.substr(0, found);
 
-			//TODO: INSPECT WHY THIS ERROR HAPPENS
-			if (type == ResourceTypes::NoResourceType)
 				continue;
+			}
 
 			uint resourceUuid = 0;
 			if (!GetResourceUuidByExportedFile(path.data(), resourceUuid))
@@ -1372,8 +1392,10 @@ ResourceTypes ModuleResourceManager::GetResourceTypeByExtension(const char* exte
 	case ASCIIpfb: case ASCIIPFB:
 		return ResourceTypes::PrefabResource;
 		break;
+	case ASCIISCN: case ASCIIscn:
+		return ResourceTypes::SceneResource;
 	}
-
+	
 	return ResourceTypes::NoResourceType;
 }
 
@@ -1399,6 +1421,8 @@ ResourceTypes ModuleResourceManager::GetLibraryResourceTypeByExtension(const cha
 		return ResourceTypes::ScriptResource;
 	else if (strcmp(extension, EXTENSION_PREFAB) == 0)
 		return ResourceTypes::PrefabResource;
+	else if (strcmp(extension, EXTENSION_SCENE) == 0)
+		return ResourceTypes::SceneResource;
 
 	return ResourceTypes::NoResourceType;
 }

@@ -1854,6 +1854,12 @@
     <ClInclude Include="Shaders.h">
       <Filter>Sources\Containers</Filter>
     </ClInclude>
+    <ClInclude Include="ResourceScene.h">
+      <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceAnimator.h">
+      <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ModuleInput.cpp">
@@ -2398,6 +2404,12 @@
     </ClCompile>
     <ClCompile Include="ModuleFBOManager.cpp">
       <Filter>Sources\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceScene.cpp">
+      <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceAnimator.cpp">
+      <Filter>Sources\Modules\Resources\Types</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

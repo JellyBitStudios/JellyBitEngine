@@ -275,6 +275,427 @@ void ComponentScript::OnStop()
 	}
 }
 
+void ComponentScript::FixedUpdate()
+{
+	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
+	if (scriptRes && scriptRes->fixedUpdateMethod)
+	{
+		MonoObject* exc = nullptr;
+		if (IsTreeActive())
+		{
+			mono_runtime_invoke(scriptRes->fixedUpdateMethod, classInstance, NULL, &exc);
+			if (exc)
+			{
+				System_Event event;
+				event.type = System_Event_Type::Pause;
+				App->PushSystemEvent(event);
+				App->Pause();
+
+				MonoString* exceptionMessage = mono_object_to_string(exc, NULL);
+				char* toLogMessage = mono_string_to_utf8(exceptionMessage);
+				CONSOLE_LOG(LogTypes::Error, toLogMessage);
+				mono_free(toLogMessage);
+			}
+		}
+	}
+}
+
+void ComponentScript::OnCollisionEnter(Collision& collision)
+{
+	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
+	if (scriptRes && scriptRes->OnCollisionEnterMethod)
+	{
+		MonoObject* exc = nullptr;
+		if (IsTreeActive())
+		{
+			//Set the collision object
+			MonoClass* collisionClass = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Collision");
+			MonoObject* collisionOBJ = mono_object_new(App->scripting->domain, collisionClass);
+			mono_runtime_object_init(collisionOBJ);
+
+			//Set the gameObject
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "gameObject"), App->scripting->MonoObjectFrom(collision.GetGameObject()));
+
+			//Set the collider
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "collider"), App->scripting->MonoComponentFrom((Component*)collision.GetCollider()));
+			
+			//Set the impulse
+			MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
+			MonoObject* impulseOBJ = mono_object_new(App->scripting->domain, vector3Class);
+			mono_runtime_object_init(impulseOBJ);
+
+			math::float3 impulse = collision.GetImpulse();
+			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &impulse.x);
+			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &impulse.y);
+			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &impulse.z);
+
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "impulse"), impulseOBJ);
+
+			//TODO: RELATIVE VELOCITY?
+
+			//Set the contacts
+			std::vector<ContactPoint> contacts = collision.GetContactPoints();
+			float numContacts = contacts.size();
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "contactCount"), &numContacts);
+
+			MonoClass* ContactPointClass = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "ContactPoint");
+			MonoArray* contactArray = mono_array_new(App->scripting->domain, ContactPointClass, numContacts);
+
+			for (int i = 0; i < numContacts; ++i)
+			{
+				ContactPoint contact = contacts[i];
+				MonoObject* contactOBJ = mono_object_new(App->scripting->domain, ContactPointClass);
+				mono_runtime_object_init(contactOBJ);
+
+				//Set normal
+				math::float3 normal = contact.GetNormal();
+				MonoObject* normalOBJ = mono_object_new(App->scripting->domain, vector3Class);
+				mono_runtime_object_init(normalOBJ);
+				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &normal.x);
+				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &normal.y);
+				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &normal.z);
+				
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "normal"), normalOBJ);
+
+				//Set other collider
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "otherCollider"), App->scripting->MonoComponentFrom((Component*)collision.GetCollider()));
+
+				//Set point
+				math::float3 point = contact.GetPoint();
+				MonoObject* pointOBJ = mono_object_new(App->scripting->domain, vector3Class);
+				mono_runtime_object_init(pointOBJ);
+				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &point.x);
+				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &point.y);
+				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &point.z);
+
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "point"), pointOBJ);
+
+				//Set separation
+				float separation = contact.GetSeparation();
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "separation"), &separation);
+
+				//TODO: SET THIS COLLIDER
+				//mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "thisCollider"), App->scripting->MonoComponentFrom((Component*)collision.GetThiCollider()));
+
+				mono_array_setref(contactArray, i, contactOBJ);
+			}
+
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "contacts"), contactArray);
+
+			void* params[1];
+			params[0] = collisionOBJ;
+
+			mono_runtime_invoke(scriptRes->OnCollisionEnterMethod, classInstance, params, &exc);
+			if (exc)
+			{
+				System_Event event;
+				event.type = System_Event_Type::Pause;
+				App->PushSystemEvent(event);
+				App->Pause();
+
+				MonoString* exceptionMessage = mono_object_to_string(exc, NULL);
+				char* toLogMessage = mono_string_to_utf8(exceptionMessage);
+				CONSOLE_LOG(LogTypes::Error, toLogMessage);
+				mono_free(toLogMessage);
+			}
+		}
+	}
+}
+
+void ComponentScript::OnCollisionStay(Collision& collision)
+{
+	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
+	if (scriptRes && scriptRes->OnCollisionStayMethod)
+	{
+		MonoObject* exc = nullptr;
+		if (IsTreeActive())
+		{
+			//Set the collision object
+			MonoClass* collisionClass = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Collision");
+			MonoObject* collisionOBJ = mono_object_new(App->scripting->domain, collisionClass);
+			mono_runtime_object_init(collisionOBJ);
+
+			//Set the gameObject
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "gameObject"), App->scripting->MonoObjectFrom(collision.GetGameObject()));
+
+			//Set the collider
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "collider"), App->scripting->MonoComponentFrom((Component*)collision.GetCollider()));
+
+			//Set the impulse
+			MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
+			MonoObject* impulseOBJ = mono_object_new(App->scripting->domain, vector3Class);
+			mono_runtime_object_init(impulseOBJ);
+
+			math::float3 impulse = collision.GetImpulse();
+			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &impulse.x);
+			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &impulse.y);
+			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &impulse.z);
+
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "impulse"), impulseOBJ);
+
+			//TODO: RELATIVE VELOCITY?
+
+			//Set the contacts
+			std::vector<ContactPoint> contacts = collision.GetContactPoints();
+			float numContacts = contacts.size();
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "contactCount"), &numContacts);
+
+			MonoClass* ContactPointClass = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "ContactPoint");
+			MonoArray* contactArray = mono_array_new(App->scripting->domain, ContactPointClass, numContacts);
+
+			for (int i = 0; i < numContacts; ++i)
+			{
+				ContactPoint contact = contacts[i];
+				MonoObject* contactOBJ = mono_object_new(App->scripting->domain, ContactPointClass);
+				mono_runtime_object_init(contactOBJ);
+
+				//Set normal
+				math::float3 normal = contact.GetNormal();
+				MonoObject* normalOBJ = mono_object_new(App->scripting->domain, vector3Class);
+				mono_runtime_object_init(normalOBJ);
+				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &normal.x);
+				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &normal.y);
+				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &normal.z);
+
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "normal"), normalOBJ);
+
+				//Set other collider
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "otherCollider"), App->scripting->MonoComponentFrom((Component*)collision.GetCollider()));
+
+				//Set point
+				math::float3 point = contact.GetPoint();
+				MonoObject* pointOBJ = mono_object_new(App->scripting->domain, vector3Class);
+				mono_runtime_object_init(pointOBJ);
+				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &point.x);
+				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &point.y);
+				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &point.z);
+
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "point"), pointOBJ);
+
+				//Set separation
+				float separation = contact.GetSeparation();
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "separation"), &separation);
+
+				//TODO: SET THIS COLLIDER
+				//mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "thisCollider"), App->scripting->MonoComponentFrom((Component*)collision.GetThiCollider()));
+
+				mono_array_setref(contactArray, i, contactOBJ);
+			}
+
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "contacts"), contactArray);
+
+			void* params[1];
+			params[0] = collisionOBJ;
+
+			mono_runtime_invoke(scriptRes->OnCollisionStayMethod, classInstance, NULL, &exc);
+			if (exc)
+			{
+				System_Event event;
+				event.type = System_Event_Type::Pause;
+				App->PushSystemEvent(event);
+				App->Pause();
+
+				MonoString* exceptionMessage = mono_object_to_string(exc, NULL);
+				char* toLogMessage = mono_string_to_utf8(exceptionMessage);
+				CONSOLE_LOG(LogTypes::Error, toLogMessage);
+				mono_free(toLogMessage);
+			}
+		}
+	}
+}
+
+void ComponentScript::OnCollisionExit(Collision& collision)
+{
+	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
+	if (scriptRes && scriptRes->OnCollisionExitMethod)
+	{
+		MonoObject* exc = nullptr;
+		if (IsTreeActive())
+		{
+			//Set the collision object
+			MonoClass* collisionClass = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Collision");
+			MonoObject* collisionOBJ = mono_object_new(App->scripting->domain, collisionClass);
+			mono_runtime_object_init(collisionOBJ);
+
+			//Set the gameObject
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "gameObject"), App->scripting->MonoObjectFrom(collision.GetGameObject()));
+
+			//Set the collider
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "collider"), App->scripting->MonoComponentFrom((Component*)collision.GetCollider()));
+
+			//Set the impulse
+			MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
+			MonoObject* impulseOBJ = mono_object_new(App->scripting->domain, vector3Class);
+			mono_runtime_object_init(impulseOBJ);
+
+			math::float3 impulse = collision.GetImpulse();
+			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &impulse.x);
+			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &impulse.y);
+			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &impulse.z);
+
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "impulse"), impulseOBJ);
+
+			//TODO: RELATIVE VELOCITY?
+
+			//Set the contacts
+			std::vector<ContactPoint> contacts = collision.GetContactPoints();
+			float numContacts = contacts.size();
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "contactCount"), &numContacts);
+
+			MonoClass* ContactPointClass = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "ContactPoint");
+			MonoArray* contactArray = mono_array_new(App->scripting->domain, ContactPointClass, numContacts);
+
+			for (int i = 0; i < numContacts; ++i)
+			{
+				ContactPoint contact = contacts[i];
+				MonoObject* contactOBJ = mono_object_new(App->scripting->domain, ContactPointClass);
+				mono_runtime_object_init(contactOBJ);
+
+				//Set normal
+				math::float3 normal = contact.GetNormal();
+				MonoObject* normalOBJ = mono_object_new(App->scripting->domain, vector3Class);
+				mono_runtime_object_init(normalOBJ);
+				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &normal.x);
+				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &normal.y);
+				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &normal.z);
+
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "normal"), normalOBJ);
+
+				//Set other collider
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "otherCollider"), App->scripting->MonoComponentFrom((Component*)collision.GetCollider()));
+
+				//Set point
+				math::float3 point = contact.GetPoint();
+				MonoObject* pointOBJ = mono_object_new(App->scripting->domain, vector3Class);
+				mono_runtime_object_init(pointOBJ);
+				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &point.x);
+				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &point.y);
+				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &point.z);
+
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "point"), pointOBJ);
+
+				//Set separation
+				float separation = contact.GetSeparation();
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "separation"), &separation);
+
+				//TODO: SET THIS COLLIDER
+				//mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "thisCollider"), App->scripting->MonoComponentFrom((Component*)collision.GetThiCollider()));
+
+				mono_array_setref(contactArray, i, contactOBJ);
+			}
+
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "contacts"), contactArray);
+
+			void* params[1];
+			params[0] = collisionOBJ;
+
+			mono_runtime_invoke(scriptRes->OnCollisionExitMethod, classInstance, NULL, &exc);
+			if (exc)
+			{
+				System_Event event;
+				event.type = System_Event_Type::Pause;
+				App->PushSystemEvent(event);
+				App->Pause();
+
+				MonoString* exceptionMessage = mono_object_to_string(exc, NULL);
+				char* toLogMessage = mono_string_to_utf8(exceptionMessage);
+				CONSOLE_LOG(LogTypes::Error, toLogMessage);
+				mono_free(toLogMessage);
+			}
+		}
+	}
+}
+
+void ComponentScript::OnTriggerEnter(Collision& collision)
+{
+	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
+	if (scriptRes && scriptRes->OnTriggerEnterMethod)
+	{
+		MonoObject* exc = nullptr;
+		if (IsTreeActive())
+		{
+			MonoObject* collider = App->scripting->MonoComponentFrom((Component*)collision.GetCollider());
+
+			void* args[1];
+			args[0] = collider;
+
+			mono_runtime_invoke(scriptRes->OnTriggerEnterMethod, classInstance, args, &exc);
+			if (exc)
+			{
+				System_Event event;
+				event.type = System_Event_Type::Pause;
+				App->PushSystemEvent(event);
+				App->Pause();
+
+				MonoString* exceptionMessage = mono_object_to_string(exc, NULL);
+				char* toLogMessage = mono_string_to_utf8(exceptionMessage);
+				CONSOLE_LOG(LogTypes::Error, toLogMessage);
+				mono_free(toLogMessage);
+			}
+		}
+	}
+}
+
+void ComponentScript::OnTriggerStay(Collision& collision)
+{
+	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
+	if (scriptRes && scriptRes->OnTriggerStayMethod)
+	{
+		MonoObject* exc = nullptr;
+		if (IsTreeActive())
+		{
+			MonoObject* collider = App->scripting->MonoComponentFrom((Component*)collision.GetCollider());
+
+			void* args[1];
+			args[0] = collider;
+
+			mono_runtime_invoke(scriptRes->OnTriggerStayMethod, classInstance, args, &exc);
+			if (exc)
+			{
+				System_Event event;
+				event.type = System_Event_Type::Pause;
+				App->PushSystemEvent(event);
+				App->Pause();
+
+				MonoString* exceptionMessage = mono_object_to_string(exc, NULL);
+				char* toLogMessage = mono_string_to_utf8(exceptionMessage);
+				CONSOLE_LOG(LogTypes::Error, toLogMessage);
+				mono_free(toLogMessage);
+			}
+		}
+	}
+}
+
+void ComponentScript::OnTriggerExit(Collision& collision)
+{
+	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
+	if (scriptRes && scriptRes->OnTriggerExitMethod)
+	{
+		MonoObject* exc = nullptr;
+		if (IsTreeActive())
+		{
+			MonoObject* collider = App->scripting->MonoComponentFrom((Component*)collision.GetCollider());
+
+			void* args[1];
+			args[0] = collider;
+
+			mono_runtime_invoke(scriptRes->OnTriggerExitMethod, classInstance, args, &exc);
+			if (exc)
+			{
+				System_Event event;
+				event.type = System_Event_Type::Pause;
+				App->PushSystemEvent(event);
+				App->Pause();
+
+				MonoString* exceptionMessage = mono_object_to_string(exc, NULL);
+				char* toLogMessage = mono_string_to_utf8(exceptionMessage);
+				CONSOLE_LOG(LogTypes::Error, toLogMessage);
+				mono_free(toLogMessage);
+			}
+		}
+	}
+}
+
 void ComponentScript::OnEnable()
 {
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
