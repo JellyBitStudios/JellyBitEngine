@@ -215,9 +215,6 @@ update_status ModulePhysics::Update()
 		{
 			gAccumulator = 0.0f;
 
-			//Call the FixedUpdate in all the active scripts
-			App->scripting->FixedUpdate();
-
 			updateStatus = FixedUpdate();
 
 			gScene->simulate(PhysicsConstants::FIXED_DT); // moves all objects in the scene forward by FIXED_DT
@@ -249,6 +246,9 @@ update_status ModulePhysics::FixedUpdate()
 	if (App->gui->WantTextInput() || App->gui->IsMouseHoveringAnyWindow())
 		return UPDATE_CONTINUE;
 #endif
+
+	//Call the FixedUpdate in all the active scripts
+	App->scripting->FixedUpdate();
 
 	//Debug();
 	DestroyChest();
