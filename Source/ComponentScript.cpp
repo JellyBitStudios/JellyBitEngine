@@ -614,7 +614,12 @@ void ComponentScript::OnTriggerEnter(Collision& collision)
 		MonoObject* exc = nullptr;
 		if (IsTreeActive())
 		{
-			mono_runtime_invoke(scriptRes->OnTriggerEnterMethod, classInstance, NULL, &exc);
+			MonoObject* collider = App->scripting->MonoComponentFrom((Component*)collision.GetCollider());
+
+			void* args[1];
+			args[0] = collider;
+
+			mono_runtime_invoke(scriptRes->OnTriggerEnterMethod, classInstance, args, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -639,7 +644,12 @@ void ComponentScript::OnTriggerStay(Collision& collision)
 		MonoObject* exc = nullptr;
 		if (IsTreeActive())
 		{
-			mono_runtime_invoke(scriptRes->OnTriggerStayMethod, classInstance, NULL, &exc);
+			MonoObject* collider = App->scripting->MonoComponentFrom((Component*)collision.GetCollider());
+
+			void* args[1];
+			args[0] = collider;
+
+			mono_runtime_invoke(scriptRes->OnTriggerStayMethod, classInstance, args, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -664,7 +674,12 @@ void ComponentScript::OnTriggerExit(Collision& collision)
 		MonoObject* exc = nullptr;
 		if (IsTreeActive())
 		{
-			mono_runtime_invoke(scriptRes->OnTriggerExitMethod, classInstance, NULL, &exc);
+			MonoObject* collider = App->scripting->MonoComponentFrom((Component*)collision.GetCollider());
+
+			void* args[1];
+			args[0] = collider;
+
+			mono_runtime_invoke(scriptRes->OnTriggerExitMethod, classInstance, args, &exc);
 			if (exc)
 			{
 				System_Event event;
