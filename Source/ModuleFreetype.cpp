@@ -1,8 +1,7 @@
 #include "ModuleFreetype.h"
+#include "Application.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
+#include "SDL/include/SDL_opengl.h"
 
 #pragma comment(lib, "Freetype/libx86/freetype.lib")
 
@@ -16,59 +15,67 @@ ModuleFreetype::~ModuleFreetype()
 
 }
 
-bool ModuleFreetype::Start() {
+bool ModuleFreetype::Init(JSON_Object* jObject)
+{
+	if(FT_Init_FreeType(&library))
+		CONSOLE_LOG(LogTypes::Error, "Error when it's initialization FreeType");
 
-	FT_Init_FreeType(&library);
-
-	error = FT_New_Face(library, "../Game/Assets/Textures/Font/ariali.ttf", 0, &face);
-	
-	if (error > 0)
-	{
-		CONSOLE_LOG(LogTypes::Error, "The font file could be opened and read, but this format is unsupported");
-	}
-	else if (error == 0)
-	{
-		CONSOLE_LOG(LogTypes::Normal, "FLOAT");
-	}
-	
 	return true;
 }
+
+bool ModuleFreetype::Start() {
+	LoadFont("../Game/Assets/Textures/Font/ariali.ttf",16);
+	return true;
+}
+
 update_status ModuleFreetype::Update()
 {
-
-	slot = face->glyph;
-
-	/* set up matrix */
-	matrix.xx = (FT_Fixed)(cos(angle) * 0x10000L);
-	matrix.xy = (FT_Fixed)(-sin(angle) * 0x10000L);
-	matrix.yx = (FT_Fixed)(sin(angle) * 0x10000L);
-	matrix.yy = (FT_Fixed)(cos(angle) * 0x10000L);
-
-	/* the pen position in 26.6 cartesian space coordinates; */
-	/* start at (300,200) relative to the upper left corner  */
-	pen.x = 300 * 64;
-	pen.y = (64 - 200) * 64;
-	char* text;
-	for (int n = 0; n < num_chars; n++)
-	{
-		/* set transformation */
-		FT_Set_Transform(face, &matrix, &pen);
-
-		/* load glyph image into the slot (erase previous one) */
-		error = FT_Load_Char(face, text[n], FT_LOAD_RENDER);
-		if (error)
-			continue;                 /* ignore errors */
-
-									  /* now, draw to our target surface (convert position) */
-		/*draw_bitmap(&slot->bitmap,
-			slot->bitmap_left,
-			target_height - slot->bitmap_top);*/
-
-		/* increment pen position */
-		pen.x += slot->advance.x;
-		pen.y += slot->advance.y;
-	}
-	
 	return UPDATE_CONTINUE;
+}
+void ModuleFreetype::LoadFont(const char* path, int size)
+{
+	if (FT_New_Face(library, path, 0, &face))
+	{
+		CONSOLE_LOG(LogTypes::Error, "The font file couldn't be opened, read or this format is unsupported");
+	}
+
+	else
+	{
+		FT_Set_Pixel_Sizes(face, 0, size);
+
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
+
+		for (uint c = 0; c < 128; c++)
+		{
+			// Load character glyph 
+			if (FT_Load_Char(face, c, FT_LOAD_RENDER))
+			{
+				CONSOLE_LOG(LogTypes::Error, "Failed to load Glyph from Freetype");
+				continue;
+			}
+			// Generate texture
+			GLuint texture;
+			glGenTextures(1, &texture);
+			glBindTexture(GL_TEXTURE_2D, texture);
+			glTexImage2D(GL_TEXTURE_2D,0,GL_RED,face->glyph->bitmap.width,face->glyph->bitmap.rows,0,GL_RED,GL_UNSIGNED_BYTE,face->glyph->bitmap.buffer);
+
+			// Set texture options
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			// Now store character for later use
+			Character character = {
+				texture,
+				math::float2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+				math::float2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+				face->glyph->advance.x
+			};
+			charactersBitmap.insert(std::pair<char, Character>(c, character));
+		}
+		FT_Done_Face(face);
+		FT_Done_FreeType(library);
+	}
 }
 
