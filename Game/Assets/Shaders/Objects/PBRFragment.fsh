@@ -76,6 +76,56 @@ float CalculateReflectance()
     float cosTheta = dot(lightDir, fNormal);
 }
 
+// Approximates the relative surface area of microfacets exactly aligned to the halfway vector
+// n: surface normal
+// h: halfway vector
+// a: surface's roughness
+float DistributionTrowbridgeReitzGGX(vec3 n, vec3 h, float a)
+{
+    float a2 = a * a;
+    float nhDot = max(0.0, dot(n, h));
+    float nhDot2 = nhDot * nhDot;
+    
+    float nom = a2;
+    float denom = nhDot2 * (a2 - 1.0) + 1.0;
+    denom = PI * denom * denom;
+    
+    return nom / denom;
+}
+
+// Approximates the relative surface area where its micro surface-details overSHADOW each other causing light rays to be occluded
+float GeometrySchlickGGX(float nvdot, float k)
+{
+    float nom = nvDot;
+    float denom = nvDot * (1.0 - k) + k;
+    
+    return nom / denom;
+}
+
+// n: surface normal
+// v: view direction (geometry obstruction)
+// l: light direction (geometry shadowing)
+// k: remapping of a
+float GeometrySmith(vec3 n, vec3 v, vec3 l, float k)
+{
+    float nvDot = max(0.0, dot(n, v));
+    float nlDot = max(0.0, dot(n, l));
+    
+    float ggx1 = GeometrySchlickGGX(nvDot, k);
+    float ggx2 = GeometrySchlickGGX(nlDot, k);
+    
+    return ggx1 * ggx2;
+}
+
+// Ratio of light that gets REFLECTED over the light that gets refracted
+// Fresnel: 90 degree: reflections become much more apparent
+// f0: base reflectivity of the surface (at a 0 degree angle as if looking directly onto a surface)
+  // view direction
+ 
+vec3 FresnelSchlick(float cosTheta, vec3 f0) // view direction
+{
+    return f0 + (1.0 - f0) * pow(1.0 - cosTheta, 5.0);
+}
 
 void main()
 {
@@ -99,20 +149,28 @@ void main()
 	}
 	
 	// Cook-Torrance BRDF
-	kd = light that gets refracted
-	ks = light that gets reflected
+	float kd = light that gets refracted
+	float ks = light that gets reflected
 	
 	/// Diffuse
 	vec3 c = diffuse; // albedo or surface color
-	flambert = c / pi; // Lambertian diffuse
+	flambert = c / PI; // Lambertian diffuse
 	
 	/// Specular
 	fcooktorrance = 
 	
 	//// Normal distribution function: Trowbridge-Reitz GGX
+	DistributionGGX()
 	
 	//// Geometry function: Smith's Schlick-GGX
+	GeometrySmith()	
 	
 	//// Fresnel equation: Fresnel-Schlick
+	vec3 viewDir = normalize(viewPos - fPosition);    
+    float cosTheta = dot(viewDir, fNormal);
 	
+	vec3 f0 = vec3(0.04); // base reflectivity for most dielectrics
+    f0 = mix(f0, albedo.rgb, metalness);
+
+    ks = FresnelSchlick(cosTheta, f0);
 }
