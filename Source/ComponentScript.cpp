@@ -78,13 +78,12 @@ void ComponentScript::OnSystemEvent(System_Event event)
 void ComponentScript::Awake()
 {
 	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
-
-	if (scriptRes && scriptRes->awakeMethod)
+	if (scriptRes && scriptRes->awakeMethod && !awaked)
 	{
-		awaked = true;
 		MonoObject* exc = nullptr;
 		if (IsTreeActive())
 		{
+			awaked = true;
 			mono_runtime_invoke(scriptRes->awakeMethod, classInstance, NULL, &exc);
 			if (exc)
 			{
@@ -105,7 +104,7 @@ void ComponentScript::Awake()
 void ComponentScript::Start()
 {
 	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
-	if (scriptRes && scriptRes->startMethod && awaked)
+	if (scriptRes && scriptRes->startMethod)
 	{
 		MonoObject* exc = nullptr;
 		if (IsTreeActive())
@@ -254,10 +253,10 @@ void ComponentScript::OnStop()
 	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
 	if (scriptRes && scriptRes->stopMethod)
 	{
-		awaked = false;
 		MonoObject* exc = nullptr;
 		if (IsTreeActive())
 		{
+			awaked = false;
 			mono_runtime_invoke(scriptRes->stopMethod, classInstance, NULL, &exc);
 			if (exc)
 			{

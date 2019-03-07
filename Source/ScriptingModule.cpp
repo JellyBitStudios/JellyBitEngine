@@ -190,20 +190,17 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 
 			for (int i = 0; i < scripts.size(); ++i)
 			{
-				if (scripts[i]->IsTreeActive())
-					scripts[i]->OnEnableMethod();
+				scripts[i]->OnEnableMethod();
 			}
 
 			for (int i = 0; i < scripts.size(); ++i)
 			{
-				if (scripts[i]->IsTreeActive() && !scripts[i]->awaked)
-					scripts[i]->Awake();
+				scripts[i]->Awake();
 			}
 
 			for (int i = 0; i < scripts.size(); ++i)
 			{
-				if (scripts[i]->IsTreeActive())
-					scripts[i]->Start();
+				scripts[i]->Start();
 			}
 		
 			//Call the Awake and Start for all the Enabled script in the Play instant.
