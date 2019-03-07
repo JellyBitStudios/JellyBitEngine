@@ -875,6 +875,9 @@ bool ModuleFileSystem::deleteFiles(const std::string& root, const std::string& e
 	{
 		std::string fileExt; GetExtension(directory.files[i].name.data(), fileExt);
 
+		if (fileExt == ".dll")
+			continue;
+
 		if (extension.empty() || fileExt == extension)
 			ret = PHYSFS_delete(std::string(directory.fullPath + "/" + directory.files[i].name).c_str()) != 0;
 
