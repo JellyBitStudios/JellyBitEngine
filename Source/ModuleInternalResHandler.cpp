@@ -42,36 +42,27 @@ void ModuleInternalResHandler::CreatePlane()
 
 	float verticesPosition[12]
 	{
-		-0.5f, -0.5f, 0.0f, // a
-		 0.5f, -0.5f, 0.0f, // b
-		-0.5f,  0.5f, 0.0f, // c
-		 0.5f,  0.5f, 0.0f, // d
+		-1.0f,  1.0f, 0.0f, // a
+		-1.0f, -1.0f, 0.0f, // b
+		 1.0f,  1.0f, 0.0f, // c
+		 1.0f, -1.0f, 0.0f, // d
 	};
 
 	uint textCordsSize = 8;
 	float textCordsPosition[8]
 	{
-		 0.0f,  0.0f, // a
-		 1.0f,  0.0f, // b
-		 0.0f,  1.0f, // c
-		 1.0f,  1.0f, // d
-	};
-
-	uint normalSize = 12;
-	float normalPosition[12]
-	{
-		0.0f, 1.0f, 0.0f, // a
-		0.0f, 1.0f, 0.0f, // a
-		0.0f, 1.0f, 0.0f, // a
-		0.0f, 1.0f, 0.0f, // a
+		 0.0f,  1.0f, // a
+		 0.0f,  0.0f, // b
+		 1.0f,  1.0f, // c
+		 1.0f,  0.0f, // d
 	};
 
 	specificData.indicesSize = 6;
 	specificData.indices = new uint[specificData.indicesSize]
 	{
 		// Front
-		2, 1, 0, // ABC
-		2, 3, 1, // BDC
+		0, 1, 2, // ABC
+		2, 1, 3, // BDC
 	};
 
 	// Vertices
@@ -80,14 +71,6 @@ void ModuleInternalResHandler::CreatePlane()
 	for (uint i = 0; i < specificData.verticesSize; ++i)
 	{
 		memcpy(specificData.vertices[i].position, cursor, sizeof(float) * 3);
-		cursor += 3;
-	}
-
-	///Normals
-	cursor = normalPosition;
-	for (uint i = 0; i < normalSize / 3; ++i)
-	{
-		memcpy(specificData.vertices[i].normal, cursor, sizeof(float) * 3);
 		cursor += 3;
 	}
 
@@ -101,9 +84,11 @@ void ModuleInternalResHandler::CreatePlane()
 
 	ResourceData data;
 	data.name = "Default Plane";
-	data.internal = true;
 
 	plane = App->res->CreateResource(ResourceTypes::MeshResource, data, &specificData, PLANE_UUID)->GetUuid();
+
+	// need this for deferred shading
+	App->res->SetAsUsed(plane);
 }
 
 void ModuleInternalResHandler::CreateCube()

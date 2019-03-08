@@ -24,6 +24,9 @@ ComponentEmitter::ComponentEmitter(GameObject* gameObject) : Component(gameObjec
 	App->particle->emitters.push_back(this);
 
 	SetMaterialRes(App->resHandler->defaultMaterial);
+
+
+	App->res->SetAsUsed(App->resHandler->plane);
 }
 
 ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, GameObject* parent, bool include) : Component(parent, EmitterComponent)
@@ -86,13 +89,15 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 	if (parent)
 		App->scene->quadtree.Insert(parent);
 
-	if(include)
+	if (include)
 		App->particle->emitters.push_back(this);
 
 	if (App->res->GetResource(componentEmitter.materialRes) != nullptr)
 		SetMaterialRes(componentEmitter.materialRes);
 	else
 		SetMaterialRes(App->resHandler->defaultMaterial);
+
+	App->res->SetAsUsed(App->resHandler->plane);
 }
 
 
@@ -108,6 +113,9 @@ ComponentEmitter::~ComponentEmitter()
 	App->particle->RemoveEmitter(this);
 
 	ClearEmitter();
+
+
+	App->res->SetAsUnused(App->resHandler->plane);
 }
 
 void ComponentEmitter::StartEmitter()
