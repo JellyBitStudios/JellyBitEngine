@@ -38,6 +38,7 @@ void ComponentLabel::OnInternalSave(char *& cursor)
 
 void ComponentLabel::OnInternalLoad(char *& cursor)
 {
+	LinkToUIModule();
 }
 
 void ComponentLabel::OnUniqueEditor()
@@ -53,4 +54,9 @@ void ComponentLabel::OnUniqueEditor()
 	finalText = text;
 	ImGui::Text(finalText.c_str());
 #endif
+}
+
+void ComponentLabel::LinkToUIModule()
+{
+	App->ui->componentsUI.push_back(this);
 }

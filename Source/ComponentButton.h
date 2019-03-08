@@ -43,6 +43,8 @@ private:
 
 	bool MouseInScreen(const uint* rect) const;
 
+	void LinkToUIModule();
+
 private:
 
 	char* tempBuffer = nullptr;

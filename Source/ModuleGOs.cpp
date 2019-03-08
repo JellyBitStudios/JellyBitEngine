@@ -15,6 +15,7 @@
 #include "ComponentEmitter.h"
 #include "ComponentMesh.h"
 #include "ComponentImage.h"
+#include "ComponentRectTransform.h"
 #include "ComponentAnimation.h"
 #include "ResourceShaderProgram.h"
 #include "ResourceAnimation.h"
@@ -161,6 +162,11 @@ GameObject* ModuleGOs::CreateCanvas(const char * name, GameObject * parent)
 	return newGameObject;
 }
 
+void ModuleGOs::SetCanvas(GameObject * canvas)
+{
+	this->canvas = canvas;
+}
+
 void ModuleGOs::DeleteCanvasPointer()
 {
 	canvas = nullptr;
@@ -176,12 +182,18 @@ GameObject* ModuleGOs::CreateGameObject(const char* goName, GameObject* parent, 
 
 GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 {
+	if (copy->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT_WORLD)
+		return nullptr;
+
 	GameObject* newGameObject = new GameObject(*copy);
 
 	if (!newRoot)
 	{
 		if (newGameObject->GetLayer() == UILAYER && copy->GetParent()->GetLayer() != UILAYER)
+		{
+			RELEASE(newGameObject);
 			return nullptr;
+		}
 
 		newGameObject->SetParent(copy->GetParent());
 		copy->GetParent()->AddChild(newGameObject);
@@ -218,6 +230,15 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 				else
 					canvas = newGameObject;
 			}
+			else
+			{
+				if (newGameObject->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
+				{
+					canvas->AddChild(newGameObject);
+					newGameObject->SetParent(canvas);
+					return newGameObject;
+				}
+			}
 		}
 
 		newGameObject->SetParent(newRoot);
@@ -232,7 +253,7 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 	}
 
 
-	if (newGameObject->GetLayer() != UILAYER)
+	if (newGameObject->GetLayer() != UILAYER && newGameObject->cmp_rectTransform == nullptr)
 	{
 		if (copy->GetParent() == nullptr)
 		{
@@ -436,17 +457,6 @@ bool ModuleGOs::LoadScene(char*& buffer, size_t sizeBuffer, bool navmesh)
 			go->IsStatic() ? staticGos.push_back(go) : dynamicGos.push_back(go);
 		}
 		gos.push_back(go);
-	}
-
-	std::vector<GameObject*> children;
-	App->scene->root->GetChildrenVector(children);
-	for each (GameObject* child in children)
-	{
-		if (std::strcmp(child->GetName(), "Canvas") == 0)
-		{
-			canvas = child;
-			App->ui->LinkAllRectsTransform();
-		}
 	}
 
 	// Discuss if this should be a resource
