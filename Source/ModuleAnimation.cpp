@@ -470,9 +470,9 @@ void ModuleAnimation::MoveAnimationForward(float time, Animation* current_animat
 
 			if (blend >= 1.f)
 			{
-				current_animation->animable_gos[i]->transform->GetPosition() = pos;
-				current_animation->animable_gos[i]->transform->GetScale() = scale;
-				current_animation->animable_gos[i]->transform->GetRotation() = rot;
+				current_animation->animable_gos[i]->transform->SetPosition(pos);
+				current_animation->animable_gos[i]->transform->SetScale(scale);
+				current_animation->animable_gos[i]->transform->SetRotation(rot);
 			}
 			else
 			{
@@ -490,9 +490,9 @@ void ModuleAnimation::MoveAnimationForward(float time, Animation* current_animat
 				scale3 = math::float3::Lerp(scale2, scale, blend);
 				rot3 = math::Quat::Slerp(rot2, rot, blend);
 				
-				current_animation->animable_gos[i]->transform->GetPosition() = pos3;
-				current_animation->animable_gos[i]->transform->GetScale() = scale3;
-				current_animation->animable_gos[i]->transform->GetRotation() = rot3;
+				current_animation->animable_gos[i]->transform->SetPosition(pos3);
+				current_animation->animable_gos[i]->transform->SetScale(scale3);
+				current_animation->animable_gos[i]->transform->SetRotation(rot3);
 
 			}
 		}
