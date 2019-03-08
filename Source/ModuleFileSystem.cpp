@@ -99,7 +99,7 @@ bool ModuleFileSystem::Start()
 #ifndef GAMEMODE
 	rootDir = RecursiveGetFilesFromDir("Assets");
 #else
-	rootAssets = RecursiveGetFilesFromDir("Library");
+	rootDir = RecursiveGetFilesFromDir("Library");
 #endif
 
 	ImportMainDir();
