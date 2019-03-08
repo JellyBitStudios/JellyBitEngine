@@ -55,7 +55,7 @@ bool ModuleScene::Start()
 
 update_status ModuleScene::Update()
 {
-	if (App->input->GetKey(SDL_SCANCODE_J) == KEY_DOWN) {
+	/*if (App->input->GetKey(SDL_SCANCODE_J) == KEY_DOWN) {
 		App->animation->SetCurrentAnimation("Idle");
 	}
 	if (App->input->GetKey(SDL_SCANCODE_K) == KEY_DOWN) {
@@ -64,7 +64,7 @@ update_status ModuleScene::Update()
 	if (App->input->GetKey(SDL_SCANCODE_L) == KEY_DOWN) {
 		App->animation->SetCurrentAnimation("Kick");
 	}
-
+	*/
 #ifndef GAMEMODE
 	if (!App->IsEditor())
 		return UPDATE_CONTINUE;
@@ -129,7 +129,10 @@ void ModuleScene::OnSystemEvent(System_Event event)
 	case System_Event_Type::LoadGMScene:
 	{
 		char* buf;
-		size_t size = App->fs->Load("Settings/GameReady.nekoScene", &buf);
+		if (!App->fs->Exists("Library/Scenes/Main Scene.scn"))
+			return;
+
+		size_t size = App->fs->Load("Library/Scenes/Main Scene.scn", &buf);
 		if (size > 0)
 		{
 			App->GOs->LoadScene(buf, size, true);

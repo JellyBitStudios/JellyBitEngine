@@ -21,6 +21,8 @@ public:
 	void Update();
 
 	const float* GetColor()const;
+	void SetResImageUuid(uint res_image_uuid);
+	uint GetResImageUuid() const;
 	uint GetResImage()const;
 
 	bool UseColor()const;
@@ -30,6 +32,8 @@ private:
 	void OnInternalSave(char*& cursor);
 	void OnInternalLoad(char*& cursor);
 	void OnUniqueEditor();
+
+	void LinkToUIModule();
 
 private:
 	uint res_image = 0;

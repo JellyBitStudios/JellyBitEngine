@@ -2,6 +2,7 @@
 #include "Application.h"
 #include "ModuleAudio.h"
 #include "ComponentAudioSource.h"
+#include "Brofiler/Brofiler.h"
 
 ModuleAudio::ModuleAudio(bool start_enabled) : Module(start_enabled)
 {
@@ -16,19 +17,24 @@ bool ModuleAudio::Start()
 	// Init wwise and audio banks
 	WwiseT::InitSoundEngine();
 	WwiseT::LoadBank("Assignment3.bnk");
-#ifdef GAMEMODE
-	PlayOnAwake();
-#endif // GAMEMODE
 	return true;
 }
 
 update_status ModuleAudio::Update(/*float dt*/)
 {
+#ifndef GAMEMODE
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	if (audioisplayed == false) {
+		PlayOnAwake();
+		audioisplayed = true;
+	}
+#endif // GAMEMODE
 	return UPDATE_CONTINUE;
 }
 
 update_status ModuleAudio::PostUpdate(/*float dt*/)
 {
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 	WwiseT::ProcessAudio();
 	return UPDATE_CONTINUE;
 }

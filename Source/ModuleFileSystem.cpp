@@ -75,6 +75,7 @@ ModuleFileSystem::~ModuleFileSystem() {}
 update_status ModuleFileSystem::PreUpdate()
 {
 #ifndef GAMEMODE
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 	static float updateAssetsCounter = 0.0f;
 	updateAssetsCounter += App->timeManager->GetRealDt();
 	if (updateAssetsCounter >= 1.0f / updateAssetsRate)
@@ -87,6 +88,12 @@ update_status ModuleFileSystem::PreUpdate()
 	return update_status::UPDATE_CONTINUE;
 }
 
+bool ModuleFileSystem::Init(JSON_Object * data)
+{
+	AddPath(GetPrefDir(), "PrefDir");
+	return true;
+}
+
 bool ModuleFileSystem::Start()
 {
 #ifndef GAMEMODE
@@ -96,11 +103,12 @@ bool ModuleFileSystem::Start()
 #endif
 
 	std::vector<std::string> lateEvents;
-	ImportFilesEvents(rootAssets, lateEvents);
+	std::vector<std::string> lateLateEvents;
+	ImportFilesEvents(rootAssets, lateEvents, lateLateEvents);
 
 	for (int i = 0; i < lateEvents.size(); ++i)
 	{
-		//The ResourceManager already manages the .meta, already imported files etc. on his own.
+		// The ResourceManager already manages the .meta, already imported files etc. on his own.
 		System_Event event;
 #ifndef GAMEMODE
 		event.fileEvent.type = System_Event_Type::ImportFile;
@@ -108,6 +116,19 @@ bool ModuleFileSystem::Start()
 		event.fileEvent.type = System_Event_Type::ImportLibraryFile;
 #endif
 		strcpy(event.fileEvent.file, lateEvents[i].data());
+		App->PushSystemEvent(event);
+	}
+
+	for (int i = 0; i < lateLateEvents.size(); ++i)
+	{
+		// The ResourceManager already manages the .meta, already imported files etc. on his own.
+		System_Event event;
+#ifndef GAMEMODE
+		event.fileEvent.type = System_Event_Type::ImportFile;
+#else
+		event.fileEvent.type = System_Event_Type::ImportLibraryFile;
+#endif
+		strcpy(event.fileEvent.file, lateLateEvents[i].data());
 		App->PushSystemEvent(event);
 	}
 
@@ -263,7 +284,7 @@ bool ModuleFileSystem::DeleteFileOrDir(const char* path) const
 	if (PHYSFS_delete(path) != 0)
 		ret = true;
 	else
-		DEPRECATED_LOG("FILE SYSTEM: Error while deleting a file or directory '%s': %s", path, PHYSFS_getLastError());
+		CONSOLE_LOG(LogTypes::Error, "FILE SYSTEM: Error while deleting a file or directory '%s': %s", path, PHYSFS_getLastError());
 
 	return ret;
 }
@@ -271,6 +292,11 @@ bool ModuleFileSystem::DeleteFileOrDir(const char* path) const
 const char* ModuleFileSystem::GetBasePath() const
 {
 	return PHYSFS_getBaseDir();
+}
+
+const char* ModuleFileSystem::GetPrefDir() const
+{
+	return PHYSFS_getPrefDir(App->GetOrganizationName(), App->GetAppName());
 }
 
 const char* ModuleFileSystem::GetReadPaths() const
@@ -1006,7 +1032,7 @@ void ModuleFileSystem::SendEvents(const Directory& newAssetsDir)
 	}
 }
 
-void ModuleFileSystem::ImportFilesEvents(const Directory& directory, std::vector<std::string>& lateEvents)
+void ModuleFileSystem::ImportFilesEvents(const Directory& directory, std::vector<std::string>& lateEvents, std::vector<std::string>& lateLateEvents)
 {
 	for (int i = 0; i < directory.files.size(); ++i)
 	{
@@ -1027,12 +1053,16 @@ void ModuleFileSystem::ImportFilesEvents(const Directory& directory, std::vector
 #else
 		resourceType = App->res->GetLibraryResourceTypeByExtension(extension.data());
 #endif
-
 		switch (resourceType)
 		{
-			case ResourceTypes::MaterialResource:
+			case ResourceTypes::ShaderProgramResource:
 			{
 				lateEvents.push_back(filePath);
+				break;
+			}
+			case ResourceTypes::MaterialResource:
+			{
+				lateLateEvents.push_back(filePath);
 				break;
 			}
 			default:
@@ -1112,7 +1142,7 @@ void ModuleFileSystem::ImportFilesEvents(const Directory& directory, std::vector
 
 	for (int i = 0; i < directory.directories.size(); ++i)
 	{
-		ImportFilesEvents(directory.directories[i], lateEvents);
+		ImportFilesEvents(directory.directories[i], lateEvents, lateLateEvents);
 	}
 }
 
@@ -1164,4 +1194,9 @@ void ModuleFileSystem::EndTempException()
 
 	PHYSFS_unmount(tempException.data());
 	tempException.clear();
+}
+
+bool ModuleFileSystem::SetWriteDir(std::string writeDir) const
+{
+	return PHYSFS_setWriteDir(writeDir.data()) != 0;
 }

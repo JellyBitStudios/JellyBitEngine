@@ -4,18 +4,22 @@
 
 #include "Brofiler/Brofiler.h"
 #include <algorithm>
-ModuleParticle::ModuleParticle(bool start_enabled) : Module(start_enabled)
-{
+#include "MathGeoLib/include/Math/float4x4.h"
+#include "Application.h"
+#include "DebugDrawer.h"
+#include "ComponentTransform.h"
 
-}
+ModuleParticle::ModuleParticle(bool start_enabled) : Module(start_enabled)
+{}
 
 ModuleParticle::~ModuleParticle()
-{
-}
+{}
 
 update_status ModuleParticle::Update()
 {
+#ifndef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+#endif // !GAMEMODE
 
 	for (std::list<ComponentEmitter*>::iterator emitter = emitters.begin(); emitter != emitters.end(); ++emitter)
 	{
@@ -66,6 +70,35 @@ void ModuleParticle::DrawParticles()
 	{
 		if (partVec[i]->owner)
 			partVec[i]->Draw();
+	}
+}
+
+void ModuleParticle::DebugDraw() const
+{
+	for (std::list<ComponentEmitter*>::iterator emitter = App->particle->emitters.begin(); emitter != App->particle->emitters.end(); ++emitter)
+	{
+		if ((*emitter)->drawShape)
+		{
+			math::float4x4 globalMat = (*emitter)->GetParent()->transform->GetGlobalMatrix();;
+			switch ((*emitter)->normalShapeType)
+			{
+			case ShapeType_BOX:
+				App->debugDrawer->DebugDraw((*emitter)->boxCreation, White, globalMat);
+				break;
+			case ShapeType_SPHERE:
+			case ShapeType_SPHERE_BORDER:
+			case ShapeType_SPHERE_CENTER:
+				App->debugDrawer->DebugDrawSphere((*emitter)->sphereCreation.r, White, globalMat);
+				break;
+			case ShapeType_CONE:
+				App->debugDrawer->DebugDrawCone((*emitter)->circleCreation.r, (*emitter)->coneHeight, White, globalMat);
+				break;
+			default:
+				break;
+			}
+		}
+		if ((*emitter)->drawAABB)
+			App->debugDrawer->DebugDraw((*emitter)->GetParent()->boundingBox, White);
 	}
 }
 

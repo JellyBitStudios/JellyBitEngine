@@ -45,6 +45,22 @@ const float * ComponentImage::GetColor() const
 	return color;
 }
 
+void ComponentImage::SetResImageUuid(uint res_image_uuid)
+{
+	if (this->res_image > 0)
+		App->res->SetAsUnused(this->res_image);
+
+	if (res_image > 0)
+		App->res->SetAsUsed(res_image);
+
+	this->res_image = res_image;
+}
+
+uint ComponentImage::GetResImageUuid() const
+{
+	return res_image;
+}
+
 uint ComponentImage::GetResImage()const
 {
 	ResourceTexture* texture = (ResourceTexture*)App->res->GetResource(res_image);
@@ -106,6 +122,7 @@ void ComponentImage::OnInternalLoad(char *& cursor)
 
 		App->res->SetAsUsed(res_image);
 	}
+	LinkToUIModule();
 }
 
 void ComponentImage::OnUniqueEditor()
@@ -125,6 +142,7 @@ void ComponentImage::OnUniqueEditor()
 		float color_g = color[COLOR_G] * 255.f;
 		float color_b = color[COLOR_B] * 255.f;
 
+		ImGui::PushItemWidth(50.0f);
 		ImGui::Text("Color RGB with alpha");
 		if (ImGui::DragScalar("##ColorR", ImGuiDataType_Float, (void*)&color_r, 1.0f, &min, &max_color, "%1.f", 1.0f))
 			color[COLOR_R] = color_r / 255.f;
@@ -164,4 +182,10 @@ void ComponentImage::OnUniqueEditor()
 		}
 	}
 #endif
+}
+
+void ComponentImage::LinkToUIModule()
+{
+	App->ui->componentsUI.push_back(this);
+
 }

@@ -21,6 +21,8 @@
 
 #include "Globals.h"
 
+#include "Brofiler/Brofiler.h"
+
 #include "MathGeoLib/include/Math/MathAll.h"
 #include <math.h>
 
@@ -47,6 +49,9 @@ bool ModuleNavigation::Init(JSON_Object* jObject)
 
 update_status ModuleNavigation::Update()
 {
+#ifndef GAMEMODE
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+#endif // !GAMEMODE
 	if (m_navMesh && m_crowd)
 	{
 		m_crowd->update(App->timeManager->GetDt(), 0);
@@ -322,17 +327,20 @@ void ModuleNavigation::SetDestination(const float* p, int indx) const
 
 bool ModuleNavigation::IsWalking(int index) const
 {
+	if (!m_navMesh || !m_crowd) return false;
 	const dtCrowdAgent* ag = m_crowd->getAgent(index);
 	return ag->state == DT_CROWDAGENT_STATE_WALKING;
 }
 
 void ModuleNavigation::RequestMoveVelocity(int index, const float* vel)
 {
+	if (!m_navMesh || !m_crowd) return;
 	m_crowd->requestMoveVelocity(index, vel);
 }
 
 void ModuleNavigation::ResetMoveTarget(int index)
 {
+	if (!m_navMesh || !m_crowd) return;
 	m_crowd->resetMoveTarget(index);
 }
 

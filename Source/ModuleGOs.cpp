@@ -3,19 +3,22 @@
 #include "Application.h"
 #include "ModuleScene.h"
 #include "ModuleNavigation.h"
-#include "GameObject.h"
-#include "ComponentMaterial.h"
-#include "ComponentMesh.h"
-
 #include "ModuleResourceManager.h"
-#include "ResourceShaderProgram.h"
-
+#include "ModuleInternalResHandler.h"
 #include "ModuleAnimation.h"
-#include "ResourceAnimation.h"
-#include "ComponentAnimation.h"
-
 #include "ModuleRenderer3D.h"
 #include "ModuleUI.h"
+
+#include "GameObject.h"
+#include "ComponentMaterial.h"
+#include "ComponentProjector.h"
+#include "ComponentEmitter.h"
+#include "ComponentMesh.h"
+#include "ComponentImage.h"
+#include "ComponentRectTransform.h"
+#include "ComponentAnimation.h"
+#include "ResourceShaderProgram.h"
+#include "ResourceAnimation.h"
 
 #include <assert.h>
 
@@ -159,6 +162,11 @@ GameObject* ModuleGOs::CreateCanvas(const char * name, GameObject * parent)
 	return newGameObject;
 }
 
+void ModuleGOs::SetCanvas(GameObject * canvas)
+{
+	this->canvas = canvas;
+}
+
 void ModuleGOs::DeleteCanvasPointer()
 {
 	canvas = nullptr;
@@ -174,12 +182,18 @@ GameObject* ModuleGOs::CreateGameObject(const char* goName, GameObject* parent, 
 
 GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 {
+	if (copy->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT_WORLD)
+		return nullptr;
+
 	GameObject* newGameObject = new GameObject(*copy);
 
 	if (!newRoot)
 	{
 		if (newGameObject->GetLayer() == UILAYER && copy->GetParent()->GetLayer() != UILAYER)
+		{
+			RELEASE(newGameObject);
 			return nullptr;
+		}
 
 		newGameObject->SetParent(copy->GetParent());
 		copy->GetParent()->AddChild(newGameObject);
@@ -216,6 +230,15 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 				else
 					canvas = newGameObject;
 			}
+			else
+			{
+				if (newGameObject->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
+				{
+					canvas->AddChild(newGameObject);
+					newGameObject->SetParent(canvas);
+					return newGameObject;
+				}
+			}
 		}
 
 		newGameObject->SetParent(newRoot);
@@ -230,7 +253,7 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 	}
 
 
-	if (newGameObject->GetLayer() != UILAYER)
+	if (newGameObject->GetLayer() != UILAYER && newGameObject->cmp_rectTransform == nullptr)
 	{
 		if (copy->GetParent() == nullptr)
 		{
@@ -436,17 +459,6 @@ bool ModuleGOs::LoadScene(char*& buffer, size_t sizeBuffer, bool navmesh)
 		gos.push_back(go);
 	}
 
-	std::vector<GameObject*> children;
-	App->scene->root->GetChildrenVector(children);
-	for each (GameObject* child in children)
-	{
-		if (std::strcmp(child->GetName(), "Canvas") == 0)
-		{
-			canvas = child;
-			App->ui->LinkAllRectsTransform();
-		}
-	}
-
 	// Discuss if this should be a resource
 	if (navmesh)
 		App->navigation->LoadNavmesh(cursor);
@@ -471,12 +483,35 @@ bool ModuleGOs::InvalidateResource(Resource* resource)
 		switch (resource->GetType())
 		{
 		case ResourceTypes::MeshResource:
+
+			// Mesh component uses Mesh resource
 			if (gameobjects[i]->cmp_mesh != nullptr && gameobjects[i]->cmp_mesh->res == resource->GetUuid())
 				gameobjects[i]->cmp_mesh->SetResource(0);
+
 			break;
+
 		case ResourceTypes::TextureResource:
+
+			// UI component uses Texture resource
+			if (gameobjects[i]->cmp_image != nullptr && gameobjects[i]->cmp_image->GetResImageUuid() == resource->GetUuid())
+				gameobjects[i]->cmp_image->SetResImageUuid(App->resHandler->defaultTexture);
+
+			break;
+
+		case ResourceTypes::MaterialResource:
+
+			// Material component uses Material resource
 			if (gameobjects[i]->cmp_material != nullptr && gameobjects[i]->cmp_material->res == resource->GetUuid())
-				gameobjects[i]->cmp_material->SetResource(0);
+				gameobjects[i]->cmp_material->SetResource(App->resHandler->defaultMaterial);
+
+			// Projector component uses Material resource
+			if (gameobjects[i]->cmp_projector != nullptr && gameobjects[i]->cmp_projector->GetMaterialRes() == resource->GetUuid())
+				gameobjects[i]->cmp_projector->SetMaterialRes(App->resHandler->defaultMaterial);
+
+			// Emitter component uses Material resource
+			if (gameobjects[i]->cmp_emitter != nullptr && gameobjects[i]->cmp_emitter->GetMaterialRes() == resource->GetUuid())
+				gameobjects[i]->cmp_emitter->SetMaterialRes(App->resHandler->defaultMaterial);
+
 			break;
 		}
 	}

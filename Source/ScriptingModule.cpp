@@ -33,8 +33,9 @@
 #include "ModuleUI.h"
 
 #include "MathGeoLib/include/MathGeoLib.h"
+#include "Brofiler/Brofiler.h"
 
-#define NAVMESHAGENT_ASCII 1299603790
+#include "parson/parson.h"
 
 bool exec(const char* cmd, std::string& error)
 {
@@ -95,6 +96,7 @@ bool ScriptingModule::Init(JSON_Object* data)
 
 bool ScriptingModule::Start()
 {
+	InitPlayerPrefs();
 
 #ifndef GAMEMODE
 	CreateScriptingProject();
@@ -111,6 +113,9 @@ update_status ScriptingModule::PreUpdate()
 
 update_status ScriptingModule::Update()
 {
+#ifndef GAMEMODE
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+#endif
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
 	{
 		UpdateMethods();
@@ -121,6 +126,9 @@ update_status ScriptingModule::Update()
 
 update_status ScriptingModule::PostUpdate()
 {
+#ifndef GAMEMODE
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+#endif // !GAMEMODE
 	if (someScriptModified || engineOpened)
 	{
 #ifndef GAMEMODE
@@ -130,7 +138,7 @@ update_status ScriptingModule::PostUpdate()
 #else
 		//Engine opened recently, import the .dll if found
 
-		System_Event event;
+		/*System_Event event;
 		event.type = System_Event_Type::ScriptingDomainReloaded;
 		App->PushSystemEvent(event);
 
@@ -145,6 +153,8 @@ update_status ScriptingModule::PostUpdate()
 		}
 
 		App->scripting->ReInstance();
+
+		engineOpened = false;*/
 
 #endif
 	}
@@ -180,20 +190,17 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 
 			for (int i = 0; i < scripts.size(); ++i)
 			{
-				if (scripts[i]->IsTreeActive())
-					scripts[i]->OnEnableMethod();
+				scripts[i]->OnEnableMethod();
 			}
 
 			for (int i = 0; i < scripts.size(); ++i)
 			{
-				if (scripts[i]->IsTreeActive() && !scripts[i]->awaked)
-					scripts[i]->Awake();
+				scripts[i]->Awake();
 			}
 
 			for (int i = 0; i < scripts.size(); ++i)
 			{
-				if (scripts[i]->IsTreeActive())
-					scripts[i]->Start();
+				scripts[i]->Start();
 			}
 		
 			//Call the Awake and Start for all the Enabled script in the Play instant.
@@ -302,6 +309,32 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 					}						
 				}
 			}
+			break;
+		}
+
+		case System_Event_Type::LoadGMScene:
+		{
+			//Engine opened recently, import the .dll if found
+			if (engineOpened)
+			{
+				System_Event event;
+				event.type = System_Event_Type::ScriptingDomainReloaded;
+				App->PushSystemEvent(event);
+
+				App->scripting->CreateDomain();
+				App->scripting->UpdateScriptingReferences();
+
+				std::vector<Resource*> scriptResources = App->res->GetResourcesByType(ResourceTypes::ScriptResource);
+				for (int i = 0; i < scriptResources.size(); ++i)
+				{
+					ResourceScript* scriptRes = (ResourceScript*)scriptResources[i];
+					scriptRes->referenceMethods();
+				}
+
+				App->scripting->ReInstance();
+
+				engineOpened = false;
+			}		
 			break;
 		}
 	}
@@ -502,6 +535,16 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 		case ComponentTypes::ImageComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine.UI", "Image"));
+			break;
+		}
+		case ComponentTypes::RigidDynamicComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Rigidbody"));
+			break;
+		}
+		case ComponentTypes::ProjectorComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Projector"));
 			break;
 		}
 	}
@@ -855,6 +898,14 @@ void ScriptingModule::GameObjectKilled(GameObject* killed)
 	}
 }
 
+void ScriptingModule::FixedUpdate()
+{
+	for (int i = 0; i < scripts.size(); ++i)
+	{
+		scripts[i]->FixedUpdate();
+	}
+}
+
 void ScriptingModule::UpdateMethods()
 {
 	for (int i = 0; i < scripts.size(); ++i)
@@ -891,6 +942,25 @@ void ScriptingModule::ExecuteCallbacks(GameObject* gameObject)
 	for (int i = 0; i < gameObject->children.size(); ++i)
 	{
 		ExecuteCallbacks(gameObject->children[i]);
+	}
+}
+
+void ScriptingModule::InitPlayerPrefs()
+{
+	if (App->fs->Exists("PrefDir/playerPrefs.jb"))
+	{
+		char* buffer;
+		uint size = App->fs->Load("PrefDir/playerPrefs.jb", &buffer);
+		if (size > 0)
+		{
+			playerPrefs = json_parse_string(buffer);
+			playerPrefsOBJ = json_value_get_object(playerPrefs);
+		}
+	}
+	else
+	{
+		playerPrefs = json_value_init_object();
+		playerPrefsOBJ = json_value_get_object(playerPrefs);
 	}
 }
 
@@ -1207,6 +1277,11 @@ float GetDeltaTime()
 float GetRealDeltaTime()
 {
 	return App->timeManager->GetRealDt();
+}
+
+float GetFixedDeltaTime()
+{
+	return App->physics->GetFixedDT();
 }
 
 float GetTime()
@@ -1567,6 +1642,32 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 
 		return App->scripting->MonoComponentFrom(comp);
 	}
+	else if (className == "Rigidbody")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::RigidDynamicComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
+	else if (className == "Projector")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::ProjectorComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
 	else
 	{
 		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
@@ -1724,6 +1825,139 @@ void SetDestination(MonoObject* navMeshAgent, MonoArray* newDestination)
 	agent->SetDestination(newDestinationcpp.ptr());
 }
 
+float NavAgentGetRadius(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->radius;
+	}
+
+	return 0.0f;
+}
+
+void NavAgentSetRadius(MonoObject* compAgent, float newRadius)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->radius = newRadius;
+		agent->UpdateParams();
+	}
+}
+
+float NavAgentGetHeight(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->height;
+	}
+
+	return 0.0f;
+}
+
+void NavAgentSetHeight(MonoObject* compAgent, float newHeight)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->height = newHeight;
+		agent->UpdateParams();
+	}
+}
+
+float NavAgentGetMaxAcceleration(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->maxAcceleration;
+	}
+
+	return 0.0f;
+}
+
+void NavAgentSetMaxAcceleration(MonoObject* compAgent, float newMaxAcceleration)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->maxAcceleration = newMaxAcceleration;
+		agent->UpdateParams();
+	}
+}
+
+float NavAgentGetMaxSpeed(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->maxSpeed;
+	}
+
+	return 0.0f;
+}
+
+void NavAgentSetMaxSpeed(MonoObject* compAgent, float newMaxSpeed)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->maxSpeed = newMaxSpeed;
+		agent->UpdateParams();
+	}
+}
+
+float NavAgentGetSeparationWeight(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->separationWeight;
+	}
+
+	return 0.0f;
+}
+
+void NavAgentSetSeparationWeight(MonoObject* compAgent, float newSeparationWeight)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->separationWeight = newSeparationWeight;
+		agent->UpdateParams();
+	}
+}
+
+bool NavAgentIsWalking(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+		return agent->IsWalking();
+
+	return false;
+}
+
+void NavAgentRequestMoveVelocity(MonoObject* compAgent, MonoArray* direction)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		math::float3 dirCPP(mono_array_get(direction, float, 0), mono_array_get(direction, float, 1), mono_array_get(direction, float, 2));
+		agent->RequestMoveVelocity(dirCPP.ptr());
+	}		
+}
+
+void NavAgentResetMoveTarget(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->ResetMoveTarget();
+	}
+}
+
 bool OverlapSphere(float radius, MonoArray* center, MonoArray** overlapHit, uint filterMask, SceneQueryFlags sceneQueryFlags)
 {
 	math::float3 centercpp(mono_array_get(center, float, 0), mono_array_get(center, float, 1), mono_array_get(center, float, 2));
@@ -1861,6 +2095,114 @@ int ButtonGetState(MonoObject* buttonComp)
 	}
 }
 
+void PlayerPrefsSave()
+{
+	uint size = json_serialization_size(App->scripting->playerPrefs);
+	char* buffer = new char[size];
+	JSON_Status status = json_serialize_to_buffer(App->scripting->playerPrefs, buffer, size);
+
+	std::string writeDir = App->fs->GetWritePath();
+
+	bool success = App->fs->SetWriteDir(App->fs->GetPrefDir());
+	App->fs->Save("playerPrefs.jb", buffer, size);
+	App->fs->SetWriteDir(writeDir);
+}
+
+void PlayerPrefsSetNumber(MonoString* key, double value)
+{
+	char* keyCpp = mono_string_to_utf8(key);
+	json_object_set_number(App->scripting->playerPrefsOBJ, keyCpp, value);
+	mono_free(keyCpp);
+}
+
+double PlayerPrefsGetNumber(MonoString* key)
+{
+	char* keyCpp = mono_string_to_utf8(key);
+	double value = json_object_get_number(App->scripting->playerPrefsOBJ, keyCpp);
+	mono_free(keyCpp);
+
+	return value;
+}
+
+void PlayerPrefsSetString(MonoString* key, MonoString* string)
+{
+	char* keyCpp = mono_string_to_utf8(key);
+	char* stringCpp = mono_string_to_utf8(string);
+
+	json_object_set_string(App->scripting->playerPrefsOBJ, keyCpp, stringCpp);
+
+	mono_free(keyCpp);
+	mono_free(stringCpp);
+}
+
+MonoString* PlayerPrefsGetString(MonoString* key)
+{
+	char* keyCpp = mono_string_to_utf8(key);
+	char* stringCpp = (char*)json_object_get_string(App->scripting->playerPrefsOBJ, keyCpp);
+	
+	if (!stringCpp)
+		return nullptr;
+
+	MonoString* string = mono_string_new(App->scripting->domain, stringCpp);
+	
+	mono_free(keyCpp);
+
+	return string;
+}
+
+void PlayerPrefsSetBoolean(MonoString* key, bool boolean)
+{
+	char* keyCpp = mono_string_to_utf8(key);
+	json_object_set_boolean(App->scripting->playerPrefsOBJ, keyCpp, boolean);
+	mono_free(keyCpp);
+}
+
+bool PlayerPrefsGetBoolean(MonoString* key)
+{
+	char* keyCpp = mono_string_to_utf8(key);
+	bool ret = json_object_get_boolean(App->scripting->playerPrefsOBJ, keyCpp);
+	mono_free(keyCpp);
+
+	return ret;
+}
+
+bool PlayerPrefsHasKey(MonoString* key)
+{
+	char* keyCpp = mono_string_to_utf8(key);
+
+	bool ret = json_object_has_value(App->scripting->playerPrefsOBJ, keyCpp);
+
+	mono_free(keyCpp);
+
+	return ret;
+}
+
+void PlayerPrefsDeleteKey(MonoString* key)
+{
+	char* keyCpp = mono_string_to_utf8(key);
+
+	json_object_remove(App->scripting->playerPrefsOBJ, keyCpp);
+
+	mono_free(keyCpp);
+}
+
+void PlayerPrefsDeleteAll()
+{
+	json_object_clear(App->scripting->playerPrefsOBJ);
+}
+
+void SMLoadScene(MonoString* sceneName)
+{
+	char* sceneNameCPP = mono_string_to_utf8(sceneName);
+
+	System_Event newEvent;
+	newEvent.sceneEvent.type = System_Event_Type::LoadScene;
+	memcpy(newEvent.sceneEvent.nameScene, sceneNameCPP, sizeof(char) * DEFAULT_BUF_SIZE);
+	App->PushSystemEvent(newEvent);
+
+	mono_free(sceneNameCPP);
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -1916,6 +2258,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Time::getRealDeltaTime", (const void*)&GetRealDeltaTime);
 	mono_add_internal_call("JellyBitEngine.Time::getTime", (const void*)&GetTime);
 	mono_add_internal_call("JellyBitEngine.Time::getRealTime", (const void*)&GetRealTime);
+	mono_add_internal_call("JellyBitEngine.Time::getFixedDT", (const void*)&GetFixedDeltaTime);
 	mono_add_internal_call("JellyBitEngine.Transform::getLocalPosition", (const void*)&GetLocalPosition);
 	mono_add_internal_call("JellyBitEngine.Transform::setLocalPosition", (const void*)&SetLocalPosition);
 	mono_add_internal_call("JellyBitEngine.Transform::getLocalRotation", (const void*)&GetLocalRotation);
@@ -1946,6 +2289,31 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Button::GetState", (const void*)&ButtonGetState);
 	mono_add_internal_call("JellyBitEngine.GameObject::GetActive", (const void*)&GetGameObjectActive);
 	mono_add_internal_call("JellyBitEngine.GameObject::SetActive", (const void*)&SetGameObjectActive);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::GetNumber", (const void*)&PlayerPrefsGetNumber);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::SetNumber", (const void*)&PlayerPrefsSetNumber);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::GetString", (const void*)&PlayerPrefsGetString);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::SetString", (const void*)&PlayerPrefsSetString);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::GetBoolean", (const void*)&PlayerPrefsGetBoolean);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::SetBoolean", (const void*)&PlayerPrefsSetBoolean);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::HasKey", (const void*)&PlayerPrefsHasKey);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::DeleteKey", (const void*)&PlayerPrefsDeleteKey);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::DeleteAll", (const void*)&PlayerPrefsDeleteAll);
+	mono_add_internal_call("JellyBitEngine.SceneManager.SceneManager::LoadScene", (const void*)&SMLoadScene);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetRadius", (const void*)&NavAgentGetRadius);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetRadius", (const void*)&NavAgentSetRadius);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetHeight", (const void*)&NavAgentGetHeight);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetHeight", (const void*)&NavAgentSetHeight);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetMaxAcceleration", (const void*)&NavAgentGetMaxAcceleration);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetMaxAcceleration", (const void*)&NavAgentSetMaxAcceleration);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetMaxSpeed", (const void*)&NavAgentGetMaxSpeed);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetMaxSpeed", (const void*)&NavAgentSetMaxSpeed);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetSeparationWeight", (const void*)&NavAgentGetSeparationWeight);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetSeparationWeight", (const void*)&NavAgentSetSeparationWeight);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::isWalking", (const void*)&NavAgentIsWalking);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::_RequestMoveVelocity", (const void*)&NavAgentRequestMoveVelocity);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::ResetMoveTarget", (const void*)&NavAgentResetMoveTarget);
+
 
 	ClearMap();
 

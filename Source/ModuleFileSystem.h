@@ -273,6 +273,7 @@ public:
 	~ModuleFileSystem();
 
 	update_status PreUpdate() override;
+	bool Init(JSON_Object* data);
 	bool Start();
 	bool CleanUp();
 
@@ -283,6 +284,7 @@ public:
 	bool DeleteFileOrDir(const char* path) const;
 
 	const char* GetBasePath() const;
+	const char* GetPrefDir() const;
 	const char* GetReadPaths() const;
 	const char* GetWritePath() const;
 	const char** GetFilesFromDir(const char* dir) const;
@@ -315,11 +317,13 @@ public:
 	bool deleteFiles(const std::string& rootDirectory, const std::string& extension) const;
 	void SendEvents(const Directory& newAssetsDir);
 
-	void ImportFilesEvents(const Directory& newDir, std::vector<std::string>& lateEvents = std::vector<std::string>());
+	void ImportFilesEvents(const Directory& newDir, std::vector<std::string>& lateEvents = std::vector<std::string>(), std::vector<std::string>& lateLateEvents = std::vector<std::string>());
 	void ForceReImport(const Directory& assetsDir);
 
 	void BeginTempException(std::string directory);
 	void EndTempException();
+
+	bool SetWriteDir(std::string writeDir) const;
 
 public:
 	Directory rootAssets;

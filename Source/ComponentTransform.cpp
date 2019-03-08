@@ -10,10 +10,12 @@
 #include "ComponentCamera.h"
 #include "ComponentProjector.h"
 #include "ComponentRigidActor.h"
+#include "ComponentRectTransform.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
 
+#include "Brofiler/Brofiler.h"
 #include <list>
 
 ComponentTransform::ComponentTransform(GameObject* parent) : Component(parent, ComponentTypes::TransformComponent) {}
@@ -137,12 +139,14 @@ void ComponentTransform::SavePrevTransform(const math::float4x4 & prevTransformM
 
 math::float4x4& ComponentTransform::GetMatrix() const
 {
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 	math::float4x4 matrix = math::float4x4::FromTRS(position, rotation, scale);
 	return matrix;
 }
 
 math::float4x4& ComponentTransform::GetGlobalMatrix() const
 {
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 	std::list<GameObject*> aux_list;
 
 	if (parent)
