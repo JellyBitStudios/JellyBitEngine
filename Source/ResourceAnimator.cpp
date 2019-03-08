@@ -80,60 +80,9 @@ bool ResourceAnimator::ImportFile(const char* file, std::string& name, std::stri
 
 bool ResourceAnimator::ExportFile(ResourceData& resourceData, ResourceAnimatorData& animData, std::string& outputFile, bool overwrite)
 {
-	bool ret = false;
+	bool ret = true;
 
-	if (overwrite)
-		outputFile = resourceData.file;
-	else
-		outputFile = resourceData.name;
-
-	uint animations_size = animData.animation_uuids.size();
-	uint meshes_size = animData.meshes_uuids.size();
-
-	uint size = sizeof(char) * DEFAULT_BUF_SIZE; // name size
-	size += sizeof(animData.skeleton_uuid); // skeleton uuid
-	size += sizeof(uint) * animations_size; // animations uuids
-	size += sizeof(uint) * meshes_size; // meshes uuids
-
-	// allocate mem
-	char* data = new char[size];
-	char* cursor = data;
-
-	// store anim name
-	uint bytes = sizeof(char)*DEFAULT_BUF_SIZE;
-	char name[DEFAULT_BUF_SIZE];
-	memset(name, 0, sizeof(char) * DEFAULT_BUF_SIZE);
-	strcpy_s(name, DEFAULT_BUF_SIZE, animData.name.data());
-	memcpy(cursor, name, bytes);
-	cursor += bytes;
-
-	for (uint i = 0; i < animations_size; ++i)
-	{
-		bytes = sizeof(uint);
-		memcpy(cursor, &animData.animation_uuids[i], bytes);
-
-		if (i < animations_size - 1)
-			cursor += bytes;
-	}
-
-	cursor += bytes; // MAYBE WORKING BAD FOR THIS?
-
-	for (uint i = 0; i < meshes_size; ++i)
-	{
-		bytes = sizeof(uint);
-		memcpy(cursor, &animData.meshes_uuids[i], bytes);
-
-		if (i < meshes_size - 1)
-			cursor += bytes;
-	}
-
-	cursor += bytes; // MAYBE WORKING BAD FOR THIS?
-
-	if (App->fs->SaveInGame((char*)data, size, FileTypes::AnimatorFile, outputFile) > 0)
-		ret = true;
-
-	// Deleting useless data
-	RELEASE_ARRAY(data);
+	
 
 	return ret;
 }

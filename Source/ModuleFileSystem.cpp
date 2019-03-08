@@ -516,11 +516,6 @@ uint ModuleFileSystem::SaveInGame(char* buffer, uint size, FileTypes fileType, s
 			outputFile.insert(strlen(DIR_LIBRARY_BONES), "/");
 			outputFile.append(EXTENSION_BONE);
 			break;
-		case FileTypes::AvatarFile:
-			outputFile.insert(0, DIR_ASSETS_AVATARS);
-			outputFile.insert(strlen(DIR_ASSETS_AVATARS), "/");
-			outputFile.append(EXTENSION_AVATAR);
-			break;
 		case FileTypes::TextureFile:
 			outputFile.insert(0, DIR_LIBRARY_TEXTURES);
 			outputFile.insert(strlen(DIR_LIBRARY_TEXTURES), "/");
@@ -555,11 +550,6 @@ uint ModuleFileSystem::SaveInGame(char* buffer, uint size, FileTypes fileType, s
 			outputFile.insert(0, DIR_ASSETS_PREFAB);
 			outputFile.insert(strlen(DIR_ASSETS_PREFAB), "/");
 			outputFile.append(EXTENSION_PREFAB);
-			break;
-		case FileTypes::AnimatorFile:
-			outputFile.insert(0, DIR_ASSETS_ANIMATOR);
-			outputFile.insert(strlen(DIR_ASSETS_ANIMATOR), "/");
-			outputFile.append(EXTENSION_ANIMATOR);
 			break;
 		case FileTypes::SceneFile:
 			outputFile.insert(0, DIR_ASSETS_SCENES);

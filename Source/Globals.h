@@ -73,10 +73,8 @@ enum update_status
 #define EXTENSION_GEOMETRY_SHADER_OBJECT ".gsh"
 #define EXTENSION_SHADER_PROGRAM ".psh"
 #define EXTENSION_PREFAB ".pfb"
-#define EXTENSION_ANIMATOR ".ani"
 #define EXTENSION_META ".meta"
 #define EXTENSION_SCRIPT ".cs"
 #define EXTENSION_MATERIAL ".mat"
-#define EXTENSION_AVATAR ".ava"
 
 #define UILAYER 1

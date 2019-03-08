@@ -3,14 +3,9 @@
 
 #include "Resource.h"
 
-#include <vector>
-
 struct ResourceAnimatorData
 {
 	std::string name;
-	std::vector<uint> animation_uuids;
-	std::vector<uint> meshes_uuids;
-	std::vector<uint> skeleton_uuid;
 };
 
 class ResourceAnimator : public Resource

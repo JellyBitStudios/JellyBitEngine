@@ -6,10 +6,7 @@
 #include "MathGeoLib/include/Math/float4.h"
 #include <list>
 
-#define UI_XRECT 0
-#define UI_YRECT 1
-#define UI_WIDTHRECT 2
-#define UI_HEIGHTRECT 3
+class GameObject;
 
 //Possible Solution
 //https://stackoverflow.com/questions/47026863/opengl-geometry-shader-with-orthographic-projection
@@ -31,10 +28,21 @@ class ResourceTexture;
 class ModuleUI : public Module
 {
 public:
+
+	enum Screen
+	{
+		X,
+		Y,
+		WIDTH,
+		HEIGHT
+	};
+
+public:
 	ModuleUI(bool start_enabled = true);
 	~ModuleUI();
 
 	void DrawCanvas();
+	void DrawWorldCanvas();
 
 	bool GetUIMode() const;
 	void SetUIMode(bool stat);
@@ -66,7 +74,10 @@ private:
 
 public:
 	std::list<Component*> componentsUI;
-	std::list<Component*> componentsRendererUI;
+	std::list<Component*> componentsWorldUI;
+	std::list<Component*> componentsScreenRendererUI;
+	std::list<Component*> componentsWorldRendererUI;
+	std::list<GameObject*> GOsWorldCanvas;
 
 private:
 	uint ui_size_draw[4];

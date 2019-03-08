@@ -20,13 +20,10 @@
 #include "ResourceShaderProgram.h"
 #include "ResourceAnimation.h"
 #include "ResourceBone.h"
-#include "ResourceAvatar.h"
 #include "ResourceScript.h"
 #include "ResourcePrefab.h"
 #include "ResourceMaterial.h"
 #include "ResourceScene.h"
-#include "ResourceAnimator.h"
-
 
 #include <assert.h>
 
@@ -683,48 +680,6 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 	}
 	break;
 
-	case ResourceTypes::AnimatorResource:
-	{
-		std::string outputFile;
-		std::string name;
-		if (ResourceAnimator::ImportFile(file, name, outputFile))
-		{
-			std::vector<uint> resourcesUuids;
-			if (!GetResourcesUuidsByFile(file, resourcesUuids))
-			{
-				// Create the resources
-				CONSOLE_LOG(LogTypes::Normal, "RESOURCE MANAGER: The animator file '%s' has resources that need to be created", file);
-
-				// 1. Animator
-				uint uuid = outputFile.empty() ? App->GenerateRandomNumber() : strtoul(outputFile.data(), NULL, 0);
-				assert(uuid > 0);
-				resourcesUuids.push_back(uuid);
-				resourcesUuids.shrink_to_fit();
-
-				ResourceData data;
-				ResourceAnimatorData animatorData;
-				data.file = file;
-				if (name.empty())
-					App->fs->GetFileName(file, data.name);
-				else
-					data.name = name.data();
-				ResourceAnimator::LoadFile(file, animatorData);
-
-				resource = CreateResource(ResourceTypes::AnimatorResource, data, &animatorData, uuid);
-			}
-			else
-				resource = GetResource(resourcesUuids.front());
-
-			// 2. Meta
-			// TODO: only create meta if any of its fields has been modificated
-			std::string outputMetaFile;
-			std::string name = resource->GetName();
-			int64_t lastModTime = ResourceAnimator::CreateMeta(file, resourcesUuids.front(), name, outputMetaFile);
-			assert(lastModTime > 0);
-		}
-	}
-	break;
-
 	case ResourceTypes::ScriptResource:
 	{
 		resource = App->scripting->ImportScriptResource(file);
@@ -1125,6 +1080,7 @@ Resource* ModuleResourceManager::ExportFile(ResourceTypes type, ResourceData& da
 	}
 	break;
 
+	// Add new resource
 	case ResourceTypes::BoneResource:
 	{
 		if (ResourceBone::ExportFile(data, *(ResourceBoneData*)specificData, outputFile, overwrite))
@@ -1134,17 +1090,6 @@ Resource* ModuleResourceManager::ExportFile(ResourceTypes type, ResourceData& da
 		}
 	}
 	break;
-
-	case ResourceTypes::AvatarResource:
-	{
-		if (ResourceAvatar::ExportFile(data, *(ResourceAvatarData*)specificData, outputFile, overwrite))
-		{
-			if (!overwrite)
-				resource = ImportFile(outputFile.data());
-		}
-	}
-	break;
-
 	case ResourceTypes::AnimationResource:
 	{
 		if (ResourceAnimation::ExportFile(data, *(ResourceAnimationData*)specificData, outputFile, overwrite))
@@ -1154,6 +1099,7 @@ Resource* ModuleResourceManager::ExportFile(ResourceTypes type, ResourceData& da
 		}
 	}
 	break;
+
 	}
 
 	return resource;
@@ -1192,14 +1138,8 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 		case ResourceTypes::BoneResource:
 			resource = new ResourceBone(ResourceTypes::BoneResource, uuid, data, *(ResourceBoneData*)specificData);
 			break;
-		case ResourceTypes::AvatarResource:
-			resource = new ResourceAvatar(ResourceTypes::AvatarResource, uuid, data, *(ResourceAvatarData*)specificData);
-			break;
 		case ResourceTypes::AnimationResource:
 			resource = new ResourceAnimation(ResourceTypes::AnimationResource, uuid, data, *(ResourceAnimationData*)specificData);
-			break;
-		case ResourceTypes::AnimatorResource:
-			resource = new ResourceAnimator(ResourceTypes::AnimatorResource, uuid, data, *(ResourceAnimatorData*)specificData);
 			break;
 		case ResourceTypes::SceneResource:
 			resource = new ResourceScene(uuid, data, *(SceneData*)specificData);
@@ -1318,12 +1258,13 @@ void ModuleResourceManager::RecursiveDeleteUnusedEntries(const char* dir, std::s
 			std::string extension;
 			App->fs->GetExtension(*it, extension);
 			if (strcmp(extension.data(), EXTENSION_SCRIPT) == 0)
-				continue;
-			ResourceTypes type = GetResourceTypeByExtension(extension.data());
+			{
+				uint found = path.rfind(*it);
+				if (found != std::string::npos)
+					path = path.substr(0, found);
 
-			//TODO: INSPECT WHY THIS ERROR HAPPENS
-			if (type == ResourceTypes::NoResourceType)
 				continue;
+			}
 
 			uint resourceUuid = 0;
 			if (!GetResourceUuidByExportedFile(path.data(), resourceUuid))
@@ -1381,7 +1322,7 @@ Resource* ModuleResourceManager::GetResource(uint uuid) const
 
 	if (it != resources.end())
 		return it->second;
-	 
+
 	return nullptr;
 }
 
@@ -1414,7 +1355,7 @@ ResourceTypes ModuleResourceManager::GetResourceTypeByExtension(const char* exte
 {
 	union
 	{
-		char ext[4] = { '.', 'a', 'v', 'a' };
+		char ext[4];
 		uint32_t asciiValue;
 	} asciiUnion;
 

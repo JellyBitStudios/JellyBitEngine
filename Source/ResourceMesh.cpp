@@ -10,12 +10,21 @@
 
 #include <assert.h>
 
-ResourceMesh::ResourceMesh(ResourceTypes type, uint uuid, ResourceData data, ResourceMeshData meshData) : Resource(type, uuid, data), meshData(meshData) {}
+ResourceMesh::ResourceMesh(ResourceTypes type, uint uuid, ResourceData data, ResourceMeshData meshData) : Resource(type, uuid, data), meshData(meshData) {
+	
+	deformableMeshData.verticesSize = 0u;
+	deformableMeshData.indicesSize = 0u;
+	deformableMeshData.vertices = nullptr;
+	deformableMeshData.indices = nullptr;
+}
 
 ResourceMesh::~ResourceMesh()
 {
 	RELEASE_ARRAY(meshData.vertices);
 	RELEASE_ARRAY(meshData.indices);
+
+	RELEASE_ARRAY(deformableMeshData.vertices);
+	RELEASE_ARRAY(deformableMeshData.indices);
 }
 
 void ResourceMesh::OnPanelAssets()
@@ -650,6 +659,27 @@ void ResourceMesh::CalculateAdjacentIndices(uint* indices, uint indicesSize, uin
 	}
 }
 
+void ResourceMesh::GenerateAndBindDeformableMesh()
+{
+	assert(deformableMeshData.vertices != nullptr && deformableMeshData.verticesSize > 0
+		&& deformableMeshData.indices != nullptr && deformableMeshData.indicesSize > 0);
+
+	App->sceneImporter->GenerateVBO(DVBO, deformableMeshData.vertices, deformableMeshData.verticesSize);
+	App->sceneImporter->GenerateIBO(DIBO, deformableMeshData.indices, deformableMeshData.indicesSize);
+	App->sceneImporter->GenerateVAO(DVAO, DVBO);
+}
+
+void ResourceMesh::DuplicateMesh(ResourceMesh * mesh)
+{
+	deformableMeshData.vertices = new Vertex[meshData.verticesSize];
+	deformableMeshData.verticesSize = meshData.verticesSize;
+	deformableMeshData.indices = new uint[meshData.indicesSize];
+	deformableMeshData.indicesSize = meshData.indicesSize;
+	deformableMeshData.meshImportSettings = meshData.meshImportSettings;
+	memcpy(deformableMeshData.vertices, meshData.vertices, sizeof(Vertex) * meshData.verticesSize);
+	memcpy(deformableMeshData.indices, meshData.indices, sizeof(uint) * meshData.indicesSize);
+}
+
 uint ResourceMesh::GetVBO() const
 {
 	return VBO;
@@ -666,6 +696,101 @@ uint ResourceMesh::GetVAO() const
 }
 
 // ----------------------------------------------------------------------------------------------------
+
+// Returns true if the meshes uuids vector is not empty. Else, returns false
+bool ResourceMesh::ReadMeshesUuidsFromMeta(const char* metaFile, std::vector<uint>& meshesUuids)
+{
+	assert(metaFile != nullptr);
+
+	char* buffer;
+	uint size = App->fs->Load(metaFile, &buffer);
+	if (size > 0)
+	{
+		char* cursor = (char*)buffer;
+
+		// 1. (Last modification time)
+		uint bytes = sizeof(int64_t);
+		cursor += bytes;
+
+		// 2. Load uuids size
+		uint uuidsSize = 0;
+		bytes = sizeof(uint);
+		memcpy(&uuidsSize, cursor, bytes);
+		assert(uuidsSize > 0);
+
+		cursor += bytes;
+
+		// 3. Load meshes uuids
+		meshesUuids.resize(uuidsSize);
+		bytes = sizeof(uint) * uuidsSize;
+		memcpy(&meshesUuids[0], cursor, bytes);
+
+		CONSOLE_LOG(LogTypes::Normal, "Resource Mesh: Successfully loaded meta '%s'", metaFile);
+		RELEASE_ARRAY(buffer);
+	}
+	else
+	{
+		CONSOLE_LOG(LogTypes::Error, "Resource Mesh: Could not load meta '%s'", metaFile);
+		return false;
+	}
+
+	if (meshesUuids.size() > 0)
+		return true;
+
+	return false;
+}
+
+bool ResourceMesh::ReadMeshImportSettingsFromMeta(const char* metaFile, ResourceMeshImportSettings& meshImportSettings)
+{
+	assert(metaFile != nullptr);
+
+	char* buffer;
+	uint size = App->fs->Load(metaFile, &buffer);
+	if (size > 0)
+	{
+		char* cursor = (char*)buffer;
+
+		// 1. (Last modification time)
+		uint bytes = sizeof(int64_t);
+		cursor += bytes;
+
+		// 2. Load uuids size
+		uint uuidsSize = 0;
+		bytes = sizeof(uint);
+		memcpy(&uuidsSize, cursor, bytes);
+		assert(uuidsSize > 0);
+
+		cursor += bytes;
+
+		// 3. (Meshes uuids)
+		bytes = sizeof(uint) * uuidsSize;
+		cursor += bytes;
+
+		// 4. Load import settings
+		bytes = sizeof(int);
+		memcpy(&meshImportSettings.postProcessConfigurationFlags, cursor, bytes);
+
+		cursor += bytes;
+
+		bytes = sizeof(uint);
+		memcpy(&meshImportSettings.customConfigurationFlags, cursor, bytes);
+
+		cursor += bytes;
+
+		bytes = sizeof(float);
+		memcpy(&meshImportSettings.scale, cursor, bytes);
+
+		CONSOLE_LOG(LogTypes::Normal, "Resource Mesh: Successfully loaded meta '%s'", metaFile);
+		RELEASE_ARRAY(buffer);
+	}
+	else
+	{
+		CONSOLE_LOG(LogTypes::Error, "Resource Mesh: Could not load meta '%s'", metaFile);
+		return false;
+	}
+
+	return true;
+}
 
 bool ResourceMesh::LoadInMemory()
 {
@@ -686,4 +811,11 @@ bool ResourceMesh::UnloadFromMemory()
 	App->sceneImporter->DeleteVertexArrayObject(VAO);
 
 	return true;
+}
+
+void ResourceMesh::UnloadDeformableMeshFromMemory()
+{
+	App->sceneImporter->DeleteBufferObject(DVBO);
+	App->sceneImporter->DeleteBufferObject(DIBO);
+	App->sceneImporter->DeleteVertexArrayObject(DVAO);
 }

@@ -84,6 +84,9 @@ public:
 
 private:
 
+	static bool ReadTextureUuidFromMeta(const char* metaFile, uint& textureUuid);
+	static bool ReadTextureImportSettingsFromMeta(const char* metaFile, ResourceTextureImportSettings& textureImportSettings);
+
 	bool LoadInMemory();
 	bool UnloadFromMemory();
 

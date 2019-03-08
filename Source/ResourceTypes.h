@@ -11,12 +11,10 @@ enum ResourceTypes
 	ShaderProgramResource,
 	MaterialResource,
 	AnimationResource,
-	AvatarResource,
 	BoneResource,
 	ScriptResource,
 	PrefabResource,
-	SceneResource,
-	AnimatorResource
+	SceneResource
 };
 
 #endif
