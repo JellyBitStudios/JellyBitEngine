@@ -190,20 +190,17 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 
 			for (int i = 0; i < scripts.size(); ++i)
 			{
-				if (scripts[i]->IsTreeActive())
-					scripts[i]->OnEnableMethod();
+				scripts[i]->OnEnableMethod();
 			}
 
 			for (int i = 0; i < scripts.size(); ++i)
 			{
-				if (scripts[i]->IsTreeActive() && !scripts[i]->awaked)
-					scripts[i]->Awake();
+				scripts[i]->Awake();
 			}
 
 			for (int i = 0; i < scripts.size(); ++i)
 			{
-				if (scripts[i]->IsTreeActive())
-					scripts[i]->Start();
+				scripts[i]->Start();
 			}
 		
 			//Call the Awake and Start for all the Enabled script in the Play instant.
@@ -538,6 +535,16 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 		case ComponentTypes::ImageComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine.UI", "Image"));
+			break;
+		}
+		case ComponentTypes::RigidDynamicComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Rigidbody"));
+			break;
+		}
+		case ComponentTypes::ProjectorComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Projector"));
 			break;
 		}
 	}
@@ -888,6 +895,14 @@ void ScriptingModule::GameObjectKilled(GameObject* killed)
 			monoObjectHandles.erase(monoObjectHandles.begin() + i);
 			break;
 		}
+	}
+}
+
+void ScriptingModule::FixedUpdate()
+{
+	for (int i = 0; i < scripts.size(); ++i)
+	{
+		scripts[i]->FixedUpdate();
 	}
 }
 
@@ -1264,6 +1279,11 @@ float GetRealDeltaTime()
 	return App->timeManager->GetRealDt();
 }
 
+float GetFixedDeltaTime()
+{
+	return App->physics->GetFixedDT();
+}
+
 float GetTime()
 {
 	return App->timeManager->GetGameTime();
@@ -1622,6 +1642,32 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 
 		return App->scripting->MonoComponentFrom(comp);
 	}
+	else if (className == "Rigidbody")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::RigidDynamicComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
+	else if (className == "Projector")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::ProjectorComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
 	else
 	{
 		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
@@ -1777,6 +1823,139 @@ void SetDestination(MonoObject* navMeshAgent, MonoArray* newDestination)
 	mono_field_get_value(navMeshAgent, mono_class_get_field_from_name(mono_object_get_class(navMeshAgent), "componentAddress"), &compAddress);
 	ComponentNavAgent* agent = (ComponentNavAgent*)compAddress;
 	agent->SetDestination(newDestinationcpp.ptr());
+}
+
+float NavAgentGetRadius(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->radius;
+	}
+
+	return 0.0f;
+}
+
+void NavAgentSetRadius(MonoObject* compAgent, float newRadius)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->radius = newRadius;
+		agent->UpdateParams();
+	}
+}
+
+float NavAgentGetHeight(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->height;
+	}
+
+	return 0.0f;
+}
+
+void NavAgentSetHeight(MonoObject* compAgent, float newHeight)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->height = newHeight;
+		agent->UpdateParams();
+	}
+}
+
+float NavAgentGetMaxAcceleration(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->maxAcceleration;
+	}
+
+	return 0.0f;
+}
+
+void NavAgentSetMaxAcceleration(MonoObject* compAgent, float newMaxAcceleration)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->maxAcceleration = newMaxAcceleration;
+		agent->UpdateParams();
+	}
+}
+
+float NavAgentGetMaxSpeed(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->maxSpeed;
+	}
+
+	return 0.0f;
+}
+
+void NavAgentSetMaxSpeed(MonoObject* compAgent, float newMaxSpeed)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->maxSpeed = newMaxSpeed;
+		agent->UpdateParams();
+	}
+}
+
+float NavAgentGetSeparationWeight(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->separationWeight;
+	}
+
+	return 0.0f;
+}
+
+void NavAgentSetSeparationWeight(MonoObject* compAgent, float newSeparationWeight)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->separationWeight = newSeparationWeight;
+		agent->UpdateParams();
+	}
+}
+
+bool NavAgentIsWalking(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+		return agent->IsWalking();
+
+	return false;
+}
+
+void NavAgentRequestMoveVelocity(MonoObject* compAgent, MonoArray* direction)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		math::float3 dirCPP(mono_array_get(direction, float, 0), mono_array_get(direction, float, 1), mono_array_get(direction, float, 2));
+		agent->RequestMoveVelocity(dirCPP.ptr());
+	}		
+}
+
+void NavAgentResetMoveTarget(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->ResetMoveTarget();
+	}
 }
 
 bool OverlapSphere(float radius, MonoArray* center, MonoArray** overlapHit, uint filterMask, SceneQueryFlags sceneQueryFlags)
@@ -2079,6 +2258,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Time::getRealDeltaTime", (const void*)&GetRealDeltaTime);
 	mono_add_internal_call("JellyBitEngine.Time::getTime", (const void*)&GetTime);
 	mono_add_internal_call("JellyBitEngine.Time::getRealTime", (const void*)&GetRealTime);
+	mono_add_internal_call("JellyBitEngine.Time::getFixedDT", (const void*)&GetFixedDeltaTime);
 	mono_add_internal_call("JellyBitEngine.Transform::getLocalPosition", (const void*)&GetLocalPosition);
 	mono_add_internal_call("JellyBitEngine.Transform::setLocalPosition", (const void*)&SetLocalPosition);
 	mono_add_internal_call("JellyBitEngine.Transform::getLocalRotation", (const void*)&GetLocalRotation);
@@ -2120,6 +2300,20 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::DeleteKey", (const void*)&PlayerPrefsDeleteKey);
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::DeleteAll", (const void*)&PlayerPrefsDeleteAll);
 	mono_add_internal_call("JellyBitEngine.SceneManager.SceneManager::LoadScene", (const void*)&SMLoadScene);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetRadius", (const void*)&NavAgentGetRadius);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetRadius", (const void*)&NavAgentSetRadius);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetHeight", (const void*)&NavAgentGetHeight);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetHeight", (const void*)&NavAgentSetHeight);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetMaxAcceleration", (const void*)&NavAgentGetMaxAcceleration);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetMaxAcceleration", (const void*)&NavAgentSetMaxAcceleration);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetMaxSpeed", (const void*)&NavAgentGetMaxSpeed);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetMaxSpeed", (const void*)&NavAgentSetMaxSpeed);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetSeparationWeight", (const void*)&NavAgentGetSeparationWeight);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetSeparationWeight", (const void*)&NavAgentSetSeparationWeight);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::isWalking", (const void*)&NavAgentIsWalking);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::_RequestMoveVelocity", (const void*)&NavAgentRequestMoveVelocity);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::ResetMoveTarget", (const void*)&NavAgentResetMoveTarget);
+
 
 	ClearMap();
 
