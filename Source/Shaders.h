@@ -57,20 +57,34 @@
 "	gl_Position = vec4(position, 1.0);\n"		\
 "}"
 
-#define fDEFERREDSHADING										\
-"#version 330 core\n"											\
-"out vec4 FragColor;\n"											\
-"in vec2 TexCoords;\n"											\
-"uniform sampler2D gPosition;\n"								\
-"uniform sampler2D gNormal;\n"									\
-"uniform sampler2D gAlbedoSpec;\n"								\
-"void main()\n"													\
-"{\n"															\
-"	// retrieve data from gbuffer\n"							\
-"	vec3 FragPos = texture(gPosition, TexCoords).rgb;\n"		\
-"	vec3 Normal = texture(gNormal, TexCoords).rgb;\n"			\
-"	vec3 albedo = texture(gAlbedoSpec, TexCoords).rgb; \n"		\
-"	FragColor = vec4(albedo, 1.0);\n"							\
+#define fDEFERREDSHADING																\
+"#version 330 core\n"																	\
+"out vec4 FragColor;\n"																	\
+"in vec2 TexCoords;\n"																	\
+"uniform sampler2D gPosition;\n"														\
+"uniform sampler2D gNormal;\n"															\
+"uniform sampler2D gAlbedoSpec;\n"														\
+"struct Light {\n"																		\
+"vec3 Dir;\n"																			\
+"vec3 Color;\n"																			\
+"};			\n"																			\
+"const int NR_LIGHTS = 32;\n"															\
+"uniform Light lights[NR_LIGHTS];\n"													\
+"uniform vec3 viewPos;\n"																\
+"void main()\n"																			\
+"{\n"																					\
+"	// retrieve data from gbuffer\n"													\
+"	vec3 FragPos = texture(gPosition, TexCoords).rgb;\n"								\
+"	vec3 Normal = texture(gNormal, TexCoords).rgb;\n"									\
+"	vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;\n"								\
+"	vec3 lighting = Albedo * 0.1; // hard-coded ambient component\n"					\
+"	vec3 viewDir = normalize(viewPos - FragPos);\n"										\
+"	for (int i = 0; i < NR_LIGHTS; ++i) \n"												\
+"	{\n"																				\
+"		vec3 diffuse = max(dot(Normal, lights[i].Dir), 0.0) * Albedo * lights[i].Color;\n"	\
+"		lighting += diffuse; \n"														\
+"	}\n"																				\
+"	FragColor = vec4(lighting, 1.0); \n"												\
 "}"
 
 #pragma endregion

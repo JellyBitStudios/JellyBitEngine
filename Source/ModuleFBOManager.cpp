@@ -6,6 +6,7 @@
 #include "ResourceMesh.h"
 #include "ResourceShaderProgram.h"
 #include "ModuleInternalResHandler.h"
+#include "Lights.h"
 
 ModuleFBOManager::ModuleFBOManager() {}
 
@@ -112,6 +113,8 @@ void ModuleFBOManager::DrawGBufferToScreen() const
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
 	location = glGetUniformLocation(resProgram->shaderProgram, "gAlbedoSpec");
 	glUniform1i(location, 2);
+
+	App->lights->UseLights(resProgram->shaderProgram);
 
 	const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(App->resHandler->plane);
 

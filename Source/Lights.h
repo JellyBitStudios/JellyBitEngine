@@ -12,6 +12,7 @@ public:
 
 	void AddLight(const class ComponentLight* light);
 	bool EraseLight(const class ComponentLight* light);
+	void UseLights(const unsigned int shaderProgram) const;
 
 private:
 

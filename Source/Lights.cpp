@@ -1,6 +1,11 @@
 #include "Lights.h"
 #include "ComponentLight.h"
 
+#include "glew\include\GL\glew.h"
+
+#include "GameObject.h"
+#include "ComponentTransform.h"
+
 #include <algorithm>
 
 Lights::Lights()
@@ -30,4 +35,15 @@ bool Lights::EraseLight(const ComponentLight* light)
 		lights.erase(it);
 
 	return ret;
+}
+
+void Lights::UseLights(const unsigned int shaderID) const
+{
+	for (int i = 0; i < lights.size(); ++i)
+	{
+		// uwu
+		math::float3 dir = lights[i]->GetParent()->transform->GetGlobalMatrix().WorldZ();
+		glUniform3fv(glGetUniformLocation(shaderID, "lights[" + i + "]"), 1, dir.ptr());
+		glUniform3fv(glGetUniformLocation(shaderID, "Light.Dir"), 1, lights[i]->color);
+	}
 }
