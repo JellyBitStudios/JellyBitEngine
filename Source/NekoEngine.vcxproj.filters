@@ -1848,7 +1848,13 @@
     <ClInclude Include="Shaders.h">
       <Filter>Sources\Containers</Filter>
     </ClInclude>
-    <ClInclude Include="Freetype\include\freetype\internal\autohint.h">
+    <ClInclude Include="ResourceScene.h">
+      <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceAnimator.h">
+      <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClInclude>
+      <ClInclude Include="Freetype\include\freetype\internal\autohint.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
     <ClInclude Include="Freetype\include\freetype\internal\cffotypes.h">
@@ -2123,11 +2129,6 @@
     </ClInclude>
     <ClInclude Include="Freetype\include\freetype\internal\tttypes.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
-    <ClInclude Include="ResourceScene.h">
-      <Filter>Sources\Modules\Resources\Types</Filter>
-    </ClInclude>
-    <ClInclude Include="ResourceAnimator.h">
-      <Filter>Sources\Modules\Resources\Types</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

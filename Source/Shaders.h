@@ -284,4 +284,38 @@
 
 #pragma endregion
 
+
+#pragma region ShaderLabelUI
+
+#define UI_LabelvShader \
+"#version 330 core\n" \
+"\n" \
+"layout(location = 0) in vec4 vertex;\n" \
+"\n" \
+"uniform mat4 mvp_matrix;\n" \
+"\n" \
+"out vec2 fTexCoord;\n" \
+"\n" \
+"void main()\n" \
+"{\n" \
+"	gl_Position = mvp_matrix * vec4(vertex.xy, 0.0, 1.0);\n" \
+"	fTexCoord = texCoord;\n" \
+"}"
+
+#define UI_LabelfShader \
+"#version 330 core\n" \
+"\n" \
+"in vec2 fTexCoord;\n" \
+"\n" \
+"out vec4 FragColor;\n" \
+"\n" \
+"uniform vec3 textColor;\n" \
+"uniform sampler2D text;\n" \
+"\n" \
+"void main()\n" \
+"{\n" \
+"	FragColor = (textColor,texture(text, fTexCoord).r);" \
+"}"
+#pragma endregion
+
 #endif
