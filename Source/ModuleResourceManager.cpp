@@ -1423,6 +1423,9 @@ ResourceTypes ModuleResourceManager::GetResourceTypeByExtension(const char* exte
 	case ASCIImat: case ASCIIMAT:
 		return ResourceTypes::MaterialResource;
 		break;
+	case ASCIIava: case ASCIIAVA:
+		return ResourceTypes::AvatarResource;
+		break;
 	case ASCIIcs: case ASCIICS:
 		return ResourceTypes::ScriptResource;
 		break;
@@ -1431,9 +1434,6 @@ ResourceTypes ModuleResourceManager::GetResourceTypeByExtension(const char* exte
 		break;
 	case ASCIISCN: case ASCIIscn:
 		return ResourceTypes::SceneResource;
-		break;
-	case ASCIIava: case ASCIIAVA:
-		return ResourceTypes::AvatarResource;
 		break;
 	}
 	
@@ -1454,6 +1454,8 @@ ResourceTypes ModuleResourceManager::GetLibraryResourceTypeByExtension(const cha
 		return ResourceTypes::ShaderProgramResource;
 	else if (strcmp(extension, EXTENSION_MATERIAL) == 0)
 		return ResourceTypes::MaterialResource;
+	else if (strcmp(extension, EXTENSION_AVATAR) == 0)
+		return ResourceTypes::AvatarResource;
 	else if (strcmp(extension, EXTENSION_ANIMATION) == 0)
 		return ResourceTypes::AnimationResource;
 	else if (strcmp(extension, EXTENSION_BONE) == 0)

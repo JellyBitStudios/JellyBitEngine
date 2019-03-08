@@ -44,6 +44,7 @@ ModuleFileSystem::ModuleFileSystem(bool start_enabled) : Module(start_enabled)
 	CreateDir(DIR_ASSETS_MESHES);
 	CreateDir(DIR_ASSETS_TEXTURES);
 	CreateDir(DIR_ASSETS_MATERIALS);
+	CreateDir(DIR_ASSETS_AVATARS);
 	CreateDir(DIR_ASSETS_SHADERS);
 	CreateDir(DIR_ASSETS_SHADERS_OBJECTS);
 	CreateDir(DIR_ASSETS_SHADERS_PROGRAMS);
@@ -224,7 +225,9 @@ void ModuleFileSystem::OnSystemEvent(System_Event event)
 				{
 					strcpy(destinationDir, DIR_ASSETS_TEXTURES);
 					break;
-				}			
+				}
+
+				// TODO ADD NEW RESOURCES
 			}
 
 			std::string fileName;
@@ -526,6 +529,11 @@ uint ModuleFileSystem::SaveInGame(char* buffer, uint size, FileTypes fileType, s
 			outputFile.insert(strlen(DIR_ASSETS_MATERIALS), "/");
 			outputFile.append(EXTENSION_MATERIAL);
 			break;
+		case FileTypes::AvatarFile:
+			outputFile.insert(0, DIR_ASSETS_AVATARS);
+			outputFile.insert(strlen(DIR_ASSETS_AVATARS), "/");
+			outputFile.append(EXTENSION_AVATAR);
+			break;
 		case FileTypes::VertexShaderObjectFile:
 			outputFile.insert(0, DIR_ASSETS_SHADERS_OBJECTS);
 			outputFile.insert(strlen(DIR_ASSETS_SHADERS_OBJECTS), "/");
@@ -556,7 +564,6 @@ uint ModuleFileSystem::SaveInGame(char* buffer, uint size, FileTypes fileType, s
 			outputFile.insert(strlen(DIR_ASSETS_SCENES), "/");
 			outputFile.append(EXTENSION_SCENE);
 			break;
-		// Scripts
 		}
 	}
 
