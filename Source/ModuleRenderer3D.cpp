@@ -187,7 +187,6 @@ update_status ModuleRenderer3D::PostUpdate()
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::Orchid);
 #endif
 
-	App->scene->Draw();
 
 	if (currentCamera != nullptr)
 	{
@@ -229,6 +228,8 @@ update_status ModuleRenderer3D::PostUpdate()
 		App->navigation->Draw();
 
 		App->debugDrawer->StartDebugDraw();
+
+		App->scene->Draw();
 
 		if (drawBoundingBoxes) // boundingBoxesColor = Yellow
 		{
@@ -303,12 +304,22 @@ void ModuleRenderer3D::OnSystemEvent(System_Event event)
 	switch (event.type)
 	{
 	case System_Event_Type::Play:
+#ifndef GAMEMODE
+		CalculateProjectionMatrix();
+#endif // !GAMEMODE
 		break;
 	case System_Event_Type::Stop:
 #ifndef GAMEMODE
+		CalculateProjectionMatrix();
 		currentCamera = App->camera->camera;
-#endif // GAME
+#endif // !GAMEMODE
 		break;
+		case System_Event_Type::LoadFinished:
+		{
+			if (App->GetEngineState() == ENGINE_PLAY)
+				SetCurrentCamera();
+			break;
+		}
 	}
 }
 

@@ -119,8 +119,6 @@ bool MaterialImporter::Import(const void* buffer, uint size, std::string& output
 			// Save to the buffer
 			if (ilSaveL(IL_DDS, data, size) > 0)
 			{
-
-
 				uint uuid = forcedUuid == 0 ? App->GenerateRandomNumber() : forcedUuid;
 				outputFile = std::to_string(uuid);
 				if (App->fs->SaveInGame((char*)data, size, FileTypes::TextureFile, outputFile) > 0)
