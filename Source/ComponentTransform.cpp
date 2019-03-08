@@ -10,6 +10,7 @@
 #include "ComponentCamera.h"
 #include "ComponentProjector.h"
 #include "ComponentRigidActor.h"
+#include "ComponentRectTransform.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
