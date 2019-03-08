@@ -31,17 +31,28 @@ public:
 	math::float4x4& GetGlobalMatrix() const;
 	void SetMatrixFromGlobal(math::float4x4& globalMatrix);
 
+	void SetPosition(math::float3 newPos);
+	void SetRotation(math::Quat newRot);
+	void SetScale(math::float3 newScale);
+
+	void Move(math::float3 distance);
+	void Rotate(math::Quat rotation);
+	void Scale(math::float3 scale);
+
+
+
 	uint GetInternalSerializationBytes();
 	virtual void OnInternalSave(char*& cursor);
 	virtual void OnInternalLoad(char*& cursor);
 
 public:
+	bool dragTransform = false;
 
+private:
 	math::float3 position = math::float3::zero;
 	math::Quat rotation = math::Quat::identity;
 	math::float3 scale = math::float3::one;
 
-	bool dragTransform = false;
 };
 
 #endif
