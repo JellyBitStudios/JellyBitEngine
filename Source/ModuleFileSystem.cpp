@@ -128,18 +128,18 @@ bool ModuleFileSystem::CleanUp()
 	return true;
 }
 
-void ModuleFileSystem::ImportMainDir()
+void ModuleFileSystem::ImportMainDir(bool reimport)
 {
 	std::vector<std::string> lateEvents;
 	std::vector<std::string> lateLateEvents;
-	ImportFilesEvents(rootDir, lateEvents, lateLateEvents);
+	ImportFilesEvents(rootDir, lateEvents, lateLateEvents, reimport);
 
 	for (int i = 0; i < lateEvents.size(); ++i)
 	{
 		// The ResourceManager already manages the .meta, already imported files etc. on his own.
 		System_Event event;
 #ifndef GAMEMODE
-		event.fileEvent.type = System_Event_Type::ImportFile;
+		event.fileEvent.type = reimport ? System_Event_Type::ReImportFile : System_Event_Type::ImportFile;
 #else
 		event.fileEvent.type = System_Event_Type::ImportLibraryFile;
 #endif
@@ -152,7 +152,7 @@ void ModuleFileSystem::ImportMainDir()
 		// The ResourceManager already manages the .meta, already imported files etc. on his own.
 		System_Event event;
 #ifndef GAMEMODE
-		event.fileEvent.type = System_Event_Type::ImportFile;
+		event.fileEvent.type = reimport ? System_Event_Type::ReImportFile : System_Event_Type::ImportFile;
 #else
 		event.fileEvent.type = System_Event_Type::ImportLibraryFile;
 #endif
@@ -1050,7 +1050,7 @@ void ModuleFileSystem::SendEvents(const Directory& newAssetsDir)
 	}
 }
 
-void ModuleFileSystem::ImportFilesEvents(const Directory& directory, std::vector<std::string>& lateEvents, std::vector<std::string>& lateLateEvents)
+void ModuleFileSystem::ImportFilesEvents(const Directory& directory, std::vector<std::string>& lateEvents, std::vector<std::string>& lateLateEvents, bool reimport)
 {
 	for (int i = 0; i < directory.files.size(); ++i)
 	{
@@ -1088,7 +1088,7 @@ void ModuleFileSystem::ImportFilesEvents(const Directory& directory, std::vector
 				//The ResourceManager already manages the .meta, already imported files etc. on his own.
 				System_Event event;
 #ifndef GAMEMODE
-				event.fileEvent.type = System_Event_Type::ImportFile;
+				event.fileEvent.type = reimport ? System_Event_Type::ReImportFile : System_Event_Type::ImportFile;
 #else
 				event.fileEvent.type = System_Event_Type::ImportLibraryFile;
 #endif
@@ -1160,7 +1160,7 @@ void ModuleFileSystem::ImportFilesEvents(const Directory& directory, std::vector
 
 	for (int i = 0; i < directory.directories.size(); ++i)
 	{
-		ImportFilesEvents(directory.directories[i], lateEvents, lateLateEvents);
+		ImportFilesEvents(directory.directories[i], lateEvents, lateLateEvents, reimport);
 	}
 }
 

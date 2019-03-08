@@ -277,7 +277,7 @@ public:
 	bool Start();
 	bool CleanUp();
 
-	void ImportMainDir();
+	void ImportMainDir(bool reimport = false);
 
 	void OnSystemEvent(System_Event event);
 
@@ -319,7 +319,7 @@ public:
 	bool deleteFiles(const std::string& rootDirectory, const std::string& extension, bool deleteRoot = false) const;
 	void SendEvents(const Directory& newAssetsDir);
 
-	void ImportFilesEvents(const Directory& newDir, std::vector<std::string>& lateEvents = std::vector<std::string>(), std::vector<std::string>& lateLateEvents = std::vector<std::string>());
+	void ImportFilesEvents(const Directory& newDir, std::vector<std::string>& lateEvents = std::vector<std::string>(), std::vector<std::string>& lateLateEvents = std::vector<std::string>(), bool reimport = false);
 	void ForceReImport(const Directory& assetsDir);
 
 	void BeginTempException(std::string directory);

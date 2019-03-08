@@ -61,7 +61,7 @@ bool PanelAssets::Draw()
 				return false;
 
 			//Export everything in Assets
-			App->fs->ForceReImport(App->fs->rootDir);
+			App->fs->ImportMainDir(true);
 
 			System_Event newEvent;
 			newEvent.type = System_Event_Type::GenerateLibraryFiles;
