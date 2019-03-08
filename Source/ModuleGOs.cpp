@@ -182,7 +182,7 @@ GameObject* ModuleGOs::CreateGameObject(const char* goName, GameObject* parent, 
 
 GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 {
-	if (copy->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT_WORLD)
+	if (/**/copy->cmp_rectTransform/**/ && copy->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT_WORLD)	/// TODO: check why alita model crash here!
 		return nullptr;
 
 	GameObject* newGameObject = new GameObject(*copy);
