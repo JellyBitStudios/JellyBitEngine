@@ -30,6 +30,7 @@
 #define DIR_ASSETS_SHADERS_PROGRAMS "Assets/Shaders/Programs"
 #define DIR_ASSETS_PREFAB "Assets/Prefabs"
 #define DIR_ASSETS_ANIMATOR "Assets/Animator"
+#define DIR_ASSETS_AVATARS "Assets/Avatars"
 #define DIR_ASSETS_SCENES "Assets/Scenes"
 #define DIR_ASSETS_SCRIPTS "Assets/Scripts"
 
@@ -46,6 +47,7 @@ enum FileTypes
 	TextureFile,
 
 	BoneFile,
+	AvatarFile,
 	AnimationFile,
 	AnimatorFile,
 

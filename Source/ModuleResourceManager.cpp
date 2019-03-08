@@ -20,6 +20,7 @@
 #include "ResourceShaderProgram.h"
 #include "ResourceAnimation.h"
 #include "ResourceBone.h"
+#include "ResourceAvatar.h"
 #include "ResourceScript.h"
 #include "ResourcePrefab.h"
 #include "ResourceMaterial.h"
@@ -1124,7 +1125,6 @@ Resource* ModuleResourceManager::ExportFile(ResourceTypes type, ResourceData& da
 	}
 	break;
 
-	// Add new resource
 	case ResourceTypes::BoneResource:
 	{
 		if (ResourceBone::ExportFile(data, *(ResourceBoneData*)specificData, outputFile, overwrite))
@@ -1134,6 +1134,17 @@ Resource* ModuleResourceManager::ExportFile(ResourceTypes type, ResourceData& da
 		}
 	}
 	break;
+
+	case ResourceTypes::AvatarResource:
+	{
+		if (ResourceAvatar::ExportFile(data, *(ResourceAvatarData*)specificData, outputFile, overwrite))
+		{
+			if (!overwrite)
+				resource = ImportFile(outputFile.data());
+		}
+	}
+	break;
+
 	case ResourceTypes::AnimationResource:
 	{
 		if (ResourceAnimation::ExportFile(data, *(ResourceAnimationData*)specificData, outputFile, overwrite))
@@ -1143,7 +1154,6 @@ Resource* ModuleResourceManager::ExportFile(ResourceTypes type, ResourceData& da
 		}
 	}
 	break;
-
 	}
 
 	return resource;
@@ -1181,6 +1191,9 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 			break;
 		case ResourceTypes::BoneResource:
 			resource = new ResourceBone(ResourceTypes::BoneResource, uuid, data, *(ResourceBoneData*)specificData);
+			break;
+		case ResourceTypes::AvatarResource:
+			resource = new ResourceAvatar(ResourceTypes::AvatarResource, uuid, data, *(ResourceAvatarData*)specificData);
 			break;
 		case ResourceTypes::AnimationResource:
 			resource = new ResourceAnimation(ResourceTypes::AnimationResource, uuid, data, *(ResourceAnimationData*)specificData);

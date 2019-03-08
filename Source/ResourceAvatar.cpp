@@ -68,8 +68,77 @@ bool ResourceAvatar::ImportFile(const char* file, std::string& name, std::string
 	return true;
 }
 
+bool ResourceAvatar::ExportFile(const ResourceData& data, const ResourceAvatarData& avatarData, std::string& outputFile, bool overwrite)
+{
+	return SaveFile(data, avatarData, outputFile, overwrite) > 0;
+}
+
+uint ResourceAvatar::SaveFile(const ResourceData& data, const ResourceAvatarData& avatarData, std::string& outputFile, bool overwrite)
+{
+	uint size =
+		sizeof(uint); // hips uuid
+
+	char* buffer = new char[size];
+	char* cursor = buffer;
+
+	// 1. Store hips uuid
+	uint bytes = sizeof(uint);
+	memcpy(cursor, &avatarData.hipsUuid, bytes);
+
+	//cursor += bytes;
+
+	// --------------------------------------------------
+
+	// Build the path of the file
+	if (overwrite)
+		outputFile = data.file;
+	else
+		outputFile = data.name;
+
+	// Save the file
+	uint retSize = App->fs->SaveInGame(buffer, size, FileTypes::AvatarFile, outputFile, overwrite) > 0;
+
+	if (retSize > 0)
+	{
+		CONSOLE_LOG(LogTypes::Normal, "Resource Avatar: Successfully saved Avatar '%s'", outputFile.data());
+	}
+	else
+		CONSOLE_LOG(LogTypes::Error, "Resource Avatar: Could not save Avatar '%s'", outputFile.data());
+
+	RELEASE_ARRAY(buffer);
+
+	return retSize;
+}
+
+bool ResourceAvatar::LoadFile(const char* file, ResourceAvatarData& outputAvatarData)
+{
+	assert(file != nullptr);
+
+	bool ret = false;
+
+	char* buffer;
+	uint size = App->fs->Load(file, &buffer);
+	if (size > 0)
+	{
+		char* cursor = (char*)buffer;
+
+		// 1. Load hips uuid
+		uint bytes = sizeof(uint);
+		memcpy(&outputAvatarData.hipsUuid, cursor, bytes);
+
+		//cursor += bytes;
+
+		CONSOLE_LOG(LogTypes::Normal, "Resource Avatar: Successfully loaded Avatar '%s'", file);
+		RELEASE_ARRAY(buffer);
+	}
+	else
+		CONSOLE_LOG(LogTypes::Error, "Resource Avatar: Could not load Avatar '%s'", file);
+
+	return ret;
+}
+
 // Returns the last modification time of the file
-uint ResourceAvatar::CreateMeta(const char* file, uint avatarUuid, std::string& name, std::string& outputMetaFile)
+uint ResourceAvatar::CreateMeta(const char* file, uint avatarUuid, const std::string& name, std::string& outputMetaFile)
 {
 	assert(file != nullptr);
 
@@ -128,8 +197,8 @@ uint ResourceAvatar::CreateMeta(const char* file, uint avatarUuid, std::string& 
 	// Build the path of the meta file and save it
 	outputMetaFile = file;
 	outputMetaFile.append(EXTENSION_META);
-	uint resultSize = App->fs->Save(outputMetaFile.data(), data, size);
-	if (resultSize > 0)
+	uint retSize = App->fs->Save(outputMetaFile.data(), data, size);
+	if (retSize > 0)
 	{
 		CONSOLE_LOG(LogTypes::Normal, "Resource Avatar: Successfully saved meta '%s'", outputMetaFile.data());
 	}
@@ -195,6 +264,11 @@ bool ResourceAvatar::ReadMeta(const char* metaFile, int64_t& lastModTime, uint& 
 	}
 
 	return true;
+}
+
+uint ResourceAvatar::SetNameToMeta(const char* metaFile, const std::string& name)
+{
+	return uint();
 }
 
 bool ResourceAvatar::GenerateLibraryFiles() const

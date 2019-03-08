@@ -10,21 +10,12 @@
 
 #include <assert.h>
 
-ResourceMesh::ResourceMesh(ResourceTypes type, uint uuid, ResourceData data, ResourceMeshData meshData) : Resource(type, uuid, data), meshData(meshData) {
-	
-	deformableMeshData.verticesSize = 0u;
-	deformableMeshData.indicesSize = 0u;
-	deformableMeshData.vertices = nullptr;
-	deformableMeshData.indices = nullptr;
-}
+ResourceMesh::ResourceMesh(ResourceTypes type, uint uuid, ResourceData data, ResourceMeshData meshData) : Resource(type, uuid, data), meshData(meshData) {}
 
 ResourceMesh::~ResourceMesh()
 {
 	RELEASE_ARRAY(meshData.vertices);
 	RELEASE_ARRAY(meshData.indices);
-
-	RELEASE_ARRAY(deformableMeshData.vertices);
-	RELEASE_ARRAY(deformableMeshData.indices);
 }
 
 void ResourceMesh::OnPanelAssets()
@@ -659,27 +650,6 @@ void ResourceMesh::CalculateAdjacentIndices(uint* indices, uint indicesSize, uin
 	}
 }
 
-void ResourceMesh::GenerateAndBindDeformableMesh()
-{
-	assert(deformableMeshData.vertices != nullptr && deformableMeshData.verticesSize > 0
-		&& deformableMeshData.indices != nullptr && deformableMeshData.indicesSize > 0);
-
-	App->sceneImporter->GenerateVBO(DVBO, deformableMeshData.vertices, deformableMeshData.verticesSize);
-	App->sceneImporter->GenerateIBO(DIBO, deformableMeshData.indices, deformableMeshData.indicesSize);
-	App->sceneImporter->GenerateVAO(DVAO, DVBO);
-}
-
-void ResourceMesh::DuplicateMesh(ResourceMesh * mesh)
-{
-	deformableMeshData.vertices = new Vertex[meshData.verticesSize];
-	deformableMeshData.verticesSize = meshData.verticesSize;
-	deformableMeshData.indices = new uint[meshData.indicesSize];
-	deformableMeshData.indicesSize = meshData.indicesSize;
-	deformableMeshData.meshImportSettings = meshData.meshImportSettings;
-	memcpy(deformableMeshData.vertices, meshData.vertices, sizeof(Vertex) * meshData.verticesSize);
-	memcpy(deformableMeshData.indices, meshData.indices, sizeof(uint) * meshData.indicesSize);
-}
-
 uint ResourceMesh::GetVBO() const
 {
 	return VBO;
@@ -716,11 +686,4 @@ bool ResourceMesh::UnloadFromMemory()
 	App->sceneImporter->DeleteVertexArrayObject(VAO);
 
 	return true;
-}
-
-void ResourceMesh::UnloadDeformableMeshFromMemory()
-{
-	App->sceneImporter->DeleteBufferObject(DVBO);
-	App->sceneImporter->DeleteBufferObject(DIBO);
-	App->sceneImporter->DeleteVertexArrayObject(DVAO);
 }

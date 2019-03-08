@@ -101,11 +101,6 @@ public:
 
 	static void CalculateAdjacentIndices(uint* indices, uint indicesSize, uint*& adjacentIndices);
 
-	void GenerateAndBindDeformableMesh();
-	void UnloadDeformableMeshFromMemory();
-
-	void DuplicateMesh(ResourceMesh* mesh);
-
 	uint GetVBO() const;
 	uint GetIBO() const;
 	uint GetVAO() const;
@@ -122,14 +117,6 @@ private:
 	uint VAO = 0;
 
 	ResourceMeshData meshData;
-
-public:
-
-	uint DVBO = 0;
-	uint DIBO = 0;
-	uint DVAO = 0;
-
-	ResourceMeshData deformableMeshData;
 };
 
 #endif

@@ -135,9 +135,6 @@ update_status ModuleAnimation::Update()
 		{
 			DeformMesh(bone);
 			ResourceMesh*res = (ResourceMesh*)App->res->GetResource(bone->attached_mesh->res);
-
-			res->UnloadDeformableMeshFromMemory();
-			res->GenerateAndBindDeformableMesh();
 		}
 	}
 
@@ -166,10 +163,6 @@ bool ModuleAnimation::StartAttachingBones()
 				mesh_co->attached_bones = bones;
 
 				ResourceMesh* res = (ResourceMesh*)App->res->GetResource(mesh_co->res);
-				
-				
-				res->DuplicateMesh(res);
-				res->GenerateAndBindDeformableMesh();
 				
 
 				for (std::vector<ComponentBone*>::iterator it = mesh_co->attached_bones.begin(); it != mesh_co->attached_bones.end(); ++it)
@@ -631,31 +624,9 @@ void ModuleAnimation::DeformMesh(ComponentBone* component_bone)
 
 			math::float3 vertex = trans.TransformPos(original);
 
-			mesh->deformableMeshData.vertices[index].position[0] += vertex.x * rbone->boneData.bone_weights[i] * SCALE;
-			mesh->deformableMeshData.vertices[index].position[1] += vertex.y * rbone->boneData.bone_weights[i] * SCALE;
-			mesh->deformableMeshData.vertices[index].position[2] += vertex.z * rbone->boneData.bone_weights[i] * SCALE;
+			//mesh->deformableMeshData.vertices[index].position[0] += vertex.x * rbone->boneData.bone_weights[i] * SCALE;
+			//mesh->deformableMeshData.vertices[index].position[1] += vertex.y * rbone->boneData.bone_weights[i] * SCALE;
+			//mesh->deformableMeshData.vertices[index].position[2] += vertex.z * rbone->boneData.bone_weights[i] * SCALE;
 		}
 	}
-}
-
-void ModuleAnimation::ResetMesh(ComponentBone * component_bone)
-{
-	ResourceBone* rbone = (ResourceBone*)App->res->GetResource(component_bone->res);
-	ResourceMesh* original = nullptr;
-	if (rbone)
-		original = (ResourceMesh*)App->res->GetResource(rbone->boneData.mesh_uid);
-
-	if (original) {
-		for (uint i = 0u; i < original->deformableMeshData.verticesSize; i++)
-		{
-			memset(original->deformableMeshData.vertices[i].position, 0, 3 * sizeof(float));
-			//memset(original->deformableMeshData.vertices, 0, original->GetSpecificData().verticesSize * sizeof(float));
-			//memset(original->deformable->vertices, 0, original->vertex_size * sizeof(float));
-		}
-		//memcpy(original->deformableMeshData.vertices, original->GetSpecificData().vertices, original->GetSpecificData().verticesSize);
-		//original->GenerateAndBindDeformableMesh();
-	}
-
-	int a = 0;
-		
 }
