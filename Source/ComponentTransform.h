@@ -35,10 +35,12 @@ public:
 	void UpdateGlobal();
 
 	void SetPosition(math::float3 newPos);
+	void SetPosition(const float newPos[3]);
 	void SetRotation(math::Quat newRot);
 	void SetScale(math::float3 newScale);
 
 	void Move(math::float3 distance);
+	void Move(const float distance[3]);
 	void Rotate(math::Quat rotation);
 	void Scale(math::float3 scale);
 	void Scale(float scale);

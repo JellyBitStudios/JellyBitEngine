@@ -18,6 +18,8 @@
 #include "Brofiler/Brofiler.h"
 #include <list>
 
+#include "MathGeoLib/include/Geometry/OBB.h"
+
 ComponentTransform::ComponentTransform(GameObject* parent) : Component(parent, ComponentTypes::TransformComponent) {}
 
 ComponentTransform::ComponentTransform(const ComponentTransform& componentTransform, GameObject* parent) : Component(parent, ComponentTypes::TransformComponent)
@@ -116,11 +118,11 @@ void ComponentTransform::OnUniqueEditor()
 				App->camera->SetReference(position);
 #endif
 
-			// Transform updated: recalculate bounding boxes
-			System_Event newEvent;
-			newEvent.goEvent.gameObject = parent;
-			newEvent.type = System_Event_Type::RecalculateBBoxes;
-			App->PushSystemEvent(newEvent);
+			//// Transform updated: recalculate bounding boxes -> // Bounding boxes are now automatically recalculated from ComponentTransform::UpdateGlobal()
+			//System_Event newEvent;
+			//newEvent.goEvent.gameObject = parent;
+			//newEvent.type = System_Event_Type::RecalculateBBoxes;
+			//App->PushSystemEvent(newEvent);
 
 			if (parent->IsStatic())
 			{
@@ -184,11 +186,11 @@ void ComponentTransform::SetMatrixFromGlobal(math::float4x4& globalMatrix)
 		App->camera->SetReference(position);
 #endif
 
-	// Transform updated: recalculate bounding boxes
-	System_Event newEvent;
-	newEvent.goEvent.gameObject = parent;
-	newEvent.type = System_Event_Type::RecalculateBBoxes;
-	App->PushSystemEvent(newEvent);
+	//// Transform updated: recalculate bounding boxes -> // Bounding boxes are now automatically recalculated from ComponentTransform::UpdateGlobal()
+	//System_Event newEvent;
+	//newEvent.goEvent.gameObject = parent;
+	//newEvent.type = System_Event_Type::RecalculateBBoxes;
+	//App->PushSystemEvent(newEvent);
 
 	if (parent->IsStatic())
 	{
@@ -206,7 +208,7 @@ math::float4x4 ComponentTransform::GetGlobalMatrix() const
 	return globalMatrix;
 }
 
-void ComponentTransform::UpdateGlobal() 
+void ComponentTransform::UpdateGlobal()
 {
 	math::float4x4 local = GetMatrix();
 
@@ -220,6 +222,11 @@ void ComponentTransform::UpdateGlobal()
 	{
 		(*childs)->transform->UpdateGlobal();
 	}
+
+	// Transform is updated, we have to recalculate the bounding box.
+	// As we are already in a recursive method, all bouding boxes will be updated by recalculating the current.
+	// Doing this we avoid calling another recusive method and improve performance.
+	parent->RecalculateBoundingBox();
 }
 
 
@@ -228,6 +235,11 @@ void ComponentTransform::SetPosition(math::float3 newPos)
 	this->position = newPos;
 
 	UpdateGlobal();
+}
+
+void ComponentTransform::SetPosition(const float newPos[3])
+{
+	SetPosition(math::float3(newPos[0], newPos[1], newPos[2]));
 }
 
 void ComponentTransform::SetRotation(math::Quat newRot)
@@ -247,6 +259,11 @@ void ComponentTransform::SetScale(math::float3 newScale)
 void ComponentTransform::Move(math::float3 distance)
 {
 	SetPosition(this->position.Add(distance));
+}
+
+void ComponentTransform::Move(const float distance[3])
+{
+	Move(math::float3(distance[0], distance[1], distance[2]));
 }
 
 void ComponentTransform::Rotate(math::Quat rotation)
