@@ -56,9 +56,9 @@ bool PanelAssets::Draw()
 			//4. Copy library, the readme, the dlls, (Settings?) and AudioFolder (temp) to a new Build folder and make a zip with it.
 
 			//Delete library
-			bool ret = App->fs->deleteFiles("Library", "", false);
-			if (ret == false)
-				return false;
+			bool ret = App->fs->deleteFiles("Library", "");
+			/*if (ret == false)
+				return false;*/
 
 			//Export everything in Assets
 			App->fs->ImportMainDir(true);

@@ -170,62 +170,36 @@ void ModuleFileSystem::OnSystemEvent(System_Event event)
 #ifndef GAMEMODE
 			char* fileOrigin = event.fileEvent.file;
 
-			union
-			{
-				char ext[4];
-				uint asciiValue;
-
-			} dictionary;
-
 			std::string extension;
 			App->fs->GetExtension(fileOrigin, extension);
 
-			strcpy(dictionary.ext, extension.data());
+			ResourceTypes type = App->res->GetResourceTypeByExtension(extension.data());
 
 			char destinationDir[DEFAULT_BUF_SIZE];
 
-			switch (dictionary.asciiValue)
+			switch (type)
 			{
-				case ASCIIFBX:
-				case ASCIIfbx:
-				case ASCIIdae:
-				case ASCIIDAE:
-				case ASCIIobj:
-				case ASCIIOBJ:
+				case ResourceTypes::MeshResource:
 				{
 					strcpy(destinationDir, DIR_ASSETS_MESHES);
 					break;
 				}
-				case ASCIIfsh:
-				case ASCIIFSH:	
-				case ASCIIvsh:
-				case ASCIIVSH:
-				case ASCIIgsh: 
-				case ASCIIGSH:
+				case ResourceTypes::ShaderObjectResource:
 				{
 					strcpy(destinationDir, DIR_ASSETS_SHADERS_OBJECTS);
 					break;
 				}
-				case ASCIIPSH:
-				case ASCIIpsh:
+				case ResourceTypes::ShaderProgramResource:
 				{
 					strcpy(destinationDir, DIR_ASSETS_SHADERS_PROGRAMS);
 					break;
 				}
-				case ASCIIcs:
-				case ASCIICS:
+				case ResourceTypes::ScriptResource:
 				{
 					strcpy(destinationDir, DIR_ASSETS_SCRIPTS);
 					break;
 				}
-				case ASCIIdds:
-				case ASCIIDDS:
-				case ASCIItga:
-				case ASCIITGA:
-				case ASCIIJPG:
-				case ASCIIjpg:
-				case ASCIIPNG:
-				case ASCIIpng:
+				case ResourceTypes::TextureResource:
 				{
 					strcpy(destinationDir, DIR_ASSETS_TEXTURES);
 					break;
@@ -881,7 +855,7 @@ bool ModuleFileSystem::deleteFiles(const std::string& root, const std::string& e
 		if (extension.empty() || fileExt == extension)
 			ret = PHYSFS_delete(std::string(directory.fullPath + "/" + directory.files[i].name).c_str()) != 0;
 
-		if (ret)
+		if (ret && deleteDir)
 			PHYSFS_delete(directory.fullPath.data());
 		else
 			return false;
