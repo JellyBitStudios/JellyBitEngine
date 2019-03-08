@@ -68,6 +68,7 @@ enum update_status
 #define EXTENSION_BONE ".nekoBone"
 #define EXTENSION_ANIMATION ".nekoAnimation"
 #define EXTENSION_SCENE ".scn"
+#define EXTENSION_FONT ".ttf"
 #define EXTENSION_VERTEX_SHADER_OBJECT ".vsh"
 #define EXTENSION_FRAGMENT_SHADER_OBJECT ".fsh"
 #define EXTENSION_GEOMETRY_SHADER_OBJECT ".gsh"

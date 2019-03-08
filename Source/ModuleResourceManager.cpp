@@ -24,6 +24,7 @@
 #include "ResourcePrefab.h"
 #include "ResourceMaterial.h"
 #include "ResourceScene.h"
+#include "ResourceFont.h"
 
 #include <assert.h>
 
@@ -700,6 +701,13 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 		break;
 	}
 
+	case ResourceTypes::FontResource:
+	{
+		//resource = ResourceFont::ImportFile(file);
+		//resources[resource->GetUuid()] = resource;
+		break;
+	}
+
 	case ResourceTypes::BoneResource:
 	{
 		std::string outputFile;
@@ -983,6 +991,13 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 	}
 	break;
 
+	case ResourceTypes::FontResource:
+	{
+		//resource = ResourceFont::ImportFile(file);
+		//resources[resource->GetUuid()] = resource;
+	}
+	break;
+
 	case ResourceTypes::BoneResource:
 	{
 		std::string fileName;
@@ -1143,6 +1158,10 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 			break;
 		case ResourceTypes::SceneResource:
 			resource = new ResourceScene(uuid, data, *(SceneData*)specificData);
+			break;
+		case ResourceTypes::FontResource:
+			resource = new ResourceFont(ResourceTypes::FontResource, uuid, data, *(FontData*)specificData);
+			break;
 	}
 
 	assert(resource != nullptr);
@@ -1394,6 +1413,10 @@ ResourceTypes ModuleResourceManager::GetResourceTypeByExtension(const char* exte
 		break;
 	case ASCIISCN: case ASCIIscn:
 		return ResourceTypes::SceneResource;
+		break;
+	case ASCIIttf: case ASCIITTF:
+		return ResourceTypes::FontResource;
+		break;
 	}
 	
 	return ResourceTypes::NoResourceType;
@@ -1423,6 +1446,8 @@ ResourceTypes ModuleResourceManager::GetLibraryResourceTypeByExtension(const cha
 		return ResourceTypes::PrefabResource;
 	else if (strcmp(extension, EXTENSION_SCENE) == 0)
 		return ResourceTypes::SceneResource;
+	else if (strcmp(extension, EXTENSION_FONT) == 0)
+		return ResourceTypes::FontResource;
 
 	return ResourceTypes::NoResourceType;
 }

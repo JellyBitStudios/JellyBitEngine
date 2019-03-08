@@ -1854,7 +1854,7 @@
     <ClInclude Include="ResourceAnimator.h">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClInclude>
-      <ClInclude Include="Freetype\include\freetype\internal\autohint.h">
+    <ClInclude Include="Freetype\include\freetype\internal\autohint.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
     <ClInclude Include="Freetype\include\freetype\internal\cffotypes.h">
@@ -2129,6 +2129,9 @@
     </ClInclude>
     <ClInclude Include="Freetype\include\freetype\internal\tttypes.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceFont.h">
+      <Filter>Sources\Modules\Resources\Types</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2679,6 +2682,9 @@
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClCompile>
     <ClCompile Include="ResourceAnimator.cpp">
+      <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceFont.cpp">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClCompile>
   </ItemGroup>

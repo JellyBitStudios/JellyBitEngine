@@ -14,7 +14,8 @@ enum ResourceTypes
 	BoneResource,
 	ScriptResource,
 	PrefabResource,
-	SceneResource
+	SceneResource,
+	FontResource
 };
 
 #endif
