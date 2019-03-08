@@ -268,7 +268,76 @@ bool ResourceAvatar::ReadMeta(const char* metaFile, int64_t& lastModTime, uint& 
 
 uint ResourceAvatar::SetNameToMeta(const char* metaFile, const std::string& name)
 {
-	return uint();
+	assert(metaFile != nullptr);
+
+	int64_t lastModTime = 0;
+	uint avatarUuid = 0;
+	std::string oldName;
+	ReadMeta(metaFile, lastModTime, avatarUuid, oldName);
+
+	uint uuidsSize = 1;
+	uint nameSize = DEFAULT_BUF_SIZE;
+
+	// Name
+	char avatarName[DEFAULT_BUF_SIZE];
+	strcpy_s(avatarName, DEFAULT_BUF_SIZE, name.data());
+
+	// --------------------------------------------------
+
+	uint size =
+		sizeof(int64_t) +
+		sizeof(uint) +
+		sizeof(uint) * uuidsSize +
+
+		sizeof(uint) + // name size
+		sizeof(char) * nameSize; // name
+
+	char* data = new char[size];
+	char* cursor = data;
+
+	// 1. Store last modification time
+	uint bytes = sizeof(int64_t);
+	memcpy(cursor, &lastModTime, bytes);
+
+	cursor += bytes;
+
+	// 2. Store uuids size
+	bytes = sizeof(uint);
+	memcpy(cursor, &uuidsSize, bytes);
+
+	cursor += bytes;
+
+	// 3. Store avatar uuid
+	bytes = sizeof(uint) * uuidsSize;
+	memcpy(cursor, &avatarUuid, bytes);
+
+	cursor += bytes;
+
+	// 4. Store avatar name size
+	bytes = sizeof(uint);
+	memcpy(cursor, &nameSize, bytes);
+
+	cursor += bytes;
+
+	// 5. Store avatar name
+	bytes = sizeof(char) * nameSize;
+	memcpy(cursor, avatarName, bytes);
+
+	// --------------------------------------------------
+
+	// Build the path of the meta file and save it
+	uint retSize = App->fs->Save(metaFile, data, size);
+	if (retSize > 0)
+	{
+		CONSOLE_LOG(LogTypes::Normal, "Resource Avatar: Successfully saved meta '%s'", metaFile);
+	}
+	else
+	{
+		CONSOLE_LOG(LogTypes::Error, "Resource Avatar: Could not save meta '%s'", metaFile);
+		return 0;
+	}
+
+	return lastModTime;
 }
 
 bool ResourceAvatar::GenerateLibraryFiles() const

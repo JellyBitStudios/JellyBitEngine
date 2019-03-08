@@ -61,7 +61,7 @@ struct ResourceMeshData
 	uint* indices = nullptr;
 	uint indicesSize = 0;
 
-	bool adjacency = true;
+	bool adjacency = false;
 	uint* adjacentIndices = nullptr;
 
 	ResourceMeshImportSettings meshImportSettings;
@@ -101,19 +101,11 @@ public:
 
 	static void CalculateAdjacentIndices(uint* indices, uint indicesSize, uint*& adjacentIndices);
 
-	void GenerateAndBindDeformableMesh();
-	void UnloadDeformableMeshFromMemory();
-
-	void DuplicateMesh(ResourceMesh* mesh);
-
 	uint GetVBO() const;
 	uint GetIBO() const;
 	uint GetVAO() const;
 
 private:
-
-	static bool ReadMeshesUuidsFromMeta(const char* metaFile, std::vector<uint>& meshesUuids);
-	static bool ReadMeshImportSettingsFromMeta(const char* metaFile, ResourceMeshImportSettings& meshImportSettings);
 
 	bool LoadInMemory();
 	bool UnloadFromMemory();
@@ -125,14 +117,6 @@ private:
 	uint VAO = 0;
 
 	ResourceMeshData meshData;
-
-public:
-
-	uint DVBO = 0;
-	uint DIBO = 0;
-	uint DVAO = 0;
-
-	ResourceMeshData deformableMeshData;
 };
 
 #endif

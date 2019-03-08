@@ -81,10 +81,10 @@ bool ResourceMaterial::ImportFile(const char* file, std::string& name, std::stri
 
 bool ResourceMaterial::ExportFile(ResourceData& data, ResourceMaterialData& materialData, std::string& outputFile, bool overwrite)
 {
-	return SaveFile(data, materialData, outputFile, overwrite);
+	return SaveFile(data, materialData, outputFile, overwrite) > 0;
 }
 
-bool ResourceMaterial::SaveFile(ResourceData& data, ResourceMaterialData& materialData, std::string& outputFile, bool overwrite)
+uint ResourceMaterial::SaveFile(ResourceData& data, ResourceMaterialData& materialData, std::string& outputFile, bool overwrite)
 {
 	bool ret = false;
 
@@ -187,7 +187,7 @@ bool ResourceMaterial::LoadFile(const char* file, ResourceMaterialData& outputMa
 		RELEASE_ARRAY(buffer);
 	}
 	else
-		CONSOLE_LOG(LogTypes::Error, "SHADER IMPORTER: Could not load Material '%s'", file);
+		CONSOLE_LOG(LogTypes::Error, "Resource Material: Could not load Material '%s'", file);
 
 	return ret;
 }
@@ -210,7 +210,8 @@ uint ResourceMaterial::CreateMeta(const char* file, uint materialUuid, std::stri
 		sizeof(uint) +
 		sizeof(uint) * uuidsSize +
 
-		sizeof(char) * nameSize;
+		sizeof(uint) + // name size
+		sizeof(char) * nameSize; // name
 
 	char* data = new char[size];
 	char* cursor = data;
@@ -250,8 +251,8 @@ uint ResourceMaterial::CreateMeta(const char* file, uint materialUuid, std::stri
 	// Build the path of the meta file and save it
 	outputMetaFile = file;
 	outputMetaFile.append(EXTENSION_META);
-	uint resultSize = App->fs->Save(outputMetaFile.data(), data, size);
-	if (resultSize > 0)
+	uint retSize = App->fs->Save(outputMetaFile.data(), data, size);
+	if (retSize > 0)
 	{
 		CONSOLE_LOG(LogTypes::Normal, "Resource Material: Successfully saved meta '%s'", outputMetaFile.data());
 	}
@@ -340,7 +341,8 @@ uint ResourceMaterial::SetNameToMeta(const char* metaFile, const std::string& na
 		sizeof(uint) +
 		sizeof(uint) * uuidsSize +
 
-		sizeof(char) * nameSize;
+		sizeof(uint) + // name size
+		sizeof(char) * nameSize; // name
 
 	char* data = new char[size];
 	char* cursor = data;
@@ -376,8 +378,8 @@ uint ResourceMaterial::SetNameToMeta(const char* metaFile, const std::string& na
 	// --------------------------------------------------
 
 	// Build the path of the meta file and save it
-	uint resultSize = App->fs->Save(metaFile, data, size);
-	if (resultSize > 0)
+	uint retSize = App->fs->Save(metaFile, data, size);
+	if (retSize > 0)
 	{
 		CONSOLE_LOG(LogTypes::Normal, "Resource Material: Successfully saved meta '%s'", metaFile);
 	}
