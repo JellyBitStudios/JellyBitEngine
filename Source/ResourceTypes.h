@@ -12,6 +12,7 @@ enum ResourceTypes
 	MaterialResource,
 	AnimationResource,
 	BoneResource,
+	AvatarResource,
 	ScriptResource,
 	PrefabResource,
 	SceneResource

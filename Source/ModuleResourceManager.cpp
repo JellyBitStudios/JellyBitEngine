@@ -20,6 +20,7 @@
 #include "ResourceShaderProgram.h"
 #include "ResourceAnimation.h"
 #include "ResourceBone.h"
+#include "ResourceAvatar.h"
 #include "ResourceScript.h"
 #include "ResourcePrefab.h"
 #include "ResourceMaterial.h"
@@ -950,7 +951,6 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
 
 		uint uuid = 0;
-		std::vector<std::string> shaderObjectsNames;
 		if (App->fs->Exists(metaFile))
 		{
 			int64_t lastModTime = 0;
@@ -960,6 +960,30 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		ResourceMaterial::LoadFile(file, materialData);
 
 		resource = CreateResource(ResourceTypes::MaterialResource, data, &materialData, uuid);
+	}
+	break;
+
+	case ResourceTypes::AvatarResource:
+	{
+		ResourceData data;
+		ResourceAvatarData avatarData;
+		data.exportedFile = file;
+
+		// Search for the meta associated to the file
+		char metaFile[DEFAULT_BUF_SIZE];
+		strcpy_s(metaFile, strlen(file) + 1, file); // file
+		strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
+
+		uint uuid = 0;
+		if (App->fs->Exists(metaFile))
+		{
+			int64_t lastModTime = 0;
+			ResourceAvatar::ReadMeta(metaFile, lastModTime, uuid, data.name);
+		}
+
+		ResourceAvatar::LoadFile(file, avatarData);
+
+		resource = CreateResource(ResourceTypes::AvatarResource, data, &avatarData, uuid);
 	}
 	break;
 
@@ -1080,7 +1104,6 @@ Resource* ModuleResourceManager::ExportFile(ResourceTypes type, ResourceData& da
 	}
 	break;
 
-	// Add new resource
 	case ResourceTypes::BoneResource:
 	{
 		if (ResourceBone::ExportFile(data, *(ResourceBoneData*)specificData, outputFile, overwrite))
@@ -1090,6 +1113,17 @@ Resource* ModuleResourceManager::ExportFile(ResourceTypes type, ResourceData& da
 		}
 	}
 	break;
+
+	case ResourceTypes::AvatarResource:
+	{
+		if (ResourceAvatar::ExportFile(data, *(ResourceAvatarData*)specificData, outputFile, overwrite))
+		{
+			if (!overwrite)
+				resource = ImportFile(outputFile.data());
+		}
+	}
+	break;
+
 	case ResourceTypes::AnimationResource:
 	{
 		if (ResourceAnimation::ExportFile(data, *(ResourceAnimationData*)specificData, outputFile, overwrite))
@@ -1137,6 +1171,9 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 			break;
 		case ResourceTypes::BoneResource:
 			resource = new ResourceBone(ResourceTypes::BoneResource, uuid, data, *(ResourceBoneData*)specificData);
+			break;
+		case ResourceTypes::AvatarResource:
+			resource = new ResourceAvatar(ResourceTypes::AvatarResource, uuid, data, *(ResourceAvatarData*)specificData);
 			break;
 		case ResourceTypes::AnimationResource:
 			resource = new ResourceAnimation(ResourceTypes::AnimationResource, uuid, data, *(ResourceAnimationData*)specificData);
@@ -1394,6 +1431,10 @@ ResourceTypes ModuleResourceManager::GetResourceTypeByExtension(const char* exte
 		break;
 	case ASCIISCN: case ASCIIscn:
 		return ResourceTypes::SceneResource;
+		break;
+	case ASCIIava: case ASCIIAVA:
+		return ResourceTypes::AvatarResource;
+		break;
 	}
 	
 	return ResourceTypes::NoResourceType;

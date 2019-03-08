@@ -45,6 +45,7 @@ enum FileTypes
 	TextureFile,
 
 	BoneFile,
+	AvatarFile,
 	AnimationFile,
 
 	PrefabFile,
