@@ -7,8 +7,8 @@
 
 ContactPoint::ContactPoint() {}
 
-ContactPoint::ContactPoint(math::float3& point, math::float3& normal, float separation) :
-	point(point), normal(normal), separation(separation) {}
+ContactPoint::ContactPoint(math::float3& point, math::float3& normal, float separation, ComponentCollider* thisCollider, ComponentCollider* otherCollider) :
+	point(point), normal(normal), separation(separation), thisCollider(thisCollider), otherCollider(otherCollider) {}
 
 ContactPoint::~ContactPoint() {}
 
@@ -27,12 +27,22 @@ float ContactPoint::GetSeparation() const
 	return separation;
 }
 
+ComponentCollider* ContactPoint::GetThisCollider() const
+{
+	return thisCollider;
+}
+
+ComponentCollider* ContactPoint::GetOtherCollider() const
+{
+	return otherCollider;
+}
+
 // ----------------------------------------------------------------------------------------------------
 
 Collision::Collision() {}
 
-Collision::Collision(GameObject* gameObject, ComponentCollider* collider, ComponentRigidActor* actor, math::float3& impulse, std::vector<ContactPoint>& contactPoints) :
-	gameObject(gameObject), collider(collider), actor(actor), impulse(impulse), contactPoints(contactPoints) {}
+Collision::Collision(GameObject* gameObject, ComponentCollider* collider, ComponentRigidActor* actor, math::float3& impulse, math::float3& relativeVelocity, std::vector<ContactPoint>& contactPoints) :
+	gameObject(gameObject), collider(collider), actor(actor), impulse(impulse), relativeVelocity(relativeVelocity), contactPoints(contactPoints) {}
 
 Collision::~Collision() {}
 
@@ -54,6 +64,11 @@ ComponentRigidActor* Collision::GetActor() const
 math::float3 Collision::GetImpulse() const
 {
 	return impulse;
+}
+
+math::float3 Collision::GetRelativeVelocity() const
+{
+	return relativeVelocity;
 }
 
 std::vector<ContactPoint> Collision::GetContactPoints() const
@@ -97,7 +112,14 @@ void SimulationEventCallback::onContact(const physx::PxContactPairHeader& pairHe
 		else
 		{
 			math::float3 totalImpulse = math::float3::zero;
-			std::vector<ContactPoint> contactPoints;
+			std::vector<ContactPoint> contactPointsA;
+			std::vector<ContactPoint> contactPointsB;
+
+			// Collision A
+			ComponentCollider* colliderA = callback->FindColliderComponentByShape(contactPair.shapes[1]);
+
+			// Collision B
+			ComponentCollider* colliderB = callback->FindColliderComponentByShape(contactPair.shapes[0]);
 
 			if (contactPair.contactCount > 0)
 			{
@@ -112,39 +134,40 @@ void SimulationEventCallback::onContact(const physx::PxContactPairHeader& pairHe
 					math::float3 impulse = math::float3(contactPairPoints[i].impulse.x, contactPairPoints[i].impulse.y, contactPairPoints[i].impulse.z);
 					totalImpulse += impulse;
 
-					ContactPoint contactPoint(point, normal, contactPairPoints[i].separation);
-					contactPoints.push_back(contactPoint);
+					ContactPoint contactPointA(point, normal, contactPairPoints[i].separation, colliderA, colliderB);
+					contactPointsA.push_back(contactPointA);
+
+					ContactPoint contactPointB(point, normal, contactPairPoints[i].separation, colliderB, colliderA);
+					contactPointsB.push_back(contactPointB);
 				}
 			}
 
 			// Collision A
-			ComponentCollider* colliderA = callback->FindColliderComponentByShape(contactPair.shapes[1]);
 			ComponentRigidActor* actorA = callback->FindRigidActorComponentByActor(pairHeader.actors[1]);
 			GameObject* gameObjectA = actorA != nullptr ? actorA->GetParent() : nullptr;
-			Collision collisionA(gameObjectA, colliderA, actorA, totalImpulse, contactPoints);
+			//Collision collisionA(gameObjectA, colliderA, actorA, totalImpulse, contactPointsA);
 			ComponentCollider* thisColliderA = callback->FindColliderComponentByShape(contactPair.shapes[0]);
 
 			// Collision B
-			ComponentCollider* colliderB = callback->FindColliderComponentByShape(contactPair.shapes[0]);
 			ComponentRigidActor* actorB = callback->FindRigidActorComponentByActor(pairHeader.actors[0]);
 			GameObject* gameObjectB = actorB != nullptr ? actorB->GetParent() : nullptr;
-			Collision collisionB(gameObjectB, colliderB, actorB, totalImpulse, contactPoints);
+			//Collision collisionB(gameObjectB, colliderB, actorB, totalImpulse, contactPointsB);
 			ComponentCollider* thisColliderB = callback->FindColliderComponentByShape(contactPair.shapes[1]);
 
 			if (contactPair.events & physx::PxPairFlag::eNOTIFY_TOUCH_FOUND)
 			{
-				callback->OnCollision(thisColliderA, collisionA, CollisionTypes::OnCollisionEnter);
-				callback->OnCollision(thisColliderB, collisionB, CollisionTypes::OnCollisionEnter);
+				//callback->OnCollision(thisColliderA, collisionA, CollisionTypes::OnCollisionEnter);
+				//callback->OnCollision(thisColliderB, collisionB, CollisionTypes::OnCollisionEnter);
 			}
 			else if (contactPair.events & physx::PxPairFlag::eNOTIFY_TOUCH_PERSISTS)
 			{
-				callback->OnCollision(thisColliderA, collisionA, CollisionTypes::OnCollisionStay);
-				callback->OnCollision(thisColliderB, collisionB, CollisionTypes::OnCollisionStay);
+				//callback->OnCollision(thisColliderA, collisionA, CollisionTypes::OnCollisionStay);
+				//callback->OnCollision(thisColliderB, collisionB, CollisionTypes::OnCollisionStay);
 			}
 			else if (contactPair.events & physx::PxPairFlag::eNOTIFY_TOUCH_LOST)
 			{
-				callback->OnCollision(thisColliderA, collisionA, CollisionTypes::OnCollisionExit);
-				callback->OnCollision(thisColliderB, collisionB, CollisionTypes::OnCollisionExit);
+				//callback->OnCollision(thisColliderA, collisionA, CollisionTypes::OnCollisionExit);
+				//callback->OnCollision(thisColliderB, collisionB, CollisionTypes::OnCollisionExit);
 			}
 		}
 	}
@@ -166,25 +189,25 @@ void SimulationEventCallback::onTrigger(physx::PxTriggerPair* pairs, physx::PxU3
 			ComponentCollider* colliderA = callback->FindColliderComponentByShape(triggerPair.triggerShape);
 			ComponentRigidActor* actorA = callback->FindRigidActorComponentByActor(triggerPair.triggerActor);
 			GameObject* gameObjectA = actorA != nullptr ? actorA->GetParent() : nullptr;
-			Collision collisionA(gameObjectA, colliderA, actorA, math::float3(), std::vector<ContactPoint>());
+			//Collision collisionA(gameObjectA, colliderA, actorA, math::float3(), std::vector<ContactPoint>());
 			ComponentCollider* thisColliderA = callback->FindColliderComponentByShape(triggerPair.otherShape);
 
 			// Collision B
 			ComponentCollider* colliderB = callback->FindColliderComponentByShape(triggerPair.otherShape);
 			ComponentRigidActor* actorB = callback->FindRigidActorComponentByActor(triggerPair.otherActor);
 			GameObject* gameObjectB = actorB != nullptr ? actorB->GetParent() : nullptr;
-			Collision collisionB(gameObjectB, colliderB, actorB, math::float3(), std::vector<ContactPoint>());
+			//Collision collisionB(gameObjectB, colliderB, actorB, math::float3(), std::vector<ContactPoint>());
 			ComponentCollider* thisColliderB = callback->FindColliderComponentByShape(triggerPair.triggerShape);
 
 			if (triggerPair.status & physx::PxPairFlag::eNOTIFY_TOUCH_FOUND)
 			{
-				callback->OnCollision(thisColliderA, collisionA, CollisionTypes::OnTriggerEnter);
-				callback->OnCollision(thisColliderB, collisionB, CollisionTypes::OnTriggerEnter);
+				//callback->OnCollision(thisColliderA, collisionA, CollisionTypes::OnTriggerEnter);
+				//callback->OnCollision(thisColliderB, collisionB, CollisionTypes::OnTriggerEnter);
 			}
 			else if (triggerPair.status & physx::PxPairFlag::eNOTIFY_TOUCH_LOST)
 			{
-				callback->OnCollision(thisColliderA, collisionA, CollisionTypes::OnTriggerExit);
-				callback->OnCollision(thisColliderB, collisionB, CollisionTypes::OnTriggerExit);
+				//callback->OnCollision(thisColliderA, collisionA, CollisionTypes::OnTriggerExit);
+				//callback->OnCollision(thisColliderB, collisionB, CollisionTypes::OnTriggerExit);
 			}
 		}
 	}
