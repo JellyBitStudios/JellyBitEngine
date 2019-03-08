@@ -12,11 +12,18 @@
 #include "ModuleTimeManager.h"
 
 #include "physfs\include\physfs.h"
+#include "libzip/include/zip.h"
 #include "Brofiler\Brofiler.h"
 
 #include <assert.h>
 
 #pragma comment(lib, "physfs/libx86/physfs.lib")
+
+#ifdef _DEBUG
+#pragma comment( lib, "libzip/zip_d.lib" )
+#else
+#pragma comment( lib, "libzip/zip_r.lib" )
+#endif // _DEBUG
 
 ModuleFileSystem::ModuleFileSystem(bool start_enabled) : Module(start_enabled)
 {
@@ -587,6 +594,33 @@ uint ModuleFileSystem::Save(std::string file, char* buffer, uint size, bool appe
 		DEPRECATED_LOG("FILE SYSTEM: Could not open file '%s' to write. ERROR: %s", fileName.data(), PHYSFS_getLastError());
 
 	return objCount;
+}
+
+void ModuleFileSystem::WriteFile(const char * zip_path, const char * filename, const char * buffer, unsigned int size)
+{
+	if (PHYSFS_removeFromSearchPath("from_zip") == 0)
+		int hello = 0;//LOG("Ettot when unmount: %s", PHYSFS_getLastError());
+
+	struct zip *f_zip = NULL;
+	int error = 0;
+	f_zip = zip_open(zip_path, ZIP_CHECKCONS, &error); /* on ouvre l'archive zip */
+	//if (error)	LOG("could not open or create archive: %s", zip_path);
+
+	zip_source_t *s;
+
+	s = zip_source_buffer(f_zip, buffer, size, 0);
+
+	if (s == NULL ||
+		zip_file_add(f_zip, filename, s, ZIP_FL_OVERWRITE + ZIP_FL_ENC_UTF_8) < 0) 
+	{
+		zip_source_free(s);
+		//LOG("error adding file: %s\n", zip_strerror(f_zip));
+	}
+
+	zip_close(f_zip);
+	f_zip = NULL;
+
+	PHYSFS_mount("from_zip", NULL, 1);
 }
 
 uint ModuleFileSystem::Load(std::string file, char** buffer) const
