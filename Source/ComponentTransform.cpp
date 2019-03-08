@@ -139,38 +139,8 @@ void ComponentTransform::SavePrevTransform(const math::float4x4 & prevTransformM
 
 math::float4x4& ComponentTransform::GetMatrix() const
 {
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 	math::float4x4 matrix = math::float4x4::FromTRS(position, rotation, scale);
 	return matrix;
-}
-
-math::float4x4& ComponentTransform::GetGlobalMatrix() const
-{
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
-	std::list<GameObject*> aux_list;
-
-	if (parent)
-	{
-		GameObject* globalParent = parent->GetParent();
-
-		while (globalParent != nullptr && globalParent->GetParent() != nullptr)
-		{
-			aux_list.push_back(globalParent);
-			globalParent = globalParent->GetParent();
-		}
-	}
-
-	math::float4x4 globalMatrix = math::float4x4::identity;
-
-	for (std::list<GameObject*>::const_reverse_iterator it = aux_list.rbegin(); it != aux_list.rend(); it++)
-	{
-		math::float4x4 parentMatrix = (*it)->transform->GetMatrix();
-		globalMatrix = globalMatrix * parentMatrix;
-	}
-
-	math::float4x4 localMatrix = GetMatrix();
-
-	return globalMatrix * localMatrix;
 }
 
 void ComponentTransform::SetMatrixFromGlobal(math::float4x4& globalMatrix)
@@ -217,6 +187,28 @@ void ComponentTransform::SetMatrixFromGlobal(math::float4x4& globalMatrix)
 		App->PushSystemEvent(newEvent);
 	}
 }
+
+math::float4x4 ComponentTransform::GetGlobalMatrix() const
+{
+	return globalMatrix;
+}
+
+void ComponentTransform::UpdateGlobal() 
+{
+	math::float4x4 local = GetMatrix();
+
+	GameObject* goParent = parent->GetParent();
+	if (goParent != nullptr && goParent->transform)
+		globalMatrix = goParent->transform->GetGlobalMatrix().Mul(local);
+	else
+		globalMatrix = local;
+
+	for (std::vector<GameObject*>::iterator childs = parent->children.begin(); childs != parent->children.end(); ++childs)
+	{
+		(*childs)->transform->UpdateGlobal();
+	}
+}
+
 
 void ComponentTransform::SetPosition(math::float3 newPos)
 {
