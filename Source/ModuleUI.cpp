@@ -262,7 +262,7 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 		rect_world = rect->GetCorners();
 		setBool(ui_shader, "isScreen", 0);
 		view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
-		projection = ((ComponentCamera*)App->camera->camera)->GetOpenGLProjectionMatrix();
+		projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();
 		mvp = view * projection;
 		
 		setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
@@ -277,7 +277,7 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 		rect_world = rect->GetCorners();
 		setBool(ui_shader, "isScreen", 0);
 		view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
-		projection = ((ComponentCamera*)App->camera->camera)->GetOpenGLProjectionMatrix();
+		projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();
 		mvp = view * projection;
 
 		setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
