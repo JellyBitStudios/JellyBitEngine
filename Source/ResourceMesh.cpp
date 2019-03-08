@@ -146,15 +146,15 @@ uint ResourceMesh::CreateMeta(const char* file, ResourceMeshImportSettings& mesh
 	uint animations_uuids_size = animationUuids.size();
 
 	uint size = 
-		sizeof(int64_t) +					//data mod
-		sizeof(uint) +						//mesh size num
-		sizeof(uint) * mesh_uuids_size +	//mesh uuids
-
-		sizeof(uint) +						//size bone num
-		sizeof(uint) * bones_uuids_size +	//bone uuids
-
-		sizeof(uint) +						//size anim num
-		sizeof(uint) * animations_uuids_size +	//anim uuids
+		sizeof(int64_t) +						// data mod
+		sizeof(uint) +							// mesh size num
+		sizeof(uint) * mesh_uuids_size +		// mesh uuids
+												   
+		sizeof(uint) +							// size bone num
+		sizeof(uint) * bones_uuids_size +		// bone uuids
+												   
+		sizeof(uint) +							// size anim num
+		sizeof(uint) * animations_uuids_size +	// anim uuids
 
 		sizeof(int) +
 		sizeof(uint) +

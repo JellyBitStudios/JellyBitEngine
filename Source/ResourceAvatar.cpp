@@ -394,6 +394,8 @@ uint ResourceAvatar::GetHipsUuid() const
 
 // ----------------------------------------------------------------------------------------------------
 
+#include "ModuleAnimation.h"
+
 void ResourceAvatar::StepAnimation(uint animationUuid, float time, float blendTime)
 {
 	ResourceAnimation* animationResource = (ResourceAnimation*)App->res->GetResource(animationUuid);
@@ -403,7 +405,10 @@ void ResourceAvatar::StepAnimation(uint animationUuid, float time, float blendTi
 		return;
 	}
 
-	for (uint i = 0; i < animationResource->animationData.numKeys; ++i)
+	// TODO
+	ModuleAnimation::Animation* animation;
+
+	for (uint i = 0; i < animation->animable_data_map; ++i)
 	{
 		// Transformation to step the bone with
 		BoneTransformation boneTransformation = animationResource->animationData.boneKeys[i];

@@ -5,6 +5,8 @@
 
 #include <vector>
 
+#define NUM_BONES_PER_VERTEX 4
+
 struct ResourceMeshImportSettings
 {
 	enum PostProcessConfigurationFlags
@@ -51,6 +53,10 @@ struct Vertex
 	float bitangent[3];
 	uchar color[4];
 	float texCoord[2];
+
+	// Animation
+	uint ids[NUM_BONES_PER_VERTEX]; // bone id
+	float weights[NUM_BONES_PER_VERTEX]; // bone weight
 };
 
 struct ResourceMeshData

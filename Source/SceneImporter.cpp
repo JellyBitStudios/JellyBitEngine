@@ -727,6 +727,14 @@ void SceneImporter::GenerateVAO(uint& VAO, uint& VBO) const
 	glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, bitangent)));
 	glEnableVertexAttribArray(5);
 
+	// 7. Ids
+	glVertexAttribPointer(6, NUM_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, ids)));
+	glEnableVertexAttribArray(6);
+
+	// 8. Weights
+	glVertexAttribPointer(7, NUM_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, weights)));
+	glEnableVertexAttribArray(7);
+
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
