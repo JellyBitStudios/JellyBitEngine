@@ -314,6 +314,12 @@ void ModuleRenderer3D::OnSystemEvent(System_Event event)
 		currentCamera = App->camera->camera;
 #endif // !GAMEMODE
 		break;
+		case System_Event_Type::LoadFinished:
+		{
+			if (App->GetEngineState() == ENGINE_PLAY)
+				SetCurrentCamera();
+			break;
+		}
 	}
 }
 
