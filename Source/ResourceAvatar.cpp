@@ -312,6 +312,13 @@ bool ResourceAvatar::GenerateLibraryFiles() const
 
 // ----------------------------------------------------------------------------------------------------
 
+uint ResourceAvatar::GetHipsUuid() const
+{
+	return avatarData.hipsUuid;
+}
+
+// ----------------------------------------------------------------------------------------------------
+
 void ResourceAvatar::StepAnimation(uint animationUuid, float time, float blendTime) const
 {
 	// TODO

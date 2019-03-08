@@ -32,6 +32,7 @@
 #include "ResourceShaderProgram.h"
 #include "ResourceScript.h"
 #include "ResourceMaterial.h"
+#include "ResourceAvatar.h"
 #include "ResourceAnimation.h"
 
 #include "imgui\imgui.h"
@@ -73,6 +74,9 @@ bool PanelInspector::Draw()
 				break;
 			case ResourceTypes::MaterialResource:
 				ShowMaterialInspector();
+				break;
+			case ResourceTypes::AvatarResource:
+				ShowAvatarInspector();
 				break;
 			case ResourceTypes::AnimationResource:
 				ShowAnimationInspector();
@@ -765,7 +769,6 @@ void PanelInspector::ShowAnimationInspector() const
 
 	// Name
 	ImGui::Text("Name:"); ImGui::SameLine(); ImGui::Text("%s", animation->animationData.name.data());
-
 }
 
 void PanelInspector::ShowMaterialInspector() const
@@ -973,6 +976,48 @@ void PanelInspector::ShowMaterialInspector() const
 		}
 		ImGui::PopItemWidth();
 	}
+}
+
+void PanelInspector::ShowAvatarInspector() const
+{
+	ImGui::Text("Avatar");
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	ResourceAvatar* avatar = (ResourceAvatar*)App->scene->selectedObject.Get();
+
+	// Name
+	ImGui::Text("Name:"); ImGui::SameLine();
+	static char name[INPUT_BUF_SIZE];
+	strcpy_s(name, INPUT_BUF_SIZE, avatar->GetName());
+	ImGui::PushItemWidth(150.0f);
+	ImGuiInputTextFlags inputFlag = ImGuiInputTextFlags_EnterReturnsTrue;
+	if (ImGui::InputText("##name", name, INPUT_BUF_SIZE, inputFlag))
+	{
+		// Search for the meta associated to the file
+		char metaFile[DEFAULT_BUF_SIZE];
+		strcpy_s(metaFile, strlen(avatar->GetFile()) + 1, avatar->GetFile()); // file
+		strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
+
+		avatar->SetName(name);
+		std::string avatarName = name;
+		ResourceAvatar::SetNameToMeta(metaFile, avatarName);
+	}
+
+	ImGui::Spacing();
+
+	// Data
+	ImGui::Text("File:"); ImGui::SameLine();
+	ImGui::TextColored(BLUE, "%s", avatar->GetFile());
+	ImGui::Text("UUID:"); ImGui::SameLine();
+	ImGui::TextColored(BLUE, "%u", avatar->GetUuid());
+	ImGui::Text("References:"); ImGui::SameLine();
+	ImGui::TextColored(BLUE, "%u", avatar->GetReferencesCount());
+
+	ImGui::Spacing();
+
+	ImGui::Text("Hips UUID:"); ImGui::SameLine();
+	ImGui::TextColored(BLUE, "%u", avatar->GetHipsUuid());
 }
 
 #endif // GAME

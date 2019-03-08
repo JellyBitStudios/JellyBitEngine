@@ -177,14 +177,18 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 		App->res->ExportFile(ResourceTypes::PrefabResource, prefabGenericData, &prefabSpecificData, std::string());
 
 		// Create Avatar
-		ResourceData avatarGenericData;
-		ResourceAvatarData avatarSpecificData;
+		if (bone_root_uuid > 0)
+		{
+			ResourceData avatarGenericData;
+			ResourceAvatarData avatarSpecificData;
 
-		avatarGenericData.name = prefabName;
-		avatarSpecificData.hipsUuid = bone_root_uuid;
+			avatarGenericData.name = prefabName;
+			avatarSpecificData.hipsUuid = bone_root_uuid;
 
-		std::string outputFile;
-		App->res->ExportFile(ResourceTypes::AvatarResource, avatarGenericData, &avatarSpecificData, outputFile);
+			std::string outputFile;
+			App->res->ExportFile(ResourceTypes::AvatarResource, avatarGenericData, &avatarSpecificData, outputFile);
+		}
+		bone_root_uuid = 0;
 
 		// ----------
 	
