@@ -187,7 +187,6 @@ update_status ModuleRenderer3D::PostUpdate()
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::Orchid);
 #endif
 
-	App->scene->Draw();
 
 	if (currentCamera != nullptr)
 	{
@@ -229,6 +228,8 @@ update_status ModuleRenderer3D::PostUpdate()
 		App->navigation->Draw();
 
 		App->debugDrawer->StartDebugDraw();
+
+		App->scene->Draw();
 
 		if (drawBoundingBoxes) // boundingBoxesColor = Yellow
 		{
