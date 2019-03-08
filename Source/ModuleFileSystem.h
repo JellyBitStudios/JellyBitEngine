@@ -307,6 +307,7 @@ public:
 
 	uint SaveInGame(char* buffer, uint size, FileTypes fileType, std::string& outputFile, bool overwrite = false) const;
 	uint Save(std::string file, char* buffer, uint size, bool append = false) const;
+	void WriteFile(const char* zip_path, const char* filename, const char * buffer, unsigned int size);
 
 	uint Load(std::string file, char** buffer) const;
 
