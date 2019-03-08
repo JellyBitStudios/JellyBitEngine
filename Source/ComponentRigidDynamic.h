@@ -49,8 +49,6 @@ public:
 
 	// Gets
 	bool IsSleeping() const;
-	math::float3 GetLinearVelocity() const;
-	math::float3 GetAngularVelocity() const;
 
 private:
 

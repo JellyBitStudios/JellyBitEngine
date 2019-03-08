@@ -85,8 +85,6 @@ public:
 
 	void GameObjectKilled(GameObject* killed);
 
-	void FixedUpdate();
-
 private:
 	void UpdateMethods();
 	void ExecuteCallbacks(GameObject* gameObject);

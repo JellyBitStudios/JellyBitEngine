@@ -6,22 +6,13 @@
 #include "GameObject.h"
 
 #include "ComponentImage.h"
-#include "ComponentRectTransform.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
 
 ComponentCanvasRenderer::ComponentCanvasRenderer(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::CanvasRendererComponent)
 {
-
-	if(parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-		App->ui->componentsScreenRendererUI.push_back(this);
-	else
-	{
-		App->ui->componentsWorldRendererUI.push_back(this);
-		fromWorld = true;
-	}
-
+	App->ui->componentsRendererUI.push_back(this);
 	rend_queue.push_back(new ToUIRend());
 	rend_queue.push_back(new ToUIRend());
 }
@@ -30,14 +21,7 @@ ComponentCanvasRenderer::ComponentCanvasRenderer(const ComponentCanvasRenderer &
 {
 	if (includeComponents)
 	{
-		if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-			App->ui->componentsScreenRendererUI.push_back(this);
-		else
-		{
-			App->ui->componentsWorldRendererUI.push_back(this);
-			fromWorld = true;
-		}
-
+		App->ui->componentsRendererUI.push_back(this);
 		rend_queue.push_back(new ToUIRend());
 		rend_queue.push_back(new ToUIRend());
 	}
@@ -45,10 +29,7 @@ ComponentCanvasRenderer::ComponentCanvasRenderer(const ComponentCanvasRenderer &
 
 ComponentCanvasRenderer::~ComponentCanvasRenderer()
 {
-	if (!fromWorld)
-		App->ui->componentsScreenRendererUI.remove(this);
-	else
-		App->ui->componentsWorldRendererUI.remove(this);
+	App->ui->componentsRendererUI.remove(this);
 
 	for (ToUIRend* rend : rend_queue)
 		RELEASE(rend);
@@ -108,7 +89,6 @@ void ComponentCanvasRenderer::OnInternalSave(char *& cursor)
 
 void ComponentCanvasRenderer::OnInternalLoad(char *& cursor)
 {
-	LinkToUIModule();
 }
 
 void ComponentCanvasRenderer::OnUniqueEditor()
@@ -116,20 +96,6 @@ void ComponentCanvasRenderer::OnUniqueEditor()
 #ifndef GAMEMODE
 	ImGui::Text("Canvas Renderer");
 #endif
-}
-
-void ComponentCanvasRenderer::LinkToUIModule()
-{
-	if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-		App->ui->componentsScreenRendererUI.push_back(this);
-	else
-	{
-		App->ui->componentsWorldRendererUI.push_back(this);
-		fromWorld = true;
-	}
-
-	rend_queue.push_back(new ToUIRend());
-	rend_queue.push_back(new ToUIRend());
 }
 
 //Rend Queue Struct

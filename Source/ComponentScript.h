@@ -1,8 +1,6 @@
 #include "Component.h"
 #include "GameObject.h"
 
-#include "SimulationEvents.h"
-
 #include <mono/metadata/object.h>
 
 class ResourceScript;
@@ -26,13 +24,6 @@ public:
 	void OnEnableMethod();
 	void OnDisableMethod();
 	void OnStop();
-	void FixedUpdate();
-	void OnCollisionEnter(Collision& collision);
-	void OnCollisionStay(Collision& collision);
-	void OnCollisionExit(Collision& collision);
-	void OnTriggerEnter(Collision& collision);
-	void OnTriggerStay(Collision& collision);
-	void OnTriggerExit(Collision& collision);
 
 	void OnEnable() override;
 	void OnDisable() override;

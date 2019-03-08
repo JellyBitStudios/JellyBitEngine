@@ -39,7 +39,6 @@ public:
 
 	//UI
 	GameObject* CreateCanvas(const char* name, GameObject* parent);
-	void SetCanvas(GameObject* canvas);
 	void DeleteCanvasPointer();
 	bool ExistCanvas() const;
 	GameObject* GetCanvas()const;

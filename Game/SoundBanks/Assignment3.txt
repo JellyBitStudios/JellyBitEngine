@@ -1,27 +1,12 @@
 Event	ID	Name			Wwise Object Path	Notes
-	133716996	Alita_idle_2			\Default Work Unit\FX\Alita\Alita_idle_2	
-	133716997	Alita_idle_3			\Default Work Unit\FX\Alita\Alita_idle_3	
-	133716999	Alita_idle_1			\Default Work Unit\FX\Alita\Alita_idle_1	
 	452547817	Stop_All			\Default Work Unit\Stop_All	
-	797292004	Alita_hitted_2			\Default Work Unit\FX\Alita\Alita_hitted_2	
-	797292005	Alita_hitted_3			\Default Work Unit\FX\Alita\Alita_hitted_3	
-	797292007	Alita_hitted_1			\Default Work Unit\FX\Alita\Alita_hitted_1	
-	1176392348	Alita_skill			\Default Work Unit\FX\Alita\Alita_skill	
 	1467305928	background_tracks			\Default Work Unit\background_tracks	
-	2418669706	Alita_running			\Default Work Unit\FX\Alita\Alita_running	
 	2607198564	music_TheDillards_Dooley			\Default Work Unit\music_TheDillards_Dooley	
-	2869677559	Alita_lowlife			\Default Work Unit\FX\Alita\Alita_lowlife	
-	3067016970	BSO_1_event			\Default Work Unit\BSO\BSO_1_event	
 	3412057565	train			\Default Work Unit\train	
-	3536468152	Alita_skill_scream			\Default Work Unit\FX\Alita\Alita_skill_scream	
-	3561450672	Alita_attack_scream_2			\Default Work Unit\FX\Alita\Alita_attack_scream_2	
-	3561450673	Alita_attack_scream_3			\Default Work Unit\FX\Alita\Alita_attack_scream_3	
-	3561450675	Alita_attack_scream_1			\Default Work Unit\FX\Alita\Alita_attack_scream_1	
 	3585407402	music_TheGrowlers_GoingGetsTuff			\Default Work Unit\music_TheGrowlers_GoingGetsTuff	
 	3679762312	Resume_All			\Default Work Unit\Resume_All	
+	3689101843	Alita_BSO_1			\Default Work Unit\Alita_BSO_1	
 	3864097025	Pause_All			\Default Work Unit\Pause_All	
-	3879163254	Alita_diying_ambient			\Default Work Unit\FX\Alita\Alita_diying_ambient	
-	3912865577	Alita_diying_scream			\Default Work Unit\FX\Alita\Alita_diying_scream	
 
 State Group	ID	Name			Wwise Object Path	Notes
 	128914588	swap_music			\Default Work Unit\swap_music	
@@ -44,21 +29,7 @@ Game Parameter	ID	Name			Wwise Object Path	Notes
 
 In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
 	5030772	The Growlers-Going Gets Tuff	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\The Growlers-Going Gets Tuff_F17FB28C.wem		\Actor-Mixer Hierarchy\Default Work Unit\The Growlers-Going Gets Tuff		36845820
-	157058898	Alita_skill	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\Alita - Skill_1_1C9C67B2.wem		\Actor-Mixer Hierarchy\Default Work Unit\FX\Alita\Alita_skill		434352
-	204297604	Alita_idle_1	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\Alita - Idle_1_1C9C67B2.wem		\Actor-Mixer Hierarchy\Default Work Unit\FX\Alita\Alita_idle_1		419392
-	243757129	Alita_diying_sound	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\Alita - Diying_1_1C9C67B2.wem		\Actor-Mixer Hierarchy\Default Work Unit\FX\Alita\Alita_diying_sound		1235008
-	281735031	Alita_lowlife	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\Alita - LowLife_F17FB28C.wem		\Actor-Mixer Hierarchy\Default Work Unit\FX\Alita\Alita_lowlife		2059840
-	291190891	Alita_hit_3	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\Alita - hitted_3_1C9C67B2.wem		\Actor-Mixer Hierarchy\Default Work Unit\FX\Alita\Alita_hit_3		38048
-	306119231	BSO_Alita_1	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\BSO_1_F17FB28C.wem		\Actor-Mixer Hierarchy\Default Work Unit\BSO\BSO_Alita_1		35527744
-	352290673	Alita_attack_3	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\Alita - Punch_Scream_3_1C9C67B2.wem		\Actor-Mixer Hierarchy\Default Work Unit\FX\Alita\Alita_attack_3		41320
 	352902853	The Dillards - Dooley	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\The Dillards - Dooley_F17FB28C.wem		\Actor-Mixer Hierarchy\Default Work Unit\The Dillards - Dooley		10850368
 	496129679	train	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\train_F17FB28C.wem		\Actor-Mixer Hierarchy\Default Work Unit\train		2029888
-	518387273	Alita_running	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\Alita - Running_1C9C67B2.wem		\Actor-Mixer Hierarchy\Default Work Unit\FX\Alita\Alita_running		744256
-	655029823	Alita_idle_3	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\Alita - Idle_3_1C9C67B2.wem		\Actor-Mixer Hierarchy\Default Work Unit\FX\Alita\Alita_idle_3		239680
-	660771868	Alita_hit_2	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\Alita - hitted_2_1C9C67B2.wem		\Actor-Mixer Hierarchy\Default Work Unit\FX\Alita\Alita_hit_2		45644
-	699779939	Alita_idle_2	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\Alita - Idle_2_1C9C67B2.wem		\Actor-Mixer Hierarchy\Default Work Unit\FX\Alita\Alita_idle_2		101440
-	750134899	Alita_hit_1	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\Alita - hitted_1_1C9C67B2.wem		\Actor-Mixer Hierarchy\Default Work Unit\FX\Alita\Alita_hit_1		25552
-	820415071	Alita_attack_2	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\Alita - Punch_Scream_2_1C9C67B2.wem		\Actor-Mixer Hierarchy\Default Work Unit\FX\Alita\Alita_attack_2		47894
-	961617855	Alita_attack_1	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\Alita - Punch_Scream_1_1C9C67B2.wem		\Actor-Mixer Hierarchy\Default Work Unit\FX\Alita\Alita_attack_1		39142
-	1071500108	Alita_diying_scream	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\Alita - Diying_2_1C9C67B2.wem		\Actor-Mixer Hierarchy\Default Work Unit\FX\Alita\Alita_diying_scream		80704
+	990793733	Alita_BSO_1	C:\Users\loiro\Desktop\PalmGine3D-WWISE-Repository-master\Assignment3_2017v\.cache\Windows\SFX\BSO_1_lvl1_1C9C67B2.wem		\Actor-Mixer Hierarchy\Default Work Unit\Alita_BSO_1		35527744
 

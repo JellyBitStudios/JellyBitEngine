@@ -3,7 +3,6 @@
 #include "Application.h"
 #include "ModuleTimeManager.h"
 #include "ModuleRenderer3D.h"
-#include "ScriptingModule.h"
 #include "GameObject.h"
 
 // *****Debug*****
@@ -246,9 +245,6 @@ update_status ModulePhysics::FixedUpdate()
 	if (App->gui->WantTextInput() || App->gui->IsMouseHoveringAnyWindow())
 		return UPDATE_CONTINUE;
 #endif
-
-	//Call the FixedUpdate in all the active scripts
-	App->scripting->FixedUpdate();
 
 	//Debug();
 	DestroyChest();
@@ -649,11 +645,6 @@ void ModulePhysics::DestroyChest()
 		}
 	}
 }
-float ModulePhysics::GetFixedDT()
-{
-	return PhysicsConstants::FIXED_DT;
-}
-
 //_*****Debug*****
 
 // ----------------------------------------------------------------------------------------------------

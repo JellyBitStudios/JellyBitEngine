@@ -33,8 +33,6 @@ private:
 	void OnInternalLoad(char*& cursor);
 	void OnUniqueEditor();
 
-	void LinkToUIModule();
-
 private:
 	uint res_image = 0;
 

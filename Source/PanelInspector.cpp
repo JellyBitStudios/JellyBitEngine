@@ -23,7 +23,6 @@
 #include "ComponentScript.h"
 #include "ComponentRigidActor.h"
 #include "ComponentCollider.h"
-#include "ComponentRectTransform.h"
 
 #include "Resource.h"
 #include "ResourceMesh.h"
@@ -183,23 +182,19 @@ void PanelInspector::ShowGameObjectInspector() const
 	bool scriptSelected = false;
 	if (ImGui::BeginPopupContextItem((const char*)0, 0))
 	{
-		if (gameObject->GetLayer() == UILAYER || gameObject->cmp_rectTransform)
+		if (gameObject->GetLayer() == UILAYER)
 		{
-
 			if (gameObject->cmp_image == nullptr)
 				if (ImGui::Selectable("Image UI")) {
 					gameObject->AddComponent(ComponentTypes::ImageComponent);
 					ImGui::CloseCurrentPopup();
 				}
-			if (gameObject->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-			{
-				if (gameObject->cmp_button == nullptr)
-					if (ImGui::Selectable("Button UI")) {
-						gameObject->AddComponent(ComponentTypes::ButtonComponent);
-						ImGui::CloseCurrentPopup();
-					}
-			}
-			if (gameObject->cmp_label == nullptr)
+			if (gameObject->cmp_button == nullptr)
+				if (ImGui::Selectable("Button UI")) {
+					gameObject->AddComponent(ComponentTypes::ButtonComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			if (gameObject->cmp_button == nullptr)
 				if (ImGui::Selectable("Text UI")) {
 					gameObject->AddComponent(ComponentTypes::LabelComponent);
 					ImGui::CloseCurrentPopup();
@@ -214,6 +209,7 @@ void PanelInspector::ShowGameObjectInspector() const
 		}
 		else
 		{
+
 			if (gameObject->cmp_mesh == nullptr)
 				if (ImGui::Selectable("Mesh")) {
 					gameObject->AddComponent(ComponentTypes::MeshComponent);
@@ -284,18 +280,17 @@ void PanelInspector::ShowGameObjectInspector() const
 					ImGui::CloseCurrentPopup();
 				}
 			}
-
-			if (gameObject->cmp_audioListener == nullptr) {
-				if (ImGui::Selectable("Audio Listener")) {
-					gameObject->AddComponent(ComponentTypes::AudioListenerComponent);
-					ImGui::CloseCurrentPopup();
-				}
+		}
+		if (gameObject->cmp_audioListener == nullptr) {
+			if (ImGui::Selectable("Audio Listener")) {
+				gameObject->AddComponent(ComponentTypes::AudioListenerComponent);
+				ImGui::CloseCurrentPopup();
 			}
-			if (gameObject->cmp_audioSource == nullptr) {
-				if (ImGui::Selectable("Audio Source")) {
-					gameObject->AddComponent(ComponentTypes::AudioSourceComponent);
-					ImGui::CloseCurrentPopup();
-				}
+		}
+		if (gameObject->cmp_audioSource == nullptr) {
+			if (ImGui::Selectable("Audio Source")) {
+				gameObject->AddComponent(ComponentTypes::AudioSourceComponent);
+				ImGui::CloseCurrentPopup();
 			}
 		}
 		ImGui::EndPopup();

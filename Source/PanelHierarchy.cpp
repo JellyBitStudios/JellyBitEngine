@@ -80,13 +80,6 @@ bool PanelHierarchy::Draw()
 				go->cmp_mesh->SetResource(App->resHandler->plane);
 				SELECT(go);
 			}
-			if (ImGui::Selectable("Create World Canvas"))
-			{
-				GameObject* go = App->GOs->CreateGameObject("WoldCanvas", root);
-				ComponentRectTransform* new_rect = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::WORLD);
-				go->AddComponent(go->cmp_rectTransform = new_rect);
-				SELECT(go);
-			}
 
 			ImGui::EndPopup();
 		}
@@ -202,17 +195,8 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 		{
 			if (ImGui::Selectable("Create Empty"))
 			{
-				GameObject* go = nullptr;
-				if (child->cmp_rectTransform->GetFrom() != ComponentRectTransform::RectFrom::RECT)
-				{
-					go = App->GOs->CreateGameObject("ChildWorldCanvas", child, true);
-					go->AddComponent(go->cmp_rectTransform = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::RECT_WORLD));
-				}
-				else
-				{
-					go = App->GOs->CreateGameObject("ChildScreenCanvas", child, true);
-					go->AddComponent(ComponentTypes::RectTransformComponent);
-				}
+				GameObject* go = App->GOs->CreateGameObject("GameObjectCanvas", child, true);
+				go->AddComponent(ComponentTypes::RectTransformComponent);
 				go->SetLayer(UILAYER);
 				ImGui::CloseCurrentPopup();
 			}
@@ -228,38 +212,17 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 		}
 		else
 		{
-			if (child->cmp_rectTransform == nullptr)
+			if (ImGui::Selectable("Create Empty"))
 			{
-				if (ImGui::Selectable("Create Empty"))
-				{
-					App->GOs->CreateGameObject("GameObject", child);
-					ImGui::CloseCurrentPopup();
-				}
-				if (ImGui::Selectable("Create Cube"))
-				{
-					GameObject* go = App->GOs->CreateGameObject("Cube", child);
-					go->AddComponent(ComponentTypes::MeshComponent);
-					go->cmp_mesh->SetResource(App->resHandler->cube);
-					ImGui::CloseCurrentPopup();
-				}
-				if (ImGui::Selectable("Create World Canvas"))
-				{
-					GameObject* go = App->GOs->CreateGameObject("WorldCanvas", child);
-					ComponentRectTransform* new_rect = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::WORLD);
-					go->AddComponent(go->cmp_rectTransform = new_rect);
-					SELECT(go);
-				}
+				App->GOs->CreateGameObject("GameObject", child);
+				ImGui::CloseCurrentPopup();
 			}
-			else
+			if (ImGui::Selectable("Create Cube"))
 			{
-				if (ImGui::Selectable("Create Empty"))
-				{
-					GameObject* go = App->GOs->CreateGameObject("ChildWorldCanvas", child, true);
-					ComponentRectTransform* new_rect = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::RECT_WORLD);
-					go->AddComponent(go->cmp_rectTransform = new_rect);
-					go->SetLayer(UILAYER);
-					SELECT(go);
-				}
+				GameObject* go = App->GOs->CreateGameObject("Cube", child);
+				go->AddComponent(ComponentTypes::MeshComponent);
+				go->cmp_mesh->SetResource(App->resHandler->cube);
+				ImGui::CloseCurrentPopup();
 			}
 			if (ImGui::Selectable("Delete"))
 			{
@@ -275,6 +238,7 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 			App->GOs->Instanciate(child, child->GetParent());
 			ImGui::CloseCurrentPopup();
 		}
+
 		ImGui::EndPopup();
 	}
 }
