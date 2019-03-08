@@ -218,6 +218,42 @@ void ComponentTransform::SetMatrixFromGlobal(math::float4x4& globalMatrix)
 	}
 }
 
+void ComponentTransform::SetPosition(math::float3 newPos)
+{
+	this->position = newPos;
+
+	//Todo recalculate global
+}
+
+void ComponentTransform::SetRotation(math::Quat newRot)
+{
+	this->rotation = newRot;
+
+	//Todo recalculate global
+}
+
+void ComponentTransform::SetScale(math::float3 newScale)
+{
+	this->scale = newScale;
+
+	//Todo recalculate global
+}
+
+void ComponentTransform::Move(math::float3 distance)
+{
+	SetPosition(this->position.Add(distance));
+}
+
+void ComponentTransform::Rotate(math::Quat rotation)
+{
+	SetRotation(rotation.Mul(this->rotation).Normalized());
+}
+
+void ComponentTransform::Scale(math::float3 scale)
+{
+	SetScale(this->scale.Mul(scale));
+}
+
 uint ComponentTransform::GetInternalSerializationBytes()
 {
 	// position + scale + rotation
