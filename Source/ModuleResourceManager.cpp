@@ -442,6 +442,8 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 				}
 				animation_uuids.shrink_to_fit();
 			}
+			else
+				resource = GetResource(resourcesUuids.front());
 			
 			// TODO_G : separate mesh / bones resources uuids from resourcesUuids
 
@@ -497,6 +499,8 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 
 				resource = CreateResource(ResourceTypes::TextureResource, data, &textureData, uuid);
 			}
+			else
+				resource = GetResource(resourcesUuids.front());
 
 			// 2. Meta
 			// TODO: only create meta if any of its fields has been modificated
