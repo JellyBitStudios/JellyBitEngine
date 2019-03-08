@@ -7,8 +7,8 @@
 #include "ModuleResourceManager.h"
 #include "ResourceMesh.h"
 #include "ResourceBone.h"
+#include "ResourceAvatar.h"
 #include "ResourceAnimation.h"
-
 #include "ResourcePrefab.h"
 
 #include "ModuleGOs.h"
@@ -159,31 +159,38 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 		std::vector<uint> dummyForcedUuids = forced_meshes_uuids;
 		RecursivelyImportNodes(scene, rootNode, rootGameObject, nullptr, mesh_files, bone_files/*not needed but ok*/, dummyForcedUuids);
 		rootGameObject->transform->scale *= importSettings.scale;
-		RecursiveProcessBones(scene, scene->mRootNode, bone_files,forced_bones_uuids);	
+		RecursiveProcessBones(scene, scene->mRootNode, bone_files, forced_bones_uuids);	
 		ImportAnimations(scene, anim_files, prefabName, forced_anim_uuids);
 
 		root_bone = nullptr; // c: 
 
-		// Prefab creation
+		// Create Prefab
 		GameObject* prefab_go = rootGameObject;
-		ResourceData data;
-		PrefabData prefab_data;
+		ResourceData prefabGenericData;
+		PrefabData prefabSpecificData;
 
-		data.file = DIR_ASSETS_PREFAB + std::string("/") + prefab_go->GetName() + EXTENSION_PREFAB;
-		data.exportedFile = "";
-		data.name = prefabName;
-		prefab_data.root = prefab_go;
+		prefabGenericData.file = DIR_ASSETS_PREFAB + std::string("/") + prefab_go->GetName() + EXTENSION_PREFAB;
+		prefabGenericData.exportedFile = "";
+		prefabGenericData.name = prefabName;
+		prefabSpecificData.root = prefab_go;
 
-		App->res->ExportFile(ResourceTypes::PrefabResource, data, &prefab_data, std::string());
-		
+		App->res->ExportFile(ResourceTypes::PrefabResource, prefabGenericData, &prefabSpecificData, std::string());
+
+		// Create Avatar
+		ResourceData avatarGenericData;
+		ResourceAvatarData avatarSpecificData;
+
+		avatarGenericData.name = prefabName;
+		avatarSpecificData.hipsUuid = bone_root_uuid;
+
+		std::string outputFile;
+		App->res->ExportFile(ResourceTypes::AvatarResource, avatarGenericData, &avatarSpecificData, outputFile);
+
+		// ----------
+	
 		aiReleaseImport(scene);
 
-		// 2. Serialize the imported scene
-		// TODO: create prefab
-		//App->GOs->SerializeFromNode(dummy, outputFile);
-
 		dummy->RecursiveForceAllResources(0);
-		// TODO DESTROY DUMMY/CHILDREN/COMPONENTS
 		App->GOs->Kill(dummy);
 	}
 
@@ -800,7 +807,7 @@ void SceneImporter::RecursiveProcessBones(mutable const aiScene * scene,
 
 		if (go->GetParent() == nullptr ||
 			(go->GetParent() && !go->GetParent()->GetComponent(ComponentTypes::BoneComponent)))
-			bone_root_uid = go->GetUUID(); // working? 
+			bone_root_uuid = go->GetUUID(); // working? 
 
 		DEPRECATED_LOG("->-> Added Bone component");
 	}
@@ -862,7 +869,7 @@ void SceneImporter::ImportAnimations(mutable const aiScene * scene
 			anim_files.push_back(outputFile);
 
 			ComponentMesh* mesh_co = (ComponentMesh*)root_bone->GetComponent(ComponentTypes::MeshComponent);
-			mesh_co->root_bones_uid = bone_root_uid;
+			mesh_co->root_bones_uid = bone_root_uuid;
 		}
 	}
 }
