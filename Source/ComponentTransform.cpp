@@ -61,13 +61,19 @@ void ComponentTransform::OnUniqueEditor()
 			position = math::float3::zero;
 			rotation = math::Quat::identity;
 			scale = math::float3::one;
+
+			UpdateGlobal();
 		}
 
 		math::float4x4 matrix = parent->transform->GetMatrix();
 
 		ImGui::Text("Position");
 		if (ImGui::DragFloat3("##Pos", &position[0], 0.01f, 0.0f, 0.0f, "%.3f"))
+		{
 			SavePrevTransform(matrix);
+		
+			UpdateGlobal();
+		}
 
 		ImGui::Text("Rotation");
 		math::float3 axis;
@@ -80,12 +86,17 @@ void ComponentTransform::OnUniqueEditor()
 			SavePrevTransform(matrix);
 		axis *= DEGTORAD;
 		rotation.SetFromAxisAngle(axis.Normalized(), axis.Length());
+
+			UpdateGlobal();
 		}
 
 		ImGui::Text("Scale");
 		if (ImGui::DragFloat3("##Scale", &scale[0], 0.01f, 0.0f, 0.0f, "%.3f"))
+		{
 			SavePrevTransform(matrix);
 
+			UpdateGlobal();
+		}
 		if (!position.Equals(lastPosition) || !rotation.Equals(lastRotation) || !scale.Equals(lastScale))
 		{
 			// Transform updated: if the game object or its children have a rigid body, update its transform
@@ -186,6 +197,8 @@ void ComponentTransform::SetMatrixFromGlobal(math::float4x4& globalMatrix)
 		newEvent.type = System_Event_Type::RecreateQuadtree;
 		App->PushSystemEvent(newEvent);
 	}
+
+	UpdateGlobal();
 }
 
 math::float4x4 ComponentTransform::GetGlobalMatrix() const
@@ -214,21 +227,21 @@ void ComponentTransform::SetPosition(math::float3 newPos)
 {
 	this->position = newPos;
 
-	//Todo recalculate global
+	UpdateGlobal();
 }
 
 void ComponentTransform::SetRotation(math::Quat newRot)
 {
 	this->rotation = newRot;
 
-	//Todo recalculate global
+	UpdateGlobal();
 }
 
 void ComponentTransform::SetScale(math::float3 newScale)
 {
 	this->scale = newScale;
 
-	//Todo recalculate global
+	UpdateGlobal();
 }
 
 void ComponentTransform::Move(math::float3 distance)
@@ -244,6 +257,25 @@ void ComponentTransform::Rotate(math::Quat rotation)
 void ComponentTransform::Scale(math::float3 scale)
 {
 	SetScale(this->scale.Mul(scale));
+}
+void ComponentTransform::Scale(float scale)
+{
+	SetScale(this->scale.Mul(scale));
+}
+
+math::float3 ComponentTransform::GetPosition() const
+{
+	return position;
+}
+
+math::Quat ComponentTransform::GetRotation() const
+{
+	return rotation;
+}
+
+math::float3 ComponentTransform::GetScale() const
+{
+	return scale;
 }
 
 uint ComponentTransform::GetInternalSerializationBytes()

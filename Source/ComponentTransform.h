@@ -41,6 +41,11 @@ public:
 	void Move(math::float3 distance);
 	void Rotate(math::Quat rotation);
 	void Scale(math::float3 scale);
+	void Scale(float scale);
+
+	math::float3 GetPosition() const;
+	math::Quat GetRotation() const;
+	math::float3 GetScale() const;
 
 
 
