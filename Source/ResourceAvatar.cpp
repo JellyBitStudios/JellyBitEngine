@@ -2,7 +2,13 @@
 
 #include "Application.h"
 #include "ModuleFileSystem.h"
+#include "ModuleGOs.h"
+#include "ModuleResourceManager.h"
 #include "ModuleScene.h"
+
+#include "ComponentBone.h"
+#include "ResourceBone.h"
+#include "ResourceAnimation.h"
 
 #include "imgui\imgui.h"
 
@@ -388,9 +394,31 @@ uint ResourceAvatar::GetHipsUuid() const
 
 // ----------------------------------------------------------------------------------------------------
 
-void ResourceAvatar::StepAnimation(uint animationUuid, float time, float blendTime) const
+void ResourceAvatar::StepAnimation(uint animationUuid, float time, float blendTime)
 {
-	// TODO
+	ResourceAnimation* animationResource = (ResourceAnimation*)App->res->GetResource(animationUuid);
+	if (animationResource == nullptr)
+	{
+		CONSOLE_LOG(LogTypes::Error, "The animation that needs to be stepped does not exist...");
+		return;
+	}
+
+	for (uint i = 0; i < animationResource->animationData.numKeys; ++i)
+	{
+		// Transformation to step the bone with
+		BoneTransformation boneTransformation = animationResource->animationData.boneKeys[i];
+
+		// Bone to be stepped with the transformation
+		ResourceBone* boneResource = (ResourceBone*)App->res->GetResource(bones[boneTransformation.bone_name.c_str()]);
+		assert(boneResource != nullptr);
+
+		// ----------
+
+
+	}
+
+
+
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -399,10 +427,41 @@ bool ResourceAvatar::LoadInMemory()
 {
 	assert(avatarData.hipsUuid > 0);
 
-	return true;
+	// Hips
+	GameObject* boneGameObject = App->GOs->GetGameObjectByUID(avatarData.hipsUuid);
+	if (boneGameObject == nullptr)
+	{
+		CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
+		return false;
+	}
+
+	// Skeleton
+	std::vector<GameObject*> boneGameObjects;
+	boneGameObject->GetChildrenVector(boneGameObjects);
+
+	for (uint i = 0; i < boneGameObjects.size(); ++i)
+	{
+		ComponentBone* boneComponent = boneGameObjects[i]->cmp_bone;
+		if (boneComponent == nullptr)
+		{
+			CONSOLE_LOG(LogTypes::Error, "A bone does not exist...");
+			continue;
+		}
+
+		ResourceBone* boneResource = (ResourceBone*)App->res->GetResource(boneComponent->res);
+		assert(boneResource != nullptr);
+
+		const char* boneName = boneResource->boneData.name.data();
+		CONSOLE_LOG(LogTypes::Normal, "The bone %s has been loaded correctly", boneName);
+		bones[boneName] = boneResource->GetUuid();
+	}
+
+	return bones.size() > 0;
 }
 
 bool ResourceAvatar::UnloadFromMemory()
 {
+	bones.clear();
+
 	return true;
 }

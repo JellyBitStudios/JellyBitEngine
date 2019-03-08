@@ -4,6 +4,7 @@
 #include "Resource.h"
 
 #include <vector>
+#include <unordered_map>
 
 struct ResourceAvatarData
 {
@@ -40,7 +41,7 @@ public:
 
 	// ----------------------------------------------------------------------------------------------------
 
-	void StepAnimation(uint animationUuid, float time, float blendTime) const;
+	void StepAnimation(uint animationUuid, float time, float blendTime);
 
 private:
 
@@ -48,6 +49,8 @@ private:
 	bool UnloadFromMemory();
 
 private:
+
+	std::unordered_map<const char*, uint> bones;
 
 	ResourceAvatarData avatarData;
 };
