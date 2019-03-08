@@ -504,3 +504,17 @@ bool ComponentRigidDynamic::IsSleeping() const
 {
 	return gActor->is<physx::PxRigidDynamic>()->isSleeping();
 }
+
+math::float3 ComponentRigidDynamic::GetLinearVelocity() const
+{
+	physx::PxVec3 gLinearVelocity = gActor->is<physx::PxRigidDynamic>()->getLinearVelocity();
+
+	return math::float3(gLinearVelocity.x, gLinearVelocity.y, gLinearVelocity.z);
+}
+
+math::float3 ComponentRigidDynamic::GetAngularVelocity() const
+{
+	physx::PxVec3 gAngularVelocity = gActor->is<physx::PxRigidDynamic>()->getAngularVelocity();
+	
+	return math::float3(gAngularVelocity.x, gAngularVelocity.y, gAngularVelocity.z);
+}
