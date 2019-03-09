@@ -62,6 +62,7 @@ public:
 	void Step();
 
 	engine_states GetEngineState() const;
+	void SetEngineState(engine_states state);
 	bool IsPlay() const;
 	bool IsPause() const;
 	bool IsStep() const;

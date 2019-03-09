@@ -20,6 +20,7 @@
 #define DIR_LIBRARY_PREFAB "Library/Prefabs"
 #define DIR_LIBRARY_SCENES "Library/Scenes"
 #define DIR_LIBRARY_SCRIPTS "Library/Scripts"
+#define DIR_LIBRARY_AUDIO "Library/Audio"
 
 #define DIR_ASSETS "Assets"
 #define DIR_ASSETS_MESHES "Assets/Meshes"
@@ -31,6 +32,7 @@
 #define DIR_ASSETS_PREFAB "Assets/Prefabs"
 #define DIR_ASSETS_SCENES "Assets/Scenes"
 #define DIR_ASSETS_SCRIPTS "Assets/Scripts"
+#define DIR_ASSETS_AUDIO "Assets/Audio"
 
 #define IS_SCENE(extension) strcmp(extension, EXTENSION_SCENE) == 0
 #define IS_META(extension) strcmp(extension, EXTENSION_META) == 0
@@ -307,6 +309,7 @@ public:
 
 	uint SaveInGame(char* buffer, uint size, FileTypes fileType, std::string& outputFile, bool overwrite = false) const;
 	uint Save(std::string file, char* buffer, uint size, bool append = false) const;
+	void WriteFile(const char* zip_path, const char* filename, const char * buffer, unsigned int size);
 
 	uint Load(std::string file, char** buffer) const;
 

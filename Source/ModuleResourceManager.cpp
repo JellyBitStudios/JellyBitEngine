@@ -24,6 +24,7 @@
 #include "ResourcePrefab.h"
 #include "ResourceMaterial.h"
 #include "ResourceScene.h"
+#include "ResourceAudioBank.h"
 
 #include <assert.h>
 
@@ -145,6 +146,28 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			}
 		}
 		break;
+
+		case ResourceTypes::AudioBankResource:
+		{
+			char metaFile[DEFAULT_BUF_SIZE];
+			sprintf(metaFile, "%s%s", event.fileEvent.file, EXTENSION_META);
+			char* metaBuffer;
+			uint size = App->fs->Load(metaFile, &metaBuffer);
+			if (size <= 0)
+				break;
+
+			char* cursor = metaBuffer;
+			cursor += sizeof(int64_t) + sizeof(uint);
+
+			uint uid;
+			memcpy(&uid, cursor, sizeof(uint));
+
+			ResourceAudioBank* bank = (ResourceAudioBank*)App->res->GetResource(uid);
+			bank->Modified();
+
+			delete[] metaBuffer;
+			break;
+		}
 		}
 	}
 	break;
@@ -793,6 +816,10 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 	}
 	break;
 
+	case ResourceTypes::AudioBankResource:
+		resource = ResourceAudioBank::ImportFile(file);
+		break;
+
 	}
 
 	return resource;
@@ -1022,6 +1049,10 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		App->animation->SetAnimationGos((ResourceAnimation*)resource);
 	}
 	break;
+
+	case ResourceTypes::AudioBankResource:	
+		resource = ResourceAudioBank::ImportFile(file);
+		break;
 	}
 
 	return resource;
@@ -1147,6 +1178,10 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 			break;
 		case ResourceTypes::SceneResource:
 			resource = new ResourceScene(uuid, data, *(SceneData*)specificData);
+			break;
+		case ResourceTypes::AudioBankResource:
+			resource = new ResourceAudioBank(uuid, data, *(ResourceAudioBankData*)specificData);
+			break;
 	}
 
 	assert(resource != nullptr);
@@ -1396,8 +1431,12 @@ ResourceTypes ModuleResourceManager::GetResourceTypeByExtension(const char* exte
 	case ASCIIpfb: case ASCIIPFB:
 		return ResourceTypes::PrefabResource;
 		break;
-	case ASCIISCN: case ASCIIscn:
+	case ASCIIscn: case ASCIISCN:
 		return ResourceTypes::SceneResource;
+		break;
+	case ASCIIbnk: case ASCIIBNK:
+		return ResourceTypes::AudioBankResource;
+		break;
 	}
 	
 	return ResourceTypes::NoResourceType;
@@ -1427,6 +1466,8 @@ ResourceTypes ModuleResourceManager::GetLibraryResourceTypeByExtension(const cha
 		return ResourceTypes::PrefabResource;
 	else if (strcmp(extension, EXTENSION_SCENE) == 0)
 		return ResourceTypes::SceneResource;
+	else if (strcmp(extension, EXTENSION_AUDIOBANK) == 0)
+		return ResourceTypes::AudioBankResource;
 
 	return ResourceTypes::NoResourceType;
 }
