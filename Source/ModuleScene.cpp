@@ -345,6 +345,7 @@ void ModuleScene::CreateRandomStaticGameObject()
 	const math::float3 center(pos.x, pos.y, pos.z);
 	const math::float3 size(2.0f, 2.0f, 2.0f);
 	random->boundingBox.SetFromCenterAndSize(center, size);
+	random->originalBoundingBox.SetFromCenterAndSize(center, size);
 
 	quadtree.Insert(random);
 }
