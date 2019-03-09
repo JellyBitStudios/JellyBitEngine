@@ -7,7 +7,9 @@
 #include "ModuleScene.h"
 
 #include "ComponentBone.h"
+#include "ComponentMesh.h"
 #include "ResourceBone.h"
+#include "ResourceMesh.h"
 #include "ResourceAnimation.h"
 
 #include "imgui\imgui.h"
@@ -394,7 +396,7 @@ uint ResourceAvatar::GetHipsUuid() const
 
 // ----------------------------------------------------------------------------------------------------
 
-void ResourceAvatar::StepAnimation(uint animationUuid, float time, float blend)
+void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 {
 	ResourceAnimation* animationResource = (ResourceAnimation*)App->res->GetResource(animationUuid);
 	if (animationResource == nullptr)
@@ -409,7 +411,7 @@ void ResourceAvatar::StepAnimation(uint animationUuid, float time, float blend)
 		// Transformation to step the bone with
 		BoneTransformation boneTransformation = animationResource->animationData.boneKeys[i];
 
-		// Bone to be stepped with the transformation
+		// Bone to be stepped
 		GameObject* boneGameObject = App->GOs->GetGameObjectByUID(bones[boneTransformation.bone_name.data()]);
 		if (boneGameObject == nullptr);
 		{
@@ -562,16 +564,18 @@ void ResourceAvatar::StepAnimation(uint animationUuid, float time, float blend)
 			&& prevRot != nullptr)
 			rot = math::Quat(prevRot[0], prevRot[1], prevRot[2], prevRot[3]);
 
-		// 3. Blend
+		// 3. Blending between two animations
 
 		if (blend == 1.0f)
 		{
+			// Not blend
 			boneGameObject->transform->position = pos;
 			boneGameObject->transform->scale = scale;
 			boneGameObject->transform->rotation = rot;
 		}
 		else
 		{
+			// Blend
 			math::float3 blendPos = math::float3::Lerp(boneGameObject->transform->position, pos, blend);
 			math::float3 blendScale = math::float3::Lerp(boneGameObject->transform->scale, scale, blend);
 			math::Quat blendRot = math::Quat::Slerp(boneGameObject->transform->rotation, rot, blend);
@@ -580,6 +584,49 @@ void ResourceAvatar::StepAnimation(uint animationUuid, float time, float blend)
 			boneGameObject->transform->scale = blendScale;
 			boneGameObject->transform->rotation = blendRot;
 		}
+	}
+}
+
+void ResourceAvatar::StepMeshes()
+{
+	// Step all meshes
+	for (std::unordered_map<const char*, uint>::const_iterator it = bones.begin(); it != bones.end(); ++it)
+	{
+		// Bone to be stepped
+		GameObject* boneGameObject = App->GOs->GetGameObjectByUID(it->second);
+		if (boneGameObject == nullptr);
+		{
+			CONSOLE_LOG(LogTypes::Error, "A bone game object does not exist...");
+			continue;
+		}
+
+		/// Bone component
+		ComponentBone* boneComponent = boneGameObject->cmp_bone;
+		assert(boneComponent != nullptr);
+
+		/// Bone resource
+		ResourceBone* boneResource = (ResourceBone*)App->res->GetResource(boneComponent->res);
+		assert(boneResource != nullptr);
+
+		/// Mesh component
+		ComponentMesh* meshComponent = boneComponent->attached_mesh;
+		if (meshComponent == nullptr)
+		{
+			CONSOLE_LOG(LogTypes::Error, "A mesh component does not exist...");
+			continue;
+		}
+
+		/// Mesh resource
+		ResourceMesh* meshResource = (ResourceMesh*)App->res->GetResource(meshComponent->res);
+		assert(meshResource != nullptr);
+
+		// ----------
+
+		math::float4x4 boneGlobalMatrix = boneComponent->GetParent()->transform->GetGlobalMatrix();
+		math::float4x4 meshMatrix = meshComponent->GetParent()->transform->GetMatrix();
+	
+		math::float4x4 globalMatrix = boneGlobalMatrix * meshMatrix.Inverted() * boneResource->boneData.offset_matrix;
+	
 	}
 }
 
@@ -593,7 +640,7 @@ bool ResourceAvatar::LoadInMemory()
 	GameObject* boneGameObject = App->GOs->GetGameObjectByUID(avatarData.hipsUuid);
 	if (boneGameObject == nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
+		CONSOLE_LOG(LogTypes::Error, "The root bone game object does not exist...");
 		return false;
 	}
 
@@ -607,7 +654,7 @@ bool ResourceAvatar::LoadInMemory()
 		ComponentBone* boneComponent = boneGameObjects[i]->cmp_bone;
 		if (boneComponent == nullptr)
 		{
-			CONSOLE_LOG(LogTypes::Error, "A bone does not exist...");
+			CONSOLE_LOG(LogTypes::Error, "A bone component does not exist...");
 			continue;
 		}
 
@@ -617,6 +664,7 @@ bool ResourceAvatar::LoadInMemory()
 
 		const char* boneName = boneResource->boneData.name.data();
 		bones[boneName] = boneGameObjects[i]->GetUUID();
+
 		CONSOLE_LOG(LogTypes::Normal, "The bone %s has been loaded correctly", boneName);
 	}
 

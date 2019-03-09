@@ -314,14 +314,14 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 				indicesSize = facesSize * 3;
 				indices = new uint[indicesSize];
 
-				for (uint j = 0; j < facesSize; ++j)
+				for (uint i = 0; i < facesSize; ++i)
 				{
-					if (nodeMesh->mFaces[j].mNumIndices != 3)
+					if (nodeMesh->mFaces[i].mNumIndices != 3)
 					{
 						CONSOLE_LOG(LogTypes::Warning, "WARNING, geometry face with != 3 indices!");
 					}
 					else
-						memcpy(&indices[j * 3], nodeMesh->mFaces[j].mIndices, 3 * sizeof(uint));
+						memcpy(&indices[i * 3], nodeMesh->mFaces[i].mIndices, 3 * sizeof(uint));
 				}
 			}
 
@@ -355,10 +355,9 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 			}*/
 
 			// Bone
-			if (nodeMesh->HasBones() == true && gameObject->GetComponent(ComponentTypes::MeshComponent))
+			if (nodeMesh->HasBones())
 			{
-				int num = nodeMesh->mNumBones;
-				for (int i = 0; i < num; ++i)
+				for (uint i = 0; i < nodeMesh->mNumBones; ++i)
 				{
 					if (!root_bone)
 						root_bone = gameObject;
@@ -375,10 +374,10 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 				texCoordsSize = verticesSize;
 				texCoords = new float[texCoordsSize * 2];
 
-				for (uint j = 0; j < verticesSize; ++j)
+				for (uint i = 0; i < verticesSize; ++i)
 				{
-					memcpy(&texCoords[j * 2], &nodeMesh->mTextureCoords[0][j].x, sizeof(float));
-					memcpy(&texCoords[(j * 2) + 1], &nodeMesh->mTextureCoords[0][j].y, sizeof(float));
+					memcpy(&texCoords[i * 2], &nodeMesh->mTextureCoords[0][i].x, sizeof(float));
+					memcpy(&texCoords[(i * 2) + 1], &nodeMesh->mTextureCoords[0][i].y, sizeof(float));
 				}
 
 				// Material

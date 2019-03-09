@@ -2,13 +2,11 @@
 #define __COMPONENT_MESH_H__
 
 #include "Component.h"
-#include <vector>
-
 #include "Globals.h"
 
-struct Mesh;
+#include <vector>
+
 class ResourceMesh;
-class ComponentBone;
 
 class ComponentMesh : public Component
 {
@@ -30,16 +28,13 @@ public:
 
 public:
 
-	uint res = 0u;
+	uint res = 0;
 
-	// navmesh utility
+	// Pathfinding
 	bool nv_walkable = true;
 
-	uint root_bones_uid = 0u;
-
-	uint root_bone = 0u;
-
-	std::vector<ComponentBone*> attached_bones;
+	// Animation
+	std::vector<uint> bonesUuids;
 };
 
 #endif
