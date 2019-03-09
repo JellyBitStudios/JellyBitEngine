@@ -243,37 +243,18 @@ void ModuleFileSystem::OnSystemEvent(System_Event event)
 
 		{
 #ifndef GAMEMODE
-			std::string zip_path = PHYSFS_getBaseDir();
-			zip_path += "Build.zip";
+			char pathBuild[DEFAULT_BUF_SIZE];
+			strcpy(pathBuild, "Build");
+			//std::string zip_path = PHYSFS_getBaseDir();
+			//zip_path += "Build.zip";
+			Directory root = RecursiveGetFilesFromDir("");
+			//if (Exists("Build.zip"))
+				//deleteFile("Build.zip");
+			if (Exists(pathBuild))
+				deleteFiles(pathBuild, "", true, true);
 
-			if (Exists("Build.zip"))
-				deleteFile("Build.zip");
-
-			Directory library = RecursiveGetFilesFromDir("Library");
-			std::vector<std::string> fullpaths;
-			library.getFullPaths(fullpaths);
-
-			const char** root_files = GetFilesFromDir("");
-			const char** file;
-			std::string strfile;
-			for (file = root_files; *file != NULL; file++)
-			{
-				strfile = *file;
-
-				if (strfile.find_last_of(".") != std::string::npos)
-					if (std::strcmp(strfile.substr(strfile.find_last_of(".") + 1).data(), "dll") == 0)
-					{
-						char* buffer = nullptr;
-						uint size = Load(*file, &buffer);
-						if (size > 0)
-						{
-							WriteFile(zip_path.data(), *file, buffer, size);
-							RELEASE(buffer);
-						}
-					}
-			}
-			PHYSFS_freeList(root_files);
-			int i = 0;
+			if (CreateDir(pathBuild))
+				RecursiveBuild(root, pathBuild);
 #endif
 			break;
 		}
@@ -643,29 +624,36 @@ uint ModuleFileSystem::Save(std::string file, char* buffer, uint size, bool appe
 
 void ModuleFileSystem::WriteFile(const char * zip_path, const char * filename, const char * buffer, unsigned int size)
 {
-	if (PHYSFS_removeFromSearchPath("from_zip") == 0)
-		int hello = 0;//LOG("Ettot when unmount: %s", PHYSFS_getLastError());
+	if (PHYSFS_removeFromSearchPath(zip_path) == 0)
+		DEPRECATED_LOG("Errot when unmount: %s", PHYSFS_getLastError());
 
 	struct zip *f_zip = NULL;
 	int error = 0;
-	f_zip = zip_open(zip_path, ZIP_CHECKCONS | ZIP_CREATE, &error); /* on ouvre l'archive zip */
-	//if (error)	LOG("could not open or create archive: %s", zip_path);
-
-	zip_source_t *s;
-
-	s = zip_source_buffer(f_zip, buffer, size, 0);
-
-	if (s == NULL ||
-		zip_file_add(f_zip, filename, s, ZIP_FL_OVERWRITE | ZIP_FL_ENC_UTF_8) < 0) 
+	f_zip = zip_open(zip_path, ZIP_CHECKCONS + ZIP_CREATE, &error); /* on ouvre l'archive zip */
+	if (error)
 	{
-		zip_source_free(s);
-		//LOG("error adding file: %s\n", zip_strerror(f_zip));
+		zip_error zerror;
+		zip_error_init_with_code(&zerror, error);
+		DEPRECATED_LOG("could not open or create archive: %s, %s", zip_path, zip_error_strerror(&zerror));
+	}
+	else
+	{
+		zip_source_t *s;
+
+		s = zip_source_buffer(f_zip, buffer, size, 0);
+
+		if (s == NULL ||
+			zip_file_add(f_zip, filename, s, ZIP_FL_OVERWRITE + ZIP_FL_ENC_UTF_8) < 0)
+		{
+			zip_source_free(s);
+			DEPRECATED_LOG("error adding file: %s\n", zip_strerror(f_zip));
+		}
 	}
 
 	zip_close(f_zip);
 	f_zip = NULL;
 
-	PHYSFS_mount("from_zip", NULL, 1);
+	PHYSFS_mount(zip_path, NULL, 1);
 }
 
 uint ModuleFileSystem::Load(std::string file, char** buffer) const
@@ -918,7 +906,7 @@ bool ModuleFileSystem::deleteFile(const std::string& filePath) const
 	return PHYSFS_delete(filePath.c_str()) != 0;
 }
 
-bool ModuleFileSystem::deleteFiles(const std::string& root, const std::string& extension, bool deleteDir) const
+bool ModuleFileSystem::deleteFiles(const std::string& root, const std::string& extension, bool deleteDir, bool build) const
 {
 	bool ret = true;
 
@@ -927,26 +915,35 @@ bool ModuleFileSystem::deleteFiles(const std::string& root, const std::string& e
 	for (int i = 0; i < directory.files.size(); ++i)
 	{
 		std::string fileExt; GetExtension(directory.files[i].name.data(), fileExt);
-
-		if (fileExt == ".dll")
-			continue;
+		if (!build)
+			if (fileExt == ".dll")
+				continue;
 
 		if (extension.empty() || fileExt == extension)
+		{
 			ret = PHYSFS_delete(std::string(directory.fullPath + "/" + directory.files[i].name).c_str()) != 0;
 
-		if (ret && deleteDir)
-			PHYSFS_delete(directory.fullPath.data());
-		else
+			if (build)
+				if(Exists(directory.fullPath + "/" + directory.files[i].name + ".meta"))
+					ret = PHYSFS_delete(std::string(directory.fullPath + "/" + directory.files[i].name + ".meta").c_str()) != 0;
+		}
+
+		if (ret == false)
 			return false;
 	}
 
 	for (int i = 0; i < directory.directories.size(); ++i)
 	{
-		ret = deleteFiles(directory.directories[i].fullPath, extension, deleteDir);
+		ret = deleteFiles(directory.directories[i].fullPath, extension, deleteDir, build);
 
 		if (ret == false)
 			return false;
 	}
+
+	if (ret && deleteDir)
+		PHYSFS_delete(directory.fullPath.data());
+	else
+		return false;
 
 	return ret;
 }
@@ -1270,4 +1267,70 @@ void ModuleFileSystem::EndTempException()
 bool ModuleFileSystem::SetWriteDir(std::string writeDir) const
 {
 	return PHYSFS_setWriteDir(writeDir.data()) != 0;
+}
+
+void ModuleFileSystem::RecursiveBuild(const Directory& dir, char * toPath, bool meta, bool inZIP)
+{
+	for (File file : dir.files)
+	{
+		if (file.name == "NekoEngine.exe")
+			continue;
+		std::string extension;
+		GetExtension(file.name.data(), extension);
+		if (extension == ".txt" || extension == ".log" || 
+			extension == ".sln" || extension == ".csproj")
+			continue;
+		else
+		{
+			std::string filePath = dir.fullPath + "/" + file.name;
+
+			char* buffer = nullptr;
+			uint size = Load(filePath.data(), &buffer);
+			if (size > 0)
+			{
+				char temp[DEFAULT_BUF_SIZE];
+				strcpy(temp, toPath);
+				strcat(temp, "/");
+				strcat(temp, file.name.data());
+
+				if(inZIP)
+					WriteFile(zip_path.data(), *file, buffer, size);
+
+				Save(temp, buffer, size);
+				if (meta)
+				{
+					RELEASE_ARRAY(buffer);
+
+					size = Load(filePath + ".meta", &buffer);
+					if (size > 0)
+					{
+						strcat(temp, ".meta");
+						Save(temp, buffer, size);
+					}
+				}
+				RELEASE_ARRAY(buffer);
+			}
+		}
+			
+	}
+
+	for (Directory toDir : dir.directories)
+	{
+		if (toDir.name == ".vs" || toDir.name == "Assets" || toDir.name == "obj" || toDir.name == "Internal" || toDir.name == "PrefDir")
+			continue;
+		else
+		{
+			char temp[DEFAULT_BUF_SIZE];
+			strcpy(temp, toPath);
+			strcat(temp, "/");
+			strcat(temp, toDir.name.data());
+			if (!Exists(temp))
+				CreateDir(temp);
+			
+			if (strstr(toDir.fullPath.data(),"Library") != nullptr)
+				meta = true;
+			RecursiveBuild(toDir, temp, meta, inZIP);
+			meta = false;
+		}
+	}
 }

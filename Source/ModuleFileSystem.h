@@ -319,7 +319,7 @@ public:
 	bool CopyDirectoryAndContentsInto(const std::string& origin, const std::string& destination, bool keepRoot = true);
 	Directory RecursiveGetFilesFromDir(char* dir) const;
 	bool deleteFile(const std::string& filePath) const;
-	bool deleteFiles(const std::string& rootDirectory, const std::string& extension, bool deleteRoot = false) const;
+	bool deleteFiles(const std::string& rootDirectory, const std::string& extension, bool deleteRoot = false, bool build = false) const;
 	void SendEvents(const Directory& newAssetsDir);
 
 	void ImportFilesEvents(const Directory& newDir, std::vector<std::string>& lateEvents = std::vector<std::string>(), std::vector<std::string>& lateLateEvents = std::vector<std::string>(), bool reimport = false);
@@ -329,6 +329,9 @@ public:
 	void EndTempException();
 
 	bool SetWriteDir(std::string writeDir) const;
+
+	//GenerateBuild  methods
+	void RecursiveBuild(const Directory& dir, char* toPath, bool meta = false, bool inZIP = false);
 
 public:
 	Directory rootDir;
