@@ -232,6 +232,44 @@ void ModuleFileSystem::OnSystemEvent(System_Event event)
 #endif
 			break;
 		}
+		case System_Event_Type::GenerateLibraryFiles:
+
+		{
+#ifndef GAMEMODE
+			std::string zip_path = PHYSFS_getBaseDir();
+			zip_path += "Build.zip";
+
+			if (Exists("Build.zip"))
+				deleteFile("Build.zip");
+
+			Directory library = RecursiveGetFilesFromDir("Library");
+			std::vector<std::string> fullpaths;
+			library.getFullPaths(fullpaths);
+
+			const char** root_files = GetFilesFromDir("");
+			const char** file;
+			std::string strfile;
+			for (file = root_files; *file != NULL; file++)
+			{
+				strfile = *file;
+
+				if (strfile.find_last_of(".") != std::string::npos)
+					if (std::strcmp(strfile.substr(strfile.find_last_of(".") + 1).data(), "dll") == 0)
+					{
+						char* buffer = nullptr;
+						uint size = Load(*file, &buffer);
+						if (size > 0)
+						{
+							WriteFile(zip_path.data(), *file, buffer, size);
+							RELEASE(buffer);
+						}
+					}
+			}
+			PHYSFS_freeList(root_files);
+			int i = 0;
+#endif
+			break;
+		}
 	}
 }
 
@@ -603,7 +641,7 @@ void ModuleFileSystem::WriteFile(const char * zip_path, const char * filename, c
 
 	struct zip *f_zip = NULL;
 	int error = 0;
-	f_zip = zip_open(zip_path, ZIP_CHECKCONS, &error); /* on ouvre l'archive zip */
+	f_zip = zip_open(zip_path, ZIP_CHECKCONS | ZIP_CREATE, &error); /* on ouvre l'archive zip */
 	//if (error)	LOG("could not open or create archive: %s", zip_path);
 
 	zip_source_t *s;
@@ -611,7 +649,7 @@ void ModuleFileSystem::WriteFile(const char * zip_path, const char * filename, c
 	s = zip_source_buffer(f_zip, buffer, size, 0);
 
 	if (s == NULL ||
-		zip_file_add(f_zip, filename, s, ZIP_FL_OVERWRITE + ZIP_FL_ENC_UTF_8) < 0) 
+		zip_file_add(f_zip, filename, s, ZIP_FL_OVERWRITE | ZIP_FL_ENC_UTF_8) < 0) 
 	{
 		zip_source_free(s);
 		//LOG("error adding file: %s\n", zip_strerror(f_zip));
