@@ -214,7 +214,7 @@ void ComponentTransform::UpdateGlobal()
 
 	GameObject* goParent = parent->GetParent();
 	if (goParent != nullptr && goParent->transform)
-		globalMatrix = goParent->transform->GetGlobalMatrix().Mul(local);
+ 		globalMatrix = goParent->transform->GetGlobalMatrix().Mul(local);
 	else
 		globalMatrix = local;
 
