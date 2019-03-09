@@ -47,9 +47,12 @@ bool ModuleAudio::CleanUp()
 	audio_sources.clear();
 	event_list.clear();
 
-	ResourceAudioBank* bank = (ResourceAudioBank*)App->res->GetResourcesByType(ResourceTypes::AudioBankResource).front();
-	if(bank)
+	std::vector<Resource*> banks = App->res->GetResourcesByType(ResourceTypes::AudioBankResource);
+	if (!banks.empty())
+	{
+		ResourceAudioBank* bank = (ResourceAudioBank*)banks[0];
 		bank->ClearBank();
+	}
 
 	WwiseT::CloseSoundEngine();
 	return true;
