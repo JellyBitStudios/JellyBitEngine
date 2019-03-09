@@ -3,6 +3,10 @@
 
 #include "Component.h"
 #include <string>
+#include <map>
+
+struct Character;
+class ComponentRectTransform;
 
 class ComponentLabel : public Component
 {
@@ -11,8 +15,10 @@ public:
 	ComponentLabel(const ComponentLabel& componentLabel, GameObject* parent, bool includeComponents = true);
 	~ComponentLabel();
 
+	void Draw(uint ui_shader, uint VAO);
 	void Update();
 
+	const char* GetFinalText() const;
 
 private:
 	uint GetInternalSerializationBytes();
@@ -22,8 +28,16 @@ private:
 	
 	void LinkToUIModule();
 
+	void SetRectToShader(uint shader);
+
+public:
+	std::map<char, Character> charactersBitmap;
+
 private:
 	std::string finalText;
+	int size = 16;
+	ComponentRectTransform* rect = nullptr;
+
 };
 
 #endif

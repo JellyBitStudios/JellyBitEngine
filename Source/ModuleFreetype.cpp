@@ -11,7 +11,7 @@ ModuleFreetype::ModuleFreetype(bool start_enabled) : Module(start_enabled)
 
 ModuleFreetype::~ModuleFreetype()
 {
-
+	FT_Done_FreeType(library);
 }
 
 bool ModuleFreetype::Init(JSON_Object* jObject)
@@ -23,7 +23,7 @@ bool ModuleFreetype::Init(JSON_Object* jObject)
 }
 
 bool ModuleFreetype::Start() {
-	LoadFont("../Game/Assets/Textures/Font/ariali.ttf",16);
+	//LoadFont("../Game/Assets/Textures/Font/ariali.ttf",16);
 	return true;
 }
 
@@ -31,8 +31,9 @@ update_status ModuleFreetype::Update()
 {
 	return UPDATE_CONTINUE;
 }
-void ModuleFreetype::LoadFont(const char* path, int size)
+void ModuleFreetype::LoadFont(const char* path, int size, std::map<char, Character> &charactersBitmap)
 {
+	FT_Face face;      /* handle to face object */
 	if (FT_New_Face(library, path, 0, &face))
 	{
 		CONSOLE_LOG(LogTypes::Error, "The font file couldn't be opened, read or this format is unsupported");
@@ -43,7 +44,6 @@ void ModuleFreetype::LoadFont(const char* path, int size)
 		FT_Set_Pixel_Sizes(face, 0, size);
 
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
-
 		for (uint c = 0; c < 128; c++)
 		{
 			// Load character glyph 
@@ -73,8 +73,8 @@ void ModuleFreetype::LoadFont(const char* path, int size)
 			};
 			charactersBitmap.insert(std::pair<char, Character>(c, character));
 		}
-		FT_Done_Face(face);
-		FT_Done_FreeType(library);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
+	FT_Done_Face(face);
 }
 

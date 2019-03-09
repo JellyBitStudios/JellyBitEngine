@@ -126,9 +126,6 @@ bool ResourceFont::ImportFile(const char * file, std::string & name, std::string
 		sprintf_s(entry, "%u", uuid);
 		outputFile = entry;
 	}
-
-
-
 	return true;
 }
 

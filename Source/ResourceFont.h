@@ -11,7 +11,7 @@
 
 struct CharacterData
 {
-	uint characterUuid;
+	uint uuidTexture;
 	math::float2 size;
 	math::float2 bearing;
 	uint advance;
@@ -19,7 +19,7 @@ struct CharacterData
 
 struct FontData
 {
-
+	uint fontSize;
 };
 class ResourceFont : public Resource
 {

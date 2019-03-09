@@ -39,11 +39,15 @@ public:
 		}
 		math::float4 GetColor();
 		uint GetTexture();
+		const char * GetText();
 
 		bool isRendered() {
 			return isRendered_flag;
 		}
 
+		void ChangeRenderedFlag(bool flag) {
+			isRendered_flag = flag;
+		}
 	private:
 		RenderTypes type = RenderTypes::RENDER_NULL;
 		Component* cmp = nullptr;

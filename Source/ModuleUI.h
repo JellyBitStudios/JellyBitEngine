@@ -69,6 +69,7 @@ private:
 	void initRenderData();
 	void DrawUIColor(ComponentRectTransform* rect, math::float4& color, float rotation = 0.0f);
 	void DrawUITexture(ComponentRectTransform* rect, uint texture = 0, float rotation = 0.0f);
+	void DrawUIText(ComponentRectTransform* rect, const char* text, float rotation = 0.0f);
 
 	void SetRectToShader(ComponentRectTransform* rect);
 

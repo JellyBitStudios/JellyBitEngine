@@ -27,15 +27,14 @@ public:
 	bool Start();
 	update_status Update();
 
-	void LoadFont(const char * path, int size);
+	void LoadFont(const char * path, int size, std::map<char, Character>& charactersBitmap);
 
 public:
 
 private:
 	FT_Library library;   /* handle to library     */
-	FT_Face face;      /* handle to face object */
 
-	std::map<char, Character> charactersBitmap;
+
 };
 
 #endif //__MODULE_FREETYPE_H__

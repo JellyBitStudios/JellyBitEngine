@@ -52,6 +52,10 @@ void ModuleUI::DrawCanvas()
 				break;
 			case ComponentCanvasRenderer::RenderTypes::TEXTURE:
 				DrawUITexture((ComponentRectTransform*)renderer->GetParent()->GetComponent(ComponentTypes::RectTransformComponent), rend->GetTexture());
+				break;	
+			case ComponentCanvasRenderer::RenderTypes::FONT:
+				((ComponentLabel*)renderer->GetParent()->GetComponent(ComponentTypes::LabelComponent))->Draw();
+				rend->ChangeRenderedFlag(true);
 				break;
 			}
 
@@ -226,6 +230,14 @@ void ModuleUI::DrawUITexture(ComponentRectTransform * rect, uint id_texture, flo
 	glBindVertexArray(0);
 
 	use(0);
+}
+
+void ModuleUI::DrawUIText(ComponentRectTransform * rect, const char * text, float rotation)
+{
+
+
+
+
 }
 
 void ModuleUI::SetRectToShader(ComponentRectTransform * rect)

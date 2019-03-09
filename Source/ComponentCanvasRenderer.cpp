@@ -6,6 +6,7 @@
 #include "GameObject.h"
 
 #include "ComponentImage.h"
+#include "ComponentLabel.h"
 #include "ComponentRectTransform.h"
 
 #include "imgui\imgui.h"
@@ -78,6 +79,18 @@ void ComponentCanvasRenderer::Update()
 				}
 			}
 		}
+	ComponentLabel* cmp_label = (ComponentLabel*)parent->GetComponent(ComponentTypes::LabelComponent);
+	if (cmp_label)
+	{
+		if (cmp_label->IsActive() && parent->IsActive())
+		{
+			for (ToUIRend* rend : rend_queue)
+			{
+				if (rend->isRendered())
+					rend->Set(RenderTypes::FONT, cmp_label);
+			}
+		}
+	}
 }
 
 void ComponentCanvasRenderer::OnEditor()
@@ -145,4 +158,10 @@ uint ComponentCanvasRenderer::ToUIRend::GetTexture()
 {
 	isRendered_flag = true;
 	return ((ComponentImage*)cmp)->GetResImage();
+}
+
+const char* ComponentCanvasRenderer::ToUIRend::GetText()
+{
+	isRendered_flag = true;
+	return ((ComponentLabel*)cmp)->GetFinalText();
 }

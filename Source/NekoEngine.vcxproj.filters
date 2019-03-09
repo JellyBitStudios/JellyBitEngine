@@ -1857,12 +1857,6 @@
     <ClInclude Include="Freetype\include\freetype\internal\autohint.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
-    <ClInclude Include="Freetype\include\freetype\internal\cffotypes.h">
-      <Filter>Sources\3rd Party\Freetype</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\include\freetype\internal\cfftypes.h">
-      <Filter>Sources\3rd Party\Freetype</Filter>
-    </ClInclude>
     <ClInclude Include="Freetype\include\freetype\freetype.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
@@ -1905,9 +1899,6 @@
     <ClInclude Include="Freetype\include\freetype\ftdriver.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
-    <ClInclude Include="Freetype\include\freetype\internal\ftdrv.h">
-      <Filter>Sources\3rd Party\Freetype</Filter>
-    </ClInclude>
     <ClInclude Include="Freetype\include\freetype\fterrdef.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
@@ -1930,9 +1921,6 @@
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
     <ClInclude Include="Freetype\include\freetype\ftgzip.h">
-      <Filter>Sources\3rd Party\Freetype</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\include\freetype\internal\fthash.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
     <ClInclude Include="Freetype\include\freetype\config\ftheader.h">
@@ -1992,9 +1980,6 @@
     <ClInclude Include="Freetype\include\freetype\internal\ftpic.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
-    <ClInclude Include="Freetype\include\freetype\internal\ftpsprop.h">
-      <Filter>Sources\3rd Party\Freetype</Filter>
-    </ClInclude>
     <ClInclude Include="Freetype\include\freetype\ftrender.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
@@ -2040,9 +2025,6 @@
     <ClInclude Include="Freetype\include\freetype\ftwinfnt.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
-    <ClInclude Include="Freetype\include\freetype\internal\internal.h">
-      <Filter>Sources\3rd Party\Freetype</Filter>
-    </ClInclude>
     <ClInclude Include="Freetype\include\freetype\internal\psaux.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
@@ -2055,13 +2037,7 @@
     <ClInclude Include="Freetype\include\freetype\internal\services\svbdf.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
-    <ClInclude Include="Freetype\include\freetype\internal\services\svcfftl.h">
-      <Filter>Sources\3rd Party\Freetype</Filter>
-    </ClInclude>
     <ClInclude Include="Freetype\include\freetype\internal\services\svcid.h">
-      <Filter>Sources\3rd Party\Freetype</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\include\freetype\internal\services\svfntfmt.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
     <ClInclude Include="Freetype\include\freetype\internal\services\svgldict.h">
@@ -2071,9 +2047,6 @@
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
     <ClInclude Include="Freetype\include\freetype\internal\services\svkern.h">
-      <Filter>Sources\3rd Party\Freetype</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\include\freetype\internal\services\svmetric.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
     <ClInclude Include="Freetype\include\freetype\internal\services\svmm.h">
@@ -2086,9 +2059,6 @@
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
     <ClInclude Include="Freetype\include\freetype\internal\services\svpostnm.h">
-      <Filter>Sources\3rd Party\Freetype</Filter>
-    </ClInclude>
-    <ClInclude Include="Freetype\include\freetype\internal\services\svprop.h">
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
     <ClInclude Include="Freetype\include\freetype\internal\services\svpscmap.h">
@@ -2132,6 +2102,9 @@
     </ClInclude>
     <ClInclude Include="ResourceFont.h">
       <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Freetype\include\freetype\internal\internal.h">
+      <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
