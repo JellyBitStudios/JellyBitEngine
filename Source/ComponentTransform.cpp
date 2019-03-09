@@ -220,7 +220,8 @@ void ComponentTransform::UpdateGlobal()
 
 	for (std::vector<GameObject*>::iterator childs = parent->children.begin(); childs != parent->children.end(); ++childs)
 	{
-		(*childs)->transform->UpdateGlobal();
+		if ((*childs)->transform)
+			(*childs)->transform->UpdateGlobal();
 	}
 
 	// Transform is updated, we have to recalculate the bounding box.
