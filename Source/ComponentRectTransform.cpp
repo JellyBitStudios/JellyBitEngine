@@ -69,8 +69,7 @@ void ComponentRectTransform::Update()
 	case ComponentRectTransform::RECT:
 		break;
 	case ComponentRectTransform::WORLD:
-		CalculateRectFromWorld();
-		ChangeChildsRect(true);
+		CalculateRectFromWorld(false);
 		break;
 	case ComponentRectTransform::RECT_WORLD:
 		break;
@@ -133,7 +132,7 @@ void ComponentRectTransform::CheckParentRect()
 		{
 			transformParent = (ComponentTransform*)rect;
 
-			CalculateRectFromWorld();
+			CalculateRectFromWorld(true);
 		}
 		break;
 	case ComponentRectTransform::RECT_WORLD:
@@ -148,10 +147,11 @@ void ComponentRectTransform::CheckParentRect()
 			if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
 				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
 
+			RecaculateAnchors();
+
 			ParentChanged();
 
-			RecaculateAnchors();
-			RecaculatePercentage();
+			//RecaculatePercentage();
 		}
 		break;
 	}
@@ -230,7 +230,7 @@ void ComponentRectTransform::UseMarginChanged(bool useMargin)
 	}
 }
 
-void ComponentRectTransform::CalculateRectFromWorld()
+void ComponentRectTransform::CalculateRectFromWorld(bool individualcheck)
 {
 	math::float4x4 globalmatrix;
 
@@ -246,7 +246,8 @@ void ComponentRectTransform::CalculateRectFromWorld()
 	rectTransform[Rect::XDIST] = abs(math::Distance(corners[Rect::RTOPRIGHT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
 	rectTransform[Rect::YDIST] = abs(math::Distance(corners[Rect::RBOTTOMLEFT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
 
-	ChangeChildsRect(true);
+	if(!individualcheck)
+		ChangeChildsRect(true);
 }
 
 void ComponentRectTransform::CalculateCornersFromRect()

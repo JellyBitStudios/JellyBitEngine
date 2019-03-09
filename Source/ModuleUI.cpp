@@ -347,6 +347,7 @@ void ModuleUI::OnWindowResize(uint width, uint height)
 	 for (GameObject* world_canvas : GOsWorldCanvas)
 	 {
 		 world_canvas->GetChildrenAndThisVectorFromLeaf(gos);
+		 std::reverse(gos.begin(), gos.end());
 		 for (GameObject* go_rect : gos)
 		 {
 			 ComponentRectTransform* cmp_rect = (ComponentRectTransform*)go_rect->GetComponent(ComponentTypes::RectTransformComponent);

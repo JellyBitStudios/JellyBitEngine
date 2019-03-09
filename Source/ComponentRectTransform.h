@@ -103,7 +103,7 @@ private:
 	float anchor_percenatges[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 private:
-	void CalculateRectFromWorld();
+	void CalculateRectFromWorld(bool individualcheck);
 	void CalculateCornersFromRect();
 
 	void RecaculateAnchors();
@@ -112,6 +112,7 @@ private:
 
 	void ParentChanged(bool size_changed = false);
 	void UseMarginChanged(bool useMargin);
+
 
 	virtual uint GetInternalSerializationBytes();
 	virtual void OnInternalSave(char*& cursor);
