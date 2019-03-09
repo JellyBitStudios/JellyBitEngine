@@ -54,7 +54,7 @@ public:
 private:
 
 	void InitResources();
-	void DeinitResources();
+	void DeinitResources() const;
 
 	void SetUniformsAsUsed();
 	void SetUniformsAsUnused() const;

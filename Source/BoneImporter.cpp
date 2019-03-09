@@ -35,7 +35,7 @@ uint BoneImporter::Import(mutable aiBone* new_bone, mutable uint mesh, mutable s
 	ResourceBoneData res_data;
 	res_data.mesh_uid = mesh;
 	res_data.bone_weights_size = new_bone->mNumWeights;
-	memcpy(res_data.offset_matrix.v, &new_bone->mOffsetMatrix.a1, sizeof(float) * 16);
+	memcpy(res_data.offsetMatrix.v, &new_bone->mOffsetMatrix.a1, sizeof(float) * 16);
 
 	res_data.bone_weights_indices = new uint[res_data.bone_weights_size];
 	res_data.bone_weights = new float[res_data.bone_weights_size];
@@ -91,8 +91,8 @@ void BoneImporter::Load(mutable const char * file_path, mutable ResourceData& da
 
 	// Load offset matrix
 	cursor += bytes;
-	bytes = sizeof(bone_data.offset_matrix);
-	memcpy(bone_data.offset_matrix.v, cursor, bytes);
+	bytes = sizeof(bone_data.offsetMatrix);
+	memcpy(bone_data.offsetMatrix.v, cursor, bytes);
 
 	// Load num_weigths
 	cursor += bytes;
@@ -131,7 +131,7 @@ bool BoneImporter::SaveBone(mutable ResourceData& res_data, mutable ResourceBone
 	// Format: mesh UID + 16 float matrix + num_weigths uint + indices uint * num_weight + weight float * num_weights
 	uint size = sizeof(char) * DEFAULT_BUF_SIZE;
 	size += sizeof(bone_data.mesh_uid); // mesh_uid
-	size += sizeof(bone_data.offset_matrix);
+	size += sizeof(bone_data.offsetMatrix);
 	size += sizeof(bone_data.bone_weights_size);
 	size += sizeof(uint) * bone_data.bone_weights_size;
 	size += sizeof(float) * bone_data.bone_weights_size;
@@ -154,8 +154,8 @@ bool BoneImporter::SaveBone(mutable ResourceData& res_data, mutable ResourceBone
 
 	// store offset matrix
 	cursor += bytes;
-	bytes = sizeof(bone_data.offset_matrix);
-	memcpy(cursor, &bone_data.offset_matrix.v, bytes);
+	bytes = sizeof(bone_data.offsetMatrix);
+	memcpy(cursor, &bone_data.offsetMatrix.v, bytes);
 
 	// store num_weights
 	cursor += bytes;

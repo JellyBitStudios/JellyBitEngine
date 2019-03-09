@@ -6,7 +6,9 @@
 #include "Resource.h"
 #include "ModuleScene.h"
 
+#ifndef GAMEMODE
 #include "imgui\imgui.h"
+#endif
 
 #include <assert.h>
 
@@ -28,20 +30,15 @@ ComponentMaterial::~ComponentMaterial()
 	SetResource(0);
 }
 
-void ComponentMaterial::Update() {}
-
 void ComponentMaterial::OnUniqueEditor()
 {
 #ifndef GAMEMODE
 	if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
 	{
 		const Resource* resource = App->res->GetResource(res);
-		if (!resource)
-			return;
-		std::string materialName = resource->GetName();
 
 		ImGui::PushID("material");
-		ImGui::Button(materialName.data(), ImVec2(150.0f, 0.0f));
+		ImGui::Button(resource->GetName(), ImVec2(150.0f, 0.0f));
 		ImGui::PopID();
 
 		if (ImGui::IsItemHovered())

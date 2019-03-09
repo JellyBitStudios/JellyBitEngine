@@ -663,7 +663,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 
 	math::float4x4 boneGlobalMatrix = boneComponent->GetParent()->transform->GetGlobalMatrix();
 	math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetMatrix();
-	math::float4x4 boneTransformation = boneGlobalMatrix * meshMatrix.Inverted() * boneResource->boneData.offset_matrix;
+	math::float4x4 boneTransformation = boneGlobalMatrix * meshMatrix.Inverted() * boneResource->boneData.offsetMatrix;
 	// FOR EACH BONE
 
 	math::float4x4 model_matrix = toDraw->GetParent()->transform->GetGlobalMatrix();

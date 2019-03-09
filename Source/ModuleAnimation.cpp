@@ -344,7 +344,7 @@ void ModuleAnimation::DeformMesh(ComponentBone* component_bone)
 		math::float4x4 trans = component_bone->GetParent()->transform->GetGlobalMatrix();
 		trans = trans * component_bone->attached_mesh->GetParent()->transform->GetGlobalMatrix().Inverse();
 
-		trans = trans * rbone->boneData.offset_matrix;
+		trans = trans * rbone->boneData.offsetMatrix;
 
 		for (uint i = 0; i < rbone->boneData.bone_weights_size; ++i)
 		{

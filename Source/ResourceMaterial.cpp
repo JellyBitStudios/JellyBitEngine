@@ -484,7 +484,7 @@ void ResourceMaterial::InitResources()
 	SetUniformsAsUsed();
 }
 
-void ResourceMaterial::DeinitResources()
+void ResourceMaterial::DeinitResources() const
 {
 	// Set as unused (shader)
 	if (materialData.shaderUuid > 0)
