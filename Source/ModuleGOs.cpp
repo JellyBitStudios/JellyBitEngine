@@ -178,9 +178,6 @@ GameObject* ModuleGOs::CreateGameObject(const char* goName, GameObject* parent, 
 	gameobjects.push_back(newGameObject);
 	dynamicGos.push_back(newGameObject);
 
-	// Calculate the global
-	newGameObject->transform->UpdateGlobal();
-
 	return newGameObject;
 }
 
