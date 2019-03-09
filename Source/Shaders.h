@@ -89,6 +89,32 @@
 
 #pragma endregion
 
+#pragma region ShaderBillboard
+
+#define vShaderBillboard										\
+"#version 330 core\n"											\
+"layout(location = 0) in vec3 position;\n"						\
+"layout(location = 1) in vec3 normal;\n"						\
+"layout(location = 2) in vec4 color;\n"							\
+"layout(location = 3) in vec2 texCoord;\n"						\
+"uniform mat4 mvp_matrix;\n"									\
+"out vec2 fTexCoord;\n"											\
+"void main()\n"													\
+"{\n"															\
+"	fTexCoord = texCoord;\n"									\
+"	gl_Position = mvp_matrix * vec4(position, 1.0);\n"			\
+"}"
+
+#define fShaderBillboard														\
+"#version 330 core\n"															\
+"in vec2 fTexCoord;\n"															\
+"uniform sampler2D diffuse;\n"													\
+"void main()\n"																	\
+"{\n"																			\
+"	FragColor = texture(diffuse,fTexCoord);\n"						\
+"}"
+#pragma endregion
+
 #pragma region ShaderParticles
 
 #define Particle_vShaderTemplate \

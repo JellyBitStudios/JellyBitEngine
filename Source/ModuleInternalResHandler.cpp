@@ -21,11 +21,13 @@ bool ModuleInternalResHandler::Start()
 	// Texture resources
 	CreateCheckers();
 	CreateDefaultTexture();
+	CreateLightIcon();
 
 	// Shader resources
 	CreateDefaultShaderProgram(vShaderTemplate, fShaderTemplate, ShaderProgramTypes::Standard);
 	CreateDefaultShaderProgram(Particle_vShaderTemplate, Particle_fShaderTemplate, ShaderProgramTypes::Particles);
 	CreateDeferredShaderProgram();
+	CreateBillboardShaderProgram();
 	CreateUIShaderProgram();
 
 	// Material resources
@@ -207,6 +209,12 @@ void ModuleInternalResHandler::CreateDefaultTexture()
 	defaultTexture = (App->res->CreateResource(ResourceTypes::TextureResource, data, &textureData, REPLACE_ME_TEXTURE_UUID))->GetUuid();
 }
 
+void ModuleInternalResHandler::CreateLightIcon()
+{
+	lightIcon = ((ResourceTexture*)App->res->ImportFile("Settings/Light_Icon.png"))->GetUuid();
+	App->res->SetAsUsed(lightIcon);
+}
+
 void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, const char* fShader, ShaderProgramTypes type)
 {
 	ResourceData vertexData;
@@ -278,11 +286,46 @@ void ModuleInternalResHandler::CreateDeferredShaderProgram()
 	shaderData.internal = true;
 	programShaderData.shaderObjectsUuids.push_back(vObj->GetUuid());
 	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
-	programShaderData.shaderProgramType = ShaderProgramTypes::UI;
+	programShaderData.shaderProgramType = ShaderProgramTypes::Source;
 	ResourceShaderProgram* pShader = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DEFERRED_SHADER_PROGRAM_UUID);
 	if (!pShader->Link())
 		pShader->isValid = false;
 	deferredShaderProgram = pShader->GetUuid();
+}
+
+void ModuleInternalResHandler::CreateBillboardShaderProgram()
+{
+	ResourceData vertexData;
+	ResourceShaderObjectData vertexShaderData;
+	vertexData.name = "Billboard vertex object";
+	vertexData.internal = true;
+	vertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
+	vertexShaderData.SetSource(vShaderBillboard, strlen(vShaderBillboard));
+	ResourceShaderObject* vObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &vertexShaderData);
+	if (!vObj->Compile())
+		vObj->isValid = false;
+
+	ResourceData fragmentData;
+	ResourceShaderObjectData fragmentShaderData;
+	fragmentData.name = "Billboard fragment object";
+	fragmentData.internal = true;
+	fragmentShaderData.shaderObjectType = ShaderObjectTypes::FragmentType;
+	fragmentShaderData.SetSource(fShaderBillboard, strlen(fShaderBillboard));
+	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, fragmentData, &fragmentShaderData);
+	if (!fObj->Compile())
+		fObj->isValid = false;
+
+	ResourceData shaderData;
+	ResourceShaderProgramData programShaderData;
+	shaderData.name = "Billboard";
+	shaderData.internal = true;
+	programShaderData.shaderObjectsUuids.push_back(vObj->GetUuid());
+	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
+	programShaderData.shaderProgramType = ShaderProgramTypes::Standard;
+	ResourceShaderProgram* pShader = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, BILLBOARD_SHADER_PROGRAM_UUID);
+	if (!pShader->Link())
+		pShader->isValid = false;
+	billboardShaderProgram = pShader->GetUuid();
 }
 
 void ModuleInternalResHandler::CreateUIShaderProgram()

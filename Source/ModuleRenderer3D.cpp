@@ -12,6 +12,8 @@
 #include "ModuleGOs.h"
 #include "ModuleParticles.h"
 #include "ModuleUI.h"
+#include "ModuleFBOManager.h"
+#include "Lights.h"
 #include "DebugDrawer.h"
 #include "ShaderImporter.h"
 #include "MaterialImporter.h"
@@ -24,7 +26,6 @@
 #include "ComponentMaterial.h"
 #include "ComponentCamera.h"
 #include "ComponentProjector.h"
-#include "ModuleFBOManager.h"
 
 #include "ResourceMesh.h"
 #include "ResourceTexture.h"
@@ -224,6 +225,8 @@ update_status ModuleRenderer3D::PostUpdate()
 
 	App->scene->Draw();
 
+	App->lights->DebugDrawLights();
+
 //	App->particle->Draw();
 
 #ifndef GAMEMODE
@@ -267,10 +270,10 @@ update_status ModuleRenderer3D::PostUpdate()
 
 		App->debugDrawer->EndDebugDraw();
 	}
-
+	*/
 	if (App->ui->GetUIMode())
 		App->ui->DrawCanvas();
-		*/
+		
 	// 3. Editor
 	App->gui->Draw();
 #else
