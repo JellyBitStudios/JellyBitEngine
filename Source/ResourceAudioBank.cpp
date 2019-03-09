@@ -99,6 +99,21 @@ void ResourceAudioBank::ClearBank()
 	delete[] bankData.buffer;
 }
 
+void ResourceAudioBank::Modified()
+{
+	App->audio->Stop();
+
+	ClearBank();
+
+	char* buffer;
+	uint size = App->fs->Load(data.file.data(), &buffer);
+	if (size > 0)
+	{
+		bankData.bankID = WwiseT::LoadBank(buffer, size);
+		bankData.buffer = buffer;
+	}
+}
+
 bool ResourceAudioBank::WriteMeta() const
 {
 	char metaFile[DEFAULT_BUF_SIZE];

@@ -23,6 +23,7 @@ public:
 public:
 	static ResourceAudioBank* ImportFile(const char* file);
 	void ClearBank();
+	void Modified();
 
 private:
 	bool LoadInMemory() { return true; };

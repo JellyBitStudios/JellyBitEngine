@@ -146,6 +146,28 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			}
 		}
 		break;
+
+		case ResourceTypes::AudioBankResource:
+		{
+			char metaFile[DEFAULT_BUF_SIZE];
+			sprintf(metaFile, "%s%s", event.fileEvent.file, EXTENSION_META);
+			char* metaBuffer;
+			uint size = App->fs->Load(metaFile, &metaBuffer);
+			if (size <= 0)
+				break;
+
+			char* cursor = metaBuffer;
+			cursor += sizeof(int64_t) + sizeof(uint);
+
+			uint uid;
+			memcpy(&uid, cursor, sizeof(uint));
+
+			ResourceAudioBank* bank = (ResourceAudioBank*)App->res->GetResource(uid);
+			bank->Modified();
+
+			delete[] metaBuffer;
+			break;
+		}
 		}
 	}
 	break;
