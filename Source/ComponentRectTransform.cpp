@@ -236,7 +236,6 @@ void ComponentRectTransform::UseMarginChanged(bool useMargin)
 void ComponentRectTransform::CalculateRectFromWorld(bool individualcheck)
 {
 	math::float4x4 globalmatrix;
-	transformParent->UpdateGlobal();
 	globalmatrix = transformParent->GetGlobalMatrix();
 
 	corners[Rect::RTOPLEFT] = math::float4(globalmatrix * math::float4(-0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
