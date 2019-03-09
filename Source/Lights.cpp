@@ -39,11 +39,14 @@ bool Lights::EraseLight(const ComponentLight* light)
 
 void Lights::UseLights(const unsigned int shaderID) const
 {
+	glUniform1i(glGetUniformLocation(shaderID, "numLights"), lights.size());
 	for (int i = 0; i < lights.size(); ++i)
 	{
-		// uwu
+		char str[20];
+		sprintf(str, "lights[%i].Dir", i);
 		math::float3 dir = lights[i]->GetParent()->transform->GetGlobalMatrix().WorldZ();
-		glUniform3fv(glGetUniformLocation(shaderID, "lights[" + i + "]"), 1, dir.ptr());
-		glUniform3fv(glGetUniformLocation(shaderID, "Light.Dir"), 1, lights[i]->color);
+		glUniform3fv(glGetUniformLocation(shaderID, str), 1, dir.ptr());
+		sprintf(str, "lights[%i].Color", i);
+		glUniform3fv(glGetUniformLocation(shaderID, str), 1, lights[i]->color);
 	}
 }

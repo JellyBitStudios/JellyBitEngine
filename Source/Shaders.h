@@ -70,6 +70,7 @@
 "};			\n"																			\
 "const int NR_LIGHTS = 32;\n"															\
 "uniform Light lights[NR_LIGHTS];\n"													\
+"uniform int numLights;\n"																\
 "uniform vec3 viewPos;\n"																\
 "void main()\n"																			\
 "{\n"																					\
@@ -79,7 +80,7 @@
 "	vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;\n"								\
 "	vec3 lighting = Albedo * 0.1; // hard-coded ambient component\n"					\
 "	vec3 viewDir = normalize(viewPos - FragPos);\n"										\
-"	for (int i = 0; i < NR_LIGHTS; ++i) \n"												\
+"	for (int i = 0; i < numLights; ++i) \n"												\
 "	{\n"																				\
 "		vec3 diffuse = max(dot(Normal, lights[i].Dir), 0.0) * Albedo * lights[i].Color;\n"	\
 "		lighting += diffuse; \n"														\
