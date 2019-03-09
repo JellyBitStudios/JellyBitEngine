@@ -54,7 +54,7 @@ void ModuleUI::DrawCanvas()
 				DrawUITexture((ComponentRectTransform*)renderer->GetParent()->GetComponent(ComponentTypes::RectTransformComponent), rend->GetTexture());
 				break;	
 			case ComponentCanvasRenderer::RenderTypes::FONT:
-				((ComponentLabel*)renderer->GetParent()->GetComponent(ComponentTypes::LabelComponent))->Draw();
+				((ComponentLabel*)renderer->GetParent()->GetComponent(ComponentTypes::LabelComponent))->Draw(ui_shader, reference_vertex);
 				rend->ChangeRenderedFlag(true);
 				break;
 			}

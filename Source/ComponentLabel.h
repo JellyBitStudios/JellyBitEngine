@@ -30,13 +30,11 @@ private:
 
 	void SetRectToShader(uint shader);
 
-public:
-	std::map<char, Character> charactersBitmap;
-
 private:
 	std::string finalText;
 	int size = 16;
 	ComponentRectTransform* rect = nullptr;
+	std::map<char, Character> charactersBitmap;
 
 };
 

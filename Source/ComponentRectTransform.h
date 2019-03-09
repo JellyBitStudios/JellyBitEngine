@@ -71,6 +71,8 @@ public:
 	void OnEditor();
 
 	void SetRect(uint x, uint y, uint x_dist, uint y_dist);
+	void SetRectPos(uint x, uint y);
+	void SetRectDim(uint x_dist, uint y_dist);
 
 	uint* GetRect();
 	math::float3* GetCorners();
