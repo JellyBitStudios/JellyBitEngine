@@ -233,9 +233,14 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 
 	if (transformation != nullptr)
 	{
-		gameObject->transform->SetPosition(transformation->transform->GetPosition().Add(newPosition));
-		gameObject->transform->SetRotation(transformation->transform->GetRotation().Mul(newRotation));
-		gameObject->transform->SetScale(transformation->transform->GetScale().Mul(newScale));
+		math::float3 pos = transformation->transform->GetPosition();
+		gameObject->transform->SetPosition(pos + newPosition);
+
+		math::Quat rot = transformation->transform->GetRotation();
+		gameObject->transform->SetRotation(rot * newRotation);
+
+		math::float3 scale = transformation->transform->GetScale();
+		gameObject->transform->SetScale({scale.x * newScale.x, scale.y * newScale.y,scale.z * newScale.z });
 	}
 	else
 	{
