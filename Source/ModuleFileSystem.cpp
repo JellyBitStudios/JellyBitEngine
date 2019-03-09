@@ -117,6 +117,11 @@ bool ModuleFileSystem::Start()
 	System_Event event;
 	event.type = System_Event_Type::LoadGMScene;
 	App->PushSystemEvent(event);
+
+	App->SetEngineState(engine_states::ENGINE_PLAY);
+	event.type = System_Event_Type::Play;
+	App->PushSystemEvent(event);
+
 #endif
 	
 

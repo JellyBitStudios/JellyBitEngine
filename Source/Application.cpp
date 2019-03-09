@@ -101,16 +101,6 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 
 	// No, I'm last ;)
 	AddModule(events);
-
-#ifdef GAMEMODE
-	engineState = engine_states::ENGINE_PLAY;
-
-	System_Event event;
-	event.type = System_Event_Type::Play;
-	PushSystemEvent(event);
-
-#endif // GAMEMODE
-
 }
 
 Application::~Application()
@@ -516,6 +506,11 @@ void Application::Step()
 engine_states Application::GetEngineState() const
 {
 	return engineState;
+}
+
+void Application::SetEngineState(engine_states state)
+{
+	this->engineState = state;
 }
 
 bool Application::IsPlay() const
