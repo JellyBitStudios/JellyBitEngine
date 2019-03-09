@@ -41,7 +41,7 @@ public:
 
 	// ----------------------------------------------------------------------------------------------------
 
-	void StepAnimation(uint animationUuid, float time, float blendTime);
+	void StepAnimation(uint animationUuid, float time, float blend = 1.0f);
 
 private:
 
@@ -50,7 +50,7 @@ private:
 
 private:
 
-	std::unordered_map<const char*, uint> bones;
+	std::unordered_map<const char*, uint> bones; // bone resource name, bone game object uuid
 
 	ResourceAvatarData avatarData;
 };

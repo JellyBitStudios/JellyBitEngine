@@ -394,9 +394,7 @@ uint ResourceAvatar::GetHipsUuid() const
 
 // ----------------------------------------------------------------------------------------------------
 
-#include "ModuleAnimation.h"
-
-void ResourceAvatar::StepAnimation(uint animationUuid, float time, float blendTime)
+void ResourceAvatar::StepAnimation(uint animationUuid, float time, float blend)
 {
 	ResourceAnimation* animationResource = (ResourceAnimation*)App->res->GetResource(animationUuid);
 	if (animationResource == nullptr)
@@ -405,25 +403,184 @@ void ResourceAvatar::StepAnimation(uint animationUuid, float time, float blendTi
 		return;
 	}
 
-	// TODO
-	ModuleAnimation::Animation* animation;
-
-	for (uint i = 0; i < animation->animable_data_map; ++i)
+	// Step all bones
+	for (uint i = 0; i < animationResource->animationData.numKeys; ++i)
 	{
 		// Transformation to step the bone with
 		BoneTransformation boneTransformation = animationResource->animationData.boneKeys[i];
 
 		// Bone to be stepped with the transformation
-		ResourceBone* boneResource = (ResourceBone*)App->res->GetResource(bones[boneTransformation.bone_name.c_str()]);
-		assert(boneResource != nullptr);
+		GameObject* boneGameObject = App->GOs->GetGameObjectByUID(bones[boneTransformation.bone_name.data()]);
+		if (boneGameObject == nullptr);
+		{
+			CONSOLE_LOG(LogTypes::Error, "A bone does not exist...");
+			continue;
+		}
 
 		// ----------
 
+		math::float3 pos = boneGameObject->transform->position;
+		math::float3 scale = boneGameObject->transform->scale;
+		math::Quat rot = boneGameObject->transform->rotation;
 
+		// 1. Find next and previous transformations
+
+		float nextTime = 0.0f;
+		float prevTime = 0.0f;
+
+		/// a) Positions
+		float* prevPos = nullptr;
+		float* nextPos = nullptr;
+		float timePos = 0.0f;
+
+		for (uint j = 0; j < boneTransformation.positions.count; ++j)
+		{
+			if (time == boneTransformation.positions.time[j])
+			{
+				// Save next and prev pos
+				nextPos = prevPos = &boneTransformation.positions.value[j * 3];
+
+				// Does not need interpolation
+
+				break;
+			}
+			else if (boneTransformation.positions.time[j] > time)
+			{
+				// Save next and prev time and pos
+				nextTime = boneTransformation.positions.time[j];
+				nextPos = &boneTransformation.positions.value[j * 3];
+
+				prevTime = boneTransformation.positions.time[j - 1];
+				prevPos = &boneTransformation.positions.value[(j * 3) - 3];
+
+				// Needs interpolation
+				timePos = (time - prevTime) / (nextTime - prevTime);
+
+				break;
+			}
+		}
+
+		/// b) Scalings
+		float* prevScale = nullptr;
+		float* nextScale = nullptr;
+		float timeScale = 0.0f;
+
+		for (uint j = 0; j < boneTransformation.scalings.count; ++j)
+		{
+			if (time == boneTransformation.scalings.time[j])
+			{
+				// Save next and prev scale
+				nextPos = prevPos = &boneTransformation.scalings.value[j * 3];
+
+				// Does not need interpolation
+
+				break;
+			}
+			else if (boneTransformation.scalings.time[j] > time)
+			{
+				// Save next and prev time and scale
+				nextTime = boneTransformation.scalings.time[j];
+				nextPos = &boneTransformation.scalings.value[j * 3];
+
+				prevTime = boneTransformation.scalings.time[j - 1];
+				prevPos = &boneTransformation.scalings.value[(j * 3) - 3];
+
+				// Needs interpolation
+				timeScale = (time - prevTime) / (nextTime - prevTime);
+
+				break;
+			}
+		}
+
+		/// c) Rotations
+		float* prevRot = nullptr;
+		float* nextRot = nullptr;
+		float timeRot = 0.0f;
+
+		for (uint j = 0; j < boneTransformation.rotations.count; ++j)
+		{
+			if (time == boneTransformation.rotations.time[j])
+			{
+				// Save next and prev scale
+				nextPos = prevPos = &boneTransformation.rotations.value[j * 4];
+
+				// Does not need interpolation
+
+				break;
+			}
+			else if (boneTransformation.rotations.time[j] > time)
+			{
+				// Save next and prev time and scale
+				nextTime = boneTransformation.rotations.time[j];
+				nextPos = &boneTransformation.rotations.value[j * 4];
+
+				prevTime = boneTransformation.rotations.time[j - 1];
+				prevPos = &boneTransformation.rotations.value[(j * 4) - 4];
+
+				// Needs interpolation
+				timeRot = (time - prevTime) / (nextTime - prevTime);
+
+				break;
+			}
+		}
+
+		// 2. Interpolate (or not)
+
+		/// a) Positions
+		if (animationResource->animationData.interpolate && prevPos != nextPos
+			&& prevPos != nullptr && nextPos != nullptr)
+		{
+			math::float3 prevPosLerp(prevPos[0], prevPos[1], prevPos[2]);
+			math::float3 nextPosLerp(nextPos[0], nextPos[1], nextPos[2]);
+			pos = math::float3::Lerp(prevPosLerp, nextPosLerp, timePos);
+		}
+		else if ((!animationResource->animationData.interpolate || prevPos == nextPos)
+			&& prevPos != nullptr)
+			pos = math::float3(prevPos[0], prevPos[1], prevPos[2]);
+
+		/// b) Scalings
+		if (animationResource->animationData.interpolate && prevScale != nextScale
+			&& prevScale != nullptr && nextScale != nullptr)
+		{
+			math::float3 prevScaleLerp(prevScale[0], prevScale[1], prevScale[2]);
+			math::float3 nextScaleLerp(nextScale[0], nextScale[1], nextScale[2]);
+			scale = math::float3::Lerp(prevScaleLerp, nextScaleLerp, timeScale);
+		}
+		else if ((!animationResource->animationData.interpolate || prevScale == nextScale)
+			&& prevScale != nullptr)
+			scale = math::float3(prevScale[0], prevScale[1], prevScale[2]);
+
+		/// c) Rotations
+		if (animationResource->animationData.interpolate && prevRot != nextRot
+			&& prevRot != nullptr && nextRot != nullptr)
+		{
+			math::Quat prevRotSlerp(prevRot[0], prevRot[1], prevRot[2], prevRot[3]);
+			math::Quat nextRotSlerp(nextRot[0], nextRot[1], nextRot[2], nextRot[3]);
+			rot = math::Quat::Slerp(prevRotSlerp, nextRotSlerp, timeRot);
+		}
+		else if ((!animationResource->animationData.interpolate || prevRot == nextRot)
+			&& prevRot != nullptr)
+			rot = math::Quat(prevRot[0], prevRot[1], prevRot[2], prevRot[3]);
+
+		// 3. Blend
+
+		if (blend == 1.0f)
+		{
+			boneGameObject->transform->position = pos;
+			boneGameObject->transform->scale = scale;
+			boneGameObject->transform->rotation = rot;
+		}
+		else
+		{
+			math::float3 blendPos = math::float3::Lerp(boneGameObject->transform->position, pos, blend);
+			math::float3 blendScale = math::float3::Lerp(boneGameObject->transform->scale, scale, blend);
+			math::Quat blendRot = math::Quat::Slerp(boneGameObject->transform->rotation, rot, blend);
+
+			boneGameObject->transform->position = blendPos;
+			boneGameObject->transform->scale = blendScale;
+			boneGameObject->transform->rotation = blendRot;
+		}
 	}
-
-
-
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -446,6 +603,7 @@ bool ResourceAvatar::LoadInMemory()
 
 	for (uint i = 0; i < boneGameObjects.size(); ++i)
 	{
+		/// Bone component
 		ComponentBone* boneComponent = boneGameObjects[i]->cmp_bone;
 		if (boneComponent == nullptr)
 		{
@@ -453,12 +611,13 @@ bool ResourceAvatar::LoadInMemory()
 			continue;
 		}
 
+		/// Bone resource
 		ResourceBone* boneResource = (ResourceBone*)App->res->GetResource(boneComponent->res);
 		assert(boneResource != nullptr);
 
 		const char* boneName = boneResource->boneData.name.data();
+		bones[boneName] = boneGameObjects[i]->GetUUID();
 		CONSOLE_LOG(LogTypes::Normal, "The bone %s has been loaded correctly", boneName);
-		bones[boneName] = boneResource->GetUuid();
 	}
 
 	return bones.size() > 0;
