@@ -7,6 +7,8 @@
 #include "ComponentEmitter.h"
 #include "ComponentRectTransform.h"
 #include "ComponentButton.h"
+#include "ComponentAudioSource.h"
+#include "ComponentAudioListener.h"
 
 #include "GameObject.h"
 
@@ -545,6 +547,16 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 		case ComponentTypes::ProjectorComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Projector"));
+			break;
+		}
+		case ComponentTypes::AudioSourceComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "AudioSource"));
+			break;
+		}
+		case ComponentTypes::AudioListenerComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "AudioListener"));
 			break;
 		}
 	}
@@ -1662,6 +1674,32 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 			return nullptr;
 
 		Component* comp = gameObject->GetComponent(ComponentTypes::ProjectorComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
+	else if (className == "AudioSource")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::AudioSourceComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
+	else if (className == "AudioListener")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::AudioListenerComponent);
 
 		if (!comp)
 			return nullptr;
