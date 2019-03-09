@@ -57,6 +57,7 @@ ModuleFileSystem::ModuleFileSystem(bool start_enabled) : Module(start_enabled)
 	CreateDir(DIR_ASSETS_PREFAB);
 	CreateDir(DIR_ASSETS_SCENES);
 	CreateDir(DIR_ASSETS_SCRIPTS);
+	CreateDir(DIR_ASSETS_AUDIO);
 #endif
 
 	if (CreateDir(DIR_LIBRARY))
@@ -74,6 +75,7 @@ ModuleFileSystem::ModuleFileSystem(bool start_enabled) : Module(start_enabled)
 		CreateDir(DIR_LIBRARY_PREFAB);
 		CreateDir(DIR_LIBRARY_SCENES);
 		CreateDir(DIR_LIBRARY_SCRIPTS);
+		CreateDir(DIR_LIBRARY_AUDIO);
 	}
 }
 

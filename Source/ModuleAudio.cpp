@@ -25,7 +25,7 @@ bool ModuleAudio::Start()
 
 update_status ModuleAudio::Update(/*float dt*/)
 {
-#ifndef GAMEMODE
+#ifdef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 	if (audioisplayed == false) {
 		PlayOnAwake();

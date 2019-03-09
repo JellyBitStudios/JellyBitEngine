@@ -1466,6 +1466,8 @@ ResourceTypes ModuleResourceManager::GetLibraryResourceTypeByExtension(const cha
 		return ResourceTypes::PrefabResource;
 	else if (strcmp(extension, EXTENSION_SCENE) == 0)
 		return ResourceTypes::SceneResource;
+	else if (strcmp(extension, EXTENSION_AUDIOBANK) == 0)
+		return ResourceTypes::AudioBankResource;
 
 	return ResourceTypes::NoResourceType;
 }
