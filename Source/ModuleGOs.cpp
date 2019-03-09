@@ -177,12 +177,17 @@ GameObject* ModuleGOs::CreateGameObject(const char* goName, GameObject* parent, 
 	GameObject* newGameObject = new GameObject(goName, parent, disableTransform);
 	gameobjects.push_back(newGameObject);
 	dynamicGos.push_back(newGameObject);
+
+	// Calculate the global
+	newGameObject->transform->UpdateGlobal();
+
 	return newGameObject;
 }
 
 GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 {
-	if (/**/copy->cmp_rectTransform/**/ && copy->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT_WORLD)	/// TODO: check why alita model crash here!
+	assert(copy->cmp_rectTransform != nullptr);
+	if (/*Added to avoid crash*/copy->cmp_rectTransform && /*Added to avoid crash*/ copy->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT_WORLD)	/// TODO: check why alita model crash here!
 		return nullptr;
 
 	GameObject* newGameObject = new GameObject(*copy);
@@ -279,7 +284,8 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 	else
 		App->ui->LinkAllRectsTransform();
 
-	
+	// Calculate the global
+	newGameObject->transform->UpdateGlobal();
 
 	return newGameObject;
 }
