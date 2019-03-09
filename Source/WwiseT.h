@@ -82,6 +82,9 @@ namespace WwiseT
 	bool CloseSoundEngine(); // Close wwise
 	void ProcessAudio();
 	void LoadBank(const char* path);
+	uint LoadBank(char* buffer, uint size);
+	void UnLoadBank(uint bankID, char* buffer);
+
 	void SetDefaultListener(uint id);
 	// Utils
 	AudioSource* CreateAudSource(const char* name);

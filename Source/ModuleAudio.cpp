@@ -4,6 +4,10 @@
 #include "ComponentAudioSource.h"
 #include "Brofiler/Brofiler.h"
 
+#include "ModuleResourceManager.h"
+#include "ResourceTypes.h"
+#include "ResourceAudioBank.h"
+
 ModuleAudio::ModuleAudio(bool start_enabled) : Module(start_enabled)
 {
 	this->name = "Audio";
@@ -14,9 +18,8 @@ ModuleAudio::~ModuleAudio()
 
 bool ModuleAudio::Start()
 {
-	// Init wwise and audio banks
+	// Init wwise
 	WwiseT::InitSoundEngine();
-	WwiseT::LoadBank("Assignment3.bnk");
 	return true;
 }
 
@@ -43,6 +46,10 @@ bool ModuleAudio::CleanUp()
 {
 	audio_sources.clear();
 	event_list.clear();
+
+	ResourceAudioBank* bank = (ResourceAudioBank*)App->res->GetResourcesByType(ResourceTypes::AudioBankResource).front();
+	bank->ClearBank();
+
 	WwiseT::CloseSoundEngine();
 	return true;
 }

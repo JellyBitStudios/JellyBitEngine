@@ -24,6 +24,7 @@
 #include "ResourcePrefab.h"
 #include "ResourceMaterial.h"
 #include "ResourceScene.h"
+#include "ResourceAudioBank.h"
 
 #include <assert.h>
 
@@ -793,6 +794,10 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 	}
 	break;
 
+	case ResourceTypes::AudioBankResource:
+		resource = ResourceAudioBank::ImportFile(file);
+		break;
+
 	}
 
 	return resource;
@@ -1022,6 +1027,10 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		App->animation->SetAnimationGos((ResourceAnimation*)resource);
 	}
 	break;
+
+	case ResourceTypes::AudioBankResource:	
+		resource = ResourceAudioBank::ImportFile(file);
+		break;
 	}
 
 	return resource;
@@ -1147,6 +1156,10 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 			break;
 		case ResourceTypes::SceneResource:
 			resource = new ResourceScene(uuid, data, *(SceneData*)specificData);
+			break;
+		case ResourceTypes::AudioBankResource:
+			resource = new ResourceAudioBank(uuid, data, *(ResourceAudioBankData*)specificData);
+			break;
 	}
 
 	assert(resource != nullptr);
@@ -1396,8 +1409,12 @@ ResourceTypes ModuleResourceManager::GetResourceTypeByExtension(const char* exte
 	case ASCIIpfb: case ASCIIPFB:
 		return ResourceTypes::PrefabResource;
 		break;
-	case ASCIISCN: case ASCIIscn:
+	case ASCIIscn: case ASCIISCN:
 		return ResourceTypes::SceneResource;
+		break;
+	case ASCIIbnk: case ASCIIBNK:
+		return ResourceTypes::AudioBankResource;
+		break;
 	}
 	
 	return ResourceTypes::NoResourceType;

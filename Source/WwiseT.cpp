@@ -1,5 +1,6 @@
 #include "WwiseT.h"
 #include "Application.h"
+
 #include "MathGeoLib/include/Math/float3.h"
 
 #include "AK/SoundEngine/Common/AkMemoryMgr.h"                  // Memory Manager
@@ -183,14 +184,33 @@ void WwiseT::LoadBank(const char * path)
 	}
 }
 
+uint WwiseT::LoadBank(char* buffer, uint size)
+{	
+	AkBankID bankID = 0;
+
+	AKRESULT eResult = AK::SoundEngine::LoadBank((void*)buffer, size, bankID);
+	if (eResult != AK_Success)
+	{
+		assert(!"Could not initialize soundbank.");
+		CONSOLE_LOG(LogTypes::Error, "Could not initialize soundbank.");
+	}
+
+	return bankID;
+}
+
+void WwiseT::UnLoadBank(uint bankID, char* buffer)
+{
+	AKRESULT eResult = AK::SoundEngine::UnloadBank(bankID, buffer);
+}
+
 void WwiseT::SetDefaultListener(uint id)
 {
 	AkGameObjectID tmp = id;
 	AKRESULT eResult = AK::SoundEngine::SetDefaultListeners(&tmp, 1);
 	if (eResult != AK_Success)
 	{
-		assert(!"Could not set GameObject as default listerner.");
-		Log("WwiseT.cpp", 1, LogTypes::Error, "Could not set GameObject as default listerner.");
+		assert(!"Could not set GameObject as default listener.");
+		CONSOLE_LOG(LogTypes::Error, "Could not set GameObject as default listener.");
 	}
 }
 
