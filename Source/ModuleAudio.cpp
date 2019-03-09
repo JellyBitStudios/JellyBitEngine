@@ -48,7 +48,8 @@ bool ModuleAudio::CleanUp()
 	event_list.clear();
 
 	ResourceAudioBank* bank = (ResourceAudioBank*)App->res->GetResourcesByType(ResourceTypes::AudioBankResource).front();
-	bank->ClearBank();
+	if(bank)
+		bank->ClearBank();
 
 	WwiseT::CloseSoundEngine();
 	return true;
