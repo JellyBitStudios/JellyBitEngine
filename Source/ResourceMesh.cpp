@@ -16,6 +16,8 @@ ResourceMesh::ResourceMesh(ResourceTypes type, uint uuid, ResourceData data, Res
 	deformableMeshData.indicesSize = 0u;
 	deformableMeshData.vertices = nullptr;
 	deformableMeshData.indices = nullptr;
+
+	this->meshData.adjacency = false;
 }
 
 ResourceMesh::~ResourceMesh()

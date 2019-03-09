@@ -78,13 +78,12 @@ void ComponentScript::OnSystemEvent(System_Event event)
 void ComponentScript::Awake()
 {
 	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
-
-	if (scriptRes && scriptRes->awakeMethod)
+	if (scriptRes && scriptRes->awakeMethod && !awaked)
 	{
-		awaked = true;
 		MonoObject* exc = nullptr;
 		if (IsTreeActive())
 		{
+			awaked = true;
 			mono_runtime_invoke(scriptRes->awakeMethod, classInstance, NULL, &exc);
 			if (exc)
 			{
@@ -105,7 +104,7 @@ void ComponentScript::Awake()
 void ComponentScript::Start()
 {
 	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
-	if (scriptRes && scriptRes->startMethod && awaked)
+	if (scriptRes && scriptRes->startMethod)
 	{
 		MonoObject* exc = nullptr;
 		if (IsTreeActive())
@@ -254,10 +253,10 @@ void ComponentScript::OnStop()
 	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
 	if (scriptRes && scriptRes->stopMethod)
 	{
-		awaked = false;
 		MonoObject* exc = nullptr;
 		if (IsTreeActive())
 		{
+			awaked = false;
 			mono_runtime_invoke(scriptRes->stopMethod, classInstance, NULL, &exc);
 			if (exc)
 			{
@@ -331,7 +330,16 @@ void ComponentScript::OnCollisionEnter(Collision& collision)
 
 			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "impulse"), impulseOBJ);
 
-			//TODO: RELATIVE VELOCITY?
+			//Set the relative velocity
+			MonoObject* relVelocityOBJ = mono_object_new(App->scripting->domain, vector3Class);
+			mono_runtime_object_init(relVelocityOBJ);
+
+			math::float3 relativeVelocity = collision.GetRelativeVelocity();
+			mono_field_set_value(relVelocityOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &relativeVelocity.x);
+			mono_field_set_value(relVelocityOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &relativeVelocity.y);
+			mono_field_set_value(relVelocityOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &relativeVelocity.z);
+
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "relativeVelocity"), &relVelocityOBJ);
 
 			//Set the contacts
 			std::vector<ContactPoint> contacts = collision.GetContactPoints();
@@ -358,7 +366,7 @@ void ComponentScript::OnCollisionEnter(Collision& collision)
 				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "normal"), normalOBJ);
 
 				//Set other collider
-				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "otherCollider"), App->scripting->MonoComponentFrom((Component*)collision.GetCollider()));
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "otherCollider"), App->scripting->MonoComponentFrom((Component*)contact.GetOtherCollider()));
 
 				//Set point
 				math::float3 point = contact.GetPoint();
@@ -374,8 +382,8 @@ void ComponentScript::OnCollisionEnter(Collision& collision)
 				float separation = contact.GetSeparation();
 				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "separation"), &separation);
 
-				//TODO: SET THIS COLLIDER
-				//mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "thisCollider"), App->scripting->MonoComponentFrom((Component*)collision.GetThiCollider()));
+				//Set this collider
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "thisCollider"), App->scripting->MonoComponentFrom((Component*)contact.GetThisCollider()));
 
 				mono_array_setref(contactArray, i, contactOBJ);
 			}

@@ -177,6 +177,10 @@ GameObject* ModuleGOs::CreateGameObject(const char* goName, GameObject* parent, 
 	GameObject* newGameObject = new GameObject(goName, parent, disableTransform);
 	gameobjects.push_back(newGameObject);
 	dynamicGos.push_back(newGameObject);
+
+	// Calculate the global
+	newGameObject->transform->UpdateGlobal();
+
 	return newGameObject;
 }
 
@@ -267,7 +271,11 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 	newEvent.type = System_Event_Type::RecreateQuadtree;
 	App->PushSystemEvent(newEvent);
 
+
 	App->ui->LinkAllRectsTransform();
+
+	if(newGameObject->transform)
+		newGameObject->transform->UpdateGlobal();
 
 	if (returnCanvas)
 		return canvas;
@@ -455,7 +463,7 @@ bool ModuleGOs::LoadScene(char*& buffer, size_t sizeBuffer, bool navmesh)
 		App->navigation->LoadNavmesh(cursor);
 
 	//App->animation->SetUpAnimations();
-	
+
 	//StartAttachingBones(); SetUpAnimations();
 
 	System_Event event;

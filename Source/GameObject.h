@@ -39,8 +39,9 @@ public:
 	bool IsStatic() const;
 	void OnEnable();
 	void OnDisable();
-	void RecursiveRecalculateBoundingBoxes();
 
+	void RecursiveRecalculateBoundingBoxes();
+	void RecalculateBoundingBox();
 	void CalculateBoundingBox();
 
 	void OnSystemEvent(System_Event event);

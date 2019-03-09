@@ -68,12 +68,10 @@ update_status ModuleNavigation::Update()
 
 				// Set new gameobject's position
 				ComponentTransform* trm = agent->GetParent()->transform;
-				memcpy(&trm->position, ag->npos, sizeof(float) * 3);
+				trm->SetPosition(ag->npos);
 
 				// Add the offset to obtain the real gameobject position
-				trm->position[0] += ag->offsetPos[0];
-				trm->position[1] += ag->offsetPos[1];
-				trm->position[2] += ag->offsetPos[2];
+				trm->Move(ag->offsetPos);
 
 				// Face gameobject to velocity dir
 				// vel equals to current velocity, nvel equals to desired velocity
@@ -84,13 +82,14 @@ update_status ModuleNavigation::Update()
 				float angle = math::Atan2(direction.x, direction.z);
 				math::Quat new_rotation;
 				new_rotation.SetFromAxisAngle(math::float3(0, 1, 0), angle);
-				trm->rotation = new_rotation;
+				trm->SetRotation(new_rotation);
 
-				// Recalculate bounding box
-				System_Event newEvent;
-				newEvent.goEvent.gameObject = trm->GetParent();
-				newEvent.type = System_Event_Type::RecalculateBBoxes;
-				App->PushSystemEvent(newEvent);		
+
+				//// // Recalculate bounding box -> // Bounding boxes are now automatically recalculated from ComponentTransform::UpdateGlobal()
+				//System_Event newEvent;
+				//newEvent.goEvent.gameObject = parent;
+				//newEvent.type = System_Event_Type::RecalculateBBoxes;
+				//App->PushSystemEvent(newEvent);
 			}
 		}
 	}

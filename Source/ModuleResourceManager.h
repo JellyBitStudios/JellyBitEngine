@@ -35,6 +35,8 @@
 #define ASCIIPFB 1111904302
 #define ASCIIscn 1852011310
 #define ASCIISCN 1313035054
+#define ASCIIbnk 1802396206
+#define ASCIIBNK 1263419950
 
 class Resource;
 struct ResourceData;
