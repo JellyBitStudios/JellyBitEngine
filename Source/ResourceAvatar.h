@@ -42,7 +42,6 @@ public:
 	// ----------------------------------------------------------------------------------------------------
 
 	void StepBones(uint animationUuid, float time, float blend = 1.0f);
-	void StepMeshes();
 
 private:
 

@@ -626,6 +626,9 @@ void ModuleRenderer3D::FrustumCulling() const
 		seen[i]->seenLastFrame = true;
 }
 
+#include "ComponentBone.h"
+#include "ResourceBone.h"
+
 void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 {
 	if (toDraw->res == 0)
@@ -645,6 +648,24 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	LoadGenericUniforms(shader);
 
 	// 2. Known mesh uniforms
+
+	// If the mesh has bones
+	// Get attached bones for the current mesh (game objects)
+	// For each bone, send its transform to the shader
+	// FOR EACH BONE
+	/// Bone component
+	ComponentBone* boneComponent;
+	assert(boneComponent != nullptr);
+
+	/// Bone resource
+	ResourceBone* boneResource = (ResourceBone*)App->res->GetResource(boneComponent->res);
+	assert(boneResource != nullptr);
+
+	math::float4x4 boneGlobalMatrix = boneComponent->GetParent()->transform->GetGlobalMatrix();
+	math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetMatrix();
+	math::float4x4 boneTransformation = boneGlobalMatrix * meshMatrix.Inverted() * boneResource->boneData.offset_matrix;
+	// FOR EACH BONE
+
 	math::float4x4 model_matrix = toDraw->GetParent()->transform->GetGlobalMatrix();
 	model_matrix = model_matrix.Transposed();
 	math::float4x4 view_matrix = currentCamera->GetOpenGLViewMatrix();
@@ -661,7 +682,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	location = glGetUniformLocation(shader, "normal_matrix");
 	glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
 
-	//if (toDraw->)
+	// TODO UNIFORM BONE
 
 
 	// 3. Unknown mesh uniforms

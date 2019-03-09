@@ -587,49 +587,6 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 	}
 }
 
-void ResourceAvatar::StepMeshes()
-{
-	// Step all meshes
-	for (std::unordered_map<const char*, uint>::const_iterator it = bones.begin(); it != bones.end(); ++it)
-	{
-		// Bone to be stepped
-		GameObject* boneGameObject = App->GOs->GetGameObjectByUID(it->second);
-		if (boneGameObject == nullptr);
-		{
-			CONSOLE_LOG(LogTypes::Error, "A bone game object does not exist...");
-			continue;
-		}
-
-		/// Bone component
-		ComponentBone* boneComponent = boneGameObject->cmp_bone;
-		assert(boneComponent != nullptr);
-
-		/// Bone resource
-		ResourceBone* boneResource = (ResourceBone*)App->res->GetResource(boneComponent->res);
-		assert(boneResource != nullptr);
-
-		/// Mesh component
-		ComponentMesh* meshComponent = boneComponent->attached_mesh;
-		if (meshComponent == nullptr)
-		{
-			CONSOLE_LOG(LogTypes::Error, "A mesh component does not exist...");
-			continue;
-		}
-
-		/// Mesh resource
-		ResourceMesh* meshResource = (ResourceMesh*)App->res->GetResource(meshComponent->res);
-		assert(meshResource != nullptr);
-
-		// ----------
-
-		math::float4x4 boneGlobalMatrix = boneComponent->GetParent()->transform->GetGlobalMatrix();
-		math::float4x4 meshMatrix = meshComponent->GetParent()->transform->GetMatrix();
-	
-		math::float4x4 globalMatrix = boneGlobalMatrix * meshMatrix.Inverted() * boneResource->boneData.offset_matrix;
-	
-	}
-}
-
 // ----------------------------------------------------------------------------------------------------
 
 bool ResourceAvatar::LoadInMemory()
