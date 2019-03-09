@@ -119,7 +119,7 @@ bool WwiseT::InitSoundEngine()
 	}
 #endif // AK_OPTIMIZED
 
-	AKRESULT base_path_res = g_lowLevelIO.SetBasePath(AKTEXT("../Game/"));
+	AKRESULT base_path_res = g_lowLevelIO.SetBasePath(AKTEXT("."));
 	if (base_path_res != AK_Success)
 	{
 		assert(!"Invalid base path!");
