@@ -268,11 +268,11 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 	newEvent.type = System_Event_Type::RecreateQuadtree;
 	App->PushSystemEvent(newEvent);
 
+	// Calculate the global
+	if (newGameObject && newGameObject->transform)
+		newGameObject->transform->UpdateGlobal();
 
 	App->ui->LinkAllRectsTransform();
-
-	if(newGameObject->transform)
-		newGameObject->transform->UpdateGlobal();
 
 	if (returnCanvas)
 		return canvas;
