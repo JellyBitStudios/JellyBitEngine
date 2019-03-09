@@ -36,6 +36,9 @@ void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 	// - position color buffer
 	glGenTextures(1, &gPosition);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
+	// Component Alpha is not required for storing Normals or Positions, but we need a floating point frame buffer
+	// and RGB16F is not compatible with most computers (at least mine not)
+	// no F= buffer clamped from 0 to 1. with f components are not clamped
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -44,6 +47,9 @@ void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 	// - normal color buffer
 	glGenTextures(1, &gNormal);
 	glBindTexture(GL_TEXTURE_2D, gNormal);
+	// Component Alpha is not required for storing Normals or Positions, but we need a floating point frame buffer
+	// and RGB16F is not compatible with most computers (at least mine not)
+	// no F= buffer clamped from 0 to 1. with f components are not clamped
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

@@ -59,32 +59,32 @@
 "	gl_Position = vec4(position, 1.0);\n"		\
 "}"
 
-#define fDEFERREDSHADING																\
-"#version 330 core\n"																	\
-"out vec4 FragColor;\n"																	\
-"in vec2 TexCoords;\n"																	\
-"uniform sampler2D gPosition;\n"														\
-"uniform sampler2D gNormal;\n"															\
-"uniform sampler2D gAlbedoSpec;\n"														\
-"struct Light {\n"																		\
-"vec3 Dir;\n"																			\
-"vec3 Color;\n"																			\
-"};			\n"																			\
-"const int NR_LIGHTS = 32;\n"															\
-"uniform Light lights[NR_LIGHTS];\n"													\
-"void main()\n"																			\
-"{\n"																					\
-"	// retrieve data from gbuffer\n"													\
-"	vec3 FragPos = texture(gPosition, TexCoords).rgb;\n"								\
-"	vec3 Normal = texture(gNormal, TexCoords).rgb;\n"									\
-"	vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;\n"								\
-"	vec3 lighting = Albedo * 0.3; // hard-coded ambient component\n"					\
-"	for (int i = 0; i < NR_LIGHTS; ++i) \n"												\
-"	{\n"																				\
+#define fDEFERREDSHADING																	\
+"#version 330 core\n"																		\
+"out vec4 FragColor;\n"																		\
+"in vec2 TexCoords;\n"																		\
+"uniform sampler2D gPosition;\n"															\
+"uniform sampler2D gNormal;\n"																\
+"uniform sampler2D gAlbedoSpec;\n"															\
+"struct Light {\n"																			\
+"vec3 Dir;\n"																				\
+"vec3 Color;\n"																				\
+"};			\n"																				\
+"const int NR_LIGHTS = 32;\n"																\
+"uniform Light lights[NR_LIGHTS];\n"														\
+"void main()\n"																				\
+"{\n"																						\
+"	// retrieve data from gbuffer\n"														\
+"	vec3 FragPos = texture(gPosition, TexCoords).rgb;\n"									\
+"	vec3 Normal = texture(gNormal, TexCoords).rgb;\n"										\
+"	vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;\n"									\
+"	vec3 lighting = Albedo * 0.3; // hard-coded ambient component\n"						\
+"	for (int i = 0; i < NR_LIGHTS; ++i) \n"													\
+"	{\n"																					\
 "		vec3 diffuse = max(dot(Normal, lights[i].Dir), 0.0) * Albedo * lights[i].Color;\n"	\
-"		lighting += diffuse; \n"														\
-"	}\n"																				\
-"	FragColor = vec4(lighting, 1.0); \n"												\
+"		lighting += diffuse; \n"															\
+"	}\n"																					\
+"	FragColor = vec4(lighting, 1.0); \n"													\
 "}"
 
 #pragma endregion
