@@ -1,8 +1,8 @@
 #ifndef __RESOURCE_TYPE_H__
 #define __RESOURCE_TYPE_H__
 
-enum ResourceTypes 
-{ 
+enum ResourceTypes
+{
 	NoResourceType,
 
 	MeshResource,
@@ -16,6 +16,7 @@ enum ResourceTypes
 	PrefabResource,
 	SceneResource,
 	FontResource
+	AudioBankResource
 };
 
 #endif

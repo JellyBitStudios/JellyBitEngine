@@ -25,6 +25,7 @@
 #include "ResourceMaterial.h"
 #include "ResourceScene.h"
 #include "ResourceFont.h"
+#include "ResourceAudioBank.h"
 
 #include <assert.h>
 
@@ -146,6 +147,28 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			}
 		}
 		break;
+
+		case ResourceTypes::AudioBankResource:
+		{
+			char metaFile[DEFAULT_BUF_SIZE];
+			sprintf(metaFile, "%s%s", event.fileEvent.file, EXTENSION_META);
+			char* metaBuffer;
+			uint size = App->fs->Load(metaFile, &metaBuffer);
+			if (size <= 0)
+				break;
+
+			char* cursor = metaBuffer;
+			cursor += sizeof(int64_t) + sizeof(uint);
+
+			uint uid;
+			memcpy(&uid, cursor, sizeof(uint));
+
+			ResourceAudioBank* bank = (ResourceAudioBank*)App->res->GetResource(uid);
+			bank->Modified();
+
+			delete[] metaBuffer;
+			break;
+		}
 		}
 	}
 	break;
@@ -192,7 +215,7 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			// 2. Delete entries
 			for (uint i = 0; i < resourcesUuids.size(); ++i)
 				App->fs->deleteFile(GetResource(resourcesUuids[i])->GetExportedFile());
-			
+
 			// 3. Delete resource(s)
 			DeleteResources(resourcesUuids);
 		}
@@ -221,7 +244,7 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			DeleteResources(resourcesUuids);
 		}
 
-		// 4. Import file	
+		// 4. Import file
 		System_Event newEvent;
 		newEvent.type = System_Event_Type::ImportFile;
 		strcpy_s(newEvent.fileEvent.file, DEFAULT_BUF_SIZE, event.fileEvent.file);
@@ -445,7 +468,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 			}
 			else
 				resource = GetResource(resourcesUuids.front());
-			
+
 			// TODO_G : separate mesh / bones resources uuids from resourcesUuids
 
 			for (uint i = 0u; i < resourcesUuids.size(); i++)
@@ -766,7 +789,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 			{
 				// Create the resources
 				CONSOLE_LOG(LogTypes::Normal, "RESOURCE MANAGER: The AnimationResource file '%s' has resources that need to be created", file);
-			
+
 				// UUID
 				uint uuid = outputFile.empty() ? App->GenerateRandomNumber() : strtoul(outputFile.data(), NULL, 0);
 				assert(uuid > 0);
@@ -800,6 +823,10 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 		}
 	}
 	break;
+
+	case ResourceTypes::AudioBankResource:
+		resource = ResourceAudioBank::ImportFile(file);
+		break;
 
 	}
 
@@ -883,7 +910,7 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		uint uuid = 0;
 		if (App->fs->Exists(metaFile))
 		{
-			int64_t lastModTime = 0;		
+			int64_t lastModTime = 0;
 			ResourceShaderObject::ReadMeta(metaFile, lastModTime, uuid, data.name);
 		}
 
@@ -1037,6 +1064,10 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		App->animation->SetAnimationGos((ResourceAnimation*)resource);
 	}
 	break;
+
+	case ResourceTypes::AudioBankResource:
+		resource = ResourceAudioBank::ImportFile(file);
+		break;
 	}
 
 	return resource;
@@ -1165,6 +1196,9 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 			break;
 		case ResourceTypes::FontResource:
 			resource = new ResourceFont(ResourceTypes::FontResource, uuid, data, *(FontData*)specificData);
+			break;
+		case ResourceTypes::AudioBankResource:
+			resource = new ResourceAudioBank(uuid, data, *(ResourceAudioBankData*)specificData);
 			break;
 	}
 
@@ -1415,14 +1449,17 @@ ResourceTypes ModuleResourceManager::GetResourceTypeByExtension(const char* exte
 	case ASCIIpfb: case ASCIIPFB:
 		return ResourceTypes::PrefabResource;
 		break;
-	case ASCIISCN: case ASCIIscn:
+	case ASCIIscn: case ASCIISCN:
 		return ResourceTypes::SceneResource;
 		break;
 	case ASCIIttf: case ASCIITTF:
 		return ResourceTypes::FontResource;
 		break;
+	case ASCIIbnk: case ASCIIBNK:
+		return ResourceTypes::AudioBankResource;
+		break;
 	}
-	
+
 	return ResourceTypes::NoResourceType;
 }
 
@@ -1452,6 +1489,8 @@ ResourceTypes ModuleResourceManager::GetLibraryResourceTypeByExtension(const cha
 		return ResourceTypes::SceneResource;
 	else if (strcmp(extension, EXTENSION_FONT) == 0)
 		return ResourceTypes::FontResource;
+	else if (strcmp(extension, EXTENSION_AUDIOBANK) == 0)
+		return ResourceTypes::AudioBankResource;
 
 	return ResourceTypes::NoResourceType;
 }

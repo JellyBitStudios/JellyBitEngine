@@ -7,6 +7,8 @@
 #include "ComponentEmitter.h"
 #include "ComponentRectTransform.h"
 #include "ComponentButton.h"
+#include "ComponentAudioSource.h"
+#include "ComponentAudioListener.h"
 
 #include "GameObject.h"
 
@@ -184,6 +186,28 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 {
 	switch (event.type)
 	{
+		case System_Event_Type::LoadFinished:
+		{
+			if (App->GetEngineState() == engine_states::ENGINE_PLAY)
+			{
+				for (int i = 0; i < scripts.size(); ++i)
+				{
+					scripts[i]->OnEnableMethod();
+				}
+
+				for (int i = 0; i < scripts.size(); ++i)
+				{
+					scripts[i]->Awake();
+				}
+
+				for (int i = 0; i < scripts.size(); ++i)
+				{
+					scripts[i]->Start();
+				}
+			}
+			break;
+		}
+
 		case System_Event_Type::Play:
 		{
 			//TODO: Check if some files have compile errors and don't let the user hit the play.
@@ -545,6 +569,16 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 		case ComponentTypes::ProjectorComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Projector"));
+			break;
+		}
+		case ComponentTypes::AudioSourceComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "AudioSource"));
+			break;
+		}
+		case ComponentTypes::AudioListenerComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "AudioListener"));
 			break;
 		}
 	}
@@ -1668,6 +1702,32 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 
 		return App->scripting->MonoComponentFrom(comp);
 	}
+	else if (className == "AudioSource")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::AudioSourceComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
+	else if (className == "AudioListener")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::AudioListenerComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
 	else
 	{
 		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
@@ -2203,6 +2263,299 @@ void SMLoadScene(MonoString* sceneName)
 	mono_free(sceneNameCPP);
 }
 
+MonoString* AudioSourceGetAudio(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return nullptr;
+
+	std::string audio = source->GetAudioToPlay();
+	return mono_string_new(App->scripting->domain, audio.c_str());
+}
+
+void AudioSourceSetAudio(MonoObject* monoComp, MonoString* newAudio)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	char* audio = mono_string_to_utf8(newAudio);
+
+	source->SetAudio(audio);
+
+	mono_free(audio);
+}
+
+bool AudioSourceGetMuted(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return false;
+
+	return source->isMuted();
+}
+
+void AudioSourceSetMuted(MonoObject* monoComp, bool muted)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetMuted(muted);
+}
+
+bool AudioSourceGetBypassEffects(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return false;
+
+	return source->GetBypassEffects();
+}
+
+void AudioSourceSetBypassEffects(MonoObject* monoComp, bool value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetBypassEffects(value);
+}
+
+bool AudioSourceGetPlayOnAwake(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return false;
+
+	return source->GetPlayOnAwake();
+}
+
+void AudioSourceSetPlayOnAwake(MonoObject* monoComp, bool value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetPlayOnAwake(value);
+}
+
+bool AudioSourceGetLoop(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return false;
+
+	return source->isInLoop();
+}
+
+void AudioSourceSetLoop(MonoObject* monoComp, bool value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetLoop(value);
+}
+
+int AudioSourceGetPriority(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return -1;
+
+	return source->GetPriority();
+}
+
+void AudioSourceSetPriority(MonoObject* monoComp, int value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetPriority(value);
+}
+
+float AudioSourceGetVolume(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return -1.0f;
+
+	return source->GetVolume();
+}
+
+void AudioSourceSetVolume(MonoObject* monoComp, float value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetVolume(value);
+}
+
+bool AudioSourceGetMono(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return false;
+
+	return source->isMono();
+}
+
+void AudioSourceSetMono(MonoObject* monoComp, bool value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetMono(value);
+}
+
+float AudioSourceGetPitch(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return -1.0f;
+
+	return source->GetPitch();
+}
+
+void AudioSourceSetPitch(MonoObject* monoComp, float value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetPitch(value);
+}
+
+float AudioSourceGetStereoPanL(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return -1.0f;
+
+	return source->GetStereoPanLeft();
+}
+
+void AudioSourceSetStereoPanL(MonoObject* monoComp, float value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetStereoPanLeft(value);
+}
+
+float AudioSourceGetStereoPanR(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return -1.0f;
+
+	return source->GetStereoPanRight();
+}
+
+void AudioSourceSetStereoPanR(MonoObject* monoComp, float value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetStereoPanRight(value);
+}
+
+float AudioSourceGetMinDistance(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return -1.0f;
+
+	return source->GetMinDistance();
+}
+
+void AudioSourceSetMinDistance(MonoObject* monoComp, float value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetMinDistance(value);
+}
+
+float AudioSourceGetMaxDistance(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return -1.0f;
+
+	return source->GetMaxDistance();
+}
+
+void AudioSourceSetMaxDistance(MonoObject* monoComp, float value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetMaxDistance(value);
+}
+
+int AudioSourceGetState(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return -1;
+
+	return source->GetState();
+}
+
+void AudioSourceSetState(MonoObject* monoComp, int value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetState(value);
+}
+
+void AudioSourcePlayAudio(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->PlayAudio();
+}
+
+void AudioSourcePauseAudio(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->PauseAudio();
+}
+
+void AudioSourceResumeAudio(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->ResumeAudio();
+}
+
+void AudioSourceStopAudio(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->StopAudio();
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -2313,7 +2666,38 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::isWalking", (const void*)&NavAgentIsWalking);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::_RequestMoveVelocity", (const void*)&NavAgentRequestMoveVelocity);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::ResetMoveTarget", (const void*)&NavAgentResetMoveTarget);
-
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetAudio", (const void*)&AudioSourceGetAudio);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetAudio", (const void*)&AudioSourceSetAudio);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetMuted", (const void*)&AudioSourceGetMuted);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetMuted", (const void*)&AudioSourceSetMuted);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetBypassEffects", (const void*)&AudioSourceGetBypassEffects);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetBypassEffects", (const void*)&AudioSourceSetBypassEffects);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetPlayOnAwake", (const void*)&AudioSourceGetPlayOnAwake);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetPlayOnAwake", (const void*)&AudioSourceSetPlayOnAwake);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetLoop", (const void*)&AudioSourceGetLoop);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetLoop", (const void*)&AudioSourceSetLoop);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetPriority", (const void*)&AudioSourceGetPriority);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetPriority", (const void*)&AudioSourceSetPriority);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetVolume", (const void*)&AudioSourceGetVolume);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetVolume", (const void*)&AudioSourceSetVolume);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetMono", (const void*)&AudioSourceGetMono);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetMono", (const void*)&AudioSourceSetMono);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetPitch", (const void*)&AudioSourceGetPitch);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetPitch", (const void*)&AudioSourceSetPitch);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetStereoPanL", (const void*)&AudioSourceGetStereoPanL);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetStereoPanL", (const void*)&AudioSourceSetStereoPanL);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetStereoPanR", (const void*)&AudioSourceGetStereoPanR);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetStereoPanR", (const void*)&AudioSourceSetStereoPanR);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetMinDistance", (const void*)&AudioSourceGetMinDistance);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetMinDistance", (const void*)&AudioSourceSetMinDistance);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetMaxDistance", (const void*)&AudioSourceGetMaxDistance);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetMaxDistance", (const void*)&AudioSourceSetMaxDistance);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetState", (const void*)&AudioSourceGetState);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetState", (const void*)&AudioSourceSetState);
+	mono_add_internal_call("JellyBitEngine.AudioSource::PlayAudio", (const void*)&AudioSourcePlayAudio);
+	mono_add_internal_call("JellyBitEngine.AudioSource::PauseAudio", (const void*)&AudioSourcePauseAudio);
+	mono_add_internal_call("JellyBitEngine.AudioSource::ResumeAudio", (const void*)&AudioSourceResumeAudio);
+	mono_add_internal_call("JellyBitEngine.AudioSource::StopAudio", (const void*)&AudioSourceStopAudio);
 
 	ClearMap();
 

@@ -77,5 +77,6 @@ enum update_status
 #define EXTENSION_META ".meta"
 #define EXTENSION_SCRIPT ".cs"
 #define EXTENSION_MATERIAL ".mat"
+#define EXTENSION_AUDIOBANK ".bnk"
 
 #define UILAYER 1
