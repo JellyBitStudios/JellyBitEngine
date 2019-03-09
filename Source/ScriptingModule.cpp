@@ -186,6 +186,28 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 {
 	switch (event.type)
 	{
+		case System_Event_Type::LoadFinished:
+		{
+			if (App->GetEngineState() == engine_states::ENGINE_PLAY)
+			{
+				for (int i = 0; i < scripts.size(); ++i)
+				{
+					scripts[i]->OnEnableMethod();
+				}
+
+				for (int i = 0; i < scripts.size(); ++i)
+				{
+					scripts[i]->Awake();
+				}
+
+				for (int i = 0; i < scripts.size(); ++i)
+				{
+					scripts[i]->Start();
+				}
+			}
+			break;
+		}
+
 		case System_Event_Type::Play:
 		{
 			//TODO: Check if some files have compile errors and don't let the user hit the play.
