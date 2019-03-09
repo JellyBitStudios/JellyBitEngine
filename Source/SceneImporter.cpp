@@ -157,9 +157,9 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 		GameObject* rootGameObject = new GameObject(rootNode->mName.data, dummy); // Root game object will never be a transformation
 
 		std::vector<uint> dummyForcedUuids = forced_meshes_uuids;
-		RecursivelyImportNodes(scene, rootNode, rootGameObject, nullptr, mesh_files, bone_files/*not needed but ok*/, dummyForcedUuids);
-		rootGameObject->transform->scale *= importSettings.scale;
-		RecursiveProcessBones(scene, scene->mRootNode, bone_files, forced_bones_uuids);	
+		RecursivelyImportNodes(scene, rootNode, rootGameObject, nullptr, mesh_files, dummyForcedUuids);
+		//rootGameObject->transform->scale *= importSettings.scale; // TODO FIX SCALE
+		RecursivelyProcessBones(scene, scene->mRootNode, bone_files, forced_bones_uuids);	
 		ImportAnimations(scene, anim_files, prefabName, forced_anim_uuids);
 
 		root_bone = nullptr; // c: 
@@ -201,7 +201,7 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 	return ret;
 }
 
-void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* node, const GameObject* parent, const GameObject* transformation, std::vector<std::string>& mesh_files, std::vector<std::string>& bone_files, std::vector<uint>& forcedUuids) const
+void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* node, const GameObject* parent, const GameObject* transformation, std::vector<std::string>& mesh_files, std::vector<uint>& forcedUuids) const
 {
 	std::string name = node->mName.data;
 
@@ -354,12 +354,12 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 				memcpy(colors, nodeMesh->mColors, sizeof(GLubyte) * colorsSize * 4);
 			}*/
 
-			// Bone
+			// Bones
 			if (nodeMesh->HasBones())
 			{
 				for (uint i = 0; i < nodeMesh->mNumBones; ++i)
 				{
-					if (!root_bone)
+					if (root_bone == nullptr)
 						root_bone = gameObject;
 
 					bones[nodeMesh->mBones[i]->mName.C_Str()] = nodeMesh->mBones[i];
@@ -521,10 +521,10 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 	{
 		if (isTransformation)
 			// If the current game object is a transformation, keep its parent and pass it as the new transformation for the next game object
-			RecursivelyImportNodes(scene, node->mChildren[i], parent, gameObject, mesh_files, bone_files, forcedUuids);
+			RecursivelyImportNodes(scene, node->mChildren[i], parent, gameObject, mesh_files, forcedUuids);
 		else
 			// Else, the current game object becomes the new parent for the next game object
-			RecursivelyImportNodes(scene, node->mChildren[i], gameObject, nullptr, mesh_files, bone_files, forcedUuids);
+			RecursivelyImportNodes(scene, node->mChildren[i], gameObject, nullptr, mesh_files, forcedUuids);
 	}
 }
 
@@ -769,7 +769,7 @@ uint SceneImporter::GetAssimpRevisionVersion() const
 
 // ----------------------------------------------------------------------------------------------------
 
-void SceneImporter::RecursiveProcessBones(mutable const aiScene * scene, 
+void SceneImporter::RecursivelyProcessBones(mutable const aiScene * scene, 
 	mutable const aiNode * node, std::vector<std::string>& bone_files, std::vector<uint>& forcedUuids)const
 {
 	std::map<std::string, aiBone*>::iterator it = bones.find(node->mName.C_Str());
@@ -824,7 +824,7 @@ void SceneImporter::RecursiveProcessBones(mutable const aiScene * scene,
 	}
 
 	for (uint i = 0; i < node->mNumChildren; ++i)
-		RecursiveProcessBones(scene, node->mChildren[i],bone_files, forcedUuids);
+		RecursivelyProcessBones(scene, node->mChildren[i],bone_files, forcedUuids);
 }
 
 void SceneImporter::ImportAnimations(mutable const aiScene * scene
