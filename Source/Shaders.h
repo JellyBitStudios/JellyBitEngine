@@ -25,19 +25,21 @@
 
 #define fShaderTemplate															\
 "#version 330 core\n"															\
-"layout (location = 0) out vec3 gPosition;\n"									\
-"layout (location = 1) out vec3 gNormal;\n"										\
+"layout (location = 0) out vec4 gPosition;\n"									\
+"layout (location = 1) out vec4 gNormal;\n"										\
 "layout (location = 2) out vec4 gAlbedoSpec;\n"									\
 "in vec2 fTexCoord;\n"															\
 "in vec3 fPosition;\n"															\
 "in vec3 fNormal;\n"															\
-"uniform sampler2D diffused;\n"	\
+"uniform sampler2D diffuse;\n"													\
 "void main()\n"																	\
 "{\n"																			\
-"	gPosition = fPosition;\n"													\
-"	gNormal = normalize(fNormal);\n"											\
-"	gAlbedoSpec.rgb = texture(diffused,fTexCoord).rgb;\n"							\
-"	gAlbedoSpec.a = 1;\n"							\
+"	gPosition.rgb = fPosition;\n"												\
+"	gNormal.rgb = normalize(fNormal);\n"										\
+"	gAlbedoSpec.rgb = texture(diffuse,fTexCoord).rgb;\n"						\
+"	gPosition.a = 1;\n"															\
+"	gNormal.a = 1;\n"															\
+"	gAlbedoSpec.a = 1;\n"														\
 "}"
 
 #pragma endregion
@@ -70,17 +72,14 @@
 "};			\n"																			\
 "const int NR_LIGHTS = 32;\n"															\
 "uniform Light lights[NR_LIGHTS];\n"													\
-"uniform int numLights;\n"																\
-"uniform vec3 viewPos;\n"																\
 "void main()\n"																			\
 "{\n"																					\
 "	// retrieve data from gbuffer\n"													\
 "	vec3 FragPos = texture(gPosition, TexCoords).rgb;\n"								\
 "	vec3 Normal = texture(gNormal, TexCoords).rgb;\n"									\
 "	vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;\n"								\
-"	vec3 lighting = Albedo * 0.1; // hard-coded ambient component\n"					\
-"	vec3 viewDir = normalize(viewPos - FragPos);\n"										\
-"	for (int i = 0; i < numLights; ++i) \n"												\
+"	vec3 lighting = Albedo * 0.3; // hard-coded ambient component\n"					\
+"	for (int i = 0; i < NR_LIGHTS; ++i) \n"												\
 "	{\n"																				\
 "		vec3 diffuse = max(dot(Normal, lights[i].Dir), 0.0) * Albedo * lights[i].Color;\n"	\
 "		lighting += diffuse; \n"														\

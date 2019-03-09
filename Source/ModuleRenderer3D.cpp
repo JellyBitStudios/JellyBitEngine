@@ -622,8 +622,6 @@ void ModuleRenderer3D::FrustumCulling() const
 		seen[i]->seenLastFrame = true;
 }
 
-#include "ModuleInternalResHandler.h"
-
 void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 {
 	if (toDraw->res == 0)
@@ -636,8 +634,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	uint shaderUuid = resourceMaterial->GetShaderUuid();
 	const ResourceShaderProgram* resourceShaderProgram = (const ResourceShaderProgram*)App->res->GetResource(shaderUuid);
 	GLuint shader = resourceShaderProgram->shaderProgram;
-	const ResourceShaderProgram* d = (ResourceShaderProgram*)App->res->GetResource(App->resHandler->defaultShaderProgram);
-	glUseProgram(d->shaderProgram);
+	glUseProgram(shader);
 
 	// 1. Generic uniforms
 	LoadGenericUniforms(shader);
