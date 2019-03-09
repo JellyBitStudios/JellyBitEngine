@@ -85,13 +85,20 @@ void ComponentRectTransform::OnEditor()
 
 void ComponentRectTransform::SetRect(uint x, uint y, uint x_dist, uint y_dist)
 {
-	rectTransform[Rect::X] = x;
-	rectTransform[Rect::Y] = y;
-	rectTransform[Rect::XDIST] = x_dist;
-	rectTransform[Rect::YDIST] = y_dist;
-
-	RecaculateAnchors();
-	RecaculatePercentage();
+	if (rFrom != ComponentRectTransform::WORLD)
+	{
+		bool size_changed = false;
+		rectTransform[Rect::X] = x;
+		rectTransform[Rect::Y] = y;
+		if (rectTransform[Rect::XDIST] != x_dist || rectTransform[Rect::YDIST] != y_dist)
+			size_changed = true;
+		rectTransform[Rect::XDIST] = x_dist;
+		rectTransform[Rect::YDIST] = y_dist;
+    
+		RecaculateAnchors();
+		RecaculatePercentage();
+		ParentChanged(size_changed);
+	}      
 }
 
 uint* ComponentRectTransform::GetRect()
@@ -147,11 +154,7 @@ void ComponentRectTransform::CheckParentRect()
 			if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
 				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
 
-			RecaculateAnchors();
-
 			ParentChanged();
-
-			//RecaculatePercentage();
 		}
 		break;
 	}
@@ -233,7 +236,7 @@ void ComponentRectTransform::UseMarginChanged(bool useMargin)
 void ComponentRectTransform::CalculateRectFromWorld(bool individualcheck)
 {
 	math::float4x4 globalmatrix;
-
+	transformParent->UpdateGlobal();
 	globalmatrix = transformParent->GetGlobalMatrix();
 
 	corners[Rect::RTOPLEFT] = math::float4(globalmatrix * math::float4(-0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
