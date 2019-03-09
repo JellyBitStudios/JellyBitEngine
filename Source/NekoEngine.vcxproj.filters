@@ -1860,6 +1860,9 @@
     <ClInclude Include="ResourceAnimator.h">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClInclude>
+    <ClInclude Include="ResourceAudioBank.h">
+      <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ModuleInput.cpp">
@@ -2409,6 +2412,9 @@
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClCompile>
     <ClCompile Include="ResourceAnimator.cpp">
+      <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceAudioBank.cpp">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClCompile>
   </ItemGroup>

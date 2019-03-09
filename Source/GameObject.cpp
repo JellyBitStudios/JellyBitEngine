@@ -327,6 +327,17 @@ void GameObject::OnDisable()
 void GameObject::RecursiveRecalculateBoundingBoxes()
 {
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+
+	RecalculateBoundingBox();
+
+	for (uint i = 0; i < children.size(); ++i)
+		children[i]->RecursiveRecalculateBoundingBoxes();
+}
+
+void GameObject::RecalculateBoundingBox()
+{
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+
 	// Get the OBB from the mesh original AABB (no translation, rotation or scale)
 	if (originalBoundingBox.IsFinite())
 	{
@@ -343,9 +354,6 @@ void GameObject::RecursiveRecalculateBoundingBoxes()
 				boundingBox = obb.MinimalEnclosingAABB();
 		}
 	}
-
-	for (uint i = 0; i < children.size(); ++i)
-		children[i]->RecursiveRecalculateBoundingBoxes();
 }
 
 void GameObject::CalculateBoundingBox()
@@ -372,6 +380,8 @@ void GameObject::OnSystemEvent(System_Event event)
 		CalculateBoundingBox();
 		break;
 	case System_Event_Type::RecalculateBBoxes:
+		// Now its done from the update global, if the game object moves it automatically recalculates the new AABB.
+		// But if you need to Recalculate the AABB and you do not move the GameObject (e.g. particles AABB) you will have to keep sending the event
 		RecursiveRecalculateBoundingBoxes();
 		break;
 	case System_Event_Type::ScriptingDomainReloaded:
