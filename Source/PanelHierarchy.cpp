@@ -105,6 +105,10 @@ bool PanelHierarchy::Draw()
 			GameObject* tmp_go = App->GOs->Instanciate(prefab->GetRoot(), App->scene->root);
 
 			App->res->SetAsUnused(prefab->GetUuid());
+
+			// Recalculate the transform in case the new GameObject transform is no identity
+			if (tmp_go && tmp_go->transform)
+				tmp_go->transform->UpdateGlobal();
 		}
 		ImGui::EndDragDropTarget();
 	}
