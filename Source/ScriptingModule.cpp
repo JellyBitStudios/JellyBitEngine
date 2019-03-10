@@ -1606,6 +1606,9 @@ void SetGlobalScale(MonoObject* monoObject, MonoArray* globalScale)
 
 MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 {
+	if (!monoObject || !type)
+		return nullptr;
+
 	MonoObject* monoComp = nullptr;
 
 	std::string className = mono_class_get_name(mono_object_get_class(type));
