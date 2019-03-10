@@ -558,7 +558,7 @@ bool ResourceMesh::UseAdjacency() const
 
 bool ResourceMesh::AddBones(std::unordered_map<const char*, uint>& bones)
 {
-	uint boneId = 0;
+	uint boneId = 0; // this id matches the uniform bones array id
 	for (std::unordered_map<const char*, uint>::const_iterator it = bones.begin(); it != bones.end(); ++it, ++boneId)
 	{
 		/// Bone game object
@@ -576,17 +576,15 @@ bool ResourceMesh::AddBones(std::unordered_map<const char*, uint>& bones)
 		if (boneResource == nullptr)
 			continue;
 
-		for (uint i = 0; i < MAX_BONES; ++i)
+		// Bone
+		for (uint i = 0; i < meshData.boneInfluencesSize; ++i)
 		{
-			const char* boneName = meshData.bonesNames[i];
-			if (strcmp(boneName, boneResource->boneData.name.data()) == 0)
+			if (strcmp(meshData.boneInfluences[i].boneName, boneResource->boneData.name.data()) == 0)
 			{
-				float* boneWeight = meshData.bonesWeights[i];
-				uint* vertexId = meshData.bonesIds[i];
-
-				for (uint i = 0; i < meshData.bonesWeightsSize[i]; ++i)
+				// Vertices influenced by the bone
+				for (uint j = 0; j < meshData.boneInfluences[j].bonesWeightsSize; ++j)
 				{
-					if (!AddBone(vertexId[i], boneWeight[i], boneId))
+					if (!AddBone(meshData.boneInfluences[i].boneIds[i], meshData.boneInfluences[i].boneWeights[i], boneId))
 						CONSOLE_LOG(LogTypes::Error, "Resource Mesh: Bone could not be attached to the mesh");
 				}
 			}

@@ -58,6 +58,14 @@ struct Vertex
 	uint boneId[MAX_BONES];
 };
 
+struct BoneInfluence
+{
+	uint bonesWeightsSize = 0;
+	float* boneWeights = nullptr;
+	uint* boneIds = nullptr;
+	char boneName[DEFAULT_BUF_SIZE];
+};
+
 struct ResourceMeshData
 {
 	Vertex* vertices = nullptr;
@@ -69,10 +77,8 @@ struct ResourceMeshData
 	bool adjacency = false;
 	uint* adjacentIndices = nullptr;
 
-	uint bonesWeightsSize[MAX_BONES];
-	float* bonesWeights[MAX_BONES];
-	uint* bonesIds[MAX_BONES];
-	const char* bonesNames[MAX_BONES];
+	BoneInfluence* boneInfluences = nullptr;
+	uint boneInfluencesSize = 0;
 
 	ResourceMeshImportSettings meshImportSettings;
 };
