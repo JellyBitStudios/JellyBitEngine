@@ -24,12 +24,13 @@ ComponentAnimator::ComponentAnimator(GameObject * embedded_game_object) :
 ComponentAnimator::ComponentAnimator(GameObject* embedded_game_object, uint resource) :
 	Component(embedded_game_object, ComponentTypes::AnimatorComponent)
 {
-	res = resource;
+	this->SetResourceAnimator(resource);
 }
 
 ComponentAnimator::ComponentAnimator(const ComponentAnimator & component_anim, GameObject * parent, bool include) : Component(parent, ComponentTypes::AnimatorComponent)
 {
-	this->SetResource(component_anim.res);
+	this->SetResourceAnimator(component_anim.res);
+	this->SetResourceAvatar(component_anim.res_avatar);
 	//App->animation->SetAnimationGos((ResourceAnimation*)App->res->GetResource(res));
 }
 
@@ -56,12 +57,31 @@ void ComponentAnimator::OnInternalLoad(char*& cursor)
 	size_t bytes = sizeof(uint);
 	memcpy(&loadedRes, cursor, bytes);
 	cursor += bytes;
-	SetResource(loadedRes);
+	SetResourceAnimator(loadedRes);
 }
 
-bool ComponentAnimator::SetResource(uint resource) //check all this
+bool ComponentAnimator::SetResourceAnimator(uint resource)
 {
+	if (res > 0)
+		App->res->SetAsUnused(res);
+
+	if (resource > 0)
+		App->res->SetAsUsed(resource);
+
 	res = resource;
+
+	return true;
+}
+
+bool ComponentAnimator::SetResourceAvatar(uint resource)
+{
+	if (res > 0)
+		App->res->SetAsUnused(res);
+
+	if (resource > 0)
+		App->res->SetAsUsed(resource);
+
+	res_avatar = resource;
 
 	return true;
 }
@@ -109,16 +129,19 @@ void ComponentAnimator::OnUniqueEditor()
 		ImGui::Text("Animator");
 		ImGui::SameLine();
 
-		std::string fileName = "Empty Animation";
+		std::string fileName = "Empty Animator";
 		const ResourceAnimator* resource = (ResourceAnimator*)App->res->GetResource(res);
 		if (resource != nullptr)
 			fileName = resource->GetName();
 
-		ImGui::Text("Animator name: %s", resource->animator_data.name.data());
-		ImGui::Text("Animator resource UUID: %i", resource->GetUuid());
-		ImGui::Text("Avatar UUID: %i", resource->animator_data.avatar_uuid);
-		ImGui::Text("Meshes affected: %i", resource->animator_data.meshes_uuids.size());
-		ImGui::Text("Animations size: %i", resource->animator_data.animations_uuids.size());
+		if (resource) {
+			ImGui::Text("Animator name: %s", resource->animator_data.name.data());
+			ImGui::Text("Animator resource UUID: %i", resource->GetUuid());
+			ImGui::Text("Avatar UUID: %i", resource->animator_data.avatar_uuid);
+			ImGui::Text("Meshes affected: %i", resource->animator_data.meshes_uuids.size());
+			ImGui::Text("Animations size: %i", resource->animator_data.animations_uuids.size());
+		}
+		
 
 		ImGui::PushID("animator");
 		ImGui::Button(fileName.data(), ImVec2(150.0f, 0.0f));
@@ -137,16 +160,35 @@ void ComponentAnimator::OnUniqueEditor()
 			{
 				uint payload_n = *(uint*)payload->Data;
 				
-				SetResource(payload_n);
+				SetResourceAnimator(payload_n);
 			}
+			ImGui::EndDragDropTarget();
+		}
 
+		fileName = "Empty Avatar";
+		const ResourceAvatar* resource_avatar = (ResourceAvatar*)App->res->GetResource(res_avatar);
+		if (resource_avatar != nullptr)
+			fileName = resource_avatar->GetName();
+
+		ImGui::PushID("avatar");
+		ImGui::Button(fileName.data(), ImVec2(150.0f, 0.0f));
+		ImGui::PopID();
+
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("%u", res_avatar);
+			ImGui::EndTooltip();
+		}
+
+		if (ImGui::BeginDragDropTarget())
+		{
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("AVATAR_INSPECTOR_SELECTOR"))
 			{
 				uint payload_n = *(uint*)payload->Data;
-				
-				SetAvatarAsUsed(payload_n);
-			}
 
+				SetResourceAvatar(payload_n);
+			}
 			ImGui::EndDragDropTarget();
 		}
 	}

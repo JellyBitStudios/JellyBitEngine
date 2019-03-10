@@ -13,7 +13,8 @@ public:
 	~ComponentAnimator();
 
 	uint GetInternalSerializationBytes();
-	bool SetResource(uint resource);
+	bool SetResourceAnimator(uint resource);
+	bool SetResourceAvatar(uint resource);
 	bool SetAvatarAsUsed(uint avatar_uuid);
 
 	virtual void Update();
@@ -27,6 +28,7 @@ public:
 
 public:
 	uint res = 0;
+	uint res_avatar = 0;
 
 };
 

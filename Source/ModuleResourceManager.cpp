@@ -1102,30 +1102,6 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 	}
 	break;
 
-	case ResourceTypes::AvatarResource:
-	{
-		ResourceData data;
-		ResourceAvatarData avatarData;
-		data.exportedFile = file;
-
-		// Search for the meta associated to the file
-		char metaFile[DEFAULT_BUF_SIZE];
-		strcpy_s(metaFile, strlen(file) + 1, file); // file
-		strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
-
-		uint uuid = 0;
-		if (App->fs->Exists(metaFile))
-		{
-			int64_t lastModTime = 0;
-			ResourceAvatar::ReadMeta(metaFile, lastModTime, uuid, data.name);
-		}
-
-		ResourceAvatar::LoadFile(file, avatarData);
-
-		resource = CreateResource(ResourceTypes::AvatarResource, data, &avatarData, uuid);
-	}
-	break;
-
 	case ResourceTypes::ScriptResource:
 	{
 		resource = App->scripting->ImportScriptResource(file);
