@@ -6,6 +6,8 @@
 #include <vector>
 #include <unordered_map>
 
+class GameObject;
+
 struct ResourceAvatarData
 {
 	uint hipsUuid = 0; // uuid of the root game object of the skeleton
@@ -41,6 +43,8 @@ public:
 
 	// ----------------------------------------------------------------------------------------------------
 
+
+	void AddBones(GameObject* gameObject) const;
 	void StepBones(uint animationUuid, float time, float blend = 1.0f);
 
 private:

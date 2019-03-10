@@ -115,7 +115,7 @@ public:
 	uint GetIndicesCount() const;
 	bool UseAdjacency() const;
 
-	bool AddBones(std::unordered_map<const char*, uint>& bones);
+	bool AddBones(const std::unordered_map<const char*, uint>& bones);
 	bool AddBone(uint vertexId, float boneWeight, uint boneId);
 	static void CalculateAdjacentIndices(uint* indices, uint indicesSize, uint*& adjacentIndices);
 

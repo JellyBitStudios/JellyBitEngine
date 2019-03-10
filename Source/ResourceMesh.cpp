@@ -556,7 +556,7 @@ bool ResourceMesh::UseAdjacency() const
 	return meshData.adjacency;
 }
 
-bool ResourceMesh::AddBones(std::unordered_map<const char*, uint>& bones)
+bool ResourceMesh::AddBones(const std::unordered_map<const char*, uint>& bones)
 {
 	uint boneId = 0; // this id matches the uniform bones array id
 	for (std::unordered_map<const char*, uint>::const_iterator it = bones.begin(); it != bones.end(); ++it, ++boneId)
@@ -589,7 +589,7 @@ bool ResourceMesh::AddBones(std::unordered_map<const char*, uint>& bones)
 				}
 			}
 			else
-				CONSOLE_LOG(LogTypes::Error, "Resource Mesh: The bone %s could not be found and added to the mesh", boneResource->boneData.name.data);
+				CONSOLE_LOG(LogTypes::Error, "Resource Mesh: The bone %s could not be found nor added to the mesh", boneResource->boneData.name.data);
 		}
 	}
 }

@@ -67,10 +67,6 @@ private:
 
 	/*Mutable stuff uwu*/
 	mutable GameObject* imported_root_go = nullptr;
-
-
-
-
 	mutable std::map<std::string, uint> imported_bones;
 	mutable uint bone_root_uuid = 0u;
 };

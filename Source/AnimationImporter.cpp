@@ -202,27 +202,6 @@ bool AnimationImporter::SaveAnimation(mutable ResourceData& res_data, mutable Re
 	return ret;
 }
 
-uint size = sizeof(ranges) +
-sizeof(float) * verticesSize * 3 +
-sizeof(float) * normalsSize * 3 +
-sizeof(float) * tangentsSize * 3 +
-sizeof(float) * bitangentsSize * 3 +
-sizeof(uchar) * colorsSize * 4 +
-sizeof(float) * texCoordsSize * 2 +
-
-// Bones
-sizeof(float) * weightsSize[0] +
-sizeof(float) * weightsSize[1] +
-sizeof(float) * weightsSize[2] +
-sizeof(float) * weightsSize[3] +
-sizeof(uint) * weightsSize[0] +
-sizeof(uint) * weightsSize[1] +
-sizeof(uint) * weightsSize[2] +
-sizeof(uint) * weightsSize[3] +
-
-sizeof(uint) * indicesSize +
-sizeof(char) * nameSize;
-
 void AnimationImporter::ImportBoneTransform(const aiNodeAnim* anim_node, BoneTransformation& bones_transform) const
 {
 	// Setting up bone name

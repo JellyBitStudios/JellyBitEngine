@@ -396,6 +396,25 @@ uint ResourceAvatar::GetHipsUuid() const
 
 // ----------------------------------------------------------------------------------------------------
 
+void ResourceAvatar::AddBones(GameObject* gameObject) const
+{
+	assert(gameObject != nullptr);
+
+	std::vector<GameObject*> children;
+	gameObject->GetChildrenVector(children);
+
+	for (uint i = 0; i < children.size(); ++i)
+	{
+		ComponentMesh* meshComponent = gameObject->cmp_mesh;
+		if (meshComponent != nullptr)
+		{
+			ResourceMesh* meshResource = (ResourceMesh*)App->res->GetResource(meshComponent->res);
+			if (meshResource != nullptr)
+				meshResource->AddBones(bones);
+		}
+	}
+}
+
 void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 {
 	ResourceAnimation* animationResource = (ResourceAnimation*)App->res->GetResource(animationUuid);
@@ -593,6 +612,8 @@ bool ResourceAvatar::LoadInMemory()
 {
 	assert(avatarData.hipsUuid > 0);
 
+	// 1. Build the skeleton
+
 	// Hips
 	GameObject* boneGameObject = App->GOs->GetGameObjectByUID(avatarData.hipsUuid);
 	if (boneGameObject == nullptr)
@@ -602,13 +623,13 @@ bool ResourceAvatar::LoadInMemory()
 	}
 
 	// Skeleton
-	std::vector<GameObject*> boneGameObjects;
-	boneGameObject->GetChildrenVector(boneGameObjects);
+	std::vector<GameObject*> children;
+	boneGameObject->GetChildrenVector(children);
 
-	for (uint i = 0; i < boneGameObjects.size(); ++i)
+	for (uint i = 0; i < children.size(); ++i)
 	{
 		/// Bone component
-		ComponentBone* boneComponent = boneGameObjects[i]->cmp_bone;
+		ComponentBone* boneComponent = children[i]->cmp_bone;
 		if (boneComponent == nullptr)
 		{
 			CONSOLE_LOG(LogTypes::Error, "A bone component does not exist...");
@@ -620,10 +641,13 @@ bool ResourceAvatar::LoadInMemory()
 		assert(boneResource != nullptr);
 
 		const char* boneName = boneResource->boneData.name.data();
-		bones[boneName] = boneGameObjects[i]->GetUUID();
+		bones[boneName] = children[i]->GetUUID();
 
 		CONSOLE_LOG(LogTypes::Normal, "The bone %s has been loaded correctly", boneName);
 	}
+
+	// 2. Add the skeleton bones to the meshes
+	AddBones(boneGameObject);
 
 	return bones.size() > 0;
 }

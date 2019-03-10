@@ -627,6 +627,7 @@ void SceneImporter::RecursivelyProcessBones(GameObject* gameObject,
 		// Export the new file
 		std::string outputFile;
 		App->res->ExportFile(ResourceTypes::BoneResource, data, &boneData, outputFile, false, false);
+
 	}
 
 	std::vector<GameObject*> children;
@@ -638,7 +639,6 @@ void SceneImporter::RecursivelyProcessBones(GameObject* gameObject,
 
 void SceneImporter::ImportAnimations(mutable const aiScene * scene, std::vector<std::string>& anim_files, const char* anim_name, std::vector<uint>& forcedUuids)const
 {
-	/*
 	for (uint i = 0; i < scene->mNumAnimations; ++i)
 	{
 		const aiAnimation* anim = scene->mAnimations[i];
@@ -693,7 +693,6 @@ void SceneImporter::ImportAnimations(mutable const aiScene * scene, std::vector<
 			mesh_co->root_bones_uid = bone_root_uuid;
 		}
 	}
-	*/
 }
 
 bool SceneImporter::Load(const char* exportedFile, ResourceData& outputData, ResourceMeshData& outputMeshData) const
