@@ -41,8 +41,6 @@ bool ModuleAnimation::Awake(JSON_Object* config)
 
 bool ModuleAnimation::Start()
 {
-	// Call here to attach bones and everytime that we reimport things
-	//StartAttachingBones();
 
 	if (current_anim) {
 		current_anim->interpolate = true;
@@ -117,28 +115,6 @@ update_status ModuleAnimation::Update()
 			anim_state = PLAYING;
 		}
 		break;
-	}
-
-
-	for (uint i = 0; i < current_anim->animable_gos.size(); ++i)
-	{
-		ComponentBone* tmp_bone = (ComponentBone*)current_anim->animable_gos.at(i)->GetComponent(ComponentTypes::BoneComponent);
-		ResetMesh(tmp_bone);
-
-	}
-
-	for (uint i = 0; i < current_anim->animable_gos.size(); ++i)
-	{
-		ComponentBone* bone = (ComponentBone*)current_anim->animable_gos.at(i)->GetComponent(ComponentTypes::BoneComponent);
-		
-		if (bone && bone->attached_mesh)
-		{
-			DeformMesh(bone);
-			ResourceMesh*res = (ResourceMesh*)App->res->GetResource(bone->attached_mesh->res);
-
-			res->UnloadDeformableMeshFromMemory();
-			res->GenerateAndBindDeformableMesh();
-		}
 	}
 
 	return update_status::UPDATE_CONTINUE;
