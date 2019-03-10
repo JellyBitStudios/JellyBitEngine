@@ -67,7 +67,7 @@ bool ComponentAnimation::SetResource(uint resource) //check all this
 
 bool ComponentAnimation::PlayAnimation(const char* anim_name)
 {
-	//TODO THIS IN ANIMATOR COMPONENT
+	// TODO_G THIS IN ANIMATOR COMPONENT
 	return true;
 //	return App->animation->SetCurrentAnimation(anim_name);
 }
