@@ -165,6 +165,7 @@ void ModuleUI::OnSystemEvent(System_Event event)
 			LinkAllRectsTransform();
 			break;
 		}
+		case System_Event_Type::LoadScene:
 		case System_Event_Type::Stop:
 		{
 			componentsUI.clear();
@@ -172,8 +173,9 @@ void ModuleUI::OnSystemEvent(System_Event event)
 			componentsScreenRendererUI.clear();
 			componentsWorldRendererUI.clear();
 			GOsWorldCanvas.clear();
-			break;
 
+			App->GOs->DeleteCanvasPointer();
+			break;
 		}
 	}
 }
