@@ -6,8 +6,6 @@
 
 #include <vector>
 
-class ResourceMesh;
-
 class ComponentMesh : public Component
 {
 public:
@@ -34,7 +32,7 @@ public:
 	bool nv_walkable = true;
 
 	// Animation
-	std::vector<uint> bonesUuids;
+	std::vector<uint> bonesUuids; // ComponentBone uuid
 };
 
 #endif

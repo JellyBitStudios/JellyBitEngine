@@ -1,27 +1,24 @@
 #include "SceneImporter.h"
 
 #include "Application.h"
-#include "BoneImporter.h"
 #include "Globals.h"
 #include "ModuleFileSystem.h"
 #include "ModuleResourceManager.h"
+#include "ModuleGOs.h"
+#include "AnimationImporter.h"
+
 #include "ResourceMesh.h"
 #include "ResourceBone.h"
 #include "ResourceAvatar.h"
 #include "ResourceAnimation.h"
 #include "ResourcePrefab.h"
 
-#include "ModuleGOs.h"
 #include "GameObject.h"
 #include "ComponentMesh.h"
 #include "ComponentMaterial.h"
 #include "ComponentTransform.h"
 #include "ComponentBone.h"
 #include "ComponentAnimation.h"
-#include "BoneImporter.h"
-#include "AnimationImporter.h"
-
-#include "ModuleAnimation.h"
 
 #include "Assimp\include\cimport.h"
 #include "Assimp\include\scene.h"
@@ -156,13 +153,29 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 		GameObject* dummy = new GameObject("Dummy", nullptr);
 		GameObject* rootGameObject = new GameObject(rootNode->mName.data, dummy); // Root game object will never be a transformation
 
-		std::vector<uint> dummyForcedUuids = forced_meshes_uuids;
-		RecursivelyImportNodes(scene, rootNode, rootGameObject, nullptr, mesh_files, dummyForcedUuids);
+		/// Import meshes
+		std::vector<uint> dummyForcedMeshesUuids = forced_meshes_uuids;
+		GameObject* rootBone = nullptr;
+		std::unordered_map<std::string, aiBone*> bonesByName; // aiBone
+		std::unordered_map<aiBone*, ComponentMesh*> meshesByBone; // ComponentMesh
+
+		RecursivelyImportNodes(scene, rootNode, rootGameObject, nullptr, 
+			rootBone, bonesByName, meshesByBone,
+			mesh_files, dummyForcedMeshesUuids);
 		//rootGameObject->transform->scale *= importSettings.scale; // TODO FIX SCALE
-		RecursivelyProcessBones(scene, scene->mRootNode, bone_files, forced_bones_uuids);	
+
+		/// Import bones
+		if (rootBone != nullptr)
+		{
+			std::vector<uint> dummyForcedBonesUuids = forced_bones_uuids;
+			RecursivelyProcessBones(rootGameObject, 
+				bonesByName, meshesByBone,
+				bone_files, dummyForcedBonesUuids);
+		}
+
 		ImportAnimations(scene, anim_files, prefabName, forced_anim_uuids);
 
-		root_bone = nullptr; // c: 
+		rootBone = nullptr; // c: 
 
 		// Create Prefab
 		GameObject* prefab_go = rootGameObject;
@@ -201,7 +214,9 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 	return ret;
 }
 
-void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* node, const GameObject* parent, const GameObject* transformation, std::vector<std::string>& mesh_files, std::vector<uint>& forcedUuids) const
+void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* node, const GameObject* parent, const GameObject* transformation, 
+	GameObject* rootBone, std::unordered_map<std::string, aiBone*> bonesByName, std::unordered_map<aiBone*, ComponentMesh*> meshesByBone,
+	std::vector<std::string>& mesh_files, std::vector<uint>& forcedUuids) const
 {
 	std::string name = node->mName.data;
 
@@ -221,7 +236,6 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 	// If the previous game object was a transformation, keep the transformation
 	else if (transformation != nullptr)
 		gameObject = (GameObject*)transformation;
-		//gameObject = new GameObject(name.data(), (GameObject*)parent);
 	// If the previous game object wasn't a transformation, create a new game object
 	else
 		gameObject = new GameObject(name.data(), (GameObject*)parent);
@@ -229,8 +243,6 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 	// If the current game object is not a transformation, update its name (just in case the previous one was)
 	if (!isTransformation)
 		gameObject->SetName(name.data());
-
-	relations[node] = gameObject;
 
 	// Transform
 	aiVector3D aPosition;
@@ -273,6 +285,7 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 		{
 			gameObject->AddComponent(ComponentTypes::MeshComponent);
 			gameObject->ForceStaticNoVector();
+
 			if (forcedUuids.size() > 0)
 			{
 				gameObject->cmp_mesh->res = forcedUuids.front();
@@ -359,12 +372,14 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 			{
 				for (uint i = 0; i < nodeMesh->mNumBones; ++i)
 				{
-					if (root_bone == nullptr)
-						root_bone = gameObject;
+					if (rootBone == nullptr)
+						rootBone = gameObject;
 
-					bones[nodeMesh->mBones[i]->mName.C_Str()] = nodeMesh->mBones[i];
-					ComponentMesh* mesh_co = (ComponentMesh*)gameObject->GetComponent(ComponentTypes::MeshComponent);
-					mesh_bone[nodeMesh->mBones[i]] = mesh_co->res;
+					aiBone* bone = nodeMesh->mBones[i];
+					const char* boneName = bone->mName.C_Str();
+					
+					bonesByName[boneName] = bone;
+					meshesByBone[bone] = gameObject->cmp_mesh;
 				}
 			}
 
@@ -413,6 +428,8 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 			// Name
 			char meshName[DEFAULT_BUF_SIZE];
 			strcpy_s(meshName, DEFAULT_BUF_SIZE, name.data());
+
+			// --------------------------------------------------
 
 			// Vertices + Normals + Tangents + Bitangents + Colors + Texture Coords + Indices + Name
 			uint ranges[8] = { verticesSize, normalsSize, tangentsSize, bitangentsSize, colorsSize, texCoordsSize, indicesSize, DEFAULT_BUF_SIZE };
@@ -521,11 +538,123 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 	{
 		if (isTransformation)
 			// If the current game object is a transformation, keep its parent and pass it as the new transformation for the next game object
-			RecursivelyImportNodes(scene, node->mChildren[i], parent, gameObject, mesh_files, forcedUuids);
+			RecursivelyImportNodes(scene, node->mChildren[i], parent, gameObject, rootBone, bonesByName, meshesByBone, mesh_files, forcedUuids);
 		else
 			// Else, the current game object becomes the new parent for the next game object
-			RecursivelyImportNodes(scene, node->mChildren[i], gameObject, nullptr, mesh_files, forcedUuids);
+			RecursivelyImportNodes(scene, node->mChildren[i], gameObject, nullptr, rootBone, bonesByName, meshesByBone, mesh_files, forcedUuids);
 	}
+}
+
+void SceneImporter::RecursivelyProcessBones(GameObject* gameObject,
+	std::unordered_map<std::string, aiBone*> bonesByName, std::unordered_map<aiBone*, ComponentMesh*> meshesByBone,
+	std::vector<std::string>& bone_files, std::vector<uint>& forcedUuids) const
+{
+	const char* name = gameObject->GetName();
+
+	std::unordered_map<std::string, aiBone*>::const_iterator it = bonesByName.find(name);
+	if (it != bonesByName.end())
+	{
+		aiBone* bone = it->second;
+
+		// 1. Create the Bone Component
+		gameObject->AddComponent(ComponentTypes::BoneComponent);
+
+		if (forcedUuids.size() > 0)
+		{
+			gameObject->cmp_bone->res = forcedUuids.front();
+			forcedUuids.erase(forcedUuids.begin());
+		}
+		else
+			gameObject->cmp_bone->res = App->GenerateRandomNumber();
+
+		// 2. Create the Bone Resource
+		ResourceData data;
+		data.name = std::to_string(gameObject->cmp_bone->res);
+
+		ResourceBoneData boneData;
+		boneData.name = name;
+		memcpy(&boneData.offsetMatrix, &bone->mOffsetMatrix.a1, sizeof(float) * 16);
+
+		for (uint i = 0; i < bone->mNumWeights; ++i)
+		{
+			boneData.weights[i] = bone->mWeights[i].mWeight;
+			boneData.indices[i] = bone->mWeights[i].mVertexId;
+		}
+
+		// Export the new file
+		std::string outputFile;
+		App->res->ExportFile(ResourceTypes::BoneResource, data, &boneData, outputFile, false, false);
+
+		// 3. Link the Mesh Component with the Bone Component
+		ComponentMesh* cmp_mesh = meshesByBone[bone];
+		cmp_mesh->bonesUuids.push_back(gameObject->GetUUID());
+	}
+
+	std::vector<GameObject*> children;
+	gameObject->GetChildrenVector(children, false);
+
+	for (uint i = 0; i < children.size(); ++i)
+		RecursivelyProcessBones(children[i], bonesByName, meshesByBone, bone_files, forcedUuids);
+}
+
+void SceneImporter::ImportAnimations(mutable const aiScene * scene, std::vector<std::string>& anim_files, const char* anim_name, std::vector<uint>& forcedUuids)const
+{
+	/*
+	for (uint i = 0; i < scene->mNumAnimations; ++i)
+	{
+		const aiAnimation* anim = scene->mAnimations[i];
+		DEPRECATED_LOG("Importing animation [%s] -----------------", anim->mName.C_Str());
+		std::string output;
+
+		if (rootBone)
+		{
+			ComponentAnimation* anim_co = (ComponentAnimation*)rootBone->AddComponent(ComponentTypes::AnimationComponent);
+
+			GameObject* go = rootBone;
+			if (forcedUuids.size() > 0)
+			{
+				go->cmp_animation->res = forcedUuids.front();
+				forcedUuids.erase(forcedUuids.begin());
+			}
+			else
+				go->cmp_animation->res = App->GenerateRandomNumber();
+
+			std::string outputFile = std::to_string(go->cmp_animation->res);
+
+			ResourceData data;
+			data.name = outputFile;
+			data.file = outputFile;
+
+			ResourceAnimationData res_data;
+
+			//static int take_count = 1;
+			std::string filename = anim_name;
+			//filename.append(std::to_string(take_count++));
+			res_data.name = filename;
+
+			res_data.ticksPerSecond = anim->mTicksPerSecond != 0 ? anim->mTicksPerSecond : 24;
+			res_data.duration = anim->mDuration / res_data.ticksPerSecond;
+
+			res_data.numKeys = anim->mNumChannels;
+
+			// Once we have the animation data we populate the animation keys with the bones' data
+			res_data.boneKeys = new BoneTransformation[res_data.numKeys];
+
+			for (uint i = 0; i < anim->mNumChannels; ++i)
+				App->animImporter->ImportBoneTransform(anim->mChannels[i], res_data.boneKeys[i]);
+
+			App->animImporter->SaveAnimation(data, res_data, outputFile, false);
+
+			// TODO_G: Check this
+			//App->animation->SetAnimationGos(anim);
+
+			anim_files.push_back(outputFile);
+
+			ComponentMesh* mesh_co = (ComponentMesh*)rootBone->GetComponent(ComponentTypes::MeshComponent);
+			mesh_co->root_bones_uid = bone_root_uuid;
+		}
+	}
+	*/
 }
 
 bool SceneImporter::Load(const char* exportedFile, ResourceData& outputData, ResourceMeshData& outputMeshData) const
@@ -765,122 +894,4 @@ uint SceneImporter::GetAssimpMinorVersion() const
 uint SceneImporter::GetAssimpRevisionVersion() const
 {
 	return aiGetVersionRevision();
-}
-
-// ----------------------------------------------------------------------------------------------------
-
-void SceneImporter::RecursivelyProcessBones(mutable const aiScene * scene, 
-	mutable const aiNode * node, std::vector<std::string>& bone_files, std::vector<uint>& forcedUuids)const
-{
-	std::map<std::string, aiBone*>::iterator it = bones.find(node->mName.C_Str());
-
-	if (it != bones.end())
-	{
-		aiBone* bone = it->second;
-
-		GameObject* go = relations[node];
-
-		ComponentBone* comp_bone = (ComponentBone*)go->AddComponent(ComponentTypes::BoneComponent);
-
-
-		if (forcedUuids.size() > 0)
-		{
-			go->cmp_bone->res = forcedUuids.front();
-			forcedUuids.erase(forcedUuids.begin());
-		}
-		else
-			go->cmp_bone->res = App->GenerateRandomNumber();
-
-		std::string outputFile = std::to_string(go->cmp_bone->res);
-
-		ResourceData data;
-		data.name = outputFile;
-		data.file = outputFile;
-
-		ResourceBoneData res_data;
-		res_data.name = bone->mName.data;
-		res_data.mesh_uid = mesh_bone[bone];
-		res_data.bone_weights_size = bone->mNumWeights;
-		memcpy(res_data.offsetMatrix.v, &bone->mOffsetMatrix.a1, sizeof(float) * 16);
-
-		res_data.bone_weights_indices = new uint[res_data.bone_weights_size];
-		res_data.bone_weights = new float[res_data.bone_weights_size];
-
-		for (uint k = 0; k < res_data.bone_weights_size; ++k)
-		{
-			res_data.bone_weights_indices[k] = bone->mWeights[k].mVertexId;
-			res_data.bone_weights[k] = bone->mWeights[k].mWeight;
-		}
-
-		App->boneImporter->SaveBone(data, res_data, outputFile, false);
-
-		bone_files.push_back(outputFile);
-
-		if (go->GetParent() == nullptr ||
-			(go->GetParent() && !go->GetParent()->GetComponent(ComponentTypes::BoneComponent)))
-			bone_root_uuid = go->GetUUID(); // working? 
-
-		DEPRECATED_LOG("->-> Added Bone component");
-	}
-
-	for (uint i = 0; i < node->mNumChildren; ++i)
-		RecursivelyProcessBones(scene, node->mChildren[i],bone_files, forcedUuids);
-}
-
-void SceneImporter::ImportAnimations(mutable const aiScene * scene
-	, std::vector<std::string>& anim_files, const char* anim_name, std::vector<uint>& forcedUuids)const
-{
-	for (uint i = 0; i < scene->mNumAnimations; ++i)
-	{
-		const aiAnimation* anim = scene->mAnimations[i];
-		DEPRECATED_LOG("Importing animation [%s] -----------------", anim->mName.C_Str());
-		std::string output;
-
-		if (root_bone) {
-			ComponentAnimation* anim_co = (ComponentAnimation*)root_bone->AddComponent(ComponentTypes::AnimationComponent);
-
-			GameObject* go = root_bone;
-			if (forcedUuids.size() > 0)
-			{
-				go->cmp_animation->res = forcedUuids.front();
-				forcedUuids.erase(forcedUuids.begin());
-			}
-			else
-				go->cmp_animation->res = App->GenerateRandomNumber();
-
-			std::string outputFile = std::to_string(go->cmp_animation->res);
-
-			ResourceData data;
-			data.name = outputFile;
-			data.file = outputFile;
-
-			ResourceAnimationData res_data;
-			
-			//static int take_count = 1;
-			std::string filename = anim_name;
-			//filename.append(std::to_string(take_count++));
-			res_data.name = filename;
-
-			res_data.ticksPerSecond= anim->mTicksPerSecond != 0 ? anim->mTicksPerSecond : 24;
-			res_data.duration = anim->mDuration / res_data.ticksPerSecond;
-
-			res_data.numKeys = anim->mNumChannels;
-
-			// Once we have the animation data we populate the animation keys with the bones' data
-			res_data.boneKeys = new BoneTransformation[res_data.numKeys];
-			
-			for (uint i = 0; i < anim->mNumChannels; ++i)
-				App->animImporter->ImportBoneTransform(anim->mChannels[i], res_data.boneKeys[i]);
-
-			App->animImporter->SaveAnimation(data, res_data, outputFile,false);
-
-			// TODO_G: Check this
-			//App->animation->SetAnimationGos(anim);
-
-			anim_files.push_back(outputFile);
-
-			ComponentMesh* mesh_co = (ComponentMesh*)root_bone->GetComponent(ComponentTypes::MeshComponent);
-			mesh_co->root_bones_uid = bone_root_uuid;
-		}
-	}
 }

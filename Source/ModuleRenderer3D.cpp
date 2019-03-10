@@ -649,22 +649,28 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 
 	// 2. Known mesh uniforms
 
-	// If the mesh has bones
-	// Get attached bones for the current mesh (game objects)
-	// For each bone, send its transform to the shader
-	// FOR EACH BONE
-	/// Bone component
-	ComponentBone* boneComponent;
-	assert(boneComponent != nullptr);
+	// Animations
+	for (uint i = 0; i < toDraw->bonesUuids.size(); ++i)
+	{
+		/// Bone game object
+		GameObject* boneGameObject = App->GOs->GetGameObjectByUID(toDraw->bonesUuids[i]);
+		if (boneGameObject == nullptr)
+			continue;
 
-	/// Bone resource
-	ResourceBone* boneResource = (ResourceBone*)App->res->GetResource(boneComponent->res);
-	assert(boneResource != nullptr);
+		/// Bone component
+		ComponentBone* boneComponent = boneGameObject->cmp_bone;
+		if (boneComponent == nullptr)
+			continue;
 
-	math::float4x4 boneGlobalMatrix = boneComponent->GetParent()->transform->GetGlobalMatrix();
-	math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetMatrix();
-	math::float4x4 boneTransformation = boneGlobalMatrix * meshMatrix.Inverted() * boneResource->boneData.offsetMatrix;
-	// FOR EACH BONE
+		/// Bone resource
+		ResourceBone* boneResource = (ResourceBone*)App->res->GetResource(boneComponent->res);
+		if (boneResource == nullptr)
+			continue;
+
+		math::float4x4 boneGlobalMatrix = boneComponent->GetParent()->transform->GetGlobalMatrix();
+		math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetMatrix();
+		math::float4x4 boneTransformation = boneGlobalMatrix * meshMatrix.Inverted() * boneResource->boneData.offsetMatrix;
+	}
 
 	math::float4x4 model_matrix = toDraw->GetParent()->transform->GetGlobalMatrix();
 	model_matrix = model_matrix.Transposed();

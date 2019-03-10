@@ -8,7 +8,6 @@
 #include "SceneImporter.h"
 #include "MaterialImporter.h"
 #include "ShaderImporter.h"
-#include "BoneImporter.h"
 #include "AnimationImporter.h"
 #include "ModuleAnimation.h"
 
@@ -361,7 +360,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 		std::vector<std::string> mesh_files;
 		std::vector<std::string> bone_files;
 		std::vector<std::string> animation_files;
-		if (ResourceMesh::ImportFile(file, meshImportSettings, mesh_files, bone_files,animation_files))
+		if (ResourceMesh::ImportFile(file, meshImportSettings, mesh_files, bone_files, animation_files))
 		{
 			std::vector<uint> resourcesUuids;
 			std::vector<uint> meshes_uuids;
@@ -396,7 +395,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 				}
 				meshes_uuids.shrink_to_fit();
 
-				// 2. Bones c:
+				// 2. Bones
 				bones_uuids.reserve(bone_files.size());
 				for (uint i = 0; i < bone_files.size(); ++i)
 				{
@@ -406,19 +405,19 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 					assert(uuid > 0);
 
 					ResourceData data;
-					ResourceBoneData bone_data;
+					ResourceBoneData boneData;
 					data.file = file;
 					data.exportedFile = bone_files[i].data();
 					App->fs->GetFileName(file, data.name);
-					App->boneImporter->Load(bone_files[i].data(), data, bone_data);
+					ResourceBone::LoadFile(bone_files[i].data(), boneData);
 
-					resource = CreateResource(ResourceTypes::BoneResource, data, &bone_data, uuid);
+					resource = CreateResource(ResourceTypes::BoneResource, data, &boneData, uuid);
 					if (resource != nullptr)
 						bones_uuids.push_back(uuid);
 				}
 				bones_uuids.shrink_to_fit();
 
-				// 3. Anims c:
+				// 3. Anims
 				animation_uuids.reserve(animation_files.size());
 				for (uint i = 0; i < animation_files.size(); ++i)
 				{
@@ -743,49 +742,6 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 		break;
 	}
 
-	case ResourceTypes::BoneResource:
-	{
-		std::string outputFile;
-		std::string name;
-		if (ResourceBone::ImportFile(file, name, outputFile)) {
-			std::vector<uint> resourcesUuids;
-			if (!GetResourcesUuidsByFile(file, resourcesUuids))
-			{
-				// Create the resources
-				CONSOLE_LOG(LogTypes::Normal, "RESOURCE MANAGER: The bone object file '%s' has resources that need to be created", file);
-
-				// 1. Shader object
-				uint uuid = outputFile.empty() ? App->GenerateRandomNumber() : strtoul(outputFile.data(), NULL, 0);
-				assert(uuid > 0);
-				resourcesUuids.push_back(uuid);
-				resourcesUuids.shrink_to_fit();
-
-				ResourceData data;
-				ResourceBoneData boneData;
-				data.file = file;
-				if (name.empty())
-					App->fs->GetFileName(file, data.name);
-				else
-					data.name = name.data();
-
-
-				uint shaderObject = 0;
-				bool success = ResourceBone::LoadFile(file, boneData);
-
-				resource = CreateResource(ResourceTypes::BoneResource, data, &boneData, uuid);
-
-			}
-			else
-				resource = GetResource(resourcesUuids.front());
-
-			std::string outputMetaFile;
-			std::string name = resource->GetName();
-			int64_t lastModTime = ResourceShaderObject::CreateMeta(file, resourcesUuids.front(), name, outputMetaFile);
-			assert(lastModTime > 0);
-		}
-		break;
-	}
-
 	case ResourceTypes::AnimationResource:
 	{
 		std::string outputFile;
@@ -862,6 +818,23 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		App->sceneImporter->Load(file, data, meshData);
 
 		resource = CreateResource(ResourceTypes::MeshResource, data, &meshData, uuid);
+	}
+	break;
+
+	case ResourceTypes::BoneResource:
+	{
+		std::string fileName;
+		App->fs->GetFileName(file, fileName);
+		uint uuid = strtoul(fileName.data(), NULL, 0);
+		assert(uuid > 0);
+
+		ResourceData data;
+		ResourceBoneData boneData;
+		data.exportedFile = file;
+
+		ResourceBone::LoadFile(file, boneData);
+
+		resource = CreateResource(ResourceTypes::BoneResource, data, &boneData, uuid);
 	}
 	break;
 
@@ -1045,24 +1018,6 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 	{
 		resource = ResourceScene::ImportFile(file);
 		resources[resource->GetUuid()] = resource;
-	}
-	break;
-
-	case ResourceTypes::BoneResource:
-	{
-		std::string fileName;
-		App->fs->GetFileName(file, fileName);
-		uint uuid = strtoul(fileName.data(), NULL, 0);
-		assert(uuid > 0);
-
-		ResourceData data;
-		ResourceBoneData boneData;
-		data.file = file;
-
-		App->boneImporter->Load(file, data, boneData);
-		//ResourceBone::LoadFile(file, boneData);
-
-		resource = CreateResource(ResourceTypes::BoneResource, data, &boneData, uuid);
 	}
 	break;
 

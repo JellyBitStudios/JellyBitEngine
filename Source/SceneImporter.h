@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 
 struct aiScene;
 struct aiNode;
@@ -49,9 +50,14 @@ private:
 
 	bool Import(const void* buffer, uint size, const char* prefabName, std::vector<std::string>& mesh_files, std::vector<std::string>& bone_files, std::vector<std::string>& anim_files, const ResourceMeshImportSettings& importSettings,
 		std::vector<uint>& forced_meshes_uuids = std::vector<uint>(), std::vector<uint>& forced_bones_uuids = std::vector<uint>(), std::vector<uint>& forced_anims_uuids = std::vector<uint>()) const;
-	void RecursivelyImportNodes(const aiScene* scene, const aiNode* node, const GameObject* parent, const GameObject* transformation, std::vector<std::string>& mesh_files, std::vector<uint>& forcedUuids = std::vector<uint>()) const;
-	void RecursivelyProcessBones(mutable const aiScene* scene,mutable const aiNode* node, std::vector<std::string>& bone_files, std::vector<uint>& forcedUuids = std::vector<uint>())const;
+	
+	void RecursivelyImportNodes(const aiScene* scene, const aiNode* node, const GameObject* parent, const GameObject* transformation, 
+		GameObject* rootBone, std::unordered_map<std::string, aiBone*> bonesByName, std::unordered_map<aiBone*, ComponentMesh*> meshesByBone,
+		std::vector<std::string>& mesh_files, std::vector<uint>& forcedUuids = std::vector<uint>()) const;
 
+	void RecursivelyProcessBones(GameObject* gameObject, 
+		std::unordered_map<std::string, aiBone*> bonesByName, std::unordered_map<aiBone*, ComponentMesh*> meshesByBone,
+		std::vector<std::string>& bone_files, std::vector<uint>& forcedUuids = std::vector<uint>()) const;
 
 	void ImportAnimations(mutable const aiScene* scene,  std::vector<std::string>& anim_files, const char* anim_name, std::vector<uint>& forcedUuids = std::vector<uint>()) const;
 
@@ -61,10 +67,10 @@ private:
 
 	/*Mutable stuff uwu*/
 	mutable GameObject* imported_root_go = nullptr;
-	mutable GameObject* root_bone = nullptr;
-	mutable std::map<aiBone*, uint> mesh_bone;
-	mutable std::map<std::string, aiBone*> bones;
-	mutable std::map<const aiNode*, GameObject*> relations;
+
+
+
+
 	mutable std::map<std::string, uint> imported_bones;
 	mutable uint bone_root_uuid = 0u;
 };
