@@ -14,7 +14,7 @@
 ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::LabelComponent)
 {
 	App->ui->componentsUI.push_back(this);
-	App->ft->LoadFont("../Game/Assets/Textures/Font/ariali.ttf", 16, charactersBitmap);
+	App->ft->LoadFont("../Game/Assets/Textures/Font/arial.ttf", 72, charactersBitmap);
 	rect = new ComponentRectTransform(parent, RectTransformComponent,ComponentRectTransform::RectFrom::RECT);
 }
 
@@ -41,32 +41,35 @@ void ComponentLabel::Draw(uint ui_shader, uint VAO)
 
 	for (std::string::const_iterator c = finalText.begin(); c != finalText.end(); ++c)
 	{
-		Character character;
-		character = charactersBitmap.find(*c)->second;
-		
-		uint x = rect->GetRect()[0] + character.bearing.x;
-		uint y = rect->GetRect()[1] + (character.size.y - character.bearing.y);
+		if ((int)(*c) >= 0 && (int)(*c) < 128 )
+		{
+			Character character;
+			character = charactersBitmap.find(*c)->second;
 
-		rect->SetRect(x, y, character.size.x, character.size.y);
+			uint x = rect->GetRect()[0] + character.bearing.x;
+			uint y = rect->GetRect()[1] /*+ (character.size.y - character.bearing.y)*/;
 
-		//Shader
-		glUseProgram(ui_shader);
-		SetRectToShader(ui_shader);
-		glUniform1i(glGetUniformLocation(ui_shader, "use_color"), 0);
+			rect->SetRect(x, y, character.size.x, character.size.y);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, character.textureID);
-		glUniform1ui(glGetUniformLocation(ui_shader, "image"), 0);
+			//Shader
+			glUseProgram(ui_shader);
+			SetRectToShader(ui_shader);
+			glUniform1i(glGetUniformLocation(ui_shader, "use_color"), 0);
 
-		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, character.textureID);
+			glUniform1ui(glGetUniformLocation(ui_shader, "image"), 0);
 
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glBindVertexArray(0);
+			glBindVertexArray(VAO);
+			glDrawArrays(GL_TRIANGLES, 0, 6);
 
-		glUseProgram(0);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glBindVertexArray(0);
 
-		rect->SetRectPos(rect->GetRect()[0] - character.bearing.x + character.advance, rectParent[1]);
+			glUseProgram(0);
+
+			rect->SetRectPos(rect->GetRect()[0] - character.bearing.x + character.advance, rectParent[1]);
+		}
 	}
 }
 
@@ -134,12 +137,12 @@ void ComponentLabel::SetRectToShader(uint shader)
 	w_width = App->ui->GetRectUI()[ModuleUI::Screen::WIDTH];
 	w_height = App->ui->GetRectUI()[ModuleUI::Screen::HEIGHT];
 
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
-	glUniform3f(glGetUniformLocation(shader, "topLeft"), pos.x, pos.y, 0.0f);
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
-	glUniform3f(glGetUniformLocation(shader, "topRight"), pos.x, pos.y, 0.0f);
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
+	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[0], (float)rect_points[1] }, w_width, w_height);
 	glUniform3f(glGetUniformLocation(shader, "bottomLeft"), pos.x, pos.y, 0.0f);
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
+	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[0] + (float)rect_points[2], (float)rect_points[1] }, w_width, w_height);
 	glUniform3f(glGetUniformLocation(shader, "bottomRight"), pos.x, pos.y, 0.0f);
+	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[0], (float)rect_points[1] + (float)rect_points[3] }, w_width, w_height);
+	glUniform3f(glGetUniformLocation(shader, "topLeft"), pos.x, pos.y, 0.0f);
+	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[0] + (float)rect_points[2], (float)rect_points[1] + (float)rect_points[3] }, w_width, w_height);
+	glUniform3f(glGetUniformLocation(shader, "topRight"), pos.x, pos.y, 0.0f);
 }
