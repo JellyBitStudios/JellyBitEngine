@@ -6,7 +6,7 @@
 
 ComponentLight::ComponentLight(GameObject* parent) : Component(parent, ComponentTypes::LightComponent)
 {
-	memset(color, 0, sizeof(float) * 3);
+	memset(color, 1, sizeof(float) * 3);
 	App->lights->AddLight(this);
 }
 

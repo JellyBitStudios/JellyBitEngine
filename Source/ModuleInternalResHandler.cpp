@@ -211,8 +211,8 @@ void ModuleInternalResHandler::CreateDefaultTexture()
 
 void ModuleInternalResHandler::CreateLightIcon()
 {
-	lightIcon = ((ResourceTexture*)App->res->ImportFile("Settings/Light_Icon.png"))->GetUuid();
-	App->res->SetAsUsed(lightIcon);
+	lightIcon = App->res->ImportFile("Settings/Light_Icon.png")->GetUuid();
+	App->res->SetAsUsed(lightIcon); // used in lights;
 }
 
 void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, const char* fShader, ShaderProgramTypes type)

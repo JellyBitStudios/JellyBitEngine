@@ -60,10 +60,9 @@ void Lights::UseLights(const unsigned int shaderID) const
 
 void Lights::DebugDrawLights() const
 {
+	glDisable(GL_DEPTH_TEST);
 	for (int i = 0; i < lights.size(); ++i)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		ResourceShaderProgram* resProgram = (ResourceShaderProgram*)App->res->GetResource(App->resHandler->billboardShaderProgram);
 		uint shader = resProgram->shaderProgram;
 		glUseProgram(shader);
@@ -72,6 +71,10 @@ void Lights::DebugDrawLights() const
 		glUniform1i(glGetUniformLocation(shader, "diffuse"), 0);
 
 		math::float4x4 model_matrix = lights[i]->GetParent()->transform->GetGlobalMatrix();
+		math::float3 zAxis = -App->renderer3D->GetCurrentCamera()->frustum.front;
+		math::float3 yAxis = App->renderer3D->GetCurrentCamera()->frustum.up;
+		math::float3 xAxis = yAxis.Cross(zAxis).Normalized();
+		model_matrix.SetRotatePart(math::float3x3(xAxis, yAxis, zAxis));
 		model_matrix = model_matrix.Transposed();
 		ComponentCamera* camera = App->renderer3D->GetCurrentCamera();
 		math::float4x4 view_matrix = camera->GetOpenGLViewMatrix();
@@ -83,8 +86,11 @@ void Lights::DebugDrawLights() const
 		glBindVertexArray(mesh->GetVAO());
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIBO());
 		glDrawElements(GL_TRIANGLES, mesh->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glUseProgram(0);
 	}
+	glEnable(GL_DEPTH_TEST);
 }
