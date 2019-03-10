@@ -667,7 +667,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	// Animations
 
 	// if to draw cmp animator -> res avatar != nullptr, get the avatar bones and load them in the shader
-
+	/*
 	char boneName[DEFAULT_BUF_SIZE];
 	for (uint i = 0; i < toDraw->bonesUuids.size(); ++i)
 	{
@@ -695,6 +695,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 		location = glGetUniformLocation(shader, boneName);
 		glUniformMatrix4fv(location, 1, GL_TRUE, boneTransform.ptr());
 	}
+	*/
 
 	// 3. Unknown mesh uniforms
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();

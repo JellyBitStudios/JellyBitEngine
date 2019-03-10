@@ -558,6 +558,8 @@ bool ResourceMesh::UseAdjacency() const
 
 bool ResourceMesh::AddBones(const std::unordered_map<const char*, uint>& bones)
 {
+	uint addedBones = 0;
+
 	uint boneId = 0; // this id matches the uniform bones array id
 	for (std::unordered_map<const char*, uint>::const_iterator it = bones.begin(); it != bones.end(); ++it, ++boneId)
 	{
@@ -579,19 +581,23 @@ bool ResourceMesh::AddBones(const std::unordered_map<const char*, uint>& bones)
 		// Bone
 		for (uint i = 0; i < meshData.boneInfluencesSize; ++i)
 		{
-			if (strcmp(boneResource->boneData.name.data, meshData.boneInfluences[i].boneName) == 0)
+			if (strcmp(boneResource->boneData.name.data(), meshData.boneInfluences[i].boneName) == 0)
 			{
 				// Vertices influenced by the bone
 				for (uint j = 0; j < meshData.boneInfluences[j].bonesWeightsSize; ++j)
 				{
-					if (!AddBone(meshData.boneInfluences[i].boneIds[i], meshData.boneInfluences[i].boneWeights[i], boneId))
-						CONSOLE_LOG(LogTypes::Error, "Resource Mesh: The bone %s could not be added to the mesh", boneResource->boneData.name.data);
+					if (AddBone(meshData.boneInfluences[i].boneIds[i], meshData.boneInfluences[i].boneWeights[i], boneId))
+						++addedBones;
+					else
+						CONSOLE_LOG(LogTypes::Error, "Resource Mesh: The bone %s could not be added to the mesh", boneResource->boneData.name.data());
 				}
 			}
 			else
-				CONSOLE_LOG(LogTypes::Error, "Resource Mesh: The bone %s could not be found nor added to the mesh", boneResource->boneData.name.data);
+				CONSOLE_LOG(LogTypes::Error, "Resource Mesh: The bone %s could not be found nor added to the mesh", boneResource->boneData.name.data());
 		}
 	}
+
+	return addedBones == boneId;
 }
 
 bool ResourceMesh::AddBone(uint vertexId, float boneWeight, uint boneId)

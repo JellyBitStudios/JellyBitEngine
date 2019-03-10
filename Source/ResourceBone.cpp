@@ -56,11 +56,9 @@ uint ResourceBone::SaveFile(const ResourceData& data, const ResourceBoneData& bo
 	// --------------------------------------------------
 
 	uint size =
-		sizeof(math::float4x4) +
-		sizeof(float) * MAX_WEIGHTS +
-		sizeof(uint) * MAX_WEIGHTS +
-		sizeof(uint) +					// name size
-		sizeof(char) * nameSize;		// name
+		sizeof(math::float4x4) +	// offset matrix
+		sizeof(uint) +				// name size
+		sizeof(char) * nameSize;	// name
 
 	char* buffer = new char[size];
 	char* cursor = buffer;
@@ -71,25 +69,13 @@ uint ResourceBone::SaveFile(const ResourceData& data, const ResourceBoneData& bo
 
 	cursor += bytes;
 
-	// 2. Store weights
-	bytes = sizeof(float) * MAX_WEIGHTS;
-	memcpy(cursor, &boneData.weights, bytes);
-
-	cursor += bytes;
-
-	// 3. Store indices
-	bytes = sizeof(uint) * MAX_WEIGHTS;
-	memcpy(cursor, &boneData.indices, bytes);
-
-	cursor += bytes;
-
-	// 4. Store name size
+	// 2. Store name size
 	bytes = sizeof(uint);
 	memcpy(cursor, &nameSize, bytes);
 
 	cursor += bytes;
 
-	// 5. Store name
+	// 3. Store name
 	bytes = sizeof(char) * nameSize;
 	memcpy(cursor, &boneName, bytes);
 
@@ -136,19 +122,7 @@ bool ResourceBone::LoadFile(const char* file, ResourceBoneData& outputBoneData)
 
 		cursor += bytes;
 
-		// 2. Load weights
-		bytes = sizeof(float) * MAX_WEIGHTS;
-		memcpy(&outputBoneData.weights, cursor, bytes);
-
-		cursor += bytes;
-
-		// 3. Load indices
-		bytes = sizeof(uint) * MAX_WEIGHTS;
-		memcpy(&outputBoneData.indices, cursor, bytes);
-
-		cursor += bytes;
-
-		// 4. Load name size
+		// 2. Load name size
 		bytes = sizeof(uint);
 		uint nameSize = 0;
 		memcpy(&nameSize, cursor, bytes);
@@ -156,7 +130,7 @@ bool ResourceBone::LoadFile(const char* file, ResourceBoneData& outputBoneData)
 
 		cursor += bytes;
 
-		// 5. Load name
+		// 3. Load name
 		bytes = sizeof(char) * nameSize;
 		memcpy(&outputBoneData.name[0], cursor, bytes);
 
