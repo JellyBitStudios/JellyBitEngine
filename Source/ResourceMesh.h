@@ -4,6 +4,7 @@
 #include "Resource.h"
 
 #include <vector>
+#include <unordered_map>
 
 #define MAX_BONES 4
 
