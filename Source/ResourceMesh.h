@@ -69,6 +69,7 @@ struct ResourceMeshData
 	bool adjacency = false;
 	uint* adjacentIndices = nullptr;
 
+	uint bonesWeightsSize[MAX_BONES];
 	float* bonesWeights[MAX_BONES];
 	uint* bonesIds[MAX_BONES];
 	const char* bonesNames[MAX_BONES];

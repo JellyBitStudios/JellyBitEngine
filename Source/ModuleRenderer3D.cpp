@@ -665,6 +665,9 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
 
 	// Animations
+
+	// if to draw cmp animator -> res avatar != nullptr, get the avatar bones and load them in the shader
+
 	char boneName[DEFAULT_BUF_SIZE];
 	for (uint i = 0; i < toDraw->bonesUuids.size(); ++i)
 	{

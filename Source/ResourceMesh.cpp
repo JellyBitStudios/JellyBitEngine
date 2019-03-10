@@ -584,7 +584,11 @@ bool ResourceMesh::AddBones(std::unordered_map<const char*, uint>& bones)
 				float* boneWeight = meshData.bonesWeights[i];
 				uint* vertexId = meshData.bonesIds[i];
 
-				AddBone(vertexId, boneWeight, boneId);
+				for (uint i = 0; i < meshData.bonesWeightsSize[i]; ++i)
+				{
+					if (!AddBone(vertexId[i], boneWeight[i], boneId))
+						CONSOLE_LOG(LogTypes::Error, "Resource Mesh: Bone could not be attached to the mesh");
+				}
 			}
 		}
 	}
@@ -598,10 +602,10 @@ bool ResourceMesh::AddBone(uint vertexId, float boneWeight, uint boneId)
 	for (uint i = 0; i < MAX_BONES; ++i)
 	{
 		// Find an empy slot
-		if (vertex.boneWeights[i] == 0.0f)
+		if (vertex.boneWeight[i] == 0.0f)
 		{
-			vertex.boneWeights[i] = boneWeight;
-			vertex.indices[i] = boneId;
+			vertex.boneWeight[i] = boneWeight;
+			vertex.boneId[i] = boneId;
 			return true;
 		}
 	}

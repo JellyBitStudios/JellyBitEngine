@@ -775,11 +775,10 @@ bool SceneImporter::Load(const void* buffer, uint size, ResourceData& outputData
 	uint texCoordsSize = ranges[5];
 
 	// Bones
-	uint bonesWeightsSize[MAX_BONES];
-	bonesWeightsSize[0] = ranges[6];
-	bonesWeightsSize[1] = ranges[7];
-	bonesWeightsSize[2] = ranges[8];
-	bonesWeightsSize[3] = ranges[9];
+	outputMeshData.bonesWeightsSize[0] = ranges[6];
+	outputMeshData.bonesWeightsSize[1] = ranges[7];
+	outputMeshData.bonesWeightsSize[2] = ranges[8];
+	outputMeshData.bonesWeightsSize[3] = ranges[9];
 
 	outputMeshData.indicesSize = ranges[10];
 	uint nameSize = ranges[11];
@@ -851,9 +850,9 @@ bool SceneImporter::Load(const void* buffer, uint size, ResourceData& outputData
 	// 8. Load bones
 	for (uint i = 0; i < MAX_BONES; ++i)
 	{
-		if (bonesWeightsSize[i] > 0)
+		if (outputMeshData.bonesWeightsSize[i] > 0)
 		{
-			bytes = sizeof(float) * bonesWeightsSize[i];
+			bytes = sizeof(float) * outputMeshData.bonesWeightsSize[i];
 			memcpy(&outputMeshData.bonesWeights[i], cursor, bytes);
 
 			cursor += bytes;
@@ -862,9 +861,9 @@ bool SceneImporter::Load(const void* buffer, uint size, ResourceData& outputData
 		
 	for (uint i = 0; i < MAX_BONES; ++i)
 	{
-		if (bonesWeightsSize[i] > 0)
+		if (outputMeshData.bonesWeightsSize[i] > 0)
 		{
-			bytes = sizeof(uint) * bonesWeightsSize[i];
+			bytes = sizeof(uint) * outputMeshData.bonesWeightsSize[i];
 			memcpy(&outputMeshData.bonesIds[i], cursor, bytes);
 
 			cursor += bytes;
@@ -873,7 +872,7 @@ bool SceneImporter::Load(const void* buffer, uint size, ResourceData& outputData
 
 	for (uint i = 0; i < MAX_BONES; ++i)
 	{
-		if (bonesWeightsSize[i] > 0)
+		if (outputMeshData.bonesWeightsSize[i] > 0)
 		{
 			bytes = sizeof(char) * nameSize;
 			memcpy(&outputMeshData.bonesNames[i], cursor, bytes);
@@ -973,11 +972,11 @@ void SceneImporter::GenerateVAO(uint& VAO, uint& VBO) const
 	glEnableVertexAttribArray(5);
 
 	// 7. Weights
-	glVertexAttribPointer(6, MAX_BONES, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, boneWeights)));
+	glVertexAttribPointer(6, MAX_BONES, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, boneWeight)));
 	glEnableVertexAttribArray(6);
 
 	// 8. Ids
-	glVertexAttribPointer(7, MAX_BONES, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, boneIds)));
+	glVertexAttribPointer(7, MAX_BONES, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, boneId)));
 	glEnableVertexAttribArray(7);
 
 	glBindVertexArray(0);
