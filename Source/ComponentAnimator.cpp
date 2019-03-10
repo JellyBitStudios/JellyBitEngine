@@ -65,8 +65,12 @@ bool ComponentAnimator::SetResourceAnimator(uint resource)
 	if (res > 0)
 		App->res->SetAsUnused(res);
 
-	if (resource > 0)
+	if (resource > 0) {
 		App->res->SetAsUsed(resource);
+		ResourceAnimator* anim_res = (ResourceAnimator*)App->res->GetResource(res);
+		if (anim_res)
+			anim_res->InitAnimator();
+	}
 
 	res = resource;
 
@@ -86,22 +90,14 @@ bool ComponentAnimator::SetResourceAvatar(uint resource)
 	return true;
 }
 
-bool ComponentAnimator::SetAvatarAsUsed(uint avatar_uuid)
-{
-	ResourceAvatar* avatar = (ResourceAvatar*)App->res->GetResource(avatar_uuid);
-	if (avatar) {
-		avatar->IncreaseReferences();
-		return true;
-	}
-	else
-		return false;
-}
-
 void ComponentAnimator::Update()
 {
 	if (res != 0) {
 		ResourceAnimator* anim_res = (ResourceAnimator*)App->res->GetResource(res);
 
+		if (anim_res) {
+			anim_res->Update();
+		}
 
 	}
 }
