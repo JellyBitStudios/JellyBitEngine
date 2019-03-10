@@ -223,8 +223,6 @@ void ComponentButton::OnInternalLoad(char *& cursor)
 	tempBuffer = new char[bytesOnClick];
 	memcpy(tempBuffer, cursor, bytesOnClick);
 	cursor += bytesOnClick;
-
-	LinkToUIModule();
 }
 
 void ComponentButton::OnLoadOnClick(char*& tempBuffer)

@@ -120,6 +120,7 @@ void ComponentCanvasRenderer::OnUniqueEditor()
 
 void ComponentCanvasRenderer::LinkToUIModule()
 {
+	/*
 	if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
 		App->ui->componentsScreenRendererUI.push_back(this);
 	else
@@ -127,9 +128,9 @@ void ComponentCanvasRenderer::LinkToUIModule()
 		App->ui->componentsWorldRendererUI.push_back(this);
 		fromWorld = true;
 	}
-
-	rend_queue.push_back(new ToUIRend());
-	rend_queue.push_back(new ToUIRend());
+	*/
+	//rend_queue.push_back(new ToUIRend());
+	//rend_queue.push_back(new ToUIRend());
 }
 
 //Rend Queue Struct

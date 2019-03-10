@@ -16,16 +16,18 @@
 ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTypes componentType, RectFrom rF) : Component(parent, ComponentTypes::RectTransformComponent)
 {
 	rFrom = rF;
-
-	if (rFrom == RectFrom::WORLD)
+	if (parent->GetParent() != nullptr)
 	{
-		App->ui->componentsWorldUI.push_back(this);
-		App->ui->GOsWorldCanvas.push_back(parent);
-	}
-	else
-		App->ui->componentsUI.push_back(this);
+		if (rFrom == RectFrom::WORLD)
+		{
+			App->ui->componentsWorldUI.push_back(this);
+			App->ui->GOsWorldCanvas.push_back(parent);
+		}
+		else
+			App->ui->componentsUI.push_back(this);
 
-	CheckParentRect();
+		CheckParentRect();
+	}
 }
 
 ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & componentRectTransform, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::RectTransformComponent)
@@ -149,10 +151,13 @@ void ComponentRectTransform::CheckParentRect()
 			parentCorners = r->GetCorners();
 			rectParent = r->GetRect();
 			z = r->GetZ() + ZSEPARATOR;
-			if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
+			if (rectTransform[Rect::XDIST] > rectParent[Rect::XDIST])
 				rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
-			if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
+			if (rectTransform[Rect::YDIST] > rectParent[Rect::YDIST])
 				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
+
+			RecaculateAnchors();
+			RecaculatePercentage();
 
 			ParentChanged();
 		}
@@ -236,6 +241,7 @@ void ComponentRectTransform::UseMarginChanged(bool useMargin)
 void ComponentRectTransform::CalculateRectFromWorld(bool individualcheck)
 {
 	math::float4x4 globalmatrix;
+	transformParent->UpdateGlobal();
 	globalmatrix = transformParent->GetGlobalMatrix();
 
 	corners[Rect::RTOPLEFT] = math::float4(globalmatrix * math::float4(-0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
@@ -661,4 +667,6 @@ void ComponentRectTransform::LinkToUIModule()
 	}
 	else
 		App->ui->componentsUI.push_back(this);
+
+	CheckParentRect();
 }

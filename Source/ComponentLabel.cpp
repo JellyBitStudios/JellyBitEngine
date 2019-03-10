@@ -37,9 +37,7 @@ void ComponentLabel::OnInternalSave(char *& cursor)
 }
 
 void ComponentLabel::OnInternalLoad(char *& cursor)
-{
-	LinkToUIModule();
-}
+{}
 
 void ComponentLabel::OnUniqueEditor()
 {
