@@ -66,6 +66,8 @@ bool PanelAssets::Draw()
 			System_Event newEvent;
 			newEvent.type = System_Event_Type::GenerateLibraryFiles;
 			App->PushSystemEvent(newEvent);
+
+			App->fs->build = true;
 		}
 
 		bool treeNodeOpened = ImGui::TreeNodeEx(DIR_ASSETS);

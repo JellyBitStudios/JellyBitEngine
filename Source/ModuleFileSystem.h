@@ -336,6 +336,8 @@ public:
 public:
 	Directory rootDir;
 
+	bool build = false;
+
 private:
 	float updateAssetsRate = 1.0f;	
 	std::string tempException;

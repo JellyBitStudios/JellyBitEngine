@@ -179,6 +179,30 @@ void ModuleFileSystem::OnSystemEvent(System_Event event)
 {
 	switch (event.type)
 	{
+		case System_Event_Type::Build:
+		{
+			if (build)
+			{
+#ifndef GAMEMODE
+				char pathBuild[DEFAULT_BUF_SIZE];
+				strcpy(pathBuild, "Build");
+				//std::string zip_path = PHYSFS_getBaseDir();
+				//zip_path += "Build.zip";
+				Directory root = RecursiveGetFilesFromDir("");
+				//if (Exists("Build.zip"))
+					//deleteFile("Build.zip");
+				if (Exists(pathBuild))
+					deleteFiles(pathBuild, "", true, true);
+
+				if (CreateDir(pathBuild))
+					RecursiveBuild(root, pathBuild);
+
+				build = false;
+#endif			
+			}
+			break;
+		}
+	
 		case System_Event_Type::FileDropped:
 		{
 #ifndef GAMEMODE
@@ -236,25 +260,6 @@ void ModuleFileSystem::OnSystemEvent(System_Event event)
 			sprintf(originExFile, "Exception/%s", fileName.data());
 			MoveFileInto(originExFile, destinationFile);
 			EndTempException();
-#endif
-			break;
-		}
-		case System_Event_Type::GenerateLibraryFiles:
-
-		{
-#ifndef GAMEMODE
-			char pathBuild[DEFAULT_BUF_SIZE];
-			strcpy(pathBuild, "Build");
-			//std::string zip_path = PHYSFS_getBaseDir();
-			//zip_path += "Build.zip";
-			Directory root = RecursiveGetFilesFromDir("");
-			//if (Exists("Build.zip"))
-				//deleteFile("Build.zip");
-			if (Exists(pathBuild))
-				deleteFiles(pathBuild, "", true, true);
-
-			if (CreateDir(pathBuild))
-				RecursiveBuild(root, pathBuild);
 #endif
 			break;
 		}

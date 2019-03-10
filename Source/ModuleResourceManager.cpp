@@ -383,7 +383,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 		std::vector<std::string> mesh_files;
 		std::vector<std::string> bone_files;
 		std::vector<std::string> animation_files;
-		if (ResourceMesh::ImportFile(file, meshImportSettings, mesh_files, bone_files,animation_files))
+		if (ResourceMesh::ImportFile(file, meshImportSettings, mesh_files, bone_files, animation_files))
 		{
 			std::vector<uint> resourcesUuids;
 			std::vector<uint> meshes_uuids;
@@ -467,7 +467,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 			}
 			else
 				resource = GetResource(resourcesUuids.front());
-			
+
 			// TODO_G : separate mesh / bones resources uuids from resourcesUuids
 
 			for (uint i = 0u; i < resourcesUuids.size(); i++)
@@ -781,7 +781,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 			{
 				// Create the resources
 				CONSOLE_LOG(LogTypes::Normal, "RESOURCE MANAGER: The AnimationResource file '%s' has resources that need to be created", file);
-			
+
 				// UUID
 				uint uuid = outputFile.empty() ? App->GenerateRandomNumber() : strtoul(outputFile.data(), NULL, 0);
 				assert(uuid > 0);
@@ -819,8 +819,11 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 	case ResourceTypes::AudioBankResource:
 		resource = ResourceAudioBank::ImportFile(file);
 		break;
-
 	}
+
+	System_Event newEvent;
+	newEvent.type = System_Event_Type::Build;
+	App->PushSystemEvent(newEvent);
 
 	return resource;
 }
