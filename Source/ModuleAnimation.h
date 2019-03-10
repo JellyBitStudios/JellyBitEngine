@@ -48,7 +48,6 @@ public:
 	ModuleAnimation();
 	~ModuleAnimation();
 
-	void OnSystemEvent(System_Event event);
 
 	// Called before render is available
 	bool Awake(JSON_Object* config = nullptr);
@@ -58,11 +57,6 @@ public:
 	bool CleanUp();
 	update_status Update();
 
-	bool StartAttachingBones();
-	void RecursiveFindBones(const GameObject * go, std::vector<ComponentBone*>& found) const;
-	void DetachBones(GameObject* go);
-
-	void SetUpAnimations();
 	void SetAnimationGos(ResourceAnimation* res);
 
 	float GetCurrentAnimationTime() const;
@@ -73,7 +67,6 @@ public:
 	void SetCurrentAnimationTime(float time);
 	bool SetCurrentAnimation(const char* anim_name);
 
-	void CleanAnimableGOS();
 
 	void PlayAnimation();
 	void PauseAnimation();
@@ -81,10 +74,6 @@ public:
 	void StepBackwards();
 	void StepForward();
 
-private:
-
-	void RecursiveGetAnimableGO(GameObject* go, BoneTransformation* bone_transformation, Animation* animation);
-	void MoveAnimationForward(float t, Animation* current_animation, float blend = 1.0f);
 
 private:
 

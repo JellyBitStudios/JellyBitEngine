@@ -92,7 +92,7 @@ update_status ModuleAnimation::Update()
 	{
 	case AnimationState::PLAYING:
 		current_anim->anim_timer += dt * current_anim->anim_speed;
-		MoveAnimationForward(current_anim->anim_timer, current_anim);
+		//MoveAnimationForward(current_anim->anim_timer, current_anim);
 		break;
 
 	case AnimationState::PAUSED:
@@ -100,7 +100,7 @@ update_status ModuleAnimation::Update()
 
 	case AnimationState::STOPPED:
 		current_anim->anim_timer = 0.0f;
-		MoveAnimationForward(current_anim->anim_timer, current_anim);
+		//MoveAnimationForward(current_anim->anim_timer, current_anim);
 		PauseAnimation();
 		break;
 
@@ -109,8 +109,8 @@ update_status ModuleAnimation::Update()
 		current_anim->anim_timer += dt * current_anim->anim_speed;
 		blend_timer += dt;
 		float blend_percentage = blend_timer / BLEND_TIME;
-		MoveAnimationForward(last_anim->anim_timer, last_anim);
-		MoveAnimationForward(current_anim->anim_timer, current_anim, blend_percentage);
+		//MoveAnimationForward(last_anim->anim_timer, last_anim);
+		//MoveAnimationForward(current_anim->anim_timer, current_anim, blend_percentage);
 		if (blend_percentage >= 1.0f) {
 			anim_state = PLAYING;
 		}
@@ -166,7 +166,7 @@ void ModuleAnimation::SetCurrentAnimationTime(float time)
 	if (stop_all)
 		return;
 	current_anim->anim_timer = time;
-	MoveAnimationForward(current_anim->anim_timer, current_anim);
+	//MoveAnimationForward(current_anim->anim_timer, current_anim);
 }
 
 bool ModuleAnimation::SetCurrentAnimation(const char* anim_name)
@@ -212,8 +212,8 @@ void ModuleAnimation::StepBackwards()
 
 		if (current_anim->anim_timer < 0.0f)
 			current_anim->anim_timer = 0.0f;
-		else
-			MoveAnimationForward(current_anim->anim_timer, current_anim);
+		//else
+			//MoveAnimationForward(current_anim->anim_timer, current_anim);
 
 		PauseAnimation();
 	}
@@ -227,8 +227,8 @@ void ModuleAnimation::StepForward()
 
 		if (current_anim->anim_timer > current_anim->duration)
 			current_anim->anim_timer = 0.0f;
-		else
-			MoveAnimationForward(current_anim->anim_timer, current_anim);
+		//else
+			//MoveAnimationForward(current_anim->anim_timer, current_anim);
 
 		PauseAnimation();
 	}
