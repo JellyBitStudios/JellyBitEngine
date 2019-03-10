@@ -338,11 +338,14 @@ void ModuleScene::RecalculateQuadtree()
 void ModuleScene::CreateRandomStaticGameObject()
 {
 	GameObject* random = App->GOs->CreateGameObject("Random", root);
-	random->transform->position = math::float3(rand() % (50 + 50 + 1) - 50, rand() % 10, rand() % (50 + 50 + 1) - 50);
+	random->transform->SetPosition(math::float3(rand() % (50 + 50 + 1) - 50, rand() % 10, rand() % (50 + 50 + 1) - 50));
 
-	const math::float3 center(random->transform->position.x, random->transform->position.y, random->transform->position.z);
+	math::float3 pos = random->transform->GetPosition();
+
+	const math::float3 center(pos.x, pos.y, pos.z);
 	const math::float3 size(2.0f, 2.0f, 2.0f);
 	random->boundingBox.SetFromCenterAndSize(center, size);
+	random->originalBoundingBox.SetFromCenterAndSize(center, size);
 
 	quadtree.Insert(random);
 }

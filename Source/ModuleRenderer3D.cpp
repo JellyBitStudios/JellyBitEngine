@@ -318,6 +318,15 @@ void ModuleRenderer3D::OnSystemEvent(System_Event event)
 		{
 			if (App->GetEngineState() == ENGINE_PLAY)
 				SetCurrentCamera();
+
+#ifndef GAMEMODE
+			CalculateProjectionMatrix();
+#endif // !GAMEMODE
+
+			// Update all GameObjects transforms
+			if (App->scene->root && App->scene->root->transform)
+				App->scene->root->transform->UpdateGlobal(); 
+
 			break;
 		}
 	}

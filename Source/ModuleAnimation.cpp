@@ -319,9 +319,9 @@ void ModuleAnimation::MoveAnimationForward(float time, Animation* current_animat
 			math::float3 pos, scale;
 			math::Quat rot;
 
-			pos = current_animation->animable_gos[i]->transform->position;
-			scale = current_animation->animable_gos[i]->transform->scale;
-			rot = current_animation->animable_gos[i]->transform->rotation;
+			pos = current_animation->animable_gos[i]->transform->GetPosition();
+			scale = current_animation->animable_gos[i]->transform->GetScale();
+			rot = current_animation->animable_gos[i]->transform->GetRotation();
 
 			float* prev_pos = nullptr;
 			float* next_pos = nullptr;
@@ -470,18 +470,18 @@ void ModuleAnimation::MoveAnimationForward(float time, Animation* current_animat
 
 			if (blend >= 1.f)
 			{
-				current_animation->animable_gos[i]->transform->position = pos;
-				current_animation->animable_gos[i]->transform->scale = scale;
-				current_animation->animable_gos[i]->transform->rotation = rot;
+				current_animation->animable_gos[i]->transform->SetPosition(pos);
+				current_animation->animable_gos[i]->transform->SetScale(scale);
+				current_animation->animable_gos[i]->transform->SetRotation(rot);
 			}
 			else
 			{
 				math::float3 pos2, scale2;
 				math::Quat rot2;
 
-				pos2 = current_animation->animable_gos[i]->transform->position;
-				scale2 = current_animation->animable_gos[i]->transform->scale;
-				rot2 = current_animation->animable_gos[i]->transform->rotation;
+				pos2 = current_animation->animable_gos[i]->transform->GetPosition();
+				scale2 = current_animation->animable_gos[i]->transform->GetScale();
+				rot2 = current_animation->animable_gos[i]->transform->GetRotation();
 
 				math::float3 pos3, scale3;
 				math::Quat rot3;
@@ -490,9 +490,9 @@ void ModuleAnimation::MoveAnimationForward(float time, Animation* current_animat
 				scale3 = math::float3::Lerp(scale2, scale, blend);
 				rot3 = math::Quat::Slerp(rot2, rot, blend);
 				
-				current_animation->animable_gos[i]->transform->position = pos3;
-				current_animation->animable_gos[i]->transform->scale = scale3;
-				current_animation->animable_gos[i]->transform->rotation = rot3;
+				current_animation->animable_gos[i]->transform->SetPosition(pos3);
+				current_animation->animable_gos[i]->transform->SetScale(scale3);
+				current_animation->animable_gos[i]->transform->SetRotation(rot3);
 
 			}
 		}

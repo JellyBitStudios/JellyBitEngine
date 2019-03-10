@@ -1096,13 +1096,13 @@ MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, M
 		if (position)
 		{
 			math::float3 newPos{mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2)};
-			instance->transform->position = newPos;
+			instance->transform->SetPosition(newPos);
 		}
 
 		if (rotation)
 		{
 			math::Quat newRotation{ mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2), mono_array_get(position, float, 3)};
-			instance->transform->rotation = newRotation;
+			instance->transform->SetRotation(newRotation);
 		}
 
 		uint32_t handleID = mono_gchandle_new(monoInstance, true);
@@ -1153,13 +1153,13 @@ MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, M
 		if (position)
 		{
 			math::float3 newPos{ mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2) };
-			newGameObject->transform->position = newPos;
+			newGameObject->transform->SetPosition(newPos);
 		}
 
 		if (rotation)
 		{
 			math::Quat newRotation{ mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2), mono_array_get(position, float, 3) };
-			newGameObject->transform->rotation = newRotation;
+			newGameObject->transform->SetRotation(newRotation);
 		}
 
 		App->scripting->ExecuteCallbacks(newGameObject);
@@ -1343,9 +1343,10 @@ MonoArray* GetLocalPosition(MonoObject* monoObject)
 
 	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_int32_class(), 3);
 
-	mono_array_set(ret, float, 0, gameObject->transform->position.x);
-	mono_array_set(ret, float, 1, gameObject->transform->position.y);
-	mono_array_set(ret, float, 2, gameObject->transform->position.z);
+	math::float3 pos = gameObject->transform->GetPosition();
+	mono_array_set(ret, float, 0, pos.x);
+	mono_array_set(ret, float, 1, pos.y);
+	mono_array_set(ret, float, 2, pos.z);
 
 	return ret;
 }
@@ -1363,9 +1364,11 @@ void SetLocalPosition(MonoObject* monoObject, MonoArray* position)
 	if (!gameObject->transform)
 		return;
 
-	gameObject->transform->position.x = mono_array_get(position, float, 0);
-	gameObject->transform->position.y = mono_array_get(position, float, 1);
-	gameObject->transform->position.z = mono_array_get(position, float, 2);
+	math::float3 pos = math::float3::zero;
+	pos.x = mono_array_get(position, float, 0);
+	pos.y = mono_array_get(position, float, 1);
+	pos.z = mono_array_get(position, float, 2);
+	gameObject->transform->SetPosition(pos);
 }
 
 MonoArray* GetLocalRotation(MonoObject* monoObject)
@@ -1383,10 +1386,11 @@ MonoArray* GetLocalRotation(MonoObject* monoObject)
 
 	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_int32_class(), 4);
 
-	mono_array_set(ret, float, 0, gameObject->transform->rotation.x);
-	mono_array_set(ret, float, 1, gameObject->transform->rotation.y);
-	mono_array_set(ret, float, 2, gameObject->transform->rotation.z);
-	mono_array_set(ret, float, 3, gameObject->transform->rotation.w);
+	math::Quat rot = gameObject->transform->GetRotation();
+	mono_array_set(ret, float, 0, rot.x);
+	mono_array_set(ret, float, 1, rot.y);
+	mono_array_set(ret, float, 2, rot.z);
+	mono_array_set(ret, float, 3, rot.w);
 
 	return ret;
 }
@@ -1404,10 +1408,12 @@ void SetLocalRotation(MonoObject* monoObject, MonoArray* rotation)
 	if (!gameObject->transform)
 		return;
 
-	gameObject->transform->rotation.x = mono_array_get(rotation, float, 0);
-	gameObject->transform->rotation.y = mono_array_get(rotation, float, 1);
-	gameObject->transform->rotation.z = mono_array_get(rotation, float, 2);
-	gameObject->transform->rotation.w = mono_array_get(rotation, float, 3);
+	math::Quat rot = math::Quat::identity;
+	rot.x = mono_array_get(rotation, float, 0);
+	rot.y = mono_array_get(rotation, float, 1);
+	rot.z = mono_array_get(rotation, float, 2);
+	rot.w = mono_array_get(rotation, float, 3);
+	gameObject->transform->SetRotation(rot);
 }
 
 MonoArray* GetLocalScale(MonoObject* monoObject)
@@ -1425,9 +1431,11 @@ MonoArray* GetLocalScale(MonoObject* monoObject)
 
 	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_int32_class(), 3);
 
-	mono_array_set(ret, float, 0, gameObject->transform->scale.x);
-	mono_array_set(ret, float, 1, gameObject->transform->scale.y);
-	mono_array_set(ret, float, 2, gameObject->transform->scale.z);
+
+	math::float3 scale = gameObject->transform->GetScale();
+	mono_array_set(ret, float, 0, scale.x);
+	mono_array_set(ret, float, 1, scale.y);
+	mono_array_set(ret, float, 2, scale.z);
 
 	return ret;
 }
@@ -1445,9 +1453,12 @@ void SetLocalScale(MonoObject* monoObject, MonoArray* scale)
 	if (!gameObject->transform)
 		return;
 
-	gameObject->transform->scale.x = mono_array_get(scale, float, 0);
-	gameObject->transform->position.y = mono_array_get(scale, float, 1);
-	gameObject->transform->scale.z = mono_array_get(scale, float, 2);
+
+	math::float3 newScale = math::float3::zero;
+	newScale.x = mono_array_get(scale, float, 0);
+	newScale.y = mono_array_get(scale, float, 1);
+	newScale.z = mono_array_get(scale, float, 2);
+	gameObject->transform->SetScale(newScale);
 }
 
 MonoArray* GetGlobalPos(MonoObject* monoObject)

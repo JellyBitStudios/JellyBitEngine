@@ -158,7 +158,7 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 
 		std::vector<uint> dummyForcedUuids = forced_meshes_uuids;
 		RecursivelyImportNodes(scene, rootNode, rootGameObject, nullptr, mesh_files, bone_files/*not needed but ok*/, dummyForcedUuids);
-		rootGameObject->transform->scale *= importSettings.scale;
+		rootGameObject->transform->Scale(importSettings.scale);
 		RecursiveProcessBones(scene, scene->mRootNode, bone_files,forced_bones_uuids);	
 		ImportAnimations(scene, anim_files, prefabName, forced_anim_uuids);
 
@@ -233,15 +233,20 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 
 	if (transformation != nullptr)
 	{
-		gameObject->transform->position = transformation->transform->position + newPosition;
-		gameObject->transform->rotation = transformation->transform->rotation * newRotation;
-		gameObject->transform->scale = { transformation->transform->scale.x * newScale.x, transformation->transform->scale.y * newScale.y, transformation->transform->scale.z * newScale.z };
+		math::float3 pos = transformation->transform->GetPosition();
+		gameObject->transform->SetPosition(pos + newPosition);
+
+		math::Quat rot = transformation->transform->GetRotation();
+		gameObject->transform->SetRotation(rot * newRotation);
+
+		math::float3 scale = transformation->transform->GetScale();
+		gameObject->transform->SetScale({scale.x * newScale.x, scale.y * newScale.y,scale.z * newScale.z });
 	}
 	else
 	{
-		gameObject->transform->position = newPosition;
-		gameObject->transform->rotation = newRotation;
-		gameObject->transform->scale = newScale;
+		gameObject->transform->SetPosition(newPosition);
+		gameObject->transform->SetRotation(newRotation);
+		gameObject->transform->SetScale(newScale);
 	}
 
 	// Meshes

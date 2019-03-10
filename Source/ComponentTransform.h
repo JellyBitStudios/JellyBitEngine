@@ -28,20 +28,43 @@ public:
 	void SavePrevTransform(const math::float4x4 & prevTransformMat);
 
 	math::float4x4& GetMatrix() const;
-	math::float4x4& GetGlobalMatrix() const;
 	void SetMatrixFromGlobal(math::float4x4& globalMatrix);
+
+	math::float4x4 GetGlobalMatrix() const;
+
+	void UpdateGlobal();
+
+	void SetPosition(math::float3 newPos);
+	void SetPosition(const float newPos[3]);
+	void SetRotation(math::Quat newRot);
+	void SetScale(math::float3 newScale);
+
+	void Move(math::float3 distance);
+	void Move(const float distance[3]);
+	void Rotate(math::Quat rotation);
+	void Scale(math::float3 scale);
+	void Scale(float scale);
+
+	math::float3 GetPosition() const;
+	math::Quat GetRotation() const;
+	math::float3 GetScale() const;
+
+
 
 	uint GetInternalSerializationBytes();
 	virtual void OnInternalSave(char*& cursor);
 	virtual void OnInternalLoad(char*& cursor);
 
 public:
+	bool dragTransform = false;
 
+private:
 	math::float3 position = math::float3::zero;
 	math::Quat rotation = math::Quat::identity;
 	math::float3 scale = math::float3::one;
 
-	bool dragTransform = false;
+	math::float4x4 globalMatrix = math::float4x4::identity;
+
 };
 
 #endif

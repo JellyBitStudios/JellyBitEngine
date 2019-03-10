@@ -106,6 +106,7 @@ bool PanelHierarchy::Draw()
 
 			App->res->SetAsUnused(prefab->GetUuid());
 		}
+
 		ImGui::EndDragDropTarget();
 	}
 	if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT && //You Found a Easter EGG!

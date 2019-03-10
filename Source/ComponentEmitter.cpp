@@ -241,7 +241,7 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType)
 	{
 	case ShapeType_BOX:
 		spawn = boxCreation.RandomPointInside(App->randomMathLCG);
-		startValues.particleDirection = (math::float3::unitY * parent->transform->rotation.ToFloat3x3().Transposed()).Normalized();
+		startValues.particleDirection = (math::float3::unitY * parent->transform->GetRotation().ToFloat3x3().Transposed()).Normalized();
 		break;
 
 	case ShapeType_SPHERE:
@@ -266,7 +266,7 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType)
 		angle = (2 * PI) * (float)App->GenerateRandomNumber() / MAXUINT;
 		centerDist = (float)App->GenerateRandomNumber() / MAXUINT;
 
-		circleCreation.pos = (math::float3(0, coneHeight, 0) * parent->transform->rotation.ToFloat3x3().Transposed());
+		circleCreation.pos = (math::float3(0, coneHeight, 0) * parent->transform->GetRotation().ToFloat3x3().Transposed());
 		startValues.particleDirection = (circleCreation.GetPoint(angle, centerDist)).Normalized();
 		break;
 	}
@@ -625,7 +625,7 @@ void ComponentEmitter::ParticleSubEmitter()
 				subEmitter = App->GOs->CreateGameObject("SubEmition",parent);
 				subEmitter->AddComponent(EmitterComponent);
 				((ComponentEmitter*)subEmitter->GetComponent(EmitterComponent))->isSubEmitter = true;
-				subEmitter->originalBoundingBox.SetFromCenterAndSize(subEmitter->transform->position, math::float3::one);
+				subEmitter->originalBoundingBox.SetFromCenterAndSize(subEmitter->transform->GetPosition(), math::float3::one);
 				App->scene->quadtree.Insert(subEmitter);
 			}
 		}

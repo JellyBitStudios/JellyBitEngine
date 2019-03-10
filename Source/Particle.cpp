@@ -168,7 +168,7 @@ void Particle::EndParticle()
 		ComponentEmitter* emitter = (ComponentEmitter*)owner->subEmitter->GetComponent(EmitterComponent);
 		if (subEmitterActive && emitter)
 		{
-			math::float3 globalPos = owner->subEmitter->transform->position;
+			math::float3 globalPos = owner->subEmitter->transform->GetPosition();
 			emitter->newPositions.push_back(transform.position - globalPos);
 		}
 	}
