@@ -50,11 +50,26 @@ void Lights::UseLights(const unsigned int shaderID) const
 	for (int i = 0; i < lights.size(); ++i)
 	{
 		char str[20];
-		sprintf(str, "lights[%i].Dir", i);
-		math::float3 dir = lights[i]->GetParent()->transform->GetGlobalMatrix().WorldZ();
-		glUniform3fv(glGetUniformLocation(shaderID, str), 1, dir.ptr());
-		sprintf(str, "lights[%i].Color", i);
+		sprintf(str, "lights[%i].type", i);
+		glUniform1i(glGetUniformLocation(shaderID, str), lights[i]->lightType);
+		if (lights[i]->lightType == LightTypes::DirectionalLight)
+		{
+			sprintf(str, "lights[%i].dir", i);
+			math::float3 dir = lights[i]->GetParent()->transform->GetGlobalMatrix().WorldZ();
+			glUniform3fv(glGetUniformLocation(shaderID, str), 1, dir.ptr());
+		}
+		else
+		{
+			sprintf(str, "lights[%i].position", i);
+			math::float3 pos = lights[i]->GetParent()->transform->GetGlobalMatrix().TranslatePart();
+			glUniform3fv(glGetUniformLocation(shaderID, str), 1, pos.ptr());
+		}
+		sprintf(str, "lights[%i].color", i);
 		glUniform3fv(glGetUniformLocation(shaderID, str), 1, lights[i]->color);
+		sprintf(str, "lights[%i].linear", i);
+		glUniform1f(glGetUniformLocation(shaderID, str), lights[i]->linear);
+		sprintf(str, "lights[%i].quadratic", i);
+		glUniform1f(glGetUniformLocation(shaderID, str), lights[i]->quadratic);
 	}
 }
 

@@ -6,7 +6,10 @@
 
 ComponentLight::ComponentLight(GameObject* parent) : Component(parent, ComponentTypes::LightComponent)
 {
-	memset(color, 1, sizeof(float) * 3);
+	// Default color
+	color[0] = 1.0f;
+	color[1] = 0.9568627f;
+	color[2] = 0.8392157f;
 	App->lights->AddLight(this);
 }
 
@@ -29,7 +32,7 @@ void ComponentLight::OnUniqueEditor()
 	ImGui::Text("Type");
 	ImGui::SameLine();
 	ImGui::PushItemWidth(100.0f);
-	const char* lights[] = { "Directional", "Point", "Spot" };
+	const char* lights[] = { "", "Directional", "Point", "Spot" };
 	ImGui::Combo("##Light Type", (int*)&lightType, lights, IM_ARRAYSIZE(lights));
 	ImGui::PopItemWidth();
 	ImGui::AlignTextToFramePadding();

@@ -67,9 +67,13 @@
 "uniform sampler2D gNormal;\n"																\
 "uniform sampler2D gAlbedoSpec;\n"															\
 "struct Light {\n"																			\
-"vec3 Dir;\n"																				\
-"vec3 Color;\n"																				\
-"};			\n"																				\
+"int type;\n"																				\
+"vec3 dir;\n"																				\
+"vec3 position;\n"																			\
+"vec3 color;\n"																				\
+"float linear;\n"																			\
+"float quadratic;\n"																		\
+"};\n"																						\
 "const int NR_LIGHTS = 32;\n"																\
 "uniform Light lights[NR_LIGHTS];\n"														\
 "void main()\n"																				\
@@ -81,10 +85,20 @@
 "	vec3 lighting = Albedo * 0.3; // hard-coded ambient component\n"						\
 "	for (int i = 0; i < NR_LIGHTS; ++i) \n"													\
 "	{\n"																					\
-"		vec3 diffuse = max(dot(Normal, lights[i].Dir), 0.0) * Albedo * lights[i].Color;\n"	\
-"		lighting += diffuse; \n"															\
+"		vec3 diffuse = vec3(0.0,0.0,0.0);\n"																	\
+"		if (lights[i].type == 1)\n"															\
+"			diffuse = max(dot(Normal, lights[i].dir), 0.0) * Albedo * lights[i].color;\n"	\
+"		else if (lights[i].type == 2)\n"																				\
+"		{\n"																				\
+"			 vec3 lightDir = normalize(lights[i].position - FragPos);\n"\
+"			 diffuse = max(dot(Normal, lightDir), 0.0) * Albedo * lights[i].color;\n"\
+"			 float distance = length(lights[i].position - FragPos);\n"\
+"			 float attenuation = 1.0 / (1.0 + lights[i].linear * distance + lights[i].quadratic * distance * distance);\n"\
+"			 diffuse *= attenuation;\n"																				\
+"		}\n"																				\
+"		lighting += diffuse;\n"															\
 "	}\n"																					\
-"	FragColor = vec4(lighting, 1.0); \n"													\
+"	FragColor = vec4(lighting, 1.0);\n"													\
 "}"
 
 #pragma endregion
