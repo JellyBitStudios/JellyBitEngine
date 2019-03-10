@@ -5,6 +5,8 @@
 #include <string>
 #include <map>
 
+#include "MathGeoLib/include/Math/float4.h"
+
 struct Character;
 class ComponentRectTransform;
 
@@ -32,9 +34,11 @@ private:
 
 private:
 	std::string finalText;
-	int size = 16;
+	int size = 72;
+	int sizeLoaded = 72;
 	ComponentRectTransform* rect = nullptr;
 	std::map<char, Character> charactersBitmap;
+	math::float4 color = math::float4(0.0f, 0.0f, 0.0f, 1.0f);
 
 };
 

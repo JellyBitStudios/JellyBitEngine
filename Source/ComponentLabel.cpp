@@ -14,7 +14,7 @@
 ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::LabelComponent)
 {
 	App->ui->componentsUI.push_back(this);
-	App->ft->LoadFont("../Game/Assets/Textures/Font/arial.ttf", 72, charactersBitmap);
+	App->ft->LoadFont("../Game/Assets/Textures/Font/arial.ttf", size, charactersBitmap);
 	rect = new ComponentRectTransform(parent, RectTransformComponent,ComponentRectTransform::RectFrom::RECT);
 }
 
@@ -38,7 +38,8 @@ void ComponentLabel::Draw(uint ui_shader, uint VAO)
 {
 	uint* rectParent = parent->cmp_rectTransform->GetRect();
 	rect->SetRect(rectParent[0], rectParent[1], 0, 0);
-
+	float sizeNorm = size / (float)sizeLoaded;
+	
 	for (std::string::const_iterator c = finalText.begin(); c != finalText.end(); ++c)
 	{
 		if ((int)(*c) >= 0 && (int)(*c) < 128 )
@@ -49,12 +50,15 @@ void ComponentLabel::Draw(uint ui_shader, uint VAO)
 			uint x = rect->GetRect()[0] + character.bearing.x;
 			uint y = rect->GetRect()[1] /*+ (character.size.y - character.bearing.y)*/;
 
-			rect->SetRect(x, y, character.size.x, character.size.y);
+			rect->SetRect(x, y, character.size.x * sizeNorm, character.size.y * sizeNorm);
 
 			//Shader
 			glUseProgram(ui_shader);
 			SetRectToShader(ui_shader);
-			glUniform1i(glGetUniformLocation(ui_shader, "use_color"), 0);
+			glUniform1i(glGetUniformLocation(ui_shader, "use_color"), 1);
+			glUniform1i(glGetUniformLocation(ui_shader, "isLabel"), 1);
+
+			glUniform4f(glGetUniformLocation(ui_shader, "spriteColor"), color.x, color.y, color.w, color.z);
 
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, character.textureID);
@@ -99,16 +103,20 @@ void ComponentLabel::OnUniqueEditor()
 
 	static char text[300] = "Edit Text";
 	float sizeX = ImGui::GetWindowWidth();
-	ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(sizeX, ImGui::GetTextLineHeight()*15), ImGuiInputTextFlags_AllowTabInput);
-
+	ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(sizeX, ImGui::GetTextLineHeight()*7), ImGuiInputTextFlags_AllowTabInput);
 	finalText = text;
-	ImGui::Text(finalText.c_str());
+
+	ImGui::PushItemWidth(200.0f);
+	ImGui::ColorEdit4("Color", &color.x, ImGuiColorEditFlags_AlphaBar);
 
 	ImGui::Separator();
 	ImGui::DragInt("Load new size", &size, 1.0f, 0, 72);
 	if (ImGui::Button("Fix new size", ImVec2(125, 20)))
-		App->ft->LoadFont("../Game/Assets/Textures/Font/ariali.ttf", size, charactersBitmap);
-
+	{
+		charactersBitmap.clear();
+		App->ft->LoadFont("../Game/Assets/Textures/Font/arial.ttf", size, charactersBitmap);
+		sizeLoaded = size;
+	}
 
 #endif
 }

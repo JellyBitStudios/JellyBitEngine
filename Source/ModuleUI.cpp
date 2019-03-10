@@ -203,6 +203,7 @@ void ModuleUI::DrawUIColor(ComponentRectTransform* rect, math::float4& color, fl
 	use(ui_shader);
 	SetRectToShader(rect);
 	setBool(ui_shader, "use_color", true);
+	setBool(ui_shader, "isLabel", false);
 	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
 
 	glBindVertexArray(reference_vertex);
@@ -218,6 +219,7 @@ void ModuleUI::DrawUITexture(ComponentRectTransform * rect, uint id_texture, flo
 	use(ui_shader);
 	SetRectToShader(rect);
 	setBool(ui_shader, "use_color", false);
+	setBool(ui_shader, "isLabel", false);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, id_texture);
@@ -230,14 +232,6 @@ void ModuleUI::DrawUITexture(ComponentRectTransform * rect, uint id_texture, flo
 	glBindVertexArray(0);
 
 	use(0);
-}
-
-void ModuleUI::DrawUIText(ComponentRectTransform * rect, const char * text, float rotation)
-{
-
-
-
-
 }
 
 void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
