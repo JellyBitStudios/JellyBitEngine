@@ -5,6 +5,9 @@
 #include "Application.h"
 #include "Brofiler/Brofiler.h"
 #include "ModuleTimeManager.h"
+#include "Application.h"
+#include "ResourceAvatar.h"
+#include "ModuleResourceManager.h"
 
 #include <assert.h>
 
@@ -540,7 +543,10 @@ bool ResourceAnimator::Update()
 	{
 	case AnimationState::PLAYING:
 		current_anim->anim_timer += dt * current_anim->anim_speed;
-		//MoveAnimationForward(current_anim->anim_timer, current_anim);
+		ResourceAvatar* tmp_avatar = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
+		if (tmp_avatar) {
+			tmp_avatar->StepBones(current_anim->animation_uuid, current_anim->anim_timer);
+		}
 		break;
 
 	case AnimationState::PAUSED:
@@ -548,7 +554,10 @@ bool ResourceAnimator::Update()
 
 	case AnimationState::STOPPED:
 		current_anim->anim_timer = 0.0f;
-		//MoveAnimationForward(current_anim->anim_timer, current_anim);
+		ResourceAvatar* tmp_avatar = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
+		if (tmp_avatar) {
+			tmp_avatar->StepBones(current_anim->animation_uuid, current_anim->anim_timer);
+		}
 		PauseAnimation();
 		break;
 
@@ -557,8 +566,12 @@ bool ResourceAnimator::Update()
 		current_anim->anim_timer += dt * current_anim->anim_speed;
 		blend_timer += dt;
 		float blend_percentage = blend_timer / BLEND_TIME;
-		//MoveAnimationForward(last_anim->anim_timer, last_anim);
-		//MoveAnimationForward(current_anim->anim_timer, current_anim, blend_percentage);
+
+		ResourceAvatar* tmp_avatar = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
+		if (tmp_avatar) {
+			tmp_avatar->StepBones(last_anim->animation_uuid, last_anim->anim_timer);
+			tmp_avatar->StepBones(current_anim->animation_uuid, current_anim->anim_timer,blend_percentage);
+		}
 		if (blend_percentage >= 1.0f) {
 			anim_state = PLAYING;
 		}
@@ -572,7 +585,7 @@ void ResourceAnimator::AddAnimationFromAnimationResource(ResourceAnimation * res
 {
 	Animation* animation = new Animation();
 	animation->name = res->animationData.name;
-	animation->anim_res_data = res->animationData;
+	animation->animation_uuid = res->GetUuid();
 
 #ifdef  GAMEMODE
 	for (uint i = 0; i < res->animationData.numKeys; ++i)
@@ -611,7 +624,11 @@ ResourceAnimator::Animation * ResourceAnimator::GetCurrentAnimation() const
 void ResourceAnimator::SetCurrentAnimationTime(float time)
 {
 	current_anim->anim_timer = time;
-	//MoveAnimationForward(current_anim->anim_timer, current_anim); //TODO
+
+	ResourceAvatar* tmp_avatar = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
+	if (tmp_avatar) {
+		tmp_avatar->StepBones(current_anim->animation_uuid, current_anim->anim_timer);
+	}
 }
 
 bool ResourceAnimator::SetCurrentAnimation(const char * anim_name)
@@ -651,13 +668,21 @@ void ResourceAnimator::StepBackwards()
 {
 	if (current_anim->anim_timer > 0.0f)
 	{
-		//TODO: REAL OR GAME
-		current_anim->anim_timer -= App->timeManager->GetRealDt() * current_anim->anim_speed;
+		float dt = 0.0f;
+		dt = App->GetDt();
+#ifdef GAMEMODE
+		dt = App->timeManager->GetDt();
+#endif // GAMEMODE
+		current_anim->anim_timer -= dt * current_anim->anim_speed;
 
 		if (current_anim->anim_timer < 0.0f)
 			current_anim->anim_timer = 0.0f;
-		//else
-			//MoveAnimationForward(current_anim->anim_timer, current_anim); //TODO
+		else {
+			ResourceAvatar* tmp_avatar = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
+			if (tmp_avatar) {
+				tmp_avatar->StepBones(current_anim->animation_uuid, current_anim->anim_timer);
+			}
+		}
 
 		PauseAnimation();
 	}
@@ -667,13 +692,21 @@ void ResourceAnimator::StepForward()
 {
 	if (current_anim->anim_timer < current_anim->duration)
 	{
-		//TODO: REAL OR GAME
-		current_anim->anim_timer += App->timeManager->GetRealDt() * current_anim->anim_speed;
+		float dt = 0.0f;
+		dt = App->GetDt();
+#ifdef GAMEMODE
+		dt = App->timeManager->GetDt();
+#endif // GAMEMODE
+		current_anim->anim_timer += dt * current_anim->anim_speed;
 
 		if (current_anim->anim_timer > current_anim->duration)
 			current_anim->anim_timer = 0.0f;
-		//else
-			//MoveAnimationForward(current_anim->anim_timer, current_anim); //TODO
+		else {
+			ResourceAvatar* tmp_avatar = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
+			if (tmp_avatar) {
+				tmp_avatar->StepBones(current_anim->animation_uuid, current_anim->anim_timer);
+			}
+		}
 
 		PauseAnimation();
 	}

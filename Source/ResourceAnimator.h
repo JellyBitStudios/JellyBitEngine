@@ -80,7 +80,7 @@ public:
 		float anim_timer = 0.0f;
 		float duration = 0.0f;
 
-		ResourceAnimationData anim_res_data;
+		uint animation_uuid;
 	};
 
 	std::vector<Animation*> animations;
