@@ -58,7 +58,7 @@ void ComponentLabel::Draw(uint ui_shader, uint VAO)
 			glUniform1i(glGetUniformLocation(ui_shader, "use_color"), 1);
 			glUniform1i(glGetUniformLocation(ui_shader, "isLabel"), 1);
 
-			glUniform4f(glGetUniformLocation(ui_shader, "spriteColor"), color.x, color.y, color.w, color.z);
+			glUniform4f(glGetUniformLocation(ui_shader, "spriteColor"), color.x, color.y, color.z, color.w);
 
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, character.textureID);
