@@ -104,7 +104,7 @@ uint ResourceAnimator::CreateMeta(const char* file, uint animatorUuid, std::stri
 		sizeof(int64_t) +
 		sizeof(uint) +
 		sizeof(uint) * uuidsSize +
-
+		sizeof(uint) + // name size
 		sizeof(char) * nameSize;
 
 	char* data = new char[size];
@@ -130,15 +130,19 @@ uint ResourceAnimator::CreateMeta(const char* file, uint animatorUuid, std::stri
 
 	cursor += bytes;
 
-	// 4. Store animation name size
+	// 4. Store animator name size
 	bytes = sizeof(uint);
 	memcpy(cursor, &nameSize, bytes);
 
 	cursor += bytes;
 
-	// 5. Store animation name
+	// 5. Store animator name
 	bytes = sizeof(char) * nameSize;
 	memcpy(cursor, animator_name, bytes);
+
+	cursor += bytes;
+
+
 
 	// --------------------------------------------------
 
@@ -222,4 +226,106 @@ bool ResourceAnimator::LoadFile(const char* file, ResourceAnimatorData& outputAn
 	bool ret = true;
 
 	return ret;
+}
+
+bool ResourceAnimator::GenerateLibraryFiles() const
+{
+	assert(data.file.data() != nullptr);
+
+	// Search for the meta associated to the file
+	char metaFile[DEFAULT_BUF_SIZE];
+	strcpy_s(metaFile, strlen(data.file.data()) + 1, data.file.data()); // file
+	strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
+
+	// 1. Copy meta
+	if (App->fs->Exists(metaFile))
+	{
+		std::string outputFile;
+		uint size = App->fs->Copy(metaFile, DIR_LIBRARY_ANIMATORS, outputFile);
+
+		if (size > 0)
+		{
+			// 2. Copy Animator
+			outputFile.clear();
+			uint size = App->fs->Copy(data.file.data(), DIR_LIBRARY_ANIMATORS, outputFile);
+
+			if (size > 0)
+				return true;
+		}
+	}
+
+	return false;
+}
+
+uint ResourceAnimator::SetNameToMeta(const char* metaFile, const std::string& name)
+{
+	assert(metaFile != nullptr);
+
+	int64_t lastModTime = 0;
+	uint materialUuid = 0;
+	std::string oldName;
+	ReadMeta(metaFile, lastModTime, materialUuid, oldName);
+
+	uint uuidsSize = 1;
+	uint nameSize = DEFAULT_BUF_SIZE;
+
+	// Name
+	char materialName[DEFAULT_BUF_SIZE];
+	strcpy_s(materialName, DEFAULT_BUF_SIZE, name.data());
+
+	uint size =
+		sizeof(int64_t) +
+		sizeof(uint) +
+		sizeof(uint) * uuidsSize +
+
+		sizeof(uint) + // name size
+		sizeof(char) * nameSize; // name
+
+	char* data = new char[size];
+	char* cursor = data;
+
+	// 1. Store last modification time
+	uint bytes = sizeof(int64_t);
+	memcpy(cursor, &lastModTime, bytes);
+
+	cursor += bytes;
+
+	// 2. Store uuids size
+	bytes = sizeof(uint);
+	memcpy(cursor, &uuidsSize, bytes);
+
+	cursor += bytes;
+
+	// 3. Store animator uuid
+	bytes = sizeof(uint) * uuidsSize;
+	memcpy(cursor, &materialUuid, bytes);
+
+	cursor += bytes;
+
+	// 4. Store animator name size
+	bytes = sizeof(uint);
+	memcpy(cursor, &nameSize, bytes);
+
+	cursor += bytes;
+
+	// 5. Store animator name
+	bytes = sizeof(char) * nameSize;
+	memcpy(cursor, materialName, bytes);
+	cursor += bytes;
+
+	// --------------------------------------------------
+
+	// Build the path of the meta file and save it
+	uint retSize = App->fs->Save(metaFile, data, size);
+	if (retSize > 0)
+	{
+		CONSOLE_LOG(LogTypes::Normal, "Resource Material: Successfully saved meta '%s'", metaFile);
+	}
+	else
+	{
+		CONSOLE_LOG(LogTypes::Error, "Resource Material: Could not save meta '%s'", metaFile);
+		return 0;
+	}
+
+	return lastModTime;
 }

@@ -14,6 +14,7 @@
 #define DIR_LIBRARY_BONES "Library/Bones"
 #define DIR_LIBRARY_TEXTURES "Library/Textures"
 #define DIR_LIBRARY_MATERIALS "Library/Materials"
+#define DIR_LIBRARY_ANIMATORS "Library/Animators"
 #define DIR_LIBRARY_AVATARS "Library/Avatars"
 #define DIR_LIBRARY_SHADERS "Library/Shaders"
 #define DIR_LIBRARY_SHADERS_OBJECTS "Library/Shaders/Objects"

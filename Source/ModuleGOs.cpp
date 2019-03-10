@@ -267,7 +267,6 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 				ComponentAnimation* anim_co = (ComponentAnimation*)gos[i]->GetComponent(ComponentTypes::AnimationComponent);
 				if (anim_co) {
 					ResourceAnimation* anim = (ResourceAnimation*)App->res->GetResource(anim_co->res);
-					App->animation->StartAttachingBones(); App->animation->SetUpAnimations();
 				}
 			}
 		}
