@@ -541,27 +541,29 @@ bool ResourceAnimator::Update()
 
 	switch (anim_state)
 	{
-	case AnimationState::PLAYING:
+	case AnimationState::PLAYING: {
 		current_anim->anim_timer += dt * current_anim->anim_speed;
 		ResourceAvatar* tmp_avatar = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
 		if (tmp_avatar) {
 			tmp_avatar->StepBones(current_anim->animation_uuid, current_anim->anim_timer);
 		}
+	}
 		break;
 
 	case AnimationState::PAUSED:
 		break;
 
-	case AnimationState::STOPPED:
+	case AnimationState::STOPPED: {
 		current_anim->anim_timer = 0.0f;
 		ResourceAvatar* tmp_avatar = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
 		if (tmp_avatar) {
 			tmp_avatar->StepBones(current_anim->animation_uuid, current_anim->anim_timer);
 		}
 		PauseAnimation();
+	}
 		break;
 
-	case AnimationState::BLENDING:
+	case AnimationState::BLENDING: {
 		last_anim->anim_timer += dt * last_anim->anim_speed;
 		current_anim->anim_timer += dt * current_anim->anim_speed;
 		blend_timer += dt;
@@ -570,11 +572,12 @@ bool ResourceAnimator::Update()
 		ResourceAvatar* tmp_avatar = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
 		if (tmp_avatar) {
 			tmp_avatar->StepBones(last_anim->animation_uuid, last_anim->anim_timer);
-			tmp_avatar->StepBones(current_anim->animation_uuid, current_anim->anim_timer,blend_percentage);
+			tmp_avatar->StepBones(current_anim->animation_uuid, current_anim->anim_timer, blend_percentage);
 		}
 		if (blend_percentage >= 1.0f) {
 			anim_state = PLAYING;
 		}
+	}
 		break;
 	}
 
