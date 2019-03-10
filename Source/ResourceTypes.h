@@ -9,6 +9,7 @@ enum ResourceTypes
 	BoneResource,
 	AvatarResource,
 	AnimationResource,
+	AnimatorResource,
 
 	TextureResource,
 	ShaderObjectResource,
