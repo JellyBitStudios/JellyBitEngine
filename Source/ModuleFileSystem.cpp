@@ -179,6 +179,16 @@ void ModuleFileSystem::OnSystemEvent(System_Event event)
 {
 	switch (event.type)
 	{
+	case System_Event_Type::Build:
+	{
+		if (build)
+		{
+			// TODO J
+			build = false;
+		}
+	}
+	break;
+
 		case System_Event_Type::FileDropped:
 		{
 #ifndef GAMEMODE
