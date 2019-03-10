@@ -11,6 +11,7 @@
 #include "ResourceMesh.h"
 #include "ResourceAnimator.h"
 #include "AnimationImporter.h"
+#include "ResourceAvatar.h"
 #ifndef GAMEMODE
 #include "imgui\imgui.h"
 #endif
@@ -63,6 +64,17 @@ bool ComponentAnimator::SetResource(uint resource) //check all this
 	res = resource;
 
 	return true;
+}
+
+bool ComponentAnimator::SetAvatarAsUsed(uint avatar_uuid)
+{
+	ResourceAvatar* avatar = (ResourceAvatar*)App->res->GetResource(avatar_uuid);
+	if (avatar) {
+		avatar->IncreaseReferences();
+		return true;
+	}
+	else
+		return false;
 }
 
 void ComponentAnimator::Update()
@@ -124,10 +136,17 @@ void ComponentAnimator::OnUniqueEditor()
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ANIMATOR_INSPECTOR_SELECTOR"))
 			{
 				uint payload_n = *(uint*)payload->Data;
-				// TODO check res type and do things:
-
+				
 				SetResource(payload_n);
 			}
+
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("AVATAR_INSPECTOR_SELECTOR"))
+			{
+				uint payload_n = *(uint*)payload->Data;
+				
+				SetAvatarAsUsed(payload_n);
+			}
+
 			ImGui::EndDragDropTarget();
 		}
 	}

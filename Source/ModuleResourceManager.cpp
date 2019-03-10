@@ -1054,6 +1054,30 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 	}
 	break;
 
+	case ResourceTypes::AnimatorResource:
+	{
+		ResourceData data;
+		ResourceAnimatorData animatorData;
+		data.exportedFile = file;
+
+		// Search for the meta associated to the file
+		char metaFile[DEFAULT_BUF_SIZE];
+		strcpy_s(metaFile, strlen(file) + 1, file); // file
+		strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
+
+		uint uuid = 0;
+		if (App->fs->Exists(metaFile))
+		{
+			int64_t lastModTime = 0;
+			ResourceAnimator::ReadMeta(metaFile, lastModTime, uuid, data.name);
+		}
+
+		ResourceAnimator::LoadFile(file, animatorData);
+
+		resource = CreateResource(ResourceTypes::AnimatorResource, data, &animatorData, uuid);
+	}
+	break;
+
 	case ResourceTypes::AvatarResource:
 	{
 		ResourceData data;
@@ -1265,6 +1289,9 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 			break;
 		case ResourceTypes::AnimationResource:
 			resource = new ResourceAnimation(ResourceTypes::AnimationResource, uuid, data, *(ResourceAnimationData*)specificData);
+			break;
+		case ResourceTypes::AnimatorResource:
+			resource = new ResourceAnimator(ResourceTypes::AnimatorResource, uuid, data, *(ResourceAnimatorData*)specificData);
 			break;
 		case ResourceTypes::SceneResource:
 			resource = new ResourceScene(uuid, data, *(SceneData*)specificData);

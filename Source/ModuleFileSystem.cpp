@@ -52,6 +52,7 @@ ModuleFileSystem::ModuleFileSystem(bool start_enabled) : Module(start_enabled)
 	CreateDir(DIR_ASSETS_TEXTURES);
 	CreateDir(DIR_ASSETS_MATERIALS);
 	CreateDir(DIR_ASSETS_AVATARS);
+	CreateDir(DIR_ASSETS_ANIMATORS);
 	CreateDir(DIR_ASSETS_SHADERS);
 	CreateDir(DIR_ASSETS_SHADERS_OBJECTS);
 	CreateDir(DIR_ASSETS_SHADERS_PROGRAMS);

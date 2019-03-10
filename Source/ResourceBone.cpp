@@ -132,6 +132,7 @@ bool ResourceBone::LoadFile(const char* file, ResourceBoneData& outputBoneData)
 
 		// 3. Load name
 		bytes = sizeof(char) * nameSize;
+		outputBoneData.name.resize(nameSize);
 		memcpy(&outputBoneData.name[0], cursor, bytes);
 
 		//cursor += bytes;

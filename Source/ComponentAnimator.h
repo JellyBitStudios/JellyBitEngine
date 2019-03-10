@@ -14,6 +14,7 @@ public:
 
 	uint GetInternalSerializationBytes();
 	bool SetResource(uint resource);
+	bool SetAvatarAsUsed(uint avatar_uuid);
 
 	virtual void Update();
 

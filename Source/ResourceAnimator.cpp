@@ -125,11 +125,8 @@ bool ResourceAnimator::ExportFile(ResourceData& resourceData, ResourceAnimatorDa
 		bytes = sizeof(uint);
 		memcpy(cursor, &animData.animations_uuids[i], bytes);
 
-		if (i < animations_size - 1)
-			cursor += bytes;
+		cursor += bytes;
 	}
-
-	cursor += bytes;
 
 	// 4. Store meshes size
 
@@ -144,11 +141,8 @@ bool ResourceAnimator::ExportFile(ResourceData& resourceData, ResourceAnimatorDa
 		bytes = sizeof(uint);
 		memcpy(cursor, &animData.meshes_uuids[i], bytes);
 
-		if (i < meshes_size - 1)
-			cursor += bytes;
+		cursor += bytes;
 	}
-
-	cursor += bytes;
 
 	// 2. Store name size
 	bytes = sizeof(uint);
@@ -160,6 +154,8 @@ bool ResourceAnimator::ExportFile(ResourceData& resourceData, ResourceAnimatorDa
 	bytes = sizeof(char) * nameSize;
 	memcpy(cursor, &animator_name, bytes);
 
+	//cursor += bytes;
+
 	// --------------------------------------------------
 
 	// Build the path of the file
@@ -169,7 +165,7 @@ bool ResourceAnimator::ExportFile(ResourceData& resourceData, ResourceAnimatorDa
 		outputFile = resourceData.name;
 
 	// Save the file
-	ret = App->fs->SaveInGame(buffer, size, FileTypes::MaterialFile, outputFile, overwrite) > 0;
+	ret = App->fs->SaveInGame(buffer, size, FileTypes::AnimatorFile, outputFile, overwrite) > 0;
 
 	if (ret)
 	{
@@ -349,12 +345,10 @@ bool ResourceAnimator::LoadFile(const char* file, ResourceAnimatorData& outputAn
 			memcpy(&anim_uuid, cursor, bytes);
 			outputAnimationData.animations_uuids.push_back(anim_uuid);
 
-			if (i < animations_size - 1)
-				cursor += bytes;
+			cursor += bytes;
 		}
 		outputAnimationData.animations_uuids.shrink_to_fit();
 
-		cursor += bytes;
 
 		// 2. Load meshes size
 		uint meshes_size = 0u;
@@ -372,12 +366,10 @@ bool ResourceAnimator::LoadFile(const char* file, ResourceAnimatorData& outputAn
 			memcpy(&mesh_uuid, cursor, bytes);
 			outputAnimationData.meshes_uuids.push_back(mesh_uuid);
 
-			if (i < meshes_size - 1)
-				cursor += bytes;
+			cursor += bytes;
 		}
 		outputAnimationData.meshes_uuids.shrink_to_fit();
 
-		cursor += bytes;
 
 		// 2. Load name size
 		bytes = sizeof(uint);
@@ -388,10 +380,12 @@ bool ResourceAnimator::LoadFile(const char* file, ResourceAnimatorData& outputAn
 		cursor += bytes;
 
 		// 3. Load name
-		bytes = sizeof(char) * nameSize;
-		memcpy(&outputAnimationData.name[0], cursor, bytes);
+		if (nameSize > 0) {
+			bytes = sizeof(char) * nameSize;
+			outputAnimationData.name.resize(nameSize);
+			memcpy(&outputAnimationData.name[0], cursor, bytes);
+		}
 
-		cursor += bytes;
 
 		CONSOLE_LOG(LogTypes::Normal, "Resource Animator: Successfully loaded Animator '%s'", file);
 		RELEASE_ARRAY(buffer);
