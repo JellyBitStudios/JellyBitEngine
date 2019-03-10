@@ -1293,8 +1293,8 @@ void ModuleFileSystem::RecursiveBuild(const Directory& dir, char * toPath, bool 
 				strcat(temp, "/");
 				strcat(temp, file.name.data());
 
-				if(inZIP)
-					WriteFile(zip_path.data(), *file, buffer, size);
+				//if(inZIP)
+					//WriteFile(zip_path.data(), *file, buffer, size);
 
 				Save(temp, buffer, size);
 				if (meta)
