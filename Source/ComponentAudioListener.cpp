@@ -35,9 +35,9 @@ void ComponentAudioListener::UpdateListenerPos() {
 
 	if (transformation != nullptr)
 	{
-		math::Quat rot = transformation->rotation;
+		math::Quat rot = transformation->GetRotation();
 
-		math::float3 vector_pos = transformation->position;
+		math::float3 vector_pos = transformation->GetPosition();
 		math::float3 vector_front = rot.Transform(math::float3(0, 0, 1));
 		math::float3 vector_up = rot.Transform(math::float3(0, 1, 0));
 

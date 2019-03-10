@@ -1863,6 +1863,9 @@
     <ClInclude Include="ComponentAnimator.h">
       <Filter>Sources\Modules\GO&amp;Components\Components</Filter>
     </ClInclude>
+    <ClInclude Include="ResourceAudioBank.h">
+      <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ModuleInput.cpp">
@@ -2416,6 +2419,9 @@
     </ClCompile>
     <ClCompile Include="ComponentAnimator.cpp">
       <Filter>Sources\Modules\GO&amp;Components\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceAudioBank.cpp">
+      <Filter>Sources\Modules\Resources\Types</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

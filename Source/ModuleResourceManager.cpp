@@ -25,6 +25,7 @@
 #include "ResourceMaterial.h"
 #include "ResourceScene.h"
 #include "ResourceAnimator.h"
+#include "ResourceAudioBank.h"
 
 #include <assert.h>
 
@@ -146,6 +147,28 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			}
 		}
 		break;
+
+		case ResourceTypes::AudioBankResource:
+		{
+			char metaFile[DEFAULT_BUF_SIZE];
+			sprintf(metaFile, "%s%s", event.fileEvent.file, EXTENSION_META);
+			char* metaBuffer;
+			uint size = App->fs->Load(metaFile, &metaBuffer);
+			if (size <= 0)
+				break;
+
+			char* cursor = metaBuffer;
+			cursor += sizeof(int64_t) + sizeof(uint);
+
+			uint uid;
+			memcpy(&uid, cursor, sizeof(uint));
+
+			ResourceAudioBank* bank = (ResourceAudioBank*)App->res->GetResource(uid);
+			bank->Modified();
+
+			delete[] metaBuffer;
+			break;
+		}
 		}
 	}
 	break;
@@ -443,7 +466,9 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 				}
 				animation_uuids.shrink_to_fit();
 			}
-			
+			else
+				resource = GetResource(resourcesUuids.front());
+
 			// TODO_G : separate mesh / bones resources uuids from resourcesUuids
 
 			for (uint i = 0u; i < resourcesUuids.size(); i++)
@@ -498,6 +523,8 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 
 				resource = CreateResource(ResourceTypes::TextureResource, data, &textureData, uuid);
 			}
+			else
+				resource = GetResource(resourcesUuids.front());
 
 			// 2. Meta
 			// TODO: only create meta if any of its fields has been modificated
@@ -796,7 +823,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 			{
 				// Create the resources
 				CONSOLE_LOG(LogTypes::Normal, "RESOURCE MANAGER: The AnimationResource file '%s' has resources that need to be created", file);
-			
+
 				// UUID
 				uint uuid = outputFile.empty() ? App->GenerateRandomNumber() : strtoul(outputFile.data(), NULL, 0);
 				assert(uuid > 0);
@@ -830,7 +857,14 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 	}
 	break;
 
+	case ResourceTypes::AudioBankResource:
+		resource = ResourceAudioBank::ImportFile(file);
+		break;
 	}
+
+	System_Event newEvent;
+	newEvent.type = System_Event_Type::Build;
+	App->PushSystemEvent(newEvent);
 
 	return resource;
 }
@@ -1081,6 +1115,10 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		App->animation->SetAnimationGos((ResourceAnimation*)resource);
 	}
 	break;
+
+	case ResourceTypes::AudioBankResource:	
+		resource = ResourceAudioBank::ImportFile(file);
+		break;
 	}
 
 	return resource;
@@ -1219,6 +1257,10 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 			break;
 		case ResourceTypes::SceneResource:
 			resource = new ResourceScene(uuid, data, *(SceneData*)specificData);
+			break;
+		case ResourceTypes::AudioBankResource:
+			resource = new ResourceAudioBank(uuid, data, *(ResourceAudioBankData*)specificData);
+			break;
 	}
 
 	assert(resource != nullptr);
@@ -1471,8 +1513,11 @@ ResourceTypes ModuleResourceManager::GetResourceTypeByExtension(const char* exte
 	case ASCIIpfb: case ASCIIPFB:
 		return ResourceTypes::PrefabResource;
 		break;
-	case ASCIISCN: case ASCIIscn:
+	case ASCIIscn: case ASCIISCN:
 		return ResourceTypes::SceneResource;
+		break;
+	case ASCIIbnk: case ASCIIBNK:
+		return ResourceTypes::AudioBankResource;
 		break;
 	}
 	
@@ -1505,6 +1550,8 @@ ResourceTypes ModuleResourceManager::GetLibraryResourceTypeByExtension(const cha
 		return ResourceTypes::PrefabResource;
 	else if (strcmp(extension, EXTENSION_SCENE) == 0)
 		return ResourceTypes::SceneResource;
+	else if (strcmp(extension, EXTENSION_AUDIOBANK) == 0)
+		return ResourceTypes::AudioBankResource;
 
 	return ResourceTypes::NoResourceType;
 }

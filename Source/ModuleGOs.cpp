@@ -177,24 +177,17 @@ GameObject* ModuleGOs::CreateGameObject(const char* goName, GameObject* parent, 
 	GameObject* newGameObject = new GameObject(goName, parent, disableTransform);
 	gameobjects.push_back(newGameObject);
 	dynamicGos.push_back(newGameObject);
+
 	return newGameObject;
 }
 
 GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 {
-	if (copy->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT_WORLD)
-		return nullptr;
-
 	GameObject* newGameObject = new GameObject(*copy);
+	bool returnCanvas = false;
 
 	if (!newRoot)
 	{
-		if (newGameObject->GetLayer() == UILAYER && copy->GetParent()->GetLayer() != UILAYER)
-		{
-			RELEASE(newGameObject);
-			return nullptr;
-		}
-
 		newGameObject->SetParent(copy->GetParent());
 		copy->GetParent()->AddChild(newGameObject);
 	}
@@ -222,10 +215,12 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 						{
 							canvas->AddChild(child);
 							child->SetParent(canvas);
+							newGameObject->EraseChild(child);
 						}
 					}
+					this->DeleteGameObject(newGameObject);
 					App->ui->LinkAllRectsTransform();
-					return canvas;
+					returnCanvas = true;
 				}
 				else
 					canvas = newGameObject;
@@ -253,34 +248,35 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 	}
 
 
-	if (newGameObject->GetLayer() != UILAYER && newGameObject->cmp_rectTransform == nullptr)
+	if (copy->GetParent() == nullptr)
 	{
-		if (copy->GetParent() == nullptr)
+		// Animation stuff // TODO_G : this can be better in vert 2
+		App->animation->Start();
+		std::vector<GameObject*> gos;
+		this->GetGameobjects(gos);
+		for (uint i = 0u; i < gos.size(); i++)
 		{
-			// Animation stuff // TODO_G : this can be better in vert 2
-			App->animation->Start();
-			std::vector<GameObject*> gos;
-			this->GetGameobjects(gos);
-			for (uint i = 0u; i < gos.size(); i++)
-			{
-
-				ComponentAnimation* anim_co = (ComponentAnimation*)gos[i]->GetComponent(ComponentTypes::AnimationComponent);
-				if (anim_co) {
-					ResourceAnimation* anim = (ResourceAnimation*)App->res->GetResource(anim_co->res);
-				}
+			ComponentAnimation* anim_co = (ComponentAnimation*)gos[i]->GetComponent(ComponentTypes::AnimationComponent);
+			if (anim_co) {
+				ResourceAnimation* anim = (ResourceAnimation*)App->res->GetResource(anim_co->res);
 			}
+
 		}
-		System_Event newEvent;
-		newEvent.type = System_Event_Type::RecreateQuadtree;
-		App->PushSystemEvent(newEvent);
-
 	}
+	System_Event newEvent;
+	newEvent.type = System_Event_Type::RecreateQuadtree;
+	App->PushSystemEvent(newEvent);
+
+	// Calculate the global
+	if (newGameObject && newGameObject->transform)
+		newGameObject->transform->UpdateGlobal();
+
+	App->ui->LinkAllRectsTransform();
+
+	if (returnCanvas)
+		return canvas;
 	else
-		App->ui->LinkAllRectsTransform();
-
-	
-
-	return newGameObject;
+		return newGameObject;
 }
 
 void ModuleGOs::DeleteGameObject(GameObject* toDelete)
@@ -463,7 +459,7 @@ bool ModuleGOs::LoadScene(char*& buffer, size_t sizeBuffer, bool navmesh)
 		App->navigation->LoadNavmesh(cursor);
 
 	//App->animation->SetUpAnimations();
-	
+
 	//StartAttachingBones(); SetUpAnimations();
 
 	System_Event event;

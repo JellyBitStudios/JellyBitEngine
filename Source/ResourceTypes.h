@@ -18,7 +18,8 @@ enum ResourceTypes
 
 	ScriptResource,
 	PrefabResource,
-	SceneResource
+	SceneResource,
+	AudioBankResource
 };
 
 #endif

@@ -6,7 +6,7 @@ enum System_Event_Type
 	NoEvent,
 
 	FileDropped, NewFile, FileMoved, ImportFile, ReImportFile, ForceReImport, FileRemoved, FileOverwritten,
-	DeleteUnusedFiles, GenerateLibraryFiles, ImportLibraryFile, // FileEvent
+	DeleteUnusedFiles, GenerateLibraryFiles, ImportLibraryFile, Build, // FileEvent
 
 	CalculateBBoxes, // GameObjectEvent
 	RecalculateBBoxes, // GameObjectEvent

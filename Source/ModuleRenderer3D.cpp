@@ -310,10 +310,35 @@ void ModuleRenderer3D::OnSystemEvent(System_Event event)
 		break;
 	case System_Event_Type::Stop:
 #ifndef GAMEMODE
-		CalculateProjectionMatrix();
 		currentCamera = App->camera->camera;
+		CalculateProjectionMatrix();
 #endif // !GAMEMODE
 		break;
+		case System_Event_Type::LoadFinished:
+		{
+			// Update all GameObjects transforms
+			if (App->scene->root)
+				for each (GameObject* child in App->scene->root->children)
+				{
+					if (child->transform != nullptr)
+						child->transform->UpdateGlobal();
+				}
+
+			if (App->GetEngineState() == ENGINE_PLAY)
+				SetCurrentCamera();
+
+			for each (ComponentCamera* camera in cameraComponents)
+			{
+				camera->UpdateTransform();
+			}
+
+#ifndef GAMEMODE
+			CalculateProjectionMatrix();
+#endif // !GAMEMODE
+
+
+			break;
+		}
 	}
 }
 

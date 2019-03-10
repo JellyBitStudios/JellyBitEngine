@@ -152,15 +152,29 @@ bool ModuleUI::CleanUp()
 
 void ModuleUI::OnSystemEvent(System_Event event)
 {
-	if (event.type == System_Event_Type::LoadFinished)
+	switch (event.type)
 	{
-		std::vector<GameObject*> children;
-		App->scene->root->GetChildrenVector(children);
-		for each (GameObject* child in children)
-			if (std::strcmp(child->GetName(), "Canvas") == 0)
-				App->GOs->SetCanvas(child);
+		case System_Event_Type::LoadFinished:
+		{
+			std::vector<GameObject*> children;
+			App->scene->root->GetChildrenVector(children);
+			for each (GameObject* child in children)
+				if (std::strcmp(child->GetName(), "Canvas") == 0)
+					App->GOs->SetCanvas(child);
 
-		LinkAllRectsTransform();
+			LinkAllRectsTransform();
+			break;
+		}
+		case System_Event_Type::Stop:
+		{
+			componentsUI.clear();
+			componentsWorldUI.clear();
+			componentsScreenRendererUI.clear();
+			componentsWorldRendererUI.clear();
+			GOsWorldCanvas.clear();
+			break;
+
+		}
 	}
 }
 
@@ -262,7 +276,7 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 		rect_world = rect->GetCorners();
 		setBool(ui_shader, "isScreen", 0);
 		view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
-		projection = ((ComponentCamera*)App->camera->camera)->GetOpenGLProjectionMatrix();
+		projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();
 		mvp = view * projection;
 		
 		setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
@@ -277,7 +291,7 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 		rect_world = rect->GetCorners();
 		setBool(ui_shader, "isScreen", 0);
 		view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
-		projection = ((ComponentCamera*)App->camera->camera)->GetOpenGLProjectionMatrix();
+		projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();
 		mvp = view * projection;
 
 		setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
@@ -347,6 +361,7 @@ void ModuleUI::OnWindowResize(uint width, uint height)
 	 for (GameObject* world_canvas : GOsWorldCanvas)
 	 {
 		 world_canvas->GetChildrenAndThisVectorFromLeaf(gos);
+		 std::reverse(gos.begin(), gos.end());
 		 for (GameObject* go_rect : gos)
 		 {
 			 ComponentRectTransform* cmp_rect = (ComponentRectTransform*)go_rect->GetComponent(ComponentTypes::RectTransformComponent);
