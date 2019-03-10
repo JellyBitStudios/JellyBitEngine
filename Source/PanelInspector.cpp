@@ -243,6 +243,11 @@ void PanelInspector::ShowGameObjectInspector() const
 					gameObject->AddComponent(ComponentTypes::ProjectorComponent);
 					ImGui::CloseCurrentPopup();
 				}
+			if (gameObject->cmp_animator == nullptr)
+				if (ImGui::Selectable("Animator")) {
+					gameObject->AddComponent(ComponentTypes::AnimatorComponent);
+					ImGui::CloseCurrentPopup();
+				}
 
 			if (ImGui::Selectable("Script"))
 			{
