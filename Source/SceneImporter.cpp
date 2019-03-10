@@ -626,8 +626,8 @@ void SceneImporter::RecursivelyProcessBones(GameObject* gameObject,
 
 		// Export the new file
 		std::string outputFile;
-		App->res->ExportFile(ResourceTypes::BoneResource, data, &boneData, outputFile, false, false);
-
+		if (App->res->ExportFile(ResourceTypes::BoneResource, data, &boneData, outputFile, false, false))
+			bone_files.push_back(outputFile);
 	}
 
 	std::vector<GameObject*> children;
