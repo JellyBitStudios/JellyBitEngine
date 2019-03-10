@@ -66,6 +66,15 @@ bool ComponentAnimator::SetResource(uint resource) //check all this
 	return true;
 }
 
+void ComponentAnimator::Update()
+{
+	if (res != 0) {
+		ResourceAnimator* anim_res = (ResourceAnimator*)App->res->GetResource(res);
+
+
+	}
+}
+
 bool ComponentAnimator::PlayAnimation(const char* anim_name)
 {
 	return App->animation->SetCurrentAnimation(anim_name);
@@ -104,6 +113,18 @@ void ComponentAnimator::OnUniqueEditor()
 			ImGui::BeginTooltip();
 			ImGui::Text("%u", res);
 			ImGui::EndTooltip();
+		}
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ANIMATOR_INSPECTOR_SELECTOR"))
+			{
+				uint payload_n = *(uint*)payload->Data;
+				// TODO check res type and do things:
+
+				SetResource(payload_n);
+			}
+			ImGui::EndDragDropTarget();
 		}
 	}
 #endif
