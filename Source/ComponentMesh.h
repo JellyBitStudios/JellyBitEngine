@@ -30,9 +30,6 @@ public:
 
 	// Pathfinding
 	bool nv_walkable = true;
-
-	// Animation
-	std::vector<uint> bonesUuids; // ComponentBone uuid
 };
 
 #endif

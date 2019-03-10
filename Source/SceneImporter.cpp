@@ -156,11 +156,10 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 		/// Import meshes
 		std::vector<uint> dummyForcedMeshesUuids = forced_meshes_uuids;
 		GameObject* rootBone = nullptr;
-		std::unordered_map<std::string, aiBone*> bonesByName; // aiBone
-		std::unordered_map<aiBone*, ComponentMesh*> meshesByBone; // ComponentMesh
+		std::unordered_map<std::string, aiBone*> bonesByName;
 
 		RecursivelyImportNodes(scene, rootNode, rootGameObject, nullptr, 
-			rootBone, bonesByName, meshesByBone,
+			rootBone, bonesByName,
 			mesh_files, dummyForcedMeshesUuids);
 		//rootGameObject->transform->scale *= importSettings.scale; // TODO FIX SCALE
 
@@ -168,8 +167,9 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 		if (rootBone != nullptr)
 		{
 			std::vector<uint> dummyForcedBonesUuids = forced_bones_uuids;
+
 			RecursivelyProcessBones(rootGameObject, 
-				bonesByName, meshesByBone,
+				bonesByName,
 				bone_files, dummyForcedBonesUuids);
 		}
 
@@ -215,7 +215,7 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 }
 
 void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* node, const GameObject* parent, const GameObject* transformation, 
-	GameObject* rootBone, std::unordered_map<std::string, aiBone*> bonesByName, std::unordered_map<aiBone*, ComponentMesh*> meshesByBone,
+	GameObject* rootBone, std::unordered_map<std::string, aiBone*>& bonesByName,
 	std::vector<std::string>& mesh_files, std::vector<uint>& forcedUuids) const
 {
 	std::string name = node->mName.data;
@@ -283,6 +283,7 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 
 		if (!broken)
 		{
+			// Create the Mesh Component
 			gameObject->AddComponent(ComponentTypes::MeshComponent);
 			gameObject->ForceStaticNoVector();
 
@@ -296,9 +297,6 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 
 			float* vertices = nullptr;
 			uint verticesSize = 0;
-
-			uint* indices = nullptr;
-			uint indicesSize = 0;
 
 			float* normals = nullptr;
 			uint normalsSize = 0;
@@ -314,6 +312,13 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 
 			float* texCoords = nullptr;
 			uint texCoordsSize = 0;
+
+			float* weights[MAX_BONES] = { nullptr, nullptr, nullptr, nullptr };
+			uint* ids[MAX_BONES] = { nullptr, nullptr, nullptr, nullptr };
+			uint weightsSize[MAX_BONES] = { 0,0,0,0 };
+
+			uint* indices = nullptr;
+			uint indicesSize = 0;
 
 			// Unique vertices
 			verticesSize = nodeMesh->mNumVertices;
@@ -370,16 +375,30 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 			// Bones
 			if (nodeMesh->HasBones())
 			{
-				for (uint i = 0; i < nodeMesh->mNumBones; ++i)
+				for (uint i = 0; i < nodeMesh->mNumBones && i < MAX_BONES; ++i)
 				{
 					if (rootBone == nullptr)
 						rootBone = gameObject;
 
 					aiBone* bone = nodeMesh->mBones[i];
+
+					weightsSize[i] = bone->mNumWeights;
+					weights[i] = new float[bone->mNumWeights];
+					ids[i] = new uint[bone->mNumWeights];
+
+					aiVertexWeight* data = bone->mWeights;
+					aiVertexWeight* cursor = data;
+
+					for (uint j = 0; j < bone->mNumWeights; ++j)
+					{
+						memcpy(weights[i], &cursor->mWeight, sizeof(float)); // strength of the influence
+						memcpy(ids[i], &cursor->mVertexId, sizeof(uint)); // index of the vertex influenced by this bone
+						cursor += sizeof(aiVertexWeight);
+					}
+
+					// Import the bones later
 					const char* boneName = bone->mName.C_Str();
-					
 					bonesByName[boneName] = bone;
-					meshesByBone[bone] = gameObject->cmp_mesh;
 				}
 			}
 
@@ -425,14 +444,25 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 				}
 			}
 
+			// --------------------------------------------------
+
+			uint nameSize = DEFAULT_BUF_SIZE;
+
 			// Name
 			char meshName[DEFAULT_BUF_SIZE];
 			strcpy_s(meshName, DEFAULT_BUF_SIZE, name.data());
 
-			// --------------------------------------------------
+			// Vertices + Normals + Tangents + Bitangents + Colors + Texture Coords + Weights + Indices + Name
+			uint ranges[] = {
+				verticesSize, normalsSize,
+				tangentsSize, bitangentsSize,
+				colorsSize, texCoordsSize,
 
-			// Vertices + Normals + Tangents + Bitangents + Colors + Texture Coords + Indices + Name
-			uint ranges[8] = { verticesSize, normalsSize, tangentsSize, bitangentsSize, colorsSize, texCoordsSize, indicesSize, DEFAULT_BUF_SIZE };
+				// Bones
+				weightsSize[0], weightsSize[1], 
+				weightsSize[2], weightsSize[3],
+
+				indicesSize, nameSize };
 
 			uint size = sizeof(ranges) +
 				sizeof(float) * verticesSize * 3 +
@@ -441,8 +471,19 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 				sizeof(float) * bitangentsSize * 3 +
 				sizeof(uchar) * colorsSize * 4 +
 				sizeof(float) * texCoordsSize * 2 +
+
+				// Bones
+				sizeof(float) * weightsSize[0] +
+				sizeof(float) * weightsSize[1] +
+				sizeof(float) * weightsSize[2] +
+				sizeof(float) * weightsSize[3] +
+				sizeof(uint) * weightsSize[0] +
+				sizeof(uint) * weightsSize[1] +
+				sizeof(uint) * weightsSize[2] +
+				sizeof(uint) * weightsSize[3] +
+
 				sizeof(uint) * indicesSize +
-				sizeof(char) * DEFAULT_BUF_SIZE;
+				sizeof(char) * nameSize;
 
 			char* data = new char[size];
 			char* cursor = data;
@@ -504,16 +545,40 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 				cursor += bytes;
 			}
 
-			// 8. Store indices
+			// 8. Store weights
+			for (uint i = 0; i < MAX_BONES; ++i)
+			{
+				if (weightsSize[i] > 0)
+				{
+					bytes = sizeof(float) * weightsSize[i];
+					memcpy(cursor, weights, bytes);
+
+					cursor += bytes;
+				}
+			}
+
+			for (uint i = 0; i < MAX_BONES; ++i)
+			{
+				if (weightsSize[i] > 0)
+				{
+					bytes = sizeof(uint) * weightsSize[i];
+					memcpy(cursor, ids, bytes);
+
+					cursor += bytes;
+				}
+			}
+
+			// 9. Store indices
 			bytes = sizeof(uint) * indicesSize;
 			memcpy(cursor, indices, bytes);
 
 			cursor += bytes;
 
-			// 9. Store name
+			// 10. Store name
 			bytes = sizeof(char) * DEFAULT_BUF_SIZE;
 			memcpy(cursor, meshName, bytes);
 
+			// Create the Mesh Resource
 			std::string outputFile = std::to_string(gameObject->cmp_mesh->res);
 			if (App->fs->SaveInGame(data, size, FileTypes::MeshFile, outputFile) > 0)
 			{
@@ -525,12 +590,19 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 
 			RELEASE_ARRAY(data);
 			RELEASE_ARRAY(vertices);
-			RELEASE_ARRAY(indices);
 			RELEASE_ARRAY(normals);
 			RELEASE_ARRAY(tangents);
 			RELEASE_ARRAY(bitangents);
 			RELEASE_ARRAY(colors);
 			RELEASE_ARRAY(texCoords);
+
+			for (uint i = 0; i < MAX_BONES; ++i)
+			{
+				RELEASE_ARRAY(weights[i]);
+				RELEASE_ARRAY(ids[i]);
+			}
+
+			RELEASE_ARRAY(indices);
 		}
 	}
 
@@ -538,25 +610,24 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 	{
 		if (isTransformation)
 			// If the current game object is a transformation, keep its parent and pass it as the new transformation for the next game object
-			RecursivelyImportNodes(scene, node->mChildren[i], parent, gameObject, rootBone, bonesByName, meshesByBone, mesh_files, forcedUuids);
+			RecursivelyImportNodes(scene, node->mChildren[i], parent, gameObject, rootBone, bonesByName, mesh_files, forcedUuids);
 		else
 			// Else, the current game object becomes the new parent for the next game object
-			RecursivelyImportNodes(scene, node->mChildren[i], gameObject, nullptr, rootBone, bonesByName, meshesByBone, mesh_files, forcedUuids);
+			RecursivelyImportNodes(scene, node->mChildren[i], gameObject, nullptr, rootBone, bonesByName, mesh_files, forcedUuids);
 	}
 }
 
 void SceneImporter::RecursivelyProcessBones(GameObject* gameObject,
-	std::unordered_map<std::string, aiBone*> bonesByName, std::unordered_map<aiBone*, ComponentMesh*> meshesByBone,
+	std::unordered_map<std::string, aiBone*>& bonesByName,
 	std::vector<std::string>& bone_files, std::vector<uint>& forcedUuids) const
 {
-	const char* name = gameObject->GetName();
-
-	std::unordered_map<std::string, aiBone*>::const_iterator it = bonesByName.find(name);
+	const char* boneName = gameObject->GetName();
+	std::unordered_map<std::string, aiBone*>::const_iterator it = bonesByName.find(boneName);
 	if (it != bonesByName.end())
 	{
 		aiBone* bone = it->second;
 
-		// 1. Create the Bone Component
+		// Create the Bone Component
 		gameObject->AddComponent(ComponentTypes::BoneComponent);
 
 		if (forcedUuids.size() > 0)
@@ -567,34 +638,24 @@ void SceneImporter::RecursivelyProcessBones(GameObject* gameObject,
 		else
 			gameObject->cmp_bone->res = App->GenerateRandomNumber();
 
-		// 2. Create the Bone Resource
+		// Create the Bone Resource
 		ResourceData data;
 		data.name = std::to_string(gameObject->cmp_bone->res);
 
 		ResourceBoneData boneData;
-		boneData.name = name;
+		boneData.name = boneName;
 		memcpy(&boneData.offsetMatrix, &bone->mOffsetMatrix.a1, sizeof(float) * 16);
-
-		for (uint i = 0; i < bone->mNumWeights; ++i)
-		{
-			boneData.weights[i] = bone->mWeights[i].mWeight;
-			boneData.indices[i] = bone->mWeights[i].mVertexId;
-		}
 
 		// Export the new file
 		std::string outputFile;
 		App->res->ExportFile(ResourceTypes::BoneResource, data, &boneData, outputFile, false, false);
-
-		// 3. Link the Mesh Component with the Bone Component
-		ComponentMesh* cmp_mesh = meshesByBone[bone];
-		cmp_mesh->bonesUuids.push_back(gameObject->GetUUID());
 	}
 
 	std::vector<GameObject*> children;
 	gameObject->GetChildrenVector(children, false);
 
 	for (uint i = 0; i < children.size(); ++i)
-		RecursivelyProcessBones(children[i], bonesByName, meshesByBone, bone_files, forcedUuids);
+		RecursivelyProcessBones(children[i], bonesByName, bone_files, forcedUuids);
 }
 
 void SceneImporter::ImportAnimations(mutable const aiScene * scene, std::vector<std::string>& anim_files, const char* anim_name, std::vector<uint>& forcedUuids)const
@@ -683,8 +744,8 @@ bool SceneImporter::Load(const void* buffer, uint size, ResourceData& outputData
 
 	char* cursor = (char*)buffer;
 
-	// Vertices + Normals + Tangents + Bitangents + Colors + Texture Coords + Indices + Name
-	uint ranges[8];
+	// Vertices + Normals + Tangents + Bitangents + Colors + Texture Coords + Weights + Indices + Name
+	uint ranges[12];
 
 	// 1. Load ranges
 	uint bytes = sizeof(ranges);
@@ -693,19 +754,63 @@ bool SceneImporter::Load(const void* buffer, uint size, ResourceData& outputData
 	cursor += bytes;
 
 	outputMeshData.verticesSize = ranges[0];
-	outputMeshData.indicesSize = ranges[6];
 	uint normalsSize = ranges[1];
 	uint tangentsSize = ranges[2];
 	uint bitangentsSize = ranges[3];
 	uint colorsSize = ranges[4];
 	uint texCoordsSize = ranges[5];
-	uint nameSize = ranges[7];
+
+	// Bones
+	uint weightsSize[MAX_BONES];
+	weightsSize[0] = ranges[6];
+	weightsSize[1] = ranges[7];
+	weightsSize[2] = ranges[8];
+	weightsSize[3] = ranges[9];
+
+	outputMeshData.indicesSize = ranges[10];
+	uint nameSize = ranges[11];
 
 	char* normalsCursor = cursor + ranges[0] * sizeof(float) * 3;
 	char* tangentsCursor = normalsCursor + ranges[1] * sizeof(float) * 3;
 	char* bitangentsCursor = tangentsCursor + ranges[2] * sizeof(float) * 3;
 	char* colorCursor = bitangentsCursor + ranges[3] * sizeof(float) * 3;
 	char* texCoordsCursor = colorCursor + ranges[4] * sizeof(uchar) * 4;
+	
+	// Bones
+	char* weightsCursor[MAX_BONES] = { nullptr, nullptr, nullptr, nullptr };
+	if (weightsSize[0] > 0)
+	{
+		weightsCursor[0] = texCoordsCursor + ranges[5] * sizeof(float) * 2;
+		if (weightsSize[1] > 0)
+		{
+			weightsCursor[1] = weightsCursor[0] + ranges[6] * sizeof(float);
+			if (weightsSize[2] > 0)
+			{
+				weightsCursor[2] = weightsCursor[1] + ranges[7] * sizeof(float);
+				if (weightsSize[3] > 0)
+				{
+					weightsCursor[3] = weightsCursor[2] + ranges[8] * sizeof(float);
+				}
+			}
+		}
+	}
+	char* idsCursor[MAX_BONES] = { nullptr, nullptr, nullptr, nullptr };
+	if (weightsSize[0] > 0)
+	{
+		idsCursor[0] = weightsCursor[3] + ranges[9] * sizeof(float);
+		if (weightsSize[1] > 0)
+		{
+			idsCursor[1] = idsCursor[0] + ranges[6] * sizeof(float);
+			if (weightsSize[2] > 0)
+			{
+				idsCursor[2] = idsCursor[1] + ranges[7] * sizeof(float);
+				if (weightsSize[3] > 0)
+				{
+					idsCursor[3] = idsCursor[2] + ranges[8] * sizeof(float);
+				}
+			}
+		}
+	}
 
 	outputMeshData.vertices = new Vertex[outputMeshData.verticesSize];
 
@@ -855,12 +960,12 @@ void SceneImporter::GenerateVAO(uint& VAO, uint& VBO) const
 	glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, bitangent)));
 	glEnableVertexAttribArray(5);
 
-	// 7. Ids
-	glVertexAttribPointer(6, NUM_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, ids)));
+	// 7. Weights
+	glVertexAttribPointer(6, MAX_BONES, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, weights)));
 	glEnableVertexAttribArray(6);
 
-	// 8. Weights
-	glVertexAttribPointer(7, NUM_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, weights)));
+	// 8. Ids
+	glVertexAttribPointer(7, MAX_BONES, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, indices)));
 	glEnableVertexAttribArray(7);
 
 	glBindVertexArray(0);

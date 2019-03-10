@@ -648,8 +648,24 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	LoadGenericUniforms(shader);
 
 	// 2. Known mesh uniforms
+	math::float4x4 model_matrix = toDraw->GetParent()->transform->GetGlobalMatrix();
+	model_matrix = model_matrix.Transposed();
+	math::float4x4 view_matrix = currentCamera->GetOpenGLViewMatrix();
+	math::float4x4 proj_matrix = currentCamera->GetOpenGLProjectionMatrix();
+	math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
+	math::float4x4 normal_matrix = model_matrix;
+	normal_matrix.Inverse();
+	normal_matrix.Transpose();
+
+	uint location = glGetUniformLocation(shader, "model_matrix");
+	glUniformMatrix4fv(location, 1, GL_FALSE, model_matrix.ptr());
+	location = glGetUniformLocation(shader, "mvp_matrix");
+	glUniformMatrix4fv(location, 1, GL_FALSE, mvp_matrix.ptr());
+	location = glGetUniformLocation(shader, "normal_matrix");
+	glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
 
 	// Animations
+	char boneName[DEFAULT_BUF_SIZE];
 	for (uint i = 0; i < toDraw->bonesUuids.size(); ++i)
 	{
 		/// Bone game object
@@ -669,27 +685,13 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 
 		math::float4x4 boneGlobalMatrix = boneComponent->GetParent()->transform->GetGlobalMatrix();
 		math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetMatrix();
-		math::float4x4 boneTransformation = boneGlobalMatrix * meshMatrix.Inverted() * boneResource->boneData.offsetMatrix;
+		
+		math::float4x4 boneTransform = boneGlobalMatrix * meshMatrix.Inverted() * boneResource->boneData.offsetMatrix;
+
+		sprintf_s(boneName, "bones[%u]", i);
+		location = glGetUniformLocation(shader, boneName);
+		glUniformMatrix4fv(location, 1, GL_TRUE, boneTransform.ptr());
 	}
-
-	math::float4x4 model_matrix = toDraw->GetParent()->transform->GetGlobalMatrix();
-	model_matrix = model_matrix.Transposed();
-	math::float4x4 view_matrix = currentCamera->GetOpenGLViewMatrix();
-	math::float4x4 proj_matrix = currentCamera->GetOpenGLProjectionMatrix();
-	math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
-	math::float4x4 normal_matrix = model_matrix;
-	normal_matrix.Inverse();
-	normal_matrix.Transpose();
-
-	uint location = glGetUniformLocation(shader, "model_matrix");
-	glUniformMatrix4fv(location, 1, GL_FALSE, model_matrix.ptr());
-	location = glGetUniformLocation(shader, "mvp_matrix");
-	glUniformMatrix4fv(location, 1, GL_FALSE, mvp_matrix.ptr());
-	location = glGetUniformLocation(shader, "normal_matrix");
-	glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
-
-	// TODO UNIFORM BONE
-
 
 	// 3. Unknown mesh uniforms
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();

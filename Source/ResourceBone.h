@@ -5,15 +5,10 @@
 
 #include "MathGeoLib\include\Math\float4x4.h"
 
-#define MAX_WEIGHTS 4
-
 struct ResourceBoneData
 {
 	std::string name;
 	math::float4x4 offsetMatrix = math::float4x4::identity; // matrix that transform from mesh space to bone space in bind pose
-	
-	float weights[MAX_WEIGHTS] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	uint indices[MAX_WEIGHTS] = { 0,0,0,0 };
 };
 
 class ResourceBone : public Resource

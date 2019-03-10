@@ -5,7 +5,7 @@
 
 #include <vector>
 
-#define NUM_BONES_PER_VERTEX 4
+#define MAX_BONES 4
 
 struct ResourceMeshImportSettings
 {
@@ -54,9 +54,8 @@ struct Vertex
 	uchar color[4];
 	float texCoord[2];
 
-	// Animation
-	uint ids[NUM_BONES_PER_VERTEX]; // bone id
-	float weights[NUM_BONES_PER_VERTEX]; // bone weight
+	float weights[MAX_BONES]; // bone weight
+	uint ids[MAX_BONES]; // bone id
 };
 
 struct ResourceMeshData
@@ -105,6 +104,7 @@ public:
 	uint GetIndicesCount() const;
 	bool UseAdjacency() const;
 
+	bool AddBone(uint vertexId, float boneWeight, uint boneId);
 	static void CalculateAdjacentIndices(uint* indices, uint indicesSize, uint*& adjacentIndices);
 
 	uint GetVBO() const;

@@ -551,6 +551,25 @@ bool ResourceMesh::UseAdjacency() const
 	return meshData.adjacency;
 }
 
+bool ResourceMesh::AddBone(uint vertexId, float boneWeight, uint boneId)
+{
+	assert(vertexId >= 0 && vertexId < meshData.verticesSize);
+	
+	Vertex vertex = meshData.vertices[vertexId];
+	for (uint i = 0; i < MAX_BONES; ++i)
+	{
+		// Find an empy slot
+		if (vertex.weights[i] == 0.0f)
+		{
+			vertex.weights[i] = boneWeight;
+			vertex.indices[i] = boneId;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void ResourceMesh::CalculateAdjacentIndices(uint* indices, uint indicesSize, uint*& adjacentIndices)
 {
 	adjacentIndices = new uint[indicesSize * 2];

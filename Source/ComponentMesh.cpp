@@ -106,7 +106,7 @@ void ComponentMesh::OnUniqueEditor()
 
 uint ComponentMesh::GetInternalSerializationBytes()
 {
-	return sizeof(uint) + sizeof(bool) + sizeof(uint) + sizeof(uint);
+	return sizeof(uint) + sizeof(bool);
 }
 
 void ComponentMesh::OnInternalSave(char*& cursor)
@@ -117,14 +117,6 @@ void ComponentMesh::OnInternalSave(char*& cursor)
 
 	bytes = sizeof(bool);
 	memcpy(cursor, &nv_walkable, bytes);
-	cursor += bytes;
-
-	bytes = sizeof(uint);
-	memcpy(cursor, &root_bones_uid, bytes);
-	cursor += bytes;
-
-	bytes = sizeof(uint);
-	memcpy(cursor, &root_bone, bytes);
 	cursor += bytes;
 }
 
@@ -138,13 +130,5 @@ void ComponentMesh::OnInternalLoad(char*& cursor)
 
 	bytes = sizeof(bool);
 	memcpy(&nv_walkable, cursor, bytes);
-	cursor += bytes;
-
-	bytes = sizeof(uint);
-	memcpy(&root_bones_uid, cursor, bytes);
-	cursor += bytes;
-
-	bytes = sizeof(uint);
-	memcpy(&root_bone, cursor, bytes);
 	cursor += bytes;
 }
