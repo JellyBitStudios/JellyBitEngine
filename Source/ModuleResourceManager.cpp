@@ -1212,6 +1212,16 @@ Resource* ModuleResourceManager::ExportFile(ResourceTypes type, ResourceData& da
 	}
 	break;
 
+	case ResourceTypes::AnimatorResource:
+	{
+		if (ResourceAnimator::ExportFile(data, *(ResourceAnimatorData*)specificData, outputFile, overwrite))
+		{
+			if (resources)
+				resource = ImportFile(outputFile.data());
+		}
+	}
+	break;
+
 	}
 
 	return resource;
@@ -1508,6 +1518,9 @@ ResourceTypes ModuleResourceManager::GetResourceTypeByExtension(const char* exte
 	case ASCIIava: case ASCIIAVA:
 		return ResourceTypes::AvatarResource;
 		break;
+	case ASCIIani: case ASCIIANI:
+		return ResourceTypes::AnimatorResource;
+		break;
 	case ASCIIcs: case ASCIICS:
 		return ResourceTypes::ScriptResource;
 		break;
@@ -1539,12 +1552,14 @@ ResourceTypes ModuleResourceManager::GetLibraryResourceTypeByExtension(const cha
 		return ResourceTypes::ShaderProgramResource;
 	else if (strcmp(extension, EXTENSION_MATERIAL) == 0)
 		return ResourceTypes::MaterialResource;
+	else if (strcmp(extension, EXTENSION_BONE) == 0)
+		return ResourceTypes::BoneResource;
 	else if (strcmp(extension, EXTENSION_AVATAR) == 0)
 		return ResourceTypes::AvatarResource;
 	else if (strcmp(extension, EXTENSION_ANIMATION) == 0)
 		return ResourceTypes::AnimationResource;
-	else if (strcmp(extension, EXTENSION_BONE) == 0)
-		return ResourceTypes::BoneResource;
+	else if (strcmp(extension, EXTENSION_ANIMATOR) == 0)
+		return ResourceTypes::AnimatorResource;
 	else if (strcmp(extension, EXTENSION_SCRIPT) == 0)
 		return ResourceTypes::ScriptResource;
 	else if (strcmp(extension, EXTENSION_PREFAB) == 0)
