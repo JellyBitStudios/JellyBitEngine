@@ -257,31 +257,3 @@ void ModuleAnimation::StepForward()
 		PauseAnimation();
 	}
 }
-
-void ModuleAnimation::DeformMesh(ComponentBone* component_bone)
-{
-	ComponentMesh* mesh_co = component_bone->attached_mesh;
-
-	if (mesh_co != nullptr)
-	{
-		ResourceBone* rbone = (ResourceBone*)App->res->GetResource(component_bone->res);
-		ResourceMesh* mesh = (ResourceMesh*)App->res->GetResource(mesh_co->res);
-
-		math::float4x4 trans = component_bone->GetParent()->transform->GetGlobalMatrix();
-		trans = trans * component_bone->attached_mesh->GetParent()->transform->GetGlobalMatrix().Inverse();
-
-		trans = trans * rbone->boneData.offsetMatrix;
-
-		for (uint i = 0; i < rbone->boneData.bone_weights_size; ++i)
-		{
-			uint index = rbone->boneData.bone_weights_indices[i];
-			math::float3 original(mesh->GetSpecificData().vertices[index].position);
-
-			math::float3 vertex = trans.TransformPos(original);
-
-			mesh->deformableMeshData.vertices[index].position[0] += vertex.x * rbone->boneData.bone_weights[i] * SCALE;
-			mesh->deformableMeshData.vertices[index].position[1] += vertex.y * rbone->boneData.bone_weights[i] * SCALE;
-			mesh->deformableMeshData.vertices[index].position[2] += vertex.z * rbone->boneData.bone_weights[i] * SCALE;
-		}
-	}
-}

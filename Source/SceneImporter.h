@@ -59,7 +59,7 @@ private:
 		std::unordered_map<std::string, aiBone*>& bonesByName,
 		std::vector<std::string>& bone_files, std::vector<uint>& forcedUuids = std::vector<uint>()) const;
 
-	void ImportAnimations(mutable const aiScene* scene,  std::vector<std::string>& anim_files, const char* anim_name, std::vector<uint>& forcedUuids = std::vector<uint>()) const;
+	void ImportAnimations(const aiScene* scene, GameObject* rootBone,  std::vector<std::string>& anim_files, const char* anim_name, std::vector<uint>& forcedUuids = std::vector<uint>()) const;
 
 	bool Load(const void* buffer, uint size, ResourceData& outputData, ResourceMeshData& outputMeshData) const;
 
