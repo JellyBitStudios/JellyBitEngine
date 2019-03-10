@@ -38,7 +38,7 @@ private:
 	int sizeLoaded = 72;
 	ComponentRectTransform* rect = nullptr;
 	std::map<char, Character> charactersBitmap;
-	math::float4 color = math::float4(0.0f, 0.0f, 0.0f, 1.0f);
+	math::float4 color = math::float4::one;
 
 };
 

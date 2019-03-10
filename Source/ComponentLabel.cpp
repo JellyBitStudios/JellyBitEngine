@@ -39,16 +39,17 @@ void ComponentLabel::Draw(uint ui_shader, uint VAO)
 	uint* rectParent = parent->cmp_rectTransform->GetRect();
 	rect->SetRect(rectParent[0], rectParent[1], 0, 0);
 	float sizeNorm = size / (float)sizeLoaded;
-	
-	for (std::string::const_iterator c = finalText.begin(); c != finalText.end(); ++c)
+
+	for (std::string::const_iterator c = finalText.begin(); c != finalText.end(); ++c) 
 	{
+
 		if ((int)(*c) >= 0 && (int)(*c) < 128 )
 		{
 			Character character;
 			character = charactersBitmap.find(*c)->second;
 
 			uint x = rect->GetRect()[0] + character.bearing.x;
-			uint y = rect->GetRect()[1] /*+ (character.size.y - character.bearing.y)*/;
+			uint y = rect->GetRect()[1] + (character.size.y - character.bearing.y);
 
 			rect->SetRect(x, y, character.size.x * sizeNorm, character.size.y * sizeNorm);
 
@@ -72,7 +73,7 @@ void ComponentLabel::Draw(uint ui_shader, uint VAO)
 
 			glUseProgram(0);
 
-			rect->SetRectPos(rect->GetRect()[0] - character.bearing.x + character.advance, rectParent[1]);
+			rect->SetRectPos(rect->GetRect()[0] + character.advance * sizeNorm, rectParent[1]);
 		}
 	}
 }
