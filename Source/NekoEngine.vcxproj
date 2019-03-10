@@ -280,6 +280,7 @@
     <ClInclude Include="Assimp\include\vector3.h" />
     <ClInclude Include="Assimp\include\version.h" />
     <ClInclude Include="ComponentAnimation.h" />
+    <ClInclude Include="ComponentAnimator.h" />
     <ClInclude Include="ComponentAudioListener.h" />
     <ClInclude Include="ComponentAudioSource.h" />
     <ClInclude Include="ComponentButton.h" />
@@ -705,6 +706,7 @@
     <ClCompile Include="AnimationImporter.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="ComponentAnimation.cpp" />
+    <ClCompile Include="ComponentAnimator.cpp" />
     <ClCompile Include="ComponentAudioListener.cpp" />
     <ClCompile Include="ComponentAudioSource.cpp" />
     <ClCompile Include="ComponentButton.cpp" />

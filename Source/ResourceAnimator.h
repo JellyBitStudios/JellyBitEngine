@@ -7,7 +7,7 @@
 struct ResourceAnimatorData
 {
 	std::string name;
-	uint avatar_uuid;
+	uint avatar_uuid = 0u;
 	std::vector<uint> meshes_uuids;
 	std::vector<uint> animations_uuids;
 };
