@@ -1210,7 +1210,7 @@ Resource* ModuleResourceManager::ExportFile(ResourceTypes type, ResourceData& da
 	{
 		if (ResourceBone::ExportFile(data, *(ResourceBoneData*)specificData, outputFile, overwrite))
 		{
-			if (!overwrite)
+			if (resources)
 				resource = ImportFile(outputFile.data());
 		}
 	}
@@ -1220,7 +1220,7 @@ Resource* ModuleResourceManager::ExportFile(ResourceTypes type, ResourceData& da
 	{
 		if (ResourceAvatar::ExportFile(data, *(ResourceAvatarData*)specificData, outputFile, overwrite))
 		{
-			if (!overwrite)
+			if (resources)
 				resource = ImportFile(outputFile.data());
 		}
 	}
@@ -1230,7 +1230,7 @@ Resource* ModuleResourceManager::ExportFile(ResourceTypes type, ResourceData& da
 	{
 		if (ResourceAnimation::ExportFile(data, *(ResourceAnimationData*)specificData, outputFile, overwrite))
 		{
-			if (!overwrite)
+			if (resources)
 				resource = ImportFile(outputFile.data());
 		}
 	}

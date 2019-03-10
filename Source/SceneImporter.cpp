@@ -168,14 +168,12 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 		{
 			std::vector<uint> dummyForcedBonesUuids = forced_bones_uuids;
 
-			RecursivelyProcessBones(rootGameObject, 
+			ImportBones(rootGameObject, 
 				bonesByName,
 				bone_files, dummyForcedBonesUuids);
 		}
 
 		ImportAnimations(scene, rootBone, anim_files, prefabName, forced_anim_uuids);
-
-		rootBone = nullptr; // c: 
 
 		// Create Prefab
 		GameObject* prefab_go = rootGameObject;
@@ -190,18 +188,17 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 		App->res->ExportFile(ResourceTypes::PrefabResource, prefabGenericData, &prefabSpecificData, std::string());
 
 		// Create Avatar
-		if (bone_root_uuid > 0)
+		if (rootBone != nullptr)
 		{
 			ResourceData avatarGenericData;
 			ResourceAvatarData avatarSpecificData;
 
 			avatarGenericData.name = prefabName;
-			avatarSpecificData.hipsUuid = bone_root_uuid;
+			avatarSpecificData.hipsUuid = rootBone->GetUUID();
 
 			std::string outputFile;
 			App->res->ExportFile(ResourceTypes::AvatarResource, avatarGenericData, &avatarSpecificData, outputFile);
 		}
-		bone_root_uuid = 0;
 
 		// ----------
 	
@@ -215,7 +212,7 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 }
 
 void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* node, const GameObject* parent, const GameObject* transformation, 
-	GameObject* rootBone, std::unordered_map<std::string, aiBone*>& bonesByName,
+	GameObject*& rootBone, std::unordered_map<std::string, aiBone*>& bonesByName,
 	std::vector<std::string>& mesh_files, std::vector<uint>& forcedUuids) const
 {
 	std::string name = node->mName.data;
@@ -596,46 +593,48 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 	}
 }
 
-void SceneImporter::RecursivelyProcessBones(GameObject* gameObject,
+void SceneImporter::ImportBones(GameObject* gameObject,
 	std::unordered_map<std::string, aiBone*>& bonesByName,
 	std::vector<std::string>& bone_files, std::vector<uint>& forcedUuids) const
 {
-	const char* boneName = gameObject->GetName();
-	std::unordered_map<std::string, aiBone*>::const_iterator it = bonesByName.find(boneName);
-	if (it != bonesByName.end())
-	{
-		aiBone* bone = it->second;
-
-		// Create the Bone Component
-		gameObject->AddComponent(ComponentTypes::BoneComponent);
-
-		if (forcedUuids.size() > 0)
-		{
-			gameObject->cmp_bone->res = forcedUuids.front();
-			forcedUuids.erase(forcedUuids.begin());
-		}
-		else
-			gameObject->cmp_bone->res = App->GenerateRandomNumber();
-
-		// Create the Bone Resource
-		ResourceData data;
-		data.name = std::to_string(gameObject->cmp_bone->res);
-
-		ResourceBoneData boneData;
-		boneData.name = boneName;
-		memcpy(&boneData.offsetMatrix, &bone->mOffsetMatrix.a1, sizeof(float) * 16);
-
-		// Export the new file
-		std::string outputFile;
-		if (App->res->ExportFile(ResourceTypes::BoneResource, data, &boneData, outputFile, false, false))
-			bone_files.push_back(outputFile);
-	}
-
 	std::vector<GameObject*> children;
-	gameObject->GetChildrenVector(children, false);
+	gameObject->GetChildrenVector(children);
 
 	for (uint i = 0; i < children.size(); ++i)
-		RecursivelyProcessBones(children[i], bonesByName, bone_files, forcedUuids);
+	{
+		const char* boneName = gameObject->GetName();
+
+		std::unordered_map<std::string, aiBone*>::const_iterator it = bonesByName.find(boneName);
+
+		if (it != bonesByName.end())
+		{
+			aiBone* bone = it->second;
+
+			// Create the Bone Component
+			gameObject->AddComponent(ComponentTypes::BoneComponent);
+
+			if (forcedUuids.size() > 0)
+			{
+				gameObject->cmp_bone->res = forcedUuids.front();
+				forcedUuids.erase(forcedUuids.begin());
+			}
+			else
+				gameObject->cmp_bone->res = App->GenerateRandomNumber();
+
+			// Create the Bone Resource
+			ResourceData data;
+			data.name = std::to_string(gameObject->cmp_bone->res);
+
+			ResourceBoneData boneData;
+			boneData.name = boneName;
+			memcpy(&boneData.offsetMatrix, &bone->mOffsetMatrix.a1, sizeof(float) * 16);
+
+			// Export the new file
+			std::string outputFile;
+			if (ResourceBone::ExportFile(data, boneData, outputFile, false))
+				bone_files.push_back(outputFile);
+		}
+	}
 }
 
 void SceneImporter::ImportAnimations(const aiScene * scene, GameObject* rootBone, std::vector<std::string>& anim_files, const char* anim_name, std::vector<uint>& forcedUuids)const
@@ -684,9 +683,6 @@ void SceneImporter::ImportAnimations(const aiScene * scene, GameObject* rootBone
 			App->animImporter->SaveAnimation(data, res_data, outputFile, false);
 
 			anim_files.push_back(outputFile);
-
-			//ComponentMesh* mesh_co = (ComponentMesh*)rootBone->GetComponent(ComponentTypes::MeshComponent);
-			//mesh_co->root_bones_uid = bone_root_uuid;
 		}
 	}
 }

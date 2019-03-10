@@ -52,10 +52,10 @@ private:
 		std::vector<uint>& forced_meshes_uuids = std::vector<uint>(), std::vector<uint>& forced_bones_uuids = std::vector<uint>(), std::vector<uint>& forced_anims_uuids = std::vector<uint>()) const;
 	
 	void RecursivelyImportNodes(const aiScene* scene, const aiNode* node, const GameObject* parent, const GameObject* transformation, 
-		GameObject* rootBone, std::unordered_map<std::string, aiBone*>& bonesByName,
+		GameObject*& rootBone, std::unordered_map<std::string, aiBone*>& bonesByName,
 		std::vector<std::string>& mesh_files, std::vector<uint>& forcedUuids = std::vector<uint>()) const;
 
-	void RecursivelyProcessBones(GameObject* gameObject, 
+	void ImportBones(GameObject* gameObject, 
 		std::unordered_map<std::string, aiBone*>& bonesByName,
 		std::vector<std::string>& bone_files, std::vector<uint>& forcedUuids = std::vector<uint>()) const;
 
@@ -68,7 +68,6 @@ private:
 	/*Mutable stuff uwu*/
 	mutable GameObject* imported_root_go = nullptr;
 	mutable std::map<std::string, uint> imported_bones;
-	mutable uint bone_root_uuid = 0u;
 };
 
 #endif
