@@ -440,9 +440,9 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 
 		// ----------
 
-		math::float3 pos = boneGameObject->transform->position;
-		math::float3 scale = boneGameObject->transform->scale;
-		math::Quat rot = boneGameObject->transform->rotation;
+		math::float3 pos = boneGameObject->transform->GetPosition();
+		math::float3 scale = boneGameObject->transform->GetScale();
+		math::Quat rot = boneGameObject->transform->GetRotation();
 
 		// 1. Find next and previous transformations
 
@@ -588,20 +588,20 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 		if (blend == 1.0f)
 		{
 			// Not blend
-			boneGameObject->transform->position = pos;
-			boneGameObject->transform->scale = scale;
-			boneGameObject->transform->rotation = rot;
+			boneGameObject->transform->SetPosition(pos);
+			boneGameObject->transform->SetScale(scale);
+			boneGameObject->transform->SetRotation(rot);
 		}
 		else
 		{
 			// Blend
-			math::float3 blendPos = math::float3::Lerp(boneGameObject->transform->position, pos, blend);
-			math::float3 blendScale = math::float3::Lerp(boneGameObject->transform->scale, scale, blend);
-			math::Quat blendRot = math::Quat::Slerp(boneGameObject->transform->rotation, rot, blend);
+			math::float3 blendPos = math::float3::Lerp(boneGameObject->transform->GetPosition(), pos, blend);
+			math::float3 blendScale = math::float3::Lerp(boneGameObject->transform->GetScale(), scale, blend);
+			math::Quat blendRot = math::Quat::Slerp(boneGameObject->transform->GetRotation(), rot, blend);
 
-			boneGameObject->transform->position = blendPos;
-			boneGameObject->transform->scale = blendScale;
-			boneGameObject->transform->rotation = blendRot;
+			boneGameObject->transform->SetPosition(blendPos);
+			boneGameObject->transform->SetScale(blendScale);
+			boneGameObject->transform->SetRotation(blendRot);
 		}
 	}
 }
