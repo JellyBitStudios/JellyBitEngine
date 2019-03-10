@@ -169,10 +169,10 @@ bool ResourceAnimator::ExportFile(ResourceData& resourceData, ResourceAnimatorDa
 
 	if (ret)
 	{
-		CONSOLE_LOG(LogTypes::Normal, "Resource Material: Successfully saved Material '%s'", outputFile.data());
+		CONSOLE_LOG(LogTypes::Normal, "Resource Animator: Successfully saved Animator '%s'", outputFile.data());
 	}
 	else
-		CONSOLE_LOG(LogTypes::Error, "Resource Material: Could not save Material '%s'", outputFile.data());
+		CONSOLE_LOG(LogTypes::Error, "Resource Animator: Could not save Animator '%s'", outputFile.data());
 
 	RELEASE_ARRAY(buffer);
 
@@ -489,11 +489,11 @@ uint ResourceAnimator::SetNameToMeta(const char* metaFile, const std::string& na
 	uint retSize = App->fs->Save(metaFile, data, size);
 	if (retSize > 0)
 	{
-		CONSOLE_LOG(LogTypes::Normal, "Resource Material: Successfully saved meta '%s'", metaFile);
+		CONSOLE_LOG(LogTypes::Normal, "Resource Animator: Successfully saved meta '%s'", metaFile);
 	}
 	else
 	{
-		CONSOLE_LOG(LogTypes::Error, "Resource Material: Could not save meta '%s'", metaFile);
+		CONSOLE_LOG(LogTypes::Error, "Resource Animator: Could not save meta '%s'", metaFile);
 		return 0;
 	}
 
