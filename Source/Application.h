@@ -114,7 +114,6 @@ public:
 	class ModuleEvents*					events;
 	class ModulePhysics*				physics;
     class ModuleUI*						ui;
-	class ModuleAnimation*				animation;
 	class ModuleAudio*					audio;
 	class DebugDrawer*					debugDrawer;
 	class ModuleNavigation*				navigation;

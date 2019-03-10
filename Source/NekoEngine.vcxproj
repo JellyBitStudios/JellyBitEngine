@@ -300,7 +300,6 @@
     <ClInclude Include="ModuleFBOManager.h" />
     <ClInclude Include="Freetype\freetype\config\ftheader.h" />
     <ClInclude Include="Freetype\ft2build.h" />
-    <ClInclude Include="ModuleAnimation.h" />
     <ClInclude Include="ModuleAudio.h" />
     <ClInclude Include="ModuleFreetype.h" />
     <ClInclude Include="ModuleInternalResHandler.h" />
@@ -725,7 +724,6 @@
     <ClCompile Include="ComponentRevoluteJoint.cpp" />
     <ClCompile Include="ComponentSphericalJoint.cpp" />
     <ClCompile Include="ModuleFBOManager.cpp" />
-    <ClCompile Include="ModuleAnimation.cpp" />
     <ClCompile Include="ModuleAudio.cpp" />
     <ClCompile Include="ModuleFreetype.cpp" />
     <ClCompile Include="ModuleInternalResHandler.cpp" />

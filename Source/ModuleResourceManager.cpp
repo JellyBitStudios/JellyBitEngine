@@ -9,7 +9,6 @@
 #include "MaterialImporter.h"
 #include "ShaderImporter.h"
 #include "AnimationImporter.h"
-#include "ModuleAnimation.h"
 
 #include "ResourceTypes.h"
 #include "Resource.h"
@@ -459,7 +458,8 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 
 					resource = CreateResource(ResourceTypes::AnimationResource, data, &anim_data, uuid);
 
-					App->animation->SetAnimationGos((ResourceAnimation*)resource);
+					// TODO_G : check this
+					//App->animation->SetAnimationGos((ResourceAnimation*)resource);
 
 					if (resource != nullptr)
 						animation_uuids.push_back(uuid);
@@ -1112,7 +1112,8 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		ResourceAnimation::LoadFile(file, animationData);
 
 		resource = CreateResource(ResourceTypes::AnimationResource, data, &animationData, uuid);
-		App->animation->SetAnimationGos((ResourceAnimation*)resource);
+		// TODO_G 
+		//App->animation->SetAnimationGos((ResourceAnimation*)resource);
 	}
 	break;
 

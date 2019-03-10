@@ -11,7 +11,6 @@
 #include "ResourceMesh.h"
 #include "ResourceAnimation.h"
 #include "AnimationImporter.h"
-#include "ModuleAnimation.h"
 #ifndef GAMEMODE
 #include "imgui\imgui.h"
 #endif
@@ -68,7 +67,9 @@ bool ComponentAnimation::SetResource(uint resource) //check all this
 
 bool ComponentAnimation::PlayAnimation(const char* anim_name)
 {
-	return App->animation->SetCurrentAnimation(anim_name);
+	//TODO THIS IN ANIMATOR COMPONENT
+	return true;
+//	return App->animation->SetCurrentAnimation(anim_name);
 }
 
 void ComponentAnimation::OnEditor()

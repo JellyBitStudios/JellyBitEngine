@@ -24,7 +24,6 @@
 #include "ModuleEvents.h"
 #include "ModulePhysics.h"
 #include "ModuleUI.h"
-#include "ModuleAnimation.h"
 #include "ModuleLayers.h"
 #include "ModuleAudio.h"
 #include "ModuleLayers.h"
@@ -54,7 +53,6 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	scripting = new ScriptingModule();
 	events = new ModuleEvents();
 	physics = new ModulePhysics();
-	animation = new ModuleAnimation();
 	layers = new ModuleLayers();
 	ui = new ModuleUI();
 	audio = new ModuleAudio();
@@ -90,7 +88,6 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	AddModule(input);
 	AddModule(scene);
 	AddModule(scripting);
-	AddModule(animation);
 	AddModule(navigation);
 	AddModule(fbo);
 

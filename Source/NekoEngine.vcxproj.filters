@@ -1521,9 +1521,6 @@
     <ClInclude Include="AnimationImporter.h">
       <Filter>Sources\Modules\Importers</Filter>
     </ClInclude>
-    <ClInclude Include="ModuleAnimation.h">
-      <Filter>Sources\Modules</Filter>
-    </ClInclude>
     <ClInclude Include="ResourceMaterial.h">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClInclude>
@@ -2296,9 +2293,6 @@
     </ClCompile>
     <ClCompile Include="AnimationImporter.cpp">
       <Filter>Sources\Modules\Importers</Filter>
-    </ClCompile>
-    <ClCompile Include="ModuleAnimation.cpp">
-      <Filter>Sources\Modules</Filter>
     </ClCompile>
     <ClCompile Include="ResourceMaterial.cpp">
       <Filter>Sources\Modules\Resources\Types</Filter>

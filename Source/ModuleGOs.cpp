@@ -5,7 +5,6 @@
 #include "ModuleNavigation.h"
 #include "ModuleResourceManager.h"
 #include "ModuleInternalResHandler.h"
-#include "ModuleAnimation.h"
 #include "ModuleRenderer3D.h"
 #include "ModuleUI.h"
 
@@ -250,8 +249,7 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 
 	if (copy->GetParent() == nullptr)
 	{
-		// Animation stuff // TODO_G : this can be better in vert 2
-		App->animation->Start();
+		// TODO_G : Start resource animator here?
 		std::vector<GameObject*> gos;
 		this->GetGameobjects(gos);
 		for (uint i = 0u; i < gos.size(); i++)
