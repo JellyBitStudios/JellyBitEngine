@@ -19,6 +19,7 @@
 #include "ResourceMesh.h"
 #include "ResourceTexture.h"
 #include "ResourceMaterial.h"
+#include "ResourceAnimator.h"
 #include "ResourceShaderProgram.h"
 #include "ResourcePrefab.h"
 
@@ -106,6 +107,9 @@ bool PanelAssets::Draw()
 		case ResourceTypes::MaterialResource:
 			strcpy_s(resource, strlen("Create Material") + 1, "Create Material");
 			break;
+		case ResourceTypes::AnimatorResource:
+			strcpy_s(resource, strlen("Create Animator") + 1, "Create Animator");
+			break;
 		}
 
 		ImGui::OpenPopup(resource);
@@ -125,6 +129,9 @@ bool PanelAssets::Draw()
 			break;
 		case ResourceTypes::MaterialResource:
 			strcpy_s(resource, strlen("Delete Material") + 1, "Delete Material");
+			break;
+		case ResourceTypes::AnimatorResource:
+			strcpy_s(resource, strlen("Delete Animator") + 1, "Delete Animator");
 			break;
 		}
 
@@ -241,7 +248,8 @@ void PanelAssets::RecursiveDrawAssetsDir(const Directory& directory)
 
 				if (resourceType == ResourceTypes::ShaderObjectResource ||
 					resourceType == ResourceTypes::ShaderProgramResource ||
-					resourceType == ResourceTypes::MaterialResource)
+					resourceType == ResourceTypes::MaterialResource ||
+					resourceType == ResourceTypes::AnimatorResource)
 					DeleteResourcePopUp(res->GetFile());
 
 				break;
@@ -315,6 +323,16 @@ void PanelAssets::CreateResourcePopUp(const char* path)
 			showCreateResourceConfirmationPopUp = true;
 			ImGui::CloseCurrentPopup();
 		}
+		else if (ImGui::Selectable("Create Animator"))
+		{
+			extension = EXTENSION_ANIMATOR;
+			strcpy_s(resourceName, strlen("New Animator") + 1, "New Animator");
+			file = path;
+			file.append("/");
+
+			showCreateResourceConfirmationPopUp = true;
+			ImGui::CloseCurrentPopup();
+		}
 		ImGui::EndPopup();
 	}
 }
@@ -336,6 +354,9 @@ void PanelAssets::DeleteResourcePopUp(const char* path)
 			break;
 		case ResourceTypes::MaterialResource:
 			strcpy_s(resource, strlen("Delete Material") + 1, "Delete Material");
+			break;
+		case ResourceTypes::AnimatorResource:
+			strcpy_s(resource, strlen("Delete Animator") + 1, "Delete Animator");
 			break;
 		}
 
@@ -361,6 +382,9 @@ void PanelAssets::CreateResourceConfirmationPopUp()
 		break;
 	case ResourceTypes::MaterialResource:
 		strcpy_s(resource, strlen("Create Material") + 1, "Create Material");
+		break;
+	case ResourceTypes::AnimatorResource:
+		strcpy_s(resource, strlen("Create Animator") + 1, "Create Animator");
 		break;
 	}
 
@@ -420,6 +444,19 @@ void PanelAssets::CreateResourceConfirmationPopUp()
 				App->res->ExportFile(resourceType, data, &materialData, outputFile, true); // overwrite true since we already know the path
 			}
 			break;
+
+			case ResourceTypes::AnimatorResource:
+			{
+				// Basic animator info
+				ResourceAnimatorData animatorData;
+				animatorData.avatar_uuid = 0u;
+				animatorData.name = "Nameless animator uwu edition";
+
+				// Export the new file
+				std::string outputFile;
+				App->res->ExportFile(resourceType, data, &animatorData, outputFile, true); // overwrite true since we already know the path
+			}
+			break;
 			}
 
 			showCreateResourceConfirmationPopUp = false;
@@ -453,6 +490,9 @@ void PanelAssets::DeleteResourceConfirmationPopUp()
 	case ResourceTypes::MaterialResource:
 		strcpy_s(resource, strlen("Delete Material") + 1, "Delete Material");
 		break;
+	case ResourceTypes::AnimatorResource:
+		strcpy_s(resource, strlen("Delete Animator") + 1, "Delete Animator");
+		break;
 	}
 
 	if (ImGui::BeginPopupModal(resource, NULL, ImGuiWindowFlags_AlwaysAutoResize))
@@ -467,6 +507,9 @@ void PanelAssets::DeleteResourceConfirmationPopUp()
 			break;
 		case ResourceTypes::MaterialResource:
 			ImGui::Text("Are you sure that you want to delete the following Material?");
+			break;
+		case ResourceTypes::AnimatorResource:
+			ImGui::Text("Are you sure that you want to delete the following Animator?");
 			break;
 		}
 		ImGui::TextColored(BLUE, "%s", file.data());
