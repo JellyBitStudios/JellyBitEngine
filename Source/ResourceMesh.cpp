@@ -2,9 +2,14 @@
 
 #include "Application.h"
 #include "ModuleFileSystem.h"
+#include "ModuleResourceManager.h"
+#include "ModuleGOs.h"
 #include "ModuleScene.h"
 
 #include "SceneImporter.h"
+
+#include "ResourceBone.h"
+#include "ComponentBone.h"
 
 #include "imgui\imgui.h"
 
@@ -551,6 +556,40 @@ bool ResourceMesh::UseAdjacency() const
 	return meshData.adjacency;
 }
 
+bool ResourceMesh::AddBones(std::unordered_map<const char*, uint>& bones)
+{
+	uint boneId = 0;
+	for (std::unordered_map<const char*, uint>::const_iterator it = bones.begin(); it != bones.end(); ++it, ++boneId)
+	{
+		/// Bone game object
+		GameObject* boneGameObject = App->GOs->GetGameObjectByUID(it->second);
+		if (boneGameObject == nullptr)
+			continue;
+
+		/// Bone component
+		ComponentBone* boneComponent = boneGameObject->cmp_bone;
+		if (boneComponent == nullptr)
+			continue;
+
+		/// Bone resource
+		ResourceBone* boneResource = (ResourceBone*)App->res->GetResource(boneComponent->res);
+		if (boneResource == nullptr)
+			continue;
+
+		for (uint i = 0; i < MAX_BONES; ++i)
+		{
+			const char* boneName = meshData.bonesNames[i];
+			if (strcmp(boneName, boneResource->boneData.name.data()) == 0)
+			{
+				float* boneWeight = meshData.bonesWeights[i];
+				uint* vertexId = meshData.bonesIds[i];
+
+				AddBone(vertexId, boneWeight, boneId);
+			}
+		}
+	}
+}
+
 bool ResourceMesh::AddBone(uint vertexId, float boneWeight, uint boneId)
 {
 	assert(vertexId >= 0 && vertexId < meshData.verticesSize);
@@ -559,9 +598,9 @@ bool ResourceMesh::AddBone(uint vertexId, float boneWeight, uint boneId)
 	for (uint i = 0; i < MAX_BONES; ++i)
 	{
 		// Find an empy slot
-		if (vertex.weights[i] == 0.0f)
+		if (vertex.boneWeights[i] == 0.0f)
 		{
-			vertex.weights[i] = boneWeight;
+			vertex.boneWeights[i] = boneWeight;
 			vertex.indices[i] = boneId;
 			return true;
 		}

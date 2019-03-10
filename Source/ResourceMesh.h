@@ -54,8 +54,8 @@ struct Vertex
 	uchar color[4];
 	float texCoord[2];
 
-	float weights[MAX_BONES]; // bone weight
-	uint ids[MAX_BONES]; // bone id
+	float boneWeight[MAX_BONES];
+	uint boneId[MAX_BONES];
 };
 
 struct ResourceMeshData
@@ -68,6 +68,10 @@ struct ResourceMeshData
 
 	bool adjacency = false;
 	uint* adjacentIndices = nullptr;
+
+	float* bonesWeights[MAX_BONES];
+	uint* bonesIds[MAX_BONES];
+	const char* bonesNames[MAX_BONES];
 
 	ResourceMeshImportSettings meshImportSettings;
 };
@@ -104,6 +108,7 @@ public:
 	uint GetIndicesCount() const;
 	bool UseAdjacency() const;
 
+	bool AddBones(std::unordered_map<const char*, uint>& bones);
 	bool AddBone(uint vertexId, float boneWeight, uint boneId);
 	static void CalculateAdjacentIndices(uint* indices, uint indicesSize, uint*& adjacentIndices);
 

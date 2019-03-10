@@ -50,7 +50,7 @@ private:
 
 private:
 
-	std::unordered_map<const char*, uint> bones; // bone resource name, bone game object uuid
+	std::unordered_map<const char*, uint> bones; // bone name, bone game object uuid
 
 	ResourceAvatarData avatarData;
 };
