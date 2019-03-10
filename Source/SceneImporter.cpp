@@ -396,14 +396,10 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 					boneInfluences[i].boneWeights = new float[bone->mNumWeights];
 					boneInfluences[i].boneIds = new uint[bone->mNumWeights];
 
-					aiVertexWeight* data = bone->mWeights;
-					aiVertexWeight* cursor = data;
-
 					for (uint j = 0; j < bone->mNumWeights; ++j)
 					{
-						memcpy(&boneInfluences[i].boneWeights[j], &cursor->mWeight, sizeof(float)); // strength of the influence
-						memcpy(&boneInfluences[i].boneIds[j], &cursor->mVertexId, sizeof(uint)); // index of the vertex influenced by this bone
-						cursor += sizeof(aiVertexWeight);
+						memcpy(&boneInfluences[i].boneWeights[j], &bone->mWeights[j].mVertexId, sizeof(float)); // strength of the influence
+						memcpy(&boneInfluences[i].boneIds[j], &bone->mWeights[j].mVertexId, sizeof(uint)); // index of the vertex influenced by this bone
 					}
 
 					// Import the bone later
