@@ -368,21 +368,16 @@ bool ResourceTexture::GenerateLibraryFiles() const
 		if (size > 0)
 		{
 			// Create a new name for the meta
-			std::string extension = metaFile;
-
-			uint found = extension.find_first_of(".");
-			if (found != std::string::npos)
-				extension = extension.substr(found, extension.size());
-
 			char newMetaFile[DEFAULT_BUF_SIZE];
-			sprintf_s(newMetaFile, "%s/%u%s", DIR_LIBRARY_TEXTURES, uuid, extension.data());
+			sprintf_s(newMetaFile, "%s/%u%s%s", DIR_LIBRARY_TEXTURES, uuid, EXTENSION_TEXTURE, EXTENSION_META);
 
 			// Save the new meta (info + new name)
 			size = App->fs->Save(newMetaFile, buffer, size);
 			if (size > 0)
+			{
+				RELEASE_ARRAY(buffer);
 				return true;
-
-			RELEASE_ARRAY(buffer);
+			}
 		}		
 	}
 
