@@ -100,13 +100,18 @@ bool PanelPhysics::Draw()
 						ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
 					sprintf_s(layerName, DEFAULT_BUF_SIZE, "##%i%i", i, j);
 					uint firstFilterMask = activeLayers[i]->GetFilterMask();
-					if (ImGui::CheckboxFlags(layerName, &firstFilterMask, activeLayers[j]->GetFilterGroup()))
+					uint firstFilterGroup = activeLayers[j]->GetFilterGroup();
+					if (ImGui::CheckboxFlags(layerName, &firstFilterMask, firstFilterGroup))
 					{
 						activeLayers[i]->SetFilterMask(firstFilterMask);
 
-						uint secondFilterMask = activeLayers[j]->GetFilterMask();
-						secondFilterMask ^= activeLayers[i]->GetFilterGroup();
-						activeLayers[j]->SetFilterMask(secondFilterMask);
+						uint secondFilterGroup = activeLayers[i]->GetFilterGroup();
+						if (firstFilterGroup != secondFilterGroup)
+						{
+							uint secondFilterMask = activeLayers[j]->GetFilterMask();
+							secondFilterMask ^= secondFilterGroup;
+							activeLayers[j]->SetFilterMask(secondFilterMask);
+						}
 					}
 					if (activeLayers[i]->builtin)
 						ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
