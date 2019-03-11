@@ -7,6 +7,7 @@
 #include "ModuleScene.h"
 
 #include "SceneImporter.h"
+#include "GameObject.h"
 
 #include "ResourceBone.h"
 #include "ComponentBone.h"

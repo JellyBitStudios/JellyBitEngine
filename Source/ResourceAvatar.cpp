@@ -11,6 +11,10 @@
 #include "ResourceBone.h"
 #include "ResourceMesh.h"
 #include "ResourceAnimation.h"
+#include "ComponentTransform.h"
+#include "GameObject.h"
+
+#include "MathGeoLib/include/MathGeoLib.h"
 
 #include "imgui\imgui.h"
 

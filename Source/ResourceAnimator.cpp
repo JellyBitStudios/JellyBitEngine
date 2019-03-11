@@ -590,11 +590,6 @@ void ResourceAnimator::AddAnimationFromAnimationResource(ResourceAnimation * res
 	animation->name = res->animationData.name;
 	animation->animation_uuid = res->GetUuid();
 
-#ifdef  GAMEMODE
-	for (uint i = 0; i < res->animationData.numKeys; ++i)
-		RecursiveGetAnimableGO(App->scene->root, &res->animationData.boneKeys[i], animation);
-#endif //  GAMEMODE
-
 	animation->duration = res->animationData.duration;
 
 	animations.push_back(animation);
