@@ -11,8 +11,6 @@ public:
 	ComponentMaterial(const ComponentMaterial& componentMaterial, GameObject* parent);
 	~ComponentMaterial();
 
-	void Update();
-
 	void OnUniqueEditor();
 
 	uint GetInternalSerializationBytes();

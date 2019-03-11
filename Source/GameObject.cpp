@@ -22,6 +22,7 @@
 #include "ComponentRigidStatic.h"
 #include "ComponentRigidDynamic.h"
 #include "ComponentNavAgent.h"
+#include "ComponentAnimator.h"
 #include "ComponentEmitter.h"
 #include "ComponentBone.h"
 #include "ComponentScript.h"
@@ -117,6 +118,11 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			cmp_animation = new ComponentAnimation(*gameObject.cmp_animation, this);
 			cmp_animation->SetParent(this);
 			components.push_back(cmp_animation);
+			break;
+		case ComponentTypes::AnimatorComponent:
+			cmp_animator = new ComponentAnimator(*gameObject.cmp_animator, this);
+			cmp_animator->SetParent(this);
+			components.push_back(cmp_animator);
 			break;
 		case ComponentTypes::LightComponent:
 			cmp_light = new ComponentLight(*gameObject.cmp_light, this);
@@ -572,6 +578,10 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 	case ComponentTypes::AnimationComponent:
 		assert(cmp_animation == NULL);
 		newComponent = cmp_animation = new ComponentAnimation(this);
+		break;
+	case ComponentTypes::AnimatorComponent:
+		assert(cmp_animator == NULL);
+		newComponent = cmp_animator = new ComponentAnimator(this);
 		break;
 	case ComponentTypes::LightComponent:
 		assert(cmp_light == NULL);

@@ -5,7 +5,6 @@
 #include "ModuleNavigation.h"
 #include "ModuleResourceManager.h"
 #include "ModuleInternalResHandler.h"
-#include "ModuleAnimation.h"
 #include "ModuleRenderer3D.h"
 #include "ModuleUI.h"
 
@@ -250,18 +249,16 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 
 	if (copy->GetParent() == nullptr)
 	{
-		// Animation stuff // TODO_G : this can be better in vert 2
-		App->animation->Start();
+		// TODO_G : Start resource animator here?
 		std::vector<GameObject*> gos;
 		this->GetGameobjects(gos);
 		for (uint i = 0u; i < gos.size(); i++)
 		{
-
 			ComponentAnimation* anim_co = (ComponentAnimation*)gos[i]->GetComponent(ComponentTypes::AnimationComponent);
 			if (anim_co) {
 				ResourceAnimation* anim = (ResourceAnimation*)App->res->GetResource(anim_co->res);
-				App->animation->StartAttachingBones(); App->animation->SetUpAnimations();
 			}
+
 		}
 	}
 	System_Event newEvent;

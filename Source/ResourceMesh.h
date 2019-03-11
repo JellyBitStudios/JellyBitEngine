@@ -4,6 +4,9 @@
 #include "Resource.h"
 
 #include <vector>
+#include <unordered_map>
+
+#define MAX_BONES 4
 
 struct ResourceMeshImportSettings
 {
@@ -51,6 +54,17 @@ struct Vertex
 	float bitangent[3];
 	uchar color[4];
 	float texCoord[2];
+
+	float boneWeight[MAX_BONES];
+	uint boneId[MAX_BONES];
+};
+
+struct BoneInfluence
+{
+	uint bonesWeightsSize = 0;
+	float* boneWeights = nullptr;
+	uint* boneIds = nullptr;
+	char boneName[DEFAULT_BUF_SIZE];
 };
 
 struct ResourceMeshData
@@ -61,8 +75,11 @@ struct ResourceMeshData
 	uint* indices = nullptr;
 	uint indicesSize = 0;
 
-	bool adjacency = true;
+	bool adjacency = false;
 	uint* adjacentIndices = nullptr;
+
+	BoneInfluence* boneInfluences = nullptr;
+	uint boneInfluencesSize = 0;
 
 	ResourceMeshImportSettings meshImportSettings;
 };
@@ -99,21 +116,15 @@ public:
 	uint GetIndicesCount() const;
 	bool UseAdjacency() const;
 
+	bool AddBones(const std::unordered_map<const char*, uint>& bones);
+	bool AddBone(uint vertexId, float boneWeight, uint boneId);
 	static void CalculateAdjacentIndices(uint* indices, uint indicesSize, uint*& adjacentIndices);
-
-	void GenerateAndBindDeformableMesh();
-	void UnloadDeformableMeshFromMemory();
-
-	void DuplicateMesh(ResourceMesh* mesh);
 
 	uint GetVBO() const;
 	uint GetIBO() const;
 	uint GetVAO() const;
 
 private:
-
-	static bool ReadMeshesUuidsFromMeta(const char* metaFile, std::vector<uint>& meshesUuids);
-	static bool ReadMeshImportSettingsFromMeta(const char* metaFile, ResourceMeshImportSettings& meshImportSettings);
 
 	bool LoadInMemory();
 	bool UnloadFromMemory();
@@ -125,14 +136,6 @@ private:
 	uint VAO = 0;
 
 	ResourceMeshData meshData;
-
-public:
-
-	uint DVBO = 0;
-	uint DIBO = 0;
-	uint DVAO = 0;
-
-	ResourceMeshData deformableMeshData;
 };
 
 #endif

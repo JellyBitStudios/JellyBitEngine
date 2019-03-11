@@ -16,9 +16,6 @@
 #include "ComponentMesh.h"
 #include "ModuleNavigation.h"
 
-// TODO_G : delete this
-#include "ModuleAnimation.h"
-
 #include "imgui/imgui.h"
 
 #include <list>

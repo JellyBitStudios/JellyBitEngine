@@ -22,7 +22,7 @@
     <ProjectGuid>{746CC4C3-787F-4B0E-AA66-E388FE3FF4F6}</ProjectGuid>
     <RootNamespace>SDLGame</RootNamespace>
     <ProjectName>NekoEngine</ProjectName>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -279,8 +279,8 @@
     <ClInclude Include="Assimp\include\vector2.h" />
     <ClInclude Include="Assimp\include\vector3.h" />
     <ClInclude Include="Assimp\include\version.h" />
-    <ClInclude Include="BoneImporter.h" />
     <ClInclude Include="ComponentAnimation.h" />
+    <ClInclude Include="ComponentAnimator.h" />
     <ClInclude Include="ComponentAudioListener.h" />
     <ClInclude Include="ComponentAudioSource.h" />
     <ClInclude Include="ComponentButton.h" />
@@ -300,7 +300,6 @@
     <ClInclude Include="ModuleFBOManager.h" />
     <ClInclude Include="Freetype\freetype\config\ftheader.h" />
     <ClInclude Include="Freetype\ft2build.h" />
-    <ClInclude Include="ModuleAnimation.h" />
     <ClInclude Include="ModuleAudio.h" />
     <ClInclude Include="ModuleFreetype.h" />
     <ClInclude Include="ModuleInternalResHandler.h" />
@@ -308,6 +307,7 @@
     <ClInclude Include="ModuleUI.h" />
     <ClInclude Include="PhysicsConstants.h" />
     <ClInclude Include="ResourceAnimator.h" />
+    <ClInclude Include="ResourceAvatar.h" />
     <ClInclude Include="ResourceAudioBank.h" />
     <ClInclude Include="ResourcePrefab.h" />
     <ClInclude Include="ResourceMaterial.h" />
@@ -705,8 +705,8 @@
     <ClCompile Include="AK\Win32\stdafx.cpp" />
     <ClCompile Include="AnimationImporter.cpp" />
     <ClCompile Include="Application.cpp" />
-    <ClCompile Include="BoneImporter.cpp" />
     <ClCompile Include="ComponentAnimation.cpp" />
+    <ClCompile Include="ComponentAnimator.cpp" />
     <ClCompile Include="ComponentAudioListener.cpp" />
     <ClCompile Include="ComponentAudioSource.cpp" />
     <ClCompile Include="ComponentButton.cpp" />
@@ -724,13 +724,13 @@
     <ClCompile Include="ComponentRevoluteJoint.cpp" />
     <ClCompile Include="ComponentSphericalJoint.cpp" />
     <ClCompile Include="ModuleFBOManager.cpp" />
-    <ClCompile Include="ModuleAnimation.cpp" />
     <ClCompile Include="ModuleAudio.cpp" />
     <ClCompile Include="ModuleFreetype.cpp" />
     <ClCompile Include="ModuleInternalResHandler.cpp" />
     <ClCompile Include="ModuleLayers.cpp" />
     <ClCompile Include="ModuleUI.cpp" />
     <ClCompile Include="ResourceAnimator.cpp" />
+    <ClCompile Include="ResourceAvatar.cpp" />
     <ClCompile Include="ResourceAudioBank.cpp" />
     <ClCompile Include="ResourcePrefab.cpp" />
     <ClCompile Include="ResourceMaterial.cpp" />
