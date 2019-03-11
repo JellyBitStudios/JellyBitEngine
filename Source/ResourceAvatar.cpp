@@ -389,6 +389,13 @@ bool ResourceAvatar::GenerateLibraryFiles() const
 
 // ----------------------------------------------------------------------------------------------------
 
+void ResourceAvatar::SetHipsUuid(uint hipsUuid)
+{
+	avatarData.hipsUuid = hipsUuid;
+
+	// TODO: build the skeleton
+}
+
 uint ResourceAvatar::GetHipsUuid() const
 {
 	return avatarData.hipsUuid;
@@ -610,7 +617,7 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 
 bool ResourceAvatar::LoadInMemory()
 {
-	assert(avatarData.hipsUuid > 0);
+	//assert(avatarData.hipsUuid > 0); // TODO: ANIMATOR MUST CHECK IF HIPS HAVE A COMPONENT BONE WITH A VALID RESOURCE BONE
 
 	// 1. Build the skeleton
 

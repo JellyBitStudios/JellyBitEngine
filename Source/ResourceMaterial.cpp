@@ -105,7 +105,6 @@ uint ResourceMaterial::SaveFile(ResourceData& data, ResourceMaterialData& materi
 	cursor += bytes;
 
 	// 2. Store uniforms size
-
 	bytes = sizeof(uint);
 	memcpy(cursor, &uniformsSize, bytes);
 

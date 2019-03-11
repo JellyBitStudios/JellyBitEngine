@@ -171,9 +171,10 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 			ImportBones(rootGameObject, 
 				bonesByName,
 				bone_files, dummyForcedBonesUuids);
-		}
 
-		ImportAnimations(scene, rootBone, anim_files, prefabName, forced_anim_uuids);
+			/// Import animations
+			ImportAnimations(scene, rootBone, anim_files, prefabName, forced_anim_uuids);
+		}
 
 		// Create Prefab
 		GameObject* prefab_go = rootGameObject;
@@ -188,6 +189,7 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 		App->res->ExportFile(ResourceTypes::PrefabResource, prefabGenericData, &prefabSpecificData, std::string());
 
 		// Create Avatar
+		/*
 		if (rootBone != nullptr)
 		{
 			ResourceData avatarGenericData;
@@ -199,6 +201,7 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 			std::string outputFile;
 			App->res->ExportFile(ResourceTypes::AvatarResource, avatarGenericData, &avatarSpecificData, outputFile);
 		}
+		*/
 
 		// ----------
 	

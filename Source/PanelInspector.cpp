@@ -10,6 +10,7 @@
 #include "ModuleResourceManager.h"
 #include "ModuleInternalResHandler.h"
 #include "ModuleGui.h"
+#include "ModuleGOs.h"
 #include "PanelShaderEditor.h"
 #include "PanelCodeEditor.h"
 #include "SceneImporter.h"
@@ -24,6 +25,7 @@
 #include "ComponentRigidActor.h"
 #include "ComponentCollider.h"
 #include "ComponentRectTransform.h"
+#include "ComponentBone.h"
 
 #include "Resource.h"
 #include "ResourceMesh.h"
@@ -34,6 +36,7 @@
 #include "ResourceMaterial.h"
 #include "ResourceAvatar.h"
 #include "ResourceAnimation.h"
+#include "ResourceBone.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -1021,8 +1024,41 @@ void PanelInspector::ShowAvatarInspector() const
 
 	ImGui::Spacing();
 
-	ImGui::Text("Hips UUID:"); ImGui::SameLine();
-	ImGui::TextColored(BLUE, "%u", avatar->GetHipsUuid());
+	uint hipsUuid = avatar->GetHipsUuid();
+	const GameObject* hipsGameObject = App->GOs->GetGameObjectByUID(hipsUuid);
+	const ComponentBone* hipsComponent = hipsGameObject != nullptr ? hipsGameObject->cmp_bone : nullptr;
+	const ResourceBone* hipsResource = hipsComponent != nullptr ? ((ResourceBone*)App->res->GetResource(hipsComponent->res)) : nullptr;
+
+	ImGui::PushID("hips");
+	ImGui::Button(hipsResource != nullptr ? hipsResource->boneData.name.data() : "Empty Avatar", ImVec2(150.0f, 0.0f));
+	ImGui::PopID();
+
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("%u", hipsUuid);
+		ImGui::EndTooltip();
+	}
+
+	if (ImGui::BeginDragDropTarget())
+	{
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY"))
+		{
+			uint payload_n = *(uint*)payload->Data;
+			const GameObject* hipsGameObject = App->GOs->GetGameObjectByUID(payload_n);
+			const ComponentBone* hipsComponent = hipsGameObject != nullptr ? hipsGameObject->cmp_bone : nullptr;
+			const ResourceBone* hipsResource = hipsComponent != nullptr ? ((ResourceBone*)App->res->GetResource(hipsComponent->res)) : nullptr;
+			
+			if (hipsResource != nullptr)
+				avatar->SetHipsUuid(payload_n);
+		}
+		ImGui::EndDragDropTarget();
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::SmallButton("REMOVE"))
+		avatar->SetHipsUuid(0);
 }
 
 #endif // GAME

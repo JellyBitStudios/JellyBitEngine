@@ -39,6 +39,7 @@ public:
 	// ----------------------------------------------------------------------------------------------------
 
 	inline ResourceAvatarData& GetSpecificData() { return avatarData; }
+	void SetHipsUuid(uint hipsUuid);
 	uint GetHipsUuid() const;
 
 	// ----------------------------------------------------------------------------------------------------
