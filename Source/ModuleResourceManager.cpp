@@ -169,6 +169,11 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			break;
 		}
 		}
+
+		System_Event newEvent;
+		newEvent.type = System_Event_Type::Build;
+		App->PushSystemEvent(newEvent);
+
 	}
 	break;
 
@@ -820,10 +825,6 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 		resource = ResourceAudioBank::ImportFile(file);
 		break;
 	}
-
-	System_Event newEvent;
-	newEvent.type = System_Event_Type::Build;
-	App->PushSystemEvent(newEvent);
 
 	return resource;
 }
