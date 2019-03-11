@@ -147,8 +147,8 @@ uint ResourceMesh::CreateMeta(const char* file, ResourceMeshImportSettings& mesh
 	assert(file != nullptr);
 
 	uint mesh_uuids_size = meshesUuids.size();
-	uint bones_uuids_size = /*bonesUuids.size() TODO_S */0u;
-	uint animations_uuids_size = /*animationUuids.size() TODO_S */0u;
+	uint bones_uuids_size = bonesUuids.size();
+	uint animations_uuids_size = animationUuids.size();
 
 	uint size = 
 		sizeof(int64_t) +						// data mod
@@ -344,8 +344,10 @@ bool ResourceMesh::ReadMeshesUuidsFromBuffer(const char* buffer,
 {
 	char* cursor = (char*)buffer;
 
-	// 1. (Last modification time)
+	// 1. Load last modification time
 	uint bytes = sizeof(int64_t);
+	//memcpy(&lastModTime, cursor, bytes);
+
 	cursor += bytes;
 
 	// 2. Load uuids size
@@ -373,29 +375,41 @@ bool ResourceMesh::ReadMeshesUuidsFromBuffer(const char* buffer,
 
 	// 5. Load bones uuids
 	bonesUuids.resize(uuidsSize);
-	if (bonesUuids.size() > 0) {
-		bytes = sizeof(uint) * uuidsSize;
+	bytes = sizeof(uint) * uuidsSize;
+	if (bonesUuids.size() > 0)
 		memcpy(&bonesUuids[0], cursor, bytes);
-	}
 
 	cursor += bytes;
 
 	// 6. Load anims uuids size
-	/*uuidsSize = 0; // TODO_S
+	uuidsSize = 0;
 	bytes = sizeof(uint);
-	memcpy(&uuidsSize, cursor, bytes); 
+	memcpy(&uuidsSize, cursor, bytes);
 	//assert(uuidsSize > 0);
 
 	cursor += bytes;
 
 	// 7. Load anims uuids
-	animationUuids.resize(uuidsSize); 
-	if (animationUuids.size() > 0) {
-		bytes = sizeof(uint) * uuidsSize;
+	animationUuids.resize(uuidsSize);
+	bytes = sizeof(uint) * uuidsSize;
+	if (animationUuids.size() > 0)
 		memcpy(&animationUuids[0], cursor, bytes);
-	}
 
-	//cursor += bytes;*/
+	cursor += bytes;
+
+	// 8. Load import settings
+	bytes = sizeof(int);
+	//memcpy(&meshImportSettings.postProcessConfigurationFlags, cursor, bytes);
+
+	cursor += bytes;
+
+	bytes = sizeof(uint);
+	//memcpy(&meshImportSettings.customConfigurationFlags, cursor, bytes);
+
+	cursor += bytes;
+
+	bytes = sizeof(float);
+	//memcpy(&meshImportSettings.scale, cursor, bytes);
 
 	if (meshesUuids.size() > 0)
 		return true;
