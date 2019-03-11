@@ -2,10 +2,11 @@
 
 #include "Application.h"
 #include "ModuleUI.h"
+#include "ModuleRenderer3D.h"
 
 #include "GameObject.h"
 #include "ComponentTransform.h"
-
+#include "ComponentCamera.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -140,7 +141,7 @@ void ComponentRectTransform::CheckParentRect()
 		if (parent != nullptr && (rect = parent->GetComponent(ComponentTypes::TransformComponent)) != nullptr)
 		{
 			transformParent = (ComponentTransform*)rect;
-
+			transformParent->UpdateGlobal();
 			CalculateRectFromWorld(true);
 		}
 		break;
@@ -240,10 +241,15 @@ void ComponentRectTransform::UseMarginChanged(bool useMargin)
 
 void ComponentRectTransform::CalculateRectFromWorld(bool individualcheck)
 {
-	math::float4x4 globalmatrix;
-	transformParent->UpdateGlobal();
-	globalmatrix = transformParent->GetGlobalMatrix();
+	if (billboard)
+	{
+		math::float3 zAxis = App->renderer3D->GetCurrentCamera()->frustum.front;
+		math::float3 yAxis = App->renderer3D->GetCurrentCamera()->frustum.up;
+		math::float3 xAxis = yAxis.Cross(zAxis).Normalized();
+		transformParent->SetRotation(math::float3x3(xAxis, yAxis, zAxis).ToQuat());
+	}
 
+	math::float4x4 globalmatrix = transformParent->GetGlobalMatrix();
 	corners[Rect::RTOPLEFT] = math::float4(globalmatrix * math::float4(-0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
 	corners[Rect::RTOPRIGHT] = math::float4(globalmatrix * math::float4(0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
 	corners[Rect::RBOTTOMLEFT] = math::float4(globalmatrix * math::float4(-0.5f, -0.5f, 0.0f, 1.0f)).Float3Part();
@@ -493,7 +499,7 @@ void ComponentRectTransform::OnUniqueEditor()
 		ImGui::Text("X: %u | Y: %u", rectTransform[Rect::X], rectTransform[Rect::Y]);
 		ImGui::Text("Dist X & Y");
 		ImGui::Text("Dist X: %u | Dist Y: %u", rectTransform[Rect::XDIST], rectTransform[Rect::YDIST]);
-
+		ImGui::Checkbox("Billboard", &billboard);
 		return;
 	case ComponentRectTransform::RECT_WORLD:
 		r_width = rectParent[Rect::XDIST];
@@ -649,6 +655,9 @@ void ComponentRectTransform::OnUniqueEditor()
 				RecaculateAnchors(RectPrivot::BOTTOMRIGHT);
 		}
 	}
+
+	if(rFrom == RectFrom::RECT_WORLD)
+		ImGui::Checkbox("Billboard", &billboard);
 
 #endif
 }
