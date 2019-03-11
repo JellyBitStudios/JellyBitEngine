@@ -663,10 +663,6 @@ void ComponentRectTransform::OnUniqueEditor()
 				RecaculateAnchors(RectPrivot::BOTTOMRIGHT);
 		}
 	}
-
-	if(rFrom == RectFrom::RECT_WORLD)
-		ImGui::Checkbox("Billboard", &billboard);
-
 #endif
 }
 
