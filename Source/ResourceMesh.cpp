@@ -147,8 +147,8 @@ uint ResourceMesh::CreateMeta(const char* file, ResourceMeshImportSettings& mesh
 	assert(file != nullptr);
 
 	uint mesh_uuids_size = meshesUuids.size();
-	uint bones_uuids_size = bonesUuids.size();
-	uint animations_uuids_size = animationUuids.size();
+	uint bones_uuids_size = /*bonesUuids.size() TODO_S */0u;
+	uint animations_uuids_size = /*animationUuids.size() TODO_S */0u;
 
 	uint size = 
 		sizeof(int64_t) +						// data mod
@@ -381,21 +381,21 @@ bool ResourceMesh::ReadMeshesUuidsFromBuffer(const char* buffer,
 	cursor += bytes;
 
 	// 6. Load anims uuids size
-	uuidsSize = 0;
+	/*uuidsSize = 0; // TODO_S
 	bytes = sizeof(uint);
-	memcpy(&uuidsSize, cursor, bytes);
+	memcpy(&uuidsSize, cursor, bytes); 
 	//assert(uuidsSize > 0);
 
 	cursor += bytes;
 
 	// 7. Load anims uuids
-	animationUuids.resize(uuidsSize);
+	animationUuids.resize(uuidsSize); 
 	if (animationUuids.size() > 0) {
 		bytes = sizeof(uint) * uuidsSize;
 		memcpy(&animationUuids[0], cursor, bytes);
 	}
 
-	cursor += bytes;
+	//cursor += bytes;*/
 
 	if (meshesUuids.size() > 0)
 		return true;
