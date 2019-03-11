@@ -23,7 +23,7 @@ class GameObject;
 struct LastTransform
 {
 	math::float4x4 matrix;
-	GameObject* object;
+	uint uuidGO;
 };
 #endif
 

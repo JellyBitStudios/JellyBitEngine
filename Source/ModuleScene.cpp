@@ -98,11 +98,12 @@ update_status ModuleScene::Update()
 		OnGizmos(currentGameObject);
 	}
 
-	if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RCTRL) == KEY_REPEAT)
-	{
-		if (App->input->GetKey(SDL_SCANCODE_Z) == KEY_DOWN)
-			GetPreviousTransform();
-	}
+	if(App->IsEditor() /*&& DONT LOOCK AT OTHER WINDOW LIKE SHADER*/)
+		if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RCTRL) == KEY_REPEAT)
+		{
+			if (App->input->GetKey(SDL_SCANCODE_Z) == KEY_DOWN)
+				GetPreviousTransform();
+		}
 #endif
 
 	return UPDATE_CONTINUE;
@@ -163,19 +164,6 @@ void ModuleScene::OnSystemEvent(System_Event event)
 		// Remove GO in list if its deleted
 		if (selectedObject == event.goEvent.gameObject)
 			SELECT(NULL);
-		std::list<LastTransform>::iterator iterator = prevTransforms.begin();
-
-		while (!prevTransforms.empty() && iterator != prevTransforms.end())
-		{
-			if ((*iterator).object == event.goEvent.gameObject)
-			{
-				prevTransforms.erase(iterator);
-				iterator = prevTransforms.begin();
-			}
-			else
-				++iterator;
-		}
-
 		break;
 #endif
 	}
@@ -249,7 +237,7 @@ void ModuleScene::SaveLastTransform(math::float4x4 matrix)
 		if (prevTransforms.empty() || curr->transform->GetGlobalMatrix().ptr() != (*prevTransforms.begin()).matrix.ptr())
 		{
 			prevTrans.matrix = matrix;
-			prevTrans.object = curr;
+			prevTrans.uuidGO = curr->GetUUID();
 			prevTransforms.push_front(prevTrans);
 		}
 	}
@@ -259,13 +247,19 @@ void ModuleScene::GetPreviousTransform()
 {
 	if (!prevTransforms.empty())
 	{
-		LastTransform prevTrans = (*prevTransforms.begin());
-		if (prevTrans.object)
+		LastTransform prevTrans;
+		GameObject* transObject = nullptr;
+		while (transObject == nullptr || !prevTransforms.empty())
 		{
-			selectedObject = prevTrans.object;
+			prevTrans = (*prevTransforms.begin());
+			transObject = App->GOs->GetGameObjectByUID(prevTrans.uuidGO);
+			prevTransforms.pop_front();
+		}
+		if (transObject && !prevTransforms.empty())
+		{
+			selectedObject = transObject;
 			selectedObject.GetCurrGameObject()->transform->SetMatrixFromGlobal(prevTrans.matrix);
 		}
-		prevTransforms.pop_front();
 	}
 	// Bounding box changed: recreate quadtree
 	System_Event newEvent;
