@@ -2,7 +2,7 @@
 
 #include "Application.h"
 #include "ModuleResourceManager.h"
-#include "Resource.h"
+#include "ResourceBone.h"
 
 #ifndef GAMEMODE
 #include "imgui\imgui.h"
@@ -26,10 +26,10 @@ void ComponentBone::OnUniqueEditor()
 #ifndef GAMEMODE
 	if (ImGui::CollapsingHeader("Bone", ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		const Resource* resource = App->res->GetResource(res);
+		const ResourceBone* boneResource = (const ResourceBone*)App->res->GetResource(res);
 
 		ImGui::PushID("bone");
-		ImGui::Button(resource != nullptr ? resource->GetName() : "Empty Bone", ImVec2(150.0f, 0.0f));
+		ImGui::Button(boneResource != nullptr ? boneResource->boneData.name.data() : "Empty Bone", ImVec2(150.0f, 0.0f));
 		ImGui::PopID();
 
 		if (ImGui::IsItemHovered())

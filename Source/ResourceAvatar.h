@@ -44,6 +44,7 @@ public:
 
 	// ----------------------------------------------------------------------------------------------------
 
+	void CreateSkeleton(GameObject* gameObject);
 
 	void AddBones(GameObject* gameObject) const;
 	void StepBones(uint animationUuid, float time, float blend = 1.0f);
