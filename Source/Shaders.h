@@ -240,10 +240,10 @@
 "\n" \
 "	vec3 a = vec3(albedo);\n" \
 "	vec3 s = vec3(texture(material.specular, fTexCoord));\n" \
-"	vec3 phong = phong(a, a, s, 32.0, true);\n" \
-"   vec4 textColor = vec4(phong, albedo.a);\n" \
-"	FragColor = mix(textColor, fColor, averageColor);" \
-"}"
+"	vec3 colorText = phong(a, a, s, 32.0, true);\n" \
+"	FragColor.xyz = mix(colorText, fColor.xyz, averageColor);\n" \
+"	FragColor.w = fColor.w;\n" \
+"}\n"
 #pragma endregion
 
 #pragma region ShaderUI
