@@ -152,7 +152,7 @@ void Component::OnLoad(char*& cursor)
 	OnInternalLoad(cursor);
 }
 
-MonoObject* Component::GetMonoComponent()
+MonoObject* Component::GetMonoComponent() const
 {
 	return monoCompHandle != 0 ? mono_gchandle_get_target(monoCompHandle) : nullptr;
 }

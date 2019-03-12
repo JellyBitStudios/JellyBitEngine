@@ -124,7 +124,7 @@ private:
 	bool isStatic = false; // coordinate with statics and dynamics vector at go module
 
 	// Scripting
-	uint32_t monoObjectHandle = 0;
+	uint32_t monoObjectHandle = 0u;
 
 	// Physics
 	uint layer = 0; // in the range [0...31]
