@@ -14,7 +14,7 @@
 #include "ComponentTransform.h"
 #include "GameObject.h"
 
-#include "MathGeoLib/include/MathGeoLib.h"
+#include "MathGeoLib\include\MathGeoLib.h"
 
 #include "imgui\imgui.h"
 
@@ -397,7 +397,21 @@ void ResourceAvatar::SetHipsUuid(uint hipsUuid)
 {
 	avatarData.hipsUuid = hipsUuid;
 
-	// TODO: build the skeleton
+	// 1. Clear the skeleton and the bones
+	ClearSkeletonAndBones();
+
+	GameObject* root = App->GOs->GetGameObjectByUID(avatarData.hipsUuid);
+	if (root == nullptr)
+	{
+		CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
+		return;
+	}
+
+	// 2. Create the skeleton
+	CreateSkeleton(root);
+
+	// 3. Add the skeleton bones to the meshes
+	AddBones(root);
 }
 
 uint ResourceAvatar::GetHipsUuid() const
@@ -405,7 +419,42 @@ uint ResourceAvatar::GetHipsUuid() const
 	return avatarData.hipsUuid;
 }
 
+std::vector<uint> ResourceAvatar::GetBonesUuids() const
+{
+	std::vector<uint> bonesUuids;
+
+	for (std::unordered_map<const char*, uint>::const_iterator it = bones.begin(); it != bones.end(); ++it)
+		bonesUuids.push_back(it->second);
+
+	return bonesUuids;
+}
+
 // ----------------------------------------------------------------------------------------------------
+
+void ResourceAvatar::CreateSkeleton(GameObject* gameObject)
+{
+	assert(gameObject != nullptr);
+
+	std::vector<GameObject*> children;
+	gameObject->GetChildrenVector(children);
+
+	for (uint i = 0; i < children.size(); ++i)
+	{
+		/// Bone component
+		ComponentBone* boneComponent = children[i]->cmp_bone;
+		if (boneComponent == nullptr)
+			continue;
+
+		/// Bone resource
+		ResourceBone* boneResource = (ResourceBone*)App->res->GetResource(boneComponent->res);
+		assert(boneResource != nullptr);
+
+		const char* boneName = boneResource->boneData.name.data();
+		bones[boneName] = children[i]->GetUUID();
+
+		CONSOLE_LOG(LogTypes::Normal, "The bone %s has been loaded correctly", boneName);
+	}
+}
 
 void ResourceAvatar::AddBones(GameObject* gameObject) const
 {
@@ -416,7 +465,7 @@ void ResourceAvatar::AddBones(GameObject* gameObject) const
 
 	for (uint i = 0; i < children.size(); ++i)
 	{
-		ComponentMesh* meshComponent = gameObject->cmp_mesh;
+		ComponentMesh* meshComponent = children[i]->cmp_mesh;
 		if (meshComponent != nullptr)
 		{
 			ResourceMesh* meshResource = (ResourceMesh*)App->res->GetResource(meshComponent->res);
@@ -424,6 +473,28 @@ void ResourceAvatar::AddBones(GameObject* gameObject) const
 				meshResource->AddBones(bones);
 		}
 	}
+}
+
+void ResourceAvatar::ClearSkeletonAndBones()
+{
+	GameObject* root = App->GOs->GetGameObjectByUID(avatarData.hipsUuid);
+	if (root == nullptr)
+	{
+		CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
+		return;
+	}
+
+	std::vector<GameObject*> children;
+	root->GetChildrenVector(children);
+
+	for (uint i = 0; i < children.size(); ++i)
+	{
+		ComponentMesh* meshComponent = children[i]->cmp_mesh;
+		if (meshComponent != nullptr && meshComponent->avatarResource == uuid)
+			meshComponent->avatarResource = 0;
+	}
+
+	bones.clear();
 }
 
 void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
@@ -621,51 +692,28 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 
 bool ResourceAvatar::LoadInMemory()
 {
-	//assert(avatarData.hipsUuid > 0); // TODO: ANIMATOR MUST CHECK IF HIPS HAVE A COMPONENT BONE WITH A VALID RESOURCE BONE
-
-	// 1. Build the skeleton
-
-	// Hips
-	GameObject* boneGameObject = App->GOs->GetGameObjectByUID(avatarData.hipsUuid);
-	if (boneGameObject == nullptr)
+	assert(avatarData.hipsUuid > 0);
+	
+	GameObject* root = App->GOs->GetGameObjectByUID(avatarData.hipsUuid);
+	if (root == nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "The root bone game object does not exist...");
+		CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
 		return false;
 	}
 
-	// Skeleton
-	std::vector<GameObject*> children;
-	boneGameObject->GetChildrenVector(children);
-
-	for (uint i = 0; i < children.size(); ++i)
-	{
-		/// Bone component
-		ComponentBone* boneComponent = children[i]->cmp_bone;
-		if (boneComponent == nullptr)
-		{
-			CONSOLE_LOG(LogTypes::Error, "A bone component does not exist...");
-			continue;
-		}
-
-		/// Bone resource
-		ResourceBone* boneResource = (ResourceBone*)App->res->GetResource(boneComponent->res);
-		assert(boneResource != nullptr);
-
-		const char* boneName = boneResource->boneData.name.data();
-		bones[boneName] = children[i]->GetUUID();
-
-		CONSOLE_LOG(LogTypes::Normal, "The bone %s has been loaded correctly", boneName);
-	}
+	// 1. Create the skeleton
+	CreateSkeleton(root);
 
 	// 2. Add the skeleton bones to the meshes
-	AddBones(boneGameObject);
+	AddBones(root);
 
 	return bones.size() > 0;
 }
 
 bool ResourceAvatar::UnloadFromMemory()
 {
-	bones.clear();
+	// Clear the skeleton and the bones
+	ClearSkeletonAndBones();
 
 	return true;
 }

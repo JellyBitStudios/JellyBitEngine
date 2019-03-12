@@ -50,6 +50,7 @@ ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & co
 	memcpy(anchor, componentRectTransform.anchor, sizeof(uint) * 4);
 	memcpy(anchor_flags, componentRectTransform.anchor_flags, sizeof(bool) * 4);
 	use_margin = componentRectTransform.use_margin;
+	billboard = componentRectTransform.billboard;
 
 	CheckParentRect();
 }
@@ -274,10 +275,12 @@ void ComponentRectTransform::CalculateCornersFromRect()
 	corners[Rect::RBOTTOMLEFT] = corners[Rect::RTOPLEFT] + (yDirection * ((float)rectTransform[Rect::YDIST] / WORLDTORECT));
 	corners[Rect::RBOTTOMRIGHT] = corners[Rect::RBOTTOMLEFT] - (xDirection * ((float)rectTransform[Rect::XDIST] / WORLDTORECT));
 
-	corners[Rect::RTOPRIGHT].z -= z;
-	corners[Rect::RTOPLEFT].z -= z;
-	corners[Rect::RBOTTOMLEFT].z -= z;
-	corners[Rect::RBOTTOMRIGHT].z -= z;
+	math::float3 zDirection = xDirection.Cross(yDirection);
+
+	corners[Rect::RTOPRIGHT] -= zDirection * z;
+	corners[Rect::RTOPLEFT] -= zDirection * z;
+	corners[Rect::RBOTTOMLEFT] -= zDirection * z;
+	corners[Rect::RBOTTOMRIGHT] -= zDirection * z;
 }
 
 void ComponentRectTransform::RecaculateAnchors()
@@ -409,12 +412,12 @@ void ComponentRectTransform::OnInternalSave(char *& cursor)
 	memcpy(cursor, &use_margin, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(RectFrom);
-	memcpy(cursor, &rFrom, bytes);
-	cursor += bytes;
-
 	bytes = sizeof(bool);
 	memcpy(cursor, &billboard, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(RectFrom);
+	memcpy(cursor, &rFrom, bytes);
 	cursor += bytes;
 }
 
@@ -436,12 +439,12 @@ void ComponentRectTransform::OnInternalLoad(char *& cursor)
 	memcpy(&use_margin, cursor, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(RectFrom);
-	memcpy(&rFrom, cursor, bytes);
-	cursor += bytes;
-
 	bytes = sizeof(bool);
 	memcpy(&billboard, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(RectFrom);
+	memcpy(&rFrom, cursor, bytes);
 	cursor += bytes;
 
 	LinkToUIModule();
@@ -499,6 +502,7 @@ void ComponentRectTransform::OnUniqueEditor()
 		}
 		break;
 	case ComponentRectTransform::WORLD:
+	{
 		ImGui::Text("Modify Transforfm For change RectTransform");
 		ImGui::Text("World|Rect difference: %i", i = WORLDTORECT);
 
@@ -507,8 +511,11 @@ void ComponentRectTransform::OnUniqueEditor()
 		ImGui::Text("X: %u | Y: %u", rectTransform[Rect::X], rectTransform[Rect::Y]);
 		ImGui::Text("Dist X & Y");
 		ImGui::Text("Dist X: %u | Dist Y: %u", rectTransform[Rect::XDIST], rectTransform[Rect::YDIST]);
-		ImGui::Checkbox("Billboard", &billboard);
+		bool tmp_billboard = billboard;
+		if (ImGui::Checkbox("Billboard", &tmp_billboard))
+			billboard = tmp_billboard;
 		return;
+	}
 	case ComponentRectTransform::RECT_WORLD:
 		r_width = rectParent[Rect::XDIST];
 		r_height = rectParent[Rect::YDIST];

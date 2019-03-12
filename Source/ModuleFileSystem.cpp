@@ -120,10 +120,6 @@ bool ModuleFileSystem::Start()
 	event.type = System_Event_Type::LoadGMScene;
 	App->PushSystemEvent(event);
 
-	App->SetEngineState(engine_states::ENGINE_PLAY);
-	event.type = System_Event_Type::Play;
-	App->PushSystemEvent(event);
-
 #endif
 	
 
@@ -159,6 +155,7 @@ void ModuleFileSystem::ImportMainDir(bool reimport)
 #else
 		event.fileEvent.type = System_Event_Type::ImportLibraryFile;
 #endif
+		event.fileEvent.build = false;
 		strcpy(event.fileEvent.file, lateEvents[i].data());
 		App->PushSystemEvent(event);
 	}
@@ -172,6 +169,7 @@ void ModuleFileSystem::ImportMainDir(bool reimport)
 #else
 		event.fileEvent.type = System_Event_Type::ImportLibraryFile;
 #endif
+		event.fileEvent.build = false;
 		strcpy(event.fileEvent.file, lateLateEvents[i].data());
 		App->PushSystemEvent(event);
 	}
@@ -1155,6 +1153,7 @@ void ModuleFileSystem::ImportFilesEvents(const Directory& directory, std::vector
 #else
 				event.fileEvent.type = System_Event_Type::ImportLibraryFile;
 #endif
+				event.fileEvent.build = false;
 				strcpy(event.fileEvent.file, filePath);
 				App->PushSystemEvent(event);
 

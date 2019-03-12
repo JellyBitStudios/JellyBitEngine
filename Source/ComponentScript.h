@@ -51,7 +51,7 @@ public:
 
 public:
 	void InstanceClass();
-	void InstanceClass(MonoObject* classInstance);
+	void InstanceClass(MonoObject* _classInstance);
 
 public:
 	bool awaked = false;
@@ -61,6 +61,4 @@ public:
 
 	uint tempBufferBytes = 0u;
 	char* tempBuffer = nullptr;
-
-	MonoObject* classInstance = nullptr;
 };

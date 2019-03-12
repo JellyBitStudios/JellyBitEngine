@@ -446,7 +446,7 @@ void ModuleGui::AddInput(uint key, uint state) const
 
 bool ModuleGui::IsMouseHoveringAnyWindow()
 {
-	return ImGui::IsMouseHoveringAnyWindow() || ImGui::IsAnyItemHovered();
+	return ImGui::IsMouseHoveringAnyWindow() || ImGui::IsAnyItemHovered() || ImGui::IsItemDeactivatedAfterChange() || ImGui::IsAnyWindowHovered();
 }
 
 bool ModuleGui::IsAnyItemFocused()

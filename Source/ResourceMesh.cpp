@@ -164,7 +164,8 @@ uint ResourceMesh::CreateMeta(const char* file, ResourceMeshImportSettings& mesh
 
 		sizeof(int) +
 		sizeof(uint) +
-		sizeof(float);
+		sizeof(float) +
+		sizeof(uint);
 
 	char* data = new char[size];
 	char* cursor = data;
@@ -229,6 +230,13 @@ uint ResourceMesh::CreateMeta(const char* file, ResourceMeshImportSettings& mesh
 
 	bytes = sizeof(float);
 	memcpy(cursor, &meshImportSettings.scale, bytes);
+
+	cursor += bytes;
+
+	bytes = sizeof(uint);
+	memcpy(cursor, &meshImportSettings.attributes, bytes);
+
+	cursor += bytes;
 
 	// --------------------------------------------------
 
@@ -326,6 +334,13 @@ bool ResourceMesh::ReadMeta(const char* metaFile, int64_t& lastModTime, Resource
 
 		bytes = sizeof(float);
 		memcpy(&meshImportSettings.scale, cursor, bytes);
+
+		cursor += bytes;
+
+		bytes = sizeof(uint);
+		memcpy(&meshImportSettings.attributes, cursor, bytes);
+
+		cursor += bytes;
 
 		CONSOLE_LOG(LogTypes::Normal, "Resource Mesh: Successfully loaded meta '%s'", metaFile);
 		RELEASE_ARRAY(buffer);
@@ -446,7 +461,8 @@ uint ResourceMesh::SetMeshImportSettingsToMeta(const char* metaFile, const Resou
 
 		sizeof(int) +
 		sizeof(uint) +
-		sizeof(float);
+		sizeof(float) +
+		sizeof(uint);
 
 	char* data = new char[size];
 	char* cursor = data;
@@ -510,6 +526,14 @@ uint ResourceMesh::SetMeshImportSettingsToMeta(const char* metaFile, const Resou
 
 	bytes = sizeof(float);
 	memcpy(cursor, &meshImportSettings.scale, bytes);
+
+	cursor += bytes;
+
+	bytes = sizeof(uint);
+	memcpy(cursor, &meshImportSettings.attributes, bytes);
+
+	cursor += bytes;
+
 
 	// --------------------------------------------------
 
@@ -757,7 +781,7 @@ bool ResourceMesh::LoadInMemory()
 
 	App->sceneImporter->GenerateVBO(VBO, meshData.vertices, meshData.verticesSize);
 	App->sceneImporter->GenerateIBO(IBO, meshData.adjacency ? meshData.adjacentIndices : meshData.indices, meshData.adjacency ? 2 * meshData.indicesSize : meshData.indicesSize);
-	App->sceneImporter->GenerateVAO(VAO, VBO);
+	App->sceneImporter->GenerateVAO(VAO, VBO, meshData.meshImportSettings.attributes);
 
 	return true;
 }

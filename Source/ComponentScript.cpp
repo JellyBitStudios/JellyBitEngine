@@ -29,8 +29,11 @@ ComponentScript::ComponentScript(ComponentScript& copy, GameObject* parent, bool
 	UUID = App->GenerateRandomNumber();
 	this->scriptResUUID = copy.scriptResUUID;
 	App->res->SetAsUsed(scriptResUUID);
-	classInstance = mono_object_clone(copy.classInstance);
-	InstanceClass(classInstance);
+
+	MonoObject* original = copy.GetMonoComponent();
+	MonoObject* newInstance = mono_object_clone(original); //In theory it copies all the public variables too
+
+	InstanceClass(newInstance);
 
 	if(includeComponents)
 		App->scripting->AddScriptComponent(this);
@@ -84,7 +87,7 @@ void ComponentScript::Awake()
 		if (IsTreeActive())
 		{
 			awaked = true;
-			mono_runtime_invoke(scriptRes->awakeMethod, classInstance, NULL, &exc);
+			mono_runtime_invoke(scriptRes->awakeMethod, GetMonoComponent(), NULL, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -109,7 +112,7 @@ void ComponentScript::Start()
 		MonoObject* exc = nullptr;
 		if (IsTreeActive())
 		{
-			mono_runtime_invoke(scriptRes->startMethod, classInstance, NULL, &exc);
+			mono_runtime_invoke(scriptRes->startMethod, GetMonoComponent(), NULL, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -134,7 +137,7 @@ void ComponentScript::PreUpdate()
 		MonoObject* exc = nullptr;
 		if (IsTreeActive())
 		{
-			mono_runtime_invoke(scriptRes->preUpdateMethod, classInstance, NULL, &exc);
+			mono_runtime_invoke(scriptRes->preUpdateMethod, GetMonoComponent(), NULL, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -159,7 +162,7 @@ void ComponentScript::Update()
 		MonoObject* exc = nullptr;
 		if (IsTreeActive())
 		{
-			mono_runtime_invoke(scriptRes->updateMethod, classInstance, NULL, &exc);
+			mono_runtime_invoke(scriptRes->updateMethod, GetMonoComponent(), NULL, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -184,7 +187,7 @@ void ComponentScript::PostUpdate()
 		MonoObject* exc = nullptr;
 		if (IsTreeActive())
 		{
-			mono_runtime_invoke(scriptRes->postUpdateMethod, classInstance, NULL, &exc);
+			mono_runtime_invoke(scriptRes->postUpdateMethod, GetMonoComponent(), NULL, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -209,7 +212,7 @@ void ComponentScript::OnEnableMethod()
 		MonoObject* exc = nullptr;
 		if (IsTreeActive())
 		{
-			mono_runtime_invoke(scriptRes->enableMethod, classInstance, NULL, &exc);
+			mono_runtime_invoke(scriptRes->enableMethod, GetMonoComponent(), NULL, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -232,7 +235,7 @@ void ComponentScript::OnDisableMethod()
 	if (scriptRes && scriptRes->disableMethod)
 	{
 		MonoObject* exc = nullptr;
-		mono_runtime_invoke(scriptRes->disableMethod, classInstance, NULL, &exc);
+		mono_runtime_invoke(scriptRes->disableMethod, GetMonoComponent(), NULL, &exc);
 		if (exc)
 		{
 			System_Event event;
@@ -257,7 +260,7 @@ void ComponentScript::OnStop()
 		if (IsTreeActive())
 		{
 			awaked = false;
-			mono_runtime_invoke(scriptRes->stopMethod, classInstance, NULL, &exc);
+			mono_runtime_invoke(scriptRes->stopMethod, GetMonoComponent(), NULL, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -282,7 +285,7 @@ void ComponentScript::FixedUpdate()
 		MonoObject* exc = nullptr;
 		if (IsTreeActive())
 		{
-			mono_runtime_invoke(scriptRes->fixedUpdateMethod, classInstance, NULL, &exc);
+			mono_runtime_invoke(scriptRes->fixedUpdateMethod, GetMonoComponent(), NULL, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -393,7 +396,7 @@ void ComponentScript::OnCollisionEnter(Collision& collision)
 			void* params[1];
 			params[0] = collisionOBJ;
 
-			mono_runtime_invoke(scriptRes->OnCollisionEnterMethod, classInstance, params, &exc);
+			mono_runtime_invoke(scriptRes->OnCollisionEnterMethod, GetMonoComponent(), params, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -495,7 +498,7 @@ void ComponentScript::OnCollisionStay(Collision& collision)
 			void* params[1];
 			params[0] = collisionOBJ;
 
-			mono_runtime_invoke(scriptRes->OnCollisionStayMethod, classInstance, NULL, &exc);
+			mono_runtime_invoke(scriptRes->OnCollisionStayMethod, GetMonoComponent(), NULL, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -597,7 +600,7 @@ void ComponentScript::OnCollisionExit(Collision& collision)
 			void* params[1];
 			params[0] = collisionOBJ;
 
-			mono_runtime_invoke(scriptRes->OnCollisionExitMethod, classInstance, NULL, &exc);
+			mono_runtime_invoke(scriptRes->OnCollisionExitMethod, GetMonoComponent(), NULL, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -627,7 +630,7 @@ void ComponentScript::OnTriggerEnter(Collision& collision)
 			void* args[1];
 			args[0] = collider;
 
-			mono_runtime_invoke(scriptRes->OnTriggerEnterMethod, classInstance, args, &exc);
+			mono_runtime_invoke(scriptRes->OnTriggerEnterMethod, GetMonoComponent(), args, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -657,7 +660,7 @@ void ComponentScript::OnTriggerStay(Collision& collision)
 			void* args[1];
 			args[0] = collider;
 
-			mono_runtime_invoke(scriptRes->OnTriggerStayMethod, classInstance, args, &exc);
+			mono_runtime_invoke(scriptRes->OnTriggerStayMethod, GetMonoComponent(), args, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -687,7 +690,7 @@ void ComponentScript::OnTriggerExit(Collision& collision)
 			void* args[1];
 			args[0] = collider;
 
-			mono_runtime_invoke(scriptRes->OnTriggerExitMethod, classInstance, args, &exc);
+			mono_runtime_invoke(scriptRes->OnTriggerExitMethod, GetMonoComponent(), args, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -840,7 +843,7 @@ void ComponentScript::OnUniqueEditor()
 		ImGui::NewLine();
 
 
-		if (!classInstance)
+		if (!GetMonoComponent())
 		{
 			ImGui::TextColored({ .5,0,0,1 }, "SCRIPT WITH ERRORS, CHECK IT");
 			return;
@@ -848,7 +851,7 @@ void ComponentScript::OnUniqueEditor()
 
 		//Script fields
 		void* iterator = 0;
-		MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+		MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 		while (field != nullptr)
 		{
@@ -866,7 +869,7 @@ void ComponentScript::OnUniqueEditor()
 
 				if (typeName == "bool")
 				{
-					bool varState; mono_field_get_value(classInstance, field, &varState);
+					bool varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 
 					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 					ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
@@ -878,12 +881,12 @@ void ComponentScript::OnUniqueEditor()
 
 					if (ImGui::Checkbox(("##" + fieldName).data(), &varState))
 					{
-						mono_field_set_value(classInstance, field, &varState);
+						mono_field_set_value(GetMonoComponent(), field, &varState);
 					}
 				}
 				else if (typeName == "single") //this is a float, idk
 				{
-					float varState; mono_field_get_value(classInstance, field, &varState);
+					float varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 
 					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 					ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
@@ -895,13 +898,13 @@ void ComponentScript::OnUniqueEditor()
 
 					if (ImGui::InputFloat(("##" + fieldName).data(), &varState))
 					{
-						mono_field_set_value(classInstance, field, &varState);
+						mono_field_set_value(GetMonoComponent(), field, &varState);
 					}
 				}
 				else if (typeName == "double")
 				{
 					double varState;
-					mono_field_get_value(classInstance, field, &varState);
+					mono_field_get_value(GetMonoComponent(), field, &varState);
 					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 					ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
 
@@ -912,7 +915,7 @@ void ComponentScript::OnUniqueEditor()
 
 					if (ImGui::InputDouble(("##" + fieldName).data(), &varState))
 					{
-						mono_field_set_value(classInstance, field, &varState);
+						mono_field_set_value(GetMonoComponent(), field, &varState);
 					}
 				}
 				else if (typeName == "System.Decimal")
@@ -922,7 +925,7 @@ void ComponentScript::OnUniqueEditor()
 				else if (typeName == "sbyte")
 				{
 					int8_t varState;
-					mono_field_get_value(classInstance, field, &varState);
+					mono_field_get_value(GetMonoComponent(), field, &varState);
 
 					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 					ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
@@ -936,13 +939,13 @@ void ComponentScript::OnUniqueEditor()
 					if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_U32, &varState_int))
 					{
 						varState = varState_int;
-						mono_field_set_value(classInstance, field, &varState);
+						mono_field_set_value(GetMonoComponent(), field, &varState);
 					}
 				}
 				else if (typeName == "byte")
 				{
 					uint8_t varState;
-					mono_field_get_value(classInstance, field, &varState);
+					mono_field_get_value(GetMonoComponent(), field, &varState);
 
 					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 					ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
@@ -956,13 +959,13 @@ void ComponentScript::OnUniqueEditor()
 					if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_U32, &varState_int))
 					{
 						varState = varState_int;
-						mono_field_set_value(classInstance, field, &varState);
+						mono_field_set_value(GetMonoComponent(), field, &varState);
 					}
 				}
 				else if (typeName == "int16")
 				{
 					int16_t varState;
-					mono_field_get_value(classInstance, field, &varState);
+					mono_field_get_value(GetMonoComponent(), field, &varState);
 
 					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 					ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
@@ -976,13 +979,13 @@ void ComponentScript::OnUniqueEditor()
 					if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_S32, &varState_int))
 					{
 						varState = varState_int;
-						mono_field_set_value(classInstance, field, &varState);
+						mono_field_set_value(GetMonoComponent(), field, &varState);
 					}
 				}
 				else if (typeName == "uint16")
 				{
 					uint16_t varState;
-					mono_field_get_value(classInstance, field, &varState);
+					mono_field_get_value(GetMonoComponent(), field, &varState);
 
 					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 					ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
@@ -996,13 +999,13 @@ void ComponentScript::OnUniqueEditor()
 					if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_U32, &varState_int))
 					{
 						varState = varState_int;
-						mono_field_set_value(classInstance, field, &varState);
+						mono_field_set_value(GetMonoComponent(), field, &varState);
 					}
 				}
 				else if (typeName == "int")
 				{
 					int32_t varState;
-					mono_field_get_value(classInstance, field, &varState);
+					mono_field_get_value(GetMonoComponent(), field, &varState);
 
 					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 					ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
@@ -1014,13 +1017,13 @@ void ComponentScript::OnUniqueEditor()
 
 					if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_S32, &varState))
 					{
-						mono_field_set_value(classInstance, field, &varState);
+						mono_field_set_value(GetMonoComponent(), field, &varState);
 					}
 				}
 				else if (typeName == "uint")
 				{
 					uint32_t varState;
-					mono_field_get_value(classInstance, field, &varState);
+					mono_field_get_value(GetMonoComponent(), field, &varState);
 
 					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 					ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
@@ -1032,13 +1035,13 @@ void ComponentScript::OnUniqueEditor()
 
 					if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_U32, &varState))
 					{
-						mono_field_set_value(classInstance, field, &varState);
+						mono_field_set_value(GetMonoComponent(), field, &varState);
 					}
 				}
 				else if (typeName == "long")
 				{
 					int64_t varState;
-					mono_field_get_value(classInstance, field, &varState);
+					mono_field_get_value(GetMonoComponent(), field, &varState);
 
 					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 					ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
@@ -1050,13 +1053,13 @@ void ComponentScript::OnUniqueEditor()
 
 					if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_S64, &varState))
 					{
-						mono_field_set_value(classInstance, field, &varState);
+						mono_field_set_value(GetMonoComponent(), field, &varState);
 					}
 				}
 				else if (typeName == "ulong")
 				{
 					uint64_t varState;
-					mono_field_get_value(classInstance, field, &varState);
+					mono_field_get_value(GetMonoComponent(), field, &varState);
 
 					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 					ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
@@ -1068,13 +1071,13 @@ void ComponentScript::OnUniqueEditor()
 
 					if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_U64, &varState))
 					{
-						mono_field_set_value(classInstance, field, &varState);
+						mono_field_set_value(GetMonoComponent(), field, &varState);
 					}
 				}
 				else if (typeName == "char")
 				{
 					int temp;
-					mono_field_get_value(classInstance, field, &temp);
+					mono_field_get_value(GetMonoComponent(), field, &temp);
 
 					char varState = (char)temp;
 
@@ -1083,13 +1086,13 @@ void ComponentScript::OnUniqueEditor()
 					{
 						MonoString* newString = mono_string_new(App->scripting->domain, stringToModify.data());
 						temp = (int)stringToModify[0];
-						mono_field_set_value(classInstance, field, &temp);
+						mono_field_set_value(GetMonoComponent(), field, &temp);
 					}
 				}
 				else if (typeName == "string")
 				{
 					MonoString* varState;
-					mono_field_get_value(classInstance, field, &varState);
+					mono_field_get_value(GetMonoComponent(), field, &varState);
 
 					char* convertedString = mono_string_to_utf8(varState);
 
@@ -1100,7 +1103,7 @@ void ComponentScript::OnUniqueEditor()
 					if (ImGui::InputText(mono_field_get_name(field), &stringToModify))
 					{
 						MonoString* newString = mono_string_new(App->scripting->domain, stringToModify.data());
-						mono_field_set_value(classInstance, field, newString);
+						mono_field_set_value(GetMonoComponent(), field, newString);
 					}
 
 					ImGui::PopStyleColor();
@@ -1111,7 +1114,7 @@ void ComponentScript::OnUniqueEditor()
 				{
 					uint buttonWidth = 0.65 * ImGui::GetWindowWidth();
 
-					float varState; mono_field_get_value(classInstance, field, &varState);
+					float varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 
 					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 					ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
@@ -1136,7 +1139,7 @@ void ComponentScript::OnUniqueEditor()
 							if (ImGui::IsMouseReleased(0))
 							{
 								MonoObject* monoObject = App->scripting->MonoObjectFrom(go);
-								mono_field_set_value(classInstance, field, monoObject);
+								mono_field_set_value(GetMonoComponent(), field, monoObject);
 							}
 						}
 						ImGui::EndDragDropTarget();
@@ -1153,7 +1156,7 @@ void ComponentScript::OnUniqueEditor()
 							if (ImGui::IsMouseReleased(0))
 							{						
 								MonoObject* oldObject;
-								mono_field_get_value(classInstance, field, &oldObject);
+								mono_field_get_value(GetMonoComponent(), field, &oldObject);
 
 								if (oldObject != nullptr)
 								{
@@ -1170,7 +1173,7 @@ void ComponentScript::OnUniqueEditor()
 								App->res->SetAsUsed(prefab->GetUuid());
 
 								MonoObject* monoObject = App->scripting->MonoObjectFrom(prefab->GetRoot());
-								mono_field_set_value(classInstance, field, monoObject);
+								mono_field_set_value(GetMonoComponent(), field, monoObject);
 							}
 						}
 						ImGui::EndDragDropTarget();
@@ -1189,7 +1192,7 @@ void ComponentScript::OnUniqueEditor()
 						if (App->input->GetKey(SDL_SCANCODE_BACKSPACE) == KEY_DOWN)
 						{
 							MonoObject* oldObject;
-							mono_field_get_value(classInstance, field, &oldObject);
+							mono_field_get_value(GetMonoComponent(), field, &oldObject);
 
 							if (oldObject != nullptr)
 							{
@@ -1203,13 +1206,13 @@ void ComponentScript::OnUniqueEditor()
 								}
 							}
 
-							mono_field_set_value(classInstance, field, NULL);
+							mono_field_set_value(GetMonoComponent(), field, NULL);
 						}
 					}
 
 					//Button text
 					MonoObject* monoObject;
-					mono_field_get_value(classInstance, field, &monoObject);
+					mono_field_get_value(GetMonoComponent(), field, &monoObject);
 
 					std::string text;
 
@@ -1229,7 +1232,7 @@ void ComponentScript::OnUniqueEditor()
 						}
 						else
 						{
-							mono_field_set_value(classInstance, field, NULL);
+							mono_field_set_value(GetMonoComponent(), field, NULL);
 						}
 					}
 					else
@@ -1248,7 +1251,7 @@ void ComponentScript::OnUniqueEditor()
 				{
 					uint buttonWidth = 0.65 * ImGui::GetWindowWidth();
 
-					float varState; mono_field_get_value(classInstance, field, &varState);
+					float varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 
 					ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 					ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
@@ -1276,7 +1279,7 @@ void ComponentScript::OnUniqueEditor()
 								MonoObject* monoTransform;
 								mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "transform"), &monoTransform);
 
-								mono_field_set_value(classInstance, field, monoTransform);
+								mono_field_set_value(GetMonoComponent(), field, monoTransform);
 							}
 						}
 						ImGui::EndDragDropTarget();
@@ -1294,13 +1297,13 @@ void ComponentScript::OnUniqueEditor()
 
 						if (App->input->GetKey(SDL_SCANCODE_BACKSPACE) == KEY_DOWN)
 						{
-							mono_field_set_value(classInstance, field, NULL);
+							mono_field_set_value(GetMonoComponent(), field, NULL);
 						}
 					}
 
 					//Button text
 					MonoObject* monoTransform;
-					mono_field_get_value(classInstance, field, &monoTransform);
+					mono_field_get_value(GetMonoComponent(), field, &monoTransform);
 
 					MonoObject* monoObject;
 					if (monoTransform)
@@ -1320,7 +1323,7 @@ void ComponentScript::OnUniqueEditor()
 						}
 						else
 						{
-							mono_field_set_value(classInstance, field, NULL);
+							mono_field_set_value(GetMonoComponent(), field, NULL);
 						}
 					}
 					else
@@ -1338,7 +1341,7 @@ void ComponentScript::OnUniqueEditor()
 				else if (typeName == "JellyBitEngine.LayerMask")
 				{
 					MonoObject* layerMask;
-					mono_field_get_value(classInstance, field, &layerMask);
+					mono_field_get_value(GetMonoComponent(), field, &layerMask);
 
 					if (layerMask)
 					{
@@ -1391,9 +1394,9 @@ void ComponentScript::OnUniqueEditor()
 					MonoClass* enumClass = mono_get_enum_class();
 
 					int32_t enumValue;
-					mono_field_get_value(classInstance, field, &enumValue);
+					mono_field_get_value(GetMonoComponent(), field, &enumValue);
 
-					MonoObject* enumOBJ = mono_field_get_value_object(App->scripting->domain, field, classInstance);
+					MonoObject* enumOBJ = mono_field_get_value_object(App->scripting->domain, field, GetMonoComponent());
 
 					MonoMethodDesc* ToStringDesc = mono_method_desc_new("Enum::ToString", false);
 					MonoMethod* ToStringMethod = mono_method_desc_search_in_class(ToStringDesc, enumClass);
@@ -1446,7 +1449,7 @@ void ComponentScript::OnUniqueEditor()
 
 							if (ImGui::Selectable(stringcpp))
 							{
-								mono_field_set_value(classInstance, field, &i);
+								mono_field_set_value(GetMonoComponent(), field, &i);
 							}
 
 							mono_free(stringcpp);
@@ -1460,7 +1463,7 @@ void ComponentScript::OnUniqueEditor()
 				}
 			}
 
-			field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+			field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 		}
 		ImGui::NewLine();
 	}
@@ -1515,10 +1518,10 @@ uint ComponentScript::GetPublicVarsSerializationBytes() const
 
 	void* iterator = 0;
 
-	if (!classInstance)
+	if (!GetMonoComponent())
 		return 0;
 
-	MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+	MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 	while (field != nullptr)
 	{
@@ -1621,7 +1624,7 @@ uint ComponentScript::GetPublicVarsSerializationBytes() const
 
 				uint nameLenght = fieldName.length();
 
-				MonoString* varState; mono_field_get_value(classInstance, field, &varState);
+				MonoString* varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 				char* cString = mono_string_to_utf8(varState);
 
 				std::string defString(cString);
@@ -1660,7 +1663,7 @@ uint ComponentScript::GetPublicVarsSerializationBytes() const
 				bytes += (sizeof(varType) + sizeof(uint) + nameLenght + sizeof(uint32_t));
 			}
 		}
-		field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+		field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 	}
 	return bytes;
 }
@@ -1895,10 +1898,10 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 	void* iterator = 0;
 
-	if (!classInstance)
+	if (!GetMonoComponent())
 		return;
 
-	MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+	MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 	while (field != nullptr)
 	{
 		uint32_t flags = mono_field_get_flags(field);
@@ -1928,7 +1931,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 			//Only count the serializable ones
 			numVars++;
 		}
-		field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+		field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 	}
 
 	uint bytes = sizeof(uint);
@@ -1936,7 +1939,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 	cursor += bytes;
 
 	iterator = 0;
-	field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+	field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 	while (field != nullptr)
 	{
 		uint32_t flags = mono_field_get_flags(field);
@@ -1970,7 +1973,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 				//Serialize the var value
 				bytes = sizeof(bool);
-				bool varState; mono_field_get_value(classInstance, field, &varState);
+				bool varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 				memcpy(cursor, &varState, bytes);
 				cursor += bytes;
 			}
@@ -1996,7 +1999,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 				//Serialize the var value
 				bytes = sizeof(float);
-				float varState; mono_field_get_value(classInstance, field, &varState);
+				float varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 				memcpy(cursor, &varState, bytes);
 				cursor += bytes;
 			}
@@ -2022,7 +2025,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 				//Serialize the var value
 				bytes = sizeof(double);
-				double varState; mono_field_get_value(classInstance, field, &varState);
+				double varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 				memcpy(cursor, &varState, bytes);
 				cursor += bytes;
 			}
@@ -2048,7 +2051,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 				//Serialize the var value
 				bytes = sizeof(int8_t);
-				int8_t varState; mono_field_get_value(classInstance, field, &varState);
+				int8_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 				memcpy(cursor, &varState, bytes);
 				cursor += bytes;
 			}
@@ -2074,7 +2077,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 				//Serialize the var value
 				bytes = sizeof(uint8_t);
-				uint8_t varState; mono_field_get_value(classInstance, field, &varState);
+				uint8_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 				memcpy(cursor, &varState, bytes);
 				cursor += bytes;
 			}
@@ -2100,7 +2103,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 				//Serialize the var value
 				bytes = sizeof(int16_t);
-				int16_t varState; mono_field_get_value(classInstance, field, &varState);
+				int16_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 				memcpy(cursor, &varState, bytes);
 				cursor += bytes;
 			}
@@ -2126,7 +2129,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 				//Serialize the var value
 				bytes = sizeof(uint16_t);
-				uint16_t varState; mono_field_get_value(classInstance, field, &varState);
+				uint16_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 				memcpy(cursor, &varState, bytes);
 				cursor += bytes;
 			}
@@ -2152,7 +2155,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 				//Serialize the var value
 				bytes = sizeof(int32_t);
-				int32_t varState; mono_field_get_value(classInstance, field, &varState);
+				int32_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 				memcpy(cursor, &varState, bytes);
 				cursor += bytes;
 			}
@@ -2178,7 +2181,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 				//Serialize the var value
 				bytes = sizeof(uint32_t);
-				uint32_t varState; mono_field_get_value(classInstance, field, &varState);
+				uint32_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 				memcpy(cursor, &varState, bytes);
 				cursor += bytes;
 			}
@@ -2204,7 +2207,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 				//Serialize the var value
 				bytes = sizeof(int64_t);
-				int64_t varState; mono_field_get_value(classInstance, field, &varState);
+				int64_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 				memcpy(cursor, &varState, bytes);
 				cursor += bytes;
 			}
@@ -2230,7 +2233,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 				//Serialize the var value
 				bytes = sizeof(uint64_t);
-				uint64_t varState; mono_field_get_value(classInstance, field, &varState);
+				uint64_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 				memcpy(cursor, &varState, bytes);
 				cursor += bytes;
 			}
@@ -2256,7 +2259,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 				//Serialize the var value
 				bytes = sizeof(char);
-				char varState; mono_field_get_value(classInstance, field, &varState);
+				char varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 				memcpy(cursor, &varState, bytes);
 				cursor += bytes;
 			}
@@ -2281,7 +2284,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 				cursor += bytes;
 
 				//Serialize the var value				
-				MonoString* varState; mono_field_get_value(classInstance, field, &varState);
+				MonoString* varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 				char* cString = mono_string_to_utf8(varState);
 
 				std::string defString(cString);
@@ -2302,7 +2305,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 			{
 				varType = VarType::GAMEOBJECT;
 
-				MonoObject* monoObject; mono_field_get_value(classInstance, field, &monoObject);
+				MonoObject* monoObject; mono_field_get_value(GetMonoComponent(), field, &monoObject);
 
 				GameObject* serializableGO = monoObject ? App->scripting->GameObjectFrom(monoObject) : nullptr;
 
@@ -2333,7 +2336,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 			{
 				varType = VarType::TRANSFORM;
 
-				MonoObject* transformObj; mono_field_get_value(classInstance, field, &transformObj);
+				MonoObject* transformObj; mono_field_get_value(GetMonoComponent(), field, &transformObj);
 
 				MonoObject* monoObject;
 
@@ -2386,7 +2389,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 				//Serialize the var value
 
 				MonoObject* layerMask;
-				mono_field_get_value(classInstance, field, &layerMask);
+				mono_field_get_value(GetMonoComponent(), field, &layerMask);
 
 				uint32_t varState = 0;
 				mono_field_get_value(layerMask, mono_class_get_field_from_name(mono_object_get_class(layerMask), "masks"), &varState);
@@ -2418,14 +2421,14 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 				//Serialize the var value
 
 				int32_t value;
-				mono_field_get_value(classInstance, field, &value);
+				mono_field_get_value(GetMonoComponent(), field, &value);
 
 				bytes = sizeof(uint32_t);
 				memcpy(cursor, &value, bytes);
 				cursor += bytes;
 			}
 		}
-		field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+		field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 	}
 }
 
@@ -2433,7 +2436,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 {
 	char* cursor = buffer;
 
-	if (!classInstance)
+	if (!GetMonoComponent())
 		return;
 
 	uint numVars = 0;
@@ -2473,7 +2476,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			cursor += bytes;
 
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -2486,11 +2489,11 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 
 					if (typeName == "bool" && fieldName == varName)
 					{
-						mono_field_set_value(classInstance, field, &var);
+						mono_field_set_value(GetMonoComponent(), field, &var);
 						break;
 					}
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 			break;
 		}
@@ -2501,7 +2504,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -2514,11 +2517,11 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 
 					if (typeName == "single" && fieldName == varName)
 					{
-						mono_field_set_value(classInstance, field, &var);
+						mono_field_set_value(GetMonoComponent(), field, &var);
 						break;
 					}
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 			break;
 		}
@@ -2529,7 +2532,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -2542,11 +2545,11 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 
 					if (typeName == "double" && fieldName == varName)
 					{
-						mono_field_set_value(classInstance, field, &var);
+						mono_field_set_value(GetMonoComponent(), field, &var);
 						break;
 					}
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 			break;
 		}
@@ -2557,7 +2560,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -2570,11 +2573,11 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 
 					if (typeName == "sbyte" && fieldName == varName)
 					{
-						mono_field_set_value(classInstance, field, &var);
+						mono_field_set_value(GetMonoComponent(), field, &var);
 						break;
 					}
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 			break;
 		}
@@ -2585,7 +2588,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -2598,11 +2601,11 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 
 					if (typeName == "byte" && fieldName == varName)
 					{
-						mono_field_set_value(classInstance, field, &var);
+						mono_field_set_value(GetMonoComponent(), field, &var);
 						break;
 					}
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 			break;
 		}
@@ -2613,7 +2616,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -2626,11 +2629,11 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 
 					if (typeName == "int16" && fieldName == varName)
 					{
-						mono_field_set_value(classInstance, field, &var);
+						mono_field_set_value(GetMonoComponent(), field, &var);
 						break;
 					}
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 			break;
 		}
@@ -2641,7 +2644,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -2654,11 +2657,11 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 
 					if (typeName == "uint16" && fieldName == varName)
 					{
-						mono_field_set_value(classInstance, field, &var);
+						mono_field_set_value(GetMonoComponent(), field, &var);
 						break;
 					}
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 			break;
 		}
@@ -2669,7 +2672,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -2682,11 +2685,11 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 
 					if (typeName == "int" && fieldName == varName)
 					{
-						mono_field_set_value(classInstance, field, &var);
+						mono_field_set_value(GetMonoComponent(), field, &var);
 						break;
 					}
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 			break;
 		}
@@ -2697,7 +2700,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -2710,11 +2713,11 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 
 					if (typeName == "uint" && fieldName == varName)
 					{
-						mono_field_set_value(classInstance, field, &var);
+						mono_field_set_value(GetMonoComponent(), field, &var);
 						break;
 					}
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 			break;
 		}
@@ -2725,7 +2728,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -2738,11 +2741,11 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 
 					if (typeName == "long" && fieldName == varName)
 					{
-						mono_field_set_value(classInstance, field, &var);
+						mono_field_set_value(GetMonoComponent(), field, &var);
 						break;
 					}
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 			break;
 		}
@@ -2753,7 +2756,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -2766,11 +2769,11 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 
 					if (typeName == "ulong" && fieldName == varName)
 					{
-						mono_field_set_value(classInstance, field, &var);
+						mono_field_set_value(GetMonoComponent(), field, &var);
 						break;
 					}
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 			break;
 		}
@@ -2781,7 +2784,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -2794,11 +2797,11 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 
 					if (typeName == "char" && fieldName == varName)
 					{
-						mono_field_set_value(classInstance, field, &var);
+						mono_field_set_value(GetMonoComponent(), field, &var);
 						break;
 					}
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 			break;
 		}
@@ -2816,7 +2819,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			cursor += bytes;
 
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -2830,11 +2833,11 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 					if (typeName == "string" && fieldName == varName)
 					{
 						MonoString* monoString = mono_string_new(App->scripting->domain, string.c_str());
-						mono_field_set_value(classInstance, field, monoString);
+						mono_field_set_value(GetMonoComponent(), field, monoString);
 						break;
 					}
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 
 			break;
@@ -2864,13 +2867,12 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 					prefab->IncreaseReferences();
 					go = prefab->GetRoot();
 				}
-
 			}
 
 			MonoObject* monoObject = go ? App->scripting->MonoObjectFrom(go) : nullptr;
 
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -2883,11 +2885,11 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 
 					if (typeName == "JellyBitEngine.GameObject" && fieldName == varName)
 					{
-						mono_field_set_value(classInstance, field, monoObject);
+						mono_field_set_value(GetMonoComponent(), field, monoObject);
 						break;
 					}
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 
 			break;
@@ -2922,7 +2924,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			MonoObject* monoObject = go ? App->scripting->MonoObjectFrom(go) : nullptr;
 
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -2939,16 +2941,16 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 						{
 							MonoObject* monoTransform;
 							mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "transform"), &monoTransform);
-							mono_field_set_value(classInstance, field, monoTransform);
+							mono_field_set_value(GetMonoComponent(), field, monoTransform);
 						}
 						else
 						{
-							mono_field_set_value(classInstance, field, nullptr);
+							mono_field_set_value(GetMonoComponent(), field, nullptr);
 						}
 						break;
 					}
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 
 			break;
@@ -2962,7 +2964,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			cursor += bytes;
 
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -2976,13 +2978,13 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 					if (typeName == "JellyBitEngine.LayerMask" && fieldName == varName)
 					{
 						MonoObject* layerMask;
-						mono_field_get_value(classInstance, field, &layerMask);
+						mono_field_get_value(GetMonoComponent(), field, &layerMask);
 
 						mono_field_set_value(layerMask, mono_class_get_field_from_name(mono_object_get_class(layerMask), "masks"), &var);
 						break;
 					}
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 			break;
 		}
@@ -2995,7 +2997,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			cursor += bytes;
 
 			void* iterator = 0;
-			MonoClassField* field = mono_class_get_fields(mono_object_get_class(classInstance), &iterator);
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 
 			while (field != nullptr)
 			{
@@ -3010,12 +3012,12 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 
 						if (fieldName == varName)
 						{						
-							mono_field_set_value(classInstance, field, &var);
+							mono_field_set_value(GetMonoComponent(), field, &var);
 							break;
 						}
 					}				
 				}
-				field = mono_class_get_fields(mono_object_get_class(classInstance), (void**)&iterator);
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
 			break;
 		}
@@ -3050,18 +3052,17 @@ void ComponentScript::InstanceClass()
 	if (!klass)
 		return;
 
-	classInstance = mono_object_new(App->scripting->domain, klass);
-	mono_runtime_object_init(classInstance);
+	MonoObject* compInstance = mono_object_new(App->scripting->domain, klass);
+	mono_runtime_object_init(compInstance);
 
 	int gameObjectAddress = (int)GetParent();
 	int componentAddress = (int)this;
 
-	mono_field_set_value(classInstance, mono_class_get_field_from_name(klass, "gameObjectAddress"), &gameObjectAddress);
-	mono_field_set_value(classInstance, mono_class_get_field_from_name(klass, "componentAddress"), &componentAddress);
-	mono_field_set_value(classInstance, mono_class_get_field_from_name(klass, "gameObject"), App->scripting->MonoObjectFrom(GetParent()));
+	mono_field_set_value(compInstance, mono_class_get_field_from_name(klass, "gameObjectAddress"), &gameObjectAddress);
+	mono_field_set_value(compInstance, mono_class_get_field_from_name(klass, "componentAddress"), &componentAddress);
+	mono_field_set_value(compInstance, mono_class_get_field_from_name(klass, "gameObject"), App->scripting->MonoObjectFrom(GetParent()));
 
-	monoCompHandle = mono_gchandle_new(classInstance, true);
-	SetMonoComponent(monoCompHandle);
+	monoCompHandle = mono_gchandle_new(compInstance, true);
 
 	App->scripting->monoComponentHandles.push_back(monoCompHandle);
 }
@@ -3088,18 +3089,15 @@ void ComponentScript::InstanceClass(MonoObject* _classInstance)
 	if (!klass)
 		return;
 
-	classInstance = _classInstance;
-	mono_runtime_object_init(classInstance);
+	mono_runtime_object_init(_classInstance);
 
 	int gameObjectAddress = (int)GetParent();
 	int componentAddress = (int)this;
 
-	mono_field_set_value(classInstance, mono_class_get_field_from_name(klass, "gameObjectAddress"), &gameObjectAddress);
-	mono_field_set_value(classInstance, mono_class_get_field_from_name(klass, "componentAddress"), &componentAddress);
-	mono_field_set_value(classInstance, mono_class_get_field_from_name(klass, "gameObject"), App->scripting->MonoObjectFrom(GetParent()));
+	mono_field_set_value(_classInstance, mono_class_get_field_from_name(klass, "gameObjectAddress"), &gameObjectAddress);
+	mono_field_set_value(_classInstance, mono_class_get_field_from_name(klass, "componentAddress"), &componentAddress);
+	mono_field_set_value(_classInstance, mono_class_get_field_from_name(klass, "gameObject"), App->scripting->MonoObjectFrom(GetParent()));
 
-	monoCompHandle = mono_gchandle_new(classInstance, true);
-	SetMonoComponent(monoCompHandle);
-
+	monoCompHandle = mono_gchandle_new(_classInstance, true);
 	App->scripting->monoComponentHandles.push_back(monoCompHandle);
 }

@@ -41,11 +41,14 @@ public:
 	inline ResourceAvatarData& GetSpecificData() { return avatarData; }
 	void SetHipsUuid(uint hipsUuid);
 	uint GetHipsUuid() const;
+	std::vector<uint> GetBonesUuids() const;
 
 	// ----------------------------------------------------------------------------------------------------
 
-
+	void CreateSkeleton(GameObject* gameObject);
 	void AddBones(GameObject* gameObject) const;
+	void ClearSkeletonAndBones();
+
 	void StepBones(uint animationUuid, float time, float blend = 1.0f);
 
 private:
