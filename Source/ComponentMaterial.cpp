@@ -58,10 +58,10 @@ void ComponentMaterial::OnUniqueEditor()
 			ImGui::EndDragDropTarget();
 		}
 
-		ImGui::SameLine();
-
 		if (res != App->resHandler->defaultMaterial)
 		{
+			ImGui::SameLine();
+
 			if (ImGui::Button("EDIT"))
 				SELECT(App->res->GetResource(res));
 		}

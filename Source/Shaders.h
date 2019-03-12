@@ -84,7 +84,9 @@
 "void main()\n" \
 "{\n" \
 "	// retrieve data from gbuffer\n" \
-"	vec3 FragPos = texture(gPosition, TexCoords).rgb;\n" \
+"	vec4 FragPosTexture = texture(gPosition, TexCoords);\n" \
+"	vec3 FragPos = FragPosTexture.rgb;\n" \
+"	float FragPosA = FragPosTexture.a; // type of shader\n" \
 "	vec4 NormalTexture = texture(gNormal, TexCoords);\n" \
 "	vec3 Normal = NormalTexture.rgb;\n" \
 "	float NormalA = NormalTexture.a; // levels \n" \
@@ -97,24 +99,34 @@
 "		vec3 diffuse = vec3(0.0, 0.0, 0.0);\n" \
 "		if (lights[i].type == 1)\n" \
 "		{\n" \
-"			float cosine = max(0.0, dot(Normal, lights[i].dir));\n" \
-"			float scaleFactor = 1.0 / NormalA;\n" \
-"			diffuse = Albedo * lights[i].color * floor(cosine * NormalA) * scaleFactor;\n" \
+"			if (FragPosA == 2) // cartoon\n" \
+"			{\n" \
+"				float cosine = max(0.0, dot(Normal, lights[i].dir));\n" \
+"				float scaleFactor = 1.0 / NormalA;\n" \
+"				diffuse = Albedo * lights[i].color * floor(cosine * NormalA) * scaleFactor;\n" \
+"			}\n" \
+"			else\n" \
+"				diffuse = max(dot(Normal, lights[i].dir), 0.0) * Albedo * lights[i].color;\n" \
 "		}\n" \
 "		else if (lights[i].type == 2)\n" \
 "		{\n" \
 "			vec3 lightDir = normalize(lights[i].position - FragPos);\n" \
-"			float cosine = max(0.0, dot(Normal, lightDir));\n" \
-"			float scaleFactor = 1.0 / NormalA;\n" \
-"			diffuse = Albedo * lights[i].color * floor(cosine * NormalA) * scaleFactor;\n" \
+"			if (FragPosA == 2) // cartoon\n" \
+"			{\n" \
+"				float cosine = max(0.0, dot(Normal, lightDir));\n" \
+"				float scaleFactor = 1.0 / NormalA;\n" \
+"				diffuse = Albedo * lights[i].color * floor(cosine * NormalA) * scaleFactor;\n" \
+"			}\n" \
+"			else\n" \
+"				diffuse = max(dot(Normal, lightDir), 0.0) * Albedo * lights[i].color;\n" \
 "			float distance = length(lights[i].position - FragPos);\n" \
 "			float attenuation = 1.0 / (1.0 + lights[i].linear * distance + lights[i].quadratic * distance * distance);\n" \
 "			diffuse *= attenuation;\n" \
 "		}\n" \
 "		lighting += diffuse;\n" \
 "	}\n" \
-"	//if (fabs(AlbedoA - 3.0) < 0.00001) // outline\n" \
-"		//lighting = Albedo;\n" \
+"	if (FragPosA == 3) // outline\n" \
+"		lighting = Albedo;\n" \
 "	FragColor = vec4(lighting, 1.0);\n" \
 "}"
 
@@ -143,7 +155,10 @@
 "uniform sampler2D diffuse;\n"						\
 "void main()\n"										\
 "{\n"												\
-"	FragColor = texture(diffuse, fTexCoord);\n"		\
+"	vec4 color = texture(diffuse, fTexCoord);\n"	\
+"	if (color.a < 0.1)\n"							\
+"		discard;\n"									\
+"	FragColor = color;\n"							\
 "}"
 #pragma endregion
 
@@ -343,7 +358,7 @@
 "uniform mat4 mvp_matrix;\n"											\
 "uniform mat3 normal_matrix;\n"											\
 "\n"																	\
-"out GS_OUT\n"															\
+"out VS_OUT\n"															\
 "{\n"																	\
 "  vec3 gPosition;\n"													\
 "  vec3 gNormal;\n"														\
@@ -470,13 +485,13 @@
 "\n"																					\
 "in GS_OUT\n"																			\
 "{\n"																					\
-"  vec3 gPosition;\n"																	\
-"  vec3 gNormal;\n"																		\
-"  vec4 gColor;\n"																		\
-"  vec2 gTexCoord;\n"																	\
+"  vec3 fPosition;\n"																	\
+"  vec3 fNormal;\n"																		\
+"  vec4 fColor;\n"																		\
+"  vec2 fTexCoord;\n"																	\
 "} fs_in;\n"																			\
 "\n"																					\
-"//flat in int fIsEdge; // whether or not we're drawing an edge\n"						\
+"flat in int fIsEdge; // whether or not we're drawing an edge\n"						\
 "\n"																					\
 "struct Material\n"																		\
 "{\n"																					\
@@ -491,26 +506,28 @@
 "\n"																					\
 "void main()\n"																			\
 "{\n"																					\
-"	vec4 albedo = texture(material.albedo, fs_in.gTexCoord);\n"							\
 "\n"																					\
 "	// If we're drawing an edge, use constant color\n"									\
-"	//if (fIsEdge == 1)\n"																\
-"	//{\n"																				\
-"		//gNormal.a = 1;\n"																\
+"	if (fIsEdge == 1)\n"																\
+"	{\n"																				\
+"		gNormal.a = 1;\n"																\
+"		gPosition.a = 3;\n"																\
 "\n"																					\
-"		//gAlbedoSpec = vec4(lineColor, 3);\n"											\
-"	//}\n"																				\
+"		gAlbedoSpec = vec4(lineColor, 1.0);\n"											\
+"	}\n"																				\
 "	// Otherwise, shade the poly\n"														\
-"	//else\n"																				\
-"	//{\n"																				\
+"	else\n"																				\
+"	{\n"																				\
 "		gNormal.a = levels;\n"															\
+"		gPosition.a = 2;\n"																\
 "\n"																					\
+"		vec4 albedo = texture(material.albedo, fs_in.fTexCoord);\n"						\
 "		vec3 diffuse = vec3(albedo);\n"													\
-"		gAlbedoSpec = vec4(diffuse, 2);\n"											\
-"	//}\n"																				\
+"		gAlbedoSpec = vec4(diffuse, albedo.a);\n"												\
+"	}\n"																				\
 "\n"																					\
-"	gPosition = vec4(fs_in.gPosition, 1);\n"											\
-"	gNormal.rgb = normalize(fs_in.gNormal);\n"											\
+"	gPosition.rgb = fs_in.fPosition;\n"											\
+"	gNormal.rgb = normalize(fs_in.fNormal);\n"											\
 "}"
 
 #pragma endregion
