@@ -79,13 +79,31 @@ bool ComponentAnimator::SetResourceAnimator(uint resource)
 
 bool ComponentAnimator::SetResourceAvatar(uint resource)
 {
-	if (res > 0)
-		App->res->SetAsUnused(res);
+	if (res_avatar > 0)
+		App->res->SetAsUnused(res_avatar);
 
 	if (resource > 0)
 		App->res->SetAsUsed(resource);
 
 	res_avatar = resource;
+
+	return true;
+}
+
+bool ComponentAnimator::SetResourceAnimation(uint resource)
+{
+	for (uint i = 0u; i < res_animations.size(); i++)
+	{
+		if (res_animations[i] == resource) {
+			App->res->SetAsUnused(res);
+			break;
+		}
+	}
+
+	if (resource > 0)
+		App->res->SetAsUsed(resource);
+
+	res_animations.push_back(resource);
 
 	return true;
 }
