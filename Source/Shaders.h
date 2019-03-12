@@ -87,7 +87,7 @@
 "	vec3 FragPos = texture(gPosition, TexCoords).rgb;\n" \
 "	vec4 NormalTexture = texture(gNormal, TexCoords);\n" \
 "	vec3 Normal = NormalTexture.rgb;\n" \
-"	float NormalA = NormalTexture.a;\n" \
+"	float NormalA = NormalTexture.a; // levels \n" \
 "	vec4 AlbedoTexture = texture(gAlbedoSpec, TexCoords);\n" \
 "	vec3 Albedo = AlbedoTexture.rgb;\n" \
 "	float AlbedoA = AlbedoTexture.a;\n" \
@@ -98,15 +98,15 @@
 "		if (lights[i].type == 1)\n" \
 "		{\n" \
 "			float cosine = max(0.0, dot(Normal, lights[i].dir));\n" \
-"			float scaleFactor = 1.0 / 2;\n" \
-"			diffuse = Albedo * lights[i].color * floor(cosine * 2) * scaleFactor;\n" \
+"			float scaleFactor = 1.0 / NormalA;\n" \
+"			diffuse = Albedo * lights[i].color * floor(cosine * NormalA) * scaleFactor;\n" \
 "		}\n" \
 "		else if (lights[i].type == 2)\n" \
 "		{\n" \
 "			vec3 lightDir = normalize(lights[i].position - FragPos);\n" \
 "			float cosine = max(0.0, dot(Normal, lightDir));\n" \
-"			float scaleFactor = 1.0 / 2;\n" \
-"			diffuse = Albedo * lights[i].color * floor(cosine * 2) * scaleFactor;\n" \
+"			float scaleFactor = 1.0 / NormalA;\n" \
+"			diffuse = Albedo * lights[i].color * floor(cosine * NormalA) * scaleFactor;\n" \
 "			float distance = length(lights[i].position - FragPos);\n" \
 "			float attenuation = 1.0 / (1.0 + lights[i].linear * distance + lights[i].quadratic * distance * distance);\n" \
 "			diffuse *= attenuation;\n" \
