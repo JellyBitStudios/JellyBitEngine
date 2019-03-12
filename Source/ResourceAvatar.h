@@ -11,7 +11,6 @@ class GameObject;
 struct ResourceAvatarData
 {
 	uint hipsUuid = 0; // uuid of the root game object of the skeleton
-	//std::vector<uint> meshesUuids; // uuid of the resources of the affected meshes 
 };
 
 class ResourceAvatar : public Resource

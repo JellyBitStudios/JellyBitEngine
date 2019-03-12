@@ -818,10 +818,6 @@ bool SceneImporter::Load(const void* buffer, uint size, ResourceData& outputData
 
 	cursor += bytes;
 
-	// Calculate adjacent indices
-	if (outputMeshData.adjacency)
-		ResourceMesh::CalculateAdjacentIndices(outputMeshData.indices, outputMeshData.indicesSize, outputMeshData.adjacentIndices);
-
 	// 10. Load name
 	bytes = sizeof(char) * nameSize;
 	outputData.name.resize(nameSize);

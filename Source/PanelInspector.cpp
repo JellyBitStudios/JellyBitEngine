@@ -533,6 +533,9 @@ void PanelInspector::ShowMeshImportSettingsInspector()
 
 	ImGui::Text("Scale"); ImGui::PushItemWidth(50.0f);
 	ImGui::DragFloat("##Scale", &m_is.scale, 0.01f, 0.0f, FLT_MAX, "%.2f", 1.0f);
+	ImGui::Checkbox("Adjacency", &m_is.adjacency);
+
+	ImGui::Spacing();
 
 	// IBO ATR
 	ImGui::Text("IBO Attributes");
@@ -831,7 +834,7 @@ void PanelInspector::ShowMaterialInspector() const
 	ResourceShaderProgram* shader = (ResourceShaderProgram*)App->res->GetResource(material->GetShaderUuid());
 	assert(shader != nullptr);
 
-	const char* shaderTypes[] = { "Standard", "Particles", "UI", "Custom" };
+	const char* shaderTypes[] = { "Standard", "Particles", "UI", "Source", "Custom" };
 
 	if (ImGui::Button("Shader"))
 		ImGui::OpenPopup("shader_popup");
