@@ -475,22 +475,27 @@ void ResourceMaterial::ResetUniforms()
 
 void ResourceMaterial::InitResources()
 {
-	// Set as used (shader)
 	if (materialData.shaderUuid > 0)
-		App->res->SetAsUsed(materialData.shaderUuid);
-
-	// Set as used (uniforms)
-	SetUniformsAsUsed();
+	{
+		// Set as used (shader)
+		if (App->res->SetAsUsed(materialData.shaderUuid) > 0)
+			// Set as used (uniforms)
+			SetUniformsAsUsed();
+		else
+			materialData.uniforms.clear();
+	}
 }
 
 void ResourceMaterial::DeinitResources() const
 {
 	// Set as unused (shader)
 	if (materialData.shaderUuid > 0)
+	{
 		App->res->SetAsUnused(materialData.shaderUuid);
 
-	// Set as unused (uniforms)
-	SetUniformsAsUnused();
+		// Set as unused (uniforms)
+		SetUniformsAsUnused();
+	}
 }
 
 void ResourceMaterial::SetUniformsAsUsed()
