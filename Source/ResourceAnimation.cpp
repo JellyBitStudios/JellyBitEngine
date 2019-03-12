@@ -45,7 +45,7 @@ void ResourceAnimation::OnPanelAssets()
 
 	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 	{
-		ImGui::SetDragDropPayload("ANIMATION_RESOURCE", &uuid, sizeof(uint));
+		ImGui::SetDragDropPayload("ANIMATION_INSPECTOR_SELECTOR", &uuid, sizeof(uint));
 		ImGui::EndDragDropSource();
 	}
 #endif // !GAMEMODE

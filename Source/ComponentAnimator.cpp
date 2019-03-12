@@ -10,6 +10,7 @@
 #include "Resource.h"
 #include "ResourceMesh.h"
 #include "ResourceAnimator.h"
+#include "ResourceAnimation.h"
 #include "AnimationImporter.h"
 #include "ResourceAvatar.h"
 #ifndef GAMEMODE
@@ -236,6 +237,33 @@ void ComponentAnimator::OnUniqueEditor()
 				uint payload_n = *(uint*)payload->Data;
 
 				SetResourceAvatar(payload_n);
+			}
+			ImGui::EndDragDropTarget();
+		}
+
+		fileName = "Empty Animations";
+		const ResourceAnimation* resource_animation = (res_animations.size() == 0) ? nullptr : (ResourceAnimation*)App->res->GetResource(res_animations.at(0));
+		if (resource_animation != nullptr)
+			fileName = resource_animation->GetName();
+
+		ImGui::PushID("animation");
+		ImGui::Button(fileName.data(), ImVec2(150.0f, 0.0f));
+		ImGui::PopID();
+
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("%u", res_avatar);
+			ImGui::EndTooltip();
+		}
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ANIMATION_INSPECTOR_SELECTOR"))
+			{
+				uint payload_n = *(uint*)payload->Data;
+
+				SetResourceAnimation(payload_n);
 			}
 			ImGui::EndDragDropTarget();
 		}
