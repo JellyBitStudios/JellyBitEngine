@@ -8,9 +8,7 @@
 #include "SceneImporter.h"
 #include "MaterialImporter.h"
 #include "ShaderImporter.h"
-#include "BoneImporter.h"
 #include "AnimationImporter.h"
-#include "ModuleAnimation.h"
 
 #include "ResourceTypes.h"
 #include "Resource.h"
@@ -20,11 +18,13 @@
 #include "ResourceShaderProgram.h"
 #include "ResourceAnimation.h"
 #include "ResourceBone.h"
+#include "ResourceAvatar.h"
 #include "ResourceScript.h"
 #include "ResourcePrefab.h"
 #include "ResourceMaterial.h"
 #include "ResourceScene.h"
 #include "ResourceFont.h"
+#include "ResourceAnimator.h"
 #include "ResourceAudioBank.h"
 
 #include <assert.h>
@@ -58,7 +58,7 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 	case System_Event_Type::ImportFile:
 	{
 		// 1. Import file
-		ImportFile(event.fileEvent.file);
+		ImportFile(event.fileEvent.file, event.fileEvent.build);
 	}
 	break;
 
@@ -122,7 +122,8 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 
 			// 3. Import file
 			System_Event newEvent;
-			newEvent.type = System_Event_Type::ImportFile;
+			newEvent.fileEvent.type = System_Event_Type::ImportFile;
+			newEvent.fileEvent.build = true;
 			strcpy_s(newEvent.fileEvent.file, DEFAULT_BUF_SIZE, event.fileEvent.file);
 			App->PushSystemEvent(newEvent);
 		}
@@ -170,6 +171,17 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			break;
 		}
 		}
+
+		uint AmountMeshes = GetAmount(ResourceTypes::MeshResource);
+		uint AmountTextures = GetAmount(ResourceTypes::TextureResource);
+
+		if (AmountMeshes == 0 && AmountTextures == 0)
+		{
+			System_Event newEvent;
+			newEvent.type = System_Event_Type::Build;
+			App->PushSystemEvent(newEvent);
+		}
+
 	}
 	break;
 
@@ -246,7 +258,8 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 
 		// 4. Import file
 		System_Event newEvent;
-		newEvent.type = System_Event_Type::ImportFile;
+		newEvent.fileEvent.type = System_Event_Type::ImportFile;
+		newEvent.fileEvent.build = false;
 		strcpy_s(newEvent.fileEvent.file, DEFAULT_BUF_SIZE, event.fileEvent.file);
 		App->PushSystemEvent(newEvent);
 	}
@@ -366,7 +379,7 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 // ----------------------------------------------------------------------------------------------------
 
 // Note: in case of a mesh resource, it returns the last mesh resource created
-Resource* ModuleResourceManager::ImportFile(const char* file)
+Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 {
 	assert(file != nullptr);
 
@@ -384,7 +397,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 		std::vector<std::string> mesh_files;
 		std::vector<std::string> bone_files;
 		std::vector<std::string> animation_files;
-		if (ResourceMesh::ImportFile(file, meshImportSettings, mesh_files, bone_files,animation_files))
+		if (ResourceMesh::ImportFile(file, meshImportSettings, mesh_files, bone_files, animation_files))
 		{
 			std::vector<uint> resourcesUuids;
 			std::vector<uint> meshes_uuids;
@@ -419,7 +432,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 				}
 				meshes_uuids.shrink_to_fit();
 
-				// 2. Bones c:
+				// 2. Bones
 				bones_uuids.reserve(bone_files.size());
 				for (uint i = 0; i < bone_files.size(); ++i)
 				{
@@ -429,19 +442,19 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 					assert(uuid > 0);
 
 					ResourceData data;
-					ResourceBoneData bone_data;
+					ResourceBoneData boneData;
 					data.file = file;
 					data.exportedFile = bone_files[i].data();
 					App->fs->GetFileName(file, data.name);
-					App->boneImporter->Load(bone_files[i].data(), data, bone_data);
+					ResourceBone::LoadFile(bone_files[i].data(), boneData);
 
-					resource = CreateResource(ResourceTypes::BoneResource, data, &bone_data, uuid);
+					resource = CreateResource(ResourceTypes::BoneResource, data, &boneData, uuid);
 					if (resource != nullptr)
 						bones_uuids.push_back(uuid);
 				}
 				bones_uuids.shrink_to_fit();
 
-				// 3. Anims c:
+				// 3. Anims
 				animation_uuids.reserve(animation_files.size());
 				for (uint i = 0; i < animation_files.size(); ++i)
 				{
@@ -459,7 +472,8 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 
 					resource = CreateResource(ResourceTypes::AnimationResource, data, &anim_data, uuid);
 
-					App->animation->SetAnimationGos((ResourceAnimation*)resource);
+					// TODO_G : check this
+					//App->animation->SetAnimationGos((ResourceAnimation*)resource);
 
 					if (resource != nullptr)
 						animation_uuids.push_back(uuid);
@@ -708,6 +722,95 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 	}
 	break;
 
+	case ResourceTypes::AnimatorResource:
+	{
+		std::string outputFile;
+		std::string name;
+		if (ResourceAnimator::ImportFile(file, name, outputFile))
+		{
+			std::vector<uint> resourcesUuids;
+			if (!GetResourcesUuidsByFile(file, resourcesUuids))
+			{
+				// Create the resources
+				CONSOLE_LOG(LogTypes::Normal, "RESOURCE MANAGER: The Animator file '%s' has resources that need to be created", file);
+
+				// 1. Material
+				uint uuid = outputFile.empty() ? App->GenerateRandomNumber() : strtoul(outputFile.data(), NULL, 0);
+				assert(uuid > 0);
+				resourcesUuids.push_back(uuid);
+				resourcesUuids.shrink_to_fit();
+
+				ResourceData data;
+				ResourceAnimatorData animatorData;
+				data.file = file;
+				if (name.empty())
+					App->fs->GetFileName(file, data.name);
+				else
+					data.name = name.data();
+				ResourceAnimator::LoadFile(file, animatorData);
+
+				resource = CreateResource(ResourceTypes::AnimatorResource, data, &animatorData, uuid);
+			}
+			else
+				resource = GetResource(resourcesUuids.front());
+
+			// 2. Meta
+			// TODO: only create meta if any of its fields has been modificated
+			std::string outputMetaFile;
+			std::string name = resource->GetName();
+			int64_t lastModTime = ResourceAnimator::CreateMeta(file, resourcesUuids.front(), name, outputMetaFile);
+			assert(lastModTime > 0);
+		}
+	}
+	break;
+	case ResourceTypes::FontResource:
+	{
+		//resource = ResourceFont::ImportFile(file);
+		//resources[resource->GetUuid()] = resource;
+		break;
+	}
+	case ResourceTypes::AvatarResource:
+	{
+		std::string outputFile;
+		std::string name;
+		if (ResourceAvatar::ImportFile(file, name, outputFile))
+		{
+			std::vector<uint> resourcesUuids;
+			if (!GetResourcesUuidsByFile(file, resourcesUuids))
+			{
+				// Create the resources
+				CONSOLE_LOG(LogTypes::Normal, "RESOURCE MANAGER: The Avatar file '%s' has resources that need to be created", file);
+
+				// 1. Avatar
+				uint uuid = outputFile.empty() ? App->GenerateRandomNumber() : strtoul(outputFile.data(), NULL, 0);
+				assert(uuid > 0);
+				resourcesUuids.push_back(uuid);
+				resourcesUuids.shrink_to_fit();
+
+				ResourceData data;
+				ResourceAvatarData avatarData;
+				data.file = file;
+				if (name.empty())
+					App->fs->GetFileName(file, data.name);
+				else
+					data.name = name.data();
+				ResourceAvatar::LoadFile(file, avatarData);
+
+				resource = CreateResource(ResourceTypes::AvatarResource, data, &avatarData, uuid);
+			}
+			else
+				resource = GetResource(resourcesUuids.front());
+
+			// 2. Meta
+			// TODO: only create meta if any of its fields has been modificated
+			std::string outputMetaFile;
+			std::string name = resource->GetName();
+			int64_t lastModTime = ResourceAvatar::CreateMeta(file, resourcesUuids.front(), name, outputMetaFile);
+			assert(lastModTime > 0);
+		}
+	}
+	break;
+
 	case ResourceTypes::ScriptResource:
 	{
 		resource = App->scripting->ImportScriptResource(file);
@@ -728,56 +831,6 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 		break;
 	}
 
-	case ResourceTypes::FontResource:
-	{
-		//resource = ResourceFont::ImportFile(file);
-		//resources[resource->GetUuid()] = resource;
-		break;
-	}
-
-	case ResourceTypes::BoneResource:
-	{
-		std::string outputFile;
-		std::string name;
-		if (ResourceBone::ImportFile(file, name, outputFile)) {
-			std::vector<uint> resourcesUuids;
-			if (!GetResourcesUuidsByFile(file, resourcesUuids))
-			{
-				// Create the resources
-				CONSOLE_LOG(LogTypes::Normal, "RESOURCE MANAGER: The bone object file '%s' has resources that need to be created", file);
-
-				// 1. Shader object
-				uint uuid = outputFile.empty() ? App->GenerateRandomNumber() : strtoul(outputFile.data(), NULL, 0);
-				assert(uuid > 0);
-				resourcesUuids.push_back(uuid);
-				resourcesUuids.shrink_to_fit();
-
-				ResourceData data;
-				ResourceBoneData boneData;
-				data.file = file;
-				if (name.empty())
-					App->fs->GetFileName(file, data.name);
-				else
-					data.name = name.data();
-
-
-				uint shaderObject = 0;
-				bool success = ResourceBone::LoadFile(file, boneData);
-
-				resource = CreateResource(ResourceTypes::BoneResource, data, &boneData, uuid);
-
-			}
-			else
-				resource = GetResource(resourcesUuids.front());
-
-			std::string outputMetaFile;
-			std::string name = resource->GetName();
-			int64_t lastModTime = ResourceShaderObject::CreateMeta(file, resourcesUuids.front(), name, outputMetaFile);
-			assert(lastModTime > 0);
-		}
-		break;
-	}
-
 	case ResourceTypes::AnimationResource:
 	{
 		std::string outputFile;
@@ -795,7 +848,6 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 				assert(uuid > 0);
 				resourcesUuids.push_back(uuid);
 				resourcesUuids.shrink_to_fit();
-
 
 				ResourceData data;
 				ResourceAnimationData animationData;
@@ -827,7 +879,13 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 	case ResourceTypes::AudioBankResource:
 		resource = ResourceAudioBank::ImportFile(file);
 		break;
+	}
 
+	if (buildEvent)
+	{
+		System_Event newEvent;
+		newEvent.type = System_Event_Type::Build;
+		App->PushSystemEvent(newEvent);
 	}
 
 	return resource;
@@ -859,6 +917,47 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		App->sceneImporter->Load(file, data, meshData);
 
 		resource = CreateResource(ResourceTypes::MeshResource, data, &meshData, uuid);
+	}
+	break;
+
+	case ResourceTypes::BoneResource:
+	{
+		std::string fileName;
+		App->fs->GetFileName(file, fileName);
+		uint uuid = strtoul(fileName.data(), NULL, 0);
+		assert(uuid > 0);
+
+		ResourceData data;
+		ResourceBoneData boneData;
+		data.exportedFile = file;
+
+		ResourceBone::LoadFile(file, boneData);
+
+		resource = CreateResource(ResourceTypes::BoneResource, data, &boneData, uuid);
+	}
+	break;
+
+	case ResourceTypes::AvatarResource:
+	{
+		ResourceData data;
+		ResourceAvatarData avatarData;
+		data.exportedFile = file;
+
+		// Search for the meta associated to the file
+		char metaFile[DEFAULT_BUF_SIZE];
+		strcpy_s(metaFile, strlen(file) + 1, file); // file
+		strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
+
+		uint uuid = 0;
+		if (App->fs->Exists(metaFile))
+		{
+			int64_t lastModTime = 0;
+			ResourceAvatar::ReadMeta(metaFile, lastModTime, uuid, data.name);
+		}
+
+		ResourceAvatar::LoadFile(file, avatarData);
+
+		resource = CreateResource(ResourceTypes::AvatarResource, data, &avatarData, uuid);
 	}
 	break;
 
@@ -989,7 +1088,6 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
 
 		uint uuid = 0;
-		std::vector<std::string> shaderObjectsNames;
 		if (App->fs->Exists(metaFile))
 		{
 			int64_t lastModTime = 0;
@@ -999,6 +1097,30 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		ResourceMaterial::LoadFile(file, materialData);
 
 		resource = CreateResource(ResourceTypes::MaterialResource, data, &materialData, uuid);
+	}
+	break;
+
+	case ResourceTypes::AnimatorResource:
+	{
+		ResourceData data;
+		ResourceAnimatorData animatorData;
+		data.exportedFile = file;
+
+		// Search for the meta associated to the file
+		char metaFile[DEFAULT_BUF_SIZE];
+		strcpy_s(metaFile, strlen(file) + 1, file); // file
+		strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
+
+		uint uuid = 0;
+		if (App->fs->Exists(metaFile))
+		{
+			int64_t lastModTime = 0;
+			ResourceAnimator::ReadMeta(metaFile, lastModTime, uuid, data.name);
+		}
+
+		ResourceAnimator::LoadFile(file, animatorData);
+
+		resource = CreateResource(ResourceTypes::AnimatorResource, data, &animatorData, uuid);
 	}
 	break;
 
@@ -1021,32 +1143,12 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		resources[resource->GetUuid()] = resource;
 	}
 	break;
-
 	case ResourceTypes::FontResource:
 	{
 		//resource = ResourceFont::ImportFile(file);
 		//resources[resource->GetUuid()] = resource;
 	}
 	break;
-
-	case ResourceTypes::BoneResource:
-	{
-		std::string fileName;
-		App->fs->GetFileName(file, fileName);
-		uint uuid = strtoul(fileName.data(), NULL, 0);
-		assert(uuid > 0);
-
-		ResourceData data;
-		ResourceBoneData boneData;
-		data.file = file;
-
-		App->boneImporter->Load(file, data, boneData);
-		//ResourceBone::LoadFile(file, boneData);
-
-		resource = CreateResource(ResourceTypes::BoneResource, data, &boneData, uuid);
-	}
-	break;
-
 	case ResourceTypes::AnimationResource:
 	{
 		std::string fileName;
@@ -1061,7 +1163,8 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		ResourceAnimation::LoadFile(file, animationData);
 
 		resource = CreateResource(ResourceTypes::AnimationResource, data, &animationData, uuid);
-		App->animation->SetAnimationGos((ResourceAnimation*)resource);
+		// TODO_G
+		//App->animation->SetAnimationGos((ResourceAnimation*)resource);
 	}
 	break;
 
@@ -1130,21 +1233,41 @@ Resource* ModuleResourceManager::ExportFile(ResourceTypes type, ResourceData& da
 	}
 	break;
 
-	// Add new resource
 	case ResourceTypes::BoneResource:
 	{
 		if (ResourceBone::ExportFile(data, *(ResourceBoneData*)specificData, outputFile, overwrite))
 		{
-			if (!overwrite)
+			if (resources)
 				resource = ImportFile(outputFile.data());
 		}
 	}
 	break;
+
+	case ResourceTypes::AvatarResource:
+	{
+		if (ResourceAvatar::ExportFile(data, *(ResourceAvatarData*)specificData, outputFile, overwrite))
+		{
+			if (resources)
+				resource = ImportFile(outputFile.data());
+		}
+	}
+	break;
+
 	case ResourceTypes::AnimationResource:
 	{
 		if (ResourceAnimation::ExportFile(data, *(ResourceAnimationData*)specificData, outputFile, overwrite))
 		{
-			if (!overwrite)
+			if (resources)
+				resource = ImportFile(outputFile.data());
+		}
+	}
+	break;
+
+	case ResourceTypes::AnimatorResource:
+	{
+		if (ResourceAnimator::ExportFile(data, *(ResourceAnimatorData*)specificData, outputFile, overwrite))
+		{
+			if (resources)
 				resource = ImportFile(outputFile.data());
 		}
 	}
@@ -1188,8 +1311,14 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 		case ResourceTypes::BoneResource:
 			resource = new ResourceBone(ResourceTypes::BoneResource, uuid, data, *(ResourceBoneData*)specificData);
 			break;
+		case ResourceTypes::AvatarResource:
+			resource = new ResourceAvatar(ResourceTypes::AvatarResource, uuid, data, *(ResourceAvatarData*)specificData);
+			break;
 		case ResourceTypes::AnimationResource:
 			resource = new ResourceAnimation(ResourceTypes::AnimationResource, uuid, data, *(ResourceAnimationData*)specificData);
+			break;
+		case ResourceTypes::AnimatorResource:
+			resource = new ResourceAnimator(ResourceTypes::AnimatorResource, uuid, data, *(ResourceAnimatorData*)specificData);
 			break;
 		case ResourceTypes::SceneResource:
 			resource = new ResourceScene(uuid, data, *(SceneData*)specificData);
@@ -1443,6 +1572,12 @@ ResourceTypes ModuleResourceManager::GetResourceTypeByExtension(const char* exte
 	case ASCIImat: case ASCIIMAT:
 		return ResourceTypes::MaterialResource;
 		break;
+	case ASCIIava: case ASCIIAVA:
+		return ResourceTypes::AvatarResource;
+		break;
+	case ASCIIani: case ASCIIANI:
+		return ResourceTypes::AnimatorResource;
+		break;
 	case ASCIIcs: case ASCIICS:
 		return ResourceTypes::ScriptResource;
 		break;
@@ -1477,10 +1612,14 @@ ResourceTypes ModuleResourceManager::GetLibraryResourceTypeByExtension(const cha
 		return ResourceTypes::ShaderProgramResource;
 	else if (strcmp(extension, EXTENSION_MATERIAL) == 0)
 		return ResourceTypes::MaterialResource;
-	else if (strcmp(extension, EXTENSION_ANIMATION) == 0)
-		return ResourceTypes::AnimationResource;
 	else if (strcmp(extension, EXTENSION_BONE) == 0)
 		return ResourceTypes::BoneResource;
+	else if (strcmp(extension, EXTENSION_AVATAR) == 0)
+		return ResourceTypes::AvatarResource;
+	else if (strcmp(extension, EXTENSION_ANIMATION) == 0)
+		return ResourceTypes::AnimationResource;
+	else if (strcmp(extension, EXTENSION_ANIMATOR) == 0)
+		return ResourceTypes::AnimatorResource;
 	else if (strcmp(extension, EXTENSION_SCRIPT) == 0)
 		return ResourceTypes::ScriptResource;
 	else if (strcmp(extension, EXTENSION_PREFAB) == 0)
@@ -1505,5 +1644,17 @@ std::vector<Resource*> ModuleResourceManager::GetResourcesByType(ResourceTypes t
 			ret.push_back(it->second);
 		}
 	}
+	return ret;
+}
+
+uint ModuleResourceManager::GetAmount(ResourceTypes type) const
+{
+	uint ret = 0;
+	for (auto resource : resources)
+	{
+		if (resource.second->GetType() == type)
+			ret++;
+	}
+
 	return ret;
 }

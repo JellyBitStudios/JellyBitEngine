@@ -101,9 +101,6 @@ void ComponentTransform::OnUniqueEditor()
 		}
 		if (!position.Equals(lastPosition) || !rotation.Equals(lastRotation) || !scale.Equals(lastScale))
 		{
-			// Transform updated: if the game object or its children have a rigid body, update its transform
-			ComponentRigidActor::RecursiveUpdateTransforms(parent);
-
 			// Transform updated: if the game object has a camera, update its frustum
 			if (parent->cmp_camera != nullptr)
 				parent->cmp_camera->UpdateTransform();
@@ -169,9 +166,6 @@ void ComponentTransform::SetMatrixFromGlobal(math::float4x4& globalMatrix)
 		newMatrix.Decompose(position, rotation, scale);
 	}
 
-	// Transform updated: if the game object or its children have a rigid body, update its transform
-	ComponentRigidActor::RecursiveUpdateTransforms(parent);
-
 	// Transform updated: if the game object has a camera, update its frustum
 	if (parent->cmp_camera != nullptr)
 		parent->cmp_camera->UpdateTransform();
@@ -217,6 +211,9 @@ void ComponentTransform::UpdateGlobal()
  		globalMatrix = goParent->transform->GetGlobalMatrix().Mul(local);
 	else
 		globalMatrix = local;
+
+	if (parent->cmp_rigidActor != nullptr)
+		parent->cmp_rigidActor->UpdateTransform(globalMatrix);
 
 	for (std::vector<GameObject*>::iterator childs = parent->children.begin(); childs != parent->children.end(); ++childs)
 	{

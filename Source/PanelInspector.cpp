@@ -10,6 +10,7 @@
 #include "ModuleResourceManager.h"
 #include "ModuleInternalResHandler.h"
 #include "ModuleGui.h"
+#include "ModuleGOs.h"
 #include "PanelShaderEditor.h"
 #include "PanelCodeEditor.h"
 #include "SceneImporter.h"
@@ -24,6 +25,7 @@
 #include "ComponentRigidActor.h"
 #include "ComponentCollider.h"
 #include "ComponentRectTransform.h"
+#include "ComponentBone.h"
 
 #include "Resource.h"
 #include "ResourceMesh.h"
@@ -32,7 +34,9 @@
 #include "ResourceShaderProgram.h"
 #include "ResourceScript.h"
 #include "ResourceMaterial.h"
+#include "ResourceAvatar.h"
 #include "ResourceAnimation.h"
+#include "ResourceBone.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -73,6 +77,9 @@ bool PanelInspector::Draw()
 				break;
 			case ResourceTypes::MaterialResource:
 				ShowMaterialInspector();
+				break;
+			case ResourceTypes::AvatarResource:
+				ShowAvatarInspector();
 				break;
 			case ResourceTypes::AnimationResource:
 				ShowAnimationInspector();
@@ -237,6 +244,11 @@ void PanelInspector::ShowGameObjectInspector() const
 			if (gameObject->cmp_projector == nullptr)
 				if (ImGui::Selectable("Projector")) {
 					gameObject->AddComponent(ComponentTypes::ProjectorComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			if (gameObject->cmp_animator == nullptr)
+				if (ImGui::Selectable("Animator")) {
+					gameObject->AddComponent(ComponentTypes::AnimatorComponent);
 					ImGui::CloseCurrentPopup();
 				}
 
@@ -450,13 +462,13 @@ void PanelInspector::ShowMeshResourceInspector() const
 	ImGui::TextColored(BLUE, "%u", resourceMesh->GetVBO());
 	ImGui::Text(""); ImGui::SameLine(); ImGui::Text("Vertices:"); ImGui::SameLine();
 	float nVerts = resourceMesh->GetVerticesCount();
-	ImGui::TextColored(BLUE, "%u", nVerts);
+	ImGui::TextColored(BLUE, "%f", nVerts);
 	ImGui::Text(""); ImGui::SameLine(); ImGui::Text("Normals:"); ImGui::SameLine();
-	ImGui::TextColored(BLUE, "%u", nVerts);
+	ImGui::TextColored(BLUE, "Not available yet");
 	ImGui::Text(""); ImGui::SameLine(); ImGui::Text("Colors:"); ImGui::SameLine();
-	ImGui::TextColored(BLUE, "%u", nVerts);
+	ImGui::TextColored(BLUE, "Not available yet");
 	ImGui::Text(""); ImGui::SameLine(); ImGui::Text("Texture Coordinates:"); ImGui::SameLine();
-	ImGui::TextColored(BLUE, "%u", nVerts);
+	ImGui::TextColored(BLUE, "Not available yet");
 
 	ImGui::Spacing();
 
@@ -469,12 +481,12 @@ void PanelInspector::ShowMeshResourceInspector() const
 	ImGui::TextColored(BLUE, "%u", resourceMesh->GetIBO());
 	float nIndices = resourceMesh->GetIndicesCount();
 	ImGui::Text(""); ImGui::SameLine(); ImGui::Text("Indices:"); ImGui::SameLine();
-	ImGui::TextColored(BLUE, "%u", nIndices);
+	ImGui::TextColored(BLUE, "%f", nIndices);
 
 	ImGui::Spacing();
 
 	ImGui::Text("Triangles:"); ImGui::SameLine();
-	ImGui::TextColored(BLUE, "%u", nIndices / 3);
+	ImGui::TextColored(BLUE, "%f", nIndices / 3);
 }
 
 void PanelInspector::ShowTextureResourceInspector() const
@@ -521,6 +533,15 @@ void PanelInspector::ShowMeshImportSettingsInspector()
 
 	ImGui::Text("Scale"); ImGui::PushItemWidth(50.0f);
 	ImGui::DragFloat("##Scale", &m_is.scale, 0.01f, 0.0f, FLT_MAX, "%.2f", 1.0f);
+
+	// IBO ATR
+	ImGui::Text("IBO Attributes");
+	ImGui::CheckboxFlags("Positions", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_POSITION);
+	ImGui::CheckboxFlags("Normals", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_NORMAL);
+	ImGui::CheckboxFlags("Colors", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_COLOR);
+	ImGui::CheckboxFlags("Texture coordinates", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_TEXCOORD);
+	ImGui::CheckboxFlags("Tangents", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_TANGENT);
+	ImGui::CheckboxFlags("Bitangents", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_BITANGENT);
 
 	const char* postProcessConfiguration[] = { "Target Realtime Fast", "Target Realtime Quality", "Target Realtime Max Quality", "Custom" };
 	
@@ -765,7 +786,6 @@ void PanelInspector::ShowAnimationInspector() const
 
 	// Name
 	ImGui::Text("Name:"); ImGui::SameLine(); ImGui::Text("%s", animation->animationData.name.data());
-
 }
 
 void PanelInspector::ShowMaterialInspector() const
@@ -973,6 +993,82 @@ void PanelInspector::ShowMaterialInspector() const
 		}
 		ImGui::PopItemWidth();
 	}
+}
+
+void PanelInspector::ShowAvatarInspector() const
+{
+	ImGui::Text("Avatar");
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	ResourceAvatar* avatar = (ResourceAvatar*)App->scene->selectedObject.Get();
+
+	// Name
+	ImGui::Text("Name:"); ImGui::SameLine();
+	static char name[INPUT_BUF_SIZE];
+	strcpy_s(name, INPUT_BUF_SIZE, avatar->GetName());
+	ImGui::PushItemWidth(150.0f);
+	ImGuiInputTextFlags inputFlag = ImGuiInputTextFlags_EnterReturnsTrue;
+	if (ImGui::InputText("##name", name, INPUT_BUF_SIZE, inputFlag))
+	{
+		// Search for the meta associated to the file
+		char metaFile[DEFAULT_BUF_SIZE];
+		strcpy_s(metaFile, strlen(avatar->GetFile()) + 1, avatar->GetFile()); // file
+		strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
+
+		avatar->SetName(name);
+		std::string avatarName = name;
+		ResourceAvatar::SetNameToMeta(metaFile, avatarName);
+	}
+
+	ImGui::Spacing();
+
+	// Data
+	ImGui::Text("File:"); ImGui::SameLine();
+	ImGui::TextColored(BLUE, "%s", avatar->GetFile());
+	ImGui::Text("UUID:"); ImGui::SameLine();
+	ImGui::TextColored(BLUE, "%u", avatar->GetUuid());
+	ImGui::Text("References:"); ImGui::SameLine();
+	ImGui::TextColored(BLUE, "%u", avatar->GetReferencesCount());
+
+	ImGui::Spacing();
+
+	uint hipsUuid = avatar->GetHipsUuid();
+	const GameObject* hipsGameObject = App->GOs->GetGameObjectByUID(hipsUuid);
+	const ComponentBone* hipsComponent = hipsGameObject != nullptr ? hipsGameObject->cmp_bone : nullptr;
+	const ResourceBone* hipsResource = hipsComponent != nullptr ? ((ResourceBone*)App->res->GetResource(hipsComponent->res)) : nullptr;
+
+	ImGui::PushID("hips");
+	ImGui::Button(hipsResource != nullptr ? hipsResource->boneData.name.data() : "Empty Root", ImVec2(150.0f, 0.0f));
+	ImGui::PopID();
+
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("%u", hipsUuid);
+		ImGui::EndTooltip();
+	}
+
+	if (ImGui::BeginDragDropTarget())
+	{
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY"))
+		{
+			const GameObject* hipsGameObject = *(GameObject**)payload->Data;
+			const ComponentBone* hipsComponent = hipsGameObject != nullptr ? hipsGameObject->cmp_bone : nullptr;
+			const ResourceBone* hipsResource = hipsComponent != nullptr ? ((ResourceBone*)App->res->GetResource(hipsComponent->res)) : nullptr;
+			
+			if (hipsResource != nullptr)
+				avatar->SetHipsUuid(hipsGameObject->GetUUID());
+			else
+				CONSOLE_LOG(LogTypes::Warning, "This root is not valid");
+		}
+		ImGui::EndDragDropTarget();
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::SmallButton("REMOVE"))
+		avatar->SetHipsUuid(0);
 }
 
 #endif // GAME

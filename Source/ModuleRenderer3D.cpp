@@ -12,6 +12,8 @@
 #include "ModuleGOs.h"
 #include "ModuleParticles.h"
 #include "ModuleUI.h"
+#include "ModuleFBOManager.h"
+#include "Lights.h"
 #include "DebugDrawer.h"
 #include "ShaderImporter.h"
 #include "MaterialImporter.h"
@@ -23,10 +25,6 @@
 #include "ComponentTransform.h"
 #include "ComponentMaterial.h"
 #include "ComponentCamera.h"
-#include "ComponentRigidActor.h"
-#include "ComponentRigidDynamic.h"
-#include "ComponentCollider.h"
-#include "ComponentEmitter.h"
 #include "ComponentProjector.h"
 
 #include "ResourceMesh.h"
@@ -187,6 +185,7 @@ update_status ModuleRenderer3D::PostUpdate()
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::Orchid);
 #endif
 
+	App->fbo->BindGBuffer();
 
 	if (currentCamera != nullptr)
 	{
@@ -195,21 +194,22 @@ update_status ModuleRenderer3D::PostUpdate()
 			if (cameraComponents[i]->IsActive())
 				cameraComponents[i]->UpdateTransform();
 		}
-
+		/*
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
 			if (projectorComponents[i]->IsActive())
 				projectorComponents[i]->UpdateTransform();
 		}
-
+		*/
 		if (currentCamera->HasFrustumCulling())
 			FrustumCulling();
-
+		/*
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
 			if (projectorComponents[i]->GetParent()->IsActive() && projectorComponents[i]->IsActive())
 				DrawProjectors(projectorComponents[i]);
 		}
+		*/
 
 		for (uint i = 0; i < meshComponents.size(); ++i)
 		{
@@ -218,6 +218,14 @@ update_status ModuleRenderer3D::PostUpdate()
 				DrawMesh(meshComponents[i]);
 		}
 	}
+
+	App->fbo->DrawGBufferToScreen();
+
+	App->fbo->MergeDepthBuffer(App->window->GetWindowWidth(), App->window->GetWindowHeight());
+
+	App->scene->Draw();
+
+	App->lights->DebugDrawLights();
 
 	App->particle->Draw();
 
@@ -265,9 +273,10 @@ update_status ModuleRenderer3D::PostUpdate()
 	}
 
 	App->ui->DrawWorldCanvas();
+
 	if (App->ui->GetUIMode())
 		App->ui->DrawCanvas();
-
+		
 	// 3. Editor
 	App->gui->Draw();
 #else
@@ -310,22 +319,32 @@ void ModuleRenderer3D::OnSystemEvent(System_Event event)
 		break;
 	case System_Event_Type::Stop:
 #ifndef GAMEMODE
-		CalculateProjectionMatrix();
 		currentCamera = App->camera->camera;
+		CalculateProjectionMatrix();
 #endif // !GAMEMODE
 		break;
 		case System_Event_Type::LoadFinished:
 		{
+			// Update all GameObjects transforms
+			if (App->scene->root)
+				for each (GameObject* child in App->scene->root->children)
+				{
+					if (child->transform != nullptr)
+						child->transform->UpdateGlobal();
+				}
+
 			if (App->GetEngineState() == ENGINE_PLAY)
 				SetCurrentCamera();
+
+			for each (ComponentCamera* camera in cameraComponents)
+			{
+				camera->UpdateTransform();
+			}
 
 #ifndef GAMEMODE
 			CalculateProjectionMatrix();
 #endif // !GAMEMODE
 
-			// Update all GameObjects transforms
-			if (App->scene->root && App->scene->root->transform)
-				App->scene->root->transform->UpdateGlobal(); 
 
 			break;
 		}
@@ -335,7 +354,6 @@ void ModuleRenderer3D::OnSystemEvent(System_Event event)
 void ModuleRenderer3D::SaveStatus(JSON_Object* jObject) const
 {
 	json_object_set_boolean(jObject, "vSync", vsync);
-
 	json_object_set_boolean(jObject, "debugDraw", debugDraw);
 	json_object_set_boolean(jObject, "drawBoundingBoxes", drawBoundingBoxes);
 	json_object_set_boolean(jObject, "drawCamerasFrustum", drawFrustums);
@@ -344,7 +362,6 @@ void ModuleRenderer3D::SaveStatus(JSON_Object* jObject) const
 void ModuleRenderer3D::LoadStatus(const JSON_Object* jObject)
 {
 	SetVSync(json_object_get_boolean(jObject, "vSync"));
-
 	debugDraw = json_object_get_boolean(jObject, "debugDraw");
 	drawBoundingBoxes = json_object_get_boolean(jObject, "drawBoundingBoxes");
 	drawFrustums = json_object_get_boolean(jObject, "drawCamerasFrustum");
@@ -641,6 +658,10 @@ void ModuleRenderer3D::FrustumCulling() const
 		seen[i]->seenLastFrame = true;
 }
 
+#include "ComponentBone.h"
+#include "ResourceBone.h"
+#include "ResourceAvatar.h"
+
 void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 {
 	if (toDraw->res == 0)
@@ -653,7 +674,6 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	uint shaderUuid = resourceMaterial->GetShaderUuid();
 	const ResourceShaderProgram* resourceShaderProgram = (const ResourceShaderProgram*)App->res->GetResource(shaderUuid);
 	GLuint shader = resourceShaderProgram->shaderProgram;
-
 	glUseProgram(shader);
 
 	// 1. Generic uniforms
@@ -676,6 +696,40 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	location = glGetUniformLocation(shader, "normal_matrix");
 	glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
 
+	// Animations
+	ResourceAvatar* avatarResource = (ResourceAvatar*)App->res->GetResource(toDraw->avatarResource);
+	if (avatarResource != nullptr)
+	{
+		char boneName[DEFAULT_BUF_SIZE];
+		std::vector<uint> bonesUuids = avatarResource->GetBonesUuids();
+		for (uint i = 0; i < bonesUuids.size(); ++i)
+		{
+			/// Bone game object
+			GameObject* boneGameObject = App->GOs->GetGameObjectByUID(bonesUuids[i]);
+			if (boneGameObject == nullptr)
+				continue;
+
+			/// Bone component
+			ComponentBone* boneComponent = boneGameObject->cmp_bone;
+			if (boneComponent == nullptr)
+				continue;
+
+			/// Bone resource
+			ResourceBone* boneResource = (ResourceBone*)App->res->GetResource(boneComponent->res);
+			if (boneResource == nullptr)
+				continue;
+
+			math::float4x4 boneGlobalMatrix = boneComponent->GetParent()->transform->GetGlobalMatrix();
+			math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetMatrix();
+
+			math::float4x4 boneTransform = boneGlobalMatrix * meshMatrix.Inverted() * boneResource->boneData.offsetMatrix;
+
+			sprintf_s(boneName, "bones[%u]", i);
+			location = glGetUniformLocation(shader, boneName);
+			glUniformMatrix4fv(location, 1, GL_TRUE, boneTransform.ptr());
+		}
+	}
+
 	// 3. Unknown mesh uniforms
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
 	LoadSpecificUniforms(textureUnit, uniforms);
@@ -683,18 +737,11 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	// Mesh
 	const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(toDraw->res);
 
-	glBindVertexArray((mesh->deformableMeshData.indicesSize == 0) ? mesh->GetVAO() : mesh->DVAO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, (mesh->deformableMeshData.indicesSize == 0) ? mesh->GetIBO() : mesh->DIBO);
+	glBindVertexArray(mesh->GetVAO());
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIBO());
 
-	uint indicesSize = 0;
-	if (mesh->UseAdjacency())
-		indicesSize = mesh->GetIndicesCount() * 2;
-	else if (mesh->deformableMeshData.indicesSize > 0)
-		indicesSize = mesh->deformableMeshData.indicesSize;
-	else
-		indicesSize = mesh->GetIndicesCount();
+	glDrawElements(mesh->UseAdjacency() ? GL_TRIANGLES_ADJACENCY : GL_TRIANGLES, mesh->UseAdjacency() ? mesh->GetIndicesCount() * 2 : mesh->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
 
-	glDrawElements(mesh->UseAdjacency() ? GL_TRIANGLES_ADJACENCY : GL_TRIANGLES, indicesSize, GL_UNSIGNED_INT, NULL);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 

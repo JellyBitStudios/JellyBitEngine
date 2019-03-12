@@ -122,7 +122,6 @@ void ComponentImage::OnInternalLoad(char *& cursor)
 
 		App->res->SetAsUsed(res_image);
 	}
-	LinkToUIModule();
 }
 
 void ComponentImage::OnUniqueEditor()

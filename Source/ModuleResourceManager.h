@@ -29,6 +29,10 @@
 #define ASCIIPSH 1213419566
 #define ASCIImat 1952541998
 #define ASCIIMAT 1413565742
+#define ASCIIava 1635148078
+#define ASCIIAVA 1096171822
+#define ASCIIani 1768841518
+#define ASCIIANI 1229865262
 #define ASCIIcs 7562030
 #define ASCIICS 5456686
 #define ASCIIpfb 1650880558
@@ -58,7 +62,7 @@ public:
 
 	// ----------------------------------------------------------------------------------------------------
 
-	Resource* ImportFile(const char* file);
+	Resource* ImportFile(const char* file, bool buildEvent = false);
 	Resource* ImportLibraryFile(const char* file);
 	Resource* ExportFile(ResourceTypes type, ResourceData& data, void* specificData, std::string& outputFile, bool overwrite = false, bool resources = true);
 	Resource* CreateResource(ResourceTypes type, ResourceData& data, void* specificData, uint forcedUuid = 0);
@@ -84,6 +88,8 @@ public:
 	ResourceTypes GetResourceTypeByExtension(const char* extension) const;
 	ResourceTypes GetLibraryResourceTypeByExtension(const char* extension) const;
 	std::vector<Resource*> GetResourcesByType(ResourceTypes type);
+
+	uint GetAmount(ResourceTypes type) const;
 
 private:
 

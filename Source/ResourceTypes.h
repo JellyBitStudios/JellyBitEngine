@@ -6,12 +6,16 @@ enum ResourceTypes
 	NoResourceType,
 
 	MeshResource,
+	BoneResource,
+	AvatarResource,
+	AnimationResource,
+	AnimatorResource,
+
 	TextureResource,
 	ShaderObjectResource,
 	ShaderProgramResource,
 	MaterialResource,
-	AnimationResource,
-	BoneResource,
+
 	ScriptResource,
 	PrefabResource,
 	SceneResource,

@@ -2,10 +2,11 @@
 
 #include "Application.h"
 #include "ModuleUI.h"
+#include "ModuleRenderer3D.h"
 
 #include "GameObject.h"
 #include "ComponentTransform.h"
-
+#include "ComponentCamera.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -16,16 +17,18 @@
 ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTypes componentType, RectFrom rF) : Component(parent, ComponentTypes::RectTransformComponent)
 {
 	rFrom = rF;
-
-	if (rFrom == RectFrom::WORLD)
+	if (parent->GetParent() != nullptr)
 	{
-		App->ui->componentsWorldUI.push_back(this);
-		App->ui->GOsWorldCanvas.push_back(parent);
-	}
-	else
-		App->ui->componentsUI.push_back(this);
+		if (rFrom == RectFrom::WORLD)
+		{
+			App->ui->componentsWorldUI.push_back(this);
+			App->ui->GOsWorldCanvas.push_back(parent);
+		}
+		else
+			App->ui->componentsUI.push_back(this);
 
-	CheckParentRect();
+		CheckParentRect();
+	}
 }
 
 ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & componentRectTransform, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::RectTransformComponent)
@@ -47,6 +50,7 @@ ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & co
 	memcpy(anchor, componentRectTransform.anchor, sizeof(uint) * 4);
 	memcpy(anchor_flags, componentRectTransform.anchor_flags, sizeof(bool) * 4);
 	use_margin = componentRectTransform.use_margin;
+	billboard = componentRectTransform.billboard;
 
 	CheckParentRect();
 }
@@ -69,8 +73,7 @@ void ComponentRectTransform::Update()
 	case ComponentRectTransform::RECT:
 		break;
 	case ComponentRectTransform::WORLD:
-		CalculateRectFromWorld();
-		ChangeChildsRect(true);
+		CalculateRectFromWorld(false);
 		break;
 	case ComponentRectTransform::RECT_WORLD:
 		break;
@@ -86,13 +89,20 @@ void ComponentRectTransform::OnEditor()
 
 void ComponentRectTransform::SetRect(uint x, uint y, uint x_dist, uint y_dist)
 {
-	rectTransform[Rect::X] = x;
-	rectTransform[Rect::Y] = y;
-	rectTransform[Rect::XDIST] = x_dist;
-	rectTransform[Rect::YDIST] = y_dist;
-
-	RecaculateAnchors();
-	RecaculatePercentage();
+	if (rFrom != ComponentRectTransform::WORLD)
+	{
+		bool size_changed = false;
+		rectTransform[Rect::X] = x;
+		rectTransform[Rect::Y] = y;
+		if (rectTransform[Rect::XDIST] != x_dist || rectTransform[Rect::YDIST] != y_dist)
+			size_changed = true;
+		rectTransform[Rect::XDIST] = x_dist;
+		rectTransform[Rect::YDIST] = y_dist;
+    
+		RecaculateAnchors();
+		RecaculatePercentage();
+		ParentChanged(size_changed);
+	}      
 }
 
 void ComponentRectTransform::SetRectPos(uint x, uint y)
@@ -149,8 +159,8 @@ void ComponentRectTransform::CheckParentRect()
 		if (parent != nullptr && (rect = parent->GetComponent(ComponentTypes::TransformComponent)) != nullptr)
 		{
 			transformParent = (ComponentTransform*)rect;
-
-			CalculateRectFromWorld();
+			transformParent->UpdateGlobal();
+			CalculateRectFromWorld(true);
 		}
 		break;
 	case ComponentRectTransform::RECT_WORLD:
@@ -160,15 +170,15 @@ void ComponentRectTransform::CheckParentRect()
 			parentCorners = r->GetCorners();
 			rectParent = r->GetRect();
 			z = r->GetZ() + ZSEPARATOR;
-			if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
+			if (rectTransform[Rect::XDIST] > rectParent[Rect::XDIST])
 				rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
-			if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
+			if (rectTransform[Rect::YDIST] > rectParent[Rect::YDIST])
 				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
-
-			ParentChanged();
 
 			RecaculateAnchors();
 			RecaculatePercentage();
+
+			ParentChanged();
 		}
 		break;
 	}
@@ -247,12 +257,17 @@ void ComponentRectTransform::UseMarginChanged(bool useMargin)
 	}
 }
 
-void ComponentRectTransform::CalculateRectFromWorld()
+void ComponentRectTransform::CalculateRectFromWorld(bool individualcheck)
 {
-	math::float4x4 globalmatrix;
+	if (billboard)
+	{
+		math::float3 zAxis = App->renderer3D->GetCurrentCamera()->frustum.front;
+		math::float3 yAxis = App->renderer3D->GetCurrentCamera()->frustum.up;
+		math::float3 xAxis = yAxis.Cross(zAxis).Normalized();
+		transformParent->SetRotation(math::float3x3(xAxis, yAxis, zAxis).ToQuat());
+	}
 
-	globalmatrix = transformParent->GetGlobalMatrix();
-
+	math::float4x4 globalmatrix = transformParent->GetGlobalMatrix();
 	corners[Rect::RTOPLEFT] = math::float4(globalmatrix * math::float4(-0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
 	corners[Rect::RTOPRIGHT] = math::float4(globalmatrix * math::float4(0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
 	corners[Rect::RBOTTOMLEFT] = math::float4(globalmatrix * math::float4(-0.5f, -0.5f, 0.0f, 1.0f)).Float3Part();
@@ -263,7 +278,8 @@ void ComponentRectTransform::CalculateRectFromWorld()
 	rectTransform[Rect::XDIST] = abs(math::Distance(corners[Rect::RTOPRIGHT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
 	rectTransform[Rect::YDIST] = abs(math::Distance(corners[Rect::RBOTTOMLEFT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
 
-	ChangeChildsRect(true);
+	if(!individualcheck)
+		ChangeChildsRect(true);
 }
 
 void ComponentRectTransform::CalculateCornersFromRect()
@@ -276,10 +292,12 @@ void ComponentRectTransform::CalculateCornersFromRect()
 	corners[Rect::RBOTTOMLEFT] = corners[Rect::RTOPLEFT] + (yDirection * ((float)rectTransform[Rect::YDIST] / WORLDTORECT));
 	corners[Rect::RBOTTOMRIGHT] = corners[Rect::RBOTTOMLEFT] - (xDirection * ((float)rectTransform[Rect::XDIST] / WORLDTORECT));
 
-	corners[Rect::RTOPRIGHT].z -= z;
-	corners[Rect::RTOPLEFT].z -= z;
-	corners[Rect::RBOTTOMLEFT].z -= z;
-	corners[Rect::RBOTTOMRIGHT].z -= z;
+	math::float3 zDirection = xDirection.Cross(yDirection);
+
+	corners[Rect::RTOPRIGHT] -= zDirection * z;
+	corners[Rect::RTOPLEFT] -= zDirection * z;
+	corners[Rect::RBOTTOMLEFT] -= zDirection * z;
+	corners[Rect::RBOTTOMRIGHT] -= zDirection * z;
 }
 
 void ComponentRectTransform::RecaculateAnchors()
@@ -390,7 +408,7 @@ void ComponentRectTransform::RecaculatePercentage()
 
 uint ComponentRectTransform::GetInternalSerializationBytes()
 {
-	return sizeof(uint) * 8 + sizeof(bool) * 5 + sizeof(RectFrom);
+	return sizeof(uint) * 8 + sizeof(bool) * 6 + sizeof(RectFrom);
 }
 
 void ComponentRectTransform::OnInternalSave(char *& cursor)
@@ -409,6 +427,10 @@ void ComponentRectTransform::OnInternalSave(char *& cursor)
 
 	bytes = sizeof(bool);
 	memcpy(cursor, &use_margin, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(bool);
+	memcpy(cursor, &billboard, bytes);
 	cursor += bytes;
 
 	bytes = sizeof(RectFrom);
@@ -432,6 +454,10 @@ void ComponentRectTransform::OnInternalLoad(char *& cursor)
 
 	bytes = sizeof(bool);
 	memcpy(&use_margin, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(bool);
+	memcpy(&billboard, cursor, bytes);
 	cursor += bytes;
 
 	bytes = sizeof(RectFrom);
@@ -493,6 +519,7 @@ void ComponentRectTransform::OnUniqueEditor()
 		}
 		break;
 	case ComponentRectTransform::WORLD:
+	{
 		ImGui::Text("Modify Transforfm For change RectTransform");
 		ImGui::Text("World|Rect difference: %i", i = WORLDTORECT);
 
@@ -501,8 +528,11 @@ void ComponentRectTransform::OnUniqueEditor()
 		ImGui::Text("X: %u | Y: %u", rectTransform[Rect::X], rectTransform[Rect::Y]);
 		ImGui::Text("Dist X & Y");
 		ImGui::Text("Dist X: %u | Dist Y: %u", rectTransform[Rect::XDIST], rectTransform[Rect::YDIST]);
-
+		bool tmp_billboard = billboard;
+		if (ImGui::Checkbox("Billboard", &tmp_billboard))
+			billboard = tmp_billboard;
 		return;
+	}
 	case ComponentRectTransform::RECT_WORLD:
 		r_width = rectParent[Rect::XDIST];
 		r_height = rectParent[Rect::YDIST];
@@ -657,7 +687,6 @@ void ComponentRectTransform::OnUniqueEditor()
 				RecaculateAnchors(RectPrivot::BOTTOMRIGHT);
 		}
 	}
-
 #endif
 }
 
@@ -675,4 +704,6 @@ void ComponentRectTransform::LinkToUIModule()
 	}
 	else
 		App->ui->componentsUI.push_back(this);
+
+	CheckParentRect();
 }

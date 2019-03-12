@@ -3,9 +3,10 @@
 
 #include "Component.h"
 
+enum LightTypes { DirectionalLight = 1, PointLight, SpotLight };
+
 class ComponentLight : public Component
 {
-	enum class LightTypes { DirectionalLight, PointLight, SpotLight };
 public:
 
 	ComponentLight(GameObject* parent);
@@ -18,9 +19,14 @@ public:
 	virtual void OnInternalSave(char*& cursor);
 	virtual void OnInternalLoad(char*& cursor);
 
-private:
+public:
+
 	LightTypes lightType = LightTypes::DirectionalLight;
-	int intensity = 1;
+	float color[3];
+	// constant = 1.0f; constant is always 1, so we dont need to store it
+	float linear = 0.09f;
+	float quadratic = 0.032f;
+
 };
 
 #endif

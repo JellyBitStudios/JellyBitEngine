@@ -9,6 +9,8 @@
 #define PLANE_UUID 1428675893
 #define CUBE_UUID 1451315056
 #define DEFAULT_SHADER_PROGRAM_UUID 1608702687
+#define DEFERRED_SHADER_PROGRAM_UUID 1708702688
+#define BILLBOARD_SHADER_PROGRAM_UUID 1708712988
 #define DEFAULT_SHADER_PROGRAM_PARTICLE_UUID 2628722347
 #define DEFAULT_SHADER_PROGRAM_UI_UUID 1246832795 
 #define CUBEMAP_SHADER_PROGRAM_UUID 1676961097
@@ -31,10 +33,13 @@ public:
 	// Texture resources
 	void CreateCheckers();
 	void CreateDefaultTexture();
+	void CreateLightIcon();
 
 	// Shader resources
-	void CreateDefaultShaderProgram(const char* vShader, const char* fShader, ShaderProgramTypes type = ShaderProgramTypes::Standard);
-	//void CreateCubemapShaderProgram();
+	void CreateDefaultShaderProgram(const char* vShader, const char* fShader, ShaderProgramTypes type);
+	void CreateDeferredShaderProgram();
+	void CreateBillboardShaderProgram();
+
 	void CreateUIShaderProgram();
 
 	// Material resources
@@ -49,12 +54,13 @@ public:
 	// Texture resources
 	uint checkers;
 	uint defaultTexture;
-	// TODO: cubemap textures
+	uint lightIcon;
 
 	// Shader resources
 	uint defaultShaderProgram;
+	uint deferredShaderProgram; // Used at FBO
+	uint billboardShaderProgram;
 	uint particleShaderProgram;
-	uint cubemapShaderProgram;
 	uint UIVertexShaderObject;
 	uint UIFragmentShaderObject;
 	uint UIShaderProgram;

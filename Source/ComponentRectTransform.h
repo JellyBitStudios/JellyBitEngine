@@ -103,9 +103,10 @@ private:
 	uint anchor[4] = {0,0,0,0};
 	bool anchor_flags[4] = { false, false, false, false };
 	float anchor_percenatges[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	bool billboard = false;
 
 private:
-	void CalculateRectFromWorld();
+	void CalculateRectFromWorld(bool individualcheck);
 	void CalculateCornersFromRect();
 
 	void RecaculateAnchors();
@@ -114,6 +115,7 @@ private:
 
 	void ParentChanged(bool size_changed = false);
 	void UseMarginChanged(bool useMargin);
+
 
 	virtual uint GetInternalSerializationBytes();
 	virtual void OnInternalSave(char*& cursor);

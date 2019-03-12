@@ -57,9 +57,26 @@ void ModuleEvents::OnSystemEvent(System_Event event)
 		delete event.resEvent.resource;
 		break;
 	}
+
+	case System_Event_Type::LoadFinished:
+	{
+#ifdef GAMEMODE
+		if (App->GetEngineState() != engine_states::ENGINE_PLAY)
+		{
+			event.type = System_Event_Type::Play;
+			App->PushSystemEvent(event);
+		}
+#endif
+		break;
+	}
 	case System_Event_Type::Play:
 		assert(App->GOs->sceneStateBuffer == 0);
 		App->GOs->SerializeFromNode(App->scene->root, App->GOs->sceneStateBuffer, App->GOs->sceneStateSize);
+
+#ifdef GAMEMODE
+		App->SetEngineState(engine_states::ENGINE_PLAY);
+#endif
+
 		break;
 	case System_Event_Type::SaveScene:
 	{

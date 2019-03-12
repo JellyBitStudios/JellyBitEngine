@@ -9,6 +9,7 @@
 #include "ComponentButton.h"
 #include "ComponentAudioSource.h"
 #include "ComponentAudioListener.h"
+#include "ComponentRigidDynamic.h"
 
 #include "GameObject.h"
 
@@ -1605,6 +1606,9 @@ void SetGlobalScale(MonoObject* monoObject, MonoArray* globalScale)
 
 MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 {
+	if (!monoObject || !type)
+		return nullptr;
+
 	MonoObject* monoComp = nullptr;
 
 	std::string className = mono_class_get_name(mono_object_get_class(type));
@@ -2026,6 +2030,26 @@ void NavAgentResetMoveTarget(MonoObject* compAgent)
 	if (agent)
 	{
 		agent->ResetMoveTarget();
+	}
+}
+
+uint NavAgentGetParams(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->params;
+	}
+	return 0;
+}
+
+void NavAgentSetParams(MonoObject* compAgent, uint params)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->params = params;
+		agent->UpdateParams();
 	}
 }
 
@@ -2567,6 +2591,46 @@ void AudioSourceStopAudio(MonoObject* monoComp)
 	source->StopAudio();
 }
 
+void RigidbodyAddForce(MonoObject* monoComp, MonoArray* force, int mode)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoComp);
+	if (!rigidbody)
+		return;
+
+	math::float3 forceCpp(mono_array_get(force, float, 0), mono_array_get(force, float, 1), mono_array_get(force, float, 2));
+
+	rigidbody->AddForce(forceCpp, (physx::PxForceMode::Enum) mode);
+}
+
+void RigidbodyClearForce(MonoObject* monoComp)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoComp);
+	if (!rigidbody)
+		return;
+
+	rigidbody->ClearForce();
+}
+
+void RigidbodyAddTorque(MonoObject* monoComp, MonoArray* torque, int mode)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoComp);
+	if (!rigidbody)
+		return;
+
+	math::float3 torqueCpp(mono_array_get(torque, float, 0), mono_array_get(torque, float, 1), mono_array_get(torque, float, 2));
+
+	rigidbody->AddTorque(torqueCpp, (physx::PxForceMode::Enum) mode);
+}
+
+void RigidbodyClearTorque(MonoObject* monoComp)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoComp);
+	if (!rigidbody)
+		return;
+
+	rigidbody->ClearTorque();
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -2677,6 +2741,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::isWalking", (const void*)&NavAgentIsWalking);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::_RequestMoveVelocity", (const void*)&NavAgentRequestMoveVelocity);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::ResetMoveTarget", (const void*)&NavAgentResetMoveTarget);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetParams", (const void*)&NavAgentGetParams);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetParams", (const void*)&NavAgentSetParams);
 	mono_add_internal_call("JellyBitEngine.AudioSource::GetAudio", (const void*)&AudioSourceGetAudio);
 	mono_add_internal_call("JellyBitEngine.AudioSource::SetAudio", (const void*)&AudioSourceSetAudio);
 	mono_add_internal_call("JellyBitEngine.AudioSource::GetMuted", (const void*)&AudioSourceGetMuted);
@@ -2709,6 +2775,10 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.AudioSource::PauseAudio", (const void*)&AudioSourcePauseAudio);
 	mono_add_internal_call("JellyBitEngine.AudioSource::ResumeAudio", (const void*)&AudioSourceResumeAudio);
 	mono_add_internal_call("JellyBitEngine.AudioSource::StopAudio", (const void*)&AudioSourceStopAudio);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddForce", (const void*)&RigidbodyAddForce);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddTorque", (const void*)&RigidbodyAddTorque);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearForce", (const void*)&RigidbodyClearForce);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearTorque", (const void*)&RigidbodyClearTorque);
 
 	ClearMap();
 
