@@ -140,7 +140,7 @@ void ModuleScene::OnSystemEvent(System_Event event)
 
 			// Initialize detour with the previous loaded navmesh
 			App->navigation->InitDetour();
-
+			
 			System_Event newEvent;
 			newEvent.type = System_Event_Type::RecreateQuadtree;
 			App->PushSystemEvent(newEvent);

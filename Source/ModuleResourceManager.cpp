@@ -57,7 +57,7 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 	case System_Event_Type::ImportFile:
 	{
 		// 1. Import file
-		ImportFile(event.fileEvent.file);
+		ImportFile(event.fileEvent.file, event.fileEvent.build);
 	}
 	break;
 
@@ -121,7 +121,8 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 
 			// 3. Import file
 			System_Event newEvent;
-			newEvent.type = System_Event_Type::ImportFile;
+			newEvent.fileEvent.type = System_Event_Type::ImportFile;
+			newEvent.fileEvent.build = true;
 			strcpy_s(newEvent.fileEvent.file, DEFAULT_BUF_SIZE, event.fileEvent.file);
 			App->PushSystemEvent(newEvent);
 		}
@@ -170,9 +171,15 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 		}
 		}
 
-		System_Event newEvent;
-		newEvent.type = System_Event_Type::Build;
-		App->PushSystemEvent(newEvent);
+		uint AmountMeshes = GetAmount(ResourceTypes::MeshResource);
+		uint AmountTextures = GetAmount(ResourceTypes::TextureResource);
+
+		if (AmountMeshes == 0 && AmountTextures == 0)
+		{
+			System_Event newEvent;
+			newEvent.type = System_Event_Type::Build;
+			App->PushSystemEvent(newEvent);
+		}
 
 	}
 	break;
@@ -250,7 +257,8 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 
 		// 4. Import file	
 		System_Event newEvent;
-		newEvent.type = System_Event_Type::ImportFile;
+		newEvent.fileEvent.type = System_Event_Type::ImportFile;
+		newEvent.fileEvent.build = false;
 		strcpy_s(newEvent.fileEvent.file, DEFAULT_BUF_SIZE, event.fileEvent.file);
 		App->PushSystemEvent(newEvent);
 	}
@@ -370,7 +378,7 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 // ----------------------------------------------------------------------------------------------------
 
 // Note: in case of a mesh resource, it returns the last mesh resource created
-Resource* ModuleResourceManager::ImportFile(const char* file)
+Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 {
 	assert(file != nullptr);
 
@@ -867,6 +875,13 @@ Resource* ModuleResourceManager::ImportFile(const char* file)
 		break;
 	}
 
+	if (buildEvent)
+	{
+		System_Event newEvent;
+		newEvent.type = System_Event_Type::Build;
+		App->PushSystemEvent(newEvent);
+	}
+		
 	return resource;
 }
 
@@ -1610,5 +1625,17 @@ std::vector<Resource*> ModuleResourceManager::GetResourcesByType(ResourceTypes t
 			ret.push_back(it->second);
 		}
 	}
+	return ret;
+}
+
+uint ModuleResourceManager::GetAmount(ResourceTypes type) const
+{
+	uint ret = 0;
+	for (auto resource : resources)
+	{
+		if (resource.second->GetType() == type)
+			ret++;
+	}
+
 	return ret;
 }
