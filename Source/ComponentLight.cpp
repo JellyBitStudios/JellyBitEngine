@@ -16,7 +16,9 @@ ComponentLight::ComponentLight(GameObject* parent) : Component(parent, Component
 ComponentLight::ComponentLight(const ComponentLight& componentLight, GameObject* parent) : Component(parent, ComponentTypes::LightComponent)
 {
 	lightType = componentLight.lightType;
-	intensity = componentLight.intensity;
+	quadratic = componentLight.quadratic;
+	linear = componentLight.linear;
+	memcpy(color, componentLight.color, sizeof(float) * 3);
 	App->lights->AddLight(this);
 }
 
@@ -36,17 +38,27 @@ void ComponentLight::OnUniqueEditor()
 	ImGui::Combo("##Light Type", (int*)&lightType, lights, IM_ARRAYSIZE(lights));
 	ImGui::PopItemWidth();
 	ImGui::AlignTextToFramePadding();
-	ImGui::Text("Intensity");
-	ImGui::SameLine();
-	ImGui::PushItemWidth(30.0f);
-	ImGui::DragScalar("##Light Intesity", ImGuiDataType_::ImGuiDataType_U32, &intensity, 1.0f);
-	ImGui::PopItemWidth();
-	ImGui::AlignTextToFramePadding();
 	ImGui::Text("Color");
 	ImGui::SameLine();
 	int misc_flags = ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_NoDragDrop | ImGuiColorEditFlags_AlphaPreview |
-					 ImGuiColorEditFlags_NoOptions | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel;
+		ImGuiColorEditFlags_NoOptions | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel;
 	ImGui::ColorEdit3("Color", (float*)&color, misc_flags);
+	ImGui::AlignTextToFramePadding();
+	if (lightType == LightTypes::PointLight)
+	{
+		ImGui::Text("Constants");
+		ImGui::Text("Quadratic");
+		ImGui::SameLine();
+		ImGui::PushItemWidth(50.0f);
+		int min = 0, max = 1;
+		ImGui::DragFloat("##Light Quadratic", &linear, 0.01f, 0.0f, 1.0f);
+		ImGui::PopItemWidth();
+		ImGui::Text("Linear");
+		ImGui::SameLine();
+		ImGui::PushItemWidth(50.0f);
+		ImGui::DragFloat("##Light Linaer", &quadratic, 0.01f, 0.0f, 1.0f);
+		ImGui::PopItemWidth();
+	}
 #endif
 }
 
@@ -59,12 +71,28 @@ void ComponentLight::OnInternalSave(char*& cursor)
 {
 	size_t bytes = sizeof(int);
 	memcpy(cursor, &lightType, bytes);
-	memcpy(cursor, &intensity, bytes);
+	cursor += bytes;
+	bytes = sizeof(float) * 3;
+	memcpy(cursor, color, sizeof(float) * 3);
+	cursor += bytes;
+	bytes = sizeof(float);
+	memcpy(cursor, &quadratic, bytes);
+	cursor += bytes;
+	memcpy(cursor, &linear, bytes);
+	cursor += bytes;
 }
 
 void ComponentLight::OnInternalLoad(char*& cursor)
 {
 	size_t bytes = sizeof(int);
 	memcpy(&lightType, cursor, bytes);
-	memcpy(&intensity, cursor, bytes);
+	cursor += bytes;
+	bytes = sizeof(float) * 3;
+	memcpy(color, cursor, sizeof(float) * 3);
+	cursor += bytes;
+	bytes = sizeof(float);
+	memcpy(&quadratic, cursor, bytes);
+	cursor += bytes;
+	memcpy(&linear, cursor, bytes);
+	cursor += bytes;
 }

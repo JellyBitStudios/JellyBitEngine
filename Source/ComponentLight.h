@@ -19,9 +19,6 @@ public:
 	virtual void OnInternalSave(char*& cursor);
 	virtual void OnInternalLoad(char*& cursor);
 
-private:
-	int intensity = 1;
-
 public:
 
 	LightTypes lightType = LightTypes::DirectionalLight;
