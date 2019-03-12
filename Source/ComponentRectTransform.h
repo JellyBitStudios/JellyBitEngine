@@ -101,6 +101,7 @@ private:
 	uint anchor[4] = {0,0,0,0};
 	bool anchor_flags[4] = { false, false, false, false };
 	float anchor_percenatges[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	bool billboard = false;
 
 private:
 	void CalculateRectFromWorld(bool individualcheck);

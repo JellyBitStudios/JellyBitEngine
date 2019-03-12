@@ -14,6 +14,8 @@
 #define DIR_LIBRARY_BONES "Library/Bones"
 #define DIR_LIBRARY_TEXTURES "Library/Textures"
 #define DIR_LIBRARY_MATERIALS "Library/Materials"
+#define DIR_LIBRARY_ANIMATORS "Library/Animators"
+#define DIR_LIBRARY_AVATARS "Library/Avatars"
 #define DIR_LIBRARY_SHADERS "Library/Shaders"
 #define DIR_LIBRARY_SHADERS_OBJECTS "Library/Shaders/Objects"
 #define DIR_LIBRARY_SHADERS_PROGRAMS "Library/Shaders/Programs"
@@ -26,6 +28,8 @@
 #define DIR_ASSETS_MESHES "Assets/Meshes"
 #define DIR_ASSETS_TEXTURES "Assets/Textures"
 #define DIR_ASSETS_MATERIALS "Assets/Materials"
+#define DIR_ASSETS_AVATARS "Assets/Avatars"
+#define DIR_ASSETS_ANIMATORS "Assets/Animators"
 #define DIR_ASSETS_SHADERS "Assets/Shaders"
 #define DIR_ASSETS_SHADERS_OBJECTS "Assets/Shaders/Objects"
 #define DIR_ASSETS_SHADERS_PROGRAMS "Assets/Shaders/Programs"
@@ -47,7 +51,9 @@ enum FileTypes
 	TextureFile,
 
 	BoneFile,
+	AvatarFile,
 	AnimationFile,
+	AnimatorFile,
 
 	PrefabFile,
 

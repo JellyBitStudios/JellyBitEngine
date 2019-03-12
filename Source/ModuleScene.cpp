@@ -16,9 +16,6 @@
 #include "ComponentMesh.h"
 #include "ModuleNavigation.h"
 
-// TODO_G : delete this
-#include "ModuleAnimation.h"
-
 #include "imgui/imgui.h"
 
 #include <list>
@@ -49,7 +46,20 @@ bool ModuleScene::Start()
 	grid = new PrimitiveGrid();
 	grid->ShowAxis(true);
 	root = new GameObject("Root", nullptr, true);
+	GameObject* directionalLight = new GameObject("Directional Light", root);
+	directionalLight->AddComponent(ComponentTypes::LightComponent);
 
+	math::float3 axis;
+	float angle;
+	math::Quat rotation = rotation.identity;
+	rotation.ToAxisAngle(axis, angle);
+	axis *= angle;
+	axis *= RADTODEG;
+	axis[0] = -50;
+	axis[1] = 30;
+	axis *= DEGTORAD;
+	rotation.SetFromAxisAngle(axis.Normalized(), axis.Length());
+	directionalLight->transform->SetRotation(rotation);
 	return true;
 }
 
@@ -144,7 +154,7 @@ void ModuleScene::OnSystemEvent(System_Event event)
 
 			// Initialize detour with the previous loaded navmesh
 			App->navigation->InitDetour();
-
+			
 			System_Event newEvent;
 			newEvent.type = System_Event_Type::RecreateQuadtree;
 			App->PushSystemEvent(newEvent);

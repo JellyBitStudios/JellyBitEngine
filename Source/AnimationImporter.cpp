@@ -3,10 +3,10 @@
 #include "Application.h"
 #include "ModuleFileSystem.h"
 #include "Assimp/include/anim.h"
+#include "MathGeoLib/include/MathGeoLib.h"
 
 #include "ModuleResourceManager.h"
 #include "ResourceAnimation.h"
-#include "ModuleAnimation.h"
 
 AnimationImporter::AnimationImporter()
 {
@@ -240,6 +240,7 @@ void AnimationImporter::ImportBoneTransform(const aiNodeAnim* anim_node, BoneTra
 	// Setting up bone positions over time
 	for (uint i = 0; i < anim_node->mNumScalingKeys; i++)
 	{
+		
 		math::float3 scale(anim_node->mScalingKeys[i].mValue.x,
 			anim_node->mScalingKeys[i].mValue.y,
 			anim_node->mScalingKeys[i].mValue.z);

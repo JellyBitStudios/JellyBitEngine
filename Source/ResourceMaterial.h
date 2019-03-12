@@ -31,7 +31,7 @@ public:
 
 	static bool ImportFile(const char* file, std::string& name, std::string& outputFile);
 	static bool ExportFile(ResourceData& data, ResourceMaterialData& materialData, std::string& outputFile, bool overwrite = false);
-	static bool SaveFile(ResourceData& data, ResourceMaterialData& materialData, std::string& outputFile, bool overwrite = false);
+	static uint SaveFile(ResourceData& data, ResourceMaterialData& materialData, std::string& outputFile, bool overwrite = false);
 	static bool LoadFile(const char* file, ResourceMaterialData& outputMaterialData);
 	
 	static uint CreateMeta(const char* file, uint materialUuid, std::string& name, std::string& outputMetaFile);
@@ -54,7 +54,7 @@ public:
 private:
 
 	void InitResources();
-	void DeinitResources();
+	void DeinitResources() const;
 
 	void SetUniformsAsUsed();
 	void SetUniformsAsUnused() const;

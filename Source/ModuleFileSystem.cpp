@@ -51,6 +51,8 @@ ModuleFileSystem::ModuleFileSystem(bool start_enabled) : Module(start_enabled)
 	CreateDir(DIR_ASSETS_MESHES);
 	CreateDir(DIR_ASSETS_TEXTURES);
 	CreateDir(DIR_ASSETS_MATERIALS);
+	CreateDir(DIR_ASSETS_AVATARS);
+	CreateDir(DIR_ASSETS_ANIMATORS);
 	CreateDir(DIR_ASSETS_SHADERS);
 	CreateDir(DIR_ASSETS_SHADERS_OBJECTS);
 	CreateDir(DIR_ASSETS_SHADERS_PROGRAMS);
@@ -118,10 +120,6 @@ bool ModuleFileSystem::Start()
 	event.type = System_Event_Type::LoadGMScene;
 	App->PushSystemEvent(event);
 
-	App->SetEngineState(engine_states::ENGINE_PLAY);
-	event.type = System_Event_Type::Play;
-	App->PushSystemEvent(event);
-
 #endif
 	
 
@@ -157,6 +155,7 @@ void ModuleFileSystem::ImportMainDir(bool reimport)
 #else
 		event.fileEvent.type = System_Event_Type::ImportLibraryFile;
 #endif
+		event.fileEvent.build = false;
 		strcpy(event.fileEvent.file, lateEvents[i].data());
 		App->PushSystemEvent(event);
 	}
@@ -170,6 +169,7 @@ void ModuleFileSystem::ImportMainDir(bool reimport)
 #else
 		event.fileEvent.type = System_Event_Type::ImportLibraryFile;
 #endif
+		event.fileEvent.build = false;
 		strcpy(event.fileEvent.file, lateLateEvents[i].data());
 		App->PushSystemEvent(event);
 	}
@@ -241,7 +241,9 @@ void ModuleFileSystem::OnSystemEvent(System_Event event)
 				{
 					strcpy(destinationDir, DIR_ASSETS_TEXTURES);
 					break;
-				}			
+				}
+
+				// TODO ADD NEW RESOURCES
 			}
 
 			std::string fileName;
@@ -543,6 +545,11 @@ uint ModuleFileSystem::SaveInGame(char* buffer, uint size, FileTypes fileType, s
 			outputFile.insert(strlen(DIR_ASSETS_MATERIALS), "/");
 			outputFile.append(EXTENSION_MATERIAL);
 			break;
+		case FileTypes::AvatarFile:
+			outputFile.insert(0, DIR_ASSETS_AVATARS);
+			outputFile.insert(strlen(DIR_ASSETS_AVATARS), "/");
+			outputFile.append(EXTENSION_AVATAR);
+			break;
 		case FileTypes::VertexShaderObjectFile:
 			outputFile.insert(0, DIR_ASSETS_SHADERS_OBJECTS);
 			outputFile.insert(strlen(DIR_ASSETS_SHADERS_OBJECTS), "/");
@@ -573,7 +580,6 @@ uint ModuleFileSystem::SaveInGame(char* buffer, uint size, FileTypes fileType, s
 			outputFile.insert(strlen(DIR_ASSETS_SCENES), "/");
 			outputFile.append(EXTENSION_SCENE);
 			break;
-		// Scripts
 		}
 	}
 
@@ -1147,6 +1153,7 @@ void ModuleFileSystem::ImportFilesEvents(const Directory& directory, std::vector
 #else
 				event.fileEvent.type = System_Event_Type::ImportLibraryFile;
 #endif
+				event.fileEvent.build = false;
 				strcpy(event.fileEvent.file, filePath);
 				App->PushSystemEvent(event);
 
