@@ -11,6 +11,7 @@
 #include "GameObject.h"
 #include "ComponentMaterial.h"
 #include "ComponentProjector.h"
+#include "ComponentAnimator.h"
 #include "ComponentEmitter.h"
 #include "ComponentMesh.h"
 #include "ComponentImage.h"
@@ -27,6 +28,17 @@ ModuleGOs::ModuleGOs(bool start_enabled) : Module(start_enabled)
 }
 
 ModuleGOs::~ModuleGOs() {}
+
+update_status ModuleGOs::Update() // TODO_G : for VS2 its ok but this have to be better
+{
+	for (std::vector<GameObject*>::const_iterator it = gameobjects.begin(); it != gameobjects.end(); ++it)
+	{
+		if (ComponentAnimator* anim_co = (ComponentAnimator*)(*it)->GetComponent(ComponentTypes::AnimatorComponent)) {
+			anim_co->Update(); // hehehehhehehe
+		}
+	}
+	return update_status::UPDATE_CONTINUE;
+}
 
 bool ModuleGOs::CleanUp()
 {
@@ -100,6 +112,9 @@ void ModuleGOs::OnSystemEvent(System_Event event)
 			break;
 		case ComponentTypes::ProjectorComponent:
 			go->cmp_projector = 0;
+			break;
+		case ComponentTypes::AnimatorComponent:
+			go->cmp_animator = 0;
 			break;
 		case ComponentTypes::RigidStaticComponent:
 		case ComponentTypes::RigidDynamicComponent:

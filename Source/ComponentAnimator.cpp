@@ -139,6 +139,8 @@ bool ComponentAnimator::SetResourceAnimation(uint resource)
 		App->res->SetAsUsed(resource);
 
 	res_animations.push_back(resource);
+	ResourceAnimator* animator = (ResourceAnimator*)App->res->GetResource(res);
+	animator->AddAnimationFromAnimationResource((ResourceAnimation*)App->res->GetResource(resource));
 
 	return true;
 }
