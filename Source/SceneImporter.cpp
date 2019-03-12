@@ -163,9 +163,10 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 			mesh_files, dummyForcedMeshesUuids);
 		//rootGameObject->transform->scale *= importSettings.scale; // TODO FIX SCALE
 
-		/// Import bones
+
 		if (rootBone != nullptr)
 		{
+			/// Import bones
 			std::vector<uint> dummyForcedBonesUuids = forced_bones_uuids;
 
 			ImportBones(rootGameObject, 
@@ -173,7 +174,8 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 				bone_files, dummyForcedBonesUuids);
 
 			/// Import animations
-			ImportAnimations(scene, rootBone, anim_files, prefabName, forced_anim_uuids);
+			std::vector<uint> dummyForcedAnimationsUuids = forced_anim_uuids;
+			ImportAnimations(scene, rootBone, anim_files, prefabName, dummyForcedAnimationsUuids);
 		}
 
 		// Create Prefab
@@ -596,47 +598,47 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 	}
 }
 
-void SceneImporter::ImportBones(GameObject* gameObject,
+void SceneImporter::ImportBones(GameObject* root,
 	std::unordered_map<std::string, aiBone*>& bonesByName,
 	std::vector<std::string>& bone_files, std::vector<uint>& forcedUuids) const
 {
 	std::vector<GameObject*> children;
-	gameObject->GetChildrenVector(children);
+	root->GetChildrenVector(children);
 
 	for (uint i = 0; i < children.size(); ++i)
 	{
+		GameObject* gameObject = children[i];
+
 		const char* boneName = gameObject->GetName();
-
 		std::unordered_map<std::string, aiBone*>::const_iterator it = bonesByName.find(boneName);
+		if (it == bonesByName.end())
+			continue;
 
-		if (it != bonesByName.end())
+		aiBone* bone = it->second;
+
+		// Create the Bone Component
+		gameObject->AddComponent(ComponentTypes::BoneComponent);
+
+		if (forcedUuids.size() > 0)
 		{
-			aiBone* bone = it->second;
-
-			// Create the Bone Component
-			gameObject->AddComponent(ComponentTypes::BoneComponent);
-
-			if (forcedUuids.size() > 0)
-			{
-				gameObject->cmp_bone->res = forcedUuids.front();
-				forcedUuids.erase(forcedUuids.begin());
-			}
-			else
-				gameObject->cmp_bone->res = App->GenerateRandomNumber();
-
-			// Create the Bone Resource
-			ResourceData data;
-			data.name = std::to_string(gameObject->cmp_bone->res);
-
-			ResourceBoneData boneData;
-			boneData.name = boneName;
-			memcpy(&boneData.offsetMatrix, &bone->mOffsetMatrix.a1, sizeof(float) * 16);
-
-			// Export the new file
-			std::string outputFile;
-			if (ResourceBone::ExportFile(data, boneData, outputFile, false))
-				bone_files.push_back(outputFile);
+			gameObject->cmp_bone->res = forcedUuids.front();
+			forcedUuids.erase(forcedUuids.begin());
 		}
+		else
+			gameObject->cmp_bone->res = App->GenerateRandomNumber();
+
+		// Create the Bone Resource
+		ResourceData data;
+		data.name = std::to_string(gameObject->cmp_bone->res);
+
+		ResourceBoneData boneData;
+		boneData.name = boneName;
+		memcpy(&boneData.offsetMatrix, &bone->mOffsetMatrix.a1, sizeof(float) * 16);
+
+		// Export the new file
+		std::string outputFile;
+		if (ResourceBone::ExportFile(data, boneData, outputFile, false))
+			bone_files.push_back(outputFile);
 	}
 }
 
@@ -862,7 +864,7 @@ void SceneImporter::GenerateIBO(uint& IBO, uint* indices, uint indicesSize) cons
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void SceneImporter::GenerateVAO(uint& VAO, uint& VBO) const
+void SceneImporter::GenerateVAO(uint& VAO, uint& VBO, uint attrFlag) const
 {
 	// Vertex Array Object
 
@@ -875,29 +877,48 @@ void SceneImporter::GenerateVAO(uint& VAO, uint& VBO) const
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
 	// Set the vertex attributes pointers
+
 	// 1. Position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, position)));
-	glEnableVertexAttribArray(0);
+	if (attrFlag & ResourceMeshImportSettings::ATTR_POSITION)
+	{
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, position)));
+		glEnableVertexAttribArray(0);
+	}
 
 	// 2. Normal
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, normal)));
-	glEnableVertexAttribArray(1);
+	if (attrFlag & ResourceMeshImportSettings::ATTR_NORMAL)
+	{
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, normal)));
+		glEnableVertexAttribArray(1);
+	}
 
 	// 3. Color
-	glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)(offsetof(Vertex, color)));
-	glEnableVertexAttribArray(2);
+	if (attrFlag & ResourceMeshImportSettings::ATTR_COLOR)
+	{
+		glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)(offsetof(Vertex, color)));
+		glEnableVertexAttribArray(2);
+	}
 
 	// 4. Tex coords
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, texCoord)));
-	glEnableVertexAttribArray(3);
+	if (attrFlag & ResourceMeshImportSettings::ATTR_TEXCOORD)
+	{
+		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, texCoord)));
+		glEnableVertexAttribArray(3);
+	}
 
 	// 5. Tangents
-	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, tangent)));
-	glEnableVertexAttribArray(4);
+	if (attrFlag & ResourceMeshImportSettings::ATTR_TANGENT)
+	{
+		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, tangent)));
+		glEnableVertexAttribArray(4);
+	}
 
 	// 6. Bitangents
-	glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, bitangent)));
-	glEnableVertexAttribArray(5);
+	if (attrFlag & ResourceMeshImportSettings::ATTR_BITANGENT)
+	{
+		glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, bitangent)));
+		glEnableVertexAttribArray(5);
+	}
 
 	// 7. Weights
 	glVertexAttribPointer(6, MAX_BONES, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, boneWeight)));

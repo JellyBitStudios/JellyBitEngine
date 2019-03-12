@@ -59,6 +59,8 @@ GameObject::GameObject(const char* name, GameObject* parent, bool disableTransfo
 	uuid = App->GenerateRandomNumber();
 }
 
+#include "ModuleRenderer3D.h"
+
 GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 {
 	strcpy_s(name, DEFAULT_BUF_SIZE, gameObject.name);
