@@ -65,16 +65,6 @@ bool ModuleScene::Start()
 
 update_status ModuleScene::Update()
 {
-	/*if (App->input->GetKey(SDL_SCANCODE_J) == KEY_DOWN) {
-		App->animation->SetCurrentAnimation("Idle");
-	}
-	if (App->input->GetKey(SDL_SCANCODE_K) == KEY_DOWN) {
-		App->animation->SetCurrentAnimation("Running");
-	}
-	if (App->input->GetKey(SDL_SCANCODE_L) == KEY_DOWN) {
-		App->animation->SetCurrentAnimation("Kick");
-	}
-	*/
 #ifndef GAMEMODE
 	if (!App->IsEditor())
 		return UPDATE_CONTINUE;
@@ -174,6 +164,18 @@ void ModuleScene::OnSystemEvent(System_Event event)
 		// Remove GO in list if its deleted
 		if (selectedObject == event.goEvent.gameObject)
 			SELECT(NULL);
+		std::list<LastTransform>::iterator iterator = prevTransforms.begin();
+
+		while (!prevTransforms.empty() && iterator != prevTransforms.end())
+		{
+			if ((*iterator).uuidGO == event.goEvent.gameObject->GetUUID())
+			{
+				prevTransforms.erase(iterator);
+				iterator = prevTransforms.begin();
+			}
+			else
+				++iterator;
+		}
 		break;
 #endif
 	}
@@ -257,19 +259,15 @@ void ModuleScene::GetPreviousTransform()
 {
 	if (!prevTransforms.empty())
 	{
-		LastTransform prevTrans;
-		GameObject* transObject = nullptr;
-		while (transObject == nullptr || !prevTransforms.empty())
-		{
-			prevTrans = (*prevTransforms.begin());
-			transObject = App->GOs->GetGameObjectByUID(prevTrans.uuidGO);
-			prevTransforms.pop_front();
-		}
-		if (transObject && !prevTransforms.empty())
+		LastTransform prevTrans = (*prevTransforms.begin());
+		GameObject* transObject = App->GOs->GetGameObjectByUID(prevTrans.uuidGO);
+
+		if (transObject)
 		{
 			selectedObject = transObject;
 			selectedObject.GetCurrGameObject()->transform->SetMatrixFromGlobal(prevTrans.matrix);
 		}
+		prevTransforms.pop_front();
 	}
 	// Bounding box changed: recreate quadtree
 	System_Event newEvent;
