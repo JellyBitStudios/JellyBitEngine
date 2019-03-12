@@ -740,7 +740,8 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	glBindVertexArray(mesh->GetVAO());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIBO());
 
-	glDrawElements(mesh->UseAdjacency() ? GL_TRIANGLES_ADJACENCY : GL_TRIANGLES, mesh->UseAdjacency() ? mesh->GetIndicesCount() * 2 : mesh->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
+	bool adjacency = mesh->UseAdjacency();
+	glDrawElements(adjacency ? GL_TRIANGLES_ADJACENCY : GL_TRIANGLES, adjacency ? mesh->GetIndicesCount() * 2 : mesh->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);

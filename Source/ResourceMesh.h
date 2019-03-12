@@ -53,8 +53,12 @@ struct ResourceMeshImportSettings
 	uint attributes = ATTR_POSITION | ATTR_NORMAL | ATTR_COLOR | ATTR_TEXCOORD | ATTR_TANGENT | ATTR_BITANGENT;
 
 	float scale = 1.0f;
+	bool adjacency = false;
 
 	char modelPath[DEFAULT_BUF_SIZE];
+
+	// TODO ADD ADJACENCY
+	// TODO ADD METAS GAME MODE
 };
 
 struct Vertex
@@ -86,7 +90,6 @@ struct ResourceMeshData
 	uint* indices = nullptr;
 	uint indicesSize = 0;
 
-	bool adjacency = false;
 	uint* adjacentIndices = nullptr;
 
 	BoneInfluence* boneInfluences = nullptr;
