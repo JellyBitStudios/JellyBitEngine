@@ -397,10 +397,9 @@ void ResourceAvatar::SetHipsUuid(uint hipsUuid)
 {
 	avatarData.hipsUuid = hipsUuid;
 
-	// 1. Clear the skeleton
-	bones.clear();
+	// 1. Clear the skeleton and the bones
+	ClearSkeletonAndBones();
 
-	// 2. Create the skeleton
 	GameObject* root = App->GOs->GetGameObjectByUID(avatarData.hipsUuid);
 	if (root == nullptr)
 	{
@@ -408,12 +407,26 @@ void ResourceAvatar::SetHipsUuid(uint hipsUuid)
 		return;
 	}
 
+	// 2. Create the skeleton
 	CreateSkeleton(root);
+
+	// 3. Add the skeleton bones to the meshes
+	AddBones(root);
 }
 
 uint ResourceAvatar::GetHipsUuid() const
 {
 	return avatarData.hipsUuid;
+}
+
+std::vector<uint> ResourceAvatar::GetBonesUuids() const
+{
+	std::vector<uint> bonesUuids;
+
+	for (std::unordered_map<const char*, uint>::const_iterator it = bones.begin(); it != bones.end(); ++it)
+		bonesUuids.push_back(it->second);
+
+	return bonesUuids;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -452,7 +465,7 @@ void ResourceAvatar::AddBones(GameObject* gameObject) const
 
 	for (uint i = 0; i < children.size(); ++i)
 	{
-		ComponentMesh* meshComponent = gameObject->cmp_mesh;
+		ComponentMesh* meshComponent = children[i]->cmp_mesh;
 		if (meshComponent != nullptr)
 		{
 			ResourceMesh* meshResource = (ResourceMesh*)App->res->GetResource(meshComponent->res);
@@ -460,6 +473,28 @@ void ResourceAvatar::AddBones(GameObject* gameObject) const
 				meshResource->AddBones(bones);
 		}
 	}
+}
+
+void ResourceAvatar::ClearSkeletonAndBones()
+{
+	GameObject* root = App->GOs->GetGameObjectByUID(avatarData.hipsUuid);
+	if (root == nullptr)
+	{
+		CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
+		return;
+	}
+
+	std::vector<GameObject*> children;
+	root->GetChildrenVector(children);
+
+	for (uint i = 0; i < children.size(); ++i)
+	{
+		ComponentMesh* meshComponent = children[i]->cmp_mesh;
+		if (meshComponent != nullptr && meshComponent->avatarResource == uuid)
+			meshComponent->avatarResource = 0;
+	}
+
+	bones.clear();
 }
 
 void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
@@ -677,7 +712,8 @@ bool ResourceAvatar::LoadInMemory()
 
 bool ResourceAvatar::UnloadFromMemory()
 {
-	bones.clear();
+	// Clear the skeleton and the bones
+	ClearSkeletonAndBones();
 
 	return true;
 }

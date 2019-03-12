@@ -104,6 +104,7 @@ void ComponentMesh::OnUniqueEditor()
 #endif
 }
 
+// TODO SAVE AND LOAD AVATAR RESOURCE UUID
 uint ComponentMesh::GetInternalSerializationBytes()
 {
 	return sizeof(uint) + sizeof(bool);
