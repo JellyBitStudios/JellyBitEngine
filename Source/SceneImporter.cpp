@@ -163,9 +163,10 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 			mesh_files, dummyForcedMeshesUuids);
 		//rootGameObject->transform->scale *= importSettings.scale; // TODO FIX SCALE
 
-		/// Import bones
+
 		if (rootBone != nullptr)
 		{
+			/// Import bones
 			std::vector<uint> dummyForcedBonesUuids = forced_bones_uuids;
 
 			ImportBones(rootGameObject, 
@@ -173,7 +174,8 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 				bone_files, dummyForcedBonesUuids);
 
 			/// Import animations
-			ImportAnimations(scene, rootBone, anim_files, prefabName, forced_anim_uuids);
+			std::vector<uint> dummyForcedAnimationsUuids = forced_anim_uuids;
+			ImportAnimations(scene, rootBone, anim_files, prefabName, dummyForcedAnimationsUuids);
 		}
 
 		// Create Prefab
@@ -596,47 +598,47 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 	}
 }
 
-void SceneImporter::ImportBones(GameObject* gameObject,
+void SceneImporter::ImportBones(GameObject* root,
 	std::unordered_map<std::string, aiBone*>& bonesByName,
 	std::vector<std::string>& bone_files, std::vector<uint>& forcedUuids) const
 {
 	std::vector<GameObject*> children;
-	gameObject->GetChildrenVector(children);
+	root->GetChildrenVector(children);
 
 	for (uint i = 0; i < children.size(); ++i)
 	{
+		GameObject* gameObject = children[i];
+
 		const char* boneName = gameObject->GetName();
-
 		std::unordered_map<std::string, aiBone*>::const_iterator it = bonesByName.find(boneName);
+		if (it == bonesByName.end())
+			continue;
 
-		if (it != bonesByName.end())
+		aiBone* bone = it->second;
+
+		// Create the Bone Component
+		gameObject->AddComponent(ComponentTypes::BoneComponent);
+
+		if (forcedUuids.size() > 0)
 		{
-			aiBone* bone = it->second;
-
-			// Create the Bone Component
-			gameObject->AddComponent(ComponentTypes::BoneComponent);
-
-			if (forcedUuids.size() > 0)
-			{
-				gameObject->cmp_bone->res = forcedUuids.front();
-				forcedUuids.erase(forcedUuids.begin());
-			}
-			else
-				gameObject->cmp_bone->res = App->GenerateRandomNumber();
-
-			// Create the Bone Resource
-			ResourceData data;
-			data.name = std::to_string(gameObject->cmp_bone->res);
-
-			ResourceBoneData boneData;
-			boneData.name = boneName;
-			memcpy(&boneData.offsetMatrix, &bone->mOffsetMatrix.a1, sizeof(float) * 16);
-
-			// Export the new file
-			std::string outputFile;
-			if (ResourceBone::ExportFile(data, boneData, outputFile, false))
-				bone_files.push_back(outputFile);
+			gameObject->cmp_bone->res = forcedUuids.front();
+			forcedUuids.erase(forcedUuids.begin());
 		}
+		else
+			gameObject->cmp_bone->res = App->GenerateRandomNumber();
+
+		// Create the Bone Resource
+		ResourceData data;
+		data.name = std::to_string(gameObject->cmp_bone->res);
+
+		ResourceBoneData boneData;
+		boneData.name = boneName;
+		memcpy(&boneData.offsetMatrix, &bone->mOffsetMatrix.a1, sizeof(float) * 16);
+
+		// Export the new file
+		std::string outputFile;
+		if (ResourceBone::ExportFile(data, boneData, outputFile, false))
+			bone_files.push_back(outputFile);
 	}
 }
 

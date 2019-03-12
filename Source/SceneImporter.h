@@ -55,7 +55,7 @@ private:
 		GameObject*& rootBone, std::unordered_map<std::string, aiBone*>& bonesByName,
 		std::vector<std::string>& mesh_files, std::vector<uint>& forcedUuids = std::vector<uint>()) const;
 
-	void ImportBones(GameObject* gameObject, 
+	void ImportBones(GameObject* root, 
 		std::unordered_map<std::string, aiBone*>& bonesByName,
 		std::vector<std::string>& bone_files, std::vector<uint>& forcedUuids = std::vector<uint>()) const;
 

@@ -28,6 +28,9 @@ public:
 
 	uint res = 0;
 
+	// Avatar
+	uint avatarResource = 0;
+
 	// Pathfinding
 	bool nv_walkable = true;
 };

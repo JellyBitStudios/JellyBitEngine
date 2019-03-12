@@ -1039,7 +1039,7 @@ void PanelInspector::ShowAvatarInspector() const
 	const ResourceBone* hipsResource = hipsComponent != nullptr ? ((ResourceBone*)App->res->GetResource(hipsComponent->res)) : nullptr;
 
 	ImGui::PushID("hips");
-	ImGui::Button(hipsResource != nullptr ? hipsResource->boneData.name.data() : "Empty Avatar", ImVec2(150.0f, 0.0f));
+	ImGui::Button(hipsResource != nullptr ? hipsResource->boneData.name.data() : "Empty Root", ImVec2(150.0f, 0.0f));
 	ImGui::PopID();
 
 	if (ImGui::IsItemHovered())
@@ -1053,13 +1053,14 @@ void PanelInspector::ShowAvatarInspector() const
 	{
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY"))
 		{
-			uint payload_n = *(uint*)payload->Data;
-			const GameObject* hipsGameObject = App->GOs->GetGameObjectByUID(payload_n);
+			const GameObject* hipsGameObject = *(GameObject**)payload->Data;
 			const ComponentBone* hipsComponent = hipsGameObject != nullptr ? hipsGameObject->cmp_bone : nullptr;
 			const ResourceBone* hipsResource = hipsComponent != nullptr ? ((ResourceBone*)App->res->GetResource(hipsComponent->res)) : nullptr;
 			
 			if (hipsResource != nullptr)
-				avatar->SetHipsUuid(payload_n);
+				avatar->SetHipsUuid(hipsGameObject->GetUUID());
+			else
+				CONSOLE_LOG(LogTypes::Warning, "This root is not valid");
 		}
 		ImGui::EndDragDropTarget();
 	}
