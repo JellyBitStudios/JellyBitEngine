@@ -341,7 +341,6 @@ uint ModuleInternalResHandler::CreateCartoonShaderProgram() const
 	if (!vObj->Compile())
 		vObj->isValid = false;
 
-	/*
 	ResourceData geometryData;
 	ResourceShaderObjectData geometryShaderData;
 	geometryData.name = "Cartoon Geometry";
@@ -351,7 +350,6 @@ uint ModuleInternalResHandler::CreateCartoonShaderProgram() const
 	ResourceShaderObject* gObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, geometryData, &geometryShaderData);
 	if (!gObj->Compile())
 		gObj->isValid = false;
-		*/
 
 	ResourceData fragmentData;
 	ResourceShaderObjectData fragmentShaderData;
@@ -368,7 +366,7 @@ uint ModuleInternalResHandler::CreateCartoonShaderProgram() const
 	shaderData.name = "Cartoon Shader";
 	shaderData.internal = true;
 	programShaderData.shaderObjectsUuids.push_back(vObj->GetUuid());
-	//programShaderData.shaderObjectsUuids.push_back(gObj->GetUuid());
+	programShaderData.shaderObjectsUuids.push_back(gObj->GetUuid());
 	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
 	programShaderData.shaderProgramType = ShaderProgramTypes::Standard;
 	ResourceShaderProgram* prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, CARTOON_SHADER_PROGRAM_UUID);

@@ -56,9 +56,6 @@ struct ResourceMeshImportSettings
 	bool adjacency = false;
 
 	char modelPath[DEFAULT_BUF_SIZE];
-
-	// TODO ADD ADJACENCY
-	// TODO ADD METAS GAME MODE
 };
 
 struct Vertex
