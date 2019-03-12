@@ -13,6 +13,9 @@
 
 ComponentImage::ComponentImage(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::ImageComponent)
 {
+	if (parent->cmp_canvasRenderer == nullptr)
+		parent->AddComponent(ComponentTypes::CanvasRendererComponent);
+
 	App->ui->componentsUI.push_back(this);
 }
 
