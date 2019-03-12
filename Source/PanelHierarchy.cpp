@@ -80,6 +80,13 @@ bool PanelHierarchy::Draw()
 				go->cmp_mesh->SetResource(App->resHandler->plane);
 				SELECT(go);
 			}
+			if (ImGui::Selectable("Create World Canvas"))
+			{
+				GameObject* go = App->GOs->CreateGameObject("WoldCanvas", root);
+				ComponentRectTransform* new_rect = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::WORLD);
+				go->AddComponent(go->cmp_rectTransform = new_rect);
+				SELECT(go);
+			}
 
 			ImGui::EndPopup();
 		}
@@ -99,6 +106,7 @@ bool PanelHierarchy::Draw()
 
 			App->res->SetAsUnused(prefab->GetUuid());
 		}
+
 		ImGui::EndDragDropTarget();
 	}
 	if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT && //You Found a Easter EGG!
@@ -195,8 +203,17 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 		{
 			if (ImGui::Selectable("Create Empty"))
 			{
-				GameObject* go = App->GOs->CreateGameObject("GameObjectCanvas", child, true);
-				go->AddComponent(ComponentTypes::RectTransformComponent);
+				GameObject* go = nullptr;
+				if (child->cmp_rectTransform->GetFrom() != ComponentRectTransform::RectFrom::RECT)
+				{
+					go = App->GOs->CreateGameObject("ChildWorldCanvas", child, true);
+					go->AddComponent(go->cmp_rectTransform = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::RECT_WORLD));
+				}
+				else
+				{
+					go = App->GOs->CreateGameObject("ChildScreenCanvas", child, true);
+					go->AddComponent(ComponentTypes::RectTransformComponent);
+				}
 				go->SetLayer(UILAYER);
 				ImGui::CloseCurrentPopup();
 			}
@@ -212,17 +229,38 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 		}
 		else
 		{
-			if (ImGui::Selectable("Create Empty"))
+			if (child->cmp_rectTransform == nullptr)
 			{
-				App->GOs->CreateGameObject("GameObject", child);
-				ImGui::CloseCurrentPopup();
+				if (ImGui::Selectable("Create Empty"))
+				{
+					App->GOs->CreateGameObject("GameObject", child);
+					ImGui::CloseCurrentPopup();
+				}
+				if (ImGui::Selectable("Create Cube"))
+				{
+					GameObject* go = App->GOs->CreateGameObject("Cube", child);
+					go->AddComponent(ComponentTypes::MeshComponent);
+					go->cmp_mesh->SetResource(App->resHandler->cube);
+					ImGui::CloseCurrentPopup();
+				}
+				if (ImGui::Selectable("Create World Canvas"))
+				{
+					GameObject* go = App->GOs->CreateGameObject("WorldCanvas", child);
+					ComponentRectTransform* new_rect = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::WORLD);
+					go->AddComponent(go->cmp_rectTransform = new_rect);
+					SELECT(go);
+				}
 			}
-			if (ImGui::Selectable("Create Cube"))
+			else
 			{
-				GameObject* go = App->GOs->CreateGameObject("Cube", child);
-				go->AddComponent(ComponentTypes::MeshComponent);
-				go->cmp_mesh->SetResource(App->resHandler->cube);
-				ImGui::CloseCurrentPopup();
+				if (ImGui::Selectable("Create Empty"))
+				{
+					GameObject* go = App->GOs->CreateGameObject("ChildWorldCanvas", child, true);
+					ComponentRectTransform* new_rect = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::RECT_WORLD);
+					go->AddComponent(go->cmp_rectTransform = new_rect);
+					go->SetLayer(UILAYER);
+					SELECT(go);
+				}
 			}
 			if (ImGui::Selectable("Delete"))
 			{
@@ -238,7 +276,6 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 			App->GOs->Instanciate(child, child->GetParent());
 			ImGui::CloseCurrentPopup();
 		}
-
 		ImGui::EndPopup();
 	}
 }
@@ -268,8 +305,33 @@ void PanelHierarchy::SetGameObjectDragAndDropTarget(GameObject* target) const
 
 			if (!payload_n->IsChild(target, true))
 			{
-				if (payload_n->GetLayer() == target->GetLayer())
+				//Sorry for this code :(, this is UI checks for no crash the engine. pukecode
+				bool rectWorldToWortldCanvas = false;
+				if (payload_n->cmp_rectTransform && target->cmp_rectTransform)
+					if (payload_n->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT_WORLD
+						&& target->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::WORLD)
+						rectWorldToWortldCanvas = true;
+				if (payload_n->GetLayer() == target->GetLayer() || rectWorldToWortldCanvas)
 				{
+					if (!rectWorldToWortldCanvas)
+					{
+						if (App->GOs->GetCanvas() == payload_n)
+						{
+							ImGui::EndDragDropTarget();
+							return;
+						}
+						if (payload_n->cmp_rectTransform && target->cmp_rectTransform)
+						{
+							if ((payload_n->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::WORLD
+								&& target->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::WORLD)
+								|| (payload_n->cmp_rectTransform->GetFrom() != target->cmp_rectTransform->GetFrom()))
+							{
+								ImGui::EndDragDropTarget();
+								return;
+							}
+						}
+					}
+
 					math::float4x4 globalMatrix;
 					if (payload_n->GetLayer() != UILAYER)
 						globalMatrix = payload_n->transform->GetGlobalMatrix();
@@ -280,7 +342,7 @@ void PanelHierarchy::SetGameObjectDragAndDropTarget(GameObject* target) const
 
 					if (payload_n->GetLayer() != UILAYER)
 						payload_n->transform->SetMatrixFromGlobal(globalMatrix);
-					else if (payload_n->GetLayer() == UILAYER)
+					else if (payload_n->cmp_rectTransform)
 					{
 						ComponentRectTransform* rect = (ComponentRectTransform*)payload_n->GetComponent(ComponentTypes::RectTransformComponent);
 						rect->CheckParentRect();

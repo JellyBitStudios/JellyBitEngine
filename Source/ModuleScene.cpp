@@ -16,9 +16,6 @@
 #include "ComponentMesh.h"
 #include "ModuleNavigation.h"
 
-// TODO_G : delete this
-#include "ModuleAnimation.h"
-
 #include "imgui/imgui.h"
 
 #include <list>
@@ -62,7 +59,7 @@ bool ModuleScene::Start()
 	axis[1] = 30;
 	axis *= DEGTORAD;
 	rotation.SetFromAxisAngle(axis.Normalized(), axis.Length());
-	directionalLight->transform->rotation = rotation;
+	directionalLight->transform->SetRotation(rotation);
 	return true;
 }
 
@@ -142,7 +139,10 @@ void ModuleScene::OnSystemEvent(System_Event event)
 	case System_Event_Type::LoadGMScene:
 	{
 		char* buf;
-		size_t size = App->fs->Load("Settings/GameReady.nekoScene", &buf);
+		if (!App->fs->Exists("Library/Scenes/Main Scene.scn"))
+			return;
+
+		size_t size = App->fs->Load("Library/Scenes/Main Scene.scn", &buf);
 		if (size > 0)
 		{
 			App->GOs->LoadScene(buf, size, true);
@@ -153,7 +153,7 @@ void ModuleScene::OnSystemEvent(System_Event event)
 
 			// Initialize detour with the previous loaded navmesh
 			App->navigation->InitDetour();
-
+			
 			System_Event newEvent;
 			newEvent.type = System_Event_Type::RecreateQuadtree;
 			App->PushSystemEvent(newEvent);
@@ -348,11 +348,14 @@ void ModuleScene::RecalculateQuadtree()
 void ModuleScene::CreateRandomStaticGameObject()
 {
 	GameObject* random = App->GOs->CreateGameObject("Random", root);
-	random->transform->position = math::float3(rand() % (50 + 50 + 1) - 50, rand() % 10, rand() % (50 + 50 + 1) - 50);
+	random->transform->SetPosition(math::float3(rand() % (50 + 50 + 1) - 50, rand() % 10, rand() % (50 + 50 + 1) - 50));
 
-	const math::float3 center(random->transform->position.x, random->transform->position.y, random->transform->position.z);
+	math::float3 pos = random->transform->GetPosition();
+
+	const math::float3 center(pos.x, pos.y, pos.z);
 	const math::float3 size(2.0f, 2.0f, 2.0f);
 	random->boundingBox.SetFromCenterAndSize(center, size);
+	random->originalBoundingBox.SetFromCenterAndSize(center, size);
 
 	quadtree.Insert(random);
 }

@@ -22,6 +22,7 @@
 #include "ComponentRigidStatic.h"
 #include "ComponentRigidDynamic.h"
 #include "ComponentNavAgent.h"
+#include "ComponentAnimator.h"
 #include "ComponentEmitter.h"
 #include "ComponentBone.h"
 #include "ComponentScript.h"
@@ -119,6 +120,11 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			cmp_animation = new ComponentAnimation(*gameObject.cmp_animation, this);
 			cmp_animation->SetParent(this);
 			components.push_back(cmp_animation);
+			break;
+		case ComponentTypes::AnimatorComponent:
+			cmp_animator = new ComponentAnimator(*gameObject.cmp_animator, this);
+			cmp_animator->SetParent(this);
+			components.push_back(cmp_animator);
 			break;
 		case ComponentTypes::LightComponent:
 			cmp_light = new ComponentLight(*gameObject.cmp_light, this);
@@ -329,6 +335,17 @@ void GameObject::OnDisable()
 void GameObject::RecursiveRecalculateBoundingBoxes()
 {
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+
+	RecalculateBoundingBox();
+
+	for (uint i = 0; i < children.size(); ++i)
+		children[i]->RecursiveRecalculateBoundingBoxes();
+}
+
+void GameObject::RecalculateBoundingBox()
+{
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+
 	// Get the OBB from the mesh original AABB (no translation, rotation or scale)
 	if (originalBoundingBox.IsFinite())
 	{
@@ -345,9 +362,6 @@ void GameObject::RecursiveRecalculateBoundingBoxes()
 				boundingBox = obb.MinimalEnclosingAABB();
 		}
 	}
-
-	for (uint i = 0; i < children.size(); ++i)
-		children[i]->RecursiveRecalculateBoundingBoxes();
 }
 
 void GameObject::CalculateBoundingBox()
@@ -374,6 +388,8 @@ void GameObject::OnSystemEvent(System_Event event)
 		CalculateBoundingBox();
 		break;
 	case System_Event_Type::RecalculateBBoxes:
+		// Now its done from the update global, if the game object moves it automatically recalculates the new AABB.
+		// But if you need to Recalculate the AABB and you do not move the GameObject (e.g. particles AABB) you will have to keep sending the event
 		RecursiveRecalculateBoundingBoxes();
 		break;
 	case System_Event_Type::ScriptingDomainReloaded:
@@ -564,6 +580,10 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 	case ComponentTypes::AnimationComponent:
 		assert(cmp_animation == NULL);
 		newComponent = cmp_animation = new ComponentAnimation(this);
+		break;
+	case ComponentTypes::AnimatorComponent:
+		assert(cmp_animator == NULL);
+		newComponent = cmp_animator = new ComponentAnimator(this);
 		break;
 	case ComponentTypes::LightComponent:
 		assert(cmp_light == NULL);

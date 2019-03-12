@@ -10,6 +10,7 @@
 #include "ModuleResourceManager.h"
 #include "ModuleInternalResHandler.h"
 #include "ModuleGui.h"
+#include "ModuleGOs.h"
 #include "PanelShaderEditor.h"
 #include "PanelCodeEditor.h"
 #include "SceneImporter.h"
@@ -23,6 +24,8 @@
 #include "ComponentScript.h"
 #include "ComponentRigidActor.h"
 #include "ComponentCollider.h"
+#include "ComponentRectTransform.h"
+#include "ComponentBone.h"
 
 #include "Resource.h"
 #include "ResourceMesh.h"
@@ -31,7 +34,9 @@
 #include "ResourceShaderProgram.h"
 #include "ResourceScript.h"
 #include "ResourceMaterial.h"
+#include "ResourceAvatar.h"
 #include "ResourceAnimation.h"
+#include "ResourceBone.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -72,6 +77,9 @@ bool PanelInspector::Draw()
 				break;
 			case ResourceTypes::MaterialResource:
 				ShowMaterialInspector();
+				break;
+			case ResourceTypes::AvatarResource:
+				ShowAvatarInspector();
 				break;
 			case ResourceTypes::AnimationResource:
 				ShowAnimationInspector();
@@ -182,19 +190,23 @@ void PanelInspector::ShowGameObjectInspector() const
 	bool scriptSelected = false;
 	if (ImGui::BeginPopupContextItem((const char*)0, 0))
 	{
-		if (gameObject->GetLayer() == UILAYER)
+		if (gameObject->GetLayer() == UILAYER || gameObject->cmp_rectTransform)
 		{
+
 			if (gameObject->cmp_image == nullptr)
 				if (ImGui::Selectable("Image UI")) {
 					gameObject->AddComponent(ComponentTypes::ImageComponent);
 					ImGui::CloseCurrentPopup();
 				}
-			if (gameObject->cmp_button == nullptr)
-				if (ImGui::Selectable("Button UI")) {
-					gameObject->AddComponent(ComponentTypes::ButtonComponent);
-					ImGui::CloseCurrentPopup();
-				}
-			if (gameObject->cmp_button == nullptr)
+			if (gameObject->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
+			{
+				if (gameObject->cmp_button == nullptr)
+					if (ImGui::Selectable("Button UI")) {
+						gameObject->AddComponent(ComponentTypes::ButtonComponent);
+						ImGui::CloseCurrentPopup();
+					}
+			}
+			if (gameObject->cmp_label == nullptr)
 				if (ImGui::Selectable("Text UI")) {
 					gameObject->AddComponent(ComponentTypes::LabelComponent);
 					ImGui::CloseCurrentPopup();
@@ -209,7 +221,6 @@ void PanelInspector::ShowGameObjectInspector() const
 		}
 		else
 		{
-
 			if (gameObject->cmp_mesh == nullptr)
 				if (ImGui::Selectable("Mesh")) {
 					gameObject->AddComponent(ComponentTypes::MeshComponent);
@@ -233,6 +244,11 @@ void PanelInspector::ShowGameObjectInspector() const
 			if (gameObject->cmp_projector == nullptr)
 				if (ImGui::Selectable("Projector")) {
 					gameObject->AddComponent(ComponentTypes::ProjectorComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			if (gameObject->cmp_animator == nullptr)
+				if (ImGui::Selectable("Animator")) {
+					gameObject->AddComponent(ComponentTypes::AnimatorComponent);
 					ImGui::CloseCurrentPopup();
 				}
 
@@ -280,17 +296,18 @@ void PanelInspector::ShowGameObjectInspector() const
 					ImGui::CloseCurrentPopup();
 				}
 			}
-		}
-		if (gameObject->cmp_audioListener == nullptr) {
-			if (ImGui::Selectable("Audio Listener")) {
-				gameObject->AddComponent(ComponentTypes::AudioListenerComponent);
-				ImGui::CloseCurrentPopup();
+
+			if (gameObject->cmp_audioListener == nullptr) {
+				if (ImGui::Selectable("Audio Listener")) {
+					gameObject->AddComponent(ComponentTypes::AudioListenerComponent);
+					ImGui::CloseCurrentPopup();
+				}
 			}
-		}
-		if (gameObject->cmp_audioSource == nullptr) {
-			if (ImGui::Selectable("Audio Source")) {
-				gameObject->AddComponent(ComponentTypes::AudioSourceComponent);
-				ImGui::CloseCurrentPopup();
+			if (gameObject->cmp_audioSource == nullptr) {
+				if (ImGui::Selectable("Audio Source")) {
+					gameObject->AddComponent(ComponentTypes::AudioSourceComponent);
+					ImGui::CloseCurrentPopup();
+				}
 			}
 		}
 		ImGui::EndPopup();
@@ -769,7 +786,6 @@ void PanelInspector::ShowAnimationInspector() const
 
 	// Name
 	ImGui::Text("Name:"); ImGui::SameLine(); ImGui::Text("%s", animation->animationData.name.data());
-
 }
 
 void PanelInspector::ShowMaterialInspector() const
@@ -977,6 +993,81 @@ void PanelInspector::ShowMaterialInspector() const
 		}
 		ImGui::PopItemWidth();
 	}
+}
+
+void PanelInspector::ShowAvatarInspector() const
+{
+	ImGui::Text("Avatar");
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	ResourceAvatar* avatar = (ResourceAvatar*)App->scene->selectedObject.Get();
+
+	// Name
+	ImGui::Text("Name:"); ImGui::SameLine();
+	static char name[INPUT_BUF_SIZE];
+	strcpy_s(name, INPUT_BUF_SIZE, avatar->GetName());
+	ImGui::PushItemWidth(150.0f);
+	ImGuiInputTextFlags inputFlag = ImGuiInputTextFlags_EnterReturnsTrue;
+	if (ImGui::InputText("##name", name, INPUT_BUF_SIZE, inputFlag))
+	{
+		// Search for the meta associated to the file
+		char metaFile[DEFAULT_BUF_SIZE];
+		strcpy_s(metaFile, strlen(avatar->GetFile()) + 1, avatar->GetFile()); // file
+		strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
+
+		avatar->SetName(name);
+		std::string avatarName = name;
+		ResourceAvatar::SetNameToMeta(metaFile, avatarName);
+	}
+
+	ImGui::Spacing();
+
+	// Data
+	ImGui::Text("File:"); ImGui::SameLine();
+	ImGui::TextColored(BLUE, "%s", avatar->GetFile());
+	ImGui::Text("UUID:"); ImGui::SameLine();
+	ImGui::TextColored(BLUE, "%u", avatar->GetUuid());
+	ImGui::Text("References:"); ImGui::SameLine();
+	ImGui::TextColored(BLUE, "%u", avatar->GetReferencesCount());
+
+	ImGui::Spacing();
+
+	uint hipsUuid = avatar->GetHipsUuid();
+	const GameObject* hipsGameObject = App->GOs->GetGameObjectByUID(hipsUuid);
+	const ComponentBone* hipsComponent = hipsGameObject != nullptr ? hipsGameObject->cmp_bone : nullptr;
+	const ResourceBone* hipsResource = hipsComponent != nullptr ? ((ResourceBone*)App->res->GetResource(hipsComponent->res)) : nullptr;
+
+	ImGui::PushID("hips");
+	ImGui::Button(hipsResource != nullptr ? hipsResource->boneData.name.data() : "Empty Avatar", ImVec2(150.0f, 0.0f));
+	ImGui::PopID();
+
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("%u", hipsUuid);
+		ImGui::EndTooltip();
+	}
+
+	if (ImGui::BeginDragDropTarget())
+	{
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY"))
+		{
+			uint payload_n = *(uint*)payload->Data;
+			const GameObject* hipsGameObject = App->GOs->GetGameObjectByUID(payload_n);
+			const ComponentBone* hipsComponent = hipsGameObject != nullptr ? hipsGameObject->cmp_bone : nullptr;
+			const ResourceBone* hipsResource = hipsComponent != nullptr ? ((ResourceBone*)App->res->GetResource(hipsComponent->res)) : nullptr;
+			
+			if (hipsResource != nullptr)
+				avatar->SetHipsUuid(payload_n);
+		}
+		ImGui::EndDragDropTarget();
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::SmallButton("REMOVE"))
+		avatar->SetHipsUuid(0);
 }
 
 #endif // GAME

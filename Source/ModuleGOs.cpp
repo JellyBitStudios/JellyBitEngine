@@ -5,7 +5,6 @@
 #include "ModuleNavigation.h"
 #include "ModuleResourceManager.h"
 #include "ModuleInternalResHandler.h"
-#include "ModuleAnimation.h"
 #include "ModuleRenderer3D.h"
 #include "ModuleUI.h"
 
@@ -15,6 +14,7 @@
 #include "ComponentEmitter.h"
 #include "ComponentMesh.h"
 #include "ComponentImage.h"
+#include "ComponentRectTransform.h"
 #include "ComponentAnimation.h"
 #include "ResourceShaderProgram.h"
 #include "ResourceAnimation.h"
@@ -161,6 +161,11 @@ GameObject* ModuleGOs::CreateCanvas(const char * name, GameObject * parent)
 	return newGameObject;
 }
 
+void ModuleGOs::SetCanvas(GameObject * canvas)
+{
+	this->canvas = canvas;
+}
+
 void ModuleGOs::DeleteCanvasPointer()
 {
 	canvas = nullptr;
@@ -171,18 +176,17 @@ GameObject* ModuleGOs::CreateGameObject(const char* goName, GameObject* parent, 
 	GameObject* newGameObject = new GameObject(goName, parent, disableTransform);
 	gameobjects.push_back(newGameObject);
 	dynamicGos.push_back(newGameObject);
+
 	return newGameObject;
 }
 
 GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 {
 	GameObject* newGameObject = new GameObject(*copy);
+	bool returnCanvas = false;
 
 	if (!newRoot)
 	{
-		if (newGameObject->GetLayer() == UILAYER && copy->GetParent()->GetLayer() != UILAYER)
-			return nullptr;
-
 		newGameObject->SetParent(copy->GetParent());
 		copy->GetParent()->AddChild(newGameObject);
 	}
@@ -210,13 +214,24 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 						{
 							canvas->AddChild(child);
 							child->SetParent(canvas);
+							newGameObject->EraseChild(child);
 						}
 					}
+					this->DeleteGameObject(newGameObject);
 					App->ui->LinkAllRectsTransform();
-					return canvas;
+					returnCanvas = true;
 				}
 				else
 					canvas = newGameObject;
+			}
+			else
+			{
+				if (newGameObject->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
+				{
+					canvas->AddChild(newGameObject);
+					newGameObject->SetParent(canvas);
+					return newGameObject;
+				}
 			}
 		}
 
@@ -232,35 +247,34 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 	}
 
 
-	if (newGameObject->GetLayer() != UILAYER)
+	if (copy->GetParent() == nullptr)
 	{
-		if (copy->GetParent() == nullptr)
+		// TODO_G : Start resource animator here?
+		std::vector<GameObject*> gos;
+		this->GetGameobjects(gos);
+		for (uint i = 0u; i < gos.size(); i++)
 		{
-			// Animation stuff // TODO_G : this can be better in vert 2
-			App->animation->Start();
-			std::vector<GameObject*> gos;
-			this->GetGameobjects(gos);
-			for (uint i = 0u; i < gos.size(); i++)
-			{
-
-				ComponentAnimation* anim_co = (ComponentAnimation*)gos[i]->GetComponent(ComponentTypes::AnimationComponent);
-				if (anim_co) {
-					ResourceAnimation* anim = (ResourceAnimation*)App->res->GetResource(anim_co->res);
-					App->animation->StartAttachingBones(); App->animation->SetUpAnimations();
-				}
+			ComponentAnimation* anim_co = (ComponentAnimation*)gos[i]->GetComponent(ComponentTypes::AnimationComponent);
+			if (anim_co) {
+				ResourceAnimation* anim = (ResourceAnimation*)App->res->GetResource(anim_co->res);
 			}
+
 		}
-		System_Event newEvent;
-		newEvent.type = System_Event_Type::RecreateQuadtree;
-		App->PushSystemEvent(newEvent);
-
 	}
+	System_Event newEvent;
+	newEvent.type = System_Event_Type::RecreateQuadtree;
+	App->PushSystemEvent(newEvent);
+
+	// Calculate the global
+	if (newGameObject && newGameObject->transform)
+		newGameObject->transform->UpdateGlobal();
+
+	App->ui->LinkAllRectsTransform();
+
+	if (returnCanvas)
+		return canvas;
 	else
-		App->ui->LinkAllRectsTransform();
-
-	
-
-	return newGameObject;
+		return newGameObject;
 }
 
 void ModuleGOs::DeleteGameObject(GameObject* toDelete)
@@ -438,23 +452,12 @@ bool ModuleGOs::LoadScene(char*& buffer, size_t sizeBuffer, bool navmesh)
 		gos.push_back(go);
 	}
 
-	std::vector<GameObject*> children;
-	App->scene->root->GetChildrenVector(children);
-	for each (GameObject* child in children)
-	{
-		if (std::strcmp(child->GetName(), "Canvas") == 0)
-		{
-			canvas = child;
-			App->ui->LinkAllRectsTransform();
-		}
-	}
-
 	// Discuss if this should be a resource
 	if (navmesh)
 		App->navigation->LoadNavmesh(cursor);
 
 	//App->animation->SetUpAnimations();
-	
+
 	//StartAttachingBones(); SetUpAnimations();
 
 	System_Event event;

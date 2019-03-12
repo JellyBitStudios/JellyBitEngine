@@ -10,12 +10,15 @@
 #include "ComponentCamera.h"
 #include "ComponentProjector.h"
 #include "ComponentRigidActor.h"
+#include "ComponentRectTransform.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
 
 #include "Brofiler/Brofiler.h"
 #include <list>
+
+#include "MathGeoLib/include/Geometry/OBB.h"
 
 ComponentTransform::ComponentTransform(GameObject* parent) : Component(parent, ComponentTypes::TransformComponent) {}
 
@@ -60,13 +63,19 @@ void ComponentTransform::OnUniqueEditor()
 			position = math::float3::zero;
 			rotation = math::Quat::identity;
 			scale = math::float3::one;
+
+			UpdateGlobal();
 		}
 
 		math::float4x4 matrix = parent->transform->GetMatrix();
 
 		ImGui::Text("Position");
 		if (ImGui::DragFloat3("##Pos", &position[0], 0.01f, 0.0f, 0.0f, "%.3f"))
+		{
 			SavePrevTransform(matrix);
+		
+			UpdateGlobal();
+		}
 
 		ImGui::Text("Rotation");
 		math::float3 axis;
@@ -79,17 +88,19 @@ void ComponentTransform::OnUniqueEditor()
 			SavePrevTransform(matrix);
 		axis *= DEGTORAD;
 		rotation.SetFromAxisAngle(axis.Normalized(), axis.Length());
+
+			UpdateGlobal();
 		}
 
 		ImGui::Text("Scale");
 		if (ImGui::DragFloat3("##Scale", &scale[0], 0.01f, 0.0f, 0.0f, "%.3f"))
+		{
 			SavePrevTransform(matrix);
 
+			UpdateGlobal();
+		}
 		if (!position.Equals(lastPosition) || !rotation.Equals(lastRotation) || !scale.Equals(lastScale))
 		{
-			// Transform updated: if the game object or its children have a rigid body, update its transform
-			ComponentRigidActor::RecursiveUpdateTransforms(parent);
-
 			// Transform updated: if the game object has a camera, update its frustum
 			if (parent->cmp_camera != nullptr)
 				parent->cmp_camera->UpdateTransform();
@@ -104,11 +115,11 @@ void ComponentTransform::OnUniqueEditor()
 				App->camera->SetReference(position);
 #endif
 
-			// Transform updated: recalculate bounding boxes
-			System_Event newEvent;
-			newEvent.goEvent.gameObject = parent;
-			newEvent.type = System_Event_Type::RecalculateBBoxes;
-			App->PushSystemEvent(newEvent);
+			//// Transform updated: recalculate bounding boxes -> // Bounding boxes are now automatically recalculated from ComponentTransform::UpdateGlobal()
+			//System_Event newEvent;
+			//newEvent.goEvent.gameObject = parent;
+			//newEvent.type = System_Event_Type::RecalculateBBoxes;
+			//App->PushSystemEvent(newEvent);
 
 			if (parent->IsStatic())
 			{
@@ -138,38 +149,8 @@ void ComponentTransform::SavePrevTransform(const math::float4x4 & prevTransformM
 
 math::float4x4& ComponentTransform::GetMatrix() const
 {
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 	math::float4x4 matrix = math::float4x4::FromTRS(position, rotation, scale);
 	return matrix;
-}
-
-math::float4x4& ComponentTransform::GetGlobalMatrix() const
-{
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
-	std::list<GameObject*> aux_list;
-
-	if (parent)
-	{
-		GameObject* globalParent = parent->GetParent();
-
-		while (globalParent != nullptr && globalParent->GetParent() != nullptr)
-		{
-			aux_list.push_back(globalParent);
-			globalParent = globalParent->GetParent();
-		}
-	}
-
-	math::float4x4 globalMatrix = math::float4x4::identity;
-
-	for (std::list<GameObject*>::const_reverse_iterator it = aux_list.rbegin(); it != aux_list.rend(); it++)
-	{
-		math::float4x4 parentMatrix = (*it)->transform->GetMatrix();
-		globalMatrix = globalMatrix * parentMatrix;
-	}
-
-	math::float4x4 localMatrix = GetMatrix();
-
-	return globalMatrix * localMatrix;
 }
 
 void ComponentTransform::SetMatrixFromGlobal(math::float4x4& globalMatrix)
@@ -185,9 +166,6 @@ void ComponentTransform::SetMatrixFromGlobal(math::float4x4& globalMatrix)
 		newMatrix.Decompose(position, rotation, scale);
 	}
 
-	// Transform updated: if the game object or its children have a rigid body, update its transform
-	ComponentRigidActor::RecursiveUpdateTransforms(parent);
-
 	// Transform updated: if the game object has a camera, update its frustum
 	if (parent->cmp_camera != nullptr)
 		parent->cmp_camera->UpdateTransform();
@@ -202,11 +180,11 @@ void ComponentTransform::SetMatrixFromGlobal(math::float4x4& globalMatrix)
 		App->camera->SetReference(position);
 #endif
 
-	// Transform updated: recalculate bounding boxes
-	System_Event newEvent;
-	newEvent.goEvent.gameObject = parent;
-	newEvent.type = System_Event_Type::RecalculateBBoxes;
-	App->PushSystemEvent(newEvent);
+	//// Transform updated: recalculate bounding boxes -> // Bounding boxes are now automatically recalculated from ComponentTransform::UpdateGlobal()
+	//System_Event newEvent;
+	//newEvent.goEvent.gameObject = parent;
+	//newEvent.type = System_Event_Type::RecalculateBBoxes;
+	//App->PushSystemEvent(newEvent);
 
 	if (parent->IsStatic())
 	{
@@ -215,6 +193,104 @@ void ComponentTransform::SetMatrixFromGlobal(math::float4x4& globalMatrix)
 		newEvent.type = System_Event_Type::RecreateQuadtree;
 		App->PushSystemEvent(newEvent);
 	}
+
+	UpdateGlobal();
+}
+
+math::float4x4 ComponentTransform::GetGlobalMatrix() const
+{
+	return globalMatrix;
+}
+
+void ComponentTransform::UpdateGlobal()
+{
+	math::float4x4 local = GetMatrix();
+
+	GameObject* goParent = parent->GetParent();
+	if (goParent != nullptr && goParent->transform)
+ 		globalMatrix = goParent->transform->GetGlobalMatrix().Mul(local);
+	else
+		globalMatrix = local;
+
+	if (parent->cmp_rigidActor != nullptr)
+		parent->cmp_rigidActor->UpdateTransform(globalMatrix);
+
+	for (std::vector<GameObject*>::iterator childs = parent->children.begin(); childs != parent->children.end(); ++childs)
+	{
+		if ((*childs)->transform)
+			(*childs)->transform->UpdateGlobal();
+	}
+
+	// Transform is updated, we have to recalculate the bounding box.
+	// As we are already in a recursive method, all bouding boxes will be updated by recalculating the current.
+	// Doing this we avoid calling another recusive method and improve performance.
+	parent->RecalculateBoundingBox();
+}
+
+
+void ComponentTransform::SetPosition(math::float3 newPos)
+{
+	this->position = newPos;
+
+	UpdateGlobal();
+}
+
+void ComponentTransform::SetPosition(const float newPos[3])
+{
+	SetPosition(math::float3(newPos[0], newPos[1], newPos[2]));
+}
+
+void ComponentTransform::SetRotation(math::Quat newRot)
+{
+	this->rotation = newRot;
+
+	UpdateGlobal();
+}
+
+void ComponentTransform::SetScale(math::float3 newScale)
+{
+	this->scale = newScale;
+
+	UpdateGlobal();
+}
+
+void ComponentTransform::Move(math::float3 distance)
+{
+	SetPosition(this->position.Add(distance));
+}
+
+void ComponentTransform::Move(const float distance[3])
+{
+	Move(math::float3(distance[0], distance[1], distance[2]));
+}
+
+void ComponentTransform::Rotate(math::Quat rotation)
+{
+	SetRotation(rotation.Mul(this->rotation).Normalized());
+}
+
+void ComponentTransform::Scale(math::float3 scale)
+{
+	SetScale(this->scale.Mul(scale));
+}
+void ComponentTransform::Scale(float scale)
+{
+	SetScale(this->scale.Mul(scale));
+}
+
+math::float3 ComponentTransform::GetPosition() const
+{
+	return position;
+}
+
+math::Quat ComponentTransform::GetRotation() const
+{
+	return rotation;
+}
+
+math::float3 ComponentTransform::GetScale() const
+{
+	return scale;
 }
 
 uint ComponentTransform::GetInternalSerializationBytes()

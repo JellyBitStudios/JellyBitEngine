@@ -2,29 +2,26 @@
 
 #include "Application.h"
 #include "ModuleFileSystem.h"
+#include "ModuleResourceManager.h"
+#include "ModuleGOs.h"
 #include "ModuleScene.h"
 
 #include "SceneImporter.h"
+#include "GameObject.h"
+
+#include "ResourceBone.h"
+#include "ComponentBone.h"
 
 #include "imgui\imgui.h"
 
 #include <assert.h>
 
-ResourceMesh::ResourceMesh(ResourceTypes type, uint uuid, ResourceData data, ResourceMeshData meshData) : Resource(type, uuid, data), meshData(meshData) {
-	
-	deformableMeshData.verticesSize = 0u;
-	deformableMeshData.indicesSize = 0u;
-	deformableMeshData.vertices = nullptr;
-	deformableMeshData.indices = nullptr;
-}
+ResourceMesh::ResourceMesh(ResourceTypes type, uint uuid, ResourceData data, ResourceMeshData meshData) : Resource(type, uuid, data), meshData(meshData) {}
 
 ResourceMesh::~ResourceMesh()
 {
 	RELEASE_ARRAY(meshData.vertices);
 	RELEASE_ARRAY(meshData.indices);
-
-	RELEASE_ARRAY(deformableMeshData.vertices);
-	RELEASE_ARRAY(deformableMeshData.indices);
 }
 
 void ResourceMesh::OnPanelAssets()
@@ -155,15 +152,15 @@ uint ResourceMesh::CreateMeta(const char* file, ResourceMeshImportSettings& mesh
 	uint animations_uuids_size = animationUuids.size();
 
 	uint size = 
-		sizeof(int64_t) +					//data mod
-		sizeof(uint) +						//mesh size num
-		sizeof(uint) * mesh_uuids_size +	//mesh uuids
-
-		sizeof(uint) +						//size bone num
-		sizeof(uint) * bones_uuids_size +	//bone uuids
-
-		sizeof(uint) +						//size anim num
-		sizeof(uint) * animations_uuids_size +	//anim uuids
+		sizeof(int64_t) +						// data mod
+		sizeof(uint) +							// mesh size num
+		sizeof(uint) * mesh_uuids_size +		// mesh uuids
+												   
+		sizeof(uint) +							// size bone num
+		sizeof(uint) * bones_uuids_size +		// bone uuids
+												   
+		sizeof(uint) +							// size anim num
+		sizeof(uint) * animations_uuids_size +	// anim uuids
 
 		sizeof(int) +
 		sizeof(uint) +
@@ -363,8 +360,10 @@ bool ResourceMesh::ReadMeshesUuidsFromBuffer(const char* buffer,
 {
 	char* cursor = (char*)buffer;
 
-	// 1. (Last modification time)
+	// 1. Load last modification time
 	uint bytes = sizeof(int64_t);
+	//memcpy(&lastModTime, cursor, bytes);
+
 	cursor += bytes;
 
 	// 2. Load uuids size
@@ -392,10 +391,9 @@ bool ResourceMesh::ReadMeshesUuidsFromBuffer(const char* buffer,
 
 	// 5. Load bones uuids
 	bonesUuids.resize(uuidsSize);
-	if (bonesUuids.size() > 0) {
-		bytes = sizeof(uint) * uuidsSize;
+	bytes = sizeof(uint) * uuidsSize;
+	if (bonesUuids.size() > 0)
 		memcpy(&bonesUuids[0], cursor, bytes);
-	}
 
 	cursor += bytes;
 
@@ -409,12 +407,25 @@ bool ResourceMesh::ReadMeshesUuidsFromBuffer(const char* buffer,
 
 	// 7. Load anims uuids
 	animationUuids.resize(uuidsSize);
-	if (animationUuids.size() > 0) {
-		bytes = sizeof(uint) * uuidsSize;
+	bytes = sizeof(uint) * uuidsSize;
+	if (animationUuids.size() > 0)
 		memcpy(&animationUuids[0], cursor, bytes);
-	}
 
 	cursor += bytes;
+
+	// 8. Load import settings
+	bytes = sizeof(int);
+	//memcpy(&meshImportSettings.postProcessConfigurationFlags, cursor, bytes);
+
+	cursor += bytes;
+
+	bytes = sizeof(uint);
+	//memcpy(&meshImportSettings.customConfigurationFlags, cursor, bytes);
+
+	cursor += bytes;
+
+	bytes = sizeof(float);
+	//memcpy(&meshImportSettings.scale, cursor, bytes);
 
 	if (meshesUuids.size() > 0)
 		return true;
@@ -579,25 +590,171 @@ uint ResourceMesh::GetIndicesCount() const
 	return meshData.indicesSize;
 }
 
-void ResourceMesh::GenerateAndBindDeformableMesh()
+bool ResourceMesh::UseAdjacency() const
 {
-	assert(deformableMeshData.vertices != nullptr && deformableMeshData.verticesSize > 0
-		&& deformableMeshData.indices != nullptr && deformableMeshData.indicesSize > 0);
-
-	App->sceneImporter->GenerateVBO(DVBO, deformableMeshData.vertices, deformableMeshData.verticesSize);
-	App->sceneImporter->GenerateIBO(DIBO, deformableMeshData.indices, deformableMeshData.indicesSize);
-	App->sceneImporter->GenerateVAO(DVAO, DVBO, deformableMeshData.meshImportSettings.attributes);
+	return meshData.adjacency;
 }
 
-void ResourceMesh::DuplicateMesh(ResourceMesh * mesh)
+bool ResourceMesh::AddBones(const std::unordered_map<const char*, uint>& bones)
 {
-	deformableMeshData.vertices = new Vertex[meshData.verticesSize];
-	deformableMeshData.verticesSize = meshData.verticesSize;
-	deformableMeshData.indices = new uint[meshData.indicesSize];
-	deformableMeshData.indicesSize = meshData.indicesSize;
-	deformableMeshData.meshImportSettings = meshData.meshImportSettings;
-	memcpy(deformableMeshData.vertices, meshData.vertices, sizeof(Vertex) * meshData.verticesSize);
-	memcpy(deformableMeshData.indices, meshData.indices, sizeof(uint) * meshData.indicesSize);
+	uint addedBones = 0;
+
+	uint boneId = 0; // this id matches the uniform bones array id
+	for (std::unordered_map<const char*, uint>::const_iterator it = bones.begin(); it != bones.end(); ++it, ++boneId)
+	{
+		/// Bone game object
+		GameObject* boneGameObject = App->GOs->GetGameObjectByUID(it->second);
+		if (boneGameObject == nullptr)
+			continue;
+
+		/// Bone component
+		ComponentBone* boneComponent = boneGameObject->cmp_bone;
+		if (boneComponent == nullptr)
+			continue;
+
+		/// Bone resource
+		ResourceBone* boneResource = (ResourceBone*)App->res->GetResource(boneComponent->res);
+		if (boneResource == nullptr)
+			continue;
+
+		// Bone
+		for (uint i = 0; i < meshData.boneInfluencesSize; ++i)
+		{
+			if (strcmp(boneResource->boneData.name.data(), meshData.boneInfluences[i].boneName) == 0)
+			{
+				// Vertices influenced by the bone
+				for (uint j = 0; j < meshData.boneInfluences[j].bonesWeightsSize; ++j)
+				{
+					if (AddBone(meshData.boneInfluences[i].boneIds[i], meshData.boneInfluences[i].boneWeights[i], boneId))
+						++addedBones;
+					else
+						CONSOLE_LOG(LogTypes::Error, "Resource Mesh: The bone %s could not be added to the mesh", boneResource->boneData.name.data());
+				}
+			}
+			else
+				CONSOLE_LOG(LogTypes::Error, "Resource Mesh: The bone %s could not be found nor added to the mesh", boneResource->boneData.name.data());
+		}
+	}
+
+	return addedBones == boneId;
+}
+
+bool ResourceMesh::AddBone(uint vertexId, float boneWeight, uint boneId)
+{
+	assert(vertexId >= 0 && vertexId < meshData.verticesSize);
+	
+	Vertex vertex = meshData.vertices[vertexId];
+	for (uint i = 0; i < MAX_BONES; ++i)
+	{
+		// Find an empy slot
+		if (vertex.boneWeight[i] == 0.0f)
+		{
+			vertex.boneWeight[i] = boneWeight;
+			vertex.boneId[i] = boneId;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void ResourceMesh::CalculateAdjacentIndices(uint* indices, uint indicesSize, uint*& adjacentIndices)
+{
+	adjacentIndices = new uint[indicesSize * 2];
+
+	for (uint i = 0; i < indicesSize; ++i)
+	{
+		adjacentIndices[i * 2 + 0] = indices[i];
+		adjacentIndices[i * 2 + 1] = 0;
+		adjacentIndices[i * 2 + 2] = indices[i + 1];
+		adjacentIndices[i * 2 + 3] = 0;
+		adjacentIndices[i * 2 + 4] = indices[i + 2];
+		adjacentIndices[i * 2 + 5] = 0;
+	}
+
+	// Find matching edges
+	for (uint i = 0; i < indicesSize * 2; i+=6)
+	{
+		// Triangle A
+		uint a1 = adjacentIndices[i];
+		uint b1 = adjacentIndices[i + 2];
+		uint c1 = adjacentIndices[i + 4];
+
+		// Scan subsequent triangles
+		for (uint j = i + 6; j < indicesSize * 2; j += 6)
+		{
+			// Triangle B
+			uint a2 = adjacentIndices[j];
+			uint b2 = adjacentIndices[j + 2];
+			uint c2 = adjacentIndices[j + 4];
+
+			// Edge 1 == Edge 1
+			if ((a1 == a2 && b1 == b2) || (a1 == b2 && b1 == a2))
+			{
+				adjacentIndices[i + 1] = c2;
+				adjacentIndices[j + 1] = c1;
+			}
+			// Edge 1 == Edge 2
+			if ((a1 == b2 && b1 == c2) || (a1 == c2 && b1 == b2))
+			{
+				adjacentIndices[i + 1] = a2;
+				adjacentIndices[j + 3] = c1;
+			}
+			// Edge 1 == Edge 3
+			if ((a1 == c2 && b1 == a2) || (a1 == a2 && b1 == c2))
+			{
+				adjacentIndices[i + 1] = b2;
+				adjacentIndices[j + 5] = c1;
+			}
+			// Edge 2 == Edge 1
+			if ((b1 == a2 && c1 == b2) || (b1 == b2 && c1 == a2))
+			{
+				adjacentIndices[i + 3] = c2;
+				adjacentIndices[j + 1] = a1;
+			}
+			// Edge 2 == Edge 2
+			if ((b1 == b2 && c1 == c2) || (b1 == c2 && c1 == b2))
+			{
+				adjacentIndices[i + 3] = a2;
+				adjacentIndices[j + 3] = a1;
+			}
+			// Edge 2 == Edge 3
+			if ((b1 == c2 && c1 == a2) || (b1 == a2 && c1 == c2))
+			{
+				adjacentIndices[i + 3] = b2;
+				adjacentIndices[j + 5] = a1;
+			}
+			// Edge 3 == Edge 1
+			if ((c1 == a2 && a1 == b2) || (c1 == b2 && a1 == a2))
+			{
+				adjacentIndices[i + 5] = c2;
+				adjacentIndices[j + 1] = b1;
+			}
+			// Edge 3 == Edge 2
+			if ((c1 == b2 && a1 == c2) || (c1 == c2 && a1 == b2))
+			{
+				adjacentIndices[i + 5] = a2;
+				adjacentIndices[j + 3] = b1;
+			}
+			// Edge 3 == Edge 3
+			if ((c1 == c2 && a1 == a2) || (c1 == a2 && a1 == c2))
+			{
+				adjacentIndices[i + 5] = b2;
+				adjacentIndices[j + 5] = b1;
+			}
+		}
+	}
+
+	// Look for any outside edges
+	for (uint i = 0; i < indicesSize * 2; i += 6)
+	{
+		if (adjacentIndices[i + 1] == 0)
+			adjacentIndices[i + 1] = adjacentIndices[i + 4];
+		if (adjacentIndices[i + 3] == 0)
+			adjacentIndices[i + 3] = adjacentIndices[i];
+		if (adjacentIndices[i + 5] == 0)
+			adjacentIndices[i + 5] = adjacentIndices[i + 2];
+	}
 }
 
 uint ResourceMesh::GetVBO() const
@@ -617,115 +774,13 @@ uint ResourceMesh::GetVAO() const
 
 // ----------------------------------------------------------------------------------------------------
 
-// Returns true if the meshes uuids vector is not empty. Else, returns false
-bool ResourceMesh::ReadMeshesUuidsFromMeta(const char* metaFile, std::vector<uint>& meshesUuids)
-{
-	assert(metaFile != nullptr);
-
-	char* buffer;
-	uint size = App->fs->Load(metaFile, &buffer);
-	if (size > 0)
-	{
-		char* cursor = (char*)buffer;
-
-		// 1. (Last modification time)
-		uint bytes = sizeof(int64_t);
-		cursor += bytes;
-
-		// 2. Load uuids size
-		uint uuidsSize = 0;
-		bytes = sizeof(uint);
-		memcpy(&uuidsSize, cursor, bytes);
-		assert(uuidsSize > 0);
-
-		cursor += bytes;
-
-		// 3. Load meshes uuids
-		meshesUuids.resize(uuidsSize);
-		bytes = sizeof(uint) * uuidsSize;
-		memcpy(&meshesUuids[0], cursor, bytes);
-
-		CONSOLE_LOG(LogTypes::Normal, "Resource Mesh: Successfully loaded meta '%s'", metaFile);
-		RELEASE_ARRAY(buffer);
-	}
-	else
-	{
-		CONSOLE_LOG(LogTypes::Error, "Resource Mesh: Could not load meta '%s'", metaFile);
-		return false;
-	}
-
-	if (meshesUuids.size() > 0)
-		return true;
-
-	return false;
-}
-
-bool ResourceMesh::ReadMeshImportSettingsFromMeta(const char* metaFile, ResourceMeshImportSettings& meshImportSettings)
-{
-	assert(metaFile != nullptr);
-
-	char* buffer;
-	uint size = App->fs->Load(metaFile, &buffer);
-	if (size > 0)
-	{
-		char* cursor = (char*)buffer;
-
-		// 1. (Last modification time)
-		uint bytes = sizeof(int64_t);
-		cursor += bytes;
-
-		// 2. Load uuids size
-		uint uuidsSize = 0;
-		bytes = sizeof(uint);
-		memcpy(&uuidsSize, cursor, bytes);
-		assert(uuidsSize > 0);
-
-		cursor += bytes;
-
-		// 3. (Meshes uuids)
-		bytes = sizeof(uint) * uuidsSize;
-		cursor += bytes;
-
-		// 4. Load import settings
-		bytes = sizeof(int);
-		memcpy(&meshImportSettings.postProcessConfigurationFlags, cursor, bytes);
-
-		cursor += bytes;
-
-		bytes = sizeof(uint);
-		memcpy(&meshImportSettings.customConfigurationFlags, cursor, bytes);
-
-		cursor += bytes;
-
-		bytes = sizeof(float);
-		memcpy(&meshImportSettings.scale, cursor, bytes);
-
-		cursor += bytes;
-
-		bytes = sizeof(uint);
-		memcpy(&meshImportSettings.attributes, cursor, bytes);
-
-		cursor += bytes;
-
-		CONSOLE_LOG(LogTypes::Normal, "Resource Mesh: Successfully loaded meta '%s'", metaFile);
-		RELEASE_ARRAY(buffer);
-	}
-	else
-	{
-		CONSOLE_LOG(LogTypes::Error, "Resource Mesh: Could not load meta '%s'", metaFile);
-		return false;
-	}
-
-	return true;
-}
-
 bool ResourceMesh::LoadInMemory()
 {
 	assert(meshData.vertices != nullptr && meshData.verticesSize > 0
 		&& meshData.indices != nullptr && meshData.indicesSize > 0);
 
 	App->sceneImporter->GenerateVBO(VBO, meshData.vertices, meshData.verticesSize);
-	App->sceneImporter->GenerateIBO(IBO, meshData.indices, meshData.indicesSize);
+	App->sceneImporter->GenerateIBO(IBO, meshData.adjacency ? meshData.adjacentIndices : meshData.indices, meshData.adjacency ? 2 * meshData.indicesSize : meshData.indicesSize);
 	App->sceneImporter->GenerateVAO(VAO, VBO, meshData.meshImportSettings.attributes);
 
 	return true;
@@ -738,11 +793,4 @@ bool ResourceMesh::UnloadFromMemory()
 	App->sceneImporter->DeleteVertexArrayObject(VAO);
 
 	return true;
-}
-
-void ResourceMesh::UnloadDeformableMeshFromMemory()
-{
-	App->sceneImporter->DeleteBufferObject(DVBO);
-	App->sceneImporter->DeleteBufferObject(DIBO);
-	App->sceneImporter->DeleteVertexArrayObject(DVAO);
 }

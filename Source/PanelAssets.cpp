@@ -19,6 +19,8 @@
 #include "ResourceMesh.h"
 #include "ResourceTexture.h"
 #include "ResourceMaterial.h"
+#include "ResourceAnimator.h"
+#include "ResourceAvatar.h"
 #include "ResourceShaderProgram.h"
 #include "ResourcePrefab.h"
 
@@ -39,7 +41,7 @@ bool PanelAssets::Draw()
 		{
 			App->scripting->CreateDomain();
 
-			App->fs->ForceReImport(App->fs->rootAssets);
+			App->fs->ForceReImport(App->fs->rootDir);
 
 			System_Event event;
 			event.type = System_Event_Type::DeleteUnusedFiles;
@@ -48,11 +50,26 @@ bool PanelAssets::Draw()
 
 		ImGui::SameLine();
 
-		if (ImGui::Button("Generate Library Files"))
+		if (ImGui::Button("Build"))
 		{
+			//1. Delete Library
+			//2. Export everything in Assets
+			//3. GenerateLibraryFiles event
+			//4. Copy library, the readme, the dlls, (Settings?) and AudioFolder (temp) to a new Build folder and make a zip with it.
+
+			//Delete library
+			bool ret = App->fs->deleteFiles("Library", "");
+			/*if (ret == false)
+				return false;*/
+
+			//Export everything in Assets
+			App->fs->ImportMainDir(true);
+
 			System_Event newEvent;
 			newEvent.type = System_Event_Type::GenerateLibraryFiles;
 			App->PushSystemEvent(newEvent);
+
+			App->fs->build = true;
 		}
 
 		bool treeNodeOpened = ImGui::TreeNodeEx(DIR_ASSETS);
@@ -88,7 +105,7 @@ bool PanelAssets::Draw()
 
 		if (treeNodeOpened)
 		{
-			RecursiveDrawAssetsDir(App->fs->rootAssets);
+			RecursiveDrawAssetsDir(App->fs->rootDir);
 			ImGui::TreePop();
 		}
 	}
@@ -105,6 +122,12 @@ bool PanelAssets::Draw()
 			break;
 		case ResourceTypes::MaterialResource:
 			strcpy_s(resource, strlen("Create Material") + 1, "Create Material");
+			break;
+		case ResourceTypes::AnimatorResource:
+			strcpy_s(resource, strlen("Create Animator") + 1, "Create Animator");
+			break;
+		case ResourceTypes::AvatarResource:
+			strcpy_s(resource, strlen("Create Avatar") + 1, "Create Avatar");
 			break;
 		}
 
@@ -125,6 +148,12 @@ bool PanelAssets::Draw()
 			break;
 		case ResourceTypes::MaterialResource:
 			strcpy_s(resource, strlen("Delete Material") + 1, "Delete Material");
+			break;
+		case ResourceTypes::AnimatorResource:
+			strcpy_s(resource, strlen("Delete Animator") + 1, "Delete Animator");
+			break;
+		case ResourceTypes::AvatarResource:
+			strcpy_s(resource, strlen("Delete Avatar") + 1, "Delete Avatar");
 			break;
 		}
 
@@ -222,8 +251,7 @@ void PanelAssets::RecursiveDrawAssetsDir(const Directory& directory)
 					}
 
 					ImGui::TreePop();
-				}
-			
+				}	
 				break;
 			}
 
@@ -239,9 +267,11 @@ void PanelAssets::RecursiveDrawAssetsDir(const Directory& directory)
 				if (res)
 					res->OnPanelAssets();
 
-				if (resourceType == ResourceTypes::ShaderObjectResource ||
-					resourceType == ResourceTypes::ShaderProgramResource ||
-					resourceType == ResourceTypes::MaterialResource)
+				if (resourceType == ResourceTypes::ShaderObjectResource
+					|| resourceType == ResourceTypes::ShaderProgramResource
+					|| resourceType == ResourceTypes::MaterialResource
+					|| resourceType == ResourceTypes::AnimatorResource
+					|| resourceType == ResourceTypes::AvatarResource)
 					DeleteResourcePopUp(res->GetFile());
 
 				break;
@@ -315,6 +345,26 @@ void PanelAssets::CreateResourcePopUp(const char* path)
 			showCreateResourceConfirmationPopUp = true;
 			ImGui::CloseCurrentPopup();
 		}
+		else if (ImGui::Selectable("Create Animator"))
+		{
+			extension = EXTENSION_ANIMATOR;
+			strcpy_s(resourceName, strlen("New Animator") + 1, "New Animator");
+			file = path;
+			file.append("/");
+
+			showCreateResourceConfirmationPopUp = true;
+			ImGui::CloseCurrentPopup();
+		}
+		else if (ImGui::Selectable("Create Avatar"))
+		{
+			extension = EXTENSION_AVATAR;
+			strcpy_s(resourceName, strlen("New Avatar") + 1, "New Avatar");
+			file = path;
+			file.append("/");
+
+			showCreateResourceConfirmationPopUp = true;
+			ImGui::CloseCurrentPopup();
+		}
 		ImGui::EndPopup();
 	}
 }
@@ -336,6 +386,12 @@ void PanelAssets::DeleteResourcePopUp(const char* path)
 			break;
 		case ResourceTypes::MaterialResource:
 			strcpy_s(resource, strlen("Delete Material") + 1, "Delete Material");
+			break;
+		case ResourceTypes::AnimatorResource:
+			strcpy_s(resource, strlen("Delete Animator") + 1, "Delete Animator");
+			break;
+		case ResourceTypes::AvatarResource:
+			strcpy_s(resource, strlen("Delete Avatar") + 1, "Delete Avatar");
 			break;
 		}
 
@@ -361,6 +417,12 @@ void PanelAssets::CreateResourceConfirmationPopUp()
 		break;
 	case ResourceTypes::MaterialResource:
 		strcpy_s(resource, strlen("Create Material") + 1, "Create Material");
+		break;
+	case ResourceTypes::AnimatorResource:
+		strcpy_s(resource, strlen("Create Animator") + 1, "Create Animator");
+		break;
+	case ResourceTypes::AvatarResource:
+		strcpy_s(resource, strlen("Create Avatar") + 1, "Create Avatar");
 		break;
 	}
 
@@ -420,6 +482,30 @@ void PanelAssets::CreateResourceConfirmationPopUp()
 				App->res->ExportFile(resourceType, data, &materialData, outputFile, true); // overwrite true since we already know the path
 			}
 			break;
+
+			case ResourceTypes::AnimatorResource:
+			{
+				// Basic animator info
+				ResourceAnimatorData animatorData;
+				animatorData.avatar_uuid = 0u;
+				animatorData.name = "Nameless animator uwu edition";
+
+				// Export the new file
+				std::string outputFile;
+				App->res->ExportFile(resourceType, data, &animatorData, outputFile, true); // overwrite true since we already know the path
+			}
+			break;
+
+			case ResourceTypes::AvatarResource:
+			{
+				// Basic avatar info
+				ResourceAvatarData avatarData;
+
+				// Export the new file
+				std::string outputFile;
+				App->res->ExportFile(resourceType, data, &avatarData, outputFile, true); // overwrite true since we already know the path
+			}
+			break;
 			}
 
 			showCreateResourceConfirmationPopUp = false;
@@ -453,6 +539,12 @@ void PanelAssets::DeleteResourceConfirmationPopUp()
 	case ResourceTypes::MaterialResource:
 		strcpy_s(resource, strlen("Delete Material") + 1, "Delete Material");
 		break;
+	case ResourceTypes::AnimatorResource:
+		strcpy_s(resource, strlen("Delete Animator") + 1, "Delete Animator");
+		break;
+	case ResourceTypes::AvatarResource:
+		strcpy_s(resource, strlen("Delete Avatar") + 1, "Delete Avatar");
+		break;
 	}
 
 	if (ImGui::BeginPopupModal(resource, NULL, ImGuiWindowFlags_AlwaysAutoResize))
@@ -467,6 +559,12 @@ void PanelAssets::DeleteResourceConfirmationPopUp()
 			break;
 		case ResourceTypes::MaterialResource:
 			ImGui::Text("Are you sure that you want to delete the following Material?");
+			break;
+		case ResourceTypes::AnimatorResource:
+			ImGui::Text("Are you sure that you want to delete the following Animator?");
+			break;
+		case ResourceTypes::AvatarResource:
+			ImGui::Text("Are you sure that you want to delete the following Avatar?");
 			break;
 		}
 		ImGui::TextColored(BLUE, "%s", file.data());

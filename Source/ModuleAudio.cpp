@@ -4,6 +4,10 @@
 #include "ComponentAudioSource.h"
 #include "Brofiler/Brofiler.h"
 
+#include "ModuleResourceManager.h"
+#include "ResourceTypes.h"
+#include "ResourceAudioBank.h"
+
 ModuleAudio::ModuleAudio(bool start_enabled) : Module(start_enabled)
 {
 	this->name = "Audio";
@@ -14,15 +18,14 @@ ModuleAudio::~ModuleAudio()
 
 bool ModuleAudio::Start()
 {
-	// Init wwise and audio banks
+	// Init wwise
 	WwiseT::InitSoundEngine();
-	WwiseT::LoadBank("Assignment3.bnk");
 	return true;
 }
 
 update_status ModuleAudio::Update(/*float dt*/)
 {
-#ifndef GAMEMODE
+#ifdef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 	if (audioisplayed == false) {
 		PlayOnAwake();
@@ -43,6 +46,14 @@ bool ModuleAudio::CleanUp()
 {
 	audio_sources.clear();
 	event_list.clear();
+
+	std::vector<Resource*> banks = App->res->GetResourcesByType(ResourceTypes::AudioBankResource);
+	if (!banks.empty())
+	{
+		ResourceAudioBank* bank = (ResourceAudioBank*)banks[0];
+		bank->ClearBank();
+	}
+
 	WwiseT::CloseSoundEngine();
 	return true;
 }

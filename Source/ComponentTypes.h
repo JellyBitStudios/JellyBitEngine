@@ -14,6 +14,7 @@ enum ComponentTypes
 	ScriptComponent,
 	BoneComponent,
 	AnimationComponent,
+	AnimatorComponent,
 	RectTransformComponent,
 	CanvasRendererComponent,
 	ImageComponent,

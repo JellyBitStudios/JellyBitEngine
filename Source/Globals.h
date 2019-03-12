@@ -67,7 +67,7 @@ enum update_status
 #define EXTENSION_TEXTURE ".nekoDDS"
 #define EXTENSION_BONE ".nekoBone"
 #define EXTENSION_ANIMATION ".nekoAnimation"
-#define EXTENSION_SCENE ".nekoScene"
+#define EXTENSION_SCENE ".scn"
 #define EXTENSION_VERTEX_SHADER_OBJECT ".vsh"
 #define EXTENSION_FRAGMENT_SHADER_OBJECT ".fsh"
 #define EXTENSION_GEOMETRY_SHADER_OBJECT ".gsh"
@@ -76,5 +76,8 @@ enum update_status
 #define EXTENSION_META ".meta"
 #define EXTENSION_SCRIPT ".cs"
 #define EXTENSION_MATERIAL ".mat"
+#define EXTENSION_ANIMATOR ".ani"
+#define EXTENSION_AVATAR ".ava"
+#define EXTENSION_AUDIOBANK ".bnk"
 
 #define UILAYER 1

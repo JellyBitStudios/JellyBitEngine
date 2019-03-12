@@ -7,6 +7,9 @@
 #include "ComponentEmitter.h"
 #include "ComponentRectTransform.h"
 #include "ComponentButton.h"
+#include "ComponentAudioSource.h"
+#include "ComponentAudioListener.h"
+#include "ComponentRigidDynamic.h"
 
 #include "GameObject.h"
 
@@ -35,8 +38,7 @@
 #include "MathGeoLib/include/MathGeoLib.h"
 #include "Brofiler/Brofiler.h"
 
-
-#define NAVMESHAGENT_ASCII 1299603790
+#include "parson/parson.h"
 
 bool exec(const char* cmd, std::string& error)
 {
@@ -97,6 +99,7 @@ bool ScriptingModule::Init(JSON_Object* data)
 
 bool ScriptingModule::Start()
 {
+	InitPlayerPrefs();
 
 #ifndef GAMEMODE
 	CreateScriptingProject();
@@ -184,26 +187,45 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 {
 	switch (event.type)
 	{
+		case System_Event_Type::LoadFinished:
+		{
+			if (App->GetEngineState() == engine_states::ENGINE_PLAY)
+			{
+				for (int i = 0; i < scripts.size(); ++i)
+				{
+					scripts[i]->OnEnableMethod();
+				}
+
+				for (int i = 0; i < scripts.size(); ++i)
+				{
+					scripts[i]->Awake();
+				}
+
+				for (int i = 0; i < scripts.size(); ++i)
+				{
+					scripts[i]->Start();
+				}
+			}
+			break;
+		}
+
 		case System_Event_Type::Play:
 		{
 			//TODO: Check if some files have compile errors and don't let the user hit the play.
 
 			for (int i = 0; i < scripts.size(); ++i)
 			{
-				if (scripts[i]->IsTreeActive())
-					scripts[i]->OnEnableMethod();
+				scripts[i]->OnEnableMethod();
 			}
 
 			for (int i = 0; i < scripts.size(); ++i)
 			{
-				if (scripts[i]->IsTreeActive() && !scripts[i]->awaked)
-					scripts[i]->Awake();
+				scripts[i]->Awake();
 			}
 
 			for (int i = 0; i < scripts.size(); ++i)
 			{
-				if (scripts[i]->IsTreeActive())
-					scripts[i]->Start();
+				scripts[i]->Start();
 			}
 		
 			//Call the Awake and Start for all the Enabled script in the Play instant.
@@ -538,6 +560,26 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 		case ComponentTypes::ImageComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine.UI", "Image"));
+			break;
+		}
+		case ComponentTypes::RigidDynamicComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Rigidbody"));
+			break;
+		}
+		case ComponentTypes::ProjectorComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Projector"));
+			break;
+		}
+		case ComponentTypes::AudioSourceComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "AudioSource"));
+			break;
+		}
+		case ComponentTypes::AudioListenerComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "AudioListener"));
 			break;
 		}
 	}
@@ -891,6 +933,14 @@ void ScriptingModule::GameObjectKilled(GameObject* killed)
 	}
 }
 
+void ScriptingModule::FixedUpdate()
+{
+	for (int i = 0; i < scripts.size(); ++i)
+	{
+		scripts[i]->FixedUpdate();
+	}
+}
+
 void ScriptingModule::UpdateMethods()
 {
 	for (int i = 0; i < scripts.size(); ++i)
@@ -927,6 +977,25 @@ void ScriptingModule::ExecuteCallbacks(GameObject* gameObject)
 	for (int i = 0; i < gameObject->children.size(); ++i)
 	{
 		ExecuteCallbacks(gameObject->children[i]);
+	}
+}
+
+void ScriptingModule::InitPlayerPrefs()
+{
+	if (App->fs->Exists("PrefDir/playerPrefs.jb"))
+	{
+		char* buffer;
+		uint size = App->fs->Load("PrefDir/playerPrefs.jb", &buffer);
+		if (size > 0)
+		{
+			playerPrefs = json_parse_string(buffer);
+			playerPrefsOBJ = json_value_get_object(playerPrefs);
+		}
+	}
+	else
+	{
+		playerPrefs = json_value_init_object();
+		playerPrefsOBJ = json_value_get_object(playerPrefs);
 	}
 }
 
@@ -1028,13 +1097,13 @@ MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, M
 		if (position)
 		{
 			math::float3 newPos{mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2)};
-			instance->transform->position = newPos;
+			instance->transform->SetPosition(newPos);
 		}
 
 		if (rotation)
 		{
 			math::Quat newRotation{ mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2), mono_array_get(position, float, 3)};
-			instance->transform->rotation = newRotation;
+			instance->transform->SetRotation(newRotation);
 		}
 
 		uint32_t handleID = mono_gchandle_new(monoInstance, true);
@@ -1085,13 +1154,13 @@ MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, M
 		if (position)
 		{
 			math::float3 newPos{ mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2) };
-			newGameObject->transform->position = newPos;
+			newGameObject->transform->SetPosition(newPos);
 		}
 
 		if (rotation)
 		{
 			math::Quat newRotation{ mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2), mono_array_get(position, float, 3) };
-			newGameObject->transform->rotation = newRotation;
+			newGameObject->transform->SetRotation(newRotation);
 		}
 
 		App->scripting->ExecuteCallbacks(newGameObject);
@@ -1245,6 +1314,11 @@ float GetRealDeltaTime()
 	return App->timeManager->GetRealDt();
 }
 
+float GetFixedDeltaTime()
+{
+	return App->physics->GetFixedDT();
+}
+
 float GetTime()
 {
 	return App->timeManager->GetGameTime();
@@ -1270,9 +1344,10 @@ MonoArray* GetLocalPosition(MonoObject* monoObject)
 
 	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_int32_class(), 3);
 
-	mono_array_set(ret, float, 0, gameObject->transform->position.x);
-	mono_array_set(ret, float, 1, gameObject->transform->position.y);
-	mono_array_set(ret, float, 2, gameObject->transform->position.z);
+	math::float3 pos = gameObject->transform->GetPosition();
+	mono_array_set(ret, float, 0, pos.x);
+	mono_array_set(ret, float, 1, pos.y);
+	mono_array_set(ret, float, 2, pos.z);
 
 	return ret;
 }
@@ -1290,9 +1365,11 @@ void SetLocalPosition(MonoObject* monoObject, MonoArray* position)
 	if (!gameObject->transform)
 		return;
 
-	gameObject->transform->position.x = mono_array_get(position, float, 0);
-	gameObject->transform->position.y = mono_array_get(position, float, 1);
-	gameObject->transform->position.z = mono_array_get(position, float, 2);
+	math::float3 pos = math::float3::zero;
+	pos.x = mono_array_get(position, float, 0);
+	pos.y = mono_array_get(position, float, 1);
+	pos.z = mono_array_get(position, float, 2);
+	gameObject->transform->SetPosition(pos);
 }
 
 MonoArray* GetLocalRotation(MonoObject* monoObject)
@@ -1310,10 +1387,11 @@ MonoArray* GetLocalRotation(MonoObject* monoObject)
 
 	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_int32_class(), 4);
 
-	mono_array_set(ret, float, 0, gameObject->transform->rotation.x);
-	mono_array_set(ret, float, 1, gameObject->transform->rotation.y);
-	mono_array_set(ret, float, 2, gameObject->transform->rotation.z);
-	mono_array_set(ret, float, 3, gameObject->transform->rotation.w);
+	math::Quat rot = gameObject->transform->GetRotation();
+	mono_array_set(ret, float, 0, rot.x);
+	mono_array_set(ret, float, 1, rot.y);
+	mono_array_set(ret, float, 2, rot.z);
+	mono_array_set(ret, float, 3, rot.w);
 
 	return ret;
 }
@@ -1331,10 +1409,12 @@ void SetLocalRotation(MonoObject* monoObject, MonoArray* rotation)
 	if (!gameObject->transform)
 		return;
 
-	gameObject->transform->rotation.x = mono_array_get(rotation, float, 0);
-	gameObject->transform->rotation.y = mono_array_get(rotation, float, 1);
-	gameObject->transform->rotation.z = mono_array_get(rotation, float, 2);
-	gameObject->transform->rotation.w = mono_array_get(rotation, float, 3);
+	math::Quat rot = math::Quat::identity;
+	rot.x = mono_array_get(rotation, float, 0);
+	rot.y = mono_array_get(rotation, float, 1);
+	rot.z = mono_array_get(rotation, float, 2);
+	rot.w = mono_array_get(rotation, float, 3);
+	gameObject->transform->SetRotation(rot);
 }
 
 MonoArray* GetLocalScale(MonoObject* monoObject)
@@ -1352,9 +1432,11 @@ MonoArray* GetLocalScale(MonoObject* monoObject)
 
 	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_int32_class(), 3);
 
-	mono_array_set(ret, float, 0, gameObject->transform->scale.x);
-	mono_array_set(ret, float, 1, gameObject->transform->scale.y);
-	mono_array_set(ret, float, 2, gameObject->transform->scale.z);
+
+	math::float3 scale = gameObject->transform->GetScale();
+	mono_array_set(ret, float, 0, scale.x);
+	mono_array_set(ret, float, 1, scale.y);
+	mono_array_set(ret, float, 2, scale.z);
 
 	return ret;
 }
@@ -1372,9 +1454,12 @@ void SetLocalScale(MonoObject* monoObject, MonoArray* scale)
 	if (!gameObject->transform)
 		return;
 
-	gameObject->transform->scale.x = mono_array_get(scale, float, 0);
-	gameObject->transform->position.y = mono_array_get(scale, float, 1);
-	gameObject->transform->scale.z = mono_array_get(scale, float, 2);
+
+	math::float3 newScale = math::float3::zero;
+	newScale.x = mono_array_get(scale, float, 0);
+	newScale.y = mono_array_get(scale, float, 1);
+	newScale.z = mono_array_get(scale, float, 2);
+	gameObject->transform->SetScale(newScale);
 }
 
 MonoArray* GetGlobalPos(MonoObject* monoObject)
@@ -1521,6 +1606,9 @@ void SetGlobalScale(MonoObject* monoObject, MonoArray* globalScale)
 
 MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 {
+	if (!monoObject || !type)
+		return nullptr;
+
 	MonoObject* monoComp = nullptr;
 
 	std::string className = mono_class_get_name(mono_object_get_class(type));
@@ -1597,6 +1685,58 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 			return nullptr;
 
 		Component* comp = gameObject->GetComponent(ComponentTypes::ImageComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
+	else if (className == "Rigidbody")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::RigidDynamicComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
+	else if (className == "Projector")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::ProjectorComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
+	else if (className == "AudioSource")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::AudioSourceComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
+	else if (className == "AudioListener")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::AudioListenerComponent);
 
 		if (!comp)
 			return nullptr;
@@ -1760,6 +1900,159 @@ void SetDestination(MonoObject* navMeshAgent, MonoArray* newDestination)
 	agent->SetDestination(newDestinationcpp.ptr());
 }
 
+float NavAgentGetRadius(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->radius;
+	}
+
+	return 0.0f;
+}
+
+void NavAgentSetRadius(MonoObject* compAgent, float newRadius)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->radius = newRadius;
+		agent->UpdateParams();
+	}
+}
+
+float NavAgentGetHeight(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->height;
+	}
+
+	return 0.0f;
+}
+
+void NavAgentSetHeight(MonoObject* compAgent, float newHeight)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->height = newHeight;
+		agent->UpdateParams();
+	}
+}
+
+float NavAgentGetMaxAcceleration(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->maxAcceleration;
+	}
+
+	return 0.0f;
+}
+
+void NavAgentSetMaxAcceleration(MonoObject* compAgent, float newMaxAcceleration)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->maxAcceleration = newMaxAcceleration;
+		agent->UpdateParams();
+	}
+}
+
+float NavAgentGetMaxSpeed(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->maxSpeed;
+	}
+
+	return 0.0f;
+}
+
+void NavAgentSetMaxSpeed(MonoObject* compAgent, float newMaxSpeed)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->maxSpeed = newMaxSpeed;
+		agent->UpdateParams();
+	}
+}
+
+float NavAgentGetSeparationWeight(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->separationWeight;
+	}
+
+	return 0.0f;
+}
+
+void NavAgentSetSeparationWeight(MonoObject* compAgent, float newSeparationWeight)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->separationWeight = newSeparationWeight;
+		agent->UpdateParams();
+	}
+}
+
+bool NavAgentIsWalking(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+		return agent->IsWalking();
+
+	return false;
+}
+
+void NavAgentRequestMoveVelocity(MonoObject* compAgent, MonoArray* direction)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		math::float3 dirCPP(mono_array_get(direction, float, 0), mono_array_get(direction, float, 1), mono_array_get(direction, float, 2));
+		agent->RequestMoveVelocity(dirCPP.ptr());
+	}		
+}
+
+void NavAgentResetMoveTarget(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->ResetMoveTarget();
+	}
+}
+
+uint NavAgentGetParams(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->params;
+	}
+	return 0;
+}
+
+void NavAgentSetParams(MonoObject* compAgent, uint params)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->params = params;
+		agent->UpdateParams();
+	}
+}
+
 bool OverlapSphere(float radius, MonoArray* center, MonoArray** overlapHit, uint filterMask, SceneQueryFlags sceneQueryFlags)
 {
 	math::float3 centercpp(mono_array_get(center, float, 0), mono_array_get(center, float, 1), mono_array_get(center, float, 2));
@@ -1897,6 +2190,447 @@ int ButtonGetState(MonoObject* buttonComp)
 	}
 }
 
+void PlayerPrefsSave()
+{
+	uint size = json_serialization_size(App->scripting->playerPrefs);
+	char* buffer = new char[size];
+	JSON_Status status = json_serialize_to_buffer(App->scripting->playerPrefs, buffer, size);
+
+	std::string writeDir = App->fs->GetWritePath();
+
+	bool success = App->fs->SetWriteDir(App->fs->GetPrefDir());
+	App->fs->Save("playerPrefs.jb", buffer, size);
+	App->fs->SetWriteDir(writeDir);
+}
+
+void PlayerPrefsSetNumber(MonoString* key, double value)
+{
+	char* keyCpp = mono_string_to_utf8(key);
+	json_object_set_number(App->scripting->playerPrefsOBJ, keyCpp, value);
+	mono_free(keyCpp);
+}
+
+double PlayerPrefsGetNumber(MonoString* key)
+{
+	char* keyCpp = mono_string_to_utf8(key);
+	double value = json_object_get_number(App->scripting->playerPrefsOBJ, keyCpp);
+	mono_free(keyCpp);
+
+	return value;
+}
+
+void PlayerPrefsSetString(MonoString* key, MonoString* string)
+{
+	char* keyCpp = mono_string_to_utf8(key);
+	char* stringCpp = mono_string_to_utf8(string);
+
+	json_object_set_string(App->scripting->playerPrefsOBJ, keyCpp, stringCpp);
+
+	mono_free(keyCpp);
+	mono_free(stringCpp);
+}
+
+MonoString* PlayerPrefsGetString(MonoString* key)
+{
+	char* keyCpp = mono_string_to_utf8(key);
+	char* stringCpp = (char*)json_object_get_string(App->scripting->playerPrefsOBJ, keyCpp);
+	
+	if (!stringCpp)
+		return nullptr;
+
+	MonoString* string = mono_string_new(App->scripting->domain, stringCpp);
+	
+	mono_free(keyCpp);
+
+	return string;
+}
+
+void PlayerPrefsSetBoolean(MonoString* key, bool boolean)
+{
+	char* keyCpp = mono_string_to_utf8(key);
+	json_object_set_boolean(App->scripting->playerPrefsOBJ, keyCpp, boolean);
+	mono_free(keyCpp);
+}
+
+bool PlayerPrefsGetBoolean(MonoString* key)
+{
+	char* keyCpp = mono_string_to_utf8(key);
+	bool ret = json_object_get_boolean(App->scripting->playerPrefsOBJ, keyCpp);
+	mono_free(keyCpp);
+
+	return ret;
+}
+
+bool PlayerPrefsHasKey(MonoString* key)
+{
+	char* keyCpp = mono_string_to_utf8(key);
+
+	bool ret = json_object_has_value(App->scripting->playerPrefsOBJ, keyCpp);
+
+	mono_free(keyCpp);
+
+	return ret;
+}
+
+void PlayerPrefsDeleteKey(MonoString* key)
+{
+	char* keyCpp = mono_string_to_utf8(key);
+
+	json_object_remove(App->scripting->playerPrefsOBJ, keyCpp);
+
+	mono_free(keyCpp);
+}
+
+void PlayerPrefsDeleteAll()
+{
+	json_object_clear(App->scripting->playerPrefsOBJ);
+}
+
+void SMLoadScene(MonoString* sceneName)
+{
+	char* sceneNameCPP = mono_string_to_utf8(sceneName);
+
+	System_Event newEvent;
+	newEvent.sceneEvent.type = System_Event_Type::LoadScene;
+	memcpy(newEvent.sceneEvent.nameScene, sceneNameCPP, sizeof(char) * DEFAULT_BUF_SIZE);
+	App->PushSystemEvent(newEvent);
+
+	mono_free(sceneNameCPP);
+}
+
+MonoString* AudioSourceGetAudio(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return nullptr;
+
+	std::string audio = source->GetAudioToPlay();
+	return mono_string_new(App->scripting->domain, audio.c_str());
+}
+
+void AudioSourceSetAudio(MonoObject* monoComp, MonoString* newAudio)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	char* audio = mono_string_to_utf8(newAudio);
+
+	source->SetAudio(audio);
+
+	mono_free(audio);
+}
+
+bool AudioSourceGetMuted(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return false;
+
+	return source->isMuted();
+}
+
+void AudioSourceSetMuted(MonoObject* monoComp, bool muted)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetMuted(muted);
+}
+
+bool AudioSourceGetBypassEffects(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return false;
+
+	return source->GetBypassEffects();
+}
+
+void AudioSourceSetBypassEffects(MonoObject* monoComp, bool value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetBypassEffects(value);
+}
+
+bool AudioSourceGetPlayOnAwake(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return false;
+
+	return source->GetPlayOnAwake();
+}
+
+void AudioSourceSetPlayOnAwake(MonoObject* monoComp, bool value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetPlayOnAwake(value);
+}
+
+bool AudioSourceGetLoop(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return false;
+
+	return source->isInLoop();
+}
+
+void AudioSourceSetLoop(MonoObject* monoComp, bool value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetLoop(value);
+}
+
+int AudioSourceGetPriority(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return -1;
+
+	return source->GetPriority();
+}
+
+void AudioSourceSetPriority(MonoObject* monoComp, int value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetPriority(value);
+}
+
+float AudioSourceGetVolume(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return -1.0f;
+
+	return source->GetVolume();
+}
+
+void AudioSourceSetVolume(MonoObject* monoComp, float value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetVolume(value);
+}
+
+bool AudioSourceGetMono(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return false;
+
+	return source->isMono();
+}
+
+void AudioSourceSetMono(MonoObject* monoComp, bool value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetMono(value);
+}
+
+float AudioSourceGetPitch(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return -1.0f;
+
+	return source->GetPitch();
+}
+
+void AudioSourceSetPitch(MonoObject* monoComp, float value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetPitch(value);
+}
+
+float AudioSourceGetStereoPanL(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return -1.0f;
+
+	return source->GetStereoPanLeft();
+}
+
+void AudioSourceSetStereoPanL(MonoObject* monoComp, float value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetStereoPanLeft(value);
+}
+
+float AudioSourceGetStereoPanR(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return -1.0f;
+
+	return source->GetStereoPanRight();
+}
+
+void AudioSourceSetStereoPanR(MonoObject* monoComp, float value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetStereoPanRight(value);
+}
+
+float AudioSourceGetMinDistance(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return -1.0f;
+
+	return source->GetMinDistance();
+}
+
+void AudioSourceSetMinDistance(MonoObject* monoComp, float value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetMinDistance(value);
+}
+
+float AudioSourceGetMaxDistance(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return -1.0f;
+
+	return source->GetMaxDistance();
+}
+
+void AudioSourceSetMaxDistance(MonoObject* monoComp, float value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetMaxDistance(value);
+}
+
+int AudioSourceGetState(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return -1;
+
+	return source->GetState();
+}
+
+void AudioSourceSetState(MonoObject* monoComp, int value)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->SetState(value);
+}
+
+void AudioSourcePlayAudio(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->PlayAudio();
+}
+
+void AudioSourcePauseAudio(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->PauseAudio();
+}
+
+void AudioSourceResumeAudio(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->ResumeAudio();
+}
+
+void AudioSourceStopAudio(MonoObject* monoComp)
+{
+	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
+	if (!source)
+		return;
+
+	source->StopAudio();
+}
+
+void RigidbodyAddForce(MonoObject* monoComp, MonoArray* force, int mode)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoComp);
+	if (!rigidbody)
+		return;
+
+	math::float3 forceCpp(mono_array_get(force, float, 0), mono_array_get(force, float, 1), mono_array_get(force, float, 2));
+
+	rigidbody->AddForce(forceCpp, (physx::PxForceMode::Enum) mode);
+}
+
+void RigidbodyClearForce(MonoObject* monoComp)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoComp);
+	if (!rigidbody)
+		return;
+
+	rigidbody->ClearForce();
+}
+
+void RigidbodyAddTorque(MonoObject* monoComp, MonoArray* torque, int mode)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoComp);
+	if (!rigidbody)
+		return;
+
+	math::float3 torqueCpp(mono_array_get(torque, float, 0), mono_array_get(torque, float, 1), mono_array_get(torque, float, 2));
+
+	rigidbody->AddTorque(torqueCpp, (physx::PxForceMode::Enum) mode);
+}
+
+void RigidbodyClearTorque(MonoObject* monoComp)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoComp);
+	if (!rigidbody)
+		return;
+
+	rigidbody->ClearTorque();
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -1952,6 +2686,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Time::getRealDeltaTime", (const void*)&GetRealDeltaTime);
 	mono_add_internal_call("JellyBitEngine.Time::getTime", (const void*)&GetTime);
 	mono_add_internal_call("JellyBitEngine.Time::getRealTime", (const void*)&GetRealTime);
+	mono_add_internal_call("JellyBitEngine.Time::getFixedDT", (const void*)&GetFixedDeltaTime);
 	mono_add_internal_call("JellyBitEngine.Transform::getLocalPosition", (const void*)&GetLocalPosition);
 	mono_add_internal_call("JellyBitEngine.Transform::setLocalPosition", (const void*)&SetLocalPosition);
 	mono_add_internal_call("JellyBitEngine.Transform::getLocalRotation", (const void*)&GetLocalRotation);
@@ -1982,6 +2717,68 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Button::GetState", (const void*)&ButtonGetState);
 	mono_add_internal_call("JellyBitEngine.GameObject::GetActive", (const void*)&GetGameObjectActive);
 	mono_add_internal_call("JellyBitEngine.GameObject::SetActive", (const void*)&SetGameObjectActive);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::GetNumber", (const void*)&PlayerPrefsGetNumber);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::SetNumber", (const void*)&PlayerPrefsSetNumber);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::GetString", (const void*)&PlayerPrefsGetString);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::SetString", (const void*)&PlayerPrefsSetString);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::GetBoolean", (const void*)&PlayerPrefsGetBoolean);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::SetBoolean", (const void*)&PlayerPrefsSetBoolean);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::HasKey", (const void*)&PlayerPrefsHasKey);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::DeleteKey", (const void*)&PlayerPrefsDeleteKey);
+	mono_add_internal_call("JellyBitEngine.PlayerPrefs::DeleteAll", (const void*)&PlayerPrefsDeleteAll);
+	mono_add_internal_call("JellyBitEngine.SceneManager.SceneManager::LoadScene", (const void*)&SMLoadScene);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetRadius", (const void*)&NavAgentGetRadius);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetRadius", (const void*)&NavAgentSetRadius);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetHeight", (const void*)&NavAgentGetHeight);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetHeight", (const void*)&NavAgentSetHeight);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetMaxAcceleration", (const void*)&NavAgentGetMaxAcceleration);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetMaxAcceleration", (const void*)&NavAgentSetMaxAcceleration);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetMaxSpeed", (const void*)&NavAgentGetMaxSpeed);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetMaxSpeed", (const void*)&NavAgentSetMaxSpeed);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetSeparationWeight", (const void*)&NavAgentGetSeparationWeight);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetSeparationWeight", (const void*)&NavAgentSetSeparationWeight);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::isWalking", (const void*)&NavAgentIsWalking);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::_RequestMoveVelocity", (const void*)&NavAgentRequestMoveVelocity);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::ResetMoveTarget", (const void*)&NavAgentResetMoveTarget);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetParams", (const void*)&NavAgentGetParams);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetParams", (const void*)&NavAgentSetParams);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetAudio", (const void*)&AudioSourceGetAudio);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetAudio", (const void*)&AudioSourceSetAudio);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetMuted", (const void*)&AudioSourceGetMuted);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetMuted", (const void*)&AudioSourceSetMuted);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetBypassEffects", (const void*)&AudioSourceGetBypassEffects);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetBypassEffects", (const void*)&AudioSourceSetBypassEffects);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetPlayOnAwake", (const void*)&AudioSourceGetPlayOnAwake);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetPlayOnAwake", (const void*)&AudioSourceSetPlayOnAwake);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetLoop", (const void*)&AudioSourceGetLoop);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetLoop", (const void*)&AudioSourceSetLoop);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetPriority", (const void*)&AudioSourceGetPriority);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetPriority", (const void*)&AudioSourceSetPriority);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetVolume", (const void*)&AudioSourceGetVolume);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetVolume", (const void*)&AudioSourceSetVolume);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetMono", (const void*)&AudioSourceGetMono);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetMono", (const void*)&AudioSourceSetMono);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetPitch", (const void*)&AudioSourceGetPitch);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetPitch", (const void*)&AudioSourceSetPitch);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetStereoPanL", (const void*)&AudioSourceGetStereoPanL);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetStereoPanL", (const void*)&AudioSourceSetStereoPanL);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetStereoPanR", (const void*)&AudioSourceGetStereoPanR);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetStereoPanR", (const void*)&AudioSourceSetStereoPanR);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetMinDistance", (const void*)&AudioSourceGetMinDistance);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetMinDistance", (const void*)&AudioSourceSetMinDistance);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetMaxDistance", (const void*)&AudioSourceGetMaxDistance);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetMaxDistance", (const void*)&AudioSourceSetMaxDistance);
+	mono_add_internal_call("JellyBitEngine.AudioSource::GetState", (const void*)&AudioSourceGetState);
+	mono_add_internal_call("JellyBitEngine.AudioSource::SetState", (const void*)&AudioSourceSetState);
+	mono_add_internal_call("JellyBitEngine.AudioSource::PlayAudio", (const void*)&AudioSourcePlayAudio);
+	mono_add_internal_call("JellyBitEngine.AudioSource::PauseAudio", (const void*)&AudioSourcePauseAudio);
+	mono_add_internal_call("JellyBitEngine.AudioSource::ResumeAudio", (const void*)&AudioSourceResumeAudio);
+	mono_add_internal_call("JellyBitEngine.AudioSource::StopAudio", (const void*)&AudioSourceStopAudio);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddForce", (const void*)&RigidbodyAddForce);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddTorque", (const void*)&RigidbodyAddTorque);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearForce", (const void*)&RigidbodyClearForce);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearTorque", (const void*)&RigidbodyClearTorque);
 
 	ClearMap();
 

@@ -458,8 +458,13 @@ bool ComponentButton::MouseInScreen(const uint* rect) const
 	uint mouseX = App->input->GetMouseX();
 	uint mouseY = App->input->GetMouseY();
 
-	return mouseX > rect[X_RECT] && mouseX < rect[X_RECT] + rect[XDIST_RECT]
-		&& mouseY > rect[Y_RECT] && mouseY < rect[Y_RECT] + rect[YDIST_RECT];
+	return mouseX > rect[ComponentRectTransform::Rect::X] && mouseX < rect[ComponentRectTransform::Rect::X] + rect[ComponentRectTransform::Rect::XDIST]
+		&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST];
+}
+
+void ComponentButton::LinkToUIModule()
+{
+	App->ui->componentsUI.push_back(this);
 }
 
 void ComponentButton::SetNewKey(const char * key)

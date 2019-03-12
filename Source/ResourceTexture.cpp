@@ -368,21 +368,16 @@ bool ResourceTexture::GenerateLibraryFiles() const
 		if (size > 0)
 		{
 			// Create a new name for the meta
-			std::string extension = metaFile;
-
-			uint found = extension.find_first_of(".");
-			if (found != std::string::npos)
-				extension = extension.substr(found, extension.size());
-
 			char newMetaFile[DEFAULT_BUF_SIZE];
-			sprintf_s(newMetaFile, "%s/%u%s", DIR_LIBRARY_TEXTURES, uuid, extension.data());
+			sprintf_s(newMetaFile, "%s/%u%s%s", DIR_LIBRARY_TEXTURES, uuid, EXTENSION_TEXTURE, EXTENSION_META);
 
 			// Save the new meta (info + new name)
 			size = App->fs->Save(newMetaFile, buffer, size);
 			if (size > 0)
+			{
+				RELEASE_ARRAY(buffer);
 				return true;
-
-			RELEASE_ARRAY(buffer);
+			}
 		}		
 	}
 
@@ -407,116 +402,6 @@ uint ResourceTexture::GetHeight() const
 }
 
 // ----------------------------------------------------------------------------------------------------
-
-// Returns true if the value of the texture uuid is > 0. Else, returns false
-bool ResourceTexture::ReadTextureUuidFromMeta(const char* metaFile, uint& textureUuid)
-{
-	assert(metaFile != nullptr);
-
-	char* buffer;
-	uint size = App->fs->Load(metaFile, &buffer);
-	if (size > 0)
-	{
-		char* cursor = (char*)buffer;
-
-		// 1. (Last modification time)
-		uint bytes = sizeof(int64_t);
-		cursor += bytes;
-
-		// 2. Load uuids size
-		uint uuidsSize = 0;
-		bytes = sizeof(uint);
-		memcpy(&uuidsSize, cursor, bytes);
-		assert(uuidsSize > 0);
-
-		cursor += bytes;
-
-		// 3. Load texture uuid
-		bytes = sizeof(uint) * uuidsSize;
-		memcpy(&textureUuid, cursor, bytes);
-		assert(textureUuid > 0);
-
-		CONSOLE_LOG(LogTypes::Normal, "Resource Mesh: Successfully loaded meta '%s'", metaFile);
-		RELEASE_ARRAY(buffer);
-	}
-	else
-	{
-		CONSOLE_LOG(LogTypes::Error, "Resource Mesh: Could not load meta '%s'", metaFile);
-		return false;
-	}
-
-	if (textureUuid > 0)
-		return true;
-
-	return false;
-}
-
-bool ResourceTexture::ReadTextureImportSettingsFromMeta(const char* metaFile, ResourceTextureImportSettings& textureImportSettings)
-{
-	assert(metaFile != nullptr);
-
-	char* buffer;
-	uint size = App->fs->Load(metaFile, &buffer);
-	if (size > 0)
-	{
-		char* cursor = (char*)buffer;
-
-		// 1. (Last modification time)
-		uint bytes = sizeof(int64_t);
-		cursor += bytes;
-
-		// 2. Load uuids size
-		uint uuidsSize = 0;
-		bytes = sizeof(uint);
-		memcpy(&uuidsSize, cursor, bytes);
-		assert(uuidsSize > 0);
-
-		cursor += bytes;
-
-		// 3. (Texture uuid)
-		bytes = sizeof(uint) * uuidsSize;
-		cursor += bytes;
-
-		// 4. Load import settings
-		bytes = sizeof(int);
-		memcpy(&textureImportSettings.compression, cursor, bytes);
-
-		cursor += bytes;
-
-		bytes = sizeof(int);
-		memcpy(&textureImportSettings.wrapS, cursor, bytes);
-
-		cursor += bytes;
-
-		bytes = sizeof(int);
-		memcpy(&textureImportSettings.wrapT, cursor, bytes);
-
-		cursor += bytes;
-
-		bytes = sizeof(int);
-		memcpy(&textureImportSettings.minFilter, cursor, bytes);
-
-		cursor += bytes;
-
-		bytes = sizeof(int);
-		memcpy(&textureImportSettings.magFilter, cursor, bytes);
-
-		cursor += bytes;
-
-		bytes = sizeof(float);
-		memcpy(&textureImportSettings.anisotropy, cursor, bytes);
-
-		CONSOLE_LOG(LogTypes::Normal, "Resource Mesh: Successfully loaded meta '%s'", metaFile);
-		RELEASE_ARRAY(buffer);
-	}
-	else
-	{
-		CONSOLE_LOG(LogTypes::Error, "Resource Mesh: Could not load meta '%s'", metaFile);
-		return false;
-	}
-
-	return true;
-}
 
 bool ResourceTexture::LoadInMemory()
 {

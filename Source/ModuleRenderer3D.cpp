@@ -227,16 +227,17 @@ update_status ModuleRenderer3D::PostUpdate()
 
 	App->lights->DebugDrawLights();
 
-//	App->particle->Draw();
+	App->particle->Draw();
 
 #ifndef GAMEMODE
 
-	/*
 	if (debugDraw)
 	{
 		App->navigation->Draw();
 
 		App->debugDrawer->StartDebugDraw();
+
+		App->scene->Draw();
 
 		if (drawBoundingBoxes) // boundingBoxesColor = Yellow
 		{
@@ -270,13 +271,16 @@ update_status ModuleRenderer3D::PostUpdate()
 
 		App->debugDrawer->EndDebugDraw();
 	}
-	*/
+
+	App->ui->DrawWorldCanvas();
+
 	if (App->ui->GetUIMode())
 		App->ui->DrawCanvas();
 		
 	// 3. Editor
 	App->gui->Draw();
 #else
+	App->ui->DrawWorldCanvas();
 	//UIOnEditor
 	if (App->ui->GetUIMode())
 		App->ui->DrawCanvas();
@@ -309,12 +313,41 @@ void ModuleRenderer3D::OnSystemEvent(System_Event event)
 	switch (event.type)
 	{
 	case System_Event_Type::Play:
+#ifndef GAMEMODE
+		CalculateProjectionMatrix();
+#endif // !GAMEMODE
 		break;
 	case System_Event_Type::Stop:
 #ifndef GAMEMODE
 		currentCamera = App->camera->camera;
-#endif // GAME
+		CalculateProjectionMatrix();
+#endif // !GAMEMODE
 		break;
+		case System_Event_Type::LoadFinished:
+		{
+			// Update all GameObjects transforms
+			if (App->scene->root)
+				for each (GameObject* child in App->scene->root->children)
+				{
+					if (child->transform != nullptr)
+						child->transform->UpdateGlobal();
+				}
+
+			if (App->GetEngineState() == ENGINE_PLAY)
+				SetCurrentCamera();
+
+			for each (ComponentCamera* camera in cameraComponents)
+			{
+				camera->UpdateTransform();
+			}
+
+#ifndef GAMEMODE
+			CalculateProjectionMatrix();
+#endif // !GAMEMODE
+
+
+			break;
+		}
 	}
 }
 
@@ -625,6 +658,9 @@ void ModuleRenderer3D::FrustumCulling() const
 		seen[i]->seenLastFrame = true;
 }
 
+#include "ComponentBone.h"
+#include "ResourceBone.h"
+
 void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 {
 	if (toDraw->res == 0)
@@ -659,6 +695,39 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	location = glGetUniformLocation(shader, "normal_matrix");
 	glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
 
+	// Animations
+
+	// if to draw cmp animator -> res avatar != nullptr, get the avatar bones and load them in the shader
+	/*
+	char boneName[DEFAULT_BUF_SIZE];
+	for (uint i = 0; i < toDraw->bonesUuids.size(); ++i)
+	{
+		/// Bone game object
+		GameObject* boneGameObject = App->GOs->GetGameObjectByUID(toDraw->bonesUuids[i]);
+		if (boneGameObject == nullptr)
+			continue;
+
+		/// Bone component
+		ComponentBone* boneComponent = boneGameObject->cmp_bone;
+		if (boneComponent == nullptr)
+			continue;
+
+		/// Bone resource
+		ResourceBone* boneResource = (ResourceBone*)App->res->GetResource(boneComponent->res);
+		if (boneResource == nullptr)
+			continue;
+
+		math::float4x4 boneGlobalMatrix = boneComponent->GetParent()->transform->GetGlobalMatrix();
+		math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetMatrix();
+		
+		math::float4x4 boneTransform = boneGlobalMatrix * meshMatrix.Inverted() * boneResource->boneData.offsetMatrix;
+
+		sprintf_s(boneName, "bones[%u]", i);
+		location = glGetUniformLocation(shader, boneName);
+		glUniformMatrix4fv(location, 1, GL_TRUE, boneTransform.ptr());
+	}
+	*/
+
 	// 3. Unknown mesh uniforms
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
 	LoadSpecificUniforms(textureUnit, uniforms);
@@ -668,7 +737,9 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 
 	glBindVertexArray(mesh->GetVAO());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIBO());
-	glDrawElements(GL_TRIANGLES, mesh->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
+
+	glDrawElements(mesh->UseAdjacency() ? GL_TRIANGLES_ADJACENCY : GL_TRIANGLES, mesh->UseAdjacency() ? mesh->GetIndicesCount() * 2 : mesh->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 

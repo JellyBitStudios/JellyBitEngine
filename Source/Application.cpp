@@ -14,7 +14,6 @@
 #include "ModuleInternalResHandler.h"
 #include "ModuleParticles.h"
 #include "MaterialImporter.h"
-#include "BoneImporter.h"
 #include "SceneImporter.h"
 #include "ShaderImporter.h"
 #include "AnimationImporter.h"
@@ -25,7 +24,6 @@
 #include "ModuleEvents.h"
 #include "ModulePhysics.h"
 #include "ModuleUI.h"
-#include "ModuleAnimation.h"
 #include "ModuleLayers.h"
 #include "ModuleAudio.h"
 #include "ModuleLayers.h"
@@ -48,7 +46,6 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	resHandler = new ModuleInternalResHandler();
 	debugDrawer = new DebugDrawer();
 	materialImporter = new MaterialImporter();
-	boneImporter = new BoneImporter();
 	animImporter = new AnimationImporter();
 	sceneImporter = new SceneImporter();
 	shaderImporter = new ShaderImporter();
@@ -57,7 +54,6 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	scripting = new ScriptingModule();
 	events = new ModuleEvents();
 	physics = new ModulePhysics();
-	animation = new ModuleAnimation();
 	layers = new ModuleLayers();
 	ui = new ModuleUI();
 	audio = new ModuleAudio();
@@ -95,7 +91,6 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	AddModule(input);
 	AddModule(scene);
 	AddModule(scripting);
-	AddModule(animation);
 	AddModule(navigation);
 	AddModule(fbo);
 
@@ -104,11 +99,6 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 
 	// No, I'm last ;)
 	AddModule(events);
-
-#ifdef GAMEMODE
-	engineState = engine_states::ENGINE_PLAY;
-#endif // GAMEMODE
-
 }
 
 Application::~Application()
@@ -125,7 +115,6 @@ Application::~Application()
 	RELEASE(lights);
 	RELEASE(debugDrawer);
 	RELEASE(materialImporter);
-	RELEASE(boneImporter);
 	RELEASE(animImporter);
 	RELEASE(sceneImporter);
 	RELEASE(shaderImporter);
@@ -514,6 +503,11 @@ void Application::Step()
 engine_states Application::GetEngineState() const
 {
 	return engineState;
+}
+
+void Application::SetEngineState(engine_states state)
+{
+	this->engineState = state;
 }
 
 bool Application::IsPlay() const

@@ -14,23 +14,29 @@
 #define DIR_LIBRARY_BONES "Library/Bones"
 #define DIR_LIBRARY_TEXTURES "Library/Textures"
 #define DIR_LIBRARY_MATERIALS "Library/Materials"
+#define DIR_LIBRARY_ANIMATORS "Library/Animators"
+#define DIR_LIBRARY_AVATARS "Library/Avatars"
 #define DIR_LIBRARY_SHADERS "Library/Shaders"
 #define DIR_LIBRARY_SHADERS_OBJECTS "Library/Shaders/Objects"
 #define DIR_LIBRARY_SHADERS_PROGRAMS "Library/Shaders/Programs"
 #define DIR_LIBRARY_PREFAB "Library/Prefabs"
 #define DIR_LIBRARY_SCENES "Library/Scenes"
 #define DIR_LIBRARY_SCRIPTS "Library/Scripts"
+#define DIR_LIBRARY_AUDIO "Library/Audio"
 
 #define DIR_ASSETS "Assets"
 #define DIR_ASSETS_MESHES "Assets/Meshes"
 #define DIR_ASSETS_TEXTURES "Assets/Textures"
 #define DIR_ASSETS_MATERIALS "Assets/Materials"
+#define DIR_ASSETS_AVATARS "Assets/Avatars"
+#define DIR_ASSETS_ANIMATORS "Assets/Animators"
 #define DIR_ASSETS_SHADERS "Assets/Shaders"
 #define DIR_ASSETS_SHADERS_OBJECTS "Assets/Shaders/Objects"
 #define DIR_ASSETS_SHADERS_PROGRAMS "Assets/Shaders/Programs"
 #define DIR_ASSETS_PREFAB "Assets/Prefabs"
 #define DIR_ASSETS_SCENES "Assets/Scenes"
 #define DIR_ASSETS_SCRIPTS "Assets/Scripts"
+#define DIR_ASSETS_AUDIO "Assets/Audio"
 
 #define IS_SCENE(extension) strcmp(extension, EXTENSION_SCENE) == 0
 #define IS_META(extension) strcmp(extension, EXTENSION_META) == 0
@@ -45,7 +51,9 @@ enum FileTypes
 	TextureFile,
 
 	BoneFile,
+	AvatarFile,
 	AnimationFile,
+	AnimatorFile,
 
 	PrefabFile,
 
@@ -273,8 +281,11 @@ public:
 	~ModuleFileSystem();
 
 	update_status PreUpdate() override;
+	bool Init(JSON_Object* data);
 	bool Start();
 	bool CleanUp();
+
+	void ImportMainDir(bool reimport = false);
 
 	void OnSystemEvent(System_Event event);
 
@@ -283,6 +294,7 @@ public:
 	bool DeleteFileOrDir(const char* path) const;
 
 	const char* GetBasePath() const;
+	const char* GetPrefDir() const;
 	const char* GetReadPaths() const;
 	const char* GetWritePath() const;
 	const char** GetFilesFromDir(const char* dir) const;
@@ -303,6 +315,7 @@ public:
 
 	uint SaveInGame(char* buffer, uint size, FileTypes fileType, std::string& outputFile, bool overwrite = false) const;
 	uint Save(std::string file, char* buffer, uint size, bool append = false) const;
+	void WriteFile(const char* zip_path, const char* filename, const char * buffer, unsigned int size);
 
 	uint Load(std::string file, char** buffer) const;
 
@@ -312,17 +325,24 @@ public:
 	bool CopyDirectoryAndContentsInto(const std::string& origin, const std::string& destination, bool keepRoot = true);
 	Directory RecursiveGetFilesFromDir(char* dir) const;
 	bool deleteFile(const std::string& filePath) const;
-	bool deleteFiles(const std::string& rootDirectory, const std::string& extension) const;
+	bool deleteFiles(const std::string& rootDirectory, const std::string& extension, bool deleteRoot = false, bool build = false) const;
 	void SendEvents(const Directory& newAssetsDir);
 
-	void ImportFilesEvents(const Directory& newDir, std::vector<std::string>& lateEvents = std::vector<std::string>(), std::vector<std::string>& lateLateEvents = std::vector<std::string>());
+	void ImportFilesEvents(const Directory& newDir, std::vector<std::string>& lateEvents = std::vector<std::string>(), std::vector<std::string>& lateLateEvents = std::vector<std::string>(), bool reimport = false);
 	void ForceReImport(const Directory& assetsDir);
 
 	void BeginTempException(std::string directory);
 	void EndTempException();
 
+	bool SetWriteDir(std::string writeDir) const;
+
+	//GenerateBuild  methods
+	void RecursiveBuild(const Directory& dir, char* toPath, bool meta = false, bool inZIP = false);
+
 public:
-	Directory rootAssets;
+	Directory rootDir;
+
+	bool build = false;
 
 private:
 	float updateAssetsRate = 1.0f;	

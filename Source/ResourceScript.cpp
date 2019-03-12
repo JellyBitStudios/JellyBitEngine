@@ -207,6 +207,34 @@ bool ResourceScript::referenceMethods()
 	stopMethod = mono_method_desc_search_in_image(desc, App->scripting->scriptsImage);
 	mono_method_desc_free(desc);
 
+	desc = mono_method_desc_new((scriptName + ":FixedUpdate()").data(), false);
+	fixedUpdateMethod = mono_method_desc_search_in_image(desc, App->scripting->scriptsImage);
+	mono_method_desc_free(desc);
+
+	desc = mono_method_desc_new((scriptName + ":OnCollisionEnter(Collision)").data(), false);
+	OnCollisionEnterMethod = mono_method_desc_search_in_image(desc, App->scripting->scriptsImage);
+	mono_method_desc_free(desc);
+
+	desc = mono_method_desc_new((scriptName + ":OnCollisionStay(Collision)").data(), false);
+	OnCollisionStayMethod = mono_method_desc_search_in_image(desc, App->scripting->scriptsImage);
+	mono_method_desc_free(desc);
+
+	desc = mono_method_desc_new((scriptName + ":OnCollisionExit(Collision)").data(), false);
+	OnCollisionExitMethod = mono_method_desc_search_in_image(desc, App->scripting->scriptsImage);
+	mono_method_desc_free(desc);
+
+	desc = mono_method_desc_new((scriptName + ":OnTriggerEnter(Collider)").data(), false);
+	OnTriggerEnterMethod = mono_method_desc_search_in_image(desc, App->scripting->scriptsImage);
+	mono_method_desc_free(desc);
+
+	desc = mono_method_desc_new((scriptName + ":OnTriggerStay(Collider)").data(), false);
+	OnTriggerStayMethod = mono_method_desc_search_in_image(desc, App->scripting->scriptsImage);
+	mono_method_desc_free(desc);
+
+	desc = mono_method_desc_new((scriptName + ":OnTriggerExit(Collider)").data(), false);
+	fixedUpdateMethod = mono_method_desc_search_in_image(desc, App->scripting->scriptsImage);
+	mono_method_desc_free(desc);
+
 	return true;
 }
 

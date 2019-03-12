@@ -12,11 +12,18 @@
 #include "ModuleTimeManager.h"
 
 #include "physfs\include\physfs.h"
+#include "libzip/include/zip.h"
 #include "Brofiler\Brofiler.h"
 
 #include <assert.h>
 
 #pragma comment(lib, "physfs/libx86/physfs.lib")
+
+#ifdef _DEBUG
+#pragma comment( lib, "libzip/zip_d.lib" )
+#else
+#pragma comment( lib, "libzip/zip_r.lib" )
+#endif // _DEBUG
 
 ModuleFileSystem::ModuleFileSystem(bool start_enabled) : Module(start_enabled)
 {
@@ -44,12 +51,15 @@ ModuleFileSystem::ModuleFileSystem(bool start_enabled) : Module(start_enabled)
 	CreateDir(DIR_ASSETS_MESHES);
 	CreateDir(DIR_ASSETS_TEXTURES);
 	CreateDir(DIR_ASSETS_MATERIALS);
+	CreateDir(DIR_ASSETS_AVATARS);
+	CreateDir(DIR_ASSETS_ANIMATORS);
 	CreateDir(DIR_ASSETS_SHADERS);
 	CreateDir(DIR_ASSETS_SHADERS_OBJECTS);
 	CreateDir(DIR_ASSETS_SHADERS_PROGRAMS);
 	CreateDir(DIR_ASSETS_PREFAB);
 	CreateDir(DIR_ASSETS_SCENES);
 	CreateDir(DIR_ASSETS_SCRIPTS);
+	CreateDir(DIR_ASSETS_AUDIO);
 #endif
 
 	if (CreateDir(DIR_LIBRARY))
@@ -67,6 +77,7 @@ ModuleFileSystem::ModuleFileSystem(bool start_enabled) : Module(start_enabled)
 		CreateDir(DIR_LIBRARY_PREFAB);
 		CreateDir(DIR_LIBRARY_SCENES);
 		CreateDir(DIR_LIBRARY_SCRIPTS);
+		CreateDir(DIR_LIBRARY_AUDIO);
 	}
 }
 
@@ -88,48 +99,27 @@ update_status ModuleFileSystem::PreUpdate()
 	return update_status::UPDATE_CONTINUE;
 }
 
+bool ModuleFileSystem::Init(JSON_Object * data)
+{
+	AddPath(GetPrefDir(), "PrefDir");
+	return true;
+}
+
 bool ModuleFileSystem::Start()
 {
 #ifndef GAMEMODE
-	rootAssets = RecursiveGetFilesFromDir("Assets");
+	rootDir = RecursiveGetFilesFromDir("Assets");
 #else
-	rootAssets = RecursiveGetFilesFromDir("Library");
+	rootDir = RecursiveGetFilesFromDir("Library");
 #endif
 
-	std::vector<std::string> lateEvents;
-	std::vector<std::string> lateLateEvents;
-	ImportFilesEvents(rootAssets, lateEvents, lateLateEvents);
-
-	for (int i = 0; i < lateEvents.size(); ++i)
-	{
-		// The ResourceManager already manages the .meta, already imported files etc. on his own.
-		System_Event event;
-#ifndef GAMEMODE
-		event.fileEvent.type = System_Event_Type::ImportFile;
-#else
-		event.fileEvent.type = System_Event_Type::ImportLibraryFile;
-#endif
-		strcpy(event.fileEvent.file, lateEvents[i].data());
-		App->PushSystemEvent(event);
-	}
-
-	for (int i = 0; i < lateLateEvents.size(); ++i)
-	{
-		// The ResourceManager already manages the .meta, already imported files etc. on his own.
-		System_Event event;
-#ifndef GAMEMODE
-		event.fileEvent.type = System_Event_Type::ImportFile;
-#else
-		event.fileEvent.type = System_Event_Type::ImportLibraryFile;
-#endif
-		strcpy(event.fileEvent.file, lateLateEvents[i].data());
-		App->PushSystemEvent(event);
-	}
+	ImportMainDir();
 
 #ifdef GAMEMODE
 	System_Event event;
 	event.type = System_Event_Type::LoadGMScene;
 	App->PushSystemEvent(event);
+
 #endif
 	
 
@@ -150,75 +140,110 @@ bool ModuleFileSystem::CleanUp()
 	return true;
 }
 
+void ModuleFileSystem::ImportMainDir(bool reimport)
+{
+	std::vector<std::string> lateEvents;
+	std::vector<std::string> lateLateEvents;
+	ImportFilesEvents(rootDir, lateEvents, lateLateEvents, reimport);
+
+	for (int i = 0; i < lateEvents.size(); ++i)
+	{
+		// The ResourceManager already manages the .meta, already imported files etc. on his own.
+		System_Event event;
+#ifndef GAMEMODE
+		event.fileEvent.type = reimport ? System_Event_Type::ReImportFile : System_Event_Type::ImportFile;
+#else
+		event.fileEvent.type = System_Event_Type::ImportLibraryFile;
+#endif
+		event.fileEvent.build = false;
+		strcpy(event.fileEvent.file, lateEvents[i].data());
+		App->PushSystemEvent(event);
+	}
+
+	for (int i = 0; i < lateLateEvents.size(); ++i)
+	{
+		// The ResourceManager already manages the .meta, already imported files etc. on his own.
+		System_Event event;
+#ifndef GAMEMODE
+		event.fileEvent.type = reimport ? System_Event_Type::ReImportFile : System_Event_Type::ImportFile;
+#else
+		event.fileEvent.type = System_Event_Type::ImportLibraryFile;
+#endif
+		event.fileEvent.build = false;
+		strcpy(event.fileEvent.file, lateLateEvents[i].data());
+		App->PushSystemEvent(event);
+	}
+}
+
 void ModuleFileSystem::OnSystemEvent(System_Event event)
 {
 	switch (event.type)
 	{
+		case System_Event_Type::Build:
+		{
+			if (build)
+			{
+#ifndef GAMEMODE
+				char pathBuild[DEFAULT_BUF_SIZE];
+				strcpy(pathBuild, "Build");
+				//std::string zip_path = PHYSFS_getBaseDir();
+				//zip_path += "Build.zip";
+				Directory root = RecursiveGetFilesFromDir("");
+				//if (Exists("Build.zip"))
+					//deleteFile("Build.zip");
+				if (Exists(pathBuild))
+					deleteFiles(pathBuild, "", true, true);
+
+				if (CreateDir(pathBuild))
+					RecursiveBuild(root, pathBuild);
+
+				build = false;
+#endif			
+			}
+			break;
+		}
+	
 		case System_Event_Type::FileDropped:
 		{
 #ifndef GAMEMODE
 			char* fileOrigin = event.fileEvent.file;
 
-			union
-			{
-				char ext[4];
-				uint asciiValue;
-
-			} dictionary;
-
 			std::string extension;
 			App->fs->GetExtension(fileOrigin, extension);
 
-			strcpy(dictionary.ext, extension.data());
+			ResourceTypes type = App->res->GetResourceTypeByExtension(extension.data());
 
 			char destinationDir[DEFAULT_BUF_SIZE];
 
-			switch (dictionary.asciiValue)
+			switch (type)
 			{
-				case ASCIIFBX:
-				case ASCIIfbx:
-				case ASCIIdae:
-				case ASCIIDAE:
-				case ASCIIobj:
-				case ASCIIOBJ:
+				case ResourceTypes::MeshResource:
 				{
 					strcpy(destinationDir, DIR_ASSETS_MESHES);
 					break;
 				}
-				case ASCIIfsh:
-				case ASCIIFSH:	
-				case ASCIIvsh:
-				case ASCIIVSH:
-				case ASCIIgsh: 
-				case ASCIIGSH:
+				case ResourceTypes::ShaderObjectResource:
 				{
 					strcpy(destinationDir, DIR_ASSETS_SHADERS_OBJECTS);
 					break;
 				}
-				case ASCIIPSH:
-				case ASCIIpsh:
+				case ResourceTypes::ShaderProgramResource:
 				{
 					strcpy(destinationDir, DIR_ASSETS_SHADERS_PROGRAMS);
 					break;
 				}
-				case ASCIIcs:
-				case ASCIICS:
+				case ResourceTypes::ScriptResource:
 				{
 					strcpy(destinationDir, DIR_ASSETS_SCRIPTS);
 					break;
 				}
-				case ASCIIdds:
-				case ASCIIDDS:
-				case ASCIItga:
-				case ASCIITGA:
-				case ASCIIJPG:
-				case ASCIIjpg:
-				case ASCIIPNG:
-				case ASCIIpng:
+				case ResourceTypes::TextureResource:
 				{
 					strcpy(destinationDir, DIR_ASSETS_TEXTURES);
 					break;
-				}			
+				}
+
+				// TODO ADD NEW RESOURCES
 			}
 
 			std::string fileName;
@@ -286,6 +311,11 @@ bool ModuleFileSystem::DeleteFileOrDir(const char* path) const
 const char* ModuleFileSystem::GetBasePath() const
 {
 	return PHYSFS_getBaseDir();
+}
+
+const char* ModuleFileSystem::GetPrefDir() const
+{
+	return PHYSFS_getPrefDir(App->GetOrganizationName(), App->GetAppName());
 }
 
 const char* ModuleFileSystem::GetReadPaths() const
@@ -515,6 +545,11 @@ uint ModuleFileSystem::SaveInGame(char* buffer, uint size, FileTypes fileType, s
 			outputFile.insert(strlen(DIR_ASSETS_MATERIALS), "/");
 			outputFile.append(EXTENSION_MATERIAL);
 			break;
+		case FileTypes::AvatarFile:
+			outputFile.insert(0, DIR_ASSETS_AVATARS);
+			outputFile.insert(strlen(DIR_ASSETS_AVATARS), "/");
+			outputFile.append(EXTENSION_AVATAR);
+			break;
 		case FileTypes::VertexShaderObjectFile:
 			outputFile.insert(0, DIR_ASSETS_SHADERS_OBJECTS);
 			outputFile.insert(strlen(DIR_ASSETS_SHADERS_OBJECTS), "/");
@@ -545,7 +580,6 @@ uint ModuleFileSystem::SaveInGame(char* buffer, uint size, FileTypes fileType, s
 			outputFile.insert(strlen(DIR_ASSETS_SCENES), "/");
 			outputFile.append(EXTENSION_SCENE);
 			break;
-		// Scripts
 		}
 	}
 
@@ -597,6 +631,40 @@ uint ModuleFileSystem::Save(std::string file, char* buffer, uint size, bool appe
 		DEPRECATED_LOG("FILE SYSTEM: Could not open file '%s' to write. ERROR: %s", fileName.data(), PHYSFS_getLastError());
 
 	return objCount;
+}
+
+void ModuleFileSystem::WriteFile(const char * zip_path, const char * filename, const char * buffer, unsigned int size)
+{
+	if (PHYSFS_removeFromSearchPath(zip_path) == 0)
+		DEPRECATED_LOG("Errot when unmount: %s", PHYSFS_getLastError());
+
+	struct zip *f_zip = NULL;
+	int error = 0;
+	f_zip = zip_open(zip_path, ZIP_CHECKCONS + ZIP_CREATE, &error); /* on ouvre l'archive zip */
+	if (error)
+	{
+		zip_error zerror;
+		zip_error_init_with_code(&zerror, error);
+		DEPRECATED_LOG("could not open or create archive: %s, %s", zip_path, zip_error_strerror(&zerror));
+	}
+	else
+	{
+		zip_source_t *s;
+
+		s = zip_source_buffer(f_zip, buffer, size, 0);
+
+		if (s == NULL ||
+			zip_file_add(f_zip, filename, s, ZIP_FL_OVERWRITE + ZIP_FL_ENC_UTF_8) < 0)
+		{
+			zip_source_free(s);
+			DEPRECATED_LOG("error adding file: %s\n", zip_strerror(f_zip));
+		}
+	}
+
+	zip_close(f_zip);
+	f_zip = NULL;
+
+	PHYSFS_mount(zip_path, NULL, 1);
 }
 
 uint ModuleFileSystem::Load(std::string file, char** buffer) const
@@ -695,10 +763,10 @@ void ModuleFileSystem::UpdateAssetsDir()
 {
 	Directory newAssetsDir = RecursiveGetFilesFromDir("Assets");
 
-	if (newAssetsDir != rootAssets)
+	if (newAssetsDir != rootDir)
 	{
 		SendEvents(newAssetsDir);
-		rootAssets = newAssetsDir;
+		rootDir = newAssetsDir;
 	}
 }
 
@@ -849,24 +917,46 @@ bool ModuleFileSystem::deleteFile(const std::string& filePath) const
 	return PHYSFS_delete(filePath.c_str()) != 0;
 }
 
-bool ModuleFileSystem::deleteFiles(const std::string& root, const std::string& extension) const
+bool ModuleFileSystem::deleteFiles(const std::string& root, const std::string& extension, bool deleteDir, bool build) const
 {
+	bool ret = true;
+
 	Directory directory = RecursiveGetFilesFromDir((char*)root.c_str());
 
 	for (int i = 0; i < directory.files.size(); ++i)
 	{
 		std::string fileExt; GetExtension(directory.files[i].name.data(), fileExt);
+		if (!build)
+			if (fileExt == ".dll")
+				continue;
 
-		if (fileExt == extension)
-			PHYSFS_delete(std::string(directory.fullPath + "/" + directory.files[i].name).c_str());
+		if (extension.empty() || fileExt == extension)
+		{
+			ret = PHYSFS_delete(std::string(directory.fullPath + "/" + directory.files[i].name).c_str()) != 0;
+
+			if (build)
+				if(Exists(directory.fullPath + "/" + directory.files[i].name + ".meta"))
+					ret = PHYSFS_delete(std::string(directory.fullPath + "/" + directory.files[i].name + ".meta").c_str()) != 0;
+		}
+
+		if (ret == false)
+			return false;
 	}
 
 	for (int i = 0; i < directory.directories.size(); ++i)
 	{
-		deleteFiles(directory.directories[i].fullPath, extension);
+		ret = deleteFiles(directory.directories[i].fullPath, extension, deleteDir, build);
+
+		if (ret == false)
+			return false;
 	}
 
-	return true;
+	if (ret && deleteDir)
+		PHYSFS_delete(directory.fullPath.data());
+	else
+		return false;
+
+	return ret;
 }
 
 void ModuleFileSystem::SendEvents(const Directory& newAssetsDir)
@@ -879,12 +969,12 @@ void ModuleFileSystem::SendEvents(const Directory& newAssetsDir)
 	std::vector<std::string> newFullPaths;
 	std::vector<std::string> oldFullPaths;
 	newAssetsDir.getFullPaths(newFullPaths);
-	rootAssets.getFullPaths(oldFullPaths);
+	rootDir.getFullPaths(oldFullPaths);
 
 	//Get the file names, without the path, for each file contained in the directory
 	std::vector<File> newFiles;
 	std::vector<File> oldFiles;
-	rootAssets.getFiles(oldFiles);
+	rootDir.getFiles(oldFiles);
 	newAssetsDir.getFiles(newFiles);
 
 	//Check for deleted files
@@ -1021,7 +1111,7 @@ void ModuleFileSystem::SendEvents(const Directory& newAssetsDir)
 	}
 }
 
-void ModuleFileSystem::ImportFilesEvents(const Directory& directory, std::vector<std::string>& lateEvents, std::vector<std::string>& lateLateEvents)
+void ModuleFileSystem::ImportFilesEvents(const Directory& directory, std::vector<std::string>& lateEvents, std::vector<std::string>& lateLateEvents, bool reimport)
 {
 	for (int i = 0; i < directory.files.size(); ++i)
 	{
@@ -1059,10 +1149,11 @@ void ModuleFileSystem::ImportFilesEvents(const Directory& directory, std::vector
 				//The ResourceManager already manages the .meta, already imported files etc. on his own.
 				System_Event event;
 #ifndef GAMEMODE
-				event.fileEvent.type = System_Event_Type::ImportFile;
+				event.fileEvent.type = reimport ? System_Event_Type::ReImportFile : System_Event_Type::ImportFile;
 #else
 				event.fileEvent.type = System_Event_Type::ImportLibraryFile;
 #endif
+				event.fileEvent.build = false;
 				strcpy(event.fileEvent.file, filePath);
 				App->PushSystemEvent(event);
 
@@ -1131,11 +1222,7 @@ void ModuleFileSystem::ImportFilesEvents(const Directory& directory, std::vector
 
 	for (int i = 0; i < directory.directories.size(); ++i)
 	{
-		ImportFilesEvents(directory.directories[i], lateEvents, lateLateEvents);
-	}
-	for (int i = 0; i < directory.directories.size(); ++i)
-	{
-		ImportFilesEvents(directory.directories[i], lateEvents, lateLateEvents);
+		ImportFilesEvents(directory.directories[i], lateEvents, lateLateEvents, reimport);
 	}
 }
 
@@ -1187,4 +1274,75 @@ void ModuleFileSystem::EndTempException()
 
 	PHYSFS_unmount(tempException.data());
 	tempException.clear();
+}
+
+bool ModuleFileSystem::SetWriteDir(std::string writeDir) const
+{
+	return PHYSFS_setWriteDir(writeDir.data()) != 0;
+}
+
+void ModuleFileSystem::RecursiveBuild(const Directory& dir, char * toPath, bool meta, bool inZIP)
+{
+	for (File file : dir.files)
+	{
+		if (file.name == "NekoEngine.exe")
+			continue;
+		std::string extension;
+		GetExtension(file.name.data(), extension);
+		if (extension == ".txt" || extension == ".log" || 
+			extension == ".sln" || extension == ".csproj")
+			continue;
+		else
+		{
+			std::string filePath = dir.fullPath + "/" + file.name;
+
+			char* buffer = nullptr;
+			uint size = Load(filePath.data(), &buffer);
+			if (size > 0)
+			{
+				char temp[DEFAULT_BUF_SIZE];
+				strcpy(temp, toPath);
+				strcat(temp, "/");
+				strcat(temp, file.name.data());
+
+				//if(inZIP)
+					//WriteFile(zip_path.data(), *file, buffer, size);
+
+				Save(temp, buffer, size);
+				if (meta)
+				{
+					RELEASE_ARRAY(buffer);
+
+					size = Load(filePath + ".meta", &buffer);
+					if (size > 0)
+					{
+						strcat(temp, ".meta");
+						Save(temp, buffer, size);
+					}
+				}
+				RELEASE_ARRAY(buffer);
+			}
+		}
+			
+	}
+
+	for (Directory toDir : dir.directories)
+	{
+		if (toDir.name == ".vs" || toDir.name == "Assets" || toDir.name == "obj" || toDir.name == "Internal" || toDir.name == "PrefDir")
+			continue;
+		else
+		{
+			char temp[DEFAULT_BUF_SIZE];
+			strcpy(temp, toPath);
+			strcat(temp, "/");
+			strcat(temp, toDir.name.data());
+			if (!Exists(temp))
+				CreateDir(temp);
+			
+			if (strstr(toDir.fullPath.data(),"Library") != nullptr)
+				meta = true;
+			RecursiveBuild(toDir, temp, meta, inZIP);
+			meta = false;
+		}
+	}
 }

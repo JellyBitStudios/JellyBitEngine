@@ -59,46 +59,46 @@
 "	gl_Position = vec4(position, 1.0);\n"		\
 "}"
 
-#define fDEFERREDSHADING																	\
-"#version 330 core\n"																		\
-"out vec4 FragColor;\n"																		\
-"in vec2 TexCoords;\n"																		\
-"uniform sampler2D gPosition;\n"															\
-"uniform sampler2D gNormal;\n"																\
-"uniform sampler2D gAlbedoSpec;\n"															\
-"struct Light {\n"																			\
-"int type;\n"																				\
-"vec3 dir;\n"																				\
-"vec3 position;\n"																			\
-"vec3 color;\n"																				\
-"float linear;\n"																			\
-"float quadratic;\n"																		\
-"};\n"																						\
-"const int NR_LIGHTS = 32;\n"																\
-"uniform Light lights[NR_LIGHTS];\n"														\
-"void main()\n"																				\
-"{\n"																						\
-"	// retrieve data from gbuffer\n"														\
-"	vec3 FragPos = texture(gPosition, TexCoords).rgb;\n"									\
-"	vec3 Normal = texture(gNormal, TexCoords).rgb;\n"										\
-"	vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;\n"									\
-"	vec3 lighting = Albedo * 0.3; // hard-coded ambient component\n"						\
-"	for (int i = 0; i < NR_LIGHTS; ++i) \n"													\
-"	{\n"																					\
-"		vec3 diffuse = vec3(0.0,0.0,0.0);\n"																	\
-"		if (lights[i].type == 1)\n"															\
-"			diffuse = max(dot(Normal, lights[i].dir), 0.0) * Albedo * lights[i].color;\n"	\
-"		else if (lights[i].type == 2)\n"																				\
-"		{\n"																				\
-"			 vec3 lightDir = normalize(lights[i].position - FragPos);\n"\
-"			 diffuse = max(dot(Normal, lightDir), 0.0) * Albedo * lights[i].color;\n"\
-"			 float distance = length(lights[i].position - FragPos);\n"\
-"			 float attenuation = 1.0 / (1.0 + lights[i].linear * distance + lights[i].quadratic * distance * distance);\n"\
-"			 diffuse *= attenuation;\n"																				\
-"		}\n"																				\
-"		lighting += diffuse;\n"															\
-"	}\n"																					\
-"	FragColor = vec4(lighting, 1.0);\n"													\
+#define fDEFERREDSHADING																									\
+"#version 330 core\n"																										\
+"out vec4 FragColor;\n"																										\
+"in vec2 TexCoords;\n"																										\
+"uniform sampler2D gPosition;\n"																							\
+"uniform sampler2D gNormal;\n"																								\
+"uniform sampler2D gAlbedoSpec;\n"																							\
+"struct Light {\n"																											\
+"int type;\n"																												\
+"vec3 dir;\n"																												\
+"vec3 position;\n"																											\
+"vec3 color;\n"																												\
+"float linear;\n"																											\
+"float quadratic;\n"																										\
+"};\n"																														\
+"const int NR_LIGHTS = 32;\n"																								\
+"uniform Light lights[NR_LIGHTS];\n"																						\
+"void main()\n"																												\
+"{\n"																														\
+"	// retrieve data from gbuffer\n"																						\
+"	vec3 FragPos = texture(gPosition, TexCoords).rgb;\n"																	\
+"	vec3 Normal = texture(gNormal, TexCoords).rgb;\n"																		\
+"	vec3 Albedo = texture(gAlbedoSpec, TexCoords).rgb;\n"																	\
+"	vec3 lighting = Albedo * 0.3; // hard-coded ambient component\n"														\
+"	for (int i = 0; i < NR_LIGHTS; ++i) \n"																					\
+"	{\n"																													\
+"		vec3 diffuse = vec3(0.0,0.0,0.0);\n"																				\
+"		if (lights[i].type == 1)\n"																							\
+"			diffuse = max(dot(Normal, lights[i].dir), 0.0) * Albedo * lights[i].color;\n"									\
+"		else if (lights[i].type == 2)\n"																					\
+"		{\n"																												\
+"			 vec3 lightDir = normalize(lights[i].position - FragPos);\n"													\
+"			 diffuse = max(dot(Normal, lightDir), 0.0) * Albedo * lights[i].color;\n"										\
+"			 float distance = length(lights[i].position - FragPos);\n"														\
+"			 float attenuation = 1.0 / (1.0 + lights[i].linear * distance + lights[i].quadratic * distance * distance);\n"	\
+"			 diffuse *= attenuation;\n"																						\
+"		}\n"																												\
+"		lighting += diffuse;\n"																								\
+"	}\n"																													\
+"	FragColor = vec4(lighting, 1.0);\n"																						\
 "}"
 
 #pragma endregion
@@ -119,14 +119,14 @@
 "	gl_Position = mvp_matrix * vec4(position, 1.0);\n"			\
 "}"
 
-#define fShaderBillboard														\
-"#version 330 core\n"															\
-"out vec4 FragColor;\n"															\
-"in vec2 fTexCoord;\n"															\
-"uniform sampler2D diffuse;\n"												\
-"void main()\n"																	\
-"{\n"																			\
-"	FragColor = texture(diffuse, fTexCoord);\n"							\
+#define fShaderBillboard							\
+"#version 330 core\n"								\
+"out vec4 FragColor;\n"								\
+"in vec2 fTexCoord;\n"								\
+"uniform sampler2D diffuse;\n"						\
+"void main()\n"										\
+"{\n"												\
+"	FragColor = texture(diffuse, fTexCoord);\n"		\
 "}"
 #pragma endregion
 
@@ -253,23 +253,46 @@
 "layout(location = 0) in vec2 vertex; // <vec2 position, vec2 texCoords>\n" \
 "layout(location = 1) in vec2 texture_coords; // <vec2 position, vec2 texCoords>\n" \
 "out vec2 TexCoords;\n" \
-"uniform vec2 topRight;\n" \
-"uniform vec2 topLeft;\n" \
-"uniform vec2 bottomLeft;\n" \
-"uniform vec2 bottomRight;\n" \
+"uniform int isScreen;\n" \
+"uniform mat4 mvp_matrix;\n" \
+"uniform vec3 topRight;\n" \
+"uniform vec3 topLeft;\n" \
+"uniform vec3 bottomLeft;\n" \
+"uniform vec3 bottomRight;\n" \
 "void main()\n" \
 "{\n" \
-"	vec2 position = topRight;\n" \
+"	vec3 position = topRight;\n" \
 "	if (vertex.x > 0.0 && vertex.y > 0.0)\n" \
+"	{\n" \
 "		position = topRight;\n" \
+"		if (isScreen == 0)\n" \
+"			TexCoords = vec2(0.0, 1.0);\n" \
+"	}"\
 "	else if (vertex.x > 0.0 && vertex.y < 0.0)\n" \
+"	{\n" \
 "		position = bottomRight;\n" \
+"		if (isScreen == 0)\n" \
+"			TexCoords = vec2(0.0,0.0);\n" \
+"	}"\
 "	else if (vertex.x < 0.0 && vertex.y > 0.0)\n" \
+"	{\n" \
 "		position = topLeft;\n" \
+"		if (isScreen == 0)\n" \
+"			TexCoords = vec2(1.0,1.0);\n" \
+"	}"\
 "	else if (vertex.x < 0.0 && vertex.y < 0.0)\n" \
+"	{\n" \
 "		position = bottomLeft;\n" \
-"	TexCoords = texture_coords;\n" \
-"	gl_Position = vec4(position, 0.0, 1.0);\n" \
+"		if (isScreen == 0)\n" \
+"			TexCoords = vec2(1.0,0.0);\n" \
+"	}"\
+"	if(isScreen == 1)\n"\
+"	{\n" \
+"		gl_Position = vec4(position, 1.0);\n" \
+"		TexCoords = texture_coords;\n" \
+"	}"\
+"	else\n"\
+"		gl_Position = mvp_matrix * vec4(position, 1.0);\n" \
 "}"
 
 #define uifShader \

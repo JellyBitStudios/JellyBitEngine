@@ -3,32 +3,27 @@
 
 #include "Component.h"
 
-class ComponentMesh;
-
 class ComponentBone : public Component
 {
 public:
 
-	ComponentBone(GameObject* embedded_game_object);
-	ComponentBone(GameObject* embedded_game_object, uint resource);
-	ComponentBone(const ComponentBone& component_bone, GameObject* parent, bool include = true);
+	ComponentBone(GameObject* parent);
+	ComponentBone(const ComponentBone& componentBone, GameObject* parent);
 	~ComponentBone();
 
-	void OnEditor();
 	void OnUniqueEditor();
 
 	uint GetInternalSerializationBytes();
-
-	bool SetResource(uint resource);
-
 	void OnInternalSave(char*& cursor);
 	void OnInternalLoad(char*& cursor);
 
-public:
-	ComponentMesh* attached_mesh = nullptr;
+	// ----------------------------------------------------------------------------------------------------
 
-	uint res = 0u;
-	uint attachedMesh = 0u;
+	void SetResource(uint boneUuid);
+
+public:
+
+	uint res = 0;
 };
 
-#endif // __COMPONENT_BONE_H__
+#endif

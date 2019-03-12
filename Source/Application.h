@@ -62,6 +62,7 @@ public:
 	void Step();
 
 	engine_states GetEngineState() const;
+	void SetEngineState(engine_states state);
 	bool IsPlay() const;
 	bool IsPause() const;
 	bool IsStep() const;
@@ -92,7 +93,6 @@ public:
 	class MaterialImporter*				materialImporter;
 	class SceneImporter*				sceneImporter;
 	class ShaderImporter*				shaderImporter;
-	mutable class BoneImporter*		boneImporter;
 	mutable class AnimationImporter*	animImporter;
 	class ModuleParticle*				particle;
 
@@ -114,7 +114,6 @@ public:
 	class ModuleEvents*					events;
 	class ModulePhysics*				physics;
     class ModuleUI*						ui;
-	class ModuleAnimation*				animation;
 	class ModuleAudio*					audio;
 	class DebugDrawer*					debugDrawer;
 	class Lights*						lights;

@@ -6,6 +6,7 @@
 #include "EventSystem.h"
 
 #include "ComponentRigidActor.h"
+#include "ComponentScript.h"
 
 #include "imgui\imgui.h"
 
@@ -92,7 +93,9 @@ uint ComponentCollider::GetInternalSerializationBytes()
 		sizeof(bool) +
 		sizeof(bool) +
 		sizeof(math::float3) +
-		sizeof(ColliderTypes);
+		sizeof(ColliderTypes) +
+		sizeof(uint) +
+		sizeof(uint);
 }
 
 void ComponentCollider::OnInternalSave(char*& cursor)
@@ -115,6 +118,14 @@ void ComponentCollider::OnInternalSave(char*& cursor)
 
 	bytes = sizeof(ColliderTypes);
 	memcpy(cursor, &colliderType, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(uint);
+	memcpy(cursor, &filterGroup, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(uint);
+	memcpy(cursor, &filterMask, bytes);
 	cursor += bytes;
 }
 
@@ -139,6 +150,18 @@ void ComponentCollider::OnInternalLoad(char*& cursor)
 	bytes = sizeof(ColliderTypes);
 	memcpy(&colliderType, cursor, bytes);
 	cursor += bytes;
+
+	bytes = sizeof(uint);
+	uint group = 0;
+	memcpy(&group, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(uint);
+	uint mask = 0;
+	memcpy(&mask, cursor, bytes);
+	cursor += bytes;
+
+	SetFiltering(group, mask);
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -152,6 +175,9 @@ void ComponentCollider::ClearShape()
 
 void ComponentCollider::SetFiltering(physx::PxU32 filterGroup, physx::PxU32 filterMask)
 {
+	this->filterGroup = filterGroup;
+	this->filterMask = filterMask;
+
 	physx::PxFilterData filterData;
 	filterData.word0 = filterGroup; // word 0 = own ID
 	gShape->setQueryFilterData(filterData);
@@ -209,25 +235,62 @@ ColliderTypes ComponentCollider::GetColliderType() const
 void ComponentCollider::OnCollisionEnter(Collision& collision)
 {
 	if (collision.GetGameObject() != nullptr)
+	{
 		CONSOLE_LOG(LogTypes::Normal, "OnCollisionEnter with '%s'", collision.GetGameObject()->GetName());
+
+		std::vector<Component*> scripts = parent->GetComponents(ComponentTypes::ScriptComponent);
+		for (int i = 0; i < scripts.size(); ++i)
+		{
+			ComponentScript* script = (ComponentScript*)scripts[i];
+			script->OnCollisionEnter(collision);
+		}
+	}
+		
 }
 
 void ComponentCollider::OnCollisionStay(Collision& collision)
 {
 	if (collision.GetGameObject() != nullptr)
+	{
 		CONSOLE_LOG(LogTypes::Normal, "OnCollisionStay with '%s'", collision.GetGameObject()->GetName());
+
+		std::vector<Component*> scripts = parent->GetComponents(ComponentTypes::ScriptComponent);
+		for (int i = 0; i < scripts.size(); ++i)
+		{
+			ComponentScript* script = (ComponentScript*)scripts[i];
+			script->OnCollisionStay(collision);
+		}
+	}		
 }
 
 void ComponentCollider::OnCollisionExit(Collision& collision)
 {
 	if (collision.GetGameObject() != nullptr)
+	{
 		CONSOLE_LOG(LogTypes::Normal, "OnCollisionExit with '%s'", collision.GetGameObject()->GetName());
+
+		std::vector<Component*> scripts = parent->GetComponents(ComponentTypes::ScriptComponent);
+		for (int i = 0; i < scripts.size(); ++i)
+		{
+			ComponentScript* script = (ComponentScript*)scripts[i];
+			script->OnCollisionExit(collision);
+		}
+	}
 }
 
 void ComponentCollider::OnTriggerEnter(Collision& collision)
 {
 	if (collision.GetGameObject() != nullptr)
+	{
 		CONSOLE_LOG(LogTypes::Normal, "OnTriggerEnter with '%s'", collision.GetGameObject()->GetName());
+
+		std::vector<Component*> scripts = parent->GetComponents(ComponentTypes::ScriptComponent);
+		for (int i = 0; i < scripts.size(); ++i)
+		{
+			ComponentScript* script = (ComponentScript*)scripts[i];
+			script->OnTriggerEnter(collision);
+		}
+	}
 
 	triggerEnter = true;
 	triggerExit = false;
@@ -237,13 +300,31 @@ void ComponentCollider::OnTriggerEnter(Collision& collision)
 void ComponentCollider::OnTriggerStay(Collision& collision)
 {
 	if (collision.GetGameObject() != nullptr)
+	{
 		CONSOLE_LOG(LogTypes::Normal, "OnTriggerStay with '%s'", collision.GetGameObject()->GetName());
+
+		std::vector<Component*> scripts = parent->GetComponents(ComponentTypes::ScriptComponent);
+		for (int i = 0; i < scripts.size(); ++i)
+		{
+			ComponentScript* script = (ComponentScript*)scripts[i];
+			script->OnTriggerStay(collision);
+		}
+	}
 }
 
 void ComponentCollider::OnTriggerExit(Collision& collision)
 {
 	if (collision.GetGameObject() != nullptr)
+	{
 		CONSOLE_LOG(LogTypes::Normal, "OnTriggerExit with '%s'", collision.GetGameObject()->GetName());
+
+		std::vector<Component*> scripts = parent->GetComponents(ComponentTypes::ScriptComponent);
+		for (int i = 0; i < scripts.size(); ++i)
+		{
+			ComponentScript* script = (ComponentScript*)scripts[i];
+			script->OnTriggerExit(collision);
+		}
+	}
 
 	triggerExit = true;
 	triggerEnter = false;

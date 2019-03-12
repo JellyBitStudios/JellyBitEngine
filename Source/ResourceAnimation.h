@@ -56,6 +56,8 @@ struct ResourceAnimationData
 	double duration;
 	double ticksPerSecond;
 
+	bool interpolate = true; // TODO GUILLERMO
+
 	uint numKeys = 0;
 	BoneTransformation* boneKeys;
 };

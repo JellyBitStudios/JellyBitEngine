@@ -39,8 +39,9 @@ public:
 	bool IsStatic() const;
 	void OnEnable();
 	void OnDisable();
-	void RecursiveRecalculateBoundingBoxes();
 
+	void RecursiveRecalculateBoundingBoxes();
+	void RecalculateBoundingBox();
 	void CalculateBoundingBox();
 
 	void OnSystemEvent(System_Event event);
@@ -96,6 +97,7 @@ public:
 	class ComponentButton* cmp_button = nullptr;
 	class ComponentLabel* cmp_label = nullptr;
 	class ComponentAnimation*  cmp_animation = nullptr;
+	class ComponentAnimator*  cmp_animator = nullptr;
 	class ComponentLight*	   cmp_light = nullptr;
 	class ComponentProjector*  cmp_projector = nullptr;
 	class ComponentAudioListener* cmp_audioListener = nullptr;

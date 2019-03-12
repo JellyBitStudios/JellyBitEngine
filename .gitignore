@@ -26,6 +26,7 @@ bld/
 [Ll]og/
 
 [Ll]ibrary/
+[Aa]ssets/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
@@ -334,9 +335,6 @@ ASALocalRun/
 
 # Local History for Visual Studio
 .localhistory/
-
-#Engine Files
-**/Game/*.exe
 
 # Scripting Files
 [Ii]nternal/
