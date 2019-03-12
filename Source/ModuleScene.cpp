@@ -46,7 +46,7 @@ bool ModuleScene::Start()
 	grid = new PrimitiveGrid();
 	grid->ShowAxis(true);
 	root = new GameObject("Root", nullptr, true);
-	GameObject* directionalLight = new GameObject("Directional Light", root);
+	GameObject* directionalLight = App->GOs->CreateGameObject("Directional Light", root);
 	directionalLight->AddComponent(ComponentTypes::LightComponent);
 
 	math::float3 axis;

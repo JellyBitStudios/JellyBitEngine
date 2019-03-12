@@ -391,7 +391,7 @@ void ComponentRectTransform::RecaculatePercentage()
 
 uint ComponentRectTransform::GetInternalSerializationBytes()
 {
-	return sizeof(uint) * 8 + sizeof(bool) * 6 + sizeof(RectFrom);
+	return sizeof(uint) * 8 + sizeof(bool) * 6 + sizeof(int);
 }
 
 void ComponentRectTransform::OnInternalSave(char *& cursor)
@@ -416,8 +416,9 @@ void ComponentRectTransform::OnInternalSave(char *& cursor)
 	memcpy(cursor, &billboard, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(RectFrom);
-	memcpy(cursor, &rFrom, bytes);
+	bytes = sizeof(int);
+	int i = (int)rFrom;
+	memcpy(cursor, &i, bytes);
 	cursor += bytes;
 }
 
@@ -442,11 +443,13 @@ void ComponentRectTransform::OnInternalLoad(char *& cursor)
 	bytes = sizeof(bool);
 	memcpy(&billboard, cursor, bytes);
 	cursor += bytes;
-
-	bytes = sizeof(RectFrom);
-	memcpy(&rFrom, cursor, bytes);
+	
+	bytes = sizeof(int);
+	int i = 0;
+	memcpy(&i, cursor, bytes);
 	cursor += bytes;
-
+	rFrom = (RectFrom)i;
+	
 	LinkToUIModule();
 }
 
