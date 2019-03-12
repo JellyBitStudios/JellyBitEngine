@@ -342,10 +342,6 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 			//Engine opened recently, import the .dll if found
 			if (engineOpened)
 			{
-				System_Event event;
-				event.type = System_Event_Type::ScriptingDomainReloaded;
-				App->PushSystemEvent(event);
-
 				App->scripting->CreateDomain();
 				App->scripting->UpdateScriptingReferences();
 
@@ -480,7 +476,11 @@ MonoObject* ScriptingModule::MonoObjectFrom(GameObject* gameObject)
 	MonoObject* monoObject = gameObject->GetMonoObject();
 
 	if (monoObject)
-		return monoObject;
+	{
+		GameObject* storedGO = GameObjectFrom(monoObject);
+		if(storedGO == gameObject)
+			return monoObject;
+	}
 
 	MonoClass* gameObjectClass = mono_class_from_name(internalImage, "JellyBitEngine", "GameObject");
 	monoObject = mono_object_new(domain, gameObjectClass);
@@ -503,7 +503,13 @@ GameObject* ScriptingModule::GameObjectFrom(MonoObject* monoObject)
 	int address;
 	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
 
-	return (GameObject*)address;
+	GameObject* gameObject = (GameObject*)address;
+
+	MonoObject* storedMonoObj = gameObject->GetMonoObject();
+	if (storedMonoObj == monoObject)
+		return gameObject;
+	else
+		return nullptr;
 	
 	//We only can create MonoObjects though a GameObject*, not viceversa.
 }
@@ -923,10 +929,23 @@ void ScriptingModule::RecompileScripts()
 
 void ScriptingModule::GameObjectKilled(GameObject* killed)
 {
+	MonoObject* monoObject = killed->GetMonoObject();
+	if (!monoObject)
+		return;
+
 	for (int i = 0; i < monoObjectHandles.size(); ++i)
-	{
-		if (mono_gchandle_get_target(monoObjectHandles[i]) == killed->GetMonoObject())
+	{	
+		if (mono_gchandle_get_target(monoObjectHandles[i]) == monoObject)
 		{
+			MonoClass* monoObjectClass = mono_object_get_class(monoObject);
+
+			MonoClassField* deletedField = mono_class_get_field_from_name(monoObjectClass, "destroyed");
+
+			bool temp = true;
+			mono_field_set_value(monoObject, deletedField, &temp);
+
+			mono_gchandle_free(monoObjectHandles[i]);
+
 			monoObjectHandles.erase(monoObjectHandles.begin() + i);
 			break;
 		}
@@ -1745,6 +1764,8 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 	}
 	else
 	{
+		//Check if this monoObject is destroyed
+
 		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
 		if (!gameObject)
 			return nullptr;
@@ -1759,7 +1780,7 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 				ComponentScript* script = (ComponentScript*)comp;
 				if (script->scriptName == className)
 				{
-					return script->classInstance;
+					return script->GetMonoComponent();
 				}
 			}
 		}
