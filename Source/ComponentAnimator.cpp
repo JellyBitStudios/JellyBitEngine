@@ -47,17 +47,51 @@ uint ComponentAnimator::GetInternalSerializationBytes()
 void ComponentAnimator::OnInternalSave(char*& cursor)
 {
 	size_t bytes = sizeof(uint);
-	memcpy(cursor, &res, bytes);
+
+	memcpy(cursor, &res, bytes); // resource animator
 	cursor += bytes;
+
+	bytes = sizeof(uint);
+	memcpy(cursor, &res_avatar, bytes); // resource avatar
+	cursor += bytes;
+
+	bytes = sizeof(uint);
+	uint anim_size = res_animations.size();
+	memcpy(cursor, &anim_size, bytes); // anim size
+	cursor += bytes;
+
+	for (uint i = 0u; i < res_animations.size(); i++)
+	{
+		bytes = sizeof(uint);
+		memcpy(cursor, &res_animations[i], bytes); // resource animation
+		cursor += bytes;
+	}
 }
 
 void ComponentAnimator::OnInternalLoad(char*& cursor)
 {
-	uint loadedRes;
+	uint loadedRes, loadedAva, animSize, loadedAni;
 	size_t bytes = sizeof(uint);
 	memcpy(&loadedRes, cursor, bytes);
 	cursor += bytes;
 	SetResourceAnimator(loadedRes);
+
+	bytes = sizeof(uint);
+	memcpy(&loadedAva, cursor, bytes);
+	cursor += bytes;
+	SetResourceAvatar(loadedAva);
+
+	bytes = sizeof(uint);
+	memcpy(&animSize, cursor, bytes);
+	cursor += bytes;
+	
+	for (uint i = 0u; i < animSize; i++)
+	{
+		bytes = sizeof(uint);
+		memcpy(&loadedAni, cursor, bytes);
+		cursor += bytes;
+		SetResourceAnimation(loadedAni);
+	}
 }
 
 bool ComponentAnimator::SetResourceAnimator(uint resource)
