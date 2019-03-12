@@ -97,6 +97,11 @@ ComponentCanvasRenderer::ToUIRend* ComponentCanvasRenderer::GetDrawAvaiable() co
 		return nullptr;
 }
 
+bool ComponentCanvasRenderer::IsWorld() const
+{
+	return fromWorld;
+}
+
 uint ComponentCanvasRenderer::GetInternalSerializationBytes()
 {
 	return 0;
