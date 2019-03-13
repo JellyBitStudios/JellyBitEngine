@@ -103,7 +103,6 @@ void ComponentScript::OnSystemEvent(System_Event event)
 
 						if (!storedMO)
 						{
-							field = mono_class_get_fields(monoClass, &it);
 							continue;
 						}
 								

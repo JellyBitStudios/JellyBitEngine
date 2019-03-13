@@ -907,18 +907,6 @@ void ScriptingModule::RecompileScripts()
 		System_Event event;
 		event.type = System_Event_Type::ScriptingDomainReloaded;
 		App->PushSystemEvent(event);
-
-		App->scripting->CreateDomain();
-		App->scripting->UpdateScriptingReferences();
-
-		std::vector<Resource*> scriptResources = App->res->GetResourcesByType(ResourceTypes::ScriptResource);
-		for (int i = 0; i < scriptResources.size(); ++i)
-		{
-			ResourceScript* scriptRes = (ResourceScript*)scriptResources[i];
-			scriptRes->referenceMethods();
-		}
-
-		App->scripting->ReInstance();
 	}
 }
 
