@@ -34,7 +34,7 @@ public:
 	uint GetParentUUID() const;
 	void ToggleIsActive();
 	void ToggleIsStatic();
-	void ForceStaticNoVector();
+	void ToggleChildrenAndThisStatic(bool toStatic);
 	bool IsActive() const;
 	bool IsStatic() const;
 	void OnEnable();
@@ -82,26 +82,26 @@ public:
 
 public:
 
-	class ComponentTransform*  transform = nullptr; //Nullptr a puño y fuego D:<
-	class ComponentMesh*       cmp_mesh = nullptr;
-	class ComponentMaterial*   cmp_material = nullptr;
-	class ComponentCamera*     cmp_camera = nullptr;
-	class ComponentNavAgent*   cmp_navAgent = nullptr;
-	class ComponentEmitter*    cmp_emitter = nullptr;
-	class ComponentRigidActor* cmp_rigidActor = nullptr;
-	class ComponentCollider*   cmp_collider = nullptr;
-	class ComponentBone*	   cmp_bone = nullptr;
-	class ComponentRectTransform* cmp_rectTransform = nullptr;
-	class ComponentCanvasRenderer* cmp_canvasRenderer = nullptr;
-	class ComponentImage* cmp_image = nullptr;
-	class ComponentButton* cmp_button = nullptr;
-	class ComponentLabel* cmp_label = nullptr;
-	class ComponentAnimation*  cmp_animation = nullptr;
-	class ComponentAnimator*  cmp_animator = nullptr;
-	class ComponentLight*	   cmp_light = nullptr;
-	class ComponentProjector*  cmp_projector = nullptr;
-	class ComponentAudioListener* cmp_audioListener = nullptr;
-	class ComponentAudioSource*   cmp_audioSource = nullptr;
+	class ComponentTransform*		transform = nullptr; //Nullptr a puño y fuego D:<
+	class ComponentMesh*			cmp_mesh = nullptr;
+	class ComponentMaterial*		cmp_material = nullptr;
+	class ComponentCamera*			cmp_camera = nullptr;
+	class ComponentNavAgent*		cmp_navAgent = nullptr;
+	class ComponentEmitter*			cmp_emitter = nullptr;
+	class ComponentRigidActor*		cmp_rigidActor = nullptr;
+	class ComponentCollider*		cmp_collider = nullptr;
+	class ComponentBone*			cmp_bone = nullptr;
+	class ComponentRectTransform*	cmp_rectTransform = nullptr;
+	class ComponentCanvasRenderer*	cmp_canvasRenderer = nullptr;
+	class ComponentImage*			cmp_image = nullptr;
+	class ComponentButton*			cmp_button = nullptr;
+	class ComponentLabel*			cmp_label = nullptr;
+	class ComponentAnimation*		cmp_animation = nullptr;
+	class ComponentAnimator*		cmp_animator = nullptr;
+	class ComponentLight*			cmp_light = nullptr;
+	class ComponentProjector*		cmp_projector = nullptr;
+	class ComponentAudioListener*	cmp_audioListener = nullptr;
+	class ComponentAudioSource*		cmp_audioSource = nullptr;
 
 	ResourcePrefab* prefab = nullptr;
 

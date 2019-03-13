@@ -29,6 +29,7 @@
 #include "ComponentAudioListener.h"
 
 #include "ResourceScene.h"
+#include "ResourceScript.h"
 
 #include "Application.h"
 #include "ModuleGOs.h"
@@ -83,6 +84,23 @@ void ModuleEvents::OnSystemEvent(System_Event event)
 		ResourceScene::ExportFile(event.sceneEvent.nameScene);
 		break;
 	}
+
+	case System_Event_Type::ScriptingDomainReloaded:
+	{
+		App->scripting->CreateDomain();
+		App->scripting->UpdateScriptingReferences();
+
+		std::vector<Resource*> scriptResources = App->res->GetResourcesByType(ResourceTypes::ScriptResource);
+		for (int i = 0; i < scriptResources.size(); ++i)
+		{
+			ResourceScript* scriptRes = (ResourceScript*)scriptResources[i];
+			scriptRes->referenceMethods();
+		}
+
+		App->scripting->ReInstance();
+		break;
+	}
+
 	case System_Event_Type::Stop:
 		assert(App->GOs->sceneStateBuffer != 0);
 #ifndef GAMEMODE

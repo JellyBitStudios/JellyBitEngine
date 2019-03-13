@@ -298,10 +298,18 @@ void GameObject::ToggleIsStatic()
 	App->GOs->RecalculateVector(this);
 }
 
-void GameObject::ForceStaticNoVector()
+void GameObject::ToggleChildrenAndThisStatic(bool toStatic)
 {
-	assert(isStatic == false);
-	isStatic = true;
+	isStatic = toStatic;
+	App->GOs->RecalculateVector(this, false);
+	for each(auto child in children)
+	{
+		child->ToggleChildrenAndThisStatic(toStatic);
+		App->GOs->RecalculateVector(this, false);
+	}
+	System_Event newEvent;
+	newEvent.type = System_Event_Type::RecreateQuadtree;
+	App->PushSystemEvent(newEvent);
 }
 
 bool GameObject::IsActive() const
