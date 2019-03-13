@@ -1848,19 +1848,22 @@
     <ClInclude Include="Shaders.h">
       <Filter>Sources\Containers</Filter>
     </ClInclude>
-    <ClInclude Include="ResourceScene.h">
-      <Filter>Sources\Modules\Resources\Types</Filter>
+    <ClInclude Include="Lights.h">
+      <Filter>Sources\Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="ComponentAnimator.h">
+      <Filter>Sources\Modules\GO&amp;Components\Components</Filter>
     </ClInclude>
     <ClInclude Include="ResourceAnimator.h">
+      <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceAudioBank.h">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClInclude>
     <ClInclude Include="ResourceAvatar.h">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClInclude>
-    <ClInclude Include="ComponentAnimator.h">
-      <Filter>Sources\Modules\GO&amp;Components\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="ResourceAudioBank.h">
+    <ClInclude Include="ResourceScene.h">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClInclude>
   </ItemGroup>
@@ -2402,19 +2405,22 @@
     <ClCompile Include="ModuleFBOManager.cpp">
       <Filter>Sources\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="ResourceScene.cpp">
-      <Filter>Sources\Modules\Resources\Types</Filter>
+    <ClCompile Include="Lights.cpp">
+      <Filter>Sources\Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="ComponentAnimator.cpp">
+      <Filter>Sources\Modules\GO&amp;Components\Components</Filter>
     </ClCompile>
     <ClCompile Include="ResourceAnimator.cpp">
+      <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceAudioBank.cpp">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClCompile>
     <ClCompile Include="ResourceAvatar.cpp">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClCompile>
-    <ClCompile Include="ComponentAnimator.cpp">
-      <Filter>Sources\Modules\GO&amp;Components\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="ResourceAudioBank.cpp">
+    <ClCompile Include="ResourceScene.cpp">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClCompile>
   </ItemGroup>

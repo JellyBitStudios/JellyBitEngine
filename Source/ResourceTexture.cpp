@@ -104,12 +104,7 @@ uint ResourceTexture::CreateMeta(const char* file, ResourceTextureImportSettings
 		sizeof(uint) +
 		sizeof(uint) * uuidsSize +
 
-		sizeof(int) +
-		sizeof(int) + 
-		sizeof(int) + 
-		sizeof(int) + 
-		sizeof(int) + 
-		sizeof(float);
+		sizeof(ResourceTextureImportSettings);
 
 	char* data = new char[size];
 	char* cursor = data;
@@ -137,33 +132,10 @@ uint ResourceTexture::CreateMeta(const char* file, ResourceTextureImportSettings
 	cursor += bytes;
 
 	// 4. Store import settings
-	bytes = sizeof(int);
-	memcpy(cursor, &textureImportSettings.compression, bytes);
+	bytes = sizeof(ResourceTextureImportSettings);
+	memcpy(cursor, &textureImportSettings, bytes);
 
 	cursor += bytes;
-
-	bytes = sizeof(int);
-	memcpy(cursor, &textureImportSettings.wrapS, bytes);
-
-	cursor += bytes;
-
-	bytes = sizeof(int);
-	memcpy(cursor, &textureImportSettings.wrapT, bytes);
-
-	cursor += bytes;
-
-	bytes = sizeof(int);
-	memcpy(cursor, &textureImportSettings.minFilter, bytes);
-
-	cursor += bytes;
-
-	bytes = sizeof(int);
-	memcpy(cursor, &textureImportSettings.magFilter, bytes);
-
-	cursor += bytes;
-
-	bytes = sizeof(float);
-	memcpy(cursor, &textureImportSettings.anisotropy, bytes);
 
 	// --------------------------------------------------
 
@@ -217,33 +189,10 @@ bool ResourceTexture::ReadMeta(const char* metaFile, int64_t& lastModTime, Resou
 		cursor += bytes;
 
 		// 4. Load import settings
-		bytes = sizeof(int);
-		memcpy(&textureImportSettings.compression, cursor, bytes);
+		bytes = sizeof(ResourceTextureImportSettings);
+		memcpy(&textureImportSettings, cursor, bytes);
 
 		cursor += bytes;
-
-		bytes = sizeof(int);
-		memcpy(&textureImportSettings.wrapS, cursor, bytes);
-
-		cursor += bytes;
-
-		bytes = sizeof(int);
-		memcpy(&textureImportSettings.wrapT, cursor, bytes);
-
-		cursor += bytes;
-
-		bytes = sizeof(int);
-		memcpy(&textureImportSettings.minFilter, cursor, bytes);
-
-		cursor += bytes;
-
-		bytes = sizeof(int);
-		memcpy(&textureImportSettings.magFilter, cursor, bytes);
-
-		cursor += bytes;
-
-		bytes = sizeof(float);
-		memcpy(&textureImportSettings.anisotropy, cursor, bytes);
 
 		CONSOLE_LOG(LogTypes::Normal, "Resource Mesh: Successfully loaded meta '%s'", metaFile);
 		RELEASE_ARRAY(buffer);
@@ -273,12 +222,7 @@ uint ResourceTexture::SetTextureImportSettingsToMeta(const char* metaFile, const
 		sizeof(uint) +
 		sizeof(uint) * uuidsSize +
 
-		sizeof(int) +
-		sizeof(int) +
-		sizeof(int) +
-		sizeof(int) +
-		sizeof(int) +
-		sizeof(float);
+		sizeof(ResourceTextureImportSettings);
 
 	char* data = new char[size];
 	char* cursor = data;
@@ -305,33 +249,10 @@ uint ResourceTexture::SetTextureImportSettingsToMeta(const char* metaFile, const
 	cursor += bytes;
 
 	// 4. Store import settings
-	bytes = sizeof(int);
-	memcpy(cursor, &textureImportSettings.compression, bytes);
+	bytes = sizeof(ResourceTextureImportSettings);
+	memcpy(cursor, &textureImportSettings, bytes);
 
 	cursor += bytes;
-
-	bytes = sizeof(int);
-	memcpy(cursor, &textureImportSettings.wrapS, bytes);
-
-	cursor += bytes;
-
-	bytes = sizeof(int);
-	memcpy(cursor, &textureImportSettings.wrapT, bytes);
-
-	cursor += bytes;
-
-	bytes = sizeof(int);
-	memcpy(cursor, &textureImportSettings.minFilter, bytes);
-
-	cursor += bytes;
-
-	bytes = sizeof(int);
-	memcpy(cursor, &textureImportSettings.magFilter, bytes);
-
-	cursor += bytes;
-
-	bytes = sizeof(float);
-	memcpy(cursor, &textureImportSettings.anisotropy, bytes);
 
 	// --------------------------------------------------
 

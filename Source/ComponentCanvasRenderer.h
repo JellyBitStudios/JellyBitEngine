@@ -59,6 +59,8 @@ public:
 
 	ToUIRend* GetDrawAvaiable() const;
 
+	bool IsWorld()const;
+
 private:
 	uint GetInternalSerializationBytes();
 	void OnInternalSave(char*& cursor);

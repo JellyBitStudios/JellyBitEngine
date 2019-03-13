@@ -391,7 +391,7 @@ uint ResourceShaderObject::Compile(const char* source, ShaderObjectTypes shaderT
 		glGetShaderInfoLog(shaderObject, logSize, NULL, infoLog);
 
 		CONSOLE_LOG(LogTypes::Error, "Shader Object could not be compiled. ERROR: %s", infoLog);
-
+		delete[] infoLog;
 #ifndef GAMEMODE
 		// GET ERROR LINE AND ERROR TEXT AND SEND IT TO THE CODE EDITOR
 		{

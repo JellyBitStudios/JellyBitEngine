@@ -38,10 +38,22 @@ struct ResourceMeshImportSettings
 		OPTIMIZE_MESHES = 1 << 15
 	};
 
+	enum AttrConfiguration
+	{
+		ATTR_POSITION = 1 << 0,
+		ATTR_NORMAL = 1 << 1,
+		ATTR_COLOR = 1 << 2,
+		ATTR_TEXCOORD = 1 << 3,
+		ATTR_TANGENT = 1 << 4,
+		ATTR_BITANGENT = 1 << 5,
+	};
+
 	PostProcessConfigurationFlags postProcessConfigurationFlags = PostProcessConfigurationFlags::TARGET_REALTIME_MAX_QUALITY;
 	uint customConfigurationFlags = 0;
+	uint attributes = ATTR_POSITION | ATTR_NORMAL | ATTR_COLOR | ATTR_TEXCOORD | ATTR_TANGENT | ATTR_BITANGENT;
 
 	float scale = 1.0f;
+	bool adjacency = false;
 
 	char modelPath[DEFAULT_BUF_SIZE];
 };
@@ -75,7 +87,6 @@ struct ResourceMeshData
 	uint* indices = nullptr;
 	uint indicesSize = 0;
 
-	bool adjacency = false;
 	uint* adjacentIndices = nullptr;
 
 	BoneInfluence* boneInfluences = nullptr;

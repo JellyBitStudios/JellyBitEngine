@@ -59,6 +59,8 @@ GameObject::GameObject(const char* name, GameObject* parent, bool disableTransfo
 	uuid = App->GenerateRandomNumber();
 }
 
+#include "ModuleRenderer3D.h"
+
 GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 {
 	strcpy_s(name, DEFAULT_BUF_SIZE, gameObject.name);
@@ -554,21 +556,19 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		newComponent = cmp_rectTransform = new ComponentRectTransform(this);
 		break;
 	case ComponentTypes::CanvasRendererComponent:
+		assert(cmp_canvasRenderer == nullptr);
 		newComponent = cmp_canvasRenderer = new ComponentCanvasRenderer(this);
 		break;
 	case ComponentTypes::ImageComponent:
-		if (cmp_canvasRenderer == nullptr)
-			AddComponent(ComponentTypes::CanvasRendererComponent);
+		assert(cmp_image == nullptr);
 		newComponent = cmp_image = new ComponentImage(this);
 		break;
 	case ComponentTypes::ButtonComponent:
-		if (cmp_canvasRenderer == nullptr)
-			AddComponent(ComponentTypes::CanvasRendererComponent);
+		assert(cmp_button == nullptr);
 		newComponent = cmp_button = new ComponentButton(this);
 		break;
 	case ComponentTypes::LabelComponent:
-		if (cmp_canvasRenderer == nullptr)
-			AddComponent(ComponentTypes::CanvasRendererComponent);
+		assert(cmp_label == nullptr);
 		newComponent = cmp_label = new ComponentLabel(this);
 		break;
 	case ComponentTypes::BoneComponent:

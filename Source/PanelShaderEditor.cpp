@@ -305,6 +305,11 @@ uint PanelShaderEditor::GetShaderObjects(std::vector<uint>& shaderObjectsUuids) 
 		ResourceShaderObject* shaderObject = (ResourceShaderObject*)App->res->GetResource(vertexShadersUuids[i]);
 		if (shaderObject != nullptr && shaderObject->isValid)
 			shaderObjectsUuids.push_back(vertexShadersUuids[i]);
+		else
+		{
+			shaderObjectsUuids.clear();
+			return 0;
+		}
 	}
 
 	for (uint i = 0; i < geometryShadersUuids.size(); ++i)
@@ -312,6 +317,11 @@ uint PanelShaderEditor::GetShaderObjects(std::vector<uint>& shaderObjectsUuids) 
 		ResourceShaderObject* shaderObject = (ResourceShaderObject*)App->res->GetResource(geometryShadersUuids[i]);
 		if (shaderObject != nullptr && shaderObject->isValid)
 			shaderObjectsUuids.push_back(geometryShadersUuids[i]);
+		else
+		{
+			shaderObjectsUuids.clear();
+			return 0;
+		}
 	}
 
 	for (uint i = 0; i < fragmentShadersUuids.size(); ++i)
@@ -319,6 +329,11 @@ uint PanelShaderEditor::GetShaderObjects(std::vector<uint>& shaderObjectsUuids) 
 		ResourceShaderObject* shaderObject = (ResourceShaderObject*)App->res->GetResource(fragmentShadersUuids[i]);
 		if (shaderObject != nullptr && shaderObject->isValid)
 			shaderObjectsUuids.push_back(fragmentShadersUuids[i]);
+		else
+		{
+			shaderObjectsUuids.clear();
+			return 0;
+		}
 	}
 
 	return shaderObjectsUuids.size();

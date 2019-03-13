@@ -151,20 +151,18 @@ uint ResourceMesh::CreateMeta(const char* file, ResourceMeshImportSettings& mesh
 	uint bones_uuids_size = bonesUuids.size();
 	uint animations_uuids_size = animationUuids.size();
 
-	uint size = 
+	uint size =
 		sizeof(int64_t) +						// data mod
 		sizeof(uint) +							// mesh size num
 		sizeof(uint) * mesh_uuids_size +		// mesh uuids
-												   
+
 		sizeof(uint) +							// size bone num
 		sizeof(uint) * bones_uuids_size +		// bone uuids
-												   
+
 		sizeof(uint) +							// size anim num
 		sizeof(uint) * animations_uuids_size +	// anim uuids
 
-		sizeof(int) +
-		sizeof(uint) +
-		sizeof(float);
+		sizeof(ResourceMeshImportSettings);
 
 	char* data = new char[size];
 	char* cursor = data;
@@ -217,18 +215,10 @@ uint ResourceMesh::CreateMeta(const char* file, ResourceMeshImportSettings& mesh
 	cursor += bytes;
 
 	// 8. Store import settings
-	bytes = sizeof(int);
-	memcpy(cursor, &meshImportSettings.postProcessConfigurationFlags, bytes);
+	bytes = sizeof(ResourceMeshImportSettings);
+	memcpy(cursor, &meshImportSettings, bytes);
 
 	cursor += bytes;
-
-	bytes = sizeof(uint);
-	memcpy(cursor, &meshImportSettings.customConfigurationFlags, bytes);
-
-	cursor += bytes;
-
-	bytes = sizeof(float);
-	memcpy(cursor, &meshImportSettings.scale, bytes);
 
 	// --------------------------------------------------
 
@@ -314,18 +304,10 @@ bool ResourceMesh::ReadMeta(const char* metaFile, int64_t& lastModTime, Resource
 		cursor += bytes;
 
 		// 8. Load import settings
-		bytes = sizeof(int);
-		memcpy(&meshImportSettings.postProcessConfigurationFlags, cursor, bytes);
+		bytes = sizeof(ResourceMeshImportSettings);
+		memcpy(&meshImportSettings, cursor, bytes);
 
 		cursor += bytes;
-
-		bytes = sizeof(uint);
-		memcpy(&meshImportSettings.customConfigurationFlags, cursor, bytes);
-
-		cursor += bytes;
-
-		bytes = sizeof(float);
-		memcpy(&meshImportSettings.scale, cursor, bytes);
 
 		CONSOLE_LOG(LogTypes::Normal, "Resource Mesh: Successfully loaded meta '%s'", metaFile);
 		RELEASE_ARRAY(buffer);
@@ -345,10 +327,8 @@ bool ResourceMesh::ReadMeshesUuidsFromBuffer(const char* buffer,
 {
 	char* cursor = (char*)buffer;
 
-	// 1. Load last modification time
+	// 1. (Last modification time)
 	uint bytes = sizeof(int64_t);
-	//memcpy(&lastModTime, cursor, bytes);
-
 	cursor += bytes;
 
 	// 2. Load uuids size
@@ -398,20 +378,6 @@ bool ResourceMesh::ReadMeshesUuidsFromBuffer(const char* buffer,
 
 	cursor += bytes;
 
-	// 8. Load import settings
-	bytes = sizeof(int);
-	//memcpy(&meshImportSettings.postProcessConfigurationFlags, cursor, bytes);
-
-	cursor += bytes;
-
-	bytes = sizeof(uint);
-	//memcpy(&meshImportSettings.customConfigurationFlags, cursor, bytes);
-
-	cursor += bytes;
-
-	bytes = sizeof(float);
-	//memcpy(&meshImportSettings.scale, cursor, bytes);
-
 	if (meshesUuids.size() > 0)
 		return true;
 
@@ -444,9 +410,7 @@ uint ResourceMesh::SetMeshImportSettingsToMeta(const char* metaFile, const Resou
 		sizeof(uint) +
 		sizeof(uint) * animation_uuids_size +
 
-		sizeof(int) +
-		sizeof(uint) +
-		sizeof(float);
+		sizeof(ResourceMeshImportSettings);
 
 	char* data = new char[size];
 	char* cursor = data;
@@ -498,18 +462,10 @@ uint ResourceMesh::SetMeshImportSettingsToMeta(const char* metaFile, const Resou
 	cursor += bytes;
 
 	// 8. Store import settings
-	bytes = sizeof(int);
-	memcpy(cursor, &meshImportSettings.postProcessConfigurationFlags, bytes);
+	bytes = sizeof(ResourceMeshImportSettings);
+	memcpy(cursor, &meshImportSettings, bytes);
 
 	cursor += bytes;
-
-	bytes = sizeof(uint);
-	memcpy(cursor, &meshImportSettings.customConfigurationFlags, bytes);
-
-	cursor += bytes;
-
-	bytes = sizeof(float);
-	memcpy(cursor, &meshImportSettings.scale, bytes);
 
 	// --------------------------------------------------
 
@@ -545,7 +501,6 @@ void ResourceMesh::GetTris(float* verticesPosition) const
 	}
 }
 
-
 void ResourceMesh::GetIndicesReference(uint*& indices) const
 {
 	indices = meshData.indices;
@@ -568,7 +523,7 @@ uint ResourceMesh::GetIndicesCount() const
 
 bool ResourceMesh::UseAdjacency() const
 {
-	return meshData.adjacency;
+	return meshData.meshImportSettings.adjacency;
 }
 
 bool ResourceMesh::AddBones(const std::unordered_map<const char*, uint>& bones)
@@ -755,9 +710,15 @@ bool ResourceMesh::LoadInMemory()
 	assert(meshData.vertices != nullptr && meshData.verticesSize > 0
 		&& meshData.indices != nullptr && meshData.indicesSize > 0);
 
+	bool adjacency = UseAdjacency();
+
+	// Calculate adjacent indices
+	if (adjacency)
+		ResourceMesh::CalculateAdjacentIndices(meshData.indices, meshData.indicesSize, meshData.adjacentIndices);
+
 	App->sceneImporter->GenerateVBO(VBO, meshData.vertices, meshData.verticesSize);
-	App->sceneImporter->GenerateIBO(IBO, meshData.adjacency ? meshData.adjacentIndices : meshData.indices, meshData.adjacency ? 2 * meshData.indicesSize : meshData.indicesSize);
-	App->sceneImporter->GenerateVAO(VAO, VBO);
+	App->sceneImporter->GenerateIBO(IBO, adjacency ? meshData.adjacentIndices : meshData.indices, adjacency ? meshData.indicesSize * 2 : meshData.indicesSize);
+	App->sceneImporter->GenerateVAO(VAO, VBO, meshData.meshImportSettings.attributes);
 
 	return true;
 }

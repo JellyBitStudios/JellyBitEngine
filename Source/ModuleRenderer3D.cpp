@@ -12,6 +12,8 @@
 #include "ModuleGOs.h"
 #include "ModuleParticles.h"
 #include "ModuleUI.h"
+#include "ModuleFBOManager.h"
+#include "Lights.h"
 #include "DebugDrawer.h"
 #include "ShaderImporter.h"
 #include "MaterialImporter.h"
@@ -23,10 +25,6 @@
 #include "ComponentTransform.h"
 #include "ComponentMaterial.h"
 #include "ComponentCamera.h"
-#include "ComponentRigidActor.h"
-#include "ComponentRigidDynamic.h"
-#include "ComponentCollider.h"
-#include "ComponentEmitter.h"
 #include "ComponentProjector.h"
 
 #include "ResourceMesh.h"
@@ -110,8 +108,8 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 
 		// Initialize clear color
 		glClearColor(0.f, 0.f, 0.f, 1.0f);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		//glEnable(GL_BLEND);
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		// Check for error
 		error = glGetError();
@@ -187,6 +185,7 @@ update_status ModuleRenderer3D::PostUpdate()
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::Orchid);
 #endif
 
+	App->fbo->BindGBuffer();
 
 	if (currentCamera != nullptr)
 	{
@@ -195,7 +194,6 @@ update_status ModuleRenderer3D::PostUpdate()
 			if (cameraComponents[i]->IsActive())
 				cameraComponents[i]->UpdateTransform();
 		}
-
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
 			if (projectorComponents[i]->IsActive())
@@ -210,7 +208,6 @@ update_status ModuleRenderer3D::PostUpdate()
 			if (projectorComponents[i]->GetParent()->IsActive() && projectorComponents[i]->IsActive())
 				DrawProjectors(projectorComponents[i]);
 		}
-
 		for (uint i = 0; i < meshComponents.size(); ++i)
 		{
 			if (meshComponents[i]->GetParent()->IsActive() && meshComponents[i]->IsActive() 
@@ -218,6 +215,14 @@ update_status ModuleRenderer3D::PostUpdate()
 				DrawMesh(meshComponents[i]);
 		}
 	}
+
+	App->fbo->DrawGBufferToScreen();
+
+	App->fbo->MergeDepthBuffer(App->window->GetWindowWidth(), App->window->GetWindowHeight());
+
+	App->scene->Draw();
+
+	App->lights->DebugDrawLights();
 
 	App->particle->Draw();
 
@@ -265,9 +270,10 @@ update_status ModuleRenderer3D::PostUpdate()
 	}
 
 	App->ui->DrawWorldCanvas();
+
 	if (App->ui->GetUIMode())
 		App->ui->DrawCanvas();
-
+		
 	// 3. Editor
 	App->gui->Draw();
 #else
@@ -345,7 +351,6 @@ void ModuleRenderer3D::OnSystemEvent(System_Event event)
 void ModuleRenderer3D::SaveStatus(JSON_Object* jObject) const
 {
 	json_object_set_boolean(jObject, "vSync", vsync);
-
 	json_object_set_boolean(jObject, "debugDraw", debugDraw);
 	json_object_set_boolean(jObject, "drawBoundingBoxes", drawBoundingBoxes);
 	json_object_set_boolean(jObject, "drawCamerasFrustum", drawFrustums);
@@ -354,7 +359,6 @@ void ModuleRenderer3D::SaveStatus(JSON_Object* jObject) const
 void ModuleRenderer3D::LoadStatus(const JSON_Object* jObject)
 {
 	SetVSync(json_object_get_boolean(jObject, "vSync"));
-
 	debugDraw = json_object_get_boolean(jObject, "debugDraw");
 	drawBoundingBoxes = json_object_get_boolean(jObject, "drawBoundingBoxes");
 	drawFrustums = json_object_get_boolean(jObject, "drawCamerasFrustum");
@@ -667,7 +671,6 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	uint shaderUuid = resourceMaterial->GetShaderUuid();
 	const ResourceShaderProgram* resourceShaderProgram = (const ResourceShaderProgram*)App->res->GetResource(shaderUuid);
 	GLuint shader = resourceShaderProgram->shaderProgram;
-
 	glUseProgram(shader);
 
 	// 1. Generic uniforms
@@ -734,7 +737,9 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	glBindVertexArray(mesh->GetVAO());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIBO());
 
-	glDrawElements(mesh->UseAdjacency() ? GL_TRIANGLES_ADJACENCY : GL_TRIANGLES, mesh->UseAdjacency() ? mesh->GetIndicesCount() * 2 : mesh->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
+	bool adjacency = mesh->UseAdjacency();
+	glDrawElements(adjacency ? GL_TRIANGLES_ADJACENCY : GL_TRIANGLES, adjacency ? mesh->GetIndicesCount() * 2 : mesh->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
