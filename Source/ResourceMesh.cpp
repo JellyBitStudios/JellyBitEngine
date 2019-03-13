@@ -554,9 +554,9 @@ bool ResourceMesh::AddBones(const std::unordered_map<const char*, uint>& bones)
 			if (strcmp(boneResource->boneData.name.data(), meshData.boneInfluences[i].boneName) == 0)
 			{
 				// Vertices influenced by the bone
-				for (uint j = 0; j < meshData.boneInfluences[j].bonesWeightsSize; ++j)
+				for (uint j = 0; j < meshData.boneInfluences[i].bonesWeightsSize; ++j)
 				{
-					if (AddBone(meshData.boneInfluences[i].boneIds[i], meshData.boneInfluences[i].boneWeights[i], boneId))
+					if (AddBone(meshData.boneInfluences[i].boneIds[j], meshData.boneInfluences[i].boneWeights[j], boneId))
 						++addedBones;
 					else
 						CONSOLE_LOG(LogTypes::Error, "Resource Mesh: The bone %s could not be added to the mesh", boneResource->boneData.name.data());

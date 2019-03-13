@@ -13,6 +13,8 @@ public:
 	ModuleGOs(bool start_enabled = true);
 	~ModuleGOs();
 
+	update_status Update(); //hehehhehehehee
+
 	bool CleanUp();
 	void OnSystemEvent(System_Event event);
 
