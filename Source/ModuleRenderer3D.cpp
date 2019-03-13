@@ -222,14 +222,14 @@ update_status ModuleRenderer3D::PostUpdate()
 
 	App->scene->Draw();
 
-	App->lights->DebugDrawLights();
-
 	App->particle->Draw();
 
 #ifndef GAMEMODE
 
 	if (debugDraw)
 	{
+		App->lights->DebugDrawLights();
+
 		App->navigation->Draw();
 
 		App->debugDrawer->StartDebugDraw();
