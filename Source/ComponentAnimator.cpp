@@ -42,7 +42,7 @@ ComponentAnimator::~ComponentAnimator()
 
 uint ComponentAnimator::GetInternalSerializationBytes()
 {
-	return sizeof(uint) + sizeof(uint) + sizeof(uint) + sizeof(uint) * res_animations.size();
+	return sizeof(uint);
 }
 
 void ComponentAnimator::OnInternalSave(char*& cursor)
@@ -102,7 +102,7 @@ bool ComponentAnimator::SetResourceAnimator(uint resource)
 
 	if (resource > 0) {
 		App->res->SetAsUsed(resource);
-		ResourceAnimator* anim_res = (ResourceAnimator*)App->res->GetResource(resource);
+		ResourceAnimator* anim_res = (ResourceAnimator*)App->res->GetResource(res);
 		if (anim_res)
 			anim_res->InitAnimator();
 	}
@@ -117,13 +117,13 @@ bool ComponentAnimator::SetResourceAvatar(uint resource)
 	if (res_avatar > 0)
 		App->res->SetAsUnused(res_avatar);
 
-	if (resource > 0) {
+	if (resource > 0)
 		App->res->SetAsUsed(resource);
-		ResourceAnimator* animator = (ResourceAnimator*)App->res->GetResource(res);
-		animator->animator_data.avatar_uuid = resource; // TODO_G : this is ugly and needs to be improved >:(
-	}
-		
+
 	res_avatar = resource;
+
+	ResourceAnimator* animator = (ResourceAnimator*)App->res->GetResource(res);
+	animator->animator_data.avatar_uuid = resource; // TODO_G : this is ugly and needs to be improved >:(
 
 	return true;
 }
@@ -138,13 +138,13 @@ bool ComponentAnimator::SetResourceAnimation(uint resource)
 		}
 	}
 
-	if (resource > 0) {
+	if (resource > 0)
 		App->res->SetAsUsed(resource);
-		res_animations.push_back(resource);
-		ResourceAnimator* animator = (ResourceAnimator*)App->res->GetResource(res);
-		animator->AddAnimationFromAnimationResource((ResourceAnimation*)App->res->GetResource(resource));
-		animator->animator_data.animations_uuids.push_back(resource);
-	}
+
+	res_animations.push_back(resource);
+	ResourceAnimator* animator = (ResourceAnimator*)App->res->GetResource(res);
+	animator->AddAnimationFromAnimationResource((ResourceAnimation*)App->res->GetResource(resource));
+
 	return true;
 }
 
@@ -192,6 +192,7 @@ void ComponentAnimator::OnUniqueEditor()
 			ImGui::Text("Animator name: %s", resource->animator_data.name.data());
 			ImGui::Text("Animator resource UUID: %i", resource->GetUuid());
 			ImGui::Text("Avatar UUID: %i", resource->animator_data.avatar_uuid);
+			ImGui::Text("Meshes affected: %i", resource->animator_data.meshes_uuids.size());
 			ImGui::Text("Animations size: %i", resource->animator_data.animations_uuids.size());
 		}
 		

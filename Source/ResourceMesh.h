@@ -68,7 +68,7 @@ struct Vertex
 	float texCoord[2];
 
 	float boneWeight[MAX_BONES] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	int boneId[MAX_BONES] = { 0,0,0,0 };
+	uint boneId[MAX_BONES] = { 0,0,0,0 };
 };
 
 struct BoneInfluence
@@ -127,7 +127,7 @@ public:
 	uint GetIndicesCount() const;
 	bool UseAdjacency() const;
 
-	bool AddBones(const std::unordered_map<std::string, uint>& bones);
+	bool AddBones(const std::unordered_map<const char*, uint>& bones);
 	bool AddBone(uint vertexId, float boneWeight, uint boneId);
 	static void CalculateAdjacentIndices(uint* indices, uint indicesSize, uint*& adjacentIndices);
 
@@ -136,9 +136,6 @@ public:
 	uint GetVAO() const;
 
 private:
-
-	void GenerateVAO();
-	void DeleteVAO();
 
 	bool LoadInMemory();
 	bool UnloadFromMemory();

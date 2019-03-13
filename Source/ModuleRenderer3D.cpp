@@ -178,8 +178,6 @@ update_status ModuleRenderer3D::PreUpdate()
 	return UPDATE_CONTINUE;
 }
 
-#include "ModuleGOs.h"
-
 // PostUpdate: present buffer to screen
 update_status ModuleRenderer3D::PostUpdate()
 {
@@ -231,18 +229,6 @@ update_status ModuleRenderer3D::PostUpdate()
 	if (debugDraw)
 	{
 		App->lights->DebugDrawLights();
-
-		// Bones debug draw
-		std::vector<GameObject*> gameObjects;
-		App->GOs->GetGameobjects(gameObjects);
-		for (uint i = 0; i < gameObjects.size(); ++i)
-		{
-			if (gameObjects[i]->cmp_bone != nullptr)
-			{
-				math::float4x4 globalMatrix = gameObjects[i]->transform->GetGlobalMatrix();
-				App->debugDrawer->DebugDrawSphere(1.0f, Yellow, globalMatrix);
-			}
-		}
 
 		App->navigation->Draw();
 
@@ -732,9 +718,8 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 
 			math::float4x4 boneGlobalMatrix = boneComponent->GetParent()->transform->GetGlobalMatrix();
 			math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetMatrix();
-			//math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetGlobalMatrix().Inverted();
 
-			math::float4x4 boneTransform = boneGlobalMatrix * meshMatrix * boneResource->boneData.offsetMatrix;
+			math::float4x4 boneTransform = boneGlobalMatrix * meshMatrix.Inverted() * boneResource->boneData.offsetMatrix;
 
 			sprintf_s(boneName, "bones[%u]", i);
 			location = glGetUniformLocation(shader, boneName);
