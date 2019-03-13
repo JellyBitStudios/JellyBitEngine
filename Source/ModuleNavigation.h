@@ -10,6 +10,7 @@
 #include <vector>
 
 constexpr int max_Agents = 128;
+#define N_EPSILON 0.00050f
 
 class ModuleNavigation : public Module
 {

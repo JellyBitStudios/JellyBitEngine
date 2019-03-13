@@ -82,7 +82,10 @@ update_status ModuleNavigation::Update()
 				float angle = math::Atan2(direction.x, direction.z);
 				math::Quat new_rotation;
 				new_rotation.SetFromAxisAngle(math::float3(0, 1, 0), angle);
-				trm->SetRotation(new_rotation);
+				if (!ApproximatelyEqual(ag->npos[0], ag->targetPos[0], N_EPSILON) &&
+					!ApproximatelyEqual(ag->npos[1], ag->targetPos[1], N_EPSILON) && 
+					!ApproximatelyEqual(ag->npos[2], ag->targetPos[2], N_EPSILON))
+					trm->SetRotation(new_rotation);
 
 
 				//// // Recalculate bounding box -> // Bounding boxes are now automatically recalculated from ComponentTransform::UpdateGlobal()
