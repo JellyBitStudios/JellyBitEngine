@@ -593,6 +593,7 @@ void ResourceAnimator::AddAnimationFromAnimationResource(ResourceAnimation * res
 	animation->duration = res->animationData.duration;
 
 	animations.push_back(animation);
+
 	current_anim = animations[0];
 	current_anim->interpolate = true;
 	current_anim->loop = true;
