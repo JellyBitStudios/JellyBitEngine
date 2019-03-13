@@ -471,6 +471,9 @@ void ComponentEmitter::ParticleColor()
 				startValues.color.sort();
 			}
 		}
+
+		ImGui::Text("Color Average");
+		ImGui::DragFloat("##AverageColor", &colorAverage, 0.05f, 0.0f, 1.0f, "%.2f");
 	}
 #endif
 }
