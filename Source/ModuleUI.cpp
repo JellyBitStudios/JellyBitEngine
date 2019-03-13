@@ -210,6 +210,13 @@ void ModuleUI::OnSystemEvent(System_Event event)
 			}
 			break;
 		}
+		case System_Event_Type::GameObjectDestroyed:
+		{
+			if (std::strcmp(event.goEvent.gameObject->GetName(), "Canvas") == 0)
+				App->GOs->DeleteCanvasPointer();
+
+			break;
+		}
 	}
 }
 
