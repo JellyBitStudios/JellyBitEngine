@@ -549,6 +549,9 @@ void ResourceAvatar::AddBones(GameObject* gameObject) const
 
 void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 {
+	if (bones.empty())
+		return;
+
 	ResourceAnimation* animationResource = (ResourceAnimation*)App->res->GetResource(animationUuid);
 	if (animationResource == nullptr)
 	{
