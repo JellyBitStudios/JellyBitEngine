@@ -1068,13 +1068,16 @@ void PanelInspector::ShowAvatarInspector() const
 
 	ImGui::Spacing();
 
+	bool exportFile = false;
+
+	// Hips
 	uint hipsUuid = avatar->GetHipsUuid();
 	const GameObject* hipsGameObject = App->GOs->GetGameObjectByUID(hipsUuid);
 	const ComponentBone* hipsComponent = hipsGameObject != nullptr ? hipsGameObject->cmp_bone : nullptr;
 	const ResourceBone* hipsResource = hipsComponent != nullptr ? ((ResourceBone*)App->res->GetResource(hipsComponent->res)) : nullptr;
 
 	ImGui::PushID("hips");
-	ImGui::Button(hipsResource != nullptr ? hipsResource->boneData.name.data() : "Empty Root", ImVec2(150.0f, 0.0f));
+	ImGui::Button(hipsResource != nullptr ? hipsResource->boneData.name.data() : "Empty Bone", ImVec2(150.0f, 0.0f));
 	ImGui::PopID();
 
 	if (ImGui::IsItemHovered())
@@ -1084,7 +1087,6 @@ void PanelInspector::ShowAvatarInspector() const
 		ImGui::EndTooltip();
 	}
 
-	bool exportFile = false;
 	if (ImGui::BeginDragDropTarget())
 	{
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY"))
@@ -1100,16 +1102,58 @@ void PanelInspector::ShowAvatarInspector() const
 				exportFile = true;
 			}
 			else
-				CONSOLE_LOG(LogTypes::Warning, "This root is not valid");
+				CONSOLE_LOG(LogTypes::Warning, "This game object is not valid");
 		}
 		ImGui::EndDragDropTarget();
 	}
 
 	ImGui::SameLine();
 
-	if (ImGui::SmallButton("REMOVE"))
+	if (ImGui::SmallButton("REMOVE##hips"))
 	{
 		avatar->SetHipsUuid(0);
+
+		exportFile = true;
+	}
+
+	// Root
+	uint rootUuid = avatar->GetRootUuid();
+	const GameObject* rootGameObject = App->GOs->GetGameObjectByUID(rootUuid);
+
+	ImGui::PushID("root");
+	ImGui::Button(rootGameObject != nullptr ? rootGameObject->GetName() : "Empty Root", ImVec2(150.0f, 0.0f));
+	ImGui::PopID();
+
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("%u", rootUuid);
+		ImGui::EndTooltip();
+	}
+
+	if (ImGui::BeginDragDropTarget())
+	{
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY"))
+		{
+			const GameObject* rootGameObject = *(GameObject**)payload->Data;
+			
+			if (rootGameObject != nullptr)
+			{
+				avatar->SetRootUuid(rootGameObject->GetUUID());
+
+				exportFile = true;
+			}
+			else
+				CONSOLE_LOG(LogTypes::Warning, "This game object is not valid");
+		}
+		ImGui::EndDragDropTarget();
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::SmallButton("REMOVE##root"))
+	{
+		avatar->SetRootUuid(0);
 
 		exportFile = true;
 	}
