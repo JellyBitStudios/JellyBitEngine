@@ -178,6 +178,8 @@ update_status ModuleRenderer3D::PreUpdate()
 	return UPDATE_CONTINUE;
 }
 
+#include "ModuleGOs.h"
+
 // PostUpdate: present buffer to screen
 update_status ModuleRenderer3D::PostUpdate()
 {
@@ -230,6 +232,18 @@ update_status ModuleRenderer3D::PostUpdate()
 
 	if (debugDraw)
 	{
+		// Bones debug draw
+		std::vector<GameObject*> gameObjects;
+		App->GOs->GetGameobjects(gameObjects);
+		for (uint i = 0; i < gameObjects.size(); ++i)
+		{
+			if (gameObjects[i]->cmp_bone != nullptr)
+			{
+				math::float4x4 globalMatrix = gameObjects[i]->transform->GetGlobalMatrix();
+				App->debugDrawer->DebugDrawSphere(1.0f, Yellow, globalMatrix);
+			}
+		}
+
 		App->navigation->Draw();
 
 		App->debugDrawer->StartDebugDraw();
