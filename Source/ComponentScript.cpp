@@ -75,6 +75,53 @@ void ComponentScript::OnSystemEvent(System_Event event)
 
 			break;
 		}
+		case System_Event_Type::GameObjectDestroyed:
+		{
+			MonoObject* monoInstance = GetMonoComponent();
+
+			if (!monoInstance)
+				return;
+
+			MonoClass* monoClass = mono_object_get_class(monoInstance);
+
+			void* it = NULL;
+			MonoClassField* field = NULL;
+
+			do
+			{
+				field = mono_class_get_fields(monoClass, &it);
+
+				if (field)
+				{
+					MonoType* type = mono_field_get_type(field);
+					char* typeName = mono_type_get_name(type);
+
+					if (strcmp(typeName, "JellyBitEngine.GameObject") == 0)
+					{
+						MonoObject* storedMO;
+						mono_field_get_value(monoInstance, field, &storedMO);
+
+						if (!storedMO)
+						{
+							field = mono_class_get_fields(monoClass, &it);
+							continue;
+						}
+								
+						int address;
+						mono_field_get_value(storedMO, mono_class_get_field_from_name(mono_object_get_class(storedMO), "cppAddress"), &address);
+
+						GameObject* storedGO = (GameObject*)address;
+
+						if (storedGO == event.goEvent.gameObject)
+						{
+							//Our referenced GO is being destroyed!
+							mono_field_set_value(monoInstance, field, NULL);
+						}
+					}
+				}
+				
+			} while (field != NULL);
+		}
 	}
 }
 
