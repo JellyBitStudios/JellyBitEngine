@@ -526,12 +526,12 @@ bool ResourceMesh::UseAdjacency() const
 	return meshData.meshImportSettings.adjacency;
 }
 
-bool ResourceMesh::AddBones(const std::unordered_map<const char*, uint>& bones)
+bool ResourceMesh::AddBones(const std::unordered_map<std::string, uint>& bones)
 {
 	uint addedBones = 0;
 
 	uint boneId = 0; // this id matches the uniform bones array id
-	for (std::unordered_map<const char*, uint>::const_iterator it = bones.begin(); it != bones.end(); ++it, ++boneId)
+	for (std::unordered_map<std::string, uint>::const_iterator it = bones.begin(); it != bones.end(); ++it, ++boneId)
 	{
 		/// Bone game object
 		GameObject* boneGameObject = App->GOs->GetGameObjectByUID(it->second);

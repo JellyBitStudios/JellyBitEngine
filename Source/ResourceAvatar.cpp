@@ -495,7 +495,7 @@ std::vector<uint> ResourceAvatar::GetBonesUuids() const
 {
 	std::vector<uint> bonesUuids;
 
-	for (std::unordered_map<const char*, uint>::const_iterator it = bones.begin(); it != bones.end(); ++it)
+	for (std::unordered_map<std::string, uint>::const_iterator it = bones.begin(); it != bones.end(); ++it)
 		bonesUuids.push_back(it->second);
 
 	return bonesUuids;
@@ -563,7 +563,15 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 		BoneTransformation boneTransformation = animationResource->animationData.boneKeys[i];
 
 		// Bone to be stepped
-		uint boneGameObjectUuid = bones[boneTransformation.bone_name.data()];
+		const char* boneName = boneTransformation.bone_name.data();
+		std::unordered_map<std::string, uint>::const_iterator it = bones.find(boneName);
+		if (it == bones.end())
+		{
+			CONSOLE_LOG(LogTypes::Error, "A bone does not exist...");
+			continue;
+		}
+
+		uint boneGameObjectUuid = it->second;
 		GameObject* boneGameObject = App->GOs->GetGameObjectByUID(boneGameObjectUuid);
 		if (boneGameObject == nullptr)
 		{
@@ -587,30 +595,33 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 		float* nextPos = nullptr;
 		float timePos = 0.0f;
 
-		for (uint j = 0; j < boneTransformation.positions.count; ++j)
+		if (boneTransformation.positions.count > i)
 		{
-			if (time == boneTransformation.positions.time[j])
+			for (uint j = 0; j < boneTransformation.positions.count; ++j)
 			{
-				// Save next and prev pos
-				nextPos = prevPos = &boneTransformation.positions.value[j * 3];
+				if (time == boneTransformation.positions.time[j])
+				{
+					// Save next and prev pos
+					nextPos = prevPos = &boneTransformation.positions.value[j * 3];
 
-				// Does not need interpolation
+					// Does not need interpolation
 
-				break;
-			}
-			else if (boneTransformation.positions.time[j] > time)
-			{
-				// Save next and prev time and pos
-				nextTime = boneTransformation.positions.time[j];
-				nextPos = &boneTransformation.positions.value[j * 3];
+					break;
+				}
+				else if (boneTransformation.positions.time[j] > time)
+				{
+					// Save next and prev time and pos
+					nextTime = boneTransformation.positions.time[j];
+					nextPos = &boneTransformation.positions.value[j * 3];
 
-				prevTime = boneTransformation.positions.time[j - 1];
-				prevPos = &boneTransformation.positions.value[(j * 3) - 3];
+					prevTime = boneTransformation.positions.time[j - 1];
+					prevPos = &boneTransformation.positions.value[(j * 3) - 3];
 
-				// Needs interpolation
-				timePos = (time - prevTime) / (nextTime - prevTime);
+					// Needs interpolation
+					timePos = (time - prevTime) / (nextTime - prevTime);
 
-				break;
+					break;
+				}
 			}
 		}
 
@@ -619,30 +630,33 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 		float* nextScale = nullptr;
 		float timeScale = 0.0f;
 
-		for (uint j = 0; j < boneTransformation.scalings.count; ++j)
+		if (boneTransformation.scalings.count > i)
 		{
-			if (time == boneTransformation.scalings.time[j])
+			for (uint j = 0; j < boneTransformation.scalings.count; ++j)
 			{
-				// Save next and prev scale
-				nextPos = prevPos = &boneTransformation.scalings.value[j * 3];
+				if (time == boneTransformation.scalings.time[j])
+				{
+					// Save next and prev scale
+					nextPos = prevScale = &boneTransformation.scalings.value[j * 3];
 
-				// Does not need interpolation
+					// Does not need interpolation
 
-				break;
-			}
-			else if (boneTransformation.scalings.time[j] > time)
-			{
-				// Save next and prev time and scale
-				nextTime = boneTransformation.scalings.time[j];
-				nextPos = &boneTransformation.scalings.value[j * 3];
+					break;
+				}
+				else if (boneTransformation.scalings.time[j] > time)
+				{
+					// Save next and prev time and scale
+					nextTime = boneTransformation.scalings.time[j];
+					nextScale = &boneTransformation.scalings.value[j * 3];
 
-				prevTime = boneTransformation.scalings.time[j - 1];
-				prevPos = &boneTransformation.scalings.value[(j * 3) - 3];
+					prevTime = boneTransformation.scalings.time[j - 1];
+					prevScale = &boneTransformation.scalings.value[(j * 3) - 3];
 
-				// Needs interpolation
-				timeScale = (time - prevTime) / (nextTime - prevTime);
+					// Needs interpolation
+					timeScale = (time - prevTime) / (nextTime - prevTime);
 
-				break;
+					break;
+				}
 			}
 		}
 
@@ -651,30 +665,33 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 		float* nextRot = nullptr;
 		float timeRot = 0.0f;
 
-		for (uint j = 0; j < boneTransformation.rotations.count; ++j)
+		if (boneTransformation.rotations.count > i)
 		{
-			if (time == boneTransformation.rotations.time[j])
+			for (uint j = 0; j < boneTransformation.rotations.count; ++j)
 			{
-				// Save next and prev scale
-				nextPos = prevPos = &boneTransformation.rotations.value[j * 4];
+				if (time == boneTransformation.rotations.time[j])
+				{
+					// Save next and prev scale
+					nextRot = prevRot = &boneTransformation.rotations.value[j * 4];
 
-				// Does not need interpolation
+					// Does not need interpolation
 
-				break;
-			}
-			else if (boneTransformation.rotations.time[j] > time)
-			{
-				// Save next and prev time and scale
-				nextTime = boneTransformation.rotations.time[j];
-				nextPos = &boneTransformation.rotations.value[j * 4];
+					break;
+				}
+				else if (boneTransformation.rotations.time[j] > time)
+				{
+					// Save next and prev time and scale
+					nextTime = boneTransformation.rotations.time[j];
+					nextRot = &boneTransformation.rotations.value[j * 4];
 
-				prevTime = boneTransformation.rotations.time[j - 1];
-				prevPos = &boneTransformation.rotations.value[(j * 4) - 4];
+					prevTime = boneTransformation.rotations.time[j - 1];
+					prevRot = &boneTransformation.rotations.value[(j * 4) - 4];
 
-				// Needs interpolation
-				timeRot = (time - prevTime) / (nextTime - prevTime);
+					// Needs interpolation
+					timeRot = (time - prevTime) / (nextTime - prevTime);
 
-				break;
+					break;
+				}
 			}
 		}
 
