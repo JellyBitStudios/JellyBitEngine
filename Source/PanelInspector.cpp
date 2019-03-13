@@ -1025,7 +1025,7 @@ void PanelInspector::ShowMaterialInspector() const
 		{
 			// Export the existing file
 			std::string outputFile;
-			App->res->ExportFile(ResourceTypes::MaterialResource, material->GetData(), &material->GetSpecificData(), outputFile, true, false);
+			ResourceMaterial::ExportFile(material->GetData(), material->GetSpecificData(), outputFile, true);
 		}
 	}
 }
@@ -1084,6 +1084,7 @@ void PanelInspector::ShowAvatarInspector() const
 		ImGui::EndTooltip();
 	}
 
+	bool exportFile = false;
 	if (ImGui::BeginDragDropTarget())
 	{
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY"))
@@ -1093,7 +1094,11 @@ void PanelInspector::ShowAvatarInspector() const
 			const ResourceBone* hipsResource = hipsComponent != nullptr ? ((ResourceBone*)App->res->GetResource(hipsComponent->res)) : nullptr;
 			
 			if (hipsResource != nullptr)
+			{
 				avatar->SetHipsUuid(hipsGameObject->GetUUID());
+
+				exportFile = true;
+			}
 			else
 				CONSOLE_LOG(LogTypes::Warning, "This root is not valid");
 		}
@@ -1103,7 +1108,18 @@ void PanelInspector::ShowAvatarInspector() const
 	ImGui::SameLine();
 
 	if (ImGui::SmallButton("REMOVE"))
+	{
 		avatar->SetHipsUuid(0);
+
+		exportFile = true;
+	}
+
+	if (exportFile)
+	{
+		// Export the existing file
+		std::string outputFile;
+		ResourceAvatar::ExportFile(avatar->GetData(), avatar->GetSpecificData(), outputFile, true);
+	}
 }
 
 #endif // GAME
