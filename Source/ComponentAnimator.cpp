@@ -119,7 +119,7 @@ bool ComponentAnimator::SetResourceAvatar(uint resource)
 
 	if (resource > 0) {
 		App->res->SetAsUsed(resource);
-		ResourceAnimator* animator = (ResourceAnimator*)App->res->GetResource(resource);
+		ResourceAnimator* animator = (ResourceAnimator*)App->res->GetResource(res);
 		animator->animator_data.avatar_uuid = resource; // TODO_G : this is ugly and needs to be improved >:(
 	}
 		
