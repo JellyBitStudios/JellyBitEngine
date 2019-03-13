@@ -955,7 +955,7 @@ void SceneImporter::GenerateVAO(uint& VAO, uint& VBO, uint attrFlag) const
 	glEnableVertexAttribArray(6);
 
 	// 8. Ids
-	glVertexAttribPointer(7, MAX_BONES, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, boneId)));
+	glVertexAttribIPointer(7, MAX_BONES, GL_INT, sizeof(Vertex), (void*)(offsetof(Vertex, boneId)));
 	glEnableVertexAttribArray(7);
 
 	glBindVertexArray(0);

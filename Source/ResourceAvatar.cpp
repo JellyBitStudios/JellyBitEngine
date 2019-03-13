@@ -540,6 +540,8 @@ void ResourceAvatar::AddBones(GameObject* gameObject) const
 		ComponentMesh* meshComponent = children[i]->cmp_mesh;
 		if (meshComponent != nullptr)
 		{
+			meshComponent->avatarResource = uuid;
+
 			ResourceMesh* meshResource = (ResourceMesh*)App->res->GetResource(meshComponent->res);
 			if (meshResource != nullptr)
 				meshResource->AddBones(bones);
@@ -771,8 +773,11 @@ void ResourceAvatar::ClearBones()
 	for (uint i = 0; i < children.size(); ++i)
 	{
 		ComponentMesh* meshComponent = children[i]->cmp_mesh;
-		if (meshComponent != nullptr && meshComponent->avatarResource == uuid)
-			meshComponent->avatarResource = 0;
+		if (meshComponent != nullptr)
+		{
+			if (meshComponent->avatarResource == uuid)
+				meshComponent->avatarResource = 0;
+		}		
 	}
 }
 

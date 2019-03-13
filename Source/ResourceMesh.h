@@ -68,7 +68,7 @@ struct Vertex
 	float texCoord[2];
 
 	float boneWeight[MAX_BONES] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	uint boneId[MAX_BONES] = { 0,0,0,0 };
+	int boneId[MAX_BONES] = { 0,0,0,0 };
 };
 
 struct BoneInfluence
@@ -136,6 +136,9 @@ public:
 	uint GetVAO() const;
 
 private:
+
+	void GenerateVAO();
+	void DeleteVAO();
 
 	bool LoadInMemory();
 	bool UnloadFromMemory();
