@@ -21,10 +21,6 @@
 #include <list>
 #include <vector>
 
-#define QUADTREE_SIZE_X 200.0f
-#define QUADTREE_SIZE_Y 100.0f
-#define QUADTREE_SIZE_Z 200.0f
-
 ModuleScene::ModuleScene(bool start_enabled) : Module(start_enabled)
 {
 	name = "Scene";
@@ -36,7 +32,7 @@ bool ModuleScene::Init(JSON_Object* jObject)
 {
 	LoadStatus(jObject);
 
-	CreateQuadtree();
+	quadtree.Create();
 
 	return true;
 }
@@ -308,33 +304,10 @@ void ModuleScene::SetShowGrid(bool showGrid)
 
 void ModuleScene::RecreateQuadtree()
 {
-	// Clear and create the quadtree
-	CreateQuadtree();
-
-	// Fill the quadtree with static game objects
-	RecalculateQuadtree();
-}
-
-void ModuleScene::CreateQuadtree()
-{
-	const math::float3 center(0.0f, 0.0f, 0.0f);
-	const math::float3 size(QUADTREE_SIZE_X, QUADTREE_SIZE_Y, QUADTREE_SIZE_Z);
-	math::AABB boundary;
-	boundary.SetFromCenterAndSize(center, size);
-
-	quadtree.SetBoundary(boundary);
-}
-
-void ModuleScene::RecalculateQuadtree()
-{
 	std::vector<GameObject*> staticGameObjects;
 	App->GOs->GetStaticGameobjects(staticGameObjects);
 
-	for (uint i = 0; i < staticGameObjects.size(); ++i)
-	{
-		if (staticGameObjects[i]->GetLayer() != UILAYER)
-			App->scene->quadtree.Insert(staticGameObjects[i]);
-	}
+	quadtree.ReDoQuadtree(staticGameObjects);
 }
 
 void ModuleScene::CreateRandomStaticGameObject()

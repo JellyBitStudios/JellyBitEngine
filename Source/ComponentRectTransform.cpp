@@ -690,6 +690,4 @@ void ComponentRectTransform::LinkToUIModule()
 	}
 	else
 		App->ui->componentsUI.push_back(this);
-
-	CheckParentRect();
 }
