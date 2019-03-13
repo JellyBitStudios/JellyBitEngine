@@ -292,7 +292,6 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 		{
 			// Create the Mesh Component
 			gameObject->AddComponent(ComponentTypes::MeshComponent);
-			gameObject->ForceStaticNoVector();
 
 			if (forcedUuids.size() > 0)
 			{
