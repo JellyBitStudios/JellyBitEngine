@@ -153,7 +153,10 @@ void Quadtree::Create(const math::AABB& limits) //Internal Create
 void Quadtree::Create() //External Create
 {
 	if (root == nullptr)
+	{
 		root = new QuadtreeNode(math::AABB());
+		root->boundingBox.SetNegativeInfinity();
+	}
 }
 
 void Quadtree::Clear()
@@ -163,6 +166,9 @@ void Quadtree::Clear()
 
 void Quadtree::Insert(GameObject* gameObject)
 {
+	if (!root->boundingBox.IsFinite())
+		root->boundingBox = gameObject->boundingBox;
+
 	if (gameObject->boundingBox.Intersects(root->boundingBox))
 		root->Insert(gameObject);
 	else
