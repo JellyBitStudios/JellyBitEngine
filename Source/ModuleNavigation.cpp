@@ -319,6 +319,7 @@ void ModuleNavigation::SetDestination(const float* p, int indx) const
 	const dtCrowdAgent* ag = m_crowd->getAgent(indx);
 	dtPolyRef polyRefTarget;
 	float targetPos[3];
+	const float* a = m_crowd->getQueryExtents();
 	m_navQuery->findNearestPoly(p, m_crowd->getQueryExtents(), m_crowd->getFilter(ag->params.queryFilterType), &polyRefTarget, targetPos);
 	if (ag && ag->active)
 		m_crowd->requestMoveTarget(indx, polyRefTarget, targetPos);
