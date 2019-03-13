@@ -26,6 +26,8 @@ public:
 	void Subdivide();
 	void RedistributeChildren();
 
+	void GetGameObjects(std::vector<GameObject*>& object) const;
+
 	template<typename Type>
 	void CollectIntersections(std::vector<GameObject*>& gameObjects, Type& primitive);
 
@@ -47,10 +49,19 @@ public:
 	Quadtree();
 	~Quadtree();
 
-	void SetBoundary(const math::AABB& limits);
+	void Create(const math::AABB & limits);	//Internal Create
+	void Create();							//External Create
 	void Clear();
 
 	void Insert(GameObject* gameObject);
+
+	void ReDoQuadtree(std::vector<GameObject*> objects);//Internal ReDo
+	void ReDoQuadtree(const math::AABB & limits);		//External ReDo
+
+	void ReDoLimits(GameObject * newObject);
+
+	void GetGameObjects(std::vector<GameObject*>& objects) const;
+	void UniqueObjects(std::vector<GameObject*>& objects) const;
 
 	template<typename Type>
 	void CollectIntersections(std::vector<GameObject*>& gameObjects, Type& primitive);
