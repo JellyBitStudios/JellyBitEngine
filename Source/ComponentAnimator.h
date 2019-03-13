@@ -2,6 +2,7 @@
 #define __COMPONENT_ANIMATOR_H__
 
 #include "Component.h"
+#include <vector>
 
 class ComponentAnimator : public Component
 {
@@ -15,6 +16,7 @@ public:
 	uint GetInternalSerializationBytes();
 	bool SetResourceAnimator(uint resource);
 	bool SetResourceAvatar(uint resource);
+	bool SetResourceAnimation(uint resource);
 
 	virtual void Update();
 
@@ -28,6 +30,7 @@ public:
 public:
 	uint res = 0;
 	uint res_avatar = 0;
+	std::vector<uint> res_animations;
 
 };
 

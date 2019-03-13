@@ -67,8 +67,8 @@ struct Vertex
 	uchar color[4];
 	float texCoord[2];
 
-	float boneWeight[MAX_BONES];
-	uint boneId[MAX_BONES];
+	float boneWeight[MAX_BONES] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	uint boneId[MAX_BONES] = { 0,0,0,0 };
 };
 
 struct BoneInfluence
