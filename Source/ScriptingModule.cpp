@@ -285,19 +285,8 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 				mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
 
 				GameObject* gameObject = (GameObject*)address;
-
-				bool destroyed = false;
-				while (gameObject)
-				{
-					if (gameObject == event.goEvent.gameObject)
-					{
-						destroyed = true;
-						break;
-					}
-					gameObject = gameObject->GetParent() ? gameObject->GetParent() : nullptr;
-				}
-
-				if (destroyed)				
+					
+				if (gameObject == event.goEvent.gameObject)
 				{
 					MonoClass* monoObjectClass = mono_object_get_class(monoObject);
 
@@ -310,6 +299,12 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 
 					monoObjectHandles.erase(monoObjectHandles.begin() + i);
 					i--;
+
+					//Erase this gameObject from all the public variables in scripts
+					for (int i = 0; i < scripts.size(); ++i)
+					{
+						scripts[i]->OnSystemEvent(event);
+					}
 				}
 			}		
 			break;
@@ -912,18 +907,6 @@ void ScriptingModule::RecompileScripts()
 		System_Event event;
 		event.type = System_Event_Type::ScriptingDomainReloaded;
 		App->PushSystemEvent(event);
-
-		App->scripting->CreateDomain();
-		App->scripting->UpdateScriptingReferences();
-
-		std::vector<Resource*> scriptResources = App->res->GetResourcesByType(ResourceTypes::ScriptResource);
-		for (int i = 0; i < scriptResources.size(); ++i)
-		{
-			ResourceScript* scriptRes = (ResourceScript*)scriptResources[i];
-			scriptRes->referenceMethods();
-		}
-
-		App->scripting->ReInstance();
 	}
 }
 
