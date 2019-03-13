@@ -98,7 +98,7 @@ update_status ModuleScene::Update()
 		OnGizmos(currentGameObject);
 	}
 
-	if(App->IsEditor() /*&& DONT LOOCK AT OTHER WINDOW LIKE SHADER*/)
+	if(App->IsEditor() && !App->gui->WantTextInput())
 		if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RCTRL) == KEY_REPEAT)
 		{
 			if (App->input->GetKey(SDL_SCANCODE_Z) == KEY_DOWN)
