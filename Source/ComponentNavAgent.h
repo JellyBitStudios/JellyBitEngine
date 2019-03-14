@@ -16,6 +16,7 @@ public:
 	void OnUniqueEditor();
 
 	void AddAgent();
+	void RemoveAgent();
 	int  GetIndex() const { return index; }
 	bool UpdateParams() const;
 	void SetDestination(const float* pos) const;
