@@ -174,6 +174,7 @@ public:
 	uint materialRes = 0;
 	bool startOnPlay = false;
 
+	float colorAverage = 0.0f;
 private:
 	// General info
 	//---------------------------------------

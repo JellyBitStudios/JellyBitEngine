@@ -63,7 +63,7 @@ private:
 
 private:
 
-	std::unordered_map<std::string, uint> bones; // bone name, bone game object uuid
+	std::unordered_map<const char*, uint> bones; // bone name, bone game object uuid
 
 	ResourceAvatarData avatarData;
 };

@@ -20,7 +20,8 @@
 ComponentEmitter::ComponentEmitter(GameObject* gameObject) : Component(gameObject, EmitterComponent)
 {
 	SetAABB(math::float3::one);
-	App->scene->quadtree.Insert(gameObject);
+	if(gameObject->IsStatic())
+		App->scene->quadtree.Insert(gameObject);
 	App->particle->emitters.push_back(this);
 
 	SetMaterialRes(App->resHandler->defaultMaterial);
@@ -471,6 +472,9 @@ void ComponentEmitter::ParticleColor()
 				startValues.color.sort();
 			}
 		}
+
+		ImGui::Text("Color Average");
+		ImGui::DragFloat("##AverageColor", &colorAverage, 0.05f, 0.0f, 1.0f, "%.2f");
 	}
 #endif
 }
@@ -712,16 +716,22 @@ bool ComponentEmitter::EditColor(ColorTime &colorTime, uint pos)
 
 void ComponentEmitter::SetAABB(const math::float3 size, const math::float3 extraPosition)
 {
-	GameObject* gameObject = GetParent();
-
-	if (gameObject)
+	if (size.MinElement() >= 0)
 	{
-		gameObject->originalBoundingBox.SetFromCenterAndSize(extraPosition, size);
+		GameObject* gameObject = GetParent();
 
-		System_Event newEvent;
-		newEvent.goEvent.gameObject = gameObject;
-		newEvent.type = System_Event_Type::RecalculateBBoxes;
-		App->PushSystemEvent(newEvent);
+		if (gameObject)
+		{
+			math::float3 pos = gameObject->transform->GetGlobalMatrix().TranslatePart();
+
+			gameObject->originalBoundingBox.SetFromCenterAndSize(pos + extraPosition, size);
+			gameObject->boundingBox = gameObject->originalBoundingBox;
+
+			System_Event newEvent;
+			newEvent.goEvent.gameObject = gameObject;
+			newEvent.type = System_Event_Type::RecreateQuadtree;
+			App->PushSystemEvent(newEvent);
+		}
 	}
 }
 

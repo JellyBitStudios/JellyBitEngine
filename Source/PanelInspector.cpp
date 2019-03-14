@@ -126,11 +126,10 @@ void PanelInspector::ShowGameObjectInspector() const
 	}
 	ImGui::PopItemWidth();
 
-	ImGui::SameLine(0.0f, 30.f);
 	bool isStatic = gameObject->IsStatic();
-	if (ImGui::Checkbox("##static", &isStatic)) { gameObject->ToggleIsStatic(); }
+	if (ImGui::Checkbox("Static", &isStatic)) { gameObject->ToggleIsStatic(); }
 	ImGui::SameLine();
-	ImGui::Text("Static");
+	if (ImGui::Button("Everybody Static")) { gameObject->ToggleChildrenAndThisStatic(!isStatic); }
 
 	// Layer
 	std::vector<const char*> layers;
