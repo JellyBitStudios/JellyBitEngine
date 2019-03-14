@@ -673,7 +673,7 @@ void ModuleRenderer3D::FrustumCulling() const
 #include "ResourceBone.h"
 #include "ResourceAvatar.h"
 
-#define MAX_BONES 100
+#define MAX_BONES 1000
 
 void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 {

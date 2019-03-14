@@ -185,7 +185,7 @@ void ComponentAnimator::OnUniqueEditor()
 		ImGui::Text("Drag n drop in this order please");
 
 		std::string fileName = "Empty Animator";
-		const ResourceAnimator* resource = (ResourceAnimator*)App->res->GetResource(res);
+		ResourceAnimator* resource = (ResourceAnimator*)App->res->GetResource(res);
 		if (resource != nullptr)
 			fileName = resource->GetName();
 
@@ -195,7 +195,29 @@ void ComponentAnimator::OnUniqueEditor()
 			ImGui::Text("Avatar UUID: %i", resource->animator_data.avatar_uuid);
 			ImGui::Text("Animations size: %i", resource->animator_data.animations_uuids.size());
 		}
-		
+
+		if (ImGui::Button("PLAY"))
+			resource->PlayAnimation();
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("PAUSE"))
+			resource->PauseAnimation();
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("STOP"))
+			resource->StopAnimation();
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("FORWARD"))
+			resource->StepForward();
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("BACKWARDS"))
+			resource->StepBackwards();
 
 		ImGui::PushID("animator");
 		ImGui::Button(fileName.data(), ImVec2(150.0f, 0.0f));
