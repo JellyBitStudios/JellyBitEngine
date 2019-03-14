@@ -81,7 +81,8 @@ struct BoneInfluence
 
 	~BoneInfluence()
 	{
-		
+		RELEASE_ARRAY(boneWeights);
+		RELEASE_ARRAY(boneIds);
 	}
 };
 
@@ -97,6 +98,14 @@ struct ResourceMeshData
 
 	BoneInfluence* boneInfluences = nullptr;
 	uint boneInfluencesSize = 0;
+
+	~ResourceMeshData()
+	{
+		RELEASE_ARRAY(vertices);
+		RELEASE_ARRAY(indices);
+		RELEASE_ARRAY(adjacentIndices);
+		RELEASE_ARRAY(boneInfluences);
+	}
 
 	ResourceMeshImportSettings meshImportSettings;
 };
