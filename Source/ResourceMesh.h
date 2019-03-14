@@ -46,11 +46,12 @@ struct ResourceMeshImportSettings
 		ATTR_TEXCOORD = 1 << 3,
 		ATTR_TANGENT = 1 << 4,
 		ATTR_BITANGENT = 1 << 5,
+		ATTR_ANIMATION = 1 << 6
 	};
 
 	PostProcessConfigurationFlags postProcessConfigurationFlags = PostProcessConfigurationFlags::TARGET_REALTIME_MAX_QUALITY;
 	uint customConfigurationFlags = 0;
-	uint attributes = ATTR_POSITION | ATTR_NORMAL | ATTR_COLOR | ATTR_TEXCOORD | ATTR_TANGENT | ATTR_BITANGENT;
+	uint attributes = ATTR_POSITION | ATTR_NORMAL | ATTR_COLOR | ATTR_TEXCOORD | ATTR_TANGENT | ATTR_BITANGENT | ATTR_ANIMATION;
 
 	float scale = 1.0f;
 	bool adjacency = false;
@@ -77,6 +78,11 @@ struct BoneInfluence
 	float* boneWeights = nullptr;
 	uint* boneIds = nullptr;
 	char boneName[DEFAULT_BUF_SIZE];
+
+	~BoneInfluence()
+	{
+		
+	}
 };
 
 struct ResourceMeshData

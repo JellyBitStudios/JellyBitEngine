@@ -545,6 +545,7 @@ void PanelInspector::ShowMeshImportSettingsInspector()
 	ImGui::CheckboxFlags("Texture coordinates", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_TEXCOORD);
 	ImGui::CheckboxFlags("Tangents", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_TANGENT);
 	ImGui::CheckboxFlags("Bitangents", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_BITANGENT);
+	ImGui::CheckboxFlags("Animations", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_ANIMATION);
 
 	const char* postProcessConfiguration[] = { "Target Realtime Fast", "Target Realtime Quality", "Target Realtime Max Quality", "Custom" };
 	
