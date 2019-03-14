@@ -21,6 +21,10 @@
 #include <list>
 #include <vector>
 
+#define QUADTREE_SIZE_X 200.0f
+#define QUADTREE_SIZE_Y 100.0f
+#define QUADTREE_SIZE_Z 200.0f
+
 ModuleScene::ModuleScene(bool start_enabled) : Module(start_enabled)
 {
 	name = "Scene";
@@ -32,7 +36,7 @@ bool ModuleScene::Init(JSON_Object* jObject)
 {
 	LoadStatus(jObject);
 
-	quadtree.Create();
+	CreateQuadtree();
 
 	return true;
 }
@@ -94,7 +98,7 @@ update_status ModuleScene::Update()
 		OnGizmos(currentGameObject);
 	}
 
-	if(App->IsEditor() && !App->gui->WantTextInput())
+	if(App->IsEditor() /*&& DONT LOOCK AT OTHER WINDOW LIKE SHADER*/)
 		if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RCTRL) == KEY_REPEAT)
 		{
 			if (App->input->GetKey(SDL_SCANCODE_Z) == KEY_DOWN)
@@ -156,7 +160,7 @@ void ModuleScene::OnSystemEvent(System_Event event)
 
 #ifndef GAMEMODE
 	case System_Event_Type::GameObjectDestroyed:
-	{
+
 		// Remove GO in list if its deleted
 		if (selectedObject == event.goEvent.gameObject)
 			SELECT(NULL);
@@ -172,15 +176,7 @@ void ModuleScene::OnSystemEvent(System_Event event)
 			else
 				++iterator;
 		}
-	}
 		break;
-	case System_Event_Type::LoadFinished:
-	{
-		System_Event newEvent;
-		newEvent.type = System_Event_Type::RecreateQuadtree;
-		App->PushSystemEvent(newEvent);
-	}
-	break;
 #endif
 	}
 }
@@ -312,10 +308,33 @@ void ModuleScene::SetShowGrid(bool showGrid)
 
 void ModuleScene::RecreateQuadtree()
 {
+	// Clear and create the quadtree
+	CreateQuadtree();
+
+	// Fill the quadtree with static game objects
+	RecalculateQuadtree();
+}
+
+void ModuleScene::CreateQuadtree()
+{
+	const math::float3 center(0.0f, 0.0f, 0.0f);
+	const math::float3 size(QUADTREE_SIZE_X, QUADTREE_SIZE_Y, QUADTREE_SIZE_Z);
+	math::AABB boundary;
+	boundary.SetFromCenterAndSize(center, size);
+
+	quadtree.SetBoundary(boundary);
+}
+
+void ModuleScene::RecalculateQuadtree()
+{
 	std::vector<GameObject*> staticGameObjects;
 	App->GOs->GetStaticGameobjects(staticGameObjects);
 
-	quadtree.ReDoQuadtree(staticGameObjects);
+	for (uint i = 0; i < staticGameObjects.size(); ++i)
+	{
+		if (staticGameObjects[i]->GetLayer() != UILAYER)
+			App->scene->quadtree.Insert(staticGameObjects[i]);
+	}
 }
 
 void ModuleScene::CreateRandomStaticGameObject()

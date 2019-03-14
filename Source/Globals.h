@@ -6,6 +6,7 @@
 
 #include <windows.h>
 #include <stdio.h>
+#include "parson/parson.h"
 
 enum class LogTypes
 {
@@ -23,9 +24,7 @@ void OpenInBrowser(char* url);
 
 void OpenInExplorer();
 
-bool ApproximatelyEqual(float a, float b, float epsilon);
-
-bool EssentiallyEqual(float a, float b, float epsilon);
+void SaveNumberArray(JSON_Object * parent, char * name, float * numbers, int size);
 
 #define CAP(n) ((n <= 0.0f) ? n=0.0f : (n >= 1.0f) ? n=1.0f : n=n)
 

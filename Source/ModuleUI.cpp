@@ -36,10 +36,9 @@ ModuleUI::~ModuleUI()
 
 void ModuleUI::DrawCanvas()
 {
-	if (depthTest) glDisable(GL_DEPTH_TEST);
-	if (cullFace)  glDisable(GL_CULL_FACE);
-	if (lighting) glDisable(GL_LIGHTING);
-
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_LIGHTING);
 	for (std::list<Component*>::iterator iteratorUI = componentsScreenRendererUI.begin(); iteratorUI != componentsScreenRendererUI.end(); ++iteratorUI)
 	{
 		ComponentCanvasRenderer* renderer = (ComponentCanvasRenderer*)*iteratorUI;
@@ -59,16 +58,14 @@ void ModuleUI::DrawCanvas()
 			rend = renderer->GetDrawAvaiable();
 		}
 	}
-	if (depthTest) glEnable(GL_DEPTH_TEST);
-	if (cullFace) glEnable(GL_CULL_FACE);
-	if (lighting) glEnable(GL_LIGHTING);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_LIGHTING);
 }
 
 void ModuleUI::DrawWorldCanvas()
 {
-	UpdateRenderStates();
-	if (lighting) glDisable(GL_LIGHTING);
-
+	glDisable(GL_LIGHTING);
 	for (std::list<Component*>::iterator iteratorUI = componentsWorldRendererUI.begin(); iteratorUI != componentsWorldRendererUI.end(); ++iteratorUI)
 	{
 		ComponentCanvasRenderer* renderer = (ComponentCanvasRenderer*)*iteratorUI;
@@ -88,7 +85,7 @@ void ModuleUI::DrawWorldCanvas()
 			rend = renderer->GetDrawAvaiable();
 		}
 	}
-	if (lighting) glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHTING);
 }
 
 bool ModuleUI::Init(JSON_Object * jObject)
@@ -211,13 +208,6 @@ void ModuleUI::OnSystemEvent(System_Event event)
 				componentsUI.remove(event.compEvent.component);
 				break;
 			}
-			break;
-		}
-		case System_Event_Type::GameObjectDestroyed:
-		{
-			if (std::strcmp(event.goEvent.gameObject->GetName(), "Canvas") == 0)
-				App->GOs->DeleteCanvasPointer();
-
 			break;
 		}
 	}
@@ -347,20 +337,6 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 		setFloat(ui_shader, "bottomRight", rect_world[ComponentRectTransform::Rect::RBOTTOMRIGHT]);
 		break;
 	}
-}
-
-void ModuleUI::UpdateRenderStates()
-{
-	GLenum capability = 0;
-
-	capability = GL_DEPTH_TEST;
-	depthTest = App->renderer3D->GetCapabilityState(capability);
-
-	capability = GL_CULL_FACE;
-	cullFace = App->renderer3D->GetCapabilityState(capability);
-
-	capability = GL_LIGHTING;
-	lighting = App->renderer3D->GetCapabilityState(capability);
 }
 
 bool ModuleUI::IsUIHovered()

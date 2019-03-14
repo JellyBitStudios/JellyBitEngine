@@ -59,6 +59,8 @@ GameObject::GameObject(const char* name, GameObject* parent, bool disableTransfo
 	uuid = App->GenerateRandomNumber();
 }
 
+#include "ModuleRenderer3D.h"
+
 GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 {
 	strcpy_s(name, DEFAULT_BUF_SIZE, gameObject.name);
@@ -296,32 +298,10 @@ void GameObject::ToggleIsStatic()
 	App->GOs->RecalculateVector(this);
 }
 
-void GameObject::ToggleChildrenAndThisStatic(bool toStatic)
+void GameObject::ForceStaticNoVector()
 {
-	std::vector<GameObject*> gos;
-	GetChildrenAndThisVectorFromLeaf(gos);
-
-	for each(auto go in gos)
-	{
-		go->isStatic = toStatic;
-		App->GOs->RecalculateVector(go, false);
-	}
-
-	System_Event newEvent;
-	newEvent.type = System_Event_Type::RecreateQuadtree;
-	App->PushSystemEvent(newEvent);
-}
-
-void GameObject::ToggleChildrenAndThisWalkable(bool walkable)
-{
-	std::vector<GameObject*> gos;
-	GetChildrenAndThisVectorFromLeaf(gos);
-
-	for each(auto go in gos)
-	{
-		if (go->cmp_mesh != 0)
-			go->cmp_mesh->nv_walkable = walkable;
-	}
+	assert(isStatic == false);
+	isStatic = true;
 }
 
 bool GameObject::IsActive() const

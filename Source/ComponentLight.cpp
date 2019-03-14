@@ -64,7 +64,7 @@ void ComponentLight::OnUniqueEditor()
 
 uint ComponentLight::GetInternalSerializationBytes()
 {
-	return sizeof(int) + sizeof(float) * 5;
+	return sizeof(int) * 2;
 }
 
 void ComponentLight::OnInternalSave(char*& cursor)

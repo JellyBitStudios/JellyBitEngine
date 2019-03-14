@@ -61,9 +61,8 @@ update_status ModuleNavigation::Update()
 			
 			int index = agent->GetIndex();
 			const dtCrowdAgent* ag = m_crowd->getAgent(index);
-			//if (ag->targetState == DT_CROWDAGENT_STATE_WALKING || ag->targetState == DT_CROWDAGENT_STATE_OFFMESH)
-			//{
-				//DT_CROWDAGENT_TARGET_VELOCITY
+			if (ag->targetState == DT_CROWDAGENT_STATE_WALKING || ag->targetState == DT_CROWDAGENT_STATE_OFFMESH)
+			{
 				// Here we are forcing new position and rotation and manually sending an event to recaculcate bb.
 				// We are ignoring to update physics position and/or camera->frustum position.
 
@@ -77,19 +76,21 @@ update_status ModuleNavigation::Update()
 				// Face gameobject to velocity dir
 				// vel equals to current velocity, nvel equals to desired velocity
 				// using nvel instead of vel would end up with a non smoothy rotation.
-				//if current agent vel is zero, we dont want to rotate it. //speedVel, nvel, vel, vel?
-				float zero[3] = { 0,0,0 };
-				if (!dtVequal(ag->vel, zero))
-				{
-					math::float3 direction;
-					memcpy(&direction, ag->vel, sizeof(float) * 3);
-					direction.Normalize();
-					float angle = math::Atan2(direction.x, direction.z);
-					math::Quat new_rotation = trm->GetRotation();
-					new_rotation = new_rotation.RotateY(angle);
-					trm->SetRotation(new_rotation);
-				}
-			//}
+				math::float3 direction;
+				memcpy(&direction, ag->vel, sizeof(float) * 3);
+				direction.Normalize();
+				float angle = math::Atan2(direction.x, direction.z);
+				math::Quat new_rotation;
+				new_rotation.SetFromAxisAngle(math::float3(0, 1, 0), angle);
+				trm->SetRotation(new_rotation);
+
+
+				//// // Recalculate bounding box -> // Bounding boxes are now automatically recalculated from ComponentTransform::UpdateGlobal()
+				//System_Event newEvent;
+				//newEvent.goEvent.gameObject = parent;
+				//newEvent.type = System_Event_Type::RecalculateBBoxes;
+				//App->PushSystemEvent(newEvent);
+			}
 		}
 	}
 
@@ -318,7 +319,6 @@ void ModuleNavigation::SetDestination(const float* p, int indx) const
 	const dtCrowdAgent* ag = m_crowd->getAgent(indx);
 	dtPolyRef polyRefTarget;
 	float targetPos[3];
-	const float* a = m_crowd->getQueryExtents();
 	m_navQuery->findNearestPoly(p, m_crowd->getQueryExtents(), m_crowd->getFilter(ag->params.queryFilterType), &polyRefTarget, targetPos);
 	if (ag && ag->active)
 		m_crowd->requestMoveTarget(indx, polyRefTarget, targetPos);

@@ -1,6 +1,5 @@
 #include "Quadtree.h"
 #include "GameObject.h"
-#include <algorithm>
 
 #define NE 0
 #define NW 1
@@ -119,22 +118,6 @@ void QuadtreeNode::RedistributeChildren()
 	}
 }
 
-void QuadtreeNode::GetGameObjects(std::vector<GameObject*>& object) const
-{
-	for (std::list<GameObject*>::const_iterator iterator = objects.begin(); iterator != objects.end(); ++iterator)
-	{
-		object.push_back(*iterator);
-	}
-
-	for (int i = 0; i < 4; i++)
-	{
-		if (children[i] != nullptr)
-			children[i]->GetGameObjects(object);
-		else
-			break;
-	}
-}
-
 // Quadtree --------------------------------------------------
 Quadtree::Quadtree() {}
 
@@ -142,21 +125,11 @@ Quadtree::~Quadtree()
 {
 	Clear();
 }
-void Quadtree::Create(const math::AABB& limits) //Internal Create
-{
-	if (root != nullptr)
-		ReDoQuadtree(limits);
 
+void Quadtree::SetBoundary(const math::AABB& limits)
+{
+	Clear();
 	root = new QuadtreeNode(limits);
-}
-
-void Quadtree::Create() //External Create
-{
-	if (root == nullptr)
-	{
-		root = new QuadtreeNode(math::AABB());
-		root->boundingBox.SetNegativeInfinity();
-	}
 }
 
 void Quadtree::Clear()
@@ -166,97 +139,6 @@ void Quadtree::Clear()
 
 void Quadtree::Insert(GameObject* gameObject)
 {
-	if (!root->boundingBox.IsFinite())
-		root->boundingBox = gameObject->boundingBox;
-
-	if (gameObject->boundingBox.IsFinite())
-	{
-		if (root->boundingBox.Contains(gameObject->boundingBox))
-			root->Insert(gameObject);
-		else
-			ReDoLimits(gameObject);
-	}
-}
-
-void Quadtree::ReDoQuadtree(std::vector<GameObject*> objects) // External Redo
-{
-	if (root != nullptr)
-	{
-		Clear();
-		if (!objects.empty())
-		{
-			Create((*objects.begin())->boundingBox);
-
-			for (std::vector<GameObject*>::iterator iterator = objects.begin(); iterator != objects.end(); ++iterator)
-			{
-				Insert(*iterator);
-			}
-		}
-		else
-			Create();
-	}
-}
-
-void Quadtree::ReDoQuadtree(const math::AABB & limits) //Internal Redo
-{
-	if (root != nullptr)
-	{
-		std::vector<GameObject*> objects;
-		GetGameObjects(objects);
-
-		Clear();
-		Create(limits);
-
-		for (std::vector<GameObject*>::iterator iterator = objects.begin(); iterator != objects.end(); ++iterator)
-		{
-			Insert(*iterator);
-		}
-	}
-}
-
-void Quadtree::ReDoLimits(GameObject* newObject)
-{
-	if (root != nullptr)
-	{
-		math::float3 minPoint = root->boundingBox.minPoint;
-		math::float3 maxPoint = root->boundingBox.maxPoint;
-		math::float3 objectMin = newObject->boundingBox.minPoint;
-		math::float3 objectMax = newObject->boundingBox.maxPoint;
-
-		if (minPoint.x > objectMin.x)
-			minPoint.x = objectMin.x;
-		if (minPoint.y > objectMin.y)
-			minPoint.y = objectMin.y;
-		if (minPoint.z > objectMin.z)
-			minPoint.z = objectMin.z;
-
-		if (maxPoint.x < objectMax.x)
-			maxPoint.x = objectMax.x;
-		if (maxPoint.y < objectMax.y)
-			maxPoint.y = objectMax.y;
-		if (maxPoint.z < objectMax.z)
-			maxPoint.z = objectMax.z;
-
-		ReDoQuadtree(math::AABB(minPoint, maxPoint));
-		Insert(newObject);
-	}
-}
-
-void Quadtree::GetGameObjects(std::vector<GameObject*>& objects) const
-{
-	if (root != nullptr)
-	{
-		root->GetGameObjects(objects);
-		UniqueObjects(objects);
-	}
-}
-
-void Quadtree::UniqueObjects(std::vector<GameObject*>& objects) const
-{
-	if (!objects.empty())
-	{
-		std::sort(objects.begin(), objects.end()); //all equals objects together
-		objects.erase(std::unique(objects.begin(), objects.end()), objects.end());
-		//erase corrupt objects after unique(that returns the new last object position)
-	}
+	if (gameObject->boundingBox.Intersects(root->boundingBox))
+		root->Insert(gameObject);
 }

@@ -111,10 +111,10 @@ void ModuleAudio::OnSystemEvent(System_Event event)
 		PlayOnAwake();
 		break;
 	case System_Event_Type::Pause:
-		Pause();
+		WwiseT::PauseAll();
 		break;
 	case System_Event_Type::Stop:
-		Stop();
+		WwiseT::StopAllEvents();
 		break;
 	}
 }

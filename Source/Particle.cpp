@@ -231,8 +231,6 @@ void Particle::Draw()
 		glUniform2f(location, currMinUVCoord.x, currMinUVCoord.y);
 		location = glGetUniformLocation(shaderProgram, "isAnimated");
 		glUniform1i(location, isParticleAnimated);
-		location = glGetUniformLocation(shaderProgram, "averageColor");
-		glUniform1f(location, owner->colorAverage);
 
 		// Unknown uniforms
 		uint textureUnit = 0;
@@ -241,7 +239,7 @@ void Particle::Draw()
 		{
 			Uniform uniform = uniforms[i];
 
-			if (strcmp(uniform.common.name, "material.albedo") == 0 || strcmp(uniform.common.name, "material.specular") == 0)
+			if (strcmp(uniform.common.name, "averageColor") == 0 || strcmp(uniform.common.name, "material.albedo") == 0 || strcmp(uniform.common.name, "material.specular") == 0)
 			{
 				switch (uniform.common.type)
 				{

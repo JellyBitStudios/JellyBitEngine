@@ -63,6 +63,8 @@ public:
 	void SetShowGrid(bool showGrid);
 
 	void RecreateQuadtree();
+	void CreateQuadtree();
+	void RecalculateQuadtree();
 	void CreateRandomStaticGameObject();
 	bool IsGizmoValid() const;
 

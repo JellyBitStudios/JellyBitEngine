@@ -59,7 +59,7 @@ struct ResourceAnimationData
 	bool interpolate = true; // TODO GUILLERMO
 
 	uint numKeys = 0;
-	BoneTransformation* boneKeys;
+	BoneTransformation* boneKeys = nullptr;
 };
 
 class ResourceAnimation : public Resource
