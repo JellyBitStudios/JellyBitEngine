@@ -22,7 +22,7 @@ ResourceMesh::~ResourceMesh()
 {
 	RELEASE_ARRAY(meshData.vertices);
 	RELEASE_ARRAY(meshData.indices);
-	RELEASE_ARRAY(meshData.adjacentIndices);
+	//RELEASE_ARRAY(meshData.adjacentIndices); //TODO S
 	RELEASE_ARRAY(meshData.boneInfluences);
 }
 
