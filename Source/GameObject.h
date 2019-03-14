@@ -35,6 +35,7 @@ public:
 	void ToggleIsActive();
 	void ToggleIsStatic();
 	void ToggleChildrenAndThisStatic(bool toStatic);
+	void ToggleChildrenAndThisWalkable(bool walkable);
 	bool IsActive() const;
 	bool IsStatic() const;
 	void OnEnable();

@@ -59,8 +59,6 @@ GameObject::GameObject(const char* name, GameObject* parent, bool disableTransfo
 	uuid = App->GenerateRandomNumber();
 }
 
-#include "ModuleRenderer3D.h"
-
 GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 {
 	strcpy_s(name, DEFAULT_BUF_SIZE, gameObject.name);
@@ -310,6 +308,15 @@ void GameObject::ToggleChildrenAndThisStatic(bool toStatic)
 	System_Event newEvent;
 	newEvent.type = System_Event_Type::RecreateQuadtree;
 	App->PushSystemEvent(newEvent);
+}
+
+void GameObject::ToggleChildrenAndThisWalkable(bool walkable)
+{
+	if (cmp_mesh != 0)
+		cmp_mesh->nv_walkable = walkable;
+
+	for each(auto go in children)
+		go->ToggleChildrenAndThisWalkable(walkable);
 }
 
 bool GameObject::IsActive() const
