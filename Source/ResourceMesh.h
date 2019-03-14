@@ -61,12 +61,12 @@ struct ResourceMeshImportSettings
 
 struct Vertex
 {
-	float position[3];
-	float normal[3];
-	float tangent[3];
-	float bitangent[3];
-	uchar color[4];
-	float texCoord[2];
+	float position[3] = { 0.0f, 0.0f, 0.0f };
+	float normal[3] = { 0.0f, 0.0f, 0.0f };
+	float tangent[3] = { 0.0f, 0.0f, 0.0f };
+	float bitangent[3] = { 0.0f, 0.0f, 0.0f };
+	uchar color[4] = { 0,0,0,0 };
+	float texCoord[2] = { 0.0f, 0.0f };
 
 	float boneWeight[MAX_BONES] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	int boneId[MAX_BONES] = { 0,0,0,0 };
