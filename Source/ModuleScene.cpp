@@ -156,7 +156,7 @@ void ModuleScene::OnSystemEvent(System_Event event)
 
 #ifndef GAMEMODE
 	case System_Event_Type::GameObjectDestroyed:
-
+	{
 		// Remove GO in list if its deleted
 		if (selectedObject == event.goEvent.gameObject)
 			SELECT(NULL);
@@ -172,7 +172,15 @@ void ModuleScene::OnSystemEvent(System_Event event)
 			else
 				++iterator;
 		}
+	}
 		break;
+	case System_Event_Type::LoadFinished:
+	{
+		System_Event newEvent;
+		newEvent.type = System_Event_Type::RecreateQuadtree;
+		App->PushSystemEvent(newEvent);
+	}
+	break;
 #endif
 	}
 }
