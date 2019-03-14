@@ -298,13 +298,15 @@ void GameObject::ToggleIsStatic()
 
 void GameObject::ToggleChildrenAndThisStatic(bool toStatic)
 {
-	isStatic = toStatic;
-	App->GOs->RecalculateVector(this, false);
-	for each(auto child in children)
+	std::vector<GameObject*> gos;
+	GetChildrenAndThisVectorFromLeaf(gos);
+
+	for each(auto go in gos)
 	{
-		child->ToggleChildrenAndThisStatic(toStatic);
-		App->GOs->RecalculateVector(this, false);
+		go->isStatic = toStatic;
+		App->GOs->RecalculateVector(go, false);
 	}
+
 	System_Event newEvent;
 	newEvent.type = System_Event_Type::RecreateQuadtree;
 	App->PushSystemEvent(newEvent);
@@ -312,11 +314,14 @@ void GameObject::ToggleChildrenAndThisStatic(bool toStatic)
 
 void GameObject::ToggleChildrenAndThisWalkable(bool walkable)
 {
-	if (cmp_mesh != 0)
-		cmp_mesh->nv_walkable = walkable;
+	std::vector<GameObject*> gos;
+	GetChildrenAndThisVectorFromLeaf(gos);
 
-	for each(auto go in children)
-		go->ToggleChildrenAndThisWalkable(walkable);
+	for each(auto go in gos)
+	{
+		if (go->cmp_mesh != 0)
+			go->cmp_mesh->nv_walkable = walkable;
+	}
 }
 
 bool GameObject::IsActive() const
