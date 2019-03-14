@@ -123,6 +123,8 @@ public:
 		std::vector<uint>& meshesUuids, std::vector<uint>& bonesUuids, std::vector<uint>& animationUuids);
 	static uint SetMeshImportSettingsToMeta(const char* metaFile, const ResourceMeshImportSettings& meshImportSettings);
 
+	bool GenerateLibraryFiles() const;
+
 	// ----------------------------------------------------------------------------------------------------
 
 	inline ResourceMeshData& GetSpecificData() { return meshData; }

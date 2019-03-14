@@ -486,6 +486,40 @@ uint ResourceMesh::SetMeshImportSettingsToMeta(const char* metaFile, const Resou
 	return lastModTime;
 }
 
+bool ResourceMesh::GenerateLibraryFiles() const
+{
+	assert(data.file.data() != nullptr);
+
+	// Search for the meta associated to the file
+	char metaFile[DEFAULT_BUF_SIZE];
+	strcpy_s(metaFile, strlen(data.file.data()) + 1, data.file.data()); // file
+	strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
+
+	// 1. Copy meta
+	if (App->fs->Exists(metaFile))
+	{
+		// Read the info of the meta
+		char* buffer;
+		uint size = App->fs->Load(metaFile, &buffer);
+		if (size > 0)
+		{
+			// Create a new name for the meta
+			char newMetaFile[DEFAULT_BUF_SIZE];
+			sprintf_s(newMetaFile, "%s/%u%s%s", DIR_LIBRARY_MESHES, uuid, EXTENSION_MESH, EXTENSION_META);
+
+			// Save the new meta (info + new name)
+			size = App->fs->Save(newMetaFile, buffer, size);
+			if (size > 0)
+			{
+				RELEASE_ARRAY(buffer);
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 // ----------------------------------------------------------------------------------------------------
 
 void ResourceMesh::GetVerticesReference(Vertex*& vertices) const

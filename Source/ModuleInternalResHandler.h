@@ -26,6 +26,7 @@ class ModuleInternalResHandler : public Module
 public:
 
 	bool Start();
+	bool CleanUp();
 
 	// Mesh resources
 	void CreatePlane();

@@ -37,6 +37,14 @@ bool ModuleInternalResHandler::Start()
 	return true;
 }
 
+bool ModuleInternalResHandler::CleanUp()
+{
+	App->res->SetAsUnused(plane);
+	App->res->SetAsUnused(lightIcon);
+
+	return true;
+}
+
 void ModuleInternalResHandler::CreatePlane()
 {
 	ResourceMeshData specificData;

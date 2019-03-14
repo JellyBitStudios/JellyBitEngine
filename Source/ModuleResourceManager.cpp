@@ -910,6 +910,20 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 
 		App->sceneImporter->Load(file, data, meshData);
 
+		// Search for the meta associated to the file
+		char metaFile[DEFAULT_BUF_SIZE];
+		strcpy_s(metaFile, strlen(file) + 1, file); // file
+		strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
+
+		if (App->fs->Exists(metaFile))
+		{
+			std::vector<uint> mesh_uuids;
+			std::vector<uint> bones_uuids;
+			std::vector<uint> animation_uuids;
+			int64_t lastModTime = 0;
+			ResourceMesh::ReadMeta(metaFile, lastModTime, meshData.meshImportSettings, mesh_uuids, bones_uuids, animation_uuids);
+		}
+
 		resource = CreateResource(ResourceTypes::MeshResource, data, &meshData, uuid);
 	}
 	break;
