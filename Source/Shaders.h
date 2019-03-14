@@ -3,24 +3,57 @@
 
 #pragma region ShaderDefault
 
-#define vShaderTemplate											\
-"#version 330 core\n"											\
-"layout(location = 0) in vec3 position;\n"						\
-"layout(location = 1) in vec3 normal;\n"						\
-"layout(location = 2) in vec4 color;\n"							\
-"layout(location = 3) in vec2 texCoord;\n"						\
-"uniform mat4 model_matrix;\n"									\
-"uniform mat4 mvp_matrix;\n"									\
-"uniform mat3 normal_matrix;\n"									\
-"out vec3 fPosition;\n"											\
-"out vec3 fNormal;\n"											\
-"out vec2 fTexCoord;\n"											\
-"void main()\n"													\
-"{\n"															\
-"	//fPosition = vec3(model_matrix * vec4(position, 1.0));\n"	\
-"	fNormal = normalize(normal_matrix * normal);\n"				\
-"	fTexCoord = texCoord;\n"									\
-"	gl_Position = mvp_matrix * vec4(position, 1.0);\n"			\
+#define vShaderTemplate																		\
+"#version 330 core\n"																		\
+"layout(location = 0) in vec3 position;\n"													\
+"layout(location = 1) in vec3 normal;\n"													\
+"layout(location = 2) in vec4 color;\n"														\
+"layout(location = 3) in vec2 texCoord;\n"													\
+"layout(location = 4) in vec3 tangents;\n"													\
+"layout(location = 5) in vec3 bitangents;\n"												\
+"layout(location = 6) in vec4 weights;\n"													\
+"layout(location = 7) in ivec4 ids;\n"														\
+"\n"																						\
+"out VS_OUT\n"																				\
+"{\n"																						\
+"	vec3 gPosition;\n"																		\
+"	vec3 gNormal;\n"																		\
+"	vec4 gColor;\n"																			\
+"	vec2 gTexCoord;\n"																		\
+"} vs_out;\n"																				\
+"\n"																						\
+"const int ANIM_SCALE = 100;\n"																\
+"const int MAX_BONES = 100;\n"																\
+"uniform mat4 bones[MAX_BONES];\n"															\
+"uniform int animate;\n"																	\
+"\n"																						\
+"uniform mat4 model_matrix;\n"																\
+"uniform mat4 mvp_matrix;\n"																\
+"uniform mat3 normal_matrix;\n"																\
+"\n"																						\
+"void main()\n"																				\
+"{\n"																						\
+"	vec4 pos = vec4(position, 1.0);\n"														\
+"	vec4 norm = vec4(normal, 0.0);\n"														\
+"\n"																						\
+"	if (animate == 1)\n"																	\
+"	{\n"																					\
+"		mat4 boneTransform = bones[ids[0]] * weights[0];\n"									\
+"		boneTransform += bones[ids[1]] * weights[1];\n"										\
+"		boneTransform += bones[ids[2]] * weights[2];\n"										\
+"		boneTransform += bones[ids[3]] * weights[3];\n"										\
+"\n"																						\
+"		pos = boneTransform * pos;\n"														\
+"		pos.xyz *= 100;\n"																	\
+"		norm = boneTransform * norm;\n"														\
+"	}\n"																					\
+"\n"																						\
+"	vs_out.gPosition = vec3(model_matrix * pos);\n"											\
+"	vs_out.gNormal = normalize(normal_matrix * norm.xyz);\n"								\
+"	vs_out.gColor = color;\n"																\
+"	vs_out.gTexCoord = texCoord;\n"															\
+"\n"																						\
+"	gl_Position = mvp_matrix * pos;\n"														\
 "}"
 
 #define fShaderTemplate															\
@@ -28,15 +61,22 @@
 "layout (location = 0) out vec4 gPosition;\n"									\
 "layout (location = 1) out vec4 gNormal;\n"										\
 "layout (location = 2) out vec4 gAlbedoSpec;\n"									\
-"in vec2 fTexCoord;\n"															\
-"in vec3 fPosition;\n"															\
-"in vec3 fNormal;\n"															\
+"\n"																			\
+"in VS_OUT\n"																	\
+"{\n"																			\
+"	vec3 gPosition;\n"															\
+"	vec3 gNormal;\n"															\
+"	vec4 gColor;\n"																\
+"	vec2 gTexCoord;\n"															\
+"} fs_in;\n"																	\
+"\n"																			\
 "uniform sampler2D diffuse;\n"													\
+"\n"																			\
 "void main()\n"																	\
 "{\n"																			\
-"	gPosition.rgb = fPosition;\n"												\
-"	gNormal.rgb = normalize(fNormal);\n"										\
-"	gAlbedoSpec.rgb = texture(diffuse,fTexCoord).rgb;\n"						\
+"	gPosition.rgb = fs_in.gPosition;\n"											\
+"	gNormal.rgb = normalize(fs_in.gNormal);\n"									\
+"	gAlbedoSpec.rgb = texture(diffuse, fs_in.gTexCoord).rgb;\n"					\
 "	gPosition.a = 1;\n"															\
 "	gNormal.a = 1;\n"															\
 "	gAlbedoSpec.a = 1;\n"														\
@@ -346,36 +386,6 @@
 
 #pragma region CartoonShader
 
-#define CartoonVertex													\
-"#version 330 core\n"													\
-"\n"																	\
-"layout(location = 0) in vec3 position;\n"								\
-"layout(location = 1) in vec3 normal;\n"								\
-"layout(location = 2) in vec4 color;\n"									\
-"layout(location = 3) in vec2 texCoord;\n"								\
-"\n"																	\
-"uniform mat4 model_matrix;\n"											\
-"uniform mat4 mvp_matrix;\n"											\
-"uniform mat3 normal_matrix;\n"											\
-"\n"																	\
-"out VS_OUT\n"															\
-"{\n"																	\
-"  vec3 gPosition;\n"													\
-"  vec3 gNormal;\n"														\
-"  vec4 gColor;\n"														\
-"  vec2 gTexCoord;\n"													\
-"} vs_out;\n"															\
-"\n"																	\
-"void main()\n"															\
-"{\n"																	\
-"	vs_out.gPosition = vec3(model_matrix * vec4(position, 1.0));\n"		\
-"	vs_out.gNormal = normalize(normal_matrix * normal);\n"				\
-"	vs_out.gColor = color;\n"											\
-"	vs_out.gTexCoord = texCoord;\n"										\
-"\n"																	\
-"	gl_Position = mvp_matrix * vec4(position, 1.0);\n"					\
-"}"
-
 #define CartoonGeometry																				\
 "#version 330 core\n"																				\
 "\n"																								\
@@ -523,10 +533,10 @@
 "\n"																					\
 "		vec4 albedo = texture(material.albedo, fs_in.fTexCoord);\n"						\
 "		vec3 diffuse = vec3(albedo);\n"													\
-"		gAlbedoSpec = vec4(diffuse, albedo.a);\n"												\
+"		gAlbedoSpec = vec4(diffuse, albedo.a);\n"										\
 "	}\n"																				\
 "\n"																					\
-"	gPosition.rgb = fs_in.fPosition;\n"											\
+"	gPosition.rgb = fs_in.fPosition;\n"													\
 "	gNormal.rgb = normalize(fs_in.fNormal);\n"											\
 "}"
 

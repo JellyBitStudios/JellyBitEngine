@@ -579,7 +579,7 @@ bool ResourceMesh::AddBone(uint vertexId, float boneWeight, uint boneId)
 {
 	assert(vertexId >= 0 && vertexId < meshData.verticesSize);
 	
-	for (uint i = 0; i < MAX_BONES; ++i)
+	for (uint i = 0; i < MAX_BONES_PER_VERTEX; ++i)
 	{
 		// Find an empy slot
 		if (meshData.vertices[vertexId].boneWeight[i] == 0.0f)

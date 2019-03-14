@@ -6,7 +6,7 @@
 #include <vector>
 #include <unordered_map>
 
-#define MAX_BONES 4
+#define MAX_BONES_PER_VERTEX 4
 
 struct ResourceMeshImportSettings
 {
@@ -68,8 +68,8 @@ struct Vertex
 	uchar color[4] = { 0,0,0,0 };
 	float texCoord[2] = { 0.0f, 0.0f };
 
-	float boneWeight[MAX_BONES] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	int boneId[MAX_BONES] = { 0,0,0,0 };
+	float boneWeight[MAX_BONES_PER_VERTEX] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	int boneId[MAX_BONES_PER_VERTEX] = { 0,0,0,0 };
 };
 
 struct BoneInfluence

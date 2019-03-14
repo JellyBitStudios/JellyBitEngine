@@ -336,7 +336,7 @@ uint ModuleInternalResHandler::CreateCartoonShaderProgram() const
 	vertexData.name = "Cartoon Vertex";
 	vertexData.internal = true;
 	vertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
-	vertexShaderData.SetSource(CartoonVertex, strlen(CartoonVertex));
+	vertexShaderData.SetSource(vShaderTemplate, strlen(vShaderTemplate));
 	ResourceShaderObject* vObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &vertexShaderData);
 	if (!vObj->Compile())
 		vObj->isValid = false;

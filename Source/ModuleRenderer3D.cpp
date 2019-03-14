@@ -673,6 +673,8 @@ void ModuleRenderer3D::FrustumCulling() const
 #include "ResourceBone.h"
 #include "ResourceAvatar.h"
 
+#define MAX_BONES 100
+
 void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 {
 	if (toDraw->res == 0)
@@ -708,10 +710,15 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
 
 	// Animations
+	char boneName[DEFAULT_BUF_SIZE];
 	ResourceAvatar* avatarResource = (ResourceAvatar*)App->res->GetResource(toDraw->avatarResource);
-	if (avatarResource != nullptr)
+	bool animate = avatarResource != nullptr;
+
+	location = glGetUniformLocation(shader, "animate");
+	glUniform1i(location, animate);
+
+	if (animate)
 	{
-		char boneName[DEFAULT_BUF_SIZE];
 		std::vector<uint> bonesUuids = avatarResource->GetBonesUuids();
 		for (uint i = 0; i < bonesUuids.size(); ++i)
 		{
@@ -744,7 +751,9 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 
 	// 3. Unknown mesh uniforms
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
-	LoadSpecificUniforms(textureUnit, uniforms);
+	std::vector<const char*> ignore;
+	ignore.push_back("animate");
+	LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	// Mesh
 	const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(toDraw->res);

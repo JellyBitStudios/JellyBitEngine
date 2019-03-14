@@ -955,11 +955,11 @@ void SceneImporter::GenerateVAO(uint& VAO, uint& VBO, uint attrFlag) const
 	if (attrFlag & ResourceMeshImportSettings::ATTR_ANIMATION)
 	{
 		// 7. Weights
-		glVertexAttribPointer(6, MAX_BONES, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, boneWeight)));
+		glVertexAttribPointer(6, MAX_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, boneWeight)));
 		glEnableVertexAttribArray(6);
 
 		// 8. Ids
-		glVertexAttribIPointer(7, MAX_BONES, GL_INT, sizeof(Vertex), (void*)(offsetof(Vertex, boneId)));
+		glVertexAttribIPointer(7, MAX_BONES_PER_VERTEX, GL_INT, sizeof(Vertex), (void*)(offsetof(Vertex, boneId)));
 		glEnableVertexAttribArray(7);
 	}
 
