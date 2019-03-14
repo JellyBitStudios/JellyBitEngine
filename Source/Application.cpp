@@ -446,6 +446,7 @@ void Application::Play()
 	case engine_states::ENGINE_PAUSE:
 		// Enter editor mode
 		engineState = engine_states::ENGINE_PLAY;
+		audio->Resume();
 		break;
 
 	case engine_states::ENGINE_EDITOR:
