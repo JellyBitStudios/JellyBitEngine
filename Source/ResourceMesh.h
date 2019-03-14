@@ -134,7 +134,7 @@ public:
 	uint GetIndicesCount() const;
 	bool UseAdjacency() const;
 
-	bool AddBones(const std::unordered_map<const char*, uint>& bones);
+	bool AddBones(const std::unordered_map<std::string, uint>& bones);
 	bool AddBone(uint vertexId, float boneWeight, uint boneId);
 	static void CalculateAdjacentIndices(uint* indices, uint indicesSize, uint*& adjacentIndices);
 
@@ -143,6 +143,9 @@ public:
 	uint GetVAO() const;
 
 private:
+
+	void GenerateVAO();
+	void DeleteVAO();
 
 	bool LoadInMemory();
 	bool UnloadFromMemory();
