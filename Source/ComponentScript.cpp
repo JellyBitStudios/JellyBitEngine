@@ -1881,6 +1881,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 			totalSize += bytes;
 			cursor += bytes;
 
+			bytes = stringLength;
 			std::string string;
 			string.resize(stringLength);
 			memcpy((void*)string.c_str(), cursor, bytes);
@@ -2858,6 +2859,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			memcpy(&stringLength, cursor, bytes);
 			cursor += bytes;
 
+			bytes = stringLength;
 			std::string string;
 			string.resize(stringLength);
 			memcpy((void*)string.c_str(), cursor, bytes);
