@@ -42,7 +42,7 @@ ComponentAnimator::~ComponentAnimator()
 
 uint ComponentAnimator::GetInternalSerializationBytes()
 {
-	return sizeof(uint);
+	return sizeof(uint) + sizeof(uint) + sizeof(uint) + sizeof(uint) * res_animations.size();;
 }
 
 void ComponentAnimator::OnInternalSave(char*& cursor)
@@ -102,7 +102,7 @@ bool ComponentAnimator::SetResourceAnimator(uint resource)
 
 	if (resource > 0) {
 		App->res->SetAsUsed(resource);
-		ResourceAnimator* anim_res = (ResourceAnimator*)App->res->GetResource(res);
+		ResourceAnimator* anim_res = (ResourceAnimator*)App->res->GetResource(resource);
 		if (anim_res)
 			anim_res->InitAnimator();
 	}
@@ -117,13 +117,13 @@ bool ComponentAnimator::SetResourceAvatar(uint resource)
 	if (res_avatar > 0)
 		App->res->SetAsUnused(res_avatar);
 
-	if (resource > 0)
+	if (resource > 0) {
 		App->res->SetAsUsed(resource);
+		ResourceAnimator* animator = (ResourceAnimator*)App->res->GetResource(res);
+		animator->animator_data.avatar_uuid = resource; // TODO_G : this is ugly and needs to be improved >:(
 
+	}
 	res_avatar = resource;
-
-	ResourceAnimator* animator = (ResourceAnimator*)App->res->GetResource(res);
-	animator->animator_data.avatar_uuid = resource; // TODO_G : this is ugly and needs to be improved >:(
 
 	return true;
 }
@@ -138,12 +138,14 @@ bool ComponentAnimator::SetResourceAnimation(uint resource)
 		}
 	}
 
-	if (resource > 0)
+	if (resource > 0){
 		App->res->SetAsUsed(resource);
+		res_animations.push_back(resource);
+		ResourceAnimator* animator = (ResourceAnimator*)App->res->GetResource(res);
+		animator->AddAnimationFromAnimationResource((ResourceAnimation*)App->res->GetResource(resource));
+		animator->animator_data.animations_uuids.push_back(resource);
+	}
 
-	res_animations.push_back(resource);
-	ResourceAnimator* animator = (ResourceAnimator*)App->res->GetResource(res);
-	animator->AddAnimationFromAnimationResource((ResourceAnimation*)App->res->GetResource(resource));
 
 	return true;
 }
@@ -182,9 +184,10 @@ void ComponentAnimator::OnUniqueEditor()
 	{
 		ImGui::Text("Animator");
 		ImGui::SameLine();
+		ImGui::Text("Drag n drop in this order please");
 
 		std::string fileName = "Empty Animator";
-		const ResourceAnimator* resource = (ResourceAnimator*)App->res->GetResource(res);
+		ResourceAnimator* resource = (ResourceAnimator*)App->res->GetResource(res);
 		if (resource != nullptr)
 			fileName = resource->GetName();
 
@@ -195,7 +198,29 @@ void ComponentAnimator::OnUniqueEditor()
 			ImGui::Text("Meshes affected: %i", resource->animator_data.meshes_uuids.size());
 			ImGui::Text("Animations size: %i", resource->animator_data.animations_uuids.size());
 		}
-		
+
+		if (ImGui::Button("PLAY"))
+			resource->PlayAnimation();
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("PAUSE"))
+			resource->PauseAnimation();
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("STOP"))
+			resource->StopAnimation();
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("FORWARD"))
+			resource->StepForward();
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("BACKWARDS"))
+			resource->StepBackwards();
 
 		ImGui::PushID("animator");
 		ImGui::Button(fileName.data(), ImVec2(150.0f, 0.0f));
@@ -247,9 +272,11 @@ void ComponentAnimator::OnUniqueEditor()
 		}
 
 		fileName = "Empty Animations";
-		const ResourceAnimation* resource_animation = (res_animations.size() == 0) ? nullptr : (ResourceAnimation*)App->res->GetResource(res_animations.at(0));
-		if (resource_animation != nullptr)
-			fileName = resource_animation->GetName();
+		uint resource_animations = (res_animations.size() == 0) ? 0u : res_animations.size();
+		if (resource_animations > 0u) {
+			fileName = "Loaded animations: ";
+			fileName.append(std::to_string(resource_animations));
+		}
 
 		ImGui::PushID("animation");
 		ImGui::Button(fileName.data(), ImVec2(150.0f, 0.0f));

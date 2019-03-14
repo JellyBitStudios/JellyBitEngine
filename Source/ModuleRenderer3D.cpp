@@ -228,6 +228,18 @@ update_status ModuleRenderer3D::PostUpdate()
 
 	if (debugDraw)
 	{
+		// Bones debug draw
+		std::vector<GameObject*> gameObjects;
+		App->GOs->GetGameobjects(gameObjects);
+		for (uint i = 0; i < gameObjects.size(); ++i)
+		{
+			if (gameObjects[i]->cmp_bone != nullptr)
+			{
+				math::float4x4 globalMatrix = gameObjects[i]->transform->GetGlobalMatrix();
+				App->debugDrawer->DebugDrawSphere(1.0f, Yellow, globalMatrix);
+			}
+		}
+
 		App->lights->DebugDrawLights();
 
 		App->navigation->Draw();
@@ -659,6 +671,8 @@ void ModuleRenderer3D::FrustumCulling() const
 #include "ResourceBone.h"
 #include "ResourceAvatar.h"
 
+#define MAX_BONES 1000
+
 void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 {
 	if (toDraw->res == 0)
@@ -694,10 +708,15 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
 
 	// Animations
+	char boneName[DEFAULT_BUF_SIZE];
 	ResourceAvatar* avatarResource = (ResourceAvatar*)App->res->GetResource(toDraw->avatarResource);
-	if (avatarResource != nullptr)
+	bool animate = avatarResource != nullptr;
+
+	location = glGetUniformLocation(shader, "animate");
+	glUniform1i(location, animate);
+
+	if (animate)
 	{
-		char boneName[DEFAULT_BUF_SIZE];
 		std::vector<uint> bonesUuids = avatarResource->GetBonesUuids();
 		for (uint i = 0; i < bonesUuids.size(); ++i)
 		{
@@ -717,9 +736,11 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 				continue;
 
 			math::float4x4 boneGlobalMatrix = boneComponent->GetParent()->transform->GetGlobalMatrix();
-			math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetMatrix();
 
-			math::float4x4 boneTransform = boneGlobalMatrix * meshMatrix.Inverted() * boneResource->boneData.offsetMatrix;
+			math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetGlobalMatrix().Inverted();
+			//math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetGlobalMatrix().Inverted();
+
+			math::float4x4 boneTransform = meshMatrix * boneGlobalMatrix * boneResource->boneData.offsetMatrix;
 
 			sprintf_s(boneName, "bones[%u]", i);
 			location = glGetUniformLocation(shader, boneName);
@@ -729,7 +750,9 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 
 	// 3. Unknown mesh uniforms
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
-	LoadSpecificUniforms(textureUnit, uniforms);
+	std::vector<const char*> ignore;
+	ignore.push_back("animate");
+	LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	// Mesh
 	const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(toDraw->res);

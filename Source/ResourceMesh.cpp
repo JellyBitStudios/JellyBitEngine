@@ -18,10 +18,12 @@
 
 ResourceMesh::ResourceMesh(ResourceTypes type, uint uuid, ResourceData data, ResourceMeshData meshData) : Resource(type, uuid, data), meshData(meshData) {}
 
-ResourceMesh::~ResourceMesh()
+ResourceMesh::~ResourceMesh() 
 {
 	RELEASE_ARRAY(meshData.vertices);
 	RELEASE_ARRAY(meshData.indices);
+	RELEASE_ARRAY(meshData.adjacentIndices);
+	RELEASE_ARRAY(meshData.boneInfluences);
 }
 
 void ResourceMesh::OnPanelAssets()
@@ -526,12 +528,12 @@ bool ResourceMesh::UseAdjacency() const
 	return meshData.meshImportSettings.adjacency;
 }
 
-bool ResourceMesh::AddBones(const std::unordered_map<const char*, uint>& bones)
+bool ResourceMesh::AddBones(const std::unordered_map<std::string, uint>& bones)
 {
 	uint addedBones = 0;
 
 	uint boneId = 0; // this id matches the uniform bones array id
-	for (std::unordered_map<const char*, uint>::const_iterator it = bones.begin(); it != bones.end(); ++it, ++boneId)
+	for (std::unordered_map<std::string, uint>::const_iterator it = bones.begin(); it != bones.end(); ++it, ++boneId)
 	{
 		/// Bone game object
 		GameObject* boneGameObject = App->GOs->GetGameObjectByUID(it->second);
@@ -567,6 +569,9 @@ bool ResourceMesh::AddBones(const std::unordered_map<const char*, uint>& bones)
 		}
 	}
 
+	DeleteVAO();
+	GenerateVAO();
+
 	return addedBones == boneId;
 }
 
@@ -574,14 +579,13 @@ bool ResourceMesh::AddBone(uint vertexId, float boneWeight, uint boneId)
 {
 	assert(vertexId >= 0 && vertexId < meshData.verticesSize);
 	
-	Vertex vertex = meshData.vertices[vertexId];
-	for (uint i = 0; i < MAX_BONES; ++i)
+	for (uint i = 0; i < MAX_BONES_PER_VERTEX; ++i)
 	{
 		// Find an empy slot
-		if (vertex.boneWeight[i] == 0.0f)
+		if (meshData.vertices[vertexId].boneWeight[i] == 0.0f)
 		{
-			vertex.boneWeight[i] = boneWeight;
-			vertex.boneId[i] = boneId;
+			meshData.vertices[vertexId].boneWeight[i] = boneWeight;
+			meshData.vertices[vertexId].boneId[i] = boneId;
 			return true;
 		}
 	}
@@ -710,24 +714,32 @@ bool ResourceMesh::LoadInMemory()
 	assert(meshData.vertices != nullptr && meshData.verticesSize > 0
 		&& meshData.indices != nullptr && meshData.indicesSize > 0);
 
-	bool adjacency = UseAdjacency();
-
 	// Calculate adjacent indices
-	if (adjacency)
+	if (UseAdjacency())
 		ResourceMesh::CalculateAdjacentIndices(meshData.indices, meshData.indicesSize, meshData.adjacentIndices);
 
-	App->sceneImporter->GenerateVBO(VBO, meshData.vertices, meshData.verticesSize);
-	App->sceneImporter->GenerateIBO(IBO, adjacency ? meshData.adjacentIndices : meshData.indices, adjacency ? meshData.indicesSize * 2 : meshData.indicesSize);
-	App->sceneImporter->GenerateVAO(VAO, VBO, meshData.meshImportSettings.attributes);
+	GenerateVAO();
 
 	return true;
 }
 
 bool ResourceMesh::UnloadFromMemory()
 {
+	DeleteVAO();
+
+	return true;
+}
+
+void ResourceMesh::GenerateVAO()
+{
+	App->sceneImporter->GenerateVBO(VBO, meshData.vertices, meshData.verticesSize);
+	App->sceneImporter->GenerateIBO(IBO, UseAdjacency() ? meshData.adjacentIndices : meshData.indices, UseAdjacency() ? meshData.indicesSize * 2 : meshData.indicesSize);
+	App->sceneImporter->GenerateVAO(VAO, VBO, meshData.meshImportSettings.attributes);
+}
+
+void ResourceMesh::DeleteVAO()
+{
 	App->sceneImporter->DeleteBufferObject(VBO);
 	App->sceneImporter->DeleteBufferObject(IBO);
 	App->sceneImporter->DeleteVertexArrayObject(VAO);
-
-	return true;
 }

@@ -21,15 +21,16 @@
 #include <vector>
 
 Particle::Particle(math::float3 pos, StartValues data)
-{}
+{
+}
 
 Particle::Particle()
 {
-
 }
 
 Particle::~Particle()
 {
+	App->res->SetAsUnused(App->resHandler->plane);
 }
 
 void Particle::SetActive(math::float3 pos, StartValues data, ParticleAnimation partAnim)
