@@ -270,37 +270,9 @@
 "};\n" \
 "\n" \
 "uniform vec3 viewPos;\n" \
-"uniform Light light;\n" \
 "uniform Material material;\n" \
 "uniform float averageColor;\n" \
 "\n" \
-"vec3 phong(vec3 ambient, vec3 diffuse, vec3 specular, float shininess, bool blinn)\n" \
-"{\n" \
-"	// Ambient\n" \
-"	vec3 a = light.ambient * ambient;\n" \
-"\n" \
-"	// Diffuse\n" \
-"	vec3 lightDir = normalize(-light.direction);\n" \
-"	float diff = max(dot(fNormal, lightDir), 0.0);\n" \
-"	vec3 d = light.diffuse * (diff * diffuse);\n" \
-"\n" \
-"	// Specular\n" \
-"	vec3 viewDir = normalize(viewPos - fPosition);\n" \
-"	float spec = 0.0;\n" \
-"	if (blinn)\n" \
-"	{\n" \
-"		vec3 halfwayDir = normalize(lightDir + viewDir);\n" \
-"		spec = pow(max(dot(fNormal, halfwayDir), 0.0), shininess);\n" \
-"	}\n" \
-"	else\n" \
-"	{\n" \
-"		vec3 reflectDir = reflect(-lightDir, fNormal);\n" \
-"		spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);\n" \
-"	}\n" \
-"	vec3 s = light.specular * (spec * specular);\n" \
-"\n" \
-"	return a + d + s;\n" \
-"}\n" \
 "\n" \
 "void main()\n" \
 "{\n" \
@@ -308,10 +280,8 @@
 "	if (albedo.a < 0.1)\n" \
 "		discard;\n" \
 "\n" \
-"	vec3 a = vec3(albedo);\n" \
 "	vec3 s = vec3(texture(material.specular, fTexCoord));\n" \
-"	vec3 colorText = phong(a, a, s, 32.0, true);\n" \
-"	FragColor.xyz = mix(colorText, fColor.xyz, averageColor);\n" \
+"	FragColor.xyz = mix(vec3(albedo), fColor.xyz, averageColor);\n" \
 "	FragColor.w = fColor.w;\n" \
 "}\n"
 #pragma endregion
