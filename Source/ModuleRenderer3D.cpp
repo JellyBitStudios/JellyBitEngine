@@ -738,10 +738,10 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 				continue;
 
 			math::float4x4 boneGlobalMatrix = boneComponent->GetParent()->transform->GetGlobalMatrix();
-			math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetMatrix();
+			math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetGlobalMatrix().Inverted();
 			//math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetGlobalMatrix().Inverted();
 
-			math::float4x4 boneTransform = boneGlobalMatrix * meshMatrix * boneResource->boneData.offsetMatrix;
+			math::float4x4 boneTransform = meshMatrix * boneGlobalMatrix * boneResource->boneData.offsetMatrix;
 
 			sprintf_s(boneName, "bones[%u]", i);
 			location = glGetUniformLocation(shader, boneName);

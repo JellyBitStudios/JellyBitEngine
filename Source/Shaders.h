@@ -22,7 +22,6 @@
 "	vec2 gTexCoord;\n"																		\
 "} vs_out;\n"																				\
 "\n"																						\
-"const int ANIM_SCALE = 100;\n"																\
 "const int MAX_BONES = 100;\n"																\
 "uniform mat4 bones[MAX_BONES];\n"															\
 "uniform int animate;\n"																	\
@@ -44,7 +43,6 @@
 "		boneTransform += bones[ids[3]] * weights[3];\n"										\
 "\n"																						\
 "		pos = boneTransform * pos;\n"														\
-"		pos.xyz *= 100;\n"																	\
 "		norm = boneTransform * norm;\n"														\
 "	}\n"																					\
 "\n"																						\
