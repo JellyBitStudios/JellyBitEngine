@@ -3,7 +3,7 @@
 #include "ResourceScript.h"
 #include "ComponentTransform.h"
 #include "ComponentNavAgent.h"
-#include "ComponentAnimation.h"
+#include "ComponentAnimator.h"
 #include "ComponentEmitter.h"
 #include "ComponentRectTransform.h"
 #include "ComponentButton.h"
@@ -538,7 +538,7 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 			break;
 		}
 
-		case ComponentTypes::AnimationComponent:
+		case ComponentTypes::AnimatorComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Animator"));
 			break;
@@ -1634,7 +1634,7 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 		if (!gameObject)
 			return nullptr;
 
-		Component* comp = gameObject->GetComponent(ComponentTypes::AnimationComponent);
+		Component* comp = gameObject->GetComponent(ComponentTypes::AnimatorComponent);
 
 		if (!comp)
 			return nullptr;
@@ -2113,7 +2113,7 @@ bool PlayAnimation(MonoObject* animatorComp, MonoString* animUUID)
 {
 	char* anim = mono_string_to_utf8(animUUID);
 
-	ComponentAnimation* animator = (ComponentAnimation*)App->scripting->ComponentFrom(animatorComp);
+	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(animatorComp);
 	bool ret = animator->PlayAnimation(anim);
 	
 	mono_free(anim);
