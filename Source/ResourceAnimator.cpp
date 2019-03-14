@@ -516,8 +516,8 @@ bool ResourceAnimator::Update()
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 #endif // GAMEMODE
 
-	if (App->GetEngineState() != engine_states::ENGINE_PLAY)
-		return update_status::UPDATE_CONTINUE;
+	//if (App->GetEngineState() != engine_states::ENGINE_PLAY)
+		//return update_status::UPDATE_CONTINUE;
 
 	if (stop_all)
 		return update_status::UPDATE_CONTINUE;

@@ -29,6 +29,7 @@ bool ModuleInternalResHandler::Start()
 	CreateDeferredShaderProgram();
 	CreateBillboardShaderProgram();
 	CreateUIShaderProgram();
+	cartoonShaderProgram = CreateCartoonShaderProgram();
 
 	// Material resources
 	CreateDefaultMaterial();
@@ -326,6 +327,53 @@ void ModuleInternalResHandler::CreateBillboardShaderProgram()
 	if (!pShader->Link())
 		pShader->isValid = false;
 	billboardShaderProgram = pShader->GetUuid();
+}
+
+uint ModuleInternalResHandler::CreateCartoonShaderProgram() const
+{
+	ResourceData vertexData;
+	ResourceShaderObjectData vertexShaderData;
+	vertexData.name = "Cartoon Vertex";
+	vertexData.internal = true;
+	vertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
+	vertexShaderData.SetSource(CartoonVertex, strlen(CartoonVertex));
+	ResourceShaderObject* vObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &vertexShaderData);
+	if (!vObj->Compile())
+		vObj->isValid = false;
+
+	ResourceData geometryData;
+	ResourceShaderObjectData geometryShaderData;
+	geometryData.name = "Cartoon Geometry";
+	geometryData.internal = true;
+	geometryShaderData.shaderObjectType = ShaderObjectTypes::GeometryType;
+	geometryShaderData.SetSource(CartoonGeometry, strlen(CartoonGeometry));
+	ResourceShaderObject* gObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, geometryData, &geometryShaderData);
+	if (!gObj->Compile())
+		gObj->isValid = false;
+
+	ResourceData fragmentData;
+	ResourceShaderObjectData fragmentShaderData;
+	fragmentData.name = "Cartoon Fragment";
+	fragmentData.internal = true;
+	fragmentShaderData.shaderObjectType = ShaderObjectTypes::FragmentType;
+	fragmentShaderData.SetSource(CartoonFragment, strlen(CartoonFragment));
+	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, fragmentData, &fragmentShaderData);
+	if (!fObj->Compile())
+		fObj->isValid = false;
+
+	ResourceData shaderData;
+	ResourceShaderProgramData programShaderData;
+	shaderData.name = "Cartoon Shader";
+	shaderData.internal = true;
+	programShaderData.shaderObjectsUuids.push_back(vObj->GetUuid());
+	programShaderData.shaderObjectsUuids.push_back(gObj->GetUuid());
+	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
+	programShaderData.shaderProgramType = ShaderProgramTypes::Standard;
+	ResourceShaderProgram* prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, CARTOON_SHADER_PROGRAM_UUID);
+	if (!prog->Link())
+		prog->isValid = false;
+
+	return prog->GetUuid();
 }
 
 void ModuleInternalResHandler::CreateUIShaderProgram()

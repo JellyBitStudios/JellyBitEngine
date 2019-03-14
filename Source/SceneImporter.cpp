@@ -163,7 +163,6 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 			mesh_files, dummyForcedMeshesUuids);
 		//rootGameObject->transform->scale *= importSettings.scale; // TODO FIX SCALE
 
-
 		if (rootBone != nullptr)
 		{
 			/// Import bones
@@ -292,7 +291,6 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 		{
 			// Create the Mesh Component
 			gameObject->AddComponent(ComponentTypes::MeshComponent);
-			gameObject->ForceStaticNoVector();
 
 			if (forcedUuids.size() > 0)
 			{
@@ -400,7 +398,7 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 
 					for (uint j = 0; j < bone->mNumWeights; ++j)
 					{
-						memcpy(&boneInfluences[i].boneWeights[j], &bone->mWeights[j].mVertexId, sizeof(float)); // strength of the influence
+						memcpy(&boneInfluences[i].boneWeights[j], &bone->mWeights[j].mWeight, sizeof(float)); // strength of the influence
 						memcpy(&boneInfluences[i].boneIds[j], &bone->mWeights[j].mVertexId, sizeof(uint)); // index of the vertex influenced by this bone
 					}
 
@@ -472,6 +470,15 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 				indicesSize, nameSize 
 			};
 
+			uint bonesSize = 0;
+			for (uint i = 0; i < boneInfluencesSize; ++i)
+			{
+				bonesSize += sizeof(uint); // bonesWeightsSize
+				bonesSize += sizeof(float) * boneInfluences[i].bonesWeightsSize; // boneWeights
+				bonesSize += sizeof(uint) * boneInfluences[i].bonesWeightsSize; // boneIds
+				bonesSize += sizeof(char) * DEFAULT_BUF_SIZE; // boneName
+			}
+
 			uint size = sizeof(ranges) +
 				sizeof(float) * verticesSize * 3 +
 				sizeof(float) * normalsSize * 3 +
@@ -481,7 +488,7 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 				sizeof(float) * texCoordsSize * 2 +
 
 				// Bones
-				sizeof(BoneInfluence) * boneInfluencesSize +
+				bonesSize +
 
 				sizeof(uint) * indicesSize +
 				sizeof(char) * nameSize;
@@ -547,11 +554,22 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 			}
 
 			// 8. Store bones
-			if (boneInfluencesSize > 0)
+			for (uint i = 0; i < boneInfluencesSize; ++i)
 			{
-				bytes = sizeof(BoneInfluence) * boneInfluencesSize;
-				memcpy(cursor, boneInfluences, bytes);
+				bytes = sizeof(uint);
+				memcpy(cursor, &boneInfluences[i].bonesWeightsSize, bytes);
+				cursor += bytes;
 
+				bytes = sizeof(float) * boneInfluences[i].bonesWeightsSize;
+				memcpy(cursor, boneInfluences[i].boneWeights, bytes);
+				cursor += bytes;
+
+				bytes = sizeof(uint) * boneInfluences[i].bonesWeightsSize;
+				memcpy(cursor, boneInfluences[i].boneIds, bytes);
+				cursor += bytes;
+
+				bytes = sizeof(char) * DEFAULT_BUF_SIZE;
+				memcpy(cursor, boneInfluences[i].boneName, bytes);
 				cursor += bytes;
 			}
 
@@ -747,7 +765,6 @@ bool SceneImporter::Load(const void* buffer, uint size, ResourceData& outputData
 	char* texCoordsCursor = colorCursor + ranges[4] * sizeof(uchar) * 4;
 
 	outputMeshData.vertices = new Vertex[outputMeshData.verticesSize];
-
 	for (uint i = 0; i < outputMeshData.verticesSize; ++i)
 	{
 		// 2. Load vertices
@@ -805,11 +822,27 @@ bool SceneImporter::Load(const void* buffer, uint size, ResourceData& outputData
 	cursor = texCoordsCursor;
 
 	// 8. Load bones
-	bytes = sizeof(BoneInfluence) * outputMeshData.boneInfluencesSize;
 	outputMeshData.boneInfluences = new BoneInfluence[outputMeshData.boneInfluencesSize];
-	memcpy(outputMeshData.boneInfluences, cursor, bytes);
+	for (uint i = 0; i < outputMeshData.boneInfluencesSize; ++i)
+	{
+		bytes = sizeof(uint);
+		memcpy(&outputMeshData.boneInfluences[i].bonesWeightsSize, cursor, bytes);
+		cursor += bytes;
 
-	cursor += bytes;
+		bytes = sizeof(float) * outputMeshData.boneInfluences[i].bonesWeightsSize;
+		outputMeshData.boneInfluences[i].boneWeights = new float[outputMeshData.boneInfluences[i].bonesWeightsSize];
+		memcpy(outputMeshData.boneInfluences[i].boneWeights, cursor, bytes);
+		cursor += bytes;
+
+		bytes = sizeof(uint) * outputMeshData.boneInfluences[i].bonesWeightsSize;
+		outputMeshData.boneInfluences[i].boneIds = new uint[outputMeshData.boneInfluences[i].bonesWeightsSize];
+		memcpy(outputMeshData.boneInfluences[i].boneIds, cursor, bytes);
+		cursor += bytes;
+
+		bytes = sizeof(char) * DEFAULT_BUF_SIZE;
+		memcpy(outputMeshData.boneInfluences[i].boneName, cursor, bytes);
+		cursor += bytes;
+	}
 	
 	// 9. Load indices
 	bytes = sizeof(uint) * outputMeshData.indicesSize;
@@ -817,10 +850,6 @@ bool SceneImporter::Load(const void* buffer, uint size, ResourceData& outputData
 	memcpy(outputMeshData.indices, cursor, bytes);
 
 	cursor += bytes;
-
-	// Calculate adjacent indices
-	if (outputMeshData.adjacency)
-		ResourceMesh::CalculateAdjacentIndices(outputMeshData.indices, outputMeshData.indicesSize, outputMeshData.adjacentIndices);
 
 	// 10. Load name
 	bytes = sizeof(char) * nameSize;

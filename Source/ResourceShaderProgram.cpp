@@ -556,7 +556,9 @@ void ResourceShaderProgram::GetUniforms(std::vector<Uniform>& uniforms)
 {
 	int count;
 	glGetProgramiv(shaderProgram, GL_ACTIVE_UNIFORMS, &count);
-	assert(count > 0);
+	if (count == 0)
+		return;
+
 	uniforms.reserve(count);
 
 	GLuint program;

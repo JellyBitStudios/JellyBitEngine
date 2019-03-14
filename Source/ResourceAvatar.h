@@ -10,8 +10,8 @@ class GameObject;
 
 struct ResourceAvatarData
 {
-	uint hipsUuid = 0; // uuid of the root game object of the skeleton
-	//std::vector<uint> meshesUuids; // uuid of the resources of the affected meshes 
+	uint hipsUuid = 0; // uuid of the root game object that forms the skeleton
+	uint rootUuid = 0;  // uuid of the root game object that will be affected by the skeleton
 };
 
 class ResourceAvatar : public Resource
@@ -39,19 +39,24 @@ public:
 	// ----------------------------------------------------------------------------------------------------
 
 	inline ResourceAvatarData& GetSpecificData() { return avatarData; }
-	void SetHipsUuid(uint hipsUuid);
+	bool SetHipsUuid(uint hipsUuid);
 	uint GetHipsUuid() const;
+	bool SetRootUuid(uint rootUuid);
+	uint GetRootUuid() const;
 	std::vector<uint> GetBonesUuids() const;
 
 	// ----------------------------------------------------------------------------------------------------
 
 	void CreateSkeleton(GameObject* gameObject);
 	void AddBones(GameObject* gameObject) const;
-	void ClearSkeletonAndBones();
 
 	void StepBones(uint animationUuid, float time, float blend = 1.0f);
 
 private:
+
+	void ClearSkeleton();
+	void ClearBones();
+	void ClearSkeletonAndBones();
 
 	bool LoadInMemory();
 	bool UnloadFromMemory();

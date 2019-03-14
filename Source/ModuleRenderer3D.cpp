@@ -108,8 +108,8 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 
 		// Initialize clear color
 		glClearColor(0.f, 0.f, 0.f, 1.0f);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		//glEnable(GL_BLEND);
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		// Check for error
 		error = glGetError();
@@ -194,23 +194,20 @@ update_status ModuleRenderer3D::PostUpdate()
 			if (cameraComponents[i]->IsActive())
 				cameraComponents[i]->UpdateTransform();
 		}
-		/*
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
 			if (projectorComponents[i]->IsActive())
 				projectorComponents[i]->UpdateTransform();
 		}
-		*/
+
 		if (currentCamera->HasFrustumCulling())
 			FrustumCulling();
-		/*
+
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
 			if (projectorComponents[i]->GetParent()->IsActive() && projectorComponents[i]->IsActive())
 				DrawProjectors(projectorComponents[i]);
 		}
-		*/
-
 		for (uint i = 0; i < meshComponents.size(); ++i)
 		{
 			if (meshComponents[i]->GetParent()->IsActive() && meshComponents[i]->IsActive() 
@@ -225,14 +222,14 @@ update_status ModuleRenderer3D::PostUpdate()
 
 	App->scene->Draw();
 
-	App->lights->DebugDrawLights();
-
 	App->particle->Draw();
 
 #ifndef GAMEMODE
 
 	if (debugDraw)
 	{
+		App->lights->DebugDrawLights();
+
 		App->navigation->Draw();
 
 		App->debugDrawer->StartDebugDraw();
@@ -740,7 +737,8 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	glBindVertexArray(mesh->GetVAO());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIBO());
 
-	glDrawElements(mesh->UseAdjacency() ? GL_TRIANGLES_ADJACENCY : GL_TRIANGLES, mesh->UseAdjacency() ? mesh->GetIndicesCount() * 2 : mesh->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
+	bool adjacency = mesh->UseAdjacency();
+	glDrawElements(adjacency ? GL_TRIANGLES_ADJACENCY : GL_TRIANGLES, adjacency ? mesh->GetIndicesCount() * 2 : mesh->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);

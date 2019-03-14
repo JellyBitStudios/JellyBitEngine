@@ -112,6 +112,12 @@ void ComponentNavAgent::AddAgent()
 									  avoidanceQuality);
 }
 
+void ComponentNavAgent::RemoveAgent()
+{
+	App->navigation->RemoveAgent(index);
+	index = -1;
+}
+
 bool ComponentNavAgent::UpdateParams() const
 {
 	float collisionQueryRange = radius * 12.0f;

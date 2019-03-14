@@ -72,18 +72,18 @@ bool PanelCodeEditor::Draw()
 		// Compile
 		if (ImGui::Button("Compile and Save"))
 		{
-			TryCompile();
-
 			// Update the existing shader object
 			shaderObject->SetSource(editor.GetText().data(), editor.GetText().length());
-			if (!shaderObject->Compile())
-				shaderObject->isValid = false;
-			else
+			if (TryCompile())
 				shaderObject->isValid = true;
+			else
+				shaderObject->isValid = false;
 
 			// Export the existing file
 			std::string outputFile;
-			App->res->ExportFile(ResourceTypes::ShaderObjectResource, shaderObject->GetData(), &shaderObject->GetSpecificData(), outputFile, true, false);
+			App->res->ExportFile(ResourceTypes::ShaderObjectResource, shaderObject->GetData(), &shaderObject->GetSpecificData(), outputFile, true, false);	
+		
+			shaderObject->Compile();
 		}
 
 		ImGui::SameLine();

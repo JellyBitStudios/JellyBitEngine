@@ -181,6 +181,46 @@ void ModuleUI::OnSystemEvent(System_Event event)
 			App->GOs->DeleteCanvasPointer();
 			break;
 		}
+		case System_Event_Type::ComponentDestroyed:
+		{
+			switch (event.compEvent.component->GetType())
+			{
+			case ComponentTypes::RectTransformComponent:
+			{
+				ComponentRectTransform* rect = (ComponentRectTransform*)event.compEvent.component;
+				if (rect->GetFrom() == ComponentRectTransform::RectFrom::WORLD)
+				{
+					componentsWorldUI.remove(rect);
+					GOsWorldCanvas.remove(rect->GetParent());
+				}
+				else
+					componentsUI.remove(rect);
+				break;
+			}
+			case ComponentTypes::CanvasRendererComponent:
+			{
+				ComponentCanvasRenderer* r_canvas = (ComponentCanvasRenderer*)event.compEvent.component;
+				if (r_canvas->IsWorld())
+					componentsWorldRendererUI.remove(r_canvas);
+				else
+					componentsScreenRendererUI.remove(r_canvas);
+				break;
+			}
+			case ComponentTypes::ButtonComponent:
+			case ComponentTypes::LabelComponent:
+			case ComponentTypes::ImageComponent:
+				componentsUI.remove(event.compEvent.component);
+				break;
+			}
+			break;
+		}
+		case System_Event_Type::GameObjectDestroyed:
+		{
+			if (std::strcmp(event.goEvent.gameObject->GetName(), "Canvas") == 0)
+				App->GOs->DeleteCanvasPointer();
+
+			break;
+		}
 	}
 }
 

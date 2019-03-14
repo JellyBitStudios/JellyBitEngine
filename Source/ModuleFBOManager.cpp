@@ -63,9 +63,17 @@ void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedoSpec, 0);
 
+	// - color + specular color buffer
+	glGenTextures(1, &gDecals);
+	glBindTexture(GL_TEXTURE_2D, gDecals);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gDecals, 0);
+
 	// - tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
-	unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-	glDrawBuffers(3, attachments);
+	unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+	glDrawBuffers(4, attachments);
 
 	// then also add render buffer object as depth buffer and check for completeness.
 	glGenRenderbuffers(1, &rboDepth);
@@ -85,6 +93,7 @@ void ModuleFBOManager::UnloadGBuffer()
 	glDeleteTextures(1, &gPosition);
 	glDeleteTextures(1, &gNormal);
 	glDeleteTextures(1, &gAlbedoSpec);
+	glDeleteTextures(1, &gDecals);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -119,6 +128,10 @@ void ModuleFBOManager::DrawGBufferToScreen() const
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
 	location = glGetUniformLocation(resProgram->shaderProgram, "gAlbedoSpec");
 	glUniform1i(location, 2);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, gDecals);
+	location = glGetUniformLocation(resProgram->shaderProgram, "gDecals");
+	glUniform1i(location, 3);
 
 	App->lights->UseLights(resProgram->shaderProgram);
 
@@ -134,6 +147,8 @@ void ModuleFBOManager::DrawGBufferToScreen() const
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glUseProgram(0);
 }

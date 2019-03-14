@@ -53,6 +53,7 @@ struct ResourceMeshImportSettings
 	uint attributes = ATTR_POSITION | ATTR_NORMAL | ATTR_COLOR | ATTR_TEXCOORD | ATTR_TANGENT | ATTR_BITANGENT;
 
 	float scale = 1.0f;
+	bool adjacency = false;
 
 	char modelPath[DEFAULT_BUF_SIZE];
 };
@@ -66,8 +67,8 @@ struct Vertex
 	uchar color[4];
 	float texCoord[2];
 
-	float boneWeight[MAX_BONES];
-	uint boneId[MAX_BONES];
+	float boneWeight[MAX_BONES] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	uint boneId[MAX_BONES] = { 0,0,0,0 };
 };
 
 struct BoneInfluence
@@ -86,7 +87,6 @@ struct ResourceMeshData
 	uint* indices = nullptr;
 	uint indicesSize = 0;
 
-	bool adjacency = false;
 	uint* adjacentIndices = nullptr;
 
 	BoneInfluence* boneInfluences = nullptr;
