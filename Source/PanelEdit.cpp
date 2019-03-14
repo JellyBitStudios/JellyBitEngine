@@ -234,6 +234,14 @@ bool PanelEdit::Draw()
 		ImGui::PushItemWidth(100.0f);
 		float timeScale = App->timeManager->GetTimeScale();
 		if (ImGui::SliderFloat("Game Time Scale", &timeScale, 0.0f, MAX_TIME_SCALE)) { App->timeManager->SetTimeScale(timeScale); }
+
+		ImGui::SameLine();
+		if (ImGui::Button("Regenerate Quadtree"))
+		{
+			System_Event newEvent;
+			newEvent.type = System_Event_Type::RecreateQuadtree;
+			App->PushSystemEvent(newEvent);
+		}
 	}
 	ImGui::End();
 
