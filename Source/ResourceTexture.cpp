@@ -11,7 +11,10 @@
 
 ResourceTexture::ResourceTexture(ResourceTypes type, uint uuid, ResourceData data, ResourceTextureData textureData) : Resource(type, uuid, data), textureData(textureData) {}
 
-ResourceTexture::~ResourceTexture() {}
+ResourceTexture::~ResourceTexture() 
+{
+	RELEASE_ARRAY(textureData.data);
+}
 
 void ResourceTexture::OnPanelAssets()
 {

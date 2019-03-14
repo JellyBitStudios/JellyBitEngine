@@ -18,7 +18,13 @@
 
 ResourceMesh::ResourceMesh(ResourceTypes type, uint uuid, ResourceData data, ResourceMeshData meshData) : Resource(type, uuid, data), meshData(meshData) {}
 
-ResourceMesh::~ResourceMesh() {}
+ResourceMesh::~ResourceMesh() 
+{
+	RELEASE_ARRAY(meshData.vertices);
+	RELEASE_ARRAY(meshData.indices);
+	RELEASE_ARRAY(meshData.adjacentIndices);
+	RELEASE_ARRAY(meshData.boneInfluences);
+}
 
 void ResourceMesh::OnPanelAssets()
 {

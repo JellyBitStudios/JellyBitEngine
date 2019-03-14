@@ -54,11 +54,6 @@ struct ResourceTextureData
 	uint height = 0;
 	uint bpp = 0;
 
-	~ResourceTextureData()
-	{
-		RELEASE_ARRAY(data);
-	}
-
 	ResourceTextureImportSettings textureImportSettings;
 };
 
