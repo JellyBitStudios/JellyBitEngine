@@ -158,7 +158,7 @@ update_status ModuleCameraEditor::Update()
 
 bool ModuleCameraEditor::CleanUp()
 {
-	DEPRECATED_LOG("Cleaning camera");
+	CONSOLE_LOG(LogTypes::Normal, "Cleaning camera");
 
 	return true;
 }

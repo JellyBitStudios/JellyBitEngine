@@ -27,7 +27,7 @@ MaterialImporter::MaterialImporter()
 		iluGetInteger(ILU_VERSION_NUM) < ILU_VERSION ||
 		ilutGetInteger(ILUT_VERSION_NUM) < ILUT_VERSION)
 	{
-		DEPRECATED_LOG("MATERIAL IMPORTER: DevIL version is different. Exiting...");
+		CONSOLE_LOG(LogTypes::Error, "MATERIAL IMPORTER: DevIL version is different. Exiting...");
 		versionCheck = false;
 	}
 

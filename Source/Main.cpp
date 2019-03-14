@@ -22,7 +22,7 @@ Application* App = NULL;
 
 int main(int argc, char ** argv)
 {
-	DEPRECATED_LOG("Starting game...");
+	CONSOLE_LOG(LogTypes::Normal, "Starting game...");
 
 	int main_return = EXIT_FAILURE;
 	main_states state = MAIN_CREATION;
@@ -33,23 +33,23 @@ int main(int argc, char ** argv)
 		{
 		case MAIN_CREATION:
 
-			DEPRECATED_LOG("-------------- Application Creation --------------");
+			CONSOLE_LOG(LogTypes::Normal, "-------------- Application Creation --------------");
 			App = new Application();
 			state = MAIN_START;
 			break;
 
 		case MAIN_START:
 
-			DEPRECATED_LOG("-------------- Application Init --------------");
+			CONSOLE_LOG(LogTypes::Normal, "-------------- Application Init --------------");
 			if (App->Init() == false)
 			{
-				DEPRECATED_LOG("Application Init exits with ERROR");
+				CONSOLE_LOG(LogTypes::Normal, "Application Init exits with ERROR");
 				state = MAIN_EXIT;
 			}
 			else
 			{
 				state = MAIN_UPDATE;
-				DEPRECATED_LOG("-------------- Application Update --------------");
+				CONSOLE_LOG(LogTypes::Normal, "-------------- Application Update --------------");
 			}
 
 			break;
@@ -61,7 +61,7 @@ int main(int argc, char ** argv)
 
 			if (update_return == UPDATE_ERROR)
 			{
-				DEPRECATED_LOG("Application Update exits with ERROR");
+				CONSOLE_LOG(LogTypes::Error, "Application Update exits with ERROR");
 				state = MAIN_EXIT;
 			}
 
@@ -72,10 +72,10 @@ int main(int argc, char ** argv)
 
 		case MAIN_FINISH:
 
-			DEPRECATED_LOG("-------------- Application CleanUp --------------");
+			CONSOLE_LOG(LogTypes::Normal, "-------------- Application CleanUp --------------");
 			if (App->CleanUp() == false)
 			{
-				DEPRECATED_LOG("Application CleanUp exits with ERROR");
+				CONSOLE_LOG(LogTypes::Error, "Application CleanUp exits with ERROR");
 			}
 			else
 				main_return = EXIT_SUCCESS;

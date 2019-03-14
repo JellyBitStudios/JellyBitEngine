@@ -351,7 +351,7 @@ void PanelHierarchy::SetGameObjectDragAndDropTarget(GameObject* target) const
 				}
 			}
 			else
-				DEPRECATED_LOG("ERROR: Invalid Target. Don't be so badass ;)");
+				CONSOLE_LOG(LogTypes::Error, "ERROR: Invalid Target. Don't be so badass ;)");
 		}
 		ImGui::EndDragDropTarget();
 	}

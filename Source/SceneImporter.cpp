@@ -665,7 +665,7 @@ void SceneImporter::ImportAnimations(const aiScene * scene, GameObject* rootBone
 	for (uint i = 0; i < scene->mNumAnimations; ++i)
 	{
 		const aiAnimation* anim = scene->mAnimations[i];
-		DEPRECATED_LOG("Importing animation [%s] -----------------", anim->mName.C_Str());
+		CONSOLE_LOG(LogTypes::Normal, "Importing animation [%s] -----------------", anim->mName.C_Str());
 		std::string output;
 
 		if (rootBone)

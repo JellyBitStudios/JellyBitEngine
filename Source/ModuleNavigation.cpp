@@ -152,7 +152,7 @@ void ModuleNavigation::InitDetour()
 	status = m_navQuery->init(m_navMesh, 2048);
 	if (dtStatusFailed(status))
 	{
-		DEPRECATED_LOG("Could not init Detour navmesh query");
+		CONSOLE_LOG(LogTypes::Error, "Could not init Detour navmesh query");
 		return;
 	}
 

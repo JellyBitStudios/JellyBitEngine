@@ -168,7 +168,7 @@ void PanelNavigation::HandleInputMeshes() const
 
 	if (staticsMeshComp.size() <= 0)
 	{
-		DEPRECATED_LOG("Rc: No static gameobjects");
+		CONSOLE_LOG(LogTypes::Normal, "Rc: No static gameobjects");
 		return;
 	}
 
@@ -189,7 +189,7 @@ void PanelNavigation::HandleInputMeshes() const
 
 	if (p_inputGeom.i_nmeshes <= 0)
 	{
-		DEPRECATED_LOG("rc: No meshes in static gameobjects");
+		CONSOLE_LOG(LogTypes::Normal, "rc: No meshes in static gameobjects");
 		return;
 	}
 
