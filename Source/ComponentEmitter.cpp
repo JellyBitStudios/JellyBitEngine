@@ -716,17 +716,22 @@ bool ComponentEmitter::EditColor(ColorTime &colorTime, uint pos)
 
 void ComponentEmitter::SetAABB(const math::float3 size, const math::float3 extraPosition)
 {
-	GameObject* gameObject = GetParent();
-
-	if (gameObject)
+	if (size.MinElement() >= 0)
 	{
-		gameObject->originalBoundingBox.SetFromCenterAndSize(extraPosition, size);
-		gameObject->boundingBox = gameObject->originalBoundingBox;
+		GameObject* gameObject = GetParent();
 
-		System_Event newEvent;
-		newEvent.goEvent.gameObject = gameObject;
-		newEvent.type = System_Event_Type::RecreateQuadtree;
-		App->PushSystemEvent(newEvent);
+		if (gameObject)
+		{
+			math::float3 pos = gameObject->transform->GetGlobalMatrix().TranslatePart();
+
+			gameObject->originalBoundingBox.SetFromCenterAndSize(pos + extraPosition, size);
+			gameObject->boundingBox = gameObject->originalBoundingBox;
+
+			System_Event newEvent;
+			newEvent.goEvent.gameObject = gameObject;
+			newEvent.type = System_Event_Type::RecreateQuadtree;
+			App->PushSystemEvent(newEvent);
+		}
 	}
 }
 
