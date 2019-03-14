@@ -55,6 +55,18 @@ bool PanelNavigation::Draw()
 			bool isWalkable = curr->cmp_mesh->nv_walkable;
 			if (ImGui::Button("Everybody Walkable")) { curr->ToggleChildrenAndThisWalkable(!isWalkable); }
 		}
+		else
+		{
+			bool isStatic = curr->IsStatic();
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Static");
+			ImGui::SameLine();
+			if (ImGui::Checkbox("##Static", &isStatic))
+				curr->ToggleIsStatic();
+			if (ImGui::Button("Everybody Static")) { curr->ToggleChildrenAndThisStatic(!isStatic); }
+			if (ImGui::Button("Everybody Walkable")) { curr->ToggleChildrenAndThisWalkable(true); }
+			if (ImGui::Button("Nobody Walkable")) { curr->ToggleChildrenAndThisWalkable(false); }
+		}
 	}
 
 	ImGui::AlignTextToFramePadding();
