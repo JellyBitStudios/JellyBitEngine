@@ -23,7 +23,7 @@ ComponentRigidDynamic::ComponentRigidDynamic(GameObject* parent, bool include) :
 	{
 		physx::PxShape* gShape = nullptr;
 
-		if (parent->cmp_collider != nullptr)
+		if (parent->cmp_collider != nullptr && parent->cmp_collider->GetShape())
 			gShape = parent->cmp_collider->GetShape();
 		else if (parent->boundingBox.IsFinite())
 			gShape = App->physics->CreateShape(physx::PxBoxGeometry(parent->boundingBox.HalfSize().x, parent->boundingBox.HalfSize().y, parent->boundingBox.HalfSize().z), *App->physics->GetDefaultMaterial());
