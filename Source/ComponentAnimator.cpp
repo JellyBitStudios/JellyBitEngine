@@ -20,6 +20,7 @@
 ComponentAnimator::ComponentAnimator(GameObject * embedded_game_object) :
 	Component(embedded_game_object, ComponentTypes::AnimatorComponent)
 {
+
 }
 
 ComponentAnimator::ComponentAnimator(GameObject* embedded_game_object, uint resource) :
@@ -30,12 +31,15 @@ ComponentAnimator::ComponentAnimator(GameObject* embedded_game_object, uint reso
 
 ComponentAnimator::ComponentAnimator(const ComponentAnimator & component_anim, GameObject * parent, bool include) : Component(parent, ComponentTypes::AnimatorComponent)
 {
-	this->SetResourceAnimator(component_anim.res);
-	this->SetResourceAvatar(component_anim.res_avatar);
-	for (uint i = 0u; i < component_anim.res_animations.size(); i++)
-	{
-		this->SetResourceAnimation(component_anim.res_animations.at(i));
+	if (include) {
+		this->SetResourceAnimator(component_anim.res);
+		this->SetResourceAvatar(component_anim.res_avatar);
+		for (uint i = 0u; i < component_anim.res_animations.size(); i++)
+		{
+			this->SetResourceAnimation(component_anim.res_animations.at(i));
+		}
 	}
+	
 	//App->animation->SetAnimationGos((ResourceAnimation*)App->res->GetResource(res));
 }
 
