@@ -372,6 +372,19 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 		}
 	}
 	break;
+
+	case System_Event_Type::LoadGMScene:     
+	case System_Event_Type::LoadFinished:
+	{
+		std::vector<Resource*> avatars = GetResourcesByType(ResourceTypes::AvatarResource);
+		for (uint i = 0; i < avatars.size(); ++i)
+		{
+			ResourceAvatar* avatar = (ResourceAvatar*)avatars[i];
+			avatar->ClearSkeletonAndBones();
+			avatar->CreateSkeletonAndAddBones();
+		}
+	}
+	break;
 	}
 }
 
