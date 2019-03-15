@@ -125,7 +125,8 @@ void ComponentBoxCollider::EncloseGeometry()
 		halfSize = parent->originalBoundingBox.HalfSize().Mul(scale);
 	}
 
-	RecalculateShape();
+	if (gShape != nullptr)
+		RecalculateShape();
 }
 
 void ComponentBoxCollider::RecalculateShape()

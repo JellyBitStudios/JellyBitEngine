@@ -148,8 +148,9 @@ void ComponentRigidActor::UpdateTransform(math::float4x4& globalMatrix) const
 		return;
 	}
 
-	gActor->setGlobalPose(physx::PxTransform(physx::PxVec3(position.x, position.y, position.z),
-		physx::PxQuat(rotation.x, rotation.y, rotation.z, rotation.w)));
+	if (gActor != nullptr)
+		gActor->setGlobalPose(physx::PxTransform(physx::PxVec3(position.x, position.y, position.z),
+			physx::PxQuat(rotation.x, rotation.y, rotation.z, rotation.w)));
 }
 
 void ComponentRigidActor::UpdateGameObjectTransform() const
