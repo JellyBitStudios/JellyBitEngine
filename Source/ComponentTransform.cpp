@@ -20,13 +20,18 @@
 
 #include "MathGeoLib/include/Geometry/OBB.h"
 
-ComponentTransform::ComponentTransform(GameObject* parent) : Component(parent, ComponentTypes::TransformComponent) {}
+ComponentTransform::ComponentTransform(GameObject* parent) : Component(parent, ComponentTypes::TransformComponent) 
+{
+	UpdateGlobal();
+}
 
 ComponentTransform::ComponentTransform(const ComponentTransform& componentTransform, GameObject* parent) : Component(parent, ComponentTypes::TransformComponent)
 {
 	position = componentTransform.position;
 	rotation = componentTransform.rotation;
 	scale = componentTransform.scale;
+
+	UpdateGlobal();
 }
 
 ComponentTransform::~ComponentTransform()
@@ -327,4 +332,6 @@ void ComponentTransform::OnInternalLoad(char*& cursor)
 	bytes = sizeof(math::float3);
 	memcpy(&scale, cursor, bytes);
 	cursor += bytes;
+
+	UpdateGlobal();
 }
