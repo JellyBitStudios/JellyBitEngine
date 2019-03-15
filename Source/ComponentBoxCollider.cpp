@@ -155,7 +155,8 @@ void ComponentBoxCollider::SetHalfSize(const math::float3& halfSize)
 {
 	assert(halfSize.IsFinite());
 	this->halfSize = halfSize;
-	gShape->setGeometry(physx::PxBoxGeometry(halfSize.x, halfSize.y, halfSize.z));
+	if (gShape != nullptr)
+		gShape->setGeometry(physx::PxBoxGeometry(halfSize.x, halfSize.y, halfSize.z));
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -163,6 +164,7 @@ void ComponentBoxCollider::SetHalfSize(const math::float3& halfSize)
 physx::PxBoxGeometry ComponentBoxCollider::GetBoxGeometry() const
 {
 	physx::PxBoxGeometry boxGeometry;
-	gShape->getBoxGeometry(boxGeometry);
+	if (gShape != nullptr)
+		gShape->getBoxGeometry(boxGeometry);
 	return boxGeometry;
 }

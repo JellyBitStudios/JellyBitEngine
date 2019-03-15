@@ -518,19 +518,30 @@ void ComponentRigidDynamic::ClearTorque() const
 
 bool ComponentRigidDynamic::IsSleeping() const
 {
-	return gActor->is<physx::PxRigidDynamic>()->isSleeping();
+	if (gActor != nullptr)
+		return gActor->is<physx::PxRigidDynamic>()->isSleeping();
+	else
+		return true;
 }
 
 math::float3 ComponentRigidDynamic::GetLinearVelocity() const
 {
-	physx::PxVec3 gLinearVelocity = gActor->is<physx::PxRigidDynamic>()->getLinearVelocity();
-
-	return math::float3(gLinearVelocity.x, gLinearVelocity.y, gLinearVelocity.z);
+	if (gActor != nullptr)
+	{
+		physx::PxVec3 gLinearVelocity = gActor->is<physx::PxRigidDynamic>()->getLinearVelocity();
+		return math::float3(gLinearVelocity.x, gLinearVelocity.y, gLinearVelocity.z);
+	}
+	else
+		return math::float3::zero;
 }
 
 math::float3 ComponentRigidDynamic::GetAngularVelocity() const
 {
-	physx::PxVec3 gAngularVelocity = gActor->is<physx::PxRigidDynamic>()->getAngularVelocity();
-	
-	return math::float3(gAngularVelocity.x, gAngularVelocity.y, gAngularVelocity.z);
+	if (gActor != nullptr)
+	{
+		physx::PxVec3 gAngularVelocity = gActor->is<physx::PxRigidDynamic>()->getAngularVelocity();
+		return math::float3(gAngularVelocity.x, gAngularVelocity.y, gAngularVelocity.z);
+	}
+	else
+		return math::float3::zero;
 }

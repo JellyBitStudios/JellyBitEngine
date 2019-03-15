@@ -191,6 +191,7 @@ void ComponentPlaneCollider::SetDistance(float distance)
 physx::PxPlaneGeometry ComponentPlaneCollider::GetPlaneGeometry() const
 {
 	physx::PxPlaneGeometry planeGeometry;
-	gShape->getPlaneGeometry(planeGeometry);
+	if (gShape != nullptr)
+		gShape->getPlaneGeometry(planeGeometry);
 	return planeGeometry;
 }

@@ -182,10 +182,12 @@ void ComponentCollider::SetFiltering(physx::PxU32 filterGroup, physx::PxU32 filt
 
 	physx::PxFilterData filterData;
 	filterData.word0 = filterGroup; // word 0 = own ID
-	gShape->setQueryFilterData(filterData);
+	if (gShape != nullptr)
+		gShape->setQueryFilterData(filterData);
 
 	filterData.word1 = filterMask; // word 1 = ID mask to filter pairs that trigger a contact callback
-	gShape->setSimulationFilterData(filterData);
+	if (gShape != nullptr)
+		gShape->setSimulationFilterData(filterData);
 }
 
 // ----------------------------------------------------------------------------------------------------

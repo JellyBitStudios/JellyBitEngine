@@ -235,21 +235,24 @@ void ComponentCapsuleCollider::SetCenter(const math::float3& center)
 	case CapsuleDirection::CapsuleDirectionXAxis:
 	{
 		physx::PxTransform relativePose(physx::PxVec3(center.x, center.y, center.z));
-		gShape->setLocalPose(relativePose);
+		if (gShape != nullptr)
+			gShape->setLocalPose(relativePose);
 	}
 	break;
 	case CapsuleDirection::CapsuleDirectionYAxis:
 	{
 		math::float3 dir = math::float3(0.0f, 0.0f, 1.0f);
 		physx::PxTransform relativePose(physx::PxVec3(center.x, center.y, center.z), physx::PxQuat(physx::PxHalfPi, physx::PxVec3(dir.x, dir.y, dir.z)));
-		gShape->setLocalPose(relativePose);
+		if (gShape != nullptr)
+			gShape->setLocalPose(relativePose);
 	}
 	break;
 	case CapsuleDirection::CapsuleDirectionZAxis:
 	{
 		math::float3 dir = math::float3(0.0f, 1.0f, 0.0f);
 		physx::PxTransform relativePose(physx::PxVec3(center.x, center.y, center.z), physx::PxQuat(physx::PxHalfPi, physx::PxVec3(dir.x, dir.y, dir.z)));
-		gShape->setLocalPose(relativePose);
+		if (gShape != nullptr)
+			gShape->setLocalPose(relativePose);
 	}
 	break;
 	}
