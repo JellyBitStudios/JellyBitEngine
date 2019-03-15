@@ -116,6 +116,8 @@ public:
 	void ParticleColor();
 	void ParticleValues();
 	void ParticleShape();
+	void ParticleSpace();
+	
 	void SetNewAnimation();
 	math::float3 RandPos(ShapeType shapeType);
 	void ShowFloatValue(math::float2 & value, bool checkBox, const char * name, float v_speed, float v_min, float v_max);
@@ -126,6 +128,8 @@ public:
 	void CreateParticles(int particlesToCreate, ShapeType shapeType, const math::float3& pos = math::float3::zero);
 	bool EditColor(ColorTime & colorTime, uint pos = 0u);
 	void SetAABB(const math::float3 size, const math::float3 extraPosition = math::float3::zero);
+
+	math::float3 GetPos();
 
 	void SetMaterialRes(uint materialUuid);
 	uint GetMaterialRes() const;
@@ -223,5 +227,7 @@ private:
 	float timeToParticle = 0.0f;
 	uint nameLenght;
 	//---------------------------------------
+
+	bool localSpace = false;
 };
 #endif // !__Emitter_H__

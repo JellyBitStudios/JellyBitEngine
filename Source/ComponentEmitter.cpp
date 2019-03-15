@@ -65,6 +65,8 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 	checkSizeOverTime = componentEmitter.checkSizeOverTime;
 	checkAngularVelocity = componentEmitter.checkAngularVelocity;
 
+	localSpace = componentEmitter.localSpace;
+
 	particleAnim.isParticleAnimated = componentEmitter.particleAnim.isParticleAnimated;
 	if (particleAnim.isParticleAnimated)
 	{
@@ -222,6 +224,7 @@ void ComponentEmitter::CreateParticles(int particlesToCreate, ShapeType shapeTyp
 		if (App->particle->GetParticle(particleId))
 		{
 			math::float3 spawnPos = pos;
+
 			spawnPos += RandPos(shapeType);
 
 			App->particle->allParticles[particleId].SetActive(spawnPos, startValues, particleAnim);
@@ -276,7 +279,7 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType)
 	}
 
 	math::float3 global = math::float3::zero;
-	if (parent)
+	if (!localSpace && parent)
 	{
 		math::float4x4 trans = parent->transform->GetGlobalMatrix();
 		math::Quat identity = math::Quat::identity;
@@ -306,6 +309,10 @@ void ComponentEmitter::OnUniqueEditor()
 	ParticleTexture();
 
 	ParticleSubEmitter();
+
+	ParticleSpace();
+
+
 #endif
 }
 
@@ -640,6 +647,16 @@ void ComponentEmitter::ParticleSubEmitter()
 #endif
 }
 
+void ComponentEmitter::ParticleSpace()
+{
+#ifndef GAMEMODE
+
+	ImGui::Checkbox("Local space", &localSpace);
+
+	ImGui::Separator();
+#endif
+}
+
 void ComponentEmitter::ShowFloatValue(math::float2& value, bool checkBox, const char* name, float v_speed, float v_min, float v_max)
 {
 #ifndef GAMEMODE
@@ -784,7 +801,23 @@ uint ComponentEmitter::GetInternalSerializationBytes()
 		+ sizeof(uint)/*size of particleColor list*/ + sizeof(boxCreation) + sizeof(burstType) + sizeof(float) * 2 //Circle and Sphere rad
 		+ sizeof(gravity) + sizeof(posDifAABB) + sizeof(loop) + sizeof(burst) + sizeof(startOnPlay)
 		+ sizeof(minPart) + sizeof(maxPart) + sizeof(char) * burstTypeName.size() + sizeof(uint)//Size of name;
-		+ sizeof(math::float2) * 7 + sizeof(math::float3) * 2 + sizeof(bool) * 2 + sizeOfList;//Bytes of all Start Values Struct;
+		+ sizeof(math::float2) * 7 + sizeof(math::float3) * 2 + sizeof(bool) * 2 + sizeOfList//Bytes of all Start Values Struct
+		+ sizeof(localSpace);		//TODO PROGRAMER -> Don't sum localSpace before load
+}
+
+math::float3 ComponentEmitter::GetPos()
+{
+	math::float3 pos = math::float3::zero;
+
+	if (localSpace)
+	{
+		math::Quat rot = math::Quat::identity;
+		math::float3 scale = math::float3::zero;
+
+		parent->transform->GetGlobalMatrix().Decompose(pos, rot, scale);
+	}
+
+	return pos;
 }
 
 void ComponentEmitter::OnInternalSave(char *& cursor)
@@ -832,6 +865,9 @@ void ComponentEmitter::OnInternalSave(char *& cursor)
 	cursor += bytes;
 
 	memcpy(cursor, &startOnPlay, bytes);
+	cursor += bytes;
+
+	memcpy(cursor, &localSpace, bytes);
 	cursor += bytes;
 
 	bytes = sizeof(int);
@@ -945,6 +981,10 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	cursor += bytes;
 
 	memcpy(&startOnPlay, cursor, bytes);
+	cursor += bytes;
+
+	//TODO PROGRAMMER: Coment this two lines then save scene and Discomment it
+	memcpy(&localSpace, cursor, bytes);
 	cursor += bytes;
 
 	bytes = sizeof(int);
