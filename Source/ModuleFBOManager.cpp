@@ -157,7 +157,7 @@ void ModuleFBOManager::MergeDepthBuffer(uint width, uint height)
 {
 	// Here we write current depth buffer from gbuffer to default
 	// buffer so we can draw in forward rendering as we used to
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, rboDepth);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
 	glBlitFramebuffer(
 		0, 0, width, height, 0, 0, width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST
