@@ -173,7 +173,8 @@ void ComponentRigidActor::UpdateGameObjectTransform() const
 void ComponentRigidActor::SetUseGravity(bool useGravity)
 {
 	this->useGravity = useGravity;
-	gActor->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, !useGravity);
+	if (gActor != nullptr)
+		gActor->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, !useGravity);
 }
 
 // ----------------------------------------------------------------------------------------------------

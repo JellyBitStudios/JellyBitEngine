@@ -28,7 +28,8 @@ ComponentPlaneCollider::ComponentPlaneCollider(GameObject* parent) : ComponentCo
 
 ComponentPlaneCollider::ComponentPlaneCollider(const ComponentPlaneCollider& componentPlaneCollider, GameObject* parent, bool include) : ComponentCollider(componentPlaneCollider, parent, ComponentTypes::PlaneColliderComponent, include)
 {
-	EncloseGeometry();
+	if (include)
+		EncloseGeometry();
 
 	colliderType = componentPlaneCollider.colliderType;
 
@@ -156,7 +157,8 @@ void ComponentPlaneCollider::SetNormal(const math::float3& normal)
 	}
 
 	physx::PxTransform relativePose = physx::PxTransformFromPlaneEquation(physx::PxPlane(normal.x, normal.y, normal.z, distance));
-	gShape->setLocalPose(relativePose);
+	if (gShape != nullptr)
+		gShape->setLocalPose(relativePose);
 }
 
 void ComponentPlaneCollider::SetDistance(float distance)
@@ -170,7 +172,8 @@ void ComponentPlaneCollider::SetDistance(float distance)
 	}
 
 	physx::PxTransform relativePose = physx::PxTransformFromPlaneEquation(physx::PxPlane(normal.x, normal.y, normal.z, distance));
-	gShape->setLocalPose(relativePose);
+	if (gShape != nullptr)
+		gShape->setLocalPose(relativePose);
 }
 
 // ----------------------------------------------------------------------------------------------------

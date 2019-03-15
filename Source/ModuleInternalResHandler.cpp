@@ -49,6 +49,8 @@ void ModuleInternalResHandler::CreatePlane()
 {
 	ResourceMeshData specificData;
 
+	specificData.meshImportSettings.adjacency = false;
+
 	specificData.verticesSize = 4;
 	specificData.vertices = new Vertex[specificData.verticesSize];
 
@@ -106,6 +108,8 @@ void ModuleInternalResHandler::CreatePlane()
 void ModuleInternalResHandler::CreateCube()
 {
 	ResourceMeshData specificData;
+
+	specificData.meshImportSettings.adjacency = false;
 
 	specificData.verticesSize = 8;
 	specificData.vertices = new Vertex[specificData.verticesSize];
