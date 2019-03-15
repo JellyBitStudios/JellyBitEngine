@@ -19,7 +19,7 @@ class ComponentRigidActor : public Component
 public:
 
 	ComponentRigidActor(GameObject* parent, ComponentTypes componentRigidActorType);
-	ComponentRigidActor(const ComponentRigidActor& componentRigidActor, GameObject* parent, ComponentTypes componentRigidActorType);
+	ComponentRigidActor(const ComponentRigidActor& componentRigidActor, GameObject* parent, ComponentTypes componentRigidActorType, bool include = true);
 	virtual ~ComponentRigidActor();
 
 	virtual void OnUniqueEditor();

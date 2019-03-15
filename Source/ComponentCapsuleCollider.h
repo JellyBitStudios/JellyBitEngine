@@ -16,7 +16,7 @@ class ComponentCapsuleCollider : public ComponentCollider
 public:
 
 	ComponentCapsuleCollider(GameObject* parent);
-	ComponentCapsuleCollider(const ComponentCapsuleCollider& componentCapsuleCollider, GameObject* parent);
+	ComponentCapsuleCollider(const ComponentCapsuleCollider& componentCapsuleCollider, GameObject* parent, bool include = true);
 	~ComponentCapsuleCollider();
 
 	void OnUniqueEditor();

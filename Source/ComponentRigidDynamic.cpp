@@ -31,6 +31,7 @@ ComponentRigidDynamic::ComponentRigidDynamic(GameObject* parent) : ComponentRigi
 
 	gActor = App->physics->CreateRigidDynamic(physx::PxTransform(physx::PxIDENTITY()), *gShape, density, isKinematic);
 	assert(gActor != nullptr);
+	App->physics->AddActor(*gActor);
 
 	rigidActorType = RigidActorTypes::RigidDynamic;
 
@@ -64,7 +65,7 @@ ComponentRigidDynamic::ComponentRigidDynamic(GameObject* parent) : ComponentRigi
 	isKinematic = rigidBodyFlags & physx::PxRigidBodyFlag::Enum::eKINEMATIC;
 }
 
-ComponentRigidDynamic::ComponentRigidDynamic(const ComponentRigidDynamic& componentRigidDynamic, GameObject* parent) : ComponentRigidActor(componentRigidDynamic, parent, ComponentTypes::RigidDynamicComponent)
+ComponentRigidDynamic::ComponentRigidDynamic(const ComponentRigidDynamic& componentRigidDynamic, GameObject* parent, bool include) : ComponentRigidActor(componentRigidDynamic, parent, ComponentTypes::RigidDynamicComponent, include)
 {
 	density = componentRigidDynamic.density;
 
@@ -80,6 +81,8 @@ ComponentRigidDynamic::ComponentRigidDynamic(const ComponentRigidDynamic& compon
 
 	gActor = App->physics->CreateRigidDynamic(physx::PxTransform(physx::PxIDENTITY()), *gShape, density, isKinematic);
 	assert(gActor != nullptr);
+	if (include)
+		App->physics->AddActor(*gActor);
 
 	rigidActorType = componentRigidDynamic.rigidActorType;
 

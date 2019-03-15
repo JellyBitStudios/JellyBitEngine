@@ -29,6 +29,7 @@ ComponentRigidStatic::ComponentRigidStatic(GameObject* parent) : ComponentRigidA
 
 	gActor = App->physics->CreateRigidStatic(physx::PxTransform(physx::PxIDENTITY()), *gShape);
 	assert(gActor != nullptr);
+	App->physics->AddActor(*gActor);
 
 	rigidActorType = RigidActorTypes::RigidStatic;
 
@@ -42,7 +43,7 @@ ComponentRigidStatic::ComponentRigidStatic(GameObject* parent) : ComponentRigidA
 	SetUseGravity(false);
 }
 
-ComponentRigidStatic::ComponentRigidStatic(const ComponentRigidStatic& componentRigidStatic, GameObject* parent) : ComponentRigidActor(componentRigidStatic, parent, ComponentTypes::RigidStaticComponent)
+ComponentRigidStatic::ComponentRigidStatic(const ComponentRigidStatic& componentRigidStatic, GameObject* parent, bool include) : ComponentRigidActor(componentRigidStatic, parent, ComponentTypes::RigidStaticComponent, include)
 {
 	physx::PxShape* gShape = nullptr;
 
@@ -56,6 +57,8 @@ ComponentRigidStatic::ComponentRigidStatic(const ComponentRigidStatic& component
 
 	gActor = App->physics->CreateRigidStatic(physx::PxTransform(physx::PxIDENTITY()), *gShape);
 	assert(gActor != nullptr);
+	if (include)
+		App->physics->AddActor(*gActor);
 
 	rigidActorType = componentRigidStatic.rigidActorType;
 

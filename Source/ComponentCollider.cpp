@@ -21,12 +21,13 @@ ComponentCollider::ComponentCollider(GameObject* parent, ComponentTypes componen
 	App->physics->AddColliderComponent(this);
 }
 
-ComponentCollider::ComponentCollider(const ComponentCollider& componentCollider, GameObject* parent, ComponentTypes componentColliderType) : Component(parent, componentColliderType)
+ComponentCollider::ComponentCollider(const ComponentCollider& componentCollider, GameObject* parent, ComponentTypes componentColliderType, bool include) : Component(parent, componentColliderType)
 {
 	gMaterial = App->physics->GetDefaultMaterial();
 	assert(gMaterial != nullptr);
 
-	App->physics->AddColliderComponent(this);
+	if (include)
+		App->physics->AddColliderComponent(this);
 }
 
 ComponentCollider::~ComponentCollider()
