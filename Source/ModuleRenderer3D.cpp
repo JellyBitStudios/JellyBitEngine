@@ -231,7 +231,8 @@ update_status ModuleRenderer3D::PostUpdate()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	App->particle->Draw();
-	glDisable(blend);
+	if (!blend)
+		glDisable(GL_BLEND);
 
 
 #ifndef GAMEMODE
