@@ -137,8 +137,8 @@ update_status ModuleCameraEditor::Update()
 	}
 
 	// Select game object
-	if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_DOWN 
-		&& !App->gui->IsMouseHoveringAnyWindow() && !App->scene->IsGizmoValid())
+	if (App->input->GetMouseButton(SDL_BUTTON_MIDDLE) == KEY_DOWN
+		&& !App->gui->IsMouseHoveringAnyWindow())
 	{
 		float distance;
 		math::float3 hitPoint;
