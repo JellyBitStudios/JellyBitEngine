@@ -8,8 +8,8 @@ class ComponentRigidStatic : public ComponentRigidActor
 {
 public:
 
-	ComponentRigidStatic(GameObject* parent);
-	ComponentRigidStatic(const ComponentRigidStatic& componentRigidStatic, GameObject* parent);
+	ComponentRigidStatic(GameObject* parent, bool include = true);
+	ComponentRigidStatic(const ComponentRigidStatic& componentRigidStatic, GameObject* parent, bool include = true);
 	~ComponentRigidStatic();
 
 	void OnUniqueEditor();

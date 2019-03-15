@@ -650,16 +650,22 @@ bool ResourceAnimator::SetCurrentAnimation(const char * anim_name)
 void ResourceAnimator::PlayAnimation()
 {
 	anim_state = AnimationState::PLAYING;
+	ResourceAvatar* ava = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
+	ava->SetIsAnimated(true);
 }
 
 void ResourceAnimator::PauseAnimation()
 {
 	anim_state = AnimationState::PAUSED;
+	ResourceAvatar* ava = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
+	ava->SetIsAnimated(false);
 }
 
 void ResourceAnimator::StopAnimation()
 {
 	anim_state = AnimationState::STOPPED;
+	ResourceAvatar* ava = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
+	ava->SetIsAnimated(false);
 }
 
 void ResourceAnimator::StepBackwards()

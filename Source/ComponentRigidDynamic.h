@@ -8,8 +8,8 @@ class ComponentRigidDynamic : public ComponentRigidActor
 {
 public:
 
-	ComponentRigidDynamic(GameObject* parent);
-	ComponentRigidDynamic(const ComponentRigidDynamic& componentRigidDynamic, GameObject* parent);
+	ComponentRigidDynamic(GameObject* parent, bool include = true);
+	ComponentRigidDynamic(const ComponentRigidDynamic& componentRigidDynamic, GameObject* parent, bool include = true);
 	~ComponentRigidDynamic();
 
 	void OnUniqueEditor();

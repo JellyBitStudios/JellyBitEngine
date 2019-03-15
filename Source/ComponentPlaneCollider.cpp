@@ -12,7 +12,7 @@
 
 // Only for static actors
 
-ComponentPlaneCollider::ComponentPlaneCollider(GameObject* parent) : ComponentCollider(parent, ComponentTypes::PlaneColliderComponent)
+ComponentPlaneCollider::ComponentPlaneCollider(GameObject* parent, bool include) : ComponentCollider(parent, ComponentTypes::PlaneColliderComponent, include)
 {
 	EncloseGeometry();
 
@@ -20,17 +20,27 @@ ComponentPlaneCollider::ComponentPlaneCollider(GameObject* parent) : ComponentCo
 
 	// -----
 
-	physx::PxShapeFlags shapeFlags = gShape->getFlags();
-	isTrigger = shapeFlags & physx::PxShapeFlag::Enum::eTRIGGER_SHAPE && !(shapeFlags & physx::PxShapeFlag::eSIMULATION_SHAPE);
-	participateInContactTests = shapeFlags & physx::PxShapeFlag::Enum::eSIMULATION_SHAPE;
-	participateInSceneQueries = shapeFlags & physx::PxShapeFlag::Enum::eSCENE_QUERY_SHAPE;
+	SetIsTrigger(isTrigger);
+	SetParticipateInContactTests(participateInContactTests);
+	SetParticipateInSceneQueries(participateInSceneQueries);
+	SetFiltering(filterGroup, filterMask);
+
+	// -----
+
+	SetNormal(normal);
+	SetDistance(distance);
+
+	SetCenter(center);
 }
 
-ComponentPlaneCollider::ComponentPlaneCollider(const ComponentPlaneCollider& componentPlaneCollider, GameObject* parent) : ComponentCollider(componentPlaneCollider, parent, ComponentTypes::PlaneColliderComponent)
+ComponentPlaneCollider::ComponentPlaneCollider(const ComponentPlaneCollider& componentPlaneCollider, GameObject* parent, bool include) : ComponentCollider(componentPlaneCollider, parent, ComponentTypes::PlaneColliderComponent, include)
 {
-	EncloseGeometry();
+	if (include)
+		EncloseGeometry();
 
 	colliderType = componentPlaneCollider.colliderType;
+
+	// -----
 
 	SetIsTrigger(componentPlaneCollider.isTrigger);
 	SetParticipateInContactTests(componentPlaneCollider.participateInContactTests);
@@ -119,7 +129,8 @@ void ComponentPlaneCollider::OnInternalLoad(char*& cursor)
 
 void ComponentPlaneCollider::EncloseGeometry()
 {
-	RecalculateShape();
+	if (gShape != nullptr)
+		RecalculateShape();
 }
 
 void ComponentPlaneCollider::RecalculateShape()
@@ -156,7 +167,8 @@ void ComponentPlaneCollider::SetNormal(const math::float3& normal)
 	}
 
 	physx::PxTransform relativePose = physx::PxTransformFromPlaneEquation(physx::PxPlane(normal.x, normal.y, normal.z, distance));
-	gShape->setLocalPose(relativePose);
+	if (gShape != nullptr)
+		gShape->setLocalPose(relativePose);
 }
 
 void ComponentPlaneCollider::SetDistance(float distance)
@@ -170,7 +182,8 @@ void ComponentPlaneCollider::SetDistance(float distance)
 	}
 
 	physx::PxTransform relativePose = physx::PxTransformFromPlaneEquation(physx::PxPlane(normal.x, normal.y, normal.z, distance));
-	gShape->setLocalPose(relativePose);
+	if (gShape != nullptr)
+		gShape->setLocalPose(relativePose);
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -178,6 +191,7 @@ void ComponentPlaneCollider::SetDistance(float distance)
 physx::PxPlaneGeometry ComponentPlaneCollider::GetPlaneGeometry() const
 {
 	physx::PxPlaneGeometry planeGeometry;
-	gShape->getPlaneGeometry(planeGeometry);
+	if (gShape != nullptr)
+		gShape->getPlaneGeometry(planeGeometry);
 	return planeGeometry;
 }

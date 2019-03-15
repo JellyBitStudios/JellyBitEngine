@@ -187,6 +187,7 @@ bool ModulePhysics::Start()
 	filterData.word1 = App->layers->GetLayer(0)->GetFilterMask();
 	planeShape->setSimulationFilterData(filterData);
 	physx::PxRigidStatic* groundPlane = CreateRigidStatic(physx::PxTransformFromPlaneEquation(physx::PxPlane(0.0f, 1.0f, 0.0f, 0.0f)), *planeShape);
+	App->physics->AddActor(*groundPlane);
 
 	debugRay = math::Ray(math::float3::zero, math::float3::zero);
 
@@ -663,8 +664,6 @@ physx::PxRigidStatic* ModulePhysics::CreateRigidStatic(const physx::PxTransform&
 	assert(transform.isFinite());
 	physx::PxRigidStatic* rigidStatic = physx::PxCreateStatic(*gPhysics, transform, shape);
 
-	AddActor(*rigidStatic);
-
 	return rigidStatic;
 }
 
@@ -676,8 +675,6 @@ physx::PxRigidDynamic* ModulePhysics::CreateRigidDynamic(const physx::PxTransfor
 		rigidDynamic = physx::PxCreateKinematic(*gPhysics, transform, shape, density);
 	else
 		rigidDynamic = physx::PxCreateDynamic(*gPhysics, transform, shape, density);
-
-	AddActor(*rigidDynamic);
 
 	return rigidDynamic;
 }
