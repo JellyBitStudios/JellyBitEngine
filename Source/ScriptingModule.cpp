@@ -12,7 +12,7 @@
 #include "ComponentRigidDynamic.h"
 
 #include "GameObject.h"
-
+ 
 #include <mono/metadata/assembly.h>
 #include <mono/jit/jit.h>
 #include <mono/metadata/mono-config.h>
@@ -468,6 +468,9 @@ void ScriptingModule::ClearScriptComponent(ComponentScript* script)
 
 MonoObject* ScriptingModule::MonoObjectFrom(GameObject* gameObject)
 {
+	if (!gameObject)
+		return nullptr;
+
 	MonoObject* monoObject = gameObject->GetMonoObject();
 
 	if (monoObject)
@@ -495,6 +498,9 @@ MonoObject* ScriptingModule::MonoObjectFrom(GameObject* gameObject)
 
 GameObject* ScriptingModule::GameObjectFrom(MonoObject* monoObject)
 {
+	if (!monoObject)
+		return nullptr;
+
 	int address;
 	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
 
@@ -511,6 +517,9 @@ GameObject* ScriptingModule::GameObjectFrom(MonoObject* monoObject)
 
 MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 {
+	if (!component)
+		return nullptr;
+
 	MonoObject* monoComponent = nullptr;
 	monoComponent = component->GetMonoComponent();
 	if (monoComponent)
@@ -607,6 +616,9 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 
 Component* ScriptingModule::ComponentFrom(MonoObject* monoComponent)
 {
+	if (!monoComponent)
+		return nullptr;
+
 	int componentAddress;
 	mono_field_get_value(monoComponent, mono_class_get_field_from_name(mono_object_get_class(monoComponent), "componentAddress"), &componentAddress);	
 
@@ -912,6 +924,9 @@ void ScriptingModule::RecompileScripts()
 
 void ScriptingModule::GameObjectKilled(GameObject* killed)
 {
+	if (!killed)
+		return;
+
 	MonoObject* monoObject = killed->GetMonoObject();
 	if (!monoObject)
 		return;
@@ -1173,6 +1188,9 @@ MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, M
 
 void DestroyObj(MonoObject* obj)
 {
+	if (!obj)
+		return;
+
 	bool found = false;
 
 	std::string className = mono_class_get_name(mono_object_get_class(obj));
@@ -1209,6 +1227,9 @@ void DestroyObj(MonoObject* obj)
 
 MonoArray* QuatMult(MonoArray* q1, MonoArray* q2)
 {
+	if (!q1 || !q2)
+		return nullptr;
+
 	math::Quat _q1(mono_array_get(q1, float, 0), mono_array_get(q1, float, 1), mono_array_get(q1, float, 2), mono_array_get(q1, float, 3));
 	math::Quat _q2(mono_array_get(q2, float, 0), mono_array_get(q2, float, 1), mono_array_get(q2, float, 2), mono_array_get(q2, float, 3));
 
@@ -1228,6 +1249,9 @@ MonoArray* QuatMult(MonoArray* q1, MonoArray* q2)
 
 MonoArray* QuatVec3(MonoArray* q, MonoArray* vec)
 {
+	if (!q || !vec)
+		return nullptr;
+
 	math::Quat _q(mono_array_get(q, float, 0), mono_array_get(q, float, 1), mono_array_get(q, float, 2), mono_array_get(q, float, 3));
 	_q.Normalize();
 
@@ -1245,6 +1269,9 @@ MonoArray* QuatVec3(MonoArray* q, MonoArray* vec)
 
 MonoArray* ToEuler(MonoArray* quat)
 {
+	if (!quat)
+		return nullptr;
+
 	math::Quat _q(mono_array_get(quat, float, 0), mono_array_get(quat, float, 1), mono_array_get(quat, float, 2), mono_array_get(quat, float, 3));
 
 	math::float3 axis;
@@ -1263,6 +1290,9 @@ MonoArray* ToEuler(MonoArray* quat)
 
 MonoArray* RotateAxisAngle(MonoArray* axis, float deg)
 {
+	if (!axis)
+		return nullptr;
+
 	math::float3 _axis({ mono_array_get(axis, float, 0), mono_array_get(axis, float, 1), mono_array_get(axis, float, 2)});
 
 	float rad = math::DegToRad(deg);
@@ -1280,6 +1310,9 @@ MonoArray* RotateAxisAngle(MonoArray* axis, float deg)
 
 MonoString* GetGOName(MonoObject* monoObject)
 {
+	if (!monoObject)
+		return nullptr;
+
 	int address;
 	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
 
@@ -1293,6 +1326,9 @@ MonoString* GetGOName(MonoObject* monoObject)
 
 void SetGOName(MonoObject* monoObject, MonoString* monoString)
 {
+	if (!monoObject || !monoString)
+		return;
+
 	int address;
 	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
 
@@ -1333,6 +1369,9 @@ float GetRealTime()
 
 MonoArray* GetLocalPosition(MonoObject* monoObject)
 {
+	if (!monoObject)
+		return nullptr;
+
 	int address;
 	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
 
@@ -1356,6 +1395,9 @@ MonoArray* GetLocalPosition(MonoObject* monoObject)
 
 void SetLocalPosition(MonoObject* monoObject, MonoArray* position)
 {
+	if (!monoObject || !position)
+		return;
+
 	int address;
 	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
 
@@ -1376,6 +1418,9 @@ void SetLocalPosition(MonoObject* monoObject, MonoArray* position)
 
 MonoArray* GetLocalRotation(MonoObject* monoObject)
 {
+	if (!monoObject)
+		return nullptr;
+
 	int address;
 	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
 
@@ -1400,6 +1445,9 @@ MonoArray* GetLocalRotation(MonoObject* monoObject)
 
 void SetLocalRotation(MonoObject* monoObject, MonoArray* rotation)
 {
+	if (!monoObject || !rotation)
+		return;
+
 	int address;
 	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
 
@@ -1421,6 +1469,9 @@ void SetLocalRotation(MonoObject* monoObject, MonoArray* rotation)
 
 MonoArray* GetLocalScale(MonoObject* monoObject)
 {
+	if (!monoObject)
+		return nullptr;
+
 	int address;
 	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
 
@@ -1445,6 +1496,9 @@ MonoArray* GetLocalScale(MonoObject* monoObject)
 
 void SetLocalScale(MonoObject* monoObject, MonoArray* scale)
 {
+	if (!monoObject || !scale)
+		return;
+
 	int address;
 	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
 
@@ -1466,6 +1520,9 @@ void SetLocalScale(MonoObject* monoObject, MonoArray* scale)
 
 MonoArray* GetGlobalPos(MonoObject* monoObject)
 {
+	if (!monoObject)
+		return nullptr;
+
 	GameObject* gameObject = nullptr;
 
 	int address;
@@ -1495,6 +1552,9 @@ MonoArray* GetGlobalPos(MonoObject* monoObject)
 
 MonoArray* GetGlobalRotation(MonoObject* monoObject)
 {
+	if (!monoObject)
+		return nullptr;
+
 	GameObject* gameObject = nullptr;
 
 	int address;
@@ -1525,6 +1585,9 @@ MonoArray* GetGlobalRotation(MonoObject* monoObject)
 
 MonoArray* GetGlobalScale(MonoObject* monoObject)
 {
+	if (!monoObject)
+		return nullptr;
+
 	GameObject* gameObject = nullptr;
 
 	int address;
@@ -1554,6 +1617,9 @@ MonoArray* GetGlobalScale(MonoObject* monoObject)
 
 void SetGlobalPos(MonoObject* monoObject, MonoArray* globalPos)
 {
+	if (!monoObject || !globalPos)
+		return;
+
 	math::float3 position, scale, newGlobalPos;
 	math::Quat rotation;
 
@@ -1572,6 +1638,9 @@ void SetGlobalPos(MonoObject* monoObject, MonoArray* globalPos)
 
 void SetGlobalRot(MonoObject* monoObject, MonoArray* globalRot)
 {
+	if (!monoObject || !globalRot)
+		return;
+
 	math::float3 position, scale;
 	math::Quat rotation, newGlobalRot;
 
@@ -1590,6 +1659,9 @@ void SetGlobalRot(MonoObject* monoObject, MonoArray* globalRot)
 
 void SetGlobalScale(MonoObject* monoObject, MonoArray* globalScale)
 {
+	if (!monoObject || !globalScale)
+		return;
+
 	math::float3 position, scale, newGlobalScale;
 	math::Quat rotation;
 
@@ -1779,6 +1851,9 @@ MonoObject* GetGameCamera()
 
 MonoObject* ScreenToRay(MonoArray* screenCoordinates, MonoObject* cameraComponent)
 {
+	if (!screenCoordinates || !cameraComponent)
+		return nullptr;
+
 	math::float2 screenPoint{ mono_array_get(screenCoordinates, float, 0),mono_array_get(screenCoordinates, float, 1) };
 
 	//Get the camera component attached
@@ -1818,6 +1893,9 @@ MonoObject* ScreenToRay(MonoArray* screenCoordinates, MonoObject* cameraComponen
 
 uint LayerToBit(MonoString* layerName)
 {
+	if (!layerName)
+		return 0u;
+
 	char* layerCName = mono_string_to_utf8(layerName);
 
 	uint bits = 0; 
@@ -1831,6 +1909,9 @@ uint LayerToBit(MonoString* layerName)
 
 bool Raycast(MonoArray* origin, MonoArray* direction, MonoObject** hitInfo, float maxDistance, uint filterMask, SceneQueryFlags sceneQueryFlags)
 {
+	if (!origin || !direction || !hitInfo || !*hitInfo)
+		return false;
+
 	math::float3 originCpp{mono_array_get(origin, float, 0), mono_array_get(origin, float, 1), mono_array_get(origin, float, 2)};
 	math::float3 directionCpp{mono_array_get(direction, float, 0), mono_array_get(direction, float, 1), mono_array_get(direction, float, 2)};
 
@@ -1897,6 +1978,9 @@ bool Raycast(MonoArray* origin, MonoArray* direction, MonoObject** hitInfo, floa
 
 void SetDestination(MonoObject* navMeshAgent, MonoArray* newDestination)
 {
+	if (!navMeshAgent || !newDestination)
+		return;
+
 	math::float3 newDestinationcpp(mono_array_get(newDestination, float, 0), mono_array_get(newDestination, float, 1), mono_array_get(newDestination, float, 2));
 	int compAddress;
 	mono_field_get_value(navMeshAgent, mono_class_get_field_from_name(mono_object_get_class(navMeshAgent), "componentAddress"), &compAddress);
@@ -2020,6 +2104,9 @@ bool NavAgentIsWalking(MonoObject* compAgent)
 
 void NavAgentRequestMoveVelocity(MonoObject* compAgent, MonoArray* direction)
 {
+	if (!direction)
+		return;
+
 	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
 	if (agent)
 	{
@@ -2059,6 +2146,9 @@ void NavAgentSetParams(MonoObject* compAgent, uint params)
 
 bool OverlapSphere(float radius, MonoArray* center, MonoArray** overlapHit, uint filterMask, SceneQueryFlags sceneQueryFlags)
 {
+	if (!center || !overlapHit || !*overlapHit)
+		return false;
+
 	math::float3 centercpp(mono_array_get(center, float, 0), mono_array_get(center, float, 1), mono_array_get(center, float, 2));
 
 	std::vector<OverlapHit> hits;
@@ -2111,6 +2201,9 @@ bool GetGameObjectActive(MonoObject* monoObject, bool active)
 
 bool PlayAnimation(MonoObject* animatorComp, MonoString* animUUID)
 {
+	if (!animUUID)
+		return false;
+
 	char* anim = mono_string_to_utf8(animUUID);
 
 	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(animatorComp);
@@ -2146,11 +2239,11 @@ bool UIHovered()
 
 MonoArray* RectTransform_GetRect(MonoObject* rectComp)
 {
-	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_uint32_class(), 4);
-
 	ComponentRectTransform* rectCpp = (ComponentRectTransform*)App->scripting->ComponentFrom(rectComp);
 	if (!rectCpp)
 		return nullptr;
+
+	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_uint32_class(), 4);
 
 	uint* rectVector = rectCpp->GetRect();
 	mono_array_set(ret, uint, 0, rectVector[0]);
@@ -2163,6 +2256,9 @@ MonoArray* RectTransform_GetRect(MonoObject* rectComp)
 
 void RectTransform_SetRect(MonoObject* rectComp, MonoArray* newRect)
 {
+	if (!newRect)
+		return;
+
 	ComponentRectTransform* rectCpp = (ComponentRectTransform*)App->scripting->ComponentFrom(rectComp);
 	if (!rectCpp)
 		return;
@@ -2209,6 +2305,9 @@ void PlayerPrefsSave()
 
 void PlayerPrefsSetNumber(MonoString* key, double value)
 {
+	if (!key)
+		return;
+
 	char* keyCpp = mono_string_to_utf8(key);
 	json_object_set_number(App->scripting->playerPrefsOBJ, keyCpp, value);
 	mono_free(keyCpp);
@@ -2216,6 +2315,9 @@ void PlayerPrefsSetNumber(MonoString* key, double value)
 
 double PlayerPrefsGetNumber(MonoString* key)
 {
+	if (!key)
+		return;
+
 	char* keyCpp = mono_string_to_utf8(key);
 	double value = json_object_get_number(App->scripting->playerPrefsOBJ, keyCpp);
 	mono_free(keyCpp);
@@ -2225,6 +2327,9 @@ double PlayerPrefsGetNumber(MonoString* key)
 
 void PlayerPrefsSetString(MonoString* key, MonoString* string)
 {
+	if (!key || !string)
+		return;
+
 	char* keyCpp = mono_string_to_utf8(key);
 	char* stringCpp = mono_string_to_utf8(string);
 
@@ -2236,6 +2341,9 @@ void PlayerPrefsSetString(MonoString* key, MonoString* string)
 
 MonoString* PlayerPrefsGetString(MonoString* key)
 {
+	if (!key)
+		return;
+
 	char* keyCpp = mono_string_to_utf8(key);
 	char* stringCpp = (char*)json_object_get_string(App->scripting->playerPrefsOBJ, keyCpp);
 	
@@ -2251,6 +2359,9 @@ MonoString* PlayerPrefsGetString(MonoString* key)
 
 void PlayerPrefsSetBoolean(MonoString* key, bool boolean)
 {
+	if (!key)
+		return;
+
 	char* keyCpp = mono_string_to_utf8(key);
 	json_object_set_boolean(App->scripting->playerPrefsOBJ, keyCpp, boolean);
 	mono_free(keyCpp);
@@ -2258,6 +2369,9 @@ void PlayerPrefsSetBoolean(MonoString* key, bool boolean)
 
 bool PlayerPrefsGetBoolean(MonoString* key)
 {
+	if (!key)
+		return;
+
 	char* keyCpp = mono_string_to_utf8(key);
 	bool ret = json_object_get_boolean(App->scripting->playerPrefsOBJ, keyCpp);
 	mono_free(keyCpp);
@@ -2267,6 +2381,9 @@ bool PlayerPrefsGetBoolean(MonoString* key)
 
 bool PlayerPrefsHasKey(MonoString* key)
 {
+	if (!key)
+		return;
+
 	char* keyCpp = mono_string_to_utf8(key);
 
 	bool ret = json_object_has_value(App->scripting->playerPrefsOBJ, keyCpp);
@@ -2278,6 +2395,9 @@ bool PlayerPrefsHasKey(MonoString* key)
 
 void PlayerPrefsDeleteKey(MonoString* key)
 {
+	if (!key)
+		return;
+
 	char* keyCpp = mono_string_to_utf8(key);
 
 	json_object_remove(App->scripting->playerPrefsOBJ, keyCpp);
@@ -2292,6 +2412,9 @@ void PlayerPrefsDeleteAll()
 
 void SMLoadScene(MonoString* sceneName)
 {
+	if (!sceneName)
+		return;
+
 	char* sceneNameCPP = mono_string_to_utf8(sceneName);
 
 	System_Event newEvent;
@@ -2314,6 +2437,9 @@ MonoString* AudioSourceGetAudio(MonoObject* monoComp)
 
 void AudioSourceSetAudio(MonoObject* monoComp, MonoString* newAudio)
 {
+	if (!newAudio)
+		return;
+
 	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
 	if (!source)
 		return;
@@ -2597,6 +2723,9 @@ void AudioSourceStopAudio(MonoObject* monoComp)
 
 void RigidbodyAddForce(MonoObject* monoComp, MonoArray* force, int mode)
 {
+	if (!force)
+		return;
+
 	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoComp);
 	if (!rigidbody)
 		return;
@@ -2617,6 +2746,9 @@ void RigidbodyClearForce(MonoObject* monoComp)
 
 void RigidbodyAddTorque(MonoObject* monoComp, MonoArray* torque, int mode)
 {
+	if (!torque)
+		return;
+
 	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoComp);
 	if (!rigidbody)
 		return;
