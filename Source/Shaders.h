@@ -280,9 +280,7 @@
 "	if (albedo.a < 0.1)\n" \
 "		discard;\n" \
 "\n" \
-"	vec3 s = vec3(texture(material.specular, fTexCoord));\n" \
-"	FragColor.xyz = mix(vec3(albedo), fColor.xyz, averageColor);\n" \
-"	FragColor.w = fColor.w;\n" \
+"	FragColor = albedo * fColor;\n;" \
 "}\n"
 #pragma endregion
 
@@ -378,8 +376,8 @@
 "\n"																								\
 "flat out int fIsEdge; // which output primitives are silhouette edges\n"							\
 "\n"																								\
-"uniform float edgeWidth; // wdth of silhouette edge in clip\n"										\
-"uniform float pctExtend; // percentage to extend quad\n"											\
+"//uniform float edgeWidth; // wdth of silhouette edge in clip\n"									\
+"//uniform float pctExtend; // percentage to extend quad\n"											\
 "\n"																								\
 "bool isFrontFacing(vec3 a, vec3 b, vec3 c) // is a triangle front facing?\n"						\
 "{\n"																								\
@@ -389,6 +387,9 @@
 "\n"																								\
 "void emitEdgeQuad(vec3 e0, vec3 e1)\n"																\
 "{\n"																								\
+"	float edgeWidth = 0.003;\n"																		\
+"	float pctExtend = 0.0;\n"																		\
+"\n"																								\
 "	vec2 ext = pctExtend * (e1.xy - e0.xy);\n"														\
 "	vec2 v = normalize(e1.xy - e0.xy);\n"															\
 "	vec2 n = vec2(-v.y, v.x) * edgeWidth;\n"														\
@@ -479,11 +480,13 @@
 "uniform vec3 viewPos;\n"																\
 "uniform Material material;\n"															\
 "\n"																					\
-"uniform vec3 lineColor; // the silhouette edge color\n"								\
-"uniform int levels;\n"																	\
+"//uniform vec3 lineColor; // the silhouette edge color\n"								\
+"//uniform int levels;\n"																\
 "\n"																					\
 "void main()\n"																			\
 "{\n"																					\
+"	vec3 lineColor = vec3(0.0, 0.0, 0.0);\n"											\
+"	int levels = 2;\n"																	\
 "\n"																					\
 "	// If we're drawing an edge, use constant color\n"									\
 "	if (fIsEdge == 1)\n"																\
