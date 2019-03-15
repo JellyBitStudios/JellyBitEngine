@@ -281,8 +281,8 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 	App->PushSystemEvent(newEvent);
 
 	// Calculate the global
-	//if (newGameObject && newGameObject->transform)
-	//	newGameObject->transform->UpdateGlobal();
+	if (newGameObject && newGameObject->transform)
+		newGameObject->transform->UpdateGlobal();
 
 	App->ui->LinkAllRectsTransform();
 

@@ -18,7 +18,7 @@
 #include "Brofiler/Brofiler.h"
 #include <list>
 
-#include "MathGeoLib/include/Geometry/OBB.h"
+#include "MathGeoLib\include\Geometry\OBB.h"
 
 ComponentTransform::ComponentTransform(GameObject* parent) : Component(parent, ComponentTypes::TransformComponent) 
 {
