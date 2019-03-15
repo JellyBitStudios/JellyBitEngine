@@ -12,7 +12,7 @@
 
 // Only for static actors
 
-ComponentPlaneCollider::ComponentPlaneCollider(GameObject* parent) : ComponentCollider(parent, ComponentTypes::PlaneColliderComponent)
+ComponentPlaneCollider::ComponentPlaneCollider(GameObject* parent, bool include) : ComponentCollider(parent, ComponentTypes::PlaneColliderComponent, include)
 {
 	EncloseGeometry();
 
@@ -20,10 +20,17 @@ ComponentPlaneCollider::ComponentPlaneCollider(GameObject* parent) : ComponentCo
 
 	// -----
 
-	physx::PxShapeFlags shapeFlags = gShape->getFlags();
-	isTrigger = shapeFlags & physx::PxShapeFlag::Enum::eTRIGGER_SHAPE && !(shapeFlags & physx::PxShapeFlag::eSIMULATION_SHAPE);
-	participateInContactTests = shapeFlags & physx::PxShapeFlag::Enum::eSIMULATION_SHAPE;
-	participateInSceneQueries = shapeFlags & physx::PxShapeFlag::Enum::eSCENE_QUERY_SHAPE;
+	SetIsTrigger(isTrigger);
+	SetParticipateInContactTests(participateInContactTests);
+	SetParticipateInSceneQueries(participateInSceneQueries);
+	SetFiltering(filterGroup, filterMask);
+
+	// -----
+
+	SetNormal(normal);
+	SetDistance(distance);
+
+	SetCenter(center);
 }
 
 ComponentPlaneCollider::ComponentPlaneCollider(const ComponentPlaneCollider& componentPlaneCollider, GameObject* parent, bool include) : ComponentCollider(componentPlaneCollider, parent, ComponentTypes::PlaneColliderComponent, include)
@@ -32,6 +39,8 @@ ComponentPlaneCollider::ComponentPlaneCollider(const ComponentPlaneCollider& com
 		EncloseGeometry();
 
 	colliderType = componentPlaneCollider.colliderType;
+
+	// -----
 
 	SetIsTrigger(componentPlaneCollider.isTrigger);
 	SetParticipateInContactTests(componentPlaneCollider.participateInContactTests);
@@ -120,7 +129,8 @@ void ComponentPlaneCollider::OnInternalLoad(char*& cursor)
 
 void ComponentPlaneCollider::EncloseGeometry()
 {
-	RecalculateShape();
+	if (gShape != nullptr)
+		RecalculateShape();
 }
 
 void ComponentPlaneCollider::RecalculateShape()

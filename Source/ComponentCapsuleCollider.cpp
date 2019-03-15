@@ -10,7 +10,7 @@
 
 #include "imgui\imgui.h"
 
-ComponentCapsuleCollider::ComponentCapsuleCollider(GameObject* parent) : ComponentCollider(parent, ComponentTypes::CapsuleColliderComponent)
+ComponentCapsuleCollider::ComponentCapsuleCollider(GameObject* parent, bool include) : ComponentCollider(parent, ComponentTypes::CapsuleColliderComponent, include)
 {
 	EncloseGeometry();
 
@@ -18,10 +18,18 @@ ComponentCapsuleCollider::ComponentCapsuleCollider(GameObject* parent) : Compone
 
 	// -----
 
-	physx::PxShapeFlags shapeFlags = gShape->getFlags();
-	isTrigger = shapeFlags & physx::PxShapeFlag::Enum::eTRIGGER_SHAPE && !(shapeFlags & physx::PxShapeFlag::eSIMULATION_SHAPE);
-	participateInContactTests = shapeFlags & physx::PxShapeFlag::Enum::eSIMULATION_SHAPE;
-	participateInSceneQueries = shapeFlags & physx::PxShapeFlag::Enum::eSCENE_QUERY_SHAPE;
+	SetIsTrigger(isTrigger);
+	SetParticipateInContactTests(participateInContactTests);
+	SetParticipateInSceneQueries(participateInSceneQueries);
+	SetFiltering(filterGroup, filterMask);
+
+	// -----
+
+	SetRadius(radius);
+	SetHalfHeight(halfHeight);
+	SetDirection(direction);
+
+	SetCenter(center);
 }
 
 ComponentCapsuleCollider::ComponentCapsuleCollider(const ComponentCapsuleCollider& componentCapsuleCollider, GameObject* parent, bool include) : ComponentCollider(componentCapsuleCollider, parent, ComponentTypes::CapsuleColliderComponent, include)
@@ -30,6 +38,8 @@ ComponentCapsuleCollider::ComponentCapsuleCollider(const ComponentCapsuleCollide
 		EncloseGeometry();
 
 	colliderType = componentCapsuleCollider.colliderType;
+
+	// -----
 
 	SetIsTrigger(componentCapsuleCollider.isTrigger);
 	SetParticipateInContactTests(componentCapsuleCollider.participateInContactTests);
@@ -169,7 +179,8 @@ void ComponentCapsuleCollider::EncloseGeometry()
 		}
 	}
 
-	RecalculateShape();
+	if (gShape != nullptr)
+		RecalculateShape();
 }
 
 void ComponentCapsuleCollider::RecalculateShape()

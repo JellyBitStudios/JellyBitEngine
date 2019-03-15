@@ -23,7 +23,7 @@ class ComponentCollider : public Component
 {
 public:
 
-	ComponentCollider(GameObject* parent, ComponentTypes componentColliderType);
+	ComponentCollider(GameObject* parent, ComponentTypes componentColliderType, bool include = true);
 	ComponentCollider(const ComponentCollider& componentCollider, GameObject* parent, ComponentTypes componentColliderType, bool include = true);
 	virtual ~ComponentCollider();
 

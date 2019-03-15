@@ -11,9 +11,10 @@
 
 #include "imgui\imgui.h"
 
-ComponentRigidActor::ComponentRigidActor(GameObject* parent, ComponentTypes componentRigidActorType) : Component(parent, componentRigidActorType)
+ComponentRigidActor::ComponentRigidActor(GameObject* parent, ComponentTypes componentRigidActorType, bool include) : Component(parent, componentRigidActorType)
 {
-	App->physics->AddRigidActorComponent(this);
+	if (include)
+		App->physics->AddRigidActorComponent(this);
 }
 
 ComponentRigidActor::ComponentRigidActor(const ComponentRigidActor& componentRigidActor, GameObject* parent, ComponentTypes componentRigidActorType, bool include) : Component(parent, componentRigidActorType)
@@ -147,8 +148,9 @@ void ComponentRigidActor::UpdateTransform(math::float4x4& globalMatrix) const
 		return;
 	}
 
-	gActor->setGlobalPose(physx::PxTransform(physx::PxVec3(position.x, position.y, position.z),
-		physx::PxQuat(rotation.x, rotation.y, rotation.z, rotation.w)));
+	if (gActor != nullptr)
+		gActor->setGlobalPose(physx::PxTransform(physx::PxVec3(position.x, position.y, position.z),
+			physx::PxQuat(rotation.x, rotation.y, rotation.z, rotation.w)));
 }
 
 void ComponentRigidActor::UpdateGameObjectTransform() const

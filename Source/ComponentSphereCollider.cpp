@@ -12,7 +12,7 @@
 
 #include "MathGeoLib\include\Math\float4x4.h"
 
-ComponentSphereCollider::ComponentSphereCollider(GameObject* parent) : ComponentCollider(parent, ComponentTypes::SphereColliderComponent)
+ComponentSphereCollider::ComponentSphereCollider(GameObject* parent, bool include) : ComponentCollider(parent, ComponentTypes::SphereColliderComponent, include)
 {
 	EncloseGeometry();
 
@@ -20,10 +20,16 @@ ComponentSphereCollider::ComponentSphereCollider(GameObject* parent) : Component
 
 	// -----
 
-	physx::PxShapeFlags shapeFlags = gShape->getFlags();
-	isTrigger = shapeFlags & physx::PxShapeFlag::Enum::eTRIGGER_SHAPE && !(shapeFlags & physx::PxShapeFlag::eSIMULATION_SHAPE);
-	participateInContactTests = shapeFlags & physx::PxShapeFlag::Enum::eSIMULATION_SHAPE;
-	participateInSceneQueries = shapeFlags & physx::PxShapeFlag::Enum::eSCENE_QUERY_SHAPE;
+	SetIsTrigger(isTrigger);
+	SetParticipateInContactTests(participateInContactTests);
+	SetParticipateInSceneQueries(participateInSceneQueries);
+	SetFiltering(filterGroup, filterMask);
+
+	// -----
+
+	SetRadius(radius);
+
+	SetCenter(center);
 }
 
 ComponentSphereCollider::ComponentSphereCollider(const ComponentSphereCollider& componentSphereCollider, GameObject* parent, bool include) : ComponentCollider(componentSphereCollider, parent, ComponentTypes::SphereColliderComponent, include)
@@ -32,6 +38,8 @@ ComponentSphereCollider::ComponentSphereCollider(const ComponentSphereCollider& 
 		EncloseGeometry();
 
 	colliderType = componentSphereCollider.colliderType;
+
+	// -----
 
 	SetIsTrigger(componentSphereCollider.isTrigger);
 	SetParticipateInContactTests(componentSphereCollider.participateInContactTests);
@@ -116,7 +124,8 @@ void ComponentSphereCollider::EncloseGeometry()
 		radius = halfSize.Length();
 	}
 
-	RecalculateShape();
+	if (gShape != nullptr)
+		RecalculateShape();
 }
 
 void ComponentSphereCollider::RecalculateShape()

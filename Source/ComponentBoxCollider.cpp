@@ -10,18 +10,25 @@
 
 #include "imgui\imgui.h"
 
-ComponentBoxCollider::ComponentBoxCollider(GameObject* parent) : ComponentCollider(parent, ComponentTypes::BoxColliderComponent)
+ComponentBoxCollider::ComponentBoxCollider(GameObject* parent, bool include) : ComponentCollider(parent, ComponentTypes::BoxColliderComponent, include)
 {
-	EncloseGeometry();
+	if (include)
+		EncloseGeometry();
 
 	colliderType = ColliderTypes::BoxCollider;
 
 	// -----
 
-	physx::PxShapeFlags shapeFlags = gShape->getFlags();
-	isTrigger = shapeFlags & physx::PxShapeFlag::Enum::eTRIGGER_SHAPE && !(shapeFlags & physx::PxShapeFlag::eSIMULATION_SHAPE);
-	participateInContactTests = shapeFlags & physx::PxShapeFlag::Enum::eSIMULATION_SHAPE;
-	participateInSceneQueries = shapeFlags & physx::PxShapeFlag::Enum::eSCENE_QUERY_SHAPE;
+	SetIsTrigger(isTrigger);
+	SetParticipateInContactTests(participateInContactTests);
+	SetParticipateInSceneQueries(participateInSceneQueries);
+	SetFiltering(filterGroup, filterMask);
+
+	// -----
+
+	SetHalfSize(halfSize);
+
+	SetCenter(center);
 }
 
 ComponentBoxCollider::ComponentBoxCollider(const ComponentBoxCollider& componentBoxCollider, GameObject* parent, bool include) : ComponentCollider(componentBoxCollider, parent, ComponentTypes::BoxColliderComponent, include)
@@ -30,6 +37,8 @@ ComponentBoxCollider::ComponentBoxCollider(const ComponentBoxCollider& component
 		EncloseGeometry();
 
 	colliderType = componentBoxCollider.colliderType;
+
+	// -----
 
 	SetIsTrigger(componentBoxCollider.isTrigger);
 	SetParticipateInContactTests(componentBoxCollider.participateInContactTests);
@@ -116,7 +125,8 @@ void ComponentBoxCollider::EncloseGeometry()
 		halfSize = parent->originalBoundingBox.HalfSize().Mul(scale);
 	}
 
-	RecalculateShape();
+	if (gShape != nullptr)
+		RecalculateShape();
 }
 
 void ComponentBoxCollider::RecalculateShape()
