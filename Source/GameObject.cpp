@@ -120,7 +120,7 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			components.push_back(cmp_animation);
 			break;
 		case ComponentTypes::AnimatorComponent:
-			cmp_animator = new ComponentAnimator(*gameObject.cmp_animator, this);
+			cmp_animator = new ComponentAnimator(*gameObject.cmp_animator, this, includeComponents);
 			cmp_animator->SetParent(this);
 			components.push_back(cmp_animator);
 			break;
