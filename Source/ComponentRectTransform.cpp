@@ -254,7 +254,7 @@ void ComponentRectTransform::CalculateRectFromWorld(bool individualcheck)
 		math::float4x4 global = transformParent->GetGlobalMatrix();
 		global.Decompose(pos, rot, scale);
 
-		transformParent->SetMatrixFromGlobal(global.FromTRS(pos, math::float3x3(xAxis, yAxis, zAxis).ToQuat(), scale));
+		transformParent->SetMatrixFromGlobal(global.FromTRS(pos, math::Quat::identity * math::float3x3(xAxis, yAxis, zAxis).ToQuat(), scale));
 	}
 
 	math::float4x4 globalmatrix = transformParent->GetGlobalMatrix();
