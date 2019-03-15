@@ -7,6 +7,7 @@
 #include "ComponentEmitter.h"
 #include "ComponentRectTransform.h"
 #include "ComponentButton.h"
+#include "ComponentImage.h"
 #include "ComponentAudioSource.h"
 #include "ComponentAudioListener.h"
 #include "ComponentRigidDynamic.h"
@@ -2290,6 +2291,26 @@ int ButtonGetState(MonoObject* buttonComp)
 	}
 }
 
+bool ImageGetUseColor(MonoObject* imageComp)
+{
+	ComponentImage* imageCompCpp = (ComponentImage*)App->scripting->ComponentFrom(imageComp);
+	if (imageCompCpp)
+	{
+		return imageCompCpp->isColorUsed();
+	}
+
+	return false;
+}
+
+void ImageSetUseColor(MonoObject* imageComp, bool value)
+{
+	ComponentImage* imageCompCpp = (ComponentImage*)App->scripting->ComponentFrom(imageComp);
+	if (imageCompCpp)
+	{
+		imageCompCpp->UseColor(value);
+	}
+}
+
 void PlayerPrefsSave()
 {
 	uint size = json_serialization_size(App->scripting->playerPrefs);
@@ -2851,6 +2872,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.RectTransform::SetRect", (const void*)&RectTransform_SetRect);
 	mono_add_internal_call("JellyBitEngine.UI.Button::SetKey", (const void*)&ButtonSetKey);
 	mono_add_internal_call("JellyBitEngine.UI.Button::GetState", (const void*)&ButtonGetState);
+	mono_add_internal_call("JellyBitEngine.UI.Image::GetUseColor", (const void*)&ImageGetUseColor);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetUseColor", (const void*)&ImageSetUseColor);
 	mono_add_internal_call("JellyBitEngine.GameObject::GetActive", (const void*)&GetGameObjectActive);
 	mono_add_internal_call("JellyBitEngine.GameObject::SetActive", (const void*)&SetGameObjectActive);
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);

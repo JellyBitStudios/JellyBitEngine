@@ -25,7 +25,8 @@ public:
 	uint GetResImageUuid() const;
 	uint GetResImage()const;
 
-	bool UseColor()const;
+	bool isColorUsed()const;
+	void UseColor(bool boolean);
 
 private:
 	uint GetInternalSerializationBytes();
