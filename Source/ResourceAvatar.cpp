@@ -501,6 +501,16 @@ std::vector<uint> ResourceAvatar::GetBonesUuids() const
 	return bonesUuids;
 }
 
+void ResourceAvatar::SetIsAnimated(bool animated)
+{
+	this->animated = animated;
+}
+
+bool ResourceAvatar::GetIsAnimated() const
+{
+	return animated;
+}
+
 // ----------------------------------------------------------------------------------------------------
 
 void ResourceAvatar::CreateSkeleton(GameObject* gameObject)

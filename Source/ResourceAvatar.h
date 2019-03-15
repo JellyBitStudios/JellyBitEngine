@@ -44,6 +44,8 @@ public:
 	bool SetRootUuid(uint rootUuid);
 	uint GetRootUuid() const;
 	std::vector<uint> GetBonesUuids() const;
+	void SetIsAnimated(bool animated);
+	bool GetIsAnimated() const;
 
 	// ----------------------------------------------------------------------------------------------------
 
@@ -63,8 +65,9 @@ private:
 
 private:
 
-	 // bone name, bone game object uuid
-	std::unordered_map<std::string, uint> bones;
+	std::unordered_map<std::string, uint> bones; // bone name, bone game object uuid
+	bool animated = false;
+
 	ResourceAvatarData avatarData;
 };
 
