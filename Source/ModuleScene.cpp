@@ -39,8 +39,11 @@ bool ModuleScene::Init(JSON_Object* jObject)
 
 bool ModuleScene::Start()
 {
+#ifndef GAMEMODE
 	grid = new PrimitiveGrid();
 	grid->ShowAxis(true);
+#endif
+
 	root = new GameObject("Root", nullptr, true);
 	GameObject* directionalLight = App->GOs->CreateGameObject("Directional Light", root);
 	directionalLight->AddComponent(ComponentTypes::LightComponent);
@@ -56,6 +59,7 @@ bool ModuleScene::Start()
 	axis *= DEGTORAD;
 	rotation.SetFromAxisAngle(axis.Normalized(), axis.Length());
 	directionalLight->transform->SetRotation(rotation);
+
 	return true;
 }
 
@@ -109,8 +113,8 @@ bool ModuleScene::CleanUp()
 {
 	bool ret = true;
 
-	RELEASE(grid);
 #ifndef GAMEMODE
+	RELEASE(grid);
 	SELECT(NULL);
 #endif
 
@@ -197,8 +201,10 @@ void ModuleScene::LoadStatus(const JSON_Object* jObject)
 
 void ModuleScene::Draw() const
 {
+#ifndef GAMEMODE
 	if (showGrid)
 		grid->Render();
+#endif
 }
 
 #ifndef GAMEMODE
