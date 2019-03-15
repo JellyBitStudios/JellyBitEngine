@@ -280,9 +280,7 @@
 "	if (albedo.a < 0.1)\n" \
 "		discard;\n" \
 "\n" \
-"	vec3 s = vec3(texture(material.specular, fTexCoord));\n" \
-"	FragColor.xyz = mix(vec3(albedo), fColor.xyz, averageColor);\n" \
-"	FragColor.w = fColor.w;\n" \
+"	FragColor = albedo * fColor;\n;" \
 "}\n"
 #pragma endregion
 
