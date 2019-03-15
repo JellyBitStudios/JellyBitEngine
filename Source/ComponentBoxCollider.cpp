@@ -112,7 +112,7 @@ void ComponentBoxCollider::EncloseGeometry()
 		globalMatrix.Decompose(pos, rot, scale);
 
 		center = parent->boundingBox.CenterPoint() - pos;
-		halfSize = parent->boundingBox.HalfSize();
+		halfSize = parent->originalBoundingBox.HalfSize().Mul(scale);
 	}
 
 	RecalculateShape();
