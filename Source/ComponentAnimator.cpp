@@ -17,7 +17,7 @@
 #include "imgui\imgui.h"
 #endif
 
-ComponentAnimator::ComponentAnimator(GameObject * embedded_game_object) :
+ComponentAnimator::ComponentAnimator(GameObject* embedded_game_object) :
 	Component(embedded_game_object, ComponentTypes::AnimatorComponent)
 {
 
@@ -26,12 +26,13 @@ ComponentAnimator::ComponentAnimator(GameObject * embedded_game_object) :
 ComponentAnimator::ComponentAnimator(GameObject* embedded_game_object, uint resource) :
 	Component(embedded_game_object, ComponentTypes::AnimatorComponent)
 {
-	this->SetResourceAnimator(resource);
+	SetResourceAnimator(resource);
 }
 
 ComponentAnimator::ComponentAnimator(const ComponentAnimator & component_anim, GameObject * parent, bool include) : Component(parent, ComponentTypes::AnimatorComponent)
 {
-	if (include) {
+	if (include) 
+	{
 		this->SetResourceAnimator(component_anim.res);
 		this->SetResourceAvatar(component_anim.res_avatar);
 		for (uint i = 0u; i < component_anim.res_animations.size(); i++)
