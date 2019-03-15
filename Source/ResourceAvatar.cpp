@@ -390,7 +390,7 @@ bool ResourceAvatar::GenerateLibraryFiles() const
 				extension = extension.substr(found, extension.size());
 
 			char newMetaFile[DEFAULT_BUF_SIZE];
-			sprintf_s(newMetaFile, "%s/%u%s", DIR_LIBRARY_TEXTURES, uuid, extension.data());
+			sprintf_s(newMetaFile, "%s/%u%s", DIR_LIBRARY_AVATARS, uuid, extension.data());
 
 			// Save the new meta (info + new name)
 			size = App->fs->Save(newMetaFile, buffer, size);

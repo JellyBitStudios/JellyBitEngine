@@ -68,6 +68,8 @@ ModuleFileSystem::ModuleFileSystem(bool start_enabled) : Module(start_enabled)
 
 		CreateDir(DIR_LIBRARY_MESHES);
 		CreateDir(DIR_LIBRARY_ANIMATIONS);
+		CreateDir(DIR_LIBRARY_ANIMATORS);
+		CreateDir(DIR_LIBRARY_AVATARS);
 		CreateDir(DIR_LIBRARY_BONES);
 		CreateDir(DIR_LIBRARY_TEXTURES);
 		CreateDir(DIR_LIBRARY_MATERIALS);
@@ -529,6 +531,11 @@ uint ModuleFileSystem::SaveInGame(char* buffer, uint size, FileTypes fileType, s
 			outputFile.insert(0, DIR_LIBRARY_ANIMATIONS);
 			outputFile.insert(strlen(DIR_LIBRARY_ANIMATIONS), "/");
 			outputFile.append(EXTENSION_ANIMATION);
+			break;
+		case FileTypes::AnimatorFile:
+			outputFile.insert(0, DIR_ASSETS_ANIMATORS);
+			outputFile.insert(strlen(DIR_ASSETS_ANIMATORS), "/");
+			outputFile.append(EXTENSION_ANIMATOR);
 			break;
 		case FileTypes::BoneFile:
 			outputFile.insert(0, DIR_LIBRARY_BONES);
