@@ -102,7 +102,6 @@ void ComponentLabel::OnUniqueEditor()
 	ImGui::Text("Text");
 	ImGui::Separator();
 
-	static char text[300] = "Edit Text";
 	float sizeX = ImGui::GetWindowWidth();
 	ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(sizeX, ImGui::GetTextLineHeight()*7), ImGuiInputTextFlags_AllowTabInput);
 	finalText = text;
