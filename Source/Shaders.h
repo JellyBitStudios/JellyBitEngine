@@ -376,7 +376,7 @@
 "\n"																								\
 "flat out int fIsEdge; // which output primitives are silhouette edges\n"							\
 "\n"																								\
-"//uniform float edgeWidth; // wdth of silhouette edge in clip\n"									\
+"//uniform float edgeWidth; // width of silhouette edge in clip\n"									\
 "//uniform float pctExtend; // percentage to extend quad\n"											\
 "\n"																								\
 "bool isFrontFacing(vec3 a, vec3 b, vec3 c) // is a triangle front facing?\n"						\
