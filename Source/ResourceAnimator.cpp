@@ -508,8 +508,6 @@ void ResourceAnimator::InitAnimator()
 		current_anim->loop = true;
 	}
 	anim_state = AnimationState::PLAYING;
-	ResourceAvatar* ava = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
-	ava->SetIsAnimated(true);
 }
 
 bool ResourceAnimator::Update()
