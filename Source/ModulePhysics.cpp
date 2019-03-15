@@ -693,7 +693,12 @@ void ModulePhysics::RemoveActor(physx::PxActor& actor) const
 
 physx::PxShape* ModulePhysics::CreateShape(const physx::PxGeometry& geometry, const physx::PxMaterial& material, bool isExclusive) const
 {
-	return gPhysics->createShape(geometry, material, isExclusive);
+	if (gPhysics)
+	{
+		return gPhysics->createShape(geometry, material, isExclusive);
+	}
+	else
+		return nullptr;
 }
 
 physx::PxJoint* ModulePhysics::CreateJoint(JointTypes jointType, physx::PxRigidActor* actor0, const physx::PxTransform& localFrame0, physx::PxRigidActor* actor1, physx::PxTransform& localFrame1) const

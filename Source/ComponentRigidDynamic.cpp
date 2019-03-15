@@ -69,7 +69,7 @@ ComponentRigidDynamic::ComponentRigidDynamic(const ComponentRigidDynamic& compon
 	{
 		physx::PxShape* gShape = nullptr;
 
-		if (componentRigidDynamic.parent->cmp_collider != nullptr)
+		if (componentRigidDynamic.parent->cmp_collider != nullptr && componentRigidDynamic.parent->cmp_collider->GetShape())
 			gShape = componentRigidDynamic.parent->cmp_collider->GetShape();
 		else if (componentRigidDynamic.parent->boundingBox.IsFinite())
 			gShape = App->physics->CreateShape(physx::PxBoxGeometry(componentRigidDynamic.parent->boundingBox.HalfSize().x, componentRigidDynamic.parent->boundingBox.HalfSize().y, componentRigidDynamic.parent->boundingBox.HalfSize().z), *App->physics->GetDefaultMaterial());
