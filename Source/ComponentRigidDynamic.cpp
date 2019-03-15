@@ -15,54 +15,50 @@
 
 #include "imgui\imgui.h"
 
-ComponentRigidDynamic::ComponentRigidDynamic(GameObject* parent) : ComponentRigidActor(parent, ComponentTypes::RigidDynamicComponent)
+ComponentRigidDynamic::ComponentRigidDynamic(GameObject* parent, bool include) : ComponentRigidActor(parent, ComponentTypes::RigidDynamicComponent, include)
 {
 	density = PhysicsConstants::DENSITY;
 
-	physx::PxShape* gShape = nullptr;
+	if (include)
+	{
+		physx::PxShape* gShape = nullptr;
 
-	if (parent->cmp_collider != nullptr)
-		gShape = parent->cmp_collider->GetShape();
-	else if (parent->boundingBox.IsFinite())
-		gShape = App->physics->CreateShape(physx::PxBoxGeometry(parent->boundingBox.HalfSize().x, parent->boundingBox.HalfSize().y, parent->boundingBox.HalfSize().z), *App->physics->GetDefaultMaterial());
-	else
-		gShape = App->physics->CreateShape(physx::PxBoxGeometry(PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE), *App->physics->GetDefaultMaterial());
-	assert(gShape != nullptr);
+		if (parent->cmp_collider != nullptr)
+			gShape = parent->cmp_collider->GetShape();
+		else if (parent->boundingBox.IsFinite())
+			gShape = App->physics->CreateShape(physx::PxBoxGeometry(parent->boundingBox.HalfSize().x, parent->boundingBox.HalfSize().y, parent->boundingBox.HalfSize().z), *App->physics->GetDefaultMaterial());
+		else
+			gShape = App->physics->CreateShape(physx::PxBoxGeometry(PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE), *App->physics->GetDefaultMaterial());
+		assert(gShape != nullptr);
 
-	gActor = App->physics->CreateRigidDynamic(physx::PxTransform(physx::PxIDENTITY()), *gShape, density, isKinematic);
-	assert(gActor != nullptr);
-	App->physics->AddActor(*gActor);
+		gActor = App->physics->CreateRigidDynamic(physx::PxTransform(physx::PxIDENTITY()), *gShape, density, isKinematic);
+		assert(gActor != nullptr);
+		App->physics->AddActor(*gActor);
+
+		gActor->setActorFlag(physx::PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
+
+		math::float4x4 globalMatrix = parent->transform->GetGlobalMatrix();
+		UpdateTransform(globalMatrix);
+	}
 
 	rigidActorType = RigidActorTypes::RigidDynamic;
 
-	gActor->setActorFlag(physx::PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
-	
-	math::float4x4 globalMatrix = parent->transform->GetGlobalMatrix();
-	UpdateTransform(globalMatrix);
+	// -----
+
+	SetUseGravity(useGravity);
 
 	// -----
 
-	physx::PxActorFlags actorFlags = gActor->getActorFlags();
-	useGravity = !(actorFlags & physx::PxActorFlag::eDISABLE_GRAVITY);
-
-	mass = gActor->is<physx::PxRigidDynamic>()->getMass();
-	physx::PxVec3 gCMass = gActor->is<physx::PxRigidDynamic>()->getCMassLocalPose().p;
-	cMass = math::float3(gCMass.x, gCMass.y, gCMass.z);
-	physx::PxVec3 gInertia = gActor->is<physx::PxRigidDynamic>()->getMassSpaceInertiaTensor();
-	inertia = math::float3(gInertia.x, gInertia.y, gInertia.z);
-	linearDamping = gActor->is<physx::PxRigidDynamic>()->getLinearDamping();
-	angularDamping = gActor->is<physx::PxRigidDynamic>()->getAngularDamping();
-	maxLinearVelocity = gActor->is<physx::PxRigidDynamic>()->getMaxLinearVelocity();
-	maxAngularVelocity = gActor->is<physx::PxRigidDynamic>()->getMaxAngularVelocity();
-	physx::PxRigidDynamicLockFlags rigidDynamicLockFlags = gActor->is<physx::PxRigidDynamic>()->getRigidDynamicLockFlags();
-	freezePosition[0] = rigidDynamicLockFlags & physx::PxRigidDynamicLockFlag::eLOCK_LINEAR_X;
-	freezePosition[1] = rigidDynamicLockFlags & physx::PxRigidDynamicLockFlag::eLOCK_LINEAR_Y;
-	freezePosition[2] = rigidDynamicLockFlags & physx::PxRigidDynamicLockFlag::eLOCK_LINEAR_Z;
-	freezeRotation[0] = rigidDynamicLockFlags & physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_X;
-	freezeRotation[1] = rigidDynamicLockFlags & physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_Y;
-	freezeRotation[2] = rigidDynamicLockFlags & physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z;
-	physx::PxRigidBodyFlags rigidBodyFlags = gActor->is<physx::PxRigidBody>()->getRigidBodyFlags();
-	isKinematic = rigidBodyFlags & physx::PxRigidBodyFlag::Enum::eKINEMATIC;
+	//SetMass(componentRigidDynamic.mass);
+	//SetCMass(componentRigidDynamic.cMass);
+	//SetInertia(componentRigidDynamic.inertia);
+	SetLinearDamping(linearDamping);
+	SetAngularDamping(angularDamping);
+	SetMaxLinearVelocity(maxLinearVelocity);
+	SetMaxAngularVelocity(maxAngularVelocity);
+	FreezePosition(freezePosition[0], freezePosition[1], freezePosition[2]);
+	FreezeRotation(freezeRotation[0], freezeRotation[1], freezeRotation[2]);
+	SetIsKinematic(isKinematic);
 }
 
 ComponentRigidDynamic::ComponentRigidDynamic(const ComponentRigidDynamic& componentRigidDynamic, GameObject* parent, bool include) : ComponentRigidActor(componentRigidDynamic, parent, ComponentTypes::RigidDynamicComponent, include)

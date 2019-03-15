@@ -11,9 +11,10 @@
 
 #include "imgui\imgui.h"
 
-ComponentRigidActor::ComponentRigidActor(GameObject* parent, ComponentTypes componentRigidActorType) : Component(parent, componentRigidActorType)
+ComponentRigidActor::ComponentRigidActor(GameObject* parent, ComponentTypes componentRigidActorType, bool include) : Component(parent, componentRigidActorType)
 {
-	App->physics->AddRigidActorComponent(this);
+	if (include)
+		App->physics->AddRigidActorComponent(this);
 }
 
 ComponentRigidActor::ComponentRigidActor(const ComponentRigidActor& componentRigidActor, GameObject* parent, ComponentTypes componentRigidActorType, bool include) : Component(parent, componentRigidActorType)

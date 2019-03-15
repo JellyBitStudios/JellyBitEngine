@@ -8,7 +8,7 @@ class ComponentRigidStatic : public ComponentRigidActor
 {
 public:
 
-	ComponentRigidStatic(GameObject* parent);
+	ComponentRigidStatic(GameObject* parent, bool include = true);
 	ComponentRigidStatic(const ComponentRigidStatic& componentRigidStatic, GameObject* parent, bool include = true);
 	~ComponentRigidStatic();
 
