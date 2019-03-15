@@ -98,17 +98,20 @@ void ComponentRigidActor::UpdateShape(physx::PxShape* shape) const
 	bool attach = true;
 
 	// Detach current shape
-	uint nbShapes = gActor->getNbShapes();
-	if (nbShapes > 0)
+	if (gActor)
 	{
-		physx::PxShape* gShape = nullptr;
-		gActor->getShapes(&gShape, 1);
+		uint nbShapes = gActor->getNbShapes();
+		if (nbShapes > 0)
+		{
+			physx::PxShape* gShape = nullptr;
+			gActor->getShapes(&gShape, 1);
 
-		if (gShape == shape && shape != nullptr)
-			attach = false;
-		else
-			gActor->detachShape(*gShape);
-	}
+			if (gShape == shape && shape != nullptr)
+				attach = false;
+			else
+				gActor->detachShape(*gShape);
+		}
+	}	
 
 	// Attach current shape
 	if (shape == nullptr)
@@ -117,10 +120,10 @@ void ComponentRigidActor::UpdateShape(physx::PxShape* shape) const
 			shape = App->physics->CreateShape(physx::PxBoxGeometry(parent->boundingBox.HalfSize().x, parent->boundingBox.HalfSize().y, parent->boundingBox.HalfSize().z), *App->physics->GetDefaultMaterial());
 		else
 			shape = App->physics->CreateShape(physx::PxBoxGeometry(PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE), *App->physics->GetDefaultMaterial());
-		assert(shape != nullptr);
+		//assert(shape != nullptr);
 	}
 
-	if (attach)
+	if (attach && gActor)
 		gActor->attachShape(*shape);
 }
 
