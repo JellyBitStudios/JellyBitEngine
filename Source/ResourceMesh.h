@@ -54,7 +54,7 @@ struct ResourceMeshImportSettings
 	uint attributes = ATTR_POSITION | ATTR_NORMAL | ATTR_COLOR | ATTR_TEXCOORD | ATTR_TANGENT | ATTR_BITANGENT | ATTR_ANIMATION;
 
 	float scale = 1.0f;
-	bool adjacency = false;
+	bool adjacency = true;
 
 	char modelPath[DEFAULT_BUF_SIZE];
 };

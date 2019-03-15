@@ -66,7 +66,7 @@ private:
 private:
 
 	std::unordered_map<std::string, uint> bones; // bone name, bone game object uuid
-	bool animated = false;
+	bool animated = true;
 
 	ResourceAvatarData avatarData;
 };
