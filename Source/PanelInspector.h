@@ -1,8 +1,6 @@
 #ifndef __PANEL_INSPECTOR_H__
 #define __PANEL_INSPECTOR_H__
 
-
-
 #include "ResourceMesh.h"
 #include "ResourceTexture.h"
 
@@ -36,6 +34,7 @@ private:
 	void ShowShaderObjectInspector() const;
 	void ShowShaderProgramInspector() const;
 	void ShowMaterialInspector() const;
+	void ShowAvatarInspector() const;
 	void ShowAnimationInspector() const;
 
 	ResourceMeshImportSettings m_is;

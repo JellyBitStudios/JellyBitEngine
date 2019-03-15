@@ -63,15 +63,12 @@ void OpenInExplorer()
 	ShellExecute(NULL, "open", pwd, NULL, NULL, SW_SHOWDEFAULT);
 }
 
-void SaveNumberArray(JSON_Object* parent, char* name, float* numbers, int size)
+bool ApproximatelyEqual(float a, float b, float epsilon)
 {
-	JSON_Value* value = json_value_init_array();
-	JSON_Array* arrray = json_value_get_array(value);
+	return fabs(a - b) <= ((fabs(a) < fabs(b) ? fabs(b) : fabs(a)) * epsilon);
+}
 
-	json_object_set_value(parent, name, value);
-
-	for (int i = 0; i < size; ++i)
-	{
-		json_array_append_number(arrray, numbers[i]);
-	}
+bool EssentiallyEqual(float a, float b, float epsilon)
+{
+	return fabs(a - b) <= ((fabs(a) > fabs(b) ? fabs(b) : fabs(a)) * epsilon);
 }

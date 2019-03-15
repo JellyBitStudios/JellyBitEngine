@@ -13,6 +13,9 @@
 
 ComponentImage::ComponentImage(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::ImageComponent)
 {
+	if (parent->cmp_canvasRenderer == nullptr)
+		parent->AddComponent(ComponentTypes::CanvasRendererComponent);
+
 	App->ui->componentsUI.push_back(this);
 }
 
@@ -122,7 +125,6 @@ void ComponentImage::OnInternalLoad(char *& cursor)
 
 		App->res->SetAsUsed(res_image);
 	}
-	LinkToUIModule();
 }
 
 void ComponentImage::OnUniqueEditor()

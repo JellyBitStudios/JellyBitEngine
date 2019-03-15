@@ -132,21 +132,6 @@ void ComponentRigidActor::ClearActor()
 	gActor = nullptr;
 }
 
-void ComponentRigidActor::RecursiveUpdateTransforms(GameObject* gameObject)
-{
-	if (gameObject->cmp_rigidActor != nullptr)
-	{
-		math::float4x4 globalMatrix = gameObject->transform->GetGlobalMatrix();
-		gameObject->cmp_rigidActor->UpdateTransform(globalMatrix);
-	}
-
-	std::vector<GameObject*> children;
-	gameObject->GetChildrenVector(children, false);
-
-	for (uint i = 0; i < children.size(); ++i)
-		RecursiveUpdateTransforms(children[i]);
-}
-
 void ComponentRigidActor::UpdateTransform(math::float4x4& globalMatrix) const
 {
 	assert(globalMatrix.IsFinite());

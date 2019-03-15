@@ -29,6 +29,7 @@
 #include "ComponentAudioListener.h"
 
 #include "ResourceScene.h"
+#include "ResourceScript.h"
 
 #include "Application.h"
 #include "ModuleGOs.h"
@@ -57,15 +58,49 @@ void ModuleEvents::OnSystemEvent(System_Event event)
 		delete event.resEvent.resource;
 		break;
 	}
+
+	case System_Event_Type::LoadFinished:
+	{
+#ifdef GAMEMODE
+		if (App->GetEngineState() != engine_states::ENGINE_PLAY)
+		{
+			event.type = System_Event_Type::Play;
+			App->PushSystemEvent(event);
+		}
+#endif
+		break;
+	}
 	case System_Event_Type::Play:
 		assert(App->GOs->sceneStateBuffer == 0);
 		App->GOs->SerializeFromNode(App->scene->root, App->GOs->sceneStateBuffer, App->GOs->sceneStateSize);
+
+#ifdef GAMEMODE
+		App->SetEngineState(engine_states::ENGINE_PLAY);
+#endif
+
 		break;
 	case System_Event_Type::SaveScene:
 	{
 		ResourceScene::ExportFile(event.sceneEvent.nameScene);
 		break;
 	}
+
+	case System_Event_Type::ScriptingDomainReloaded:
+	{
+		App->scripting->CreateDomain();
+		App->scripting->UpdateScriptingReferences();
+
+		std::vector<Resource*> scriptResources = App->res->GetResourcesByType(ResourceTypes::ScriptResource);
+		for (int i = 0; i < scriptResources.size(); ++i)
+		{
+			ResourceScript* scriptRes = (ResourceScript*)scriptResources[i];
+			scriptRes->referenceMethods();
+		}
+
+		App->scripting->ReInstance();
+		break;
+	}
+
 	case System_Event_Type::Stop:
 		assert(App->GOs->sceneStateBuffer != 0);
 #ifndef GAMEMODE

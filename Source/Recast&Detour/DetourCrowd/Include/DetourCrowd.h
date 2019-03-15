@@ -142,6 +142,7 @@ struct dtCrowdAgent
 	/// The desired speed.
 	float desiredSpeed;
 
+	float epsilon;
 	float offsetPos[3];	///< Initial offset from detour pos to real entity pos.
 	float npos[3];		///< The current agent position. [(x, y, z)]
 	float disp[3];		///< A temporary value used to accumulate agent displacement during iterative collision resolution. [(x, y, z)]

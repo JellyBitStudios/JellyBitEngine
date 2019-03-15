@@ -6,7 +6,7 @@ enum System_Event_Type
 	NoEvent,
 
 	FileDropped, NewFile, FileMoved, ImportFile, ReImportFile, ForceReImport, FileRemoved, FileOverwritten,
-	DeleteUnusedFiles, GenerateLibraryFiles, ImportLibraryFile, // FileEvent
+	DeleteUnusedFiles, GenerateLibraryFiles, ImportLibraryFile, Build, // FileEvent
 
 	CalculateBBoxes, // GameObjectEvent
 	RecalculateBBoxes, // GameObjectEvent
@@ -43,6 +43,8 @@ struct FileEvent
 	System_Event_Type type;
 	char file[DEFAULT_BUF_SIZE];
 	char newFileLocation[DEFAULT_BUF_SIZE];
+
+	bool build;
 };
 
 struct GameObjectEvent

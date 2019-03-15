@@ -22,6 +22,7 @@
 #include "ComponentRigidStatic.h"
 #include "ComponentRigidDynamic.h"
 #include "ComponentNavAgent.h"
+#include "ComponentAnimator.h"
 #include "ComponentEmitter.h"
 #include "ComponentBone.h"
 #include "ComponentScript.h"
@@ -117,6 +118,11 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			cmp_animation = new ComponentAnimation(*gameObject.cmp_animation, this);
 			cmp_animation->SetParent(this);
 			components.push_back(cmp_animation);
+			break;
+		case ComponentTypes::AnimatorComponent:
+			cmp_animator = new ComponentAnimator(*gameObject.cmp_animator, this);
+			cmp_animator->SetParent(this);
+			components.push_back(cmp_animator);
 			break;
 		case ComponentTypes::LightComponent:
 			cmp_light = new ComponentLight(*gameObject.cmp_light, this);
@@ -290,10 +296,27 @@ void GameObject::ToggleIsStatic()
 	App->GOs->RecalculateVector(this);
 }
 
-void GameObject::ForceStaticNoVector()
+void GameObject::ToggleChildrenAndThisStatic(bool toStatic)
 {
-	assert(isStatic == false);
-	isStatic = true;
+	isStatic = toStatic;
+	App->GOs->RecalculateVector(this, false);
+	for each(auto child in children)
+	{
+		child->ToggleChildrenAndThisStatic(toStatic);
+		App->GOs->RecalculateVector(this, false);
+	}
+	System_Event newEvent;
+	newEvent.type = System_Event_Type::RecreateQuadtree;
+	App->PushSystemEvent(newEvent);
+}
+
+void GameObject::ToggleChildrenAndThisWalkable(bool walkable)
+{
+	if (cmp_mesh != 0)
+		cmp_mesh->nv_walkable = walkable;
+
+	for each(auto go in children)
+		go->ToggleChildrenAndThisWalkable(walkable);
 }
 
 bool GameObject::IsActive() const
@@ -548,21 +571,19 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		newComponent = cmp_rectTransform = new ComponentRectTransform(this);
 		break;
 	case ComponentTypes::CanvasRendererComponent:
+		assert(cmp_canvasRenderer == nullptr);
 		newComponent = cmp_canvasRenderer = new ComponentCanvasRenderer(this);
 		break;
 	case ComponentTypes::ImageComponent:
-		if (cmp_canvasRenderer == nullptr)
-			AddComponent(ComponentTypes::CanvasRendererComponent);
+		assert(cmp_image == nullptr);
 		newComponent = cmp_image = new ComponentImage(this);
 		break;
 	case ComponentTypes::ButtonComponent:
-		if (cmp_canvasRenderer == nullptr)
-			AddComponent(ComponentTypes::CanvasRendererComponent);
+		assert(cmp_button == nullptr);
 		newComponent = cmp_button = new ComponentButton(this);
 		break;
 	case ComponentTypes::LabelComponent:
-		if (cmp_canvasRenderer == nullptr)
-			AddComponent(ComponentTypes::CanvasRendererComponent);
+		assert(cmp_label == nullptr);
 		newComponent = cmp_label = new ComponentLabel(this);
 		break;
 	case ComponentTypes::BoneComponent:
@@ -572,6 +593,10 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 	case ComponentTypes::AnimationComponent:
 		assert(cmp_animation == NULL);
 		newComponent = cmp_animation = new ComponentAnimation(this);
+		break;
+	case ComponentTypes::AnimatorComponent:
+		assert(cmp_animator == NULL);
+		newComponent = cmp_animator = new ComponentAnimator(this);
 		break;
 	case ComponentTypes::LightComponent:
 		assert(cmp_light == NULL);

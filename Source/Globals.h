@@ -6,7 +6,6 @@
 
 #include <windows.h>
 #include <stdio.h>
-#include "parson/parson.h"
 
 enum class LogTypes
 {
@@ -24,7 +23,9 @@ void OpenInBrowser(char* url);
 
 void OpenInExplorer();
 
-void SaveNumberArray(JSON_Object * parent, char * name, float * numbers, int size);
+bool ApproximatelyEqual(float a, float b, float epsilon);
+
+bool EssentiallyEqual(float a, float b, float epsilon);
 
 #define CAP(n) ((n <= 0.0f) ? n=0.0f : (n >= 1.0f) ? n=1.0f : n=n)
 
@@ -77,6 +78,8 @@ enum update_status
 #define EXTENSION_META ".meta"
 #define EXTENSION_SCRIPT ".cs"
 #define EXTENSION_MATERIAL ".mat"
+#define EXTENSION_ANIMATOR ".ani"
+#define EXTENSION_AVATAR ".ava"
 #define EXTENSION_AUDIOBANK ".bnk"
 
 #define UILAYER 1

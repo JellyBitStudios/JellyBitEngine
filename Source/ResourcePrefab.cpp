@@ -228,12 +228,12 @@ bool ResourcePrefab::LoadInMemory()
 	for(auto gameObject : childs)
 		gameObject->OnSystemEvent(event);
 
-	prefabData.root = new GameObject(*temp, false);
+	prefabData.root = temp;//new GameObject(*temp, false);
 	prefabData.root->ForceUUID(uuid);
 	prefabData.root->prefab = this;
 
 	delete[] buffer;
-	temp->DestroyTemplate();
+	//temp->DestroyTemplate();
 
 	return true;
 }

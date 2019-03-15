@@ -16,17 +16,10 @@
 #include "ComponentMesh.h"
 #include "ModuleNavigation.h"
 
-// TODO_G : delete this
-#include "ModuleAnimation.h"
-
 #include "imgui/imgui.h"
 
 #include <list>
 #include <vector>
-
-#define QUADTREE_SIZE_X 200.0f
-#define QUADTREE_SIZE_Y 100.0f
-#define QUADTREE_SIZE_Z 200.0f
 
 ModuleScene::ModuleScene(bool start_enabled) : Module(start_enabled)
 {
@@ -39,7 +32,7 @@ bool ModuleScene::Init(JSON_Object* jObject)
 {
 	LoadStatus(jObject);
 
-	CreateQuadtree();
+	quadtree.Create();
 
 	return true;
 }
@@ -49,22 +42,25 @@ bool ModuleScene::Start()
 	grid = new PrimitiveGrid();
 	grid->ShowAxis(true);
 	root = new GameObject("Root", nullptr, true);
+	GameObject* directionalLight = App->GOs->CreateGameObject("Directional Light", root);
+	directionalLight->AddComponent(ComponentTypes::LightComponent);
 
+	math::float3 axis;
+	float angle;
+	math::Quat rotation = rotation.identity;
+	rotation.ToAxisAngle(axis, angle);
+	axis *= angle;
+	axis *= RADTODEG;
+	axis[0] = -50;
+	axis[1] = 30;
+	axis *= DEGTORAD;
+	rotation.SetFromAxisAngle(axis.Normalized(), axis.Length());
+	directionalLight->transform->SetRotation(rotation);
 	return true;
 }
 
 update_status ModuleScene::Update()
 {
-	/*if (App->input->GetKey(SDL_SCANCODE_J) == KEY_DOWN) {
-		App->animation->SetCurrentAnimation("Idle");
-	}
-	if (App->input->GetKey(SDL_SCANCODE_K) == KEY_DOWN) {
-		App->animation->SetCurrentAnimation("Running");
-	}
-	if (App->input->GetKey(SDL_SCANCODE_L) == KEY_DOWN) {
-		App->animation->SetCurrentAnimation("Kick");
-	}
-	*/
 #ifndef GAMEMODE
 	if (!App->IsEditor())
 		return UPDATE_CONTINUE;
@@ -98,11 +94,12 @@ update_status ModuleScene::Update()
 		OnGizmos(currentGameObject);
 	}
 
-	if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RCTRL) == KEY_REPEAT)
-	{
-		if (App->input->GetKey(SDL_SCANCODE_Z) == KEY_DOWN)
-			GetPreviousTransform();
-	}
+	if(App->IsEditor() && !App->gui->WantTextInput())
+		if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RCTRL) == KEY_REPEAT)
+		{
+			if (App->input->GetKey(SDL_SCANCODE_Z) == KEY_DOWN)
+				GetPreviousTransform();
+		}
 #endif
 
 	return UPDATE_CONTINUE;
@@ -143,7 +140,7 @@ void ModuleScene::OnSystemEvent(System_Event event)
 
 			// Initialize detour with the previous loaded navmesh
 			App->navigation->InitDetour();
-
+			
 			System_Event newEvent;
 			newEvent.type = System_Event_Type::RecreateQuadtree;
 			App->PushSystemEvent(newEvent);
@@ -167,7 +164,7 @@ void ModuleScene::OnSystemEvent(System_Event event)
 
 		while (!prevTransforms.empty() && iterator != prevTransforms.end())
 		{
-			if ((*iterator).object == event.goEvent.gameObject)
+			if ((*iterator).uuidGO == event.goEvent.gameObject->GetUUID())
 			{
 				prevTransforms.erase(iterator);
 				iterator = prevTransforms.begin();
@@ -175,7 +172,6 @@ void ModuleScene::OnSystemEvent(System_Event event)
 			else
 				++iterator;
 		}
-
 		break;
 #endif
 	}
@@ -249,7 +245,7 @@ void ModuleScene::SaveLastTransform(math::float4x4 matrix)
 		if (prevTransforms.empty() || curr->transform->GetGlobalMatrix().ptr() != (*prevTransforms.begin()).matrix.ptr())
 		{
 			prevTrans.matrix = matrix;
-			prevTrans.object = curr;
+			prevTrans.uuidGO = curr->GetUUID();
 			prevTransforms.push_front(prevTrans);
 		}
 	}
@@ -260,9 +256,11 @@ void ModuleScene::GetPreviousTransform()
 	if (!prevTransforms.empty())
 	{
 		LastTransform prevTrans = (*prevTransforms.begin());
-		if (prevTrans.object)
+		GameObject* transObject = App->GOs->GetGameObjectByUID(prevTrans.uuidGO);
+
+		if (transObject)
 		{
-			selectedObject = prevTrans.object;
+			selectedObject = transObject;
 			selectedObject.GetCurrGameObject()->transform->SetMatrixFromGlobal(prevTrans.matrix);
 		}
 		prevTransforms.pop_front();
@@ -306,33 +304,10 @@ void ModuleScene::SetShowGrid(bool showGrid)
 
 void ModuleScene::RecreateQuadtree()
 {
-	// Clear and create the quadtree
-	CreateQuadtree();
-
-	// Fill the quadtree with static game objects
-	RecalculateQuadtree();
-}
-
-void ModuleScene::CreateQuadtree()
-{
-	const math::float3 center(0.0f, 0.0f, 0.0f);
-	const math::float3 size(QUADTREE_SIZE_X, QUADTREE_SIZE_Y, QUADTREE_SIZE_Z);
-	math::AABB boundary;
-	boundary.SetFromCenterAndSize(center, size);
-
-	quadtree.SetBoundary(boundary);
-}
-
-void ModuleScene::RecalculateQuadtree()
-{
 	std::vector<GameObject*> staticGameObjects;
 	App->GOs->GetStaticGameobjects(staticGameObjects);
 
-	for (uint i = 0; i < staticGameObjects.size(); ++i)
-	{
-		if (staticGameObjects[i]->GetLayer() != UILAYER)
-			App->scene->quadtree.Insert(staticGameObjects[i]);
-	}
+	quadtree.ReDoQuadtree(staticGameObjects);
 }
 
 void ModuleScene::CreateRandomStaticGameObject()

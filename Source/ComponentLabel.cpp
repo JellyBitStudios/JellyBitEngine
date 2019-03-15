@@ -14,8 +14,15 @@
 ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::LabelComponent)
 {
 	App->ui->componentsUI.push_back(this);
+
+	if (parent->cmp_canvasRenderer == nullptr)
+		parent->AddComponent(ComponentTypes::CanvasRendererComponent);
+		
 	App->ft->LoadFont("../Game/Assets/Textures/Font/arial.ttf", size, charactersBitmap);
 	rect = new ComponentRectTransform(parent, RectTransformComponent,ComponentRectTransform::RectFrom::RECT);
+
+
+
 }
 
 ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::LabelComponent)
@@ -40,7 +47,7 @@ void ComponentLabel::Draw(uint ui_shader, uint VAO)
 	rect->SetRect(rectParent[0], rectParent[1], 0, 0);
 	float sizeNorm = size / (float)sizeLoaded;
 
-	for (std::string::const_iterator c = finalText.begin(); c != finalText.end(); ++c) 
+	for (std::string::const_iterator c = finalText.begin(); c != finalText.end(); ++c)
 	{
 
 		if ((int)(*c) >= 0 && (int)(*c) < 128 )
@@ -92,9 +99,7 @@ void ComponentLabel::OnInternalSave(char *& cursor)
 }
 
 void ComponentLabel::OnInternalLoad(char *& cursor)
-{
-	LinkToUIModule();
-}
+{}
 
 void ComponentLabel::OnUniqueEditor()
 {

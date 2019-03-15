@@ -68,7 +68,7 @@ void ModuleFreetype::LoadFont(const char* path, int size, std::map<char, Charact
 				texture,
 				math::float2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
 				math::float2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-				face->glyph->bitmap.width + face->glyph->bitmap_left
+				face->glyph->advance.x / 64
 			};
 			charactersBitmap.insert(std::pair<char, Character>(c, character));
 		}

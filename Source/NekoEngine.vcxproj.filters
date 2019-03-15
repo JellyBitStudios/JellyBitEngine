@@ -1506,9 +1506,6 @@
     <ClInclude Include="SceneQueries.h">
       <Filter>Sources\Helpers\Physics</Filter>
     </ClInclude>
-    <ClInclude Include="BoneImporter.h">
-      <Filter>Sources\Modules\Importers</Filter>
-    </ClInclude>
     <ClInclude Include="ModuleInternalResHandler.h">
       <Filter>Sources\Modules</Filter>
     </ClInclude>
@@ -1523,9 +1520,6 @@
     </ClInclude>
     <ClInclude Include="AnimationImporter.h">
       <Filter>Sources\Modules\Importers</Filter>
-    </ClInclude>
-    <ClInclude Include="ModuleAnimation.h">
-      <Filter>Sources\Modules</Filter>
     </ClInclude>
     <ClInclude Include="ResourceMaterial.h">
       <Filter>Sources\Modules\Resources\Types</Filter>
@@ -1848,8 +1842,11 @@
     <ClInclude Include="Shaders.h">
       <Filter>Sources\Containers</Filter>
     </ClInclude>
-    <ClInclude Include="ResourceScene.h">
-      <Filter>Sources\Modules\Resources\Types</Filter>
+    <ClInclude Include="Lights.h">
+      <Filter>Sources\Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="ComponentAnimator.h">
+      <Filter>Sources\Modules\GO&amp;Components\Components</Filter>
     </ClInclude>
     <ClInclude Include="ResourceAnimator.h">
       <Filter>Sources\Modules\Resources\Types</Filter>
@@ -2107,6 +2104,12 @@
       <Filter>Sources\3rd Party\Freetype</Filter>
     </ClInclude>
     <ClInclude Include="ResourceAudioBank.h">
+      <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceAvatar.h">
+      <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceScene.h">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClInclude>
   </ItemGroup>
@@ -2525,9 +2528,6 @@
     <ClCompile Include="SceneQueries.cpp">
       <Filter>Sources\Helpers\Physics</Filter>
     </ClCompile>
-    <ClCompile Include="BoneImporter.cpp">
-      <Filter>Sources\Modules\Importers</Filter>
-    </ClCompile>
     <ClCompile Include="ModuleInternalResHandler.cpp">
       <Filter>Sources\Modules</Filter>
     </ClCompile>
@@ -2542,9 +2542,6 @@
     </ClCompile>
     <ClCompile Include="AnimationImporter.cpp">
       <Filter>Sources\Modules\Importers</Filter>
-    </ClCompile>
-    <ClCompile Include="ModuleAnimation.cpp">
-      <Filter>Sources\Modules</Filter>
     </ClCompile>
     <ClCompile Include="ResourceMaterial.cpp">
       <Filter>Sources\Modules\Resources\Types</Filter>
@@ -2654,8 +2651,11 @@
     <ClCompile Include="ModuleFBOManager.cpp">
       <Filter>Sources\Modules</Filter>
     </ClCompile>
-    <ClCompile Include="ResourceScene.cpp">
-      <Filter>Sources\Modules\Resources\Types</Filter>
+    <ClCompile Include="Lights.cpp">
+      <Filter>Sources\Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="ComponentAnimator.cpp">
+      <Filter>Sources\Modules\GO&amp;Components\Components</Filter>
     </ClCompile>
     <ClCompile Include="ResourceAnimator.cpp">
       <Filter>Sources\Modules\Resources\Types</Filter>
@@ -2663,6 +2663,12 @@
     <ClCompile Include="ResourceFont.cpp">
     </ClCompile>
     <ClCompile Include="ResourceAudioBank.cpp">
+      <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceAvatar.cpp">
+      <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceScene.cpp">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClCompile>
   </ItemGroup>

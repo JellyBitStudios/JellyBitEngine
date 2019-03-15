@@ -23,7 +23,7 @@ class GameObject;
 struct LastTransform
 {
 	math::float4x4 matrix;
-	GameObject* object;
+	uint uuidGO;
 };
 #endif
 
@@ -63,8 +63,6 @@ public:
 	void SetShowGrid(bool showGrid);
 
 	void RecreateQuadtree();
-	void CreateQuadtree();
-	void RecalculateQuadtree();
 	void CreateRandomStaticGameObject();
 	bool IsGizmoValid() const;
 

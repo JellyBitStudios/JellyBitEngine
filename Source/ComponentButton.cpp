@@ -223,8 +223,6 @@ void ComponentButton::OnInternalLoad(char *& cursor)
 	tempBuffer = new char[bytesOnClick];
 	memcpy(tempBuffer, cursor, bytesOnClick);
 	cursor += bytesOnClick;
-
-	LinkToUIModule();
 }
 
 void ComponentButton::OnLoadOnClick(char*& tempBuffer)
@@ -376,7 +374,7 @@ void ComponentButton::OnUniqueEditor()
 			ComponentScript* script = (ComponentScript*)scripts[i];
 			if (ImGui::BeginMenu(script->scriptName.data()))
 			{
-				MonoObject* compInstance = script->classInstance;
+				MonoObject* compInstance = script->GetMonoComponent();
 				MonoClass* compClass = mono_object_get_class(compInstance);
 
 				const char* className = mono_class_get_name(compClass);

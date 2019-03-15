@@ -305,8 +305,33 @@ void PanelHierarchy::SetGameObjectDragAndDropTarget(GameObject* target) const
 
 			if (!payload_n->IsChild(target, true))
 			{
-				if (payload_n->GetLayer() == target->GetLayer())
+				//Sorry for this code :(, this is UI checks for no crash the engine. pukecode
+				bool rectWorldToWortldCanvas = false;
+				if (payload_n->cmp_rectTransform && target->cmp_rectTransform)
+					if (payload_n->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT_WORLD
+						&& target->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::WORLD)
+						rectWorldToWortldCanvas = true;
+				if (payload_n->GetLayer() == target->GetLayer() || rectWorldToWortldCanvas)
 				{
+					if (!rectWorldToWortldCanvas)
+					{
+						if (App->GOs->GetCanvas() == payload_n)
+						{
+							ImGui::EndDragDropTarget();
+							return;
+						}
+						if (payload_n->cmp_rectTransform && target->cmp_rectTransform)
+						{
+							if ((payload_n->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::WORLD
+								&& target->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::WORLD)
+								|| (payload_n->cmp_rectTransform->GetFrom() != target->cmp_rectTransform->GetFrom()))
+							{
+								ImGui::EndDragDropTarget();
+								return;
+							}
+						}
+					}
+
 					math::float4x4 globalMatrix;
 					if (payload_n->GetLayer() != UILAYER)
 						globalMatrix = payload_n->transform->GetGlobalMatrix();
@@ -317,7 +342,7 @@ void PanelHierarchy::SetGameObjectDragAndDropTarget(GameObject* target) const
 
 					if (payload_n->GetLayer() != UILAYER)
 						payload_n->transform->SetMatrixFromGlobal(globalMatrix);
-					else if (payload_n->GetLayer() == UILAYER)
+					else if (payload_n->cmp_rectTransform)
 					{
 						ComponentRectTransform* rect = (ComponentRectTransform*)payload_n->GetComponent(ComponentTypes::RectTransformComponent);
 						rect->CheckParentRect();

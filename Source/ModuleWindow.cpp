@@ -3,6 +3,7 @@
 #include "ModuleRenderer3D.h"
 #include "ModuleWindow.h"
 #include "ModuleUI.h"
+#include "ModuleFBOManager.h"
 
 #include "glew\include\GL\glew.h"
 
@@ -174,6 +175,7 @@ void ModuleWindow::UpdateWindowSize() const
 	SDL_SetWindowSize(window, width, height);
 	App->renderer3D->OnResize(width, height);
 	App->ui->OnWindowResize(width, height);
+	App->fbo->ResizeGBuffer(width, height);
 }
 
 uint ModuleWindow::GetRefreshRate() const

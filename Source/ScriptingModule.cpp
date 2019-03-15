@@ -9,6 +9,7 @@
 #include "ComponentButton.h"
 #include "ComponentAudioSource.h"
 #include "ComponentAudioListener.h"
+#include "ComponentRigidDynamic.h"
 
 #include "GameObject.h"
 
@@ -284,19 +285,8 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 				mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
 
 				GameObject* gameObject = (GameObject*)address;
-
-				bool destroyed = false;
-				while (gameObject)
-				{
-					if (gameObject == event.goEvent.gameObject)
-					{
-						destroyed = true;
-						break;
-					}
-					gameObject = gameObject->GetParent() ? gameObject->GetParent() : nullptr;
-				}
-
-				if (destroyed)				
+					
+				if (gameObject == event.goEvent.gameObject)
 				{
 					MonoClass* monoObjectClass = mono_object_get_class(monoObject);
 
@@ -309,6 +299,12 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 
 					monoObjectHandles.erase(monoObjectHandles.begin() + i);
 					i--;
+
+					//Erase this gameObject from all the public variables in scripts
+					for (int i = 0; i < scripts.size(); ++i)
+					{
+						scripts[i]->OnSystemEvent(event);
+					}
 				}
 			}		
 			break;
@@ -341,10 +337,6 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 			//Engine opened recently, import the .dll if found
 			if (engineOpened)
 			{
-				System_Event event;
-				event.type = System_Event_Type::ScriptingDomainReloaded;
-				App->PushSystemEvent(event);
-
 				App->scripting->CreateDomain();
 				App->scripting->UpdateScriptingReferences();
 
@@ -479,7 +471,11 @@ MonoObject* ScriptingModule::MonoObjectFrom(GameObject* gameObject)
 	MonoObject* monoObject = gameObject->GetMonoObject();
 
 	if (monoObject)
-		return monoObject;
+	{
+		GameObject* storedGO = GameObjectFrom(monoObject);
+		if(storedGO == gameObject)
+			return monoObject;
+	}
 
 	MonoClass* gameObjectClass = mono_class_from_name(internalImage, "JellyBitEngine", "GameObject");
 	monoObject = mono_object_new(domain, gameObjectClass);
@@ -502,7 +498,13 @@ GameObject* ScriptingModule::GameObjectFrom(MonoObject* monoObject)
 	int address;
 	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
 
-	return (GameObject*)address;
+	GameObject* gameObject = (GameObject*)address;
+
+	MonoObject* storedMonoObj = gameObject->GetMonoObject();
+	if (storedMonoObj == monoObject)
+		return gameObject;
+	else
+		return nullptr;
 	
 	//We only can create MonoObjects though a GameObject*, not viceversa.
 }
@@ -905,27 +907,28 @@ void ScriptingModule::RecompileScripts()
 		System_Event event;
 		event.type = System_Event_Type::ScriptingDomainReloaded;
 		App->PushSystemEvent(event);
-
-		App->scripting->CreateDomain();
-		App->scripting->UpdateScriptingReferences();
-
-		std::vector<Resource*> scriptResources = App->res->GetResourcesByType(ResourceTypes::ScriptResource);
-		for (int i = 0; i < scriptResources.size(); ++i)
-		{
-			ResourceScript* scriptRes = (ResourceScript*)scriptResources[i];
-			scriptRes->referenceMethods();
-		}
-
-		App->scripting->ReInstance();
 	}
 }
 
 void ScriptingModule::GameObjectKilled(GameObject* killed)
 {
+	MonoObject* monoObject = killed->GetMonoObject();
+	if (!monoObject)
+		return;
+
 	for (int i = 0; i < monoObjectHandles.size(); ++i)
-	{
-		if (mono_gchandle_get_target(monoObjectHandles[i]) == killed->GetMonoObject())
+	{	
+		if (mono_gchandle_get_target(monoObjectHandles[i]) == monoObject)
 		{
+			MonoClass* monoObjectClass = mono_object_get_class(monoObject);
+
+			MonoClassField* deletedField = mono_class_get_field_from_name(monoObjectClass, "destroyed");
+
+			bool temp = true;
+			mono_field_set_value(monoObject, deletedField, &temp);
+
+			mono_gchandle_free(monoObjectHandles[i]);
+
 			monoObjectHandles.erase(monoObjectHandles.begin() + i);
 			break;
 		}
@@ -1605,6 +1608,9 @@ void SetGlobalScale(MonoObject* monoObject, MonoArray* globalScale)
 
 MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 {
+	if (!monoObject || !type)
+		return nullptr;
+
 	MonoObject* monoComp = nullptr;
 
 	std::string className = mono_class_get_name(mono_object_get_class(type));
@@ -1741,6 +1747,8 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 	}
 	else
 	{
+		//Check if this monoObject is destroyed
+
 		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
 		if (!gameObject)
 			return nullptr;
@@ -1755,7 +1763,7 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 				ComponentScript* script = (ComponentScript*)comp;
 				if (script->scriptName == className)
 				{
-					return script->classInstance;
+					return script->GetMonoComponent();
 				}
 			}
 		}
@@ -2026,6 +2034,26 @@ void NavAgentResetMoveTarget(MonoObject* compAgent)
 	if (agent)
 	{
 		agent->ResetMoveTarget();
+	}
+}
+
+uint NavAgentGetParams(MonoObject* compAgent)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		return agent->params;
+	}
+	return 0;
+}
+
+void NavAgentSetParams(MonoObject* compAgent, uint params)
+{
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(compAgent);
+	if (agent)
+	{
+		agent->params = params;
+		agent->UpdateParams();
 	}
 }
 
@@ -2567,6 +2595,46 @@ void AudioSourceStopAudio(MonoObject* monoComp)
 	source->StopAudio();
 }
 
+void RigidbodyAddForce(MonoObject* monoComp, MonoArray* force, int mode)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoComp);
+	if (!rigidbody)
+		return;
+
+	math::float3 forceCpp(mono_array_get(force, float, 0), mono_array_get(force, float, 1), mono_array_get(force, float, 2));
+
+	rigidbody->AddForce(forceCpp, (physx::PxForceMode::Enum) mode);
+}
+
+void RigidbodyClearForce(MonoObject* monoComp)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoComp);
+	if (!rigidbody)
+		return;
+
+	rigidbody->ClearForce();
+}
+
+void RigidbodyAddTorque(MonoObject* monoComp, MonoArray* torque, int mode)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoComp);
+	if (!rigidbody)
+		return;
+
+	math::float3 torqueCpp(mono_array_get(torque, float, 0), mono_array_get(torque, float, 1), mono_array_get(torque, float, 2));
+
+	rigidbody->AddTorque(torqueCpp, (physx::PxForceMode::Enum) mode);
+}
+
+void RigidbodyClearTorque(MonoObject* monoComp)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoComp);
+	if (!rigidbody)
+		return;
+
+	rigidbody->ClearTorque();
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -2677,6 +2745,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::isWalking", (const void*)&NavAgentIsWalking);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::_RequestMoveVelocity", (const void*)&NavAgentRequestMoveVelocity);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::ResetMoveTarget", (const void*)&NavAgentResetMoveTarget);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetParams", (const void*)&NavAgentGetParams);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetParams", (const void*)&NavAgentSetParams);
 	mono_add_internal_call("JellyBitEngine.AudioSource::GetAudio", (const void*)&AudioSourceGetAudio);
 	mono_add_internal_call("JellyBitEngine.AudioSource::SetAudio", (const void*)&AudioSourceSetAudio);
 	mono_add_internal_call("JellyBitEngine.AudioSource::GetMuted", (const void*)&AudioSourceGetMuted);
@@ -2709,6 +2779,10 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.AudioSource::PauseAudio", (const void*)&AudioSourcePauseAudio);
 	mono_add_internal_call("JellyBitEngine.AudioSource::ResumeAudio", (const void*)&AudioSourceResumeAudio);
 	mono_add_internal_call("JellyBitEngine.AudioSource::StopAudio", (const void*)&AudioSourceStopAudio);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddForce", (const void*)&RigidbodyAddForce);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddTorque", (const void*)&RigidbodyAddTorque);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearForce", (const void*)&RigidbodyClearForce);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearTorque", (const void*)&RigidbodyClearTorque);
 
 	ClearMap();
 

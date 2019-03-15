@@ -21,11 +21,15 @@ bool ModuleInternalResHandler::Start()
 	// Texture resources
 	CreateCheckers();
 	CreateDefaultTexture();
+	CreateLightIcon();
 
 	// Shader resources
 	CreateDefaultShaderProgram(vShaderTemplate, fShaderTemplate, ShaderProgramTypes::Standard);
 	CreateDefaultShaderProgram(Particle_vShaderTemplate, Particle_fShaderTemplate, ShaderProgramTypes::Particles);
+	CreateDeferredShaderProgram();
+	CreateBillboardShaderProgram();
 	CreateUIShaderProgram();
+	cartoonShaderProgram = CreateCartoonShaderProgram();
 
 	// Material resources
 	CreateDefaultMaterial();
@@ -206,6 +210,12 @@ void ModuleInternalResHandler::CreateDefaultTexture()
 	defaultTexture = (App->res->CreateResource(ResourceTypes::TextureResource, data, &textureData, REPLACE_ME_TEXTURE_UUID))->GetUuid();
 }
 
+void ModuleInternalResHandler::CreateLightIcon()
+{
+	lightIcon = App->res->ImportFile("Settings/Light_Icon.png")->GetUuid();
+	App->res->SetAsUsed(lightIcon); // used in lights;
+}
+
 void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, const char* fShader, ShaderProgramTypes type)
 {
 	ResourceData vertexData;
@@ -224,7 +234,7 @@ void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, c
 	fragmentData.internal = true;
 	fragmentShaderData.shaderObjectType = ShaderObjectTypes::FragmentType;
 	fragmentShaderData.SetSource(fShader, strlen(fShader));
-	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &fragmentShaderData);
+	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, fragmentData, &fragmentShaderData);
 	if (!fObj->Compile())
 		fObj->isValid = false;
 
@@ -236,7 +246,7 @@ void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, c
 	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
 	programShaderData.shaderProgramType = type;
 	ResourceShaderProgram* prog = nullptr;
-	if(type == ShaderProgramTypes::Standard)
+	if (type == ShaderProgramTypes::Standard)
 		prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DEFAULT_SHADER_PROGRAM_UUID);
 	else if (type == ShaderProgramTypes::Particles)
 		prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DEFAULT_SHADER_PROGRAM_PARTICLE_UUID);
@@ -247,7 +257,123 @@ void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, c
 		defaultShaderProgram = prog->GetUuid();
 	else if (type == ShaderProgramTypes::Particles)
 		particleShaderProgram = prog->GetUuid();
+}
 
+void ModuleInternalResHandler::CreateDeferredShaderProgram()
+{
+	ResourceData vertexData;
+	ResourceShaderObjectData vertexShaderData;
+	vertexData.name = "Deferred vertex object";
+	vertexData.internal = true;
+	vertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
+	vertexShaderData.SetSource(vDEFERREDSHADING, strlen(vDEFERREDSHADING));
+	ResourceShaderObject* vObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &vertexShaderData);
+	if (!vObj->Compile())
+		vObj->isValid = false;
+
+	ResourceData fragmentData;
+	ResourceShaderObjectData fragmentShaderData;
+	fragmentData.name = "Deferred fragment object";
+	fragmentData.internal = true;
+	fragmentShaderData.shaderObjectType = ShaderObjectTypes::FragmentType;
+	fragmentShaderData.SetSource(fDEFERREDSHADING, strlen(fDEFERREDSHADING));
+	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, fragmentData, &fragmentShaderData);
+	if (!fObj->Compile())
+		fObj->isValid = false;
+
+	ResourceData shaderData;
+	ResourceShaderProgramData programShaderData;
+	shaderData.name = "Deferred shader program";
+	shaderData.internal = true;
+	programShaderData.shaderObjectsUuids.push_back(vObj->GetUuid());
+	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
+	programShaderData.shaderProgramType = ShaderProgramTypes::Source;
+	ResourceShaderProgram* pShader = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DEFERRED_SHADER_PROGRAM_UUID);
+	if (!pShader->Link())
+		pShader->isValid = false;
+	deferredShaderProgram = pShader->GetUuid();
+}
+
+void ModuleInternalResHandler::CreateBillboardShaderProgram()
+{
+	ResourceData vertexData;
+	ResourceShaderObjectData vertexShaderData;
+	vertexData.name = "Billboard vertex object";
+	vertexData.internal = true;
+	vertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
+	vertexShaderData.SetSource(vShaderBillboard, strlen(vShaderBillboard));
+	ResourceShaderObject* vObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &vertexShaderData);
+	if (!vObj->Compile())
+		vObj->isValid = false;
+
+	ResourceData fragmentData;
+	ResourceShaderObjectData fragmentShaderData;
+	fragmentData.name = "Billboard fragment object";
+	fragmentData.internal = true;
+	fragmentShaderData.shaderObjectType = ShaderObjectTypes::FragmentType;
+	fragmentShaderData.SetSource(fShaderBillboard, strlen(fShaderBillboard));
+	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, fragmentData, &fragmentShaderData);
+	if (!fObj->Compile())
+		fObj->isValid = false;
+
+	ResourceData shaderData;
+	ResourceShaderProgramData programShaderData;
+	shaderData.name = "Billboard";
+	shaderData.internal = true;
+	programShaderData.shaderObjectsUuids.push_back(vObj->GetUuid());
+	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
+	programShaderData.shaderProgramType = ShaderProgramTypes::Standard;
+	ResourceShaderProgram* pShader = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, BILLBOARD_SHADER_PROGRAM_UUID);
+	if (!pShader->Link())
+		pShader->isValid = false;
+	billboardShaderProgram = pShader->GetUuid();
+}
+
+uint ModuleInternalResHandler::CreateCartoonShaderProgram() const
+{
+	ResourceData vertexData;
+	ResourceShaderObjectData vertexShaderData;
+	vertexData.name = "Cartoon Vertex";
+	vertexData.internal = true;
+	vertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
+	vertexShaderData.SetSource(CartoonVertex, strlen(CartoonVertex));
+	ResourceShaderObject* vObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &vertexShaderData);
+	if (!vObj->Compile())
+		vObj->isValid = false;
+
+	ResourceData geometryData;
+	ResourceShaderObjectData geometryShaderData;
+	geometryData.name = "Cartoon Geometry";
+	geometryData.internal = true;
+	geometryShaderData.shaderObjectType = ShaderObjectTypes::GeometryType;
+	geometryShaderData.SetSource(CartoonGeometry, strlen(CartoonGeometry));
+	ResourceShaderObject* gObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, geometryData, &geometryShaderData);
+	if (!gObj->Compile())
+		gObj->isValid = false;
+
+	ResourceData fragmentData;
+	ResourceShaderObjectData fragmentShaderData;
+	fragmentData.name = "Cartoon Fragment";
+	fragmentData.internal = true;
+	fragmentShaderData.shaderObjectType = ShaderObjectTypes::FragmentType;
+	fragmentShaderData.SetSource(CartoonFragment, strlen(CartoonFragment));
+	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, fragmentData, &fragmentShaderData);
+	if (!fObj->Compile())
+		fObj->isValid = false;
+
+	ResourceData shaderData;
+	ResourceShaderProgramData programShaderData;
+	shaderData.name = "Cartoon Shader";
+	shaderData.internal = true;
+	programShaderData.shaderObjectsUuids.push_back(vObj->GetUuid());
+	programShaderData.shaderObjectsUuids.push_back(gObj->GetUuid());
+	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
+	programShaderData.shaderProgramType = ShaderProgramTypes::Standard;
+	ResourceShaderProgram* prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, CARTOON_SHADER_PROGRAM_UUID);
+	if (!prog->Link())
+		prog->isValid = false;
+
+	return prog->GetUuid();
 }
 
 void ModuleInternalResHandler::CreateUIShaderProgram()
@@ -259,7 +385,7 @@ void ModuleInternalResHandler::CreateUIShaderProgram()
 	vertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
 	vertexShaderData.SetSource(uivShader, strlen(uivShader));
 	ResourceShaderObject* vObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &vertexShaderData);
-	if (vObj->Compile())
+	if (!vObj->Compile())
 		vObj->isValid = false;
 	UIVertexShaderObject = vObj->shaderObject;
 
@@ -269,8 +395,8 @@ void ModuleInternalResHandler::CreateUIShaderProgram()
 	fragmentData.internal = true;
 	fragmentShaderData.shaderObjectType = ShaderObjectTypes::FragmentType;
 	fragmentShaderData.SetSource(uifShader, strlen(uifShader));
-	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &fragmentShaderData);
-	if (fObj->Compile())
+	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, fragmentData, &fragmentShaderData);
+	if (!fObj->Compile())
 		fObj->isValid = false;
 	UIFragmentShaderObject = fObj->shaderObject;
 
@@ -282,7 +408,7 @@ void ModuleInternalResHandler::CreateUIShaderProgram()
 	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
 	programShaderData.shaderProgramType = ShaderProgramTypes::UI;
 	ResourceShaderProgram* pShader = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DEFAULT_SHADER_PROGRAM_UI_UUID);
-	if (pShader->Link())
+	if (!pShader->Link())
 		pShader->isValid = false;
 	UIShaderProgram = pShader->shaderProgram;
 }
@@ -302,7 +428,7 @@ void ModuleInternalResHandler::CreateDefaultMaterial()
 		{
 		case Uniforms_Values::Sampler2U_value:
 		{
-			if (strcmp(uniform.common.name, "material.albedo") == 0)
+			if (strcmp(uniform.common.name, "diffuse") == 0)
 			{
 				uniform.sampler2DU.value.uuid = defaultTexture;
 				uniform.sampler2DU.value.id = ((ResourceTexture*)App->res->GetResource(defaultTexture))->GetId();

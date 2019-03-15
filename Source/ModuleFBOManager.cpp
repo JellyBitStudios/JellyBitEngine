@@ -6,6 +6,7 @@
 #include "ResourceMesh.h"
 #include "ResourceShaderProgram.h"
 #include "ModuleInternalResHandler.h"
+#include "Lights.h"
 
 ModuleFBOManager::ModuleFBOManager() {}
 
@@ -13,33 +14,32 @@ ModuleFBOManager::~ModuleFBOManager() {}
 
 bool ModuleFBOManager::Start()
 {
-	LoadGBuffer();
+	LoadGBuffer(App->window->GetWindowWidth(), App->window->GetWindowHeight());
 	return true;
 }
 
 bool ModuleFBOManager::CleanUp()
 {
-	glDeleteFramebuffers(1, &gBuffer);
-	glDeleteRenderbuffers(1, &rboDepth);
-	glDeleteTextures(1, &gPosition);
-	glDeleteTextures(1, &gNormal);
-	glDeleteTextures(1, &gAlbedoSpec);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	UnloadGBuffer();
 	return true;
 }
 
-void ModuleFBOManager::LoadGBuffer()
+void ModuleFBOManager::OnSystemEvent(System_Event event)
+{}
+
+void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 {
 	// DEFERRED SHADING G BUFFER
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 
-	uint width = App->window->GetWindowWidth();
-	uint height = App->window->GetWindowHeight();
 	// - position color buffer
 	glGenTextures(1, &gPosition);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	// Component Alpha is not required for storing Normals or Positions, but we need a floating point frame buffer
+	// and RGB16F is not compatible with most computers (at least mine not)
+	// no F= buffer clamped from 0 to 1. with f components are not clamped
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
@@ -47,7 +47,10 @@ void ModuleFBOManager::LoadGBuffer()
 	// - normal color buffer
 	glGenTextures(1, &gNormal);
 	glBindTexture(GL_TEXTURE_2D, gNormal);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	// Component Alpha is not required for storing Normals or Positions, but we need a floating point frame buffer
+	// and RGB16F is not compatible with most computers (at least mine not)
+	// no F= buffer clamped from 0 to 1. with f components are not clamped
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
@@ -60,9 +63,17 @@ void ModuleFBOManager::LoadGBuffer()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedoSpec, 0);
 
+	// - color + specular color buffer
+	glGenTextures(1, &gDecals);
+	glBindTexture(GL_TEXTURE_2D, gDecals);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gDecals, 0);
+
 	// - tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
-	unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-	glDrawBuffers(3, attachments);
+	unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+	glDrawBuffers(4, attachments);
 
 	// then also add render buffer object as depth buffer and check for completeness.
 	glGenRenderbuffers(1, &rboDepth);
@@ -75,6 +86,24 @@ void ModuleFBOManager::LoadGBuffer()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void ModuleFBOManager::UnloadGBuffer()
+{
+	glDeleteFramebuffers(1, &gBuffer);
+	glDeleteRenderbuffers(1, &rboDepth);
+	glDeleteTextures(1, &gPosition);
+	glDeleteTextures(1, &gNormal);
+	glDeleteTextures(1, &gAlbedoSpec);
+	glDeleteTextures(1, &gDecals);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void ModuleFBOManager::ResizeGBuffer(uint width, uint height)
+{
+	// First set the new width and height and then call this method. GBuffer would be loaded with the new 
+	UnloadGBuffer();
+	LoadGBuffer(width, height);
+}
+
 void ModuleFBOManager::BindGBuffer()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
@@ -85,7 +114,7 @@ void ModuleFBOManager::DrawGBufferToScreen() const
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	ResourceShaderProgram* resProgram;// = (ResourceShaderProgram*)App->res->GetResource(App->resHandler->deferredShaderProgram);
+	ResourceShaderProgram* resProgram = (ResourceShaderProgram*)App->res->GetResource(App->resHandler->deferredShaderProgram);
 	glUseProgram(resProgram->shaderProgram);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
@@ -99,6 +128,12 @@ void ModuleFBOManager::DrawGBufferToScreen() const
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
 	location = glGetUniformLocation(resProgram->shaderProgram, "gAlbedoSpec");
 	glUniform1i(location, 2);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, gDecals);
+	location = glGetUniformLocation(resProgram->shaderProgram, "gDecals");
+	glUniform1i(location, 3);
+
+	App->lights->UseLights(resProgram->shaderProgram);
 
 	const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(App->resHandler->plane);
 
@@ -113,15 +148,15 @@ void ModuleFBOManager::DrawGBufferToScreen() const
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, 0);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	glUseProgram(0);
 }
 
-void ModuleFBOManager::MergeDepthBuffer()
+void ModuleFBOManager::MergeDepthBuffer(uint width, uint height)
 {
-	// Here we write current depth buffer from g buffer to default
+	// Here we write current depth buffer from gbuffer to default
 	// buffer so we can draw in forward rendering as we used to
-	uint width = App->window->GetWindowWidth();
-	uint height = App->window->GetWindowHeight();
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
 	glBlitFramebuffer(
