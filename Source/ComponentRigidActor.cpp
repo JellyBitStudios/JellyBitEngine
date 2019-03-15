@@ -111,7 +111,7 @@ void ComponentRigidActor::UpdateShape(physx::PxShape* shape) const
 			else
 				gActor->detachShape(*gShape);
 		}
-	}	
+	}
 
 	// Attach current shape
 	if (shape == nullptr)
