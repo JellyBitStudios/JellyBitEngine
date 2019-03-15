@@ -8,7 +8,7 @@ class ComponentPlaneCollider : public ComponentCollider
 {
 public:
 
-	ComponentPlaneCollider(GameObject* parent);
+	ComponentPlaneCollider(GameObject* parent, bool include = true);
 	ComponentPlaneCollider(const ComponentPlaneCollider& componentPlaneCollider, GameObject* parent, bool include = true);
 	~ComponentPlaneCollider();
 
