@@ -194,7 +194,8 @@ void ComponentCollider::SetIsTrigger(bool isTrigger)
 	this->isTrigger = isTrigger;
 	if (isTrigger && participateInContactTests)
 		SetParticipateInContactTests(false); // shapes cannot simultaneously be trigger shapes and simulation shapes
-	gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, isTrigger);
+	if (gShape != nullptr)
+		gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, isTrigger);
 }
 
 void ComponentCollider::SetParticipateInContactTests(bool participateInContactTests)
@@ -202,13 +203,15 @@ void ComponentCollider::SetParticipateInContactTests(bool participateInContactTe
 	this->participateInContactTests = participateInContactTests;
 	if (participateInContactTests && isTrigger)
 		SetIsTrigger(false); // shapes cannot simultaneously be trigger shapes and simulation shapes
-	gShape->setFlag(physx::PxShapeFlag::Enum::eSIMULATION_SHAPE, participateInContactTests);
+	if (gShape != nullptr)
+		gShape->setFlag(physx::PxShapeFlag::Enum::eSIMULATION_SHAPE, participateInContactTests);
 }
 
 void ComponentCollider::SetParticipateInSceneQueries(bool participateInSceneQueries)
 {
 	this->participateInSceneQueries = participateInSceneQueries;
-	gShape->setFlag(physx::PxShapeFlag::Enum::eSCENE_QUERY_SHAPE, participateInSceneQueries);
+	if (gShape != nullptr)
+		gShape->setFlag(physx::PxShapeFlag::Enum::eSCENE_QUERY_SHAPE, participateInSceneQueries);
 }
 
 void ComponentCollider::SetCenter(const math::float3& center)
@@ -216,7 +219,8 @@ void ComponentCollider::SetCenter(const math::float3& center)
 	assert(center.IsFinite());
 	this->center = center;
 	physx::PxTransform relativePose(physx::PxVec3(center.x, center.y, center.z));
-	gShape->setLocalPose(relativePose);
+	if (gShape != nullptr)
+		gShape->setLocalPose(relativePose);
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -245,8 +249,7 @@ void ComponentCollider::OnCollisionEnter(Collision& collision)
 			ComponentScript* script = (ComponentScript*)scripts[i];
 			script->OnCollisionEnter(collision);
 		}
-	}
-		
+	}		
 }
 
 void ComponentCollider::OnCollisionStay(Collision& collision)

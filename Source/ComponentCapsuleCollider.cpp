@@ -26,7 +26,8 @@ ComponentCapsuleCollider::ComponentCapsuleCollider(GameObject* parent) : Compone
 
 ComponentCapsuleCollider::ComponentCapsuleCollider(const ComponentCapsuleCollider& componentCapsuleCollider, GameObject* parent, bool include) : ComponentCollider(componentCapsuleCollider, parent, ComponentTypes::CapsuleColliderComponent, include)
 {
-	EncloseGeometry();
+	if (include)
+		EncloseGeometry();
 
 	colliderType = componentCapsuleCollider.colliderType;
 
@@ -246,13 +247,15 @@ void ComponentCapsuleCollider::SetCenter(const math::float3& center)
 void ComponentCapsuleCollider::SetRadius(float radius)
 {
 	this->radius = radius;
-	gShape->setGeometry(physx::PxCapsuleGeometry(radius, halfHeight));
+	if (gShape != nullptr)
+		gShape->setGeometry(physx::PxCapsuleGeometry(radius, halfHeight));
 }
 
 void ComponentCapsuleCollider::SetHalfHeight(float halfHeight)
 {
 	this->halfHeight = halfHeight;
-	gShape->setGeometry(physx::PxCapsuleGeometry(radius, halfHeight));
+	if (gShape != nullptr)
+		gShape->setGeometry(physx::PxCapsuleGeometry(radius, halfHeight));
 }
 
 void ComponentCapsuleCollider::SetDirection(CapsuleDirection direction)
@@ -263,21 +266,24 @@ void ComponentCapsuleCollider::SetDirection(CapsuleDirection direction)
 	case CapsuleDirection::CapsuleDirectionXAxis:
 	{
 		physx::PxTransform relativePose(physx::PxVec3(center.x, center.y, center.z));
-		gShape->setLocalPose(relativePose);
+		if (gShape != nullptr)
+			gShape->setLocalPose(relativePose);
 	}
 	break;
 	case CapsuleDirection::CapsuleDirectionYAxis:
 	{
 		math::float3 dir = math::float3(0.0f, 0.0f, 1.0f);
 		physx::PxTransform relativePose(physx::PxVec3(center.x, center.y, center.z), physx::PxQuat(physx::PxHalfPi, physx::PxVec3(dir.x, dir.y, dir.z)));
-		gShape->setLocalPose(relativePose);
+		if (gShape != nullptr)
+			gShape->setLocalPose(relativePose);
 	}
 	break;
 	case CapsuleDirection::CapsuleDirectionZAxis:
 	{
 		math::float3 dir = math::float3(0.0f, 1.0f, 0.0f);
 		physx::PxTransform relativePose(physx::PxVec3(center.x, center.y, center.z), physx::PxQuat(physx::PxHalfPi, physx::PxVec3(dir.x, dir.y, dir.z)));
-		gShape->setLocalPose(relativePose);
+		if (gShape != nullptr)
+			gShape->setLocalPose(relativePose);
 	}
 	break;
 	}
@@ -288,6 +294,7 @@ void ComponentCapsuleCollider::SetDirection(CapsuleDirection direction)
 physx::PxCapsuleGeometry ComponentCapsuleCollider::GetCapsuleGeometry() const
 {
 	physx::PxCapsuleGeometry capsuleGeometry;
-	gShape->getCapsuleGeometry(capsuleGeometry);
+	if (gShape != nullptr)
+		gShape->getCapsuleGeometry(capsuleGeometry);
 	return capsuleGeometry;
 }

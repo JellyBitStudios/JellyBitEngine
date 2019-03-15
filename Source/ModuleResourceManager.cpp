@@ -424,6 +424,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 					meshData.meshImportSettings = meshImportSettings;
 					strcpy((char*)meshData.meshImportSettings.modelPath, file);
 					App->sceneImporter->Load(mesh_files[i].data(), data, meshData);
+					meshData.meshImportSettings.adjacency = true;
 
 					resource = CreateResource(ResourceTypes::MeshResource, data, &meshData, uuid);
 					if (resource != nullptr)
@@ -922,6 +923,7 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 			std::vector<uint> animation_uuids;
 			int64_t lastModTime = 0;
 			ResourceMesh::ReadMeta(metaFile, lastModTime, meshData.meshImportSettings, mesh_uuids, bones_uuids, animation_uuids);
+			meshData.meshImportSettings.adjacency = true;
 		}
 
 		resource = CreateResource(ResourceTypes::MeshResource, data, &meshData, uuid);

@@ -32,6 +32,10 @@ ComponentAnimator::ComponentAnimator(const ComponentAnimator & component_anim, G
 {
 	this->SetResourceAnimator(component_anim.res);
 	this->SetResourceAvatar(component_anim.res_avatar);
+	for (uint i = 0u; i < component_anim.res_animations.size(); i++)
+	{
+		this->SetResourceAnimation(component_anim.res_animations.at(i));
+	}
 	//App->animation->SetAnimationGos((ResourceAnimation*)App->res->GetResource(res));
 }
 

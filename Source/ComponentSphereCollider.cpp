@@ -28,7 +28,8 @@ ComponentSphereCollider::ComponentSphereCollider(GameObject* parent) : Component
 
 ComponentSphereCollider::ComponentSphereCollider(const ComponentSphereCollider& componentSphereCollider, GameObject* parent, bool include) : ComponentCollider(componentSphereCollider, parent, ComponentTypes::SphereColliderComponent, include)
 {
-	EncloseGeometry();
+	if (include)
+		EncloseGeometry();
 
 	colliderType = componentSphereCollider.colliderType;
 
@@ -143,7 +144,8 @@ void ComponentSphereCollider::RecalculateShape()
 void ComponentSphereCollider::SetRadius(float radius)
 {
 	this->radius = radius;
-	gShape->setGeometry(physx::PxSphereGeometry(radius));
+	if (gShape != nullptr)
+		gShape->setGeometry(physx::PxSphereGeometry(radius));
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -151,6 +153,7 @@ void ComponentSphereCollider::SetRadius(float radius)
 physx::PxSphereGeometry ComponentSphereCollider::GetSphereGeometry() const
 {
 	physx::PxSphereGeometry sphereGeometry;
-	gShape->getSphereGeometry(sphereGeometry);
+	if (gShape != nullptr)
+		gShape->getSphereGeometry(sphereGeometry);
 	return sphereGeometry;
 }

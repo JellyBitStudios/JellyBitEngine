@@ -26,7 +26,8 @@ ComponentBoxCollider::ComponentBoxCollider(GameObject* parent) : ComponentCollid
 
 ComponentBoxCollider::ComponentBoxCollider(const ComponentBoxCollider& componentBoxCollider, GameObject* parent, bool include) : ComponentCollider(componentBoxCollider, parent, ComponentTypes::BoxColliderComponent, include)
 {
-	EncloseGeometry();
+	if (include)
+		EncloseGeometry();
 
 	colliderType = componentBoxCollider.colliderType;
 

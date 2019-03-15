@@ -47,25 +47,28 @@ ComponentRigidStatic::ComponentRigidStatic(const ComponentRigidStatic& component
 {
 	physx::PxShape* gShape = nullptr;
 
-	if (parent->cmp_collider != nullptr)
-		gShape = parent->cmp_collider->GetShape();
-	else if (parent->boundingBox.IsFinite())
-		gShape = App->physics->CreateShape(physx::PxBoxGeometry(parent->boundingBox.HalfSize().x, parent->boundingBox.HalfSize().y, parent->boundingBox.HalfSize().z), *App->physics->GetDefaultMaterial());
-	else
-		gShape = App->physics->CreateShape(physx::PxBoxGeometry(PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE), *App->physics->GetDefaultMaterial());
-	assert(gShape != nullptr);
-
-	gActor = App->physics->CreateRigidStatic(physx::PxTransform(physx::PxIDENTITY()), *gShape);
-	assert(gActor != nullptr);
 	if (include)
+	{
+		if (parent->cmp_collider != nullptr)
+			gShape = parent->cmp_collider->GetShape();
+		else if (parent->boundingBox.IsFinite())
+			gShape = App->physics->CreateShape(physx::PxBoxGeometry(parent->boundingBox.HalfSize().x, parent->boundingBox.HalfSize().y, parent->boundingBox.HalfSize().z), *App->physics->GetDefaultMaterial());
+		else
+			gShape = App->physics->CreateShape(physx::PxBoxGeometry(PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE), *App->physics->GetDefaultMaterial());
+		assert(gShape != nullptr);
+
+		gActor = App->physics->CreateRigidStatic(physx::PxTransform(physx::PxIDENTITY()), *gShape);
+		assert(gActor != nullptr);
+
 		App->physics->AddActor(*gActor);
 
+		gActor->setActorFlag(physx::PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
+
+		math::float4x4 globalMatrix = parent->transform->GetGlobalMatrix();
+		UpdateTransform(globalMatrix);
+	}
+
 	rigidActorType = componentRigidStatic.rigidActorType;
-
-	gActor->setActorFlag(physx::PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
-
-	math::float4x4 globalMatrix = parent->transform->GetGlobalMatrix();
-	UpdateTransform(globalMatrix);
 
 	// -----
 

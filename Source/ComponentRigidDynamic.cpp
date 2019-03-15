@@ -69,27 +69,30 @@ ComponentRigidDynamic::ComponentRigidDynamic(const ComponentRigidDynamic& compon
 {
 	density = componentRigidDynamic.density;
 
-	physx::PxShape* gShape = nullptr;
-
-	if (componentRigidDynamic.parent->cmp_collider != nullptr)
-		gShape = componentRigidDynamic.parent->cmp_collider->GetShape();
-	else if (componentRigidDynamic.parent->boundingBox.IsFinite())
-		gShape = App->physics->CreateShape(physx::PxBoxGeometry(componentRigidDynamic.parent->boundingBox.HalfSize().x, componentRigidDynamic.parent->boundingBox.HalfSize().y, componentRigidDynamic.parent->boundingBox.HalfSize().z), *App->physics->GetDefaultMaterial());
-	else
-		gShape = App->physics->CreateShape(physx::PxBoxGeometry(PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE), *App->physics->GetDefaultMaterial());
-	assert(gShape != nullptr);
-
-	gActor = App->physics->CreateRigidDynamic(physx::PxTransform(physx::PxIDENTITY()), *gShape, density, isKinematic);
-	assert(gActor != nullptr);
 	if (include)
+	{
+		physx::PxShape* gShape = nullptr;
+
+		if (componentRigidDynamic.parent->cmp_collider != nullptr)
+			gShape = componentRigidDynamic.parent->cmp_collider->GetShape();
+		else if (componentRigidDynamic.parent->boundingBox.IsFinite())
+			gShape = App->physics->CreateShape(physx::PxBoxGeometry(componentRigidDynamic.parent->boundingBox.HalfSize().x, componentRigidDynamic.parent->boundingBox.HalfSize().y, componentRigidDynamic.parent->boundingBox.HalfSize().z), *App->physics->GetDefaultMaterial());
+		else
+			gShape = App->physics->CreateShape(physx::PxBoxGeometry(PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE), *App->physics->GetDefaultMaterial());
+		assert(gShape != nullptr);
+
+		gActor = App->physics->CreateRigidDynamic(physx::PxTransform(physx::PxIDENTITY()), *gShape, density, isKinematic);
+		assert(gActor != nullptr);
+
 		App->physics->AddActor(*gActor);
 
+		gActor->setActorFlag(physx::PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
+
+		math::float4x4 globalMatrix = parent->transform->GetGlobalMatrix();
+		UpdateTransform(globalMatrix);
+	}
+
 	rigidActorType = componentRigidDynamic.rigidActorType;
-
-	gActor->setActorFlag(physx::PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
-
-	math::float4x4 globalMatrix = parent->transform->GetGlobalMatrix();
-	UpdateTransform(globalMatrix);
 
 	// -----
 
@@ -382,14 +385,16 @@ void ComponentRigidDynamic::SetMass(float mass)
 	// mass = 0.0f equals infinite mass
 	// infinite mass: the linear velocity of the body cannot be changed by any constraints
 	this->mass = mass;
-	gActor->is<physx::PxRigidDynamic>()->setMass(mass);
+	if (gActor != nullptr)
+		gActor->is<physx::PxRigidDynamic>()->setMass(mass);
 }
 
 void ComponentRigidDynamic::SetCMass(const math::float3& cMass)
 {
 	assert(cMass.IsFinite());
 	this->cMass = cMass;
-	gActor->is<physx::PxRigidDynamic>()->setCMassLocalPose(physx::PxTransform(physx::PxVec3(cMass.x, cMass.y, cMass.z)));
+	if (gActor != nullptr)
+		gActor->is<physx::PxRigidDynamic>()->setCMassLocalPose(physx::PxTransform(physx::PxVec3(cMass.x, cMass.y, cMass.z)));
 }
 
 void ComponentRigidDynamic::SetInertia(const math::float3& inertia)
@@ -397,31 +402,36 @@ void ComponentRigidDynamic::SetInertia(const math::float3& inertia)
 	assert(inertia.IsFinite());
 	// inertia = math::float3(0.0f, 0.0f, 0.0f) equals infinite inertia
 	this->inertia = inertia;
-	gActor->is<physx::PxRigidDynamic>()->setMassSpaceInertiaTensor(physx::PxVec3(inertia.x, inertia.y, inertia.z));
+	if (gActor != nullptr)
+		gActor->is<physx::PxRigidDynamic>()->setMassSpaceInertiaTensor(physx::PxVec3(inertia.x, inertia.y, inertia.z));
 }
 
 void ComponentRigidDynamic::SetLinearDamping(float linearDamping)
 {
 	this->linearDamping = linearDamping;
-	gActor->is<physx::PxRigidDynamic>()->setLinearDamping(linearDamping);
+	if (gActor != nullptr)
+		gActor->is<physx::PxRigidDynamic>()->setLinearDamping(linearDamping);
 }
 
 void ComponentRigidDynamic::SetAngularDamping(float angularDamping)
 {
 	this->angularDamping = angularDamping;
-	gActor->is<physx::PxRigidDynamic>()->setAngularDamping(angularDamping);
+	if (gActor != nullptr)
+		gActor->is<physx::PxRigidDynamic>()->setAngularDamping(angularDamping);
 }
 
 void ComponentRigidDynamic::SetMaxLinearVelocity(float maxLinearVelocity)
 {
 	this->maxLinearVelocity = maxLinearVelocity;
-	gActor->is<physx::PxRigidDynamic>()->setMaxLinearVelocity(maxLinearVelocity);
+	if (gActor != nullptr)
+		gActor->is<physx::PxRigidDynamic>()->setMaxLinearVelocity(maxLinearVelocity);
 }
 
 void ComponentRigidDynamic::SetMaxAngularVelocity(float maxAngularVelocity)
 {
 	this->maxAngularVelocity = maxAngularVelocity;
-	gActor->is<physx::PxRigidDynamic>()->setMaxAngularVelocity(maxAngularVelocity);
+	if (gActor != nullptr)
+		gActor->is<physx::PxRigidDynamic>()->setMaxAngularVelocity(maxAngularVelocity);
 }
 
 void ComponentRigidDynamic::FreezePosition(bool x, bool y, bool z)
@@ -438,7 +448,8 @@ void ComponentRigidDynamic::FreezePosition(bool x, bool y, bool z)
 	if (z)
 		flags |= physx::PxRigidDynamicLockFlag::eLOCK_LINEAR_Z;
 
-	gActor->is<physx::PxRigidDynamic>()->setRigidDynamicLockFlags(flags);
+	if (gActor != nullptr)
+		gActor->is<physx::PxRigidDynamic>()->setRigidDynamicLockFlags(flags);
 }
 
 void ComponentRigidDynamic::FreezeRotation(bool x, bool y, bool z)
@@ -455,13 +466,15 @@ void ComponentRigidDynamic::FreezeRotation(bool x, bool y, bool z)
 	if (z)
 		flags |= physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z;
 
-	gActor->is<physx::PxRigidDynamic>()->setRigidDynamicLockFlags(flags);
+	if (gActor != nullptr)
+		gActor->is<physx::PxRigidDynamic>()->setRigidDynamicLockFlags(flags);
 }
 
 void ComponentRigidDynamic::SetIsKinematic(bool isKinematic)
 {
 	this->isKinematic = isKinematic;
-	gActor->is<physx::PxRigidBody>()->setRigidBodyFlag(physx::PxRigidBodyFlag::Enum::eKINEMATIC, isKinematic);
+	if (gActor != nullptr)
+		gActor->is<physx::PxRigidBody>()->setRigidBodyFlag(physx::PxRigidBodyFlag::Enum::eKINEMATIC, isKinematic);
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -469,38 +482,42 @@ void ComponentRigidDynamic::SetIsKinematic(bool isKinematic)
 void ComponentRigidDynamic::SetLinearVelocity(math::float3& linearVelocity)
 {
 	assert(linearVelocity.IsFinite());
-	gActor->is<physx::PxRigidDynamic>()->setLinearVelocity(physx::PxVec3(linearVelocity.x, linearVelocity.y, linearVelocity.z));
+	if (gActor != nullptr)
+		gActor->is<physx::PxRigidDynamic>()->setLinearVelocity(physx::PxVec3(linearVelocity.x, linearVelocity.y, linearVelocity.z));
 }
 
 void ComponentRigidDynamic::SetAngularVelocity(math::float3& angularVelocity)
 {
 	assert(angularVelocity.IsFinite());
-	gActor->is<physx::PxRigidDynamic>()->setAngularVelocity(physx::PxVec3(angularVelocity.x, angularVelocity.y, angularVelocity.z));
+	if (gActor != nullptr)
+		gActor->is<physx::PxRigidDynamic>()->setAngularVelocity(physx::PxVec3(angularVelocity.x, angularVelocity.y, angularVelocity.z));
 }
 
 void ComponentRigidDynamic::AddForce(math::float3& force, physx::PxForceMode::Enum forceMode)
 {
 	assert(force.IsFinite());
 	// f = m*a (force = mass * acceleration)
-
-	gActor->is<physx::PxRigidDynamic>()->addForce(physx::PxVec3(force.x, force.y, force.z), forceMode);
+	if (gActor != nullptr)
+		gActor->is<physx::PxRigidDynamic>()->addForce(physx::PxVec3(force.x, force.y, force.z), forceMode);
 }
 
 void ComponentRigidDynamic::ClearForce() const
 {
-	gActor->is<physx::PxRigidDynamic>()->clearForce();
+	if (gActor != nullptr)
+		gActor->is<physx::PxRigidDynamic>()->clearForce();
 }
 
 void ComponentRigidDynamic::AddTorque(math::float3& torque, physx::PxForceMode::Enum forceMode)
 {
 	assert(torque.IsFinite());
-
-	gActor->is<physx::PxRigidDynamic>()->addTorque(physx::PxVec3(torque.x, torque.y, torque.z), forceMode);
+	if (gActor != nullptr)
+		gActor->is<physx::PxRigidDynamic>()->addTorque(physx::PxVec3(torque.x, torque.y, torque.z), forceMode);
 }
 
 void ComponentRigidDynamic::ClearTorque() const
 {
-	gActor->is<physx::PxRigidDynamic>()->clearTorque();
+	if (gActor != nullptr)
+		gActor->is<physx::PxRigidDynamic>()->clearTorque();
 }
 
 bool ComponentRigidDynamic::IsSleeping() const
