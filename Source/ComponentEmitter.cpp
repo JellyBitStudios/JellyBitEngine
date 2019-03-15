@@ -65,6 +65,8 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 	checkSizeOverTime = componentEmitter.checkSizeOverTime;
 	checkAngularVelocity = componentEmitter.checkAngularVelocity;
 
+	localSpace = componentEmitter.localSpace;
+
 	particleAnim.isParticleAnimated = componentEmitter.particleAnim.isParticleAnimated;
 	if (particleAnim.isParticleAnimated)
 	{
@@ -799,7 +801,8 @@ uint ComponentEmitter::GetInternalSerializationBytes()
 		+ sizeof(uint)/*size of particleColor list*/ + sizeof(boxCreation) + sizeof(burstType) + sizeof(float) * 2 //Circle and Sphere rad
 		+ sizeof(gravity) + sizeof(posDifAABB) + sizeof(loop) + sizeof(burst) + sizeof(startOnPlay)
 		+ sizeof(minPart) + sizeof(maxPart) + sizeof(char) * burstTypeName.size() + sizeof(uint)//Size of name;
-		+ sizeof(math::float2) * 7 + sizeof(math::float3) * 2 + sizeof(bool) * 2 + sizeOfList;//Bytes of all Start Values Struct;
+		+ sizeof(math::float2) * 7 + sizeof(math::float3) * 2 + sizeof(bool) * 2 + sizeOfList//Bytes of all Start Values Struct
+		+ sizeof(localSpace);		//TODO PROGRAMER -> Don't sum localSpace before load
 }
 
 math::float3 ComponentEmitter::GetPos()
@@ -862,6 +865,9 @@ void ComponentEmitter::OnInternalSave(char *& cursor)
 	cursor += bytes;
 
 	memcpy(cursor, &startOnPlay, bytes);
+	cursor += bytes;
+
+	memcpy(cursor, &localSpace, bytes);
 	cursor += bytes;
 
 	bytes = sizeof(int);
@@ -975,6 +981,10 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	cursor += bytes;
 
 	memcpy(&startOnPlay, cursor, bytes);
+	cursor += bytes;
+
+	//TODO PROGRAMMER: Coment this two lines then save scene and Discomment it
+	memcpy(&localSpace, cursor, bytes);
 	cursor += bytes;
 
 	bytes = sizeof(int);
