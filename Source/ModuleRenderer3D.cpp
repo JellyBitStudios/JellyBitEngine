@@ -194,20 +194,24 @@ update_status ModuleRenderer3D::PostUpdate()
 			if (cameraComponents[i]->IsActive())
 				cameraComponents[i]->UpdateTransform();
 		}
+		/*
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
 			if (projectorComponents[i]->IsActive())
 				projectorComponents[i]->UpdateTransform();
 		}
+		*/
 
 		if (currentCamera->HasFrustumCulling())
 			FrustumCulling();
 
+		/*
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
 			if (projectorComponents[i]->GetParent()->IsActive() && projectorComponents[i]->IsActive())
 				DrawProjectors(projectorComponents[i]);
 		}
+		*/
 		for (uint i = 0; i < meshComponents.size(); ++i)
 		{
 			if (meshComponents[i]->GetParent()->IsActive() && meshComponents[i]->IsActive() 
@@ -676,8 +680,6 @@ void ModuleRenderer3D::FrustumCulling() const
 #include "ComponentBone.h"
 #include "ResourceBone.h"
 #include "ResourceAvatar.h"
-
-#define MAX_BONES 1000
 
 void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 {
