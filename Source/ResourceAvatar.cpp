@@ -377,27 +377,17 @@ bool ResourceAvatar::GenerateLibraryFiles() const
 	// 1. Copy meta
 	if (App->fs->Exists(metaFile))
 	{
-		// Read the info of the meta
-		char* buffer;
-		uint size = App->fs->Load(metaFile, &buffer);
+		std::string outputFile;
+		uint size = App->fs->Copy(metaFile, DIR_LIBRARY_AVATARS, outputFile);
+
 		if (size > 0)
 		{
-			// Create a new name for the meta
-			std::string extension = metaFile;
+			// 2. Copy avatar
+			outputFile.clear();
+			uint size = App->fs->Copy(data.file.data(), DIR_LIBRARY_AVATARS, outputFile);
 
-			uint found = extension.find_first_of(".");
-			if (found != std::string::npos)
-				extension = extension.substr(found, extension.size());
-
-			char newMetaFile[DEFAULT_BUF_SIZE];
-			sprintf_s(newMetaFile, "%s/%u%s", DIR_LIBRARY_AVATARS, uuid, extension.data());
-
-			// Save the new meta (info + new name)
-			size = App->fs->Save(newMetaFile, buffer, size);
 			if (size > 0)
 				return true;
-
-			RELEASE_ARRAY(buffer);
 		}
 	}
 
