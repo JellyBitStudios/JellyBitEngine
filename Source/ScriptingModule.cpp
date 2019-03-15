@@ -2316,7 +2316,7 @@ void PlayerPrefsSetNumber(MonoString* key, double value)
 double PlayerPrefsGetNumber(MonoString* key)
 {
 	if (!key)
-		return;
+		return 0.0f;
 
 	char* keyCpp = mono_string_to_utf8(key);
 	double value = json_object_get_number(App->scripting->playerPrefsOBJ, keyCpp);
@@ -2342,7 +2342,7 @@ void PlayerPrefsSetString(MonoString* key, MonoString* string)
 MonoString* PlayerPrefsGetString(MonoString* key)
 {
 	if (!key)
-		return;
+		return nullptr;
 
 	char* keyCpp = mono_string_to_utf8(key);
 	char* stringCpp = (char*)json_object_get_string(App->scripting->playerPrefsOBJ, keyCpp);
@@ -2370,7 +2370,7 @@ void PlayerPrefsSetBoolean(MonoString* key, bool boolean)
 bool PlayerPrefsGetBoolean(MonoString* key)
 {
 	if (!key)
-		return;
+		return false;
 
 	char* keyCpp = mono_string_to_utf8(key);
 	bool ret = json_object_get_boolean(App->scripting->playerPrefsOBJ, keyCpp);
@@ -2382,7 +2382,7 @@ bool PlayerPrefsGetBoolean(MonoString* key)
 bool PlayerPrefsHasKey(MonoString* key)
 {
 	if (!key)
-		return;
+		return false;
 
 	char* keyCpp = mono_string_to_utf8(key);
 
