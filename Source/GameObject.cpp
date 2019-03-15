@@ -613,27 +613,27 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		break;
 	case ComponentTypes::RigidStaticComponent:
 		assert(cmp_rigidActor == nullptr);
-		newComponent = cmp_rigidActor = new ComponentRigidStatic(this);
+		newComponent = cmp_rigidActor = new ComponentRigidStatic(this, includeInModules);
 		break;
 	case ComponentTypes::RigidDynamicComponent:
 		assert(cmp_rigidActor == nullptr);
-		newComponent = cmp_rigidActor = new ComponentRigidDynamic(this);
+		newComponent = cmp_rigidActor = new ComponentRigidDynamic(this, includeInModules);
 		break;
 	case ComponentTypes::BoxColliderComponent:
 		assert(cmp_collider == nullptr);
-		newComponent = cmp_collider = new ComponentBoxCollider(this);
+		newComponent = cmp_collider = new ComponentBoxCollider(this, includeInModules);
 		break;
 	case ComponentTypes::SphereColliderComponent:
 		assert(cmp_collider == nullptr);
-		newComponent = cmp_collider = new ComponentSphereCollider(this);
+		newComponent = cmp_collider = new ComponentSphereCollider(this, includeInModules);
 		break;
 	case ComponentTypes::CapsuleColliderComponent:
 		assert(cmp_collider == nullptr);
-		newComponent = cmp_collider = new ComponentCapsuleCollider(this);
+		newComponent = cmp_collider = new ComponentCapsuleCollider(this, includeInModules);
 		break;
 	case ComponentTypes::PlaneColliderComponent:
 		assert(cmp_collider == nullptr);
-		newComponent = cmp_collider = new ComponentPlaneCollider(this);
+		newComponent = cmp_collider = new ComponentPlaneCollider(this, includeInModules);
 		break;
 	case ComponentTypes::ScriptComponent:
 	{
