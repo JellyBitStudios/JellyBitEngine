@@ -76,6 +76,7 @@ private:
 	math::float4 currentColor = math::float4::one;
 
 	ParticleTrans transform;
+	math::float3 _movement = math::float3::zero;
 
 	float rotation = 0.0f;
 	float angle = 0.0f;
