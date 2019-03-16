@@ -63,6 +63,7 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 {
 	strcpy_s(name, DEFAULT_BUF_SIZE, gameObject.name);
 
+	originalBoundingBox = gameObject.originalBoundingBox;
 	boundingBox = gameObject.boundingBox;
 
 	isActive = gameObject.isActive;
@@ -72,6 +73,7 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 	layer = gameObject.layer;
 
 	uuid = App->GenerateRandomNumber();
+
 
 	for (int i = 0; i < gameObject.components.size(); ++i)
 	{
