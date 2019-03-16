@@ -117,12 +117,18 @@ void PanelInspector::ShowGameObjectInspector() const
 
 	ImGui::PushItemWidth(100.0f);
 	ImGuiInputTextFlags inputFlag = ImGuiInputTextFlags_EnterReturnsTrue;
-	if (ImGui::InputText("##objName", objName, IM_ARRAYSIZE(objName), inputFlag))
+
+	if (std::strcmp(objName, "Canvas") == 0)
+		ImGui::Text("Canvas");
+	else
 	{
-		if (std::strcmp(objName, "Canvas") != 0)
-			gameObject->SetName(objName);
-		else
-			CONSOLE_LOG(LogTypes::Warning, "Canvas is a reserved name.");
+		if (ImGui::InputText("##objName", objName, IM_ARRAYSIZE(objName), inputFlag))
+		{
+			if (std::strcmp(objName, "Canvas") != 0)
+				gameObject->SetName(objName);
+			else
+				CONSOLE_LOG(LogTypes::Warning, "Canvas is a reserved name.");
+		}
 	}
 	ImGui::PopItemWidth();
 
