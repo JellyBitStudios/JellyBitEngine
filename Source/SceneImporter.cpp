@@ -670,18 +670,17 @@ void SceneImporter::ImportAnimations(const aiScene * scene, GameObject* rootBone
 
 		if (rootBone)
 		{
-			ComponentAnimation* anim_co = (ComponentAnimation*)rootBone->AddComponent(ComponentTypes::AnimationComponent);
-
+			uint res_uuid = 0u;
 			GameObject* go = rootBone;
 			if (forcedUuids.size() > 0)
 			{
-				go->cmp_animation->res = forcedUuids.front();
+				res_uuid = forcedUuids.front();
 				forcedUuids.erase(forcedUuids.begin());
 			}
 			else
-				go->cmp_animation->res = App->GenerateRandomNumber();
+				res_uuid = App->GenerateRandomNumber();
 
-			std::string outputFile = std::to_string(go->cmp_animation->res);
+			std::string outputFile = std::to_string(res_uuid);
 
 			ResourceData data;
 			data.name = outputFile;
