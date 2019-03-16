@@ -62,11 +62,14 @@ void ModuleUI::DrawCanvas()
 	if (depthTest) glEnable(GL_DEPTH_TEST);
 	if (cullFace) glEnable(GL_CULL_FACE);
 	if (lighting) glEnable(GL_LIGHTING);
+	if (!blend) glDisable(GL_BLEND);
+
 }
 
 void ModuleUI::DrawWorldCanvas()
 {
 	UpdateRenderStates();
+	if (!blend) glEnable(GL_BLEND);
 	if (lighting) glDisable(GL_LIGHTING);
 
 	for (std::list<Component*>::iterator iteratorUI = componentsWorldRendererUI.begin(); iteratorUI != componentsWorldRendererUI.end(); ++iteratorUI)
@@ -361,6 +364,9 @@ void ModuleUI::UpdateRenderStates()
 
 	capability = GL_LIGHTING;
 	lighting = App->renderer3D->GetCapabilityState(capability);
+
+	capability = GL_BLEND;
+	blend = App->renderer3D->GetCapabilityState(capability);
 }
 
 bool ModuleUI::IsUIHovered()
