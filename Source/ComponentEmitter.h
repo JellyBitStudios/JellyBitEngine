@@ -228,6 +228,9 @@ private:
 	uint nameLenght;
 	//---------------------------------------
 
+	//Particle always in GO pos or particle ignore their GO when spawned
 	bool localSpace = false;
+
+	bool isPlaying = false;
 };
 #endif // !__Emitter_H__
