@@ -754,6 +754,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 			location = glGetUniformLocation(shader, boneName);
 			glUniformMatrix4fv(location, 1, GL_TRUE, boneTransform.ptr());
 		}
+		
 	}
 
 	// 3. Unknown mesh uniforms
@@ -778,6 +779,18 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	{
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	if (animate)
+	{
+		for (uint i = 0; i < 150; ++i)
+		{
+			math::float4x4 boneTransform = math::float4x4::identity;
+
+			sprintf_s(boneName, "bones[%u]", i);
+			location = glGetUniformLocation(shader, boneName);
+			glUniformMatrix4fv(location, 1, GL_FALSE, boneTransform.ptr());
+		}
 	}
 
 	glUseProgram(0);
