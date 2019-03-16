@@ -442,16 +442,19 @@ bool ModuleUI::MouseInScreen()
 
 		for (GameObject* go_rect : gos)
 		{
-			uint* rect = ((ComponentRectTransform*)go_rect->GetComponent(ComponentTypes::RectTransformComponent))->GetRect();
-
-			if (rect)
+			if (go_rect->IsActive())
 			{
-				uint mouseX = App->input->GetMouseX();
-				uint mouseY = App->input->GetMouseY();
+				uint* rect = ((ComponentRectTransform*)go_rect->GetComponent(ComponentTypes::RectTransformComponent))->GetRect();
 
-				if (mouseX > rect[ComponentRectTransform::Rect::X] && mouseX < rect[ComponentRectTransform::Rect::X] + rect[ComponentRectTransform::Rect::XDIST]
-					&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST])
-					return true;
+				if (rect)
+				{
+					uint mouseX = App->input->GetMouseX();
+					uint mouseY = App->input->GetMouseY();
+
+					if (mouseX > rect[ComponentRectTransform::Rect::X] && mouseX < rect[ComponentRectTransform::Rect::X] + rect[ComponentRectTransform::Rect::XDIST]
+						&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST])
+						return true;
+				}
 			}
 		}
 	}
