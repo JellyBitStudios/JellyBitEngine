@@ -124,7 +124,7 @@ void ComponentSphereCollider::EncloseGeometry()
 		radius = halfSize.Length();
 	}
 
-	if (gShape != nullptr)
+	//if (gShape != nullptr)
 		RecalculateShape();
 }
 

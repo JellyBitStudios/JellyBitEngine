@@ -802,7 +802,7 @@ uint ComponentEmitter::GetInternalSerializationBytes()
 		+ sizeof(gravity) + sizeof(posDifAABB) + sizeof(loop) + sizeof(burst) + sizeof(startOnPlay)
 		+ sizeof(minPart) + sizeof(maxPart) + sizeof(char) * burstTypeName.size() + sizeof(uint)//Size of name;
 		+ sizeof(math::float2) * 7 + sizeof(math::float3) * 2 + sizeof(bool) * 2 + sizeOfList//Bytes of all Start Values Struct
-		+ sizeof(localSpace);		//TODO PROGRAMER -> Don't sum localSpace before load
+		/*+ sizeof(localSpace)*/;		//TODO PROGRAMER -> Don't sum localSpace before load
 }
 
 math::float3 ComponentEmitter::GetPos()
@@ -867,8 +867,8 @@ void ComponentEmitter::OnInternalSave(char *& cursor)
 	memcpy(cursor, &startOnPlay, bytes);
 	cursor += bytes;
 
-	memcpy(cursor, &localSpace, bytes);
-	cursor += bytes;
+	/*memcpy(cursor, &localSpace, bytes);
+	cursor += bytes;*/
 
 	bytes = sizeof(int);
 	memcpy(cursor, &rateOverTime, bytes);
@@ -984,8 +984,8 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	cursor += bytes;
 
 	//TODO PROGRAMMER: Coment this two lines then save scene and Discomment it
-	memcpy(&localSpace, cursor, bytes);
-	cursor += bytes;
+	/*memcpy(&localSpace, cursor, bytes);
+	cursor += bytes;*/
 
 	bytes = sizeof(int);
 	memcpy(&rateOverTime, cursor, bytes);

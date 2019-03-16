@@ -1910,7 +1910,7 @@ uint LayerToBit(MonoString* layerName)
 
 bool Raycast(MonoArray* origin, MonoArray* direction, MonoObject** hitInfo, float maxDistance, uint filterMask, SceneQueryFlags sceneQueryFlags)
 {
-	if (!origin || !direction || !hitInfo || !*hitInfo)
+	if (!origin || !direction)
 		return false;
 
 	math::float3 originCpp{mono_array_get(origin, float, 0), mono_array_get(origin, float, 1), mono_array_get(origin, float, 2)};

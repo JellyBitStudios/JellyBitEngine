@@ -432,6 +432,8 @@ GameObject* ModuleGOs::DeSerializeToNode(char*& buffer, size_t sizeBuffer, bool 
 
 bool ModuleGOs::LoadScene(char*& buffer, size_t sizeBuffer, bool navmesh)
 {
+	App->physics;
+
 	char* cursor = buffer;
 	size_t bytes = sizeof(uint);
 	uint totalGO;

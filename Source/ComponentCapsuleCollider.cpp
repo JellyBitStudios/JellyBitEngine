@@ -179,7 +179,7 @@ void ComponentCapsuleCollider::EncloseGeometry()
 		}
 	}
 
-	if (gShape != nullptr)
+	//if (gShape != nullptr)
 		RecalculateShape();
 }
 

@@ -129,7 +129,7 @@ void ComponentPlaneCollider::OnInternalLoad(char*& cursor)
 
 void ComponentPlaneCollider::EncloseGeometry()
 {
-	if (gShape != nullptr)
+	//if (gShape != nullptr)
 		RecalculateShape();
 }
 
