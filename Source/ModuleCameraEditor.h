@@ -23,6 +23,7 @@ public:
 	bool Init(JSON_Object* jObject);
 	bool Start();
 	update_status Update();
+	void OpenInHierarchy(GameObject * curr);
 	bool CleanUp();
 
 	void SaveStatus(JSON_Object*) const;
