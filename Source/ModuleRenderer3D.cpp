@@ -258,6 +258,13 @@ update_status ModuleRenderer3D::PostUpdate()
 
 		App->scene->Draw();
 
+		if (drawCurrentGO)
+		{
+			GameObject* curr = App->scene->selectedObject.GetCurrGameObject();
+			if (curr && curr->boundingBox.IsFinite())
+				App->debugDrawer->DebugDraw(curr->boundingBox, DeepPink);
+		}
+
 		if (drawBoundingBoxes) // boundingBoxesColor = Yellow
 		{
 			Color boundingBoxesColor = Yellow;

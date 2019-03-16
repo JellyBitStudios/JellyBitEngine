@@ -60,7 +60,7 @@ void Raycaster::ScreenPointToRay(int posX, int posY, float& shortestDistance, ma
 		localSpaceSegment.Transform(hits[i]->transform->GetGlobalMatrix().Inverted());
 
 		if (hits[i]->cmp_mesh == nullptr)
-			return;
+			continue;
 
 		const ResourceMesh* resMesh = (const ResourceMesh*)App->res->GetResource(hits[i]->cmp_mesh->res);
 

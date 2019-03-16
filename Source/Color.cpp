@@ -11,3 +11,6 @@ Color Black = Color(0.0f, 0.0f, 0.0f);
 Color White = Color(1.0f, 1.0f, 1.0f);
 Color Grey = Color(0.5f, 0.5f, 0.5f);
 Color Yellow = Color(1.0f, 1.0f, 0.0f);
+
+Color DeepPink = Color(1.0f, 0.078f, 0.576f);
+Color PapayaWhip = Color(1.0f, 0.9f, 0.8f);

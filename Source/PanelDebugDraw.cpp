@@ -48,6 +48,8 @@ bool PanelDebugDraw::Draw()
 			ImGui::Checkbox("Rigid Actors", &App->renderer3D->drawRigidActors);
 			ImGui::SameLine();
 			ImGui::Checkbox("Quadtree", &App->renderer3D->drawQuadtree);
+			ImGui::SameLine();
+			ImGui::Checkbox("Draw Selected", &App->renderer3D->drawCurrentGO);
 		}
 	}
 	ImGui::End();
