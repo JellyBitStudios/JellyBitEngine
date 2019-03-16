@@ -93,7 +93,7 @@ private:
 	
 	bool anyItemIsHovered = false;
 
-	bool depthTest, cullFace, lighting;
+	bool depthTest, cullFace, lighting, blend;
 
 private:
 	bool MouseInScreen();
