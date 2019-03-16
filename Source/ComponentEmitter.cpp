@@ -130,6 +130,7 @@ void ComponentEmitter::StartEmitter()
 		loopTimer.Start();
 
 		timeToParticle = 0.0f;
+		isPlaying = true;
 	}
 }
 
@@ -151,44 +152,47 @@ void ComponentEmitter::ChangeGameState(SimulatedGame state)
 
 void ComponentEmitter::Update()
 {
-	if (rateOverTime > 0)
+	if (isPlaying)
 	{
-		float time = timer.ReadSec();
-		if (time > timeToParticle && (loop || loopTimer.ReadSec() < duration))
+		if (rateOverTime > 0)
 		{
- 			if (App->IsPlay() || simulatedGame == SimulatedGame_PLAY || App->IsStep())
+			float time = timer.ReadSec();
+			if (time > timeToParticle && (loop || loopTimer.ReadSec() < duration))
 			{
-				int particlesToCreate = (time / (1.0f / rateOverTime));
-				CreateParticles(particlesToCreate, normalShapeType,math::float3::zero);
-				timeToParticle = (1.0f / rateOverTime);
-				
-				timer.Start();
+				if (App->IsPlay() || simulatedGame == SimulatedGame_PLAY || App->IsStep())
+				{
+					int particlesToCreate = (time / (1.0f / rateOverTime));
+					CreateParticles(particlesToCreate, normalShapeType, math::float3::zero);
+					timeToParticle = (1.0f / rateOverTime);
+
+					timer.Start();
+				}
+
+			}
+		}
+		float burstT = burstTime.ReadSec();
+		if (burst && burstT > repeatTime)
+		{
+			if (App->IsPlay() || simulatedGame == SimulatedGame_PLAY || App->IsStep())
+			{
+				int particlesToCreate = minPart;
+				if (minPart != maxPart)
+					particlesToCreate = (rand() % (maxPart - minPart)) + minPart;
+				CreateParticles(particlesToCreate, burstType, math::float3::zero);
+			}
+			burstTime.Start();
+		}
+
+		//Used for SubEmitter. Create particles from ParticleEmiter death (On Emiter update because need to resize before Particle update)
+		if (!newPositions.empty())
+		{
+			for (std::list<math::float3>::const_iterator iterator = newPositions.begin(); iterator != newPositions.end(); ++iterator)
+			{
+				CreateParticles(rateOverTime, normalShapeType, *iterator);
 			}
 
+			newPositions.clear();
 		}
-	}
-	float burstT = burstTime.ReadSec();
-	if (burst && burstT > repeatTime)
-	{
-		if (App->IsPlay() || simulatedGame == SimulatedGame_PLAY || App->IsStep())
-		{
-			int particlesToCreate = minPart;
-			if (minPart != maxPart)
-				particlesToCreate = (rand() % (maxPart - minPart)) + minPart;
-			CreateParticles(particlesToCreate, burstType, math::float3::zero);
-		}
-		burstTime.Start();
-	}
-
-	//Used for SubEmitter. Create particles from ParticleEmiter death (On Emiter update because need to resize before Particle update)
-	if (!newPositions.empty())
-	{
-		for (std::list<math::float3>::const_iterator iterator = newPositions.begin(); iterator != newPositions.end(); ++iterator)
-		{
-			CreateParticles(rateOverTime, normalShapeType, *iterator);
-		}
-
-		newPositions.clear();
 	}
 }
 
@@ -203,6 +207,7 @@ void ComponentEmitter::ClearEmitter()
 	App->particle->activeParticles -= particles.size();
 
 	particles.clear();
+	isPlaying = false;
 }
 
 void ComponentEmitter::SoftClearEmitter()
