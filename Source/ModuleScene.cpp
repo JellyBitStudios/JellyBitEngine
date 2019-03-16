@@ -45,20 +45,20 @@ bool ModuleScene::Start()
 #endif
 
 	root = new GameObject("Root", nullptr, true);
-	GameObject* directionalLight = App->GOs->CreateGameObject("Directional Light", root);
-	directionalLight->AddComponent(ComponentTypes::LightComponent);
-
-	math::float3 axis;
-	float angle;
-	math::Quat rotation = rotation.identity;
-	rotation.ToAxisAngle(axis, angle);
-	axis *= angle;
-	axis *= RADTODEG;
-	axis[0] = -50;
-	axis[1] = 30;
-	axis *= DEGTORAD;
-	rotation.SetFromAxisAngle(axis.Normalized(), axis.Length());
-	directionalLight->transform->SetRotation(rotation);
+	//GameObject* directionalLight = App->GOs->CreateGameObject("Directional Light", root);
+	//directionalLight->AddComponent(ComponentTypes::LightComponent);
+	//
+	//math::float3 axis;
+	//float angle;
+	//math::Quat rotation = rotation.identity;
+	//rotation.ToAxisAngle(axis, angle);
+	//axis *= angle;
+	//axis *= RADTODEG;
+	//axis[0] = -50;
+	//axis[1] = 30;
+	//axis *= DEGTORAD;
+	//rotation.SetFromAxisAngle(axis.Normalized(), axis.Length());
+	//directionalLight->transform->SetRotation(rotation);
 
 	return true;
 }
