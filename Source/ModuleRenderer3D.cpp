@@ -20,6 +20,10 @@
 #include "SceneImporter.h"
 #include "Quadtree.h"
 
+#include "ComponentBone.h"
+#include "ResourceBone.h"
+#include "ResourceAvatar.h"
+
 #include "GameObject.h"
 #include "ComponentMesh.h"
 #include "ComponentTransform.h"
@@ -684,10 +688,6 @@ void ModuleRenderer3D::FrustumCulling() const
 		seen[i]->seenLastFrame = true;
 }
 
-#include "ComponentBone.h"
-#include "ResourceBone.h"
-#include "ResourceAvatar.h"
-
 void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 {
 	if (toDraw->res == 0)
@@ -786,6 +786,19 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	{
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+
+	if (animate)
+	{
+		std::vector<uint> bonesUuids = avatarResource->GetBonesUuids();
+		for (uint i = 0; i < bonesUuids.size(); ++i)
+		{
+			math::float4x4 boneTransform = math::float4x4::identity;
+			sprintf_s(boneName, "bones[%u]", i);
+			location = glGetUniformLocation(shader, boneName);
+			glUniformMatrix4fv(location, 1, GL_TRUE, boneTransform.ptr());
+		}
 	}
 
 	glUseProgram(0);
