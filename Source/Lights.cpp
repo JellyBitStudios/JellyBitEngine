@@ -51,7 +51,7 @@ void Lights::UseLights(const unsigned int shaderID) const
 	{
 		if (i < lights.size())
 		{
-			char str[20];
+			char str[DEFAULT_BUF_SIZE];
 			sprintf(str, "lights[%i].type", i);
 			glUniform1i(glGetUniformLocation(shaderID, str), lights[i]->lightType);
 			if (lights[i]->lightType == LightTypes::DirectionalLight)
