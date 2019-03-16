@@ -114,6 +114,9 @@ public:
 
 	bool seenLastFrame = false;
 
+	// Open Hierarchy
+	bool openHierarchy = false;
+
 private:
 
 	char name[DEFAULT_BUF_SIZE];
@@ -129,6 +132,7 @@ private:
 
 	// Physics
 	uint layer = 0; // in the range [0...31]
+
 };
 
 #endif

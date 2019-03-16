@@ -92,7 +92,7 @@ bool Particle::Update(float dt)
 		if(acceleration3.Equals(math::float3::zero))
 			_movement +=  movement;
 		else
-			_movement += (movement + acceleration3 * dt)/2;
+			_movement += (movement + acceleration3 * dt);
 
 		transform.position = _movement + owner->GetPos();
 

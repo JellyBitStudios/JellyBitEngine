@@ -22,7 +22,7 @@
 "	vec2 gTexCoord;\n"																		\
 "} vs_out;\n"																				\
 "\n"																						\
-"const int MAX_BONES = 150;\n"																\
+"const int MAX_BONES = 160;\n"																\
 "uniform mat4 bones[MAX_BONES];\n"															\
 "uniform int animate;\n"																	\
 "\n"																						\
@@ -503,6 +503,63 @@
 "		gPosition.a = 2;\n"																\
 "\n"																					\
 "		vec4 albedo = texture(material.albedo, fs_in.fTexCoord);\n"						\
+"		vec3 diffuse = vec3(albedo);\n"													\
+"		gAlbedoSpec = vec4(diffuse, albedo.a);\n"										\
+"	}\n"																				\
+"\n"																					\
+"	gPosition.rgb = fs_in.fPosition;\n"													\
+"	gNormal.rgb = normalize(fs_in.fNormal);\n"											\
+"}"
+
+#define CartoonFloorFragment																\
+"#version 330 core\n"																	\
+"\n"																					\
+"layout(location = 0) out vec4 gPosition;\n"											\
+"layout(location = 1) out vec4 gNormal;\n"												\
+"layout(location = 2) out vec4 gAlbedoSpec;\n"											\
+"\n"																					\
+"in GS_OUT\n"																			\
+"{\n"																					\
+"  vec3 fPosition;\n"																	\
+"  vec3 fNormal;\n"																		\
+"  vec4 fColor;\n"																		\
+"  vec2 fTexCoord;\n"																	\
+"} fs_in;\n"																			\
+"\n"																					\
+"flat in int fIsEdge; // whether or not we're drawing an edge\n"						\
+"\n"																					\
+"struct Material\n"																		\
+"{\n"																					\
+"	sampler2D albedo;\n"																\
+"};\n"																					\
+"\n"																					\
+"uniform vec3 viewPos;\n"																\
+"uniform Material material;\n"															\
+"uniform vec2 repeat = vec2(2, 2);\n"															\
+"\n"																					\
+"//uniform vec3 lineColor; // the silhouette edge color\n"								\
+"//uniform int levels;\n"																\
+"\n"																					\
+"void main()\n"																			\
+"{\n"																					\
+"	vec3 lineColor = vec3(0.0, 0.0, 0.0);\n"											\
+"	int levels = 2;\n"																	\
+"\n"																					\
+"	// If we're drawing an edge, use constant color\n"									\
+"	if (fIsEdge == 1)\n"																\
+"	{\n"																				\
+"		gNormal.a = 1;\n"																\
+"		gPosition.a = 3;\n"																\
+"\n"																					\
+"		gAlbedoSpec = vec4(lineColor, 1.0);\n"											\
+"	}\n"																				\
+"	// Otherwise, shade the poly\n"														\
+"	else\n"																				\
+"	{\n"																				\
+"		gNormal.a = levels;\n"															\
+"		gPosition.a = 2;\n"																\
+"\n"																					\
+"		vec4 albedo = texture2D(material.albedo, vec2(mod(fs_in.fTexCoord.x * repeat.x, 1), mod(fs_in.fTexCoord.y * repeat.y, 1)));\n"						\
 "		vec3 diffuse = vec3(albedo);\n"													\
 "		gAlbedoSpec = vec4(diffuse, albedo.a);\n"										\
 "	}\n"																				\

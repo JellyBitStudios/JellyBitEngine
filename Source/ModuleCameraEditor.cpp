@@ -148,12 +148,25 @@ update_status ModuleCameraEditor::Update()
 		if (hitGameObject != nullptr)
 		{
 			SELECT(hitGameObject);
+
+			GameObject* parent = hitGameObject->GetParent();
+			if (parent)
+				OpenInHierarchy(parent);
 		}
 		else
 			SELECT(NULL);
 	}
 
 	return UPDATE_CONTINUE;
+}
+
+void ModuleCameraEditor::OpenInHierarchy(GameObject* curr)
+{
+	curr->openHierarchy = true;
+
+	GameObject* parent = curr->GetParent();
+	if (parent)
+		OpenInHierarchy(parent);
 }
 
 bool ModuleCameraEditor::CleanUp()

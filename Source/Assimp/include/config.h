@@ -133,7 +133,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // default limit for bone count
 #if (!defined AI_SBBC_DEFAULT_MAX_BONES)
-#   define AI_SBBC_DEFAULT_MAX_BONES        60
+#   define AI_SBBC_DEFAULT_MAX_BONES        160
 #endif
 
 
