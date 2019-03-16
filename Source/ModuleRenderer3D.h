@@ -104,6 +104,7 @@ public:
 	bool drawFrustums = true;
 	bool drawColliders = true;
 	bool drawRigidActors = true;
+	bool drawCurrentGO = true;
 	bool drawQuadtree = false;
 };
 

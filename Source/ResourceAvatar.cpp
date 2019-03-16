@@ -621,8 +621,7 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 		float* nextPos = nullptr;
 		float timePos = 0.0f;
 
-		if (animationResource->animationData.boneKeys[i].positions.count > i)
-		{
+		
 			for (uint j = 0; j < animationResource->animationData.boneKeys[i].positions.count; ++j)
 			{
 				if (time == animationResource->animationData.boneKeys[i].positions.time[j])
@@ -649,7 +648,7 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 					break;
 				}
 			}
-		}
+		
 
 		/// b) Scalings
 		float* prevScale = nullptr;
@@ -691,8 +690,7 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 		float* nextRot = nullptr;
 		float timeRot = 0.0f;
 
-		if (animationResource->animationData.boneKeys[i].rotations.count > i)
-		{
+		
 			for (uint j = 0; j < animationResource->animationData.boneKeys[i].rotations.count; ++j)
 			{
 				if (time == animationResource->animationData.boneKeys[i].rotations.time[j])
@@ -719,7 +717,7 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 					break;
 				}
 			}
-		}
+		
 
 		// 2. Interpolate (or not)
 

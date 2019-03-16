@@ -22,7 +22,7 @@
 "	vec2 gTexCoord;\n"																		\
 "} vs_out;\n"																				\
 "\n"																						\
-"const int MAX_BONES = 150;\n"																\
+"const int MAX_BONES = 160;\n"																\
 "uniform mat4 bones[MAX_BONES];\n"															\
 "uniform int animate;\n"																	\
 "\n"																						\
