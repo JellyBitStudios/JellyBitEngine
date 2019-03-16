@@ -568,14 +568,16 @@ bool ResourceAnimator::Update()
 		current_anim->anim_timer += dt * current_anim->anim_speed;
 		blend_timer += dt;
 		float blend_percentage = blend_timer / BLEND_TIME;
+		
+		if (blend_percentage >= 1.0f) {
+			anim_state = PLAYING;
+			break;
+		}
 
 		ResourceAvatar* tmp_avatar = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
 		if (tmp_avatar) {
-			tmp_avatar->StepBones(last_anim->animation_uuid, last_anim->anim_timer);
-			tmp_avatar->StepBones(current_anim->animation_uuid, current_anim->anim_timer, blend_percentage);
-		}
-		if (blend_percentage >= 1.0f) {
-			anim_state = PLAYING;
+			//tmp_avatar->StepBones(last_anim->animation_uuid, last_anim->anim_timer);
+			tmp_avatar->StepBones(current_anim->animation_uuid, current_anim->anim_timer);
 		}
 	}
 		break;
