@@ -115,7 +115,7 @@
 "	float quadratic;\n" \
 "};\n" \
 "\n" \
-"const int NR_LIGHTS = 32;\n" \
+"const int NR_LIGHTS = 50;\n" \
 "\n" \
 "uniform Light lights[NR_LIGHTS];\n" \
 "\n" \
