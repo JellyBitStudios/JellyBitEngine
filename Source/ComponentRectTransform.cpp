@@ -12,7 +12,7 @@
 #include "imgui\imgui_internal.h"
 
 #define WORLDTORECT 100.0f
-#define ZSEPARATOR 0.1f
+#define ZSEPARATOR 0.005f
 
 ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTypes componentType, RectFrom rF) : Component(parent, ComponentTypes::RectTransformComponent)
 {
