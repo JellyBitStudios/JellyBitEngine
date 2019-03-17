@@ -20,6 +20,10 @@
 #include "SceneImporter.h"
 #include "Quadtree.h"
 
+#include "ComponentBone.h"
+#include "ResourceBone.h"
+#include "ResourceAvatar.h"
+
 #include "GameObject.h"
 #include "ComponentMesh.h"
 #include "ComponentTransform.h"
@@ -54,14 +58,14 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 {
 	bool ret = true;
 
-	DEPRECATED_LOG("Creating 3D Renderer context");
+	CONSOLE_LOG(LogTypes::Normal,"Creating 3D Renderer context");
 	
 	// Create context
 	context = SDL_GL_CreateContext(App->window->window);
 
 	if (context == NULL)
 	{
-		DEPRECATED_LOG("OpenGL context could not be created! SDL_Error: %s\n", SDL_GetError());
+		CONSOLE_LOG(LogTypes::Error, "OpenGL context could not be created! SDL_Error: %s\n", SDL_GetError());
 		ret = false;
 	}
 	
@@ -73,7 +77,7 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 		GLenum error = glewInit();
 		if (error != GL_NO_ERROR)
 		{
-			DEPRECATED_LOG("Error initializing glew! %s\n", glewGetErrorString(error));
+			CONSOLE_LOG(LogTypes::Error, "Error initializing glew! %s\n", glewGetErrorString(error));
 			ret = false;
 		}
 
@@ -85,7 +89,7 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 		error = glGetError();
 		if (error != GL_NO_ERROR)
 		{
-			DEPRECATED_LOG("Error initializing OpenGL! %s\n", gluErrorString(error));
+			CONSOLE_LOG(LogTypes::Error, "Error initializing OpenGL! %s\n", gluErrorString(error));
 			ret = false;
 		}
 
@@ -97,7 +101,7 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 		error = glGetError();
 		if (error != GL_NO_ERROR)
 		{
-			DEPRECATED_LOG("Error initializing OpenGL! %s\n", gluErrorString(error));
+			CONSOLE_LOG(LogTypes::Error, "Error initializing OpenGL! %s\n", gluErrorString(error));
 			ret = false;
 		}
 
@@ -115,7 +119,7 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 		error = glGetError();
 		if (error != GL_NO_ERROR)
 		{
-			DEPRECATED_LOG("Error initializing OpenGL! %s\n", gluErrorString(error));
+			CONSOLE_LOG(LogTypes::Error, "Error initializing OpenGL! %s\n", gluErrorString(error));
 			ret = false;
 		}
 
@@ -194,20 +198,24 @@ update_status ModuleRenderer3D::PostUpdate()
 			if (cameraComponents[i]->IsActive())
 				cameraComponents[i]->UpdateTransform();
 		}
+		/*
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
 			if (projectorComponents[i]->IsActive())
 				projectorComponents[i]->UpdateTransform();
 		}
+		*/
 
 		if (currentCamera->HasFrustumCulling())
 			FrustumCulling();
 
+		/*
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
 			if (projectorComponents[i]->GetParent()->IsActive() && projectorComponents[i]->IsActive())
 				DrawProjectors(projectorComponents[i]);
 		}
+		*/
 		for (uint i = 0; i < meshComponents.size(); ++i)
 		{
 			if (meshComponents[i]->GetParent()->IsActive() && meshComponents[i]->IsActive() 
@@ -222,12 +230,30 @@ update_status ModuleRenderer3D::PostUpdate()
 
 	App->scene->Draw();
 
+	bool blend = GetCapabilityState(GL_BLEND);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	App->particle->Draw();
+	if (!blend)
+		glDisable(GL_BLEND);
+
 
 #ifndef GAMEMODE
 
 	if (debugDraw)
 	{
+		// Bones debug draw
+		std::vector<GameObject*> gameObjects;
+		App->GOs->GetGameobjects(gameObjects);
+		for (uint i = 0; i < gameObjects.size(); ++i)
+		{
+			if (gameObjects[i]->cmp_bone != nullptr)
+			{
+				math::float4x4 globalMatrix = gameObjects[i]->transform->GetGlobalMatrix();
+				App->debugDrawer->DebugDrawSphere(1.0f, Yellow, globalMatrix);
+			}
+		}
+
 		App->lights->DebugDrawLights();
 
 		App->navigation->Draw();
@@ -235,6 +261,13 @@ update_status ModuleRenderer3D::PostUpdate()
 		App->debugDrawer->StartDebugDraw();
 
 		App->scene->Draw();
+
+		if (drawCurrentGO)
+		{
+			GameObject* curr = App->scene->selectedObject.GetCurrGameObject();
+			if (curr && curr->boundingBox.IsFinite())
+				App->debugDrawer->DebugDraw(curr->boundingBox, DeepPink);
+		}
 
 		if (drawBoundingBoxes) // boundingBoxesColor = Yellow
 		{
@@ -299,7 +332,7 @@ bool ModuleRenderer3D::CleanUp()
 	App->window->GetScreenSize(x, y);
 	glViewport(0, 0, x, y);
 
-	DEPRECATED_LOG("Destroying 3D Renderer");
+	CONSOLE_LOG(LogTypes::Normal, "Destroying 3D Renderer");
 	SDL_GL_DeleteContext(context);
 
 	return ret;
@@ -399,7 +432,7 @@ bool ModuleRenderer3D::SetVSync(bool vsync)
 		if (SDL_GL_SetSwapInterval(1) == -1)
 		{
 			ret = false;
-			DEPRECATED_LOG("Warning: Unable to set VSync! SDL Error: %s\n", SDL_GetError());
+			CONSOLE_LOG(LogTypes::Warning, "Unable to set VSync! SDL Error: %s\n", SDL_GetError());
 		}
 	}
 	else {
@@ -407,7 +440,7 @@ bool ModuleRenderer3D::SetVSync(bool vsync)
 		if (SDL_GL_SetSwapInterval(0) == -1) 
 		{
 			ret = false;
-			DEPRECATED_LOG("Warning: Unable to set immediate updates! SDL Error: %s\n", SDL_GetError());
+			CONSOLE_LOG(LogTypes::Warning, "Unable to set immediate updates! SDL Error: %s\n", SDL_GetError());
 		}
 	}
 
@@ -571,11 +604,11 @@ bool ModuleRenderer3D::RecalculateMainCamera()
 
 	if (multipleMainCameras)
 	{
-		DEPRECATED_LOG("Warning! More than 1 Main Camera is defined");
+		CONSOLE_LOG(LogTypes::Warning, "More than 1 Main Camera is defined");
 	}
 	else if (mainCamera == nullptr)
 	{
-		DEPRECATED_LOG("Warning! No Main Camera is defined");
+		CONSOLE_LOG(LogTypes::Warning, "No Main Camera is defined");
 	}
 
 	ret = SetMainCamera(mainCamera);
@@ -590,7 +623,7 @@ bool ModuleRenderer3D::SetMainCamera(ComponentCamera* mainCamera)
 	if (ret)
 		this->mainCamera = mainCamera;
 	else
-		DEPRECATED_LOG("Main Camera could not be set");
+		CONSOLE_LOG(LogTypes::Error, "Main Camera could not be set");
 
 	return ret;
 }
@@ -605,7 +638,7 @@ bool ModuleRenderer3D::SetCurrentCamera()
 		SetMeshComponentsSeenLastFrame(!currentCamera->HasFrustumCulling());
 	}
 	else
-		DEPRECATED_LOG("Current Camera could not be set");
+		CONSOLE_LOG(LogTypes::Error, "Current Camera could not be set");
 
 	return ret;
 }
@@ -655,10 +688,6 @@ void ModuleRenderer3D::FrustumCulling() const
 		seen[i]->seenLastFrame = true;
 }
 
-#include "ComponentBone.h"
-#include "ResourceBone.h"
-#include "ResourceAvatar.h"
-
 void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 {
 	if (toDraw->res == 0)
@@ -694,10 +723,15 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
 
 	// Animations
+	char boneName[DEFAULT_BUF_SIZE];
 	ResourceAvatar* avatarResource = (ResourceAvatar*)App->res->GetResource(toDraw->avatarResource);
-	if (avatarResource != nullptr)
+	bool animate = avatarResource != nullptr && avatarResource->GetIsAnimated();
+
+	location = glGetUniformLocation(shader, "animate");
+	glUniform1i(location, animate);
+
+	if (animate)
 	{
-		char boneName[DEFAULT_BUF_SIZE];
 		std::vector<uint> bonesUuids = avatarResource->GetBonesUuids();
 		for (uint i = 0; i < bonesUuids.size(); ++i)
 		{
@@ -717,19 +751,24 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 				continue;
 
 			math::float4x4 boneGlobalMatrix = boneComponent->GetParent()->transform->GetGlobalMatrix();
-			math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetMatrix();
 
-			math::float4x4 boneTransform = boneGlobalMatrix * meshMatrix.Inverted() * boneResource->boneData.offsetMatrix;
+			math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetGlobalMatrix().Inverted();
+			//math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetGlobalMatrix().Inverted();
+
+			math::float4x4 boneTransform = meshMatrix * boneGlobalMatrix * boneResource->boneData.offsetMatrix;
 
 			sprintf_s(boneName, "bones[%u]", i);
 			location = glGetUniformLocation(shader, boneName);
 			glUniformMatrix4fv(location, 1, GL_TRUE, boneTransform.ptr());
 		}
+		
 	}
 
 	// 3. Unknown mesh uniforms
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
-	LoadSpecificUniforms(textureUnit, uniforms);
+	std::vector<const char*> ignore;
+	ignore.push_back("animate");
+	LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	// Mesh
 	const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(toDraw->res);
@@ -747,6 +786,19 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	{
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+
+	if (animate)
+	{
+		std::vector<uint> bonesUuids = avatarResource->GetBonesUuids();
+		for (uint i = 0; i < bonesUuids.size(); ++i)
+		{
+			math::float4x4 boneTransform = math::float4x4::identity;
+			sprintf_s(boneName, "bones[%u]", i);
+			location = glGetUniformLocation(shader, boneName);
+			glUniformMatrix4fv(location, 1, GL_TRUE, boneTransform.ptr());
+		}
 	}
 
 	glUseProgram(0);

@@ -68,6 +68,8 @@ ModuleFileSystem::ModuleFileSystem(bool start_enabled) : Module(start_enabled)
 
 		CreateDir(DIR_LIBRARY_MESHES);
 		CreateDir(DIR_LIBRARY_ANIMATIONS);
+		CreateDir(DIR_LIBRARY_ANIMATORS);
+		CreateDir(DIR_LIBRARY_AVATARS);
 		CreateDir(DIR_LIBRARY_BONES);
 		CreateDir(DIR_LIBRARY_TEXTURES);
 		CreateDir(DIR_LIBRARY_MATERIALS);
@@ -134,7 +136,7 @@ bool ModuleFileSystem::Start()
 
 bool ModuleFileSystem::CleanUp()
 {
-	DEPRECATED_LOG("Freeing File System subsystem");
+	CONSOLE_LOG(LogTypes::Normal, "Freeing File System subsystem");
 	PHYSFS_deinit();
 
 	return true;
@@ -276,10 +278,10 @@ bool ModuleFileSystem::CreateDir(const char* dirName) const
 
 	if (ret)
 	{
-		DEPRECATED_LOG("FILE SYSTEM: Successfully created the directory '%s'", dirName);
+		CONSOLE_LOG(LogTypes::Normal, "FILE SYSTEM: Successfully created the directory '%s'", dirName);
 	}
 	else
-		DEPRECATED_LOG("FILE SYSTEM: Couldn't create the directory '%s'. ERROR: %s", dirName, PHYSFS_getLastError());
+		CONSOLE_LOG(LogTypes::Error, "FILE SYSTEM: Couldn't create the directory '%s'. ERROR: %s", dirName, PHYSFS_getLastError());
 
 	return ret;
 }
@@ -291,7 +293,7 @@ bool ModuleFileSystem::AddPath(const char* newDir, const char* mountPoint) const
 	if (PHYSFS_mount(newDir, mountPoint, 1) != 0)
 		ret = true;
 	else
-		DEPRECATED_LOG("FILE SYSTEM: Error while adding a path or zip '%s': %s", newDir, PHYSFS_getLastError());
+		CONSOLE_LOG(LogTypes::Error, "FILE SYSTEM: Error while adding a path or zip '%s': %s", newDir, PHYSFS_getLastError());
 
 	return ret;
 }
@@ -530,6 +532,11 @@ uint ModuleFileSystem::SaveInGame(char* buffer, uint size, FileTypes fileType, s
 			outputFile.insert(strlen(DIR_LIBRARY_ANIMATIONS), "/");
 			outputFile.append(EXTENSION_ANIMATION);
 			break;
+		case FileTypes::AnimatorFile:
+			outputFile.insert(0, DIR_ASSETS_ANIMATORS);
+			outputFile.insert(strlen(DIR_ASSETS_ANIMATORS), "/");
+			outputFile.append(EXTENSION_ANIMATOR);
+			break;
 		case FileTypes::BoneFile:
 			outputFile.insert(0, DIR_LIBRARY_BONES);
 			outputFile.insert(strlen(DIR_LIBRARY_BONES), "/");
@@ -613,22 +620,22 @@ uint ModuleFileSystem::Save(std::string file, char* buffer, uint size, bool appe
 			{
 				if (append)
 				{
-					DEPRECATED_LOG("FILE SYSTEM: Append %u bytes to file '%s'", objCount, fileName.data());
+					CONSOLE_LOG(LogTypes::Normal, "FILE SYSTEM: Append %u bytes to file '%s'", objCount, fileName.data());
 				}
 				else
-					DEPRECATED_LOG("FILE SYSTEM: File '%s' overwritten with %u bytes", fileName.data(), objCount);
+					CONSOLE_LOG(LogTypes::Normal, "FILE SYSTEM: File '%s' overwritten with %u bytes", fileName.data(), objCount);
 			}
 			else
-				DEPRECATED_LOG("FILE SYSTEM: New file '%s' created with %u bytes", fileName.data(), objCount);
+				CONSOLE_LOG(LogTypes::Normal, "FILE SYSTEM: New file '%s' created with %u bytes", fileName.data(), objCount);
 		}
 		else
-			DEPRECATED_LOG("FILE SYSTEM: Could not write to file '%s'. ERROR: %s", fileName.data(), PHYSFS_getLastError());
+			CONSOLE_LOG(LogTypes::Error, "FILE SYSTEM: Could not write to file '%s'. ERROR: %s", fileName.data(), PHYSFS_getLastError());
 
 		if (PHYSFS_close(filehandle) == 0)
-			DEPRECATED_LOG("FILE SYSTEM: Could not close file '%s'. ERROR: %s", fileName.data(), PHYSFS_getLastError());
+			CONSOLE_LOG(LogTypes::Error, "FILE SYSTEM: Could not close file '%s'. ERROR: %s", fileName.data(), PHYSFS_getLastError());
 	}
 	else
-		DEPRECATED_LOG("FILE SYSTEM: Could not open file '%s' to write. ERROR: %s", fileName.data(), PHYSFS_getLastError());
+		CONSOLE_LOG(LogTypes::Error, "FILE SYSTEM: Could not open file '%s' to write. ERROR: %s", fileName.data(), PHYSFS_getLastError());
 
 	return objCount;
 }
@@ -636,7 +643,7 @@ uint ModuleFileSystem::Save(std::string file, char* buffer, uint size, bool appe
 void ModuleFileSystem::WriteFile(const char * zip_path, const char * filename, const char * buffer, unsigned int size)
 {
 	if (PHYSFS_removeFromSearchPath(zip_path) == 0)
-		DEPRECATED_LOG("Errot when unmount: %s", PHYSFS_getLastError());
+		CONSOLE_LOG(LogTypes::Error, "Errot when unmount: %s", PHYSFS_getLastError());
 
 	struct zip *f_zip = NULL;
 	int error = 0;
@@ -645,7 +652,7 @@ void ModuleFileSystem::WriteFile(const char * zip_path, const char * filename, c
 	{
 		zip_error zerror;
 		zip_error_init_with_code(&zerror, error);
-		DEPRECATED_LOG("could not open or create archive: %s, %s", zip_path, zip_error_strerror(&zerror));
+		CONSOLE_LOG(LogTypes::Error, "could not open or create archive: %s, %s", zip_path, zip_error_strerror(&zerror));
 	}
 	else
 	{
@@ -657,7 +664,7 @@ void ModuleFileSystem::WriteFile(const char * zip_path, const char * filename, c
 			zip_file_add(f_zip, filename, s, ZIP_FL_OVERWRITE + ZIP_FL_ENC_UTF_8) < 0)
 		{
 			zip_source_free(s);
-			DEPRECATED_LOG("error adding file: %s\n", zip_strerror(f_zip));
+			CONSOLE_LOG(LogTypes::Error, "error adding file: %s\n", zip_strerror(f_zip));
 		}
 	}
 
@@ -696,18 +703,18 @@ uint ModuleFileSystem::Load(std::string file, char** buffer) const
 				else
 				{
 					RELEASE(buffer);
-					DEPRECATED_LOG("FILE SYSTEM: Could not read from file '%s'. ERROR: %s", fileName.data(), PHYSFS_getLastError());
+					CONSOLE_LOG(LogTypes::Error, "FILE SYSTEM: Could not read from file '%s'. ERROR: %s", fileName.data(), PHYSFS_getLastError());
 				}
 
 				if (PHYSFS_close(filehandle) == 0)
-					DEPRECATED_LOG("FILE SYSTEM: Could not close file '%s'. ERROR: %s", fileName.data(), PHYSFS_getLastError());
+					CONSOLE_LOG(LogTypes::Error, "FILE SYSTEM: Could not close file '%s'. ERROR: %s", fileName.data(), PHYSFS_getLastError());
 			}
 		}
 		else
-			DEPRECATED_LOG("FILE SYSTEM: Could not open file '%s' to read. ERROR: %s", fileName.data(), PHYSFS_getLastError());
+			CONSOLE_LOG(LogTypes::Error, "FILE SYSTEM: Could not open file '%s' to read. ERROR: %s", fileName.data(), PHYSFS_getLastError());
 	}
 	else
-		DEPRECATED_LOG("FILE SYSTEM: Could not load file '%s' to read because it doesn't exist", fileName.data());
+		CONSOLE_LOG(LogTypes::Error, "FILE SYSTEM: Could not load file '%s' to read because it doesn't exist", fileName.data());
 
 	return objCount;
 }

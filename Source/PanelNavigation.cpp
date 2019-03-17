@@ -55,6 +55,18 @@ bool PanelNavigation::Draw()
 			bool isWalkable = curr->cmp_mesh->nv_walkable;
 			if (ImGui::Button("Everybody Walkable")) { curr->ToggleChildrenAndThisWalkable(!isWalkable); }
 		}
+		else
+		{
+			bool isStatic = curr->IsStatic();
+			ImGui::AlignTextToFramePadding();
+			ImGui::Text("Static");
+			ImGui::SameLine();
+			if (ImGui::Checkbox("##Static", &isStatic))
+				curr->ToggleIsStatic();
+			if (ImGui::Button("Everybody Static")) { curr->ToggleChildrenAndThisStatic(!isStatic); }
+			if (ImGui::Button("Everybody Walkable")) { curr->ToggleChildrenAndThisWalkable(true); }
+			if (ImGui::Button("Nobody Walkable")) { curr->ToggleChildrenAndThisWalkable(false); }
+		}
 	}
 
 	ImGui::AlignTextToFramePadding();
@@ -156,7 +168,7 @@ void PanelNavigation::HandleInputMeshes() const
 
 	if (staticsMeshComp.size() <= 0)
 	{
-		DEPRECATED_LOG("Rc: No static gameobjects");
+		CONSOLE_LOG(LogTypes::Normal, "Rc: No static gameobjects");
 		return;
 	}
 
@@ -177,7 +189,7 @@ void PanelNavigation::HandleInputMeshes() const
 
 	if (p_inputGeom.i_nmeshes <= 0)
 	{
-		DEPRECATED_LOG("rc: No meshes in static gameobjects");
+		CONSOLE_LOG(LogTypes::Normal, "rc: No meshes in static gameobjects");
 		return;
 	}
 

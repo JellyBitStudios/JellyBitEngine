@@ -117,12 +117,18 @@ void PanelInspector::ShowGameObjectInspector() const
 
 	ImGui::PushItemWidth(100.0f);
 	ImGuiInputTextFlags inputFlag = ImGuiInputTextFlags_EnterReturnsTrue;
-	if (ImGui::InputText("##objName", objName, IM_ARRAYSIZE(objName), inputFlag))
+
+	if (std::strcmp(objName, "Canvas") == 0)
+		ImGui::Text("Canvas");
+	else
 	{
-		if (std::strcmp(objName, "Canvas") != 0)
-			gameObject->SetName(objName);
-		else
-			CONSOLE_LOG(LogTypes::Warning, "Canvas is a reserved name.");
+		if (ImGui::InputText("##objName", objName, IM_ARRAYSIZE(objName), inputFlag))
+		{
+			if (std::strcmp(objName, "Canvas") != 0)
+				gameObject->SetName(objName);
+			else
+				CONSOLE_LOG(LogTypes::Warning, "Canvas is a reserved name.");
+		}
 	}
 	ImGui::PopItemWidth();
 
@@ -544,6 +550,7 @@ void PanelInspector::ShowMeshImportSettingsInspector()
 	ImGui::CheckboxFlags("Texture coordinates", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_TEXCOORD);
 	ImGui::CheckboxFlags("Tangents", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_TANGENT);
 	ImGui::CheckboxFlags("Bitangents", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_BITANGENT);
+	ImGui::CheckboxFlags("Animations", &(uint)m_is.attributes, ResourceMeshImportSettings::AttrConfiguration::ATTR_ANIMATION);
 
 	const char* postProcessConfiguration[] = { "Target Realtime Fast", "Target Realtime Quality", "Target Realtime Max Quality", "Custom" };
 	

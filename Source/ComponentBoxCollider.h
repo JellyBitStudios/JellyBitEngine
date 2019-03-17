@@ -8,8 +8,8 @@ class ComponentBoxCollider : public ComponentCollider
 {
 public:
 
-	ComponentBoxCollider(GameObject* parent);
-	ComponentBoxCollider(const ComponentBoxCollider& componentBoxCollider, GameObject* parent);
+	ComponentBoxCollider(GameObject* parent, bool include = true);
+	ComponentBoxCollider(const ComponentBoxCollider& componentBoxCollider, GameObject* parent, bool include = true);
 	~ComponentBoxCollider();
 
 	void OnUniqueEditor();

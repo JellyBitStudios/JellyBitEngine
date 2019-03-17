@@ -21,15 +21,16 @@
 #include <vector>
 
 Particle::Particle(math::float3 pos, StartValues data)
-{}
+{
+}
 
 Particle::Particle()
 {
-
 }
 
 Particle::~Particle()
 {
+	App->res->SetAsUnused(App->resHandler->plane);
 }
 
 void Particle::SetActive(math::float3 pos, StartValues data, ParticleAnimation partAnim)
@@ -50,7 +51,7 @@ void Particle::SetActive(math::float3 pos, StartValues data, ParticleAnimation p
 
 	sizeOverTime = CreateRandomNum(data.sizeOverTime);
 
-	transform.position = pos;
+	_movement = pos;
 	transform.rotation = math::Quat::FromEulerXYZ(0, 0, 0); //Start rotation
 	transform.scale = math::float3::one * CreateRandomNum(data.size);
 
@@ -80,8 +81,6 @@ void Particle::SetActive(math::float3 pos, StartValues data, ParticleAnimation p
 
 bool Particle::Update(float dt)
 {
-	//BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
-
 	if (owner->simulatedGame == SimulatedGame_PAUSE || App->IsPause())
 		dt = 0;
 	life += dt;
@@ -91,9 +90,11 @@ bool Particle::Update(float dt)
 		math::float3 movement = direction * (speed * dt);
 
 		if(acceleration3.Equals(math::float3::zero))
-			transform.position +=  movement;
+			_movement +=  movement;
 		else
-			transform.position += (movement + acceleration3 * dt)/2;
+			_movement += (movement + acceleration3 * dt);
+
+		transform.position = _movement + owner->GetPos();
 
 		LookAtCamera();
 

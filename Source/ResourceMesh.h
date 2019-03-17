@@ -6,7 +6,7 @@
 #include <vector>
 #include <unordered_map>
 
-#define MAX_BONES 4
+#define MAX_BONES_PER_VERTEX 4
 
 struct ResourceMeshImportSettings
 {
@@ -46,29 +46,30 @@ struct ResourceMeshImportSettings
 		ATTR_TEXCOORD = 1 << 3,
 		ATTR_TANGENT = 1 << 4,
 		ATTR_BITANGENT = 1 << 5,
+		ATTR_ANIMATION = 1 << 6
 	};
 
 	PostProcessConfigurationFlags postProcessConfigurationFlags = PostProcessConfigurationFlags::TARGET_REALTIME_MAX_QUALITY;
 	uint customConfigurationFlags = 0;
-	uint attributes = ATTR_POSITION | ATTR_NORMAL | ATTR_COLOR | ATTR_TEXCOORD | ATTR_TANGENT | ATTR_BITANGENT;
+	uint attributes = ATTR_POSITION | ATTR_NORMAL | ATTR_COLOR | ATTR_TEXCOORD | ATTR_TANGENT | ATTR_BITANGENT | ATTR_ANIMATION;
 
 	float scale = 1.0f;
-	bool adjacency = false;
+	bool adjacency = true; // TODO Sandra: it should be false by default
 
 	char modelPath[DEFAULT_BUF_SIZE];
 };
 
 struct Vertex
 {
-	float position[3];
-	float normal[3];
-	float tangent[3];
-	float bitangent[3];
-	uchar color[4];
-	float texCoord[2];
+	float position[3] = { 0.0f, 0.0f, 0.0f };
+	float normal[3] = { 0.0f, 0.0f, 0.0f };
+	float tangent[3] = { 0.0f, 0.0f, 0.0f };
+	float bitangent[3] = { 0.0f, 0.0f, 0.0f };
+	uchar color[4] = { 0,0,0,0 };
+	float texCoord[2] = { 0.0f, 0.0f };
 
-	float boneWeight[MAX_BONES] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	uint boneId[MAX_BONES] = { 0,0,0,0 };
+	float boneWeight[MAX_BONES_PER_VERTEX] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	int boneId[MAX_BONES_PER_VERTEX] = { 0,0,0,0 };
 };
 
 struct BoneInfluence
@@ -77,6 +78,12 @@ struct BoneInfluence
 	float* boneWeights = nullptr;
 	uint* boneIds = nullptr;
 	char boneName[DEFAULT_BUF_SIZE];
+
+	~BoneInfluence()
+	{
+		RELEASE_ARRAY(boneWeights);
+		RELEASE_ARRAY(boneIds);
+	}
 };
 
 struct ResourceMeshData
@@ -116,6 +123,8 @@ public:
 		std::vector<uint>& meshesUuids, std::vector<uint>& bonesUuids, std::vector<uint>& animationUuids);
 	static uint SetMeshImportSettingsToMeta(const char* metaFile, const ResourceMeshImportSettings& meshImportSettings);
 
+	bool GenerateLibraryFiles() const;
+
 	// ----------------------------------------------------------------------------------------------------
 
 	inline ResourceMeshData& GetSpecificData() { return meshData; }
@@ -127,7 +136,7 @@ public:
 	uint GetIndicesCount() const;
 	bool UseAdjacency() const;
 
-	bool AddBones(const std::unordered_map<const char*, uint>& bones);
+	bool AddBones(const std::unordered_map<std::string, uint>& bones);
 	bool AddBone(uint vertexId, float boneWeight, uint boneId);
 	static void CalculateAdjacentIndices(uint* indices, uint indicesSize, uint*& adjacentIndices);
 
@@ -136,6 +145,9 @@ public:
 	uint GetVAO() const;
 
 private:
+
+	void GenerateVAO();
+	void DeleteVAO();
 
 	bool LoadInMemory();
 	bool UnloadFromMemory();

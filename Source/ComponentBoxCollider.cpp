@@ -10,25 +10,35 @@
 
 #include "imgui\imgui.h"
 
-ComponentBoxCollider::ComponentBoxCollider(GameObject* parent) : ComponentCollider(parent, ComponentTypes::BoxColliderComponent)
+ComponentBoxCollider::ComponentBoxCollider(GameObject* parent, bool include) : ComponentCollider(parent, ComponentTypes::BoxColliderComponent, include)
 {
-	EncloseGeometry();
+	if (include)
+		EncloseGeometry();
 
 	colliderType = ColliderTypes::BoxCollider;
 
 	// -----
 
-	physx::PxShapeFlags shapeFlags = gShape->getFlags();
-	isTrigger = shapeFlags & physx::PxShapeFlag::Enum::eTRIGGER_SHAPE && !(shapeFlags & physx::PxShapeFlag::eSIMULATION_SHAPE);
-	participateInContactTests = shapeFlags & physx::PxShapeFlag::Enum::eSIMULATION_SHAPE;
-	participateInSceneQueries = shapeFlags & physx::PxShapeFlag::Enum::eSCENE_QUERY_SHAPE;
+	SetIsTrigger(isTrigger);
+	SetParticipateInContactTests(participateInContactTests);
+	SetParticipateInSceneQueries(participateInSceneQueries);
+	SetFiltering(filterGroup, filterMask);
+
+	// -----
+
+	SetHalfSize(halfSize);
+
+	SetCenter(center);
 }
 
-ComponentBoxCollider::ComponentBoxCollider(const ComponentBoxCollider& componentBoxCollider, GameObject* parent) : ComponentCollider(componentBoxCollider, parent, ComponentTypes::BoxColliderComponent)
+ComponentBoxCollider::ComponentBoxCollider(const ComponentBoxCollider& componentBoxCollider, GameObject* parent, bool include) : ComponentCollider(componentBoxCollider, parent, ComponentTypes::BoxColliderComponent, include)
 {
-	EncloseGeometry();
+	if (include)
+		EncloseGeometry();
 
 	colliderType = componentBoxCollider.colliderType;
+
+	// -----
 
 	SetIsTrigger(componentBoxCollider.isTrigger);
 	SetParticipateInContactTests(componentBoxCollider.participateInContactTests);
@@ -112,10 +122,11 @@ void ComponentBoxCollider::EncloseGeometry()
 		globalMatrix.Decompose(pos, rot, scale);
 
 		center = parent->boundingBox.CenterPoint() - pos;
-		halfSize = parent->boundingBox.HalfSize();
+		halfSize = parent->originalBoundingBox.HalfSize().Mul(scale);
 	}
 
-	RecalculateShape();
+	//if (gShape != nullptr)
+		RecalculateShape();
 }
 
 void ComponentBoxCollider::RecalculateShape()
@@ -144,7 +155,8 @@ void ComponentBoxCollider::SetHalfSize(const math::float3& halfSize)
 {
 	assert(halfSize.IsFinite());
 	this->halfSize = halfSize;
-	gShape->setGeometry(physx::PxBoxGeometry(halfSize.x, halfSize.y, halfSize.z));
+	if (gShape != nullptr)
+		gShape->setGeometry(physx::PxBoxGeometry(halfSize.x, halfSize.y, halfSize.z));
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -152,6 +164,7 @@ void ComponentBoxCollider::SetHalfSize(const math::float3& halfSize)
 physx::PxBoxGeometry ComponentBoxCollider::GetBoxGeometry() const
 {
 	physx::PxBoxGeometry boxGeometry;
-	gShape->getBoxGeometry(boxGeometry);
+	if (gShape != nullptr)
+		gShape->getBoxGeometry(boxGeometry);
 	return boxGeometry;
 }

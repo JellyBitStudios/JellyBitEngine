@@ -73,9 +73,14 @@ uint ComponentImage::GetResImage()const
 		return 0;
 }
 
-bool ComponentImage::UseColor() const
+bool ComponentImage::isColorUsed() const
 {
 	return use_color_vec;
+}
+
+void ComponentImage::UseColor(bool boolean)
+{
+	use_color_vec = boolean;
 }
 
 uint ComponentImage::GetInternalSerializationBytes()

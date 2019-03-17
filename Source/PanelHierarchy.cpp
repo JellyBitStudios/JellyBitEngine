@@ -142,6 +142,14 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 					treeNodeFlags |= ImGuiTreeNodeFlags_Selected;
 
 				bool treeNodeOpened = false;
+				if (child->openHierarchy)
+				{
+					treeNodeOpened = true;
+					ImGui::SetNextTreeNodeOpen(true);
+
+					child->openHierarchy = false;
+				}
+
 				if (ImGui::TreeNodeEx(name, treeNodeFlags))
 					treeNodeOpened = true;
 
@@ -153,7 +161,7 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 				{
 					if (std::strcmp(child->GetName(), "Canvas") == 0)
 						App->GOs->DeleteCanvasPointer();
-						
+
 					App->scene->selectedObject = CurrentSelection::SelectedType::null;
 					App->GOs->DeleteGameObject(child);
 				}
@@ -174,6 +182,12 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 
 				if (App->scene->selectedObject == child)
 					treeNodeFlags |= ImGuiTreeNodeFlags_Selected;
+
+				if (root->openHierarchy)
+				{
+					ImGui::SetNextTreeNodeOpen(true);
+					root->openHierarchy = false;
+				}
 
 				ImGui::TreeNodeEx(name, treeNodeFlags);
 				ImGui::TreePop();
@@ -351,7 +365,7 @@ void PanelHierarchy::SetGameObjectDragAndDropTarget(GameObject* target) const
 				}
 			}
 			else
-				DEPRECATED_LOG("ERROR: Invalid Target. Don't be so badass ;)");
+				CONSOLE_LOG(LogTypes::Error, "ERROR: Invalid Target. Don't be so badass ;)");
 		}
 		ImGui::EndDragDropTarget();
 	}

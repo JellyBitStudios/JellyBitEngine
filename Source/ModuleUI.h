@@ -72,6 +72,8 @@ private:
 
 	void SetRectToShader(ComponentRectTransform* rect);
 
+	void UpdateRenderStates();
+
 public:
 	std::list<Component*> componentsUI;
 	std::list<Component*> componentsWorldUI;
@@ -90,6 +92,8 @@ private:
 	bool uiMode = true;
 	
 	bool anyItemIsHovered = false;
+
+	bool depthTest, cullFace, lighting, blend;
 
 private:
 	bool MouseInScreen();

@@ -36,9 +36,10 @@ ModuleUI::~ModuleUI()
 
 void ModuleUI::DrawCanvas()
 {
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
-	glDisable(GL_LIGHTING);
+	if (depthTest) glDisable(GL_DEPTH_TEST);
+	if (cullFace)  glDisable(GL_CULL_FACE);
+	if (lighting) glDisable(GL_LIGHTING);
+
 	for (std::list<Component*>::iterator iteratorUI = componentsScreenRendererUI.begin(); iteratorUI != componentsScreenRendererUI.end(); ++iteratorUI)
 	{
 		ComponentCanvasRenderer* renderer = (ComponentCanvasRenderer*)*iteratorUI;
@@ -62,14 +63,19 @@ void ModuleUI::DrawCanvas()
 			rend = renderer->GetDrawAvaiable();
 		}
 	}
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	glEnable(GL_LIGHTING);
+	if (depthTest) glEnable(GL_DEPTH_TEST);
+	if (cullFace) glEnable(GL_CULL_FACE);
+	if (lighting) glEnable(GL_LIGHTING);
+	if (!blend) glDisable(GL_BLEND);
+
 }
 
 void ModuleUI::DrawWorldCanvas()
 {
-	glDisable(GL_LIGHTING);
+	UpdateRenderStates();
+	if (!blend) glEnable(GL_BLEND);
+	if (lighting) glDisable(GL_LIGHTING);
+
 	for (std::list<Component*>::iterator iteratorUI = componentsWorldRendererUI.begin(); iteratorUI != componentsWorldRendererUI.end(); ++iteratorUI)
 	{
 		ComponentCanvasRenderer* renderer = (ComponentCanvasRenderer*)*iteratorUI;
@@ -89,7 +95,7 @@ void ModuleUI::DrawWorldCanvas()
 			rend = renderer->GetDrawAvaiable();
 		}
 	}
-	glEnable(GL_LIGHTING);
+	if (lighting) glEnable(GL_LIGHTING);
 }
 
 bool ModuleUI::Init(JSON_Object * jObject)
@@ -352,6 +358,23 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 	}
 }
 
+void ModuleUI::UpdateRenderStates()
+{
+	GLenum capability = 0;
+
+	capability = GL_DEPTH_TEST;
+	depthTest = App->renderer3D->GetCapabilityState(capability);
+
+	capability = GL_CULL_FACE;
+	cullFace = App->renderer3D->GetCapabilityState(capability);
+
+	capability = GL_LIGHTING;
+	lighting = App->renderer3D->GetCapabilityState(capability);
+
+	capability = GL_BLEND;
+	blend = App->renderer3D->GetCapabilityState(capability);
+}
+
 bool ModuleUI::IsUIHovered()
 {
 	return anyItemIsHovered;
@@ -431,16 +454,19 @@ bool ModuleUI::MouseInScreen()
 
 		for (GameObject* go_rect : gos)
 		{
-			uint* rect = ((ComponentRectTransform*)go_rect->GetComponent(ComponentTypes::RectTransformComponent))->GetRect();
-
-			if (rect)
+			if (go_rect->IsActive())
 			{
-				uint mouseX = App->input->GetMouseX();
-				uint mouseY = App->input->GetMouseY();
+				uint* rect = ((ComponentRectTransform*)go_rect->GetComponent(ComponentTypes::RectTransformComponent))->GetRect();
 
-				if (mouseX > rect[ComponentRectTransform::Rect::X] && mouseX < rect[ComponentRectTransform::Rect::X] + rect[ComponentRectTransform::Rect::XDIST]
-					&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST])
-					return true;
+				if (rect)
+				{
+					uint mouseX = App->input->GetMouseX();
+					uint mouseY = App->input->GetMouseY();
+
+					if (mouseX > rect[ComponentRectTransform::Rect::X] && mouseX < rect[ComponentRectTransform::Rect::X] + rect[ComponentRectTransform::Rect::XDIST]
+						&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST])
+						return true;
+				}
 			}
 		}
 	}

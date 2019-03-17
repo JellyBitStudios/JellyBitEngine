@@ -11,14 +11,16 @@
 
 #include "imgui\imgui.h"
 
-ComponentRigidActor::ComponentRigidActor(GameObject* parent, ComponentTypes componentRigidActorType) : Component(parent, componentRigidActorType)
+ComponentRigidActor::ComponentRigidActor(GameObject* parent, ComponentTypes componentRigidActorType, bool include) : Component(parent, componentRigidActorType)
 {
-	App->physics->AddRigidActorComponent(this);
+	if (include)
+		App->physics->AddRigidActorComponent(this);
 }
 
-ComponentRigidActor::ComponentRigidActor(const ComponentRigidActor& componentRigidActor, GameObject* parent, ComponentTypes componentRigidActorType) : Component(parent, componentRigidActorType)
+ComponentRigidActor::ComponentRigidActor(const ComponentRigidActor& componentRigidActor, GameObject* parent, ComponentTypes componentRigidActorType, bool include) : Component(parent, componentRigidActorType)
 {
-	App->physics->AddRigidActorComponent(this);
+	if (include)
+		App->physics->AddRigidActorComponent(this);
 }
 
 ComponentRigidActor::~ComponentRigidActor()
@@ -96,16 +98,19 @@ void ComponentRigidActor::UpdateShape(physx::PxShape* shape) const
 	bool attach = true;
 
 	// Detach current shape
-	uint nbShapes = gActor->getNbShapes();
-	if (nbShapes > 0)
+	if (gActor)
 	{
-		physx::PxShape* gShape = nullptr;
-		gActor->getShapes(&gShape, 1);
+		uint nbShapes = gActor->getNbShapes();
+		if (nbShapes > 0)
+		{
+			physx::PxShape* gShape = nullptr;
+			gActor->getShapes(&gShape, 1);
 
-		if (gShape == shape && shape != nullptr)
-			attach = false;
-		else
-			gActor->detachShape(*gShape);
+			if (gShape == shape && shape != nullptr)
+				attach = false;
+			else
+				gActor->detachShape(*gShape);
+		}
 	}
 
 	// Attach current shape
@@ -115,10 +120,10 @@ void ComponentRigidActor::UpdateShape(physx::PxShape* shape) const
 			shape = App->physics->CreateShape(physx::PxBoxGeometry(parent->boundingBox.HalfSize().x, parent->boundingBox.HalfSize().y, parent->boundingBox.HalfSize().z), *App->physics->GetDefaultMaterial());
 		else
 			shape = App->physics->CreateShape(physx::PxBoxGeometry(PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE), *App->physics->GetDefaultMaterial());
-		assert(shape != nullptr);
+		//assert(shape != nullptr);
 	}
 
-	if (attach)
+	if (attach && gActor)
 		gActor->attachShape(*shape);
 }
 
@@ -146,8 +151,9 @@ void ComponentRigidActor::UpdateTransform(math::float4x4& globalMatrix) const
 		return;
 	}
 
-	gActor->setGlobalPose(physx::PxTransform(physx::PxVec3(position.x, position.y, position.z),
-		physx::PxQuat(rotation.x, rotation.y, rotation.z, rotation.w)));
+	if (gActor != nullptr)
+		gActor->setGlobalPose(physx::PxTransform(physx::PxVec3(position.x, position.y, position.z),
+			physx::PxQuat(rotation.x, rotation.y, rotation.z, rotation.w)));
 }
 
 void ComponentRigidActor::UpdateGameObjectTransform() const
@@ -172,7 +178,8 @@ void ComponentRigidActor::UpdateGameObjectTransform() const
 void ComponentRigidActor::SetUseGravity(bool useGravity)
 {
 	this->useGravity = useGravity;
-	gActor->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, !useGravity);
+	if (gActor != nullptr)
+		gActor->setActorFlag(physx::PxActorFlag::eDISABLE_GRAVITY, !useGravity);
 }
 
 // ----------------------------------------------------------------------------------------------------

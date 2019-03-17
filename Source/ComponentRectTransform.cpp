@@ -12,7 +12,7 @@
 #include "imgui\imgui_internal.h"
 
 #define WORLDTORECT 100.0f
-#define ZSEPARATOR 0.1f
+#define ZSEPARATOR 0.005f
 
 ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTypes componentType, RectFrom rF) : Component(parent, ComponentTypes::RectTransformComponent)
 {
@@ -52,7 +52,7 @@ ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & co
 	use_margin = componentRectTransform.use_margin;
 	billboard = componentRectTransform.billboard;
 
-	CheckParentRect();
+	//heckParentRect();
 }
 
 ComponentRectTransform::~ComponentRectTransform()
@@ -264,7 +264,14 @@ void ComponentRectTransform::CalculateRectFromWorld(bool individualcheck)
 		math::float3 zAxis = App->renderer3D->GetCurrentCamera()->frustum.front;
 		math::float3 yAxis = App->renderer3D->GetCurrentCamera()->frustum.up;
 		math::float3 xAxis = yAxis.Cross(zAxis).Normalized();
-		transformParent->SetRotation(math::float3x3(xAxis, yAxis, zAxis).ToQuat());
+
+		math::float3 pos = math::float3::zero;
+		math::Quat rot = math::Quat::identity;
+		math::float3 scale = math::float3::zero;
+		math::float4x4 global = transformParent->GetGlobalMatrix();
+		global.Decompose(pos, rot, scale);
+
+		transformParent->SetMatrixFromGlobal(global.FromTRS(pos, math::Quat::identity * math::float3x3(xAxis, yAxis, zAxis).ToQuat(), scale));
 	}
 
 	math::float4x4 globalmatrix = transformParent->GetGlobalMatrix();

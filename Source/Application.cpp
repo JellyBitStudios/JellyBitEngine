@@ -165,7 +165,7 @@ bool Application::Init()
 	}
 
 	// After all Init calls we call Start() in all modules
-	DEPRECATED_LOG("Application Start --------------");
+	CONSOLE_LOG(LogTypes::Normal, "Application Start --------------");
 	for (std::list<Module*>::const_iterator item = list_modules.begin(); item != list_modules.end() && ret; ++item)
 		ret = (*item)->Start();
 
@@ -449,6 +449,7 @@ void Application::Play()
 	case engine_states::ENGINE_PAUSE:
 		// Enter editor mode
 		engineState = engine_states::ENGINE_PLAY;
+		audio->Resume();
 		break;
 
 	case engine_states::ENGINE_EDITOR:

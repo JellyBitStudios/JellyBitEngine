@@ -86,7 +86,7 @@ bool ModuleGui::Start()
 {
 	bool ret = true;
 
-	DEPRECATED_LOG("Starting ImGui");
+	CONSOLE_LOG(LogTypes::Normal, "Starting ImGui");
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -263,7 +263,7 @@ bool ModuleGui::CleanUp()
 	
 	App->res->SetAsUnused(atlas->GetUuid());
 
-	DEPRECATED_LOG("Cleaning up ImGui");
+	CONSOLE_LOG(LogTypes::Normal, "Cleaning up ImGui");
 
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplSDL2_Shutdown();

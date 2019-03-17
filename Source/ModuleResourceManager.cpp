@@ -373,6 +373,19 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 		}
 	}
 	break;
+
+	case System_Event_Type::LoadGMScene:     
+	case System_Event_Type::LoadFinished:
+	{
+		std::vector<Resource*> avatars = GetResourcesByType(ResourceTypes::AvatarResource);
+		for (uint i = 0; i < avatars.size(); ++i)
+		{
+			ResourceAvatar* avatar = (ResourceAvatar*)avatars[i];
+			avatar->ClearSkeletonAndBones();
+			avatar->CreateSkeletonAndAddBones();
+		}
+	}
+	break;
 	}
 }
 
@@ -425,6 +438,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 					meshData.meshImportSettings = meshImportSettings;
 					strcpy((char*)meshData.meshImportSettings.modelPath, file);
 					App->sceneImporter->Load(mesh_files[i].data(), data, meshData);
+					meshData.meshImportSettings.adjacency = true;
 
 					resource = CreateResource(ResourceTypes::MeshResource, data, &meshData, uuid);
 					if (resource != nullptr)
@@ -915,6 +929,21 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		data.exportedFile = file;
 
 		App->sceneImporter->Load(file, data, meshData);
+
+		// Search for the meta associated to the file
+		char metaFile[DEFAULT_BUF_SIZE];
+		strcpy_s(metaFile, strlen(file) + 1, file); // file
+		strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
+
+		if (App->fs->Exists(metaFile))
+		{
+			std::vector<uint> mesh_uuids;
+			std::vector<uint> bones_uuids;
+			std::vector<uint> animation_uuids;
+			int64_t lastModTime = 0;
+			ResourceMesh::ReadMeta(metaFile, lastModTime, meshData.meshImportSettings, mesh_uuids, bones_uuids, animation_uuids);
+			meshData.meshImportSettings.adjacency = true;
+		}
 
 		resource = CreateResource(ResourceTypes::MeshResource, data, &meshData, uuid);
 	}

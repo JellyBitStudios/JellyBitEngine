@@ -3,24 +3,55 @@
 
 #pragma region ShaderDefault
 
-#define vShaderTemplate											\
-"#version 330 core\n"											\
-"layout(location = 0) in vec3 position;\n"						\
-"layout(location = 1) in vec3 normal;\n"						\
-"layout(location = 2) in vec4 color;\n"							\
-"layout(location = 3) in vec2 texCoord;\n"						\
-"uniform mat4 model_matrix;\n"									\
-"uniform mat4 mvp_matrix;\n"									\
-"uniform mat3 normal_matrix;\n"									\
-"out vec3 fPosition;\n"											\
-"out vec3 fNormal;\n"											\
-"out vec2 fTexCoord;\n"											\
-"void main()\n"													\
-"{\n"															\
-"	//fPosition = vec3(model_matrix * vec4(position, 1.0));\n"	\
-"	fNormal = normalize(normal_matrix * normal);\n"				\
-"	fTexCoord = texCoord;\n"									\
-"	gl_Position = mvp_matrix * vec4(position, 1.0);\n"			\
+#define vShaderTemplate																		\
+"#version 330 core\n"																		\
+"layout(location = 0) in vec3 position;\n"													\
+"layout(location = 1) in vec3 normal;\n"													\
+"layout(location = 2) in vec4 color;\n"														\
+"layout(location = 3) in vec2 texCoord;\n"													\
+"layout(location = 4) in vec3 tangents;\n"													\
+"layout(location = 5) in vec3 bitangents;\n"												\
+"layout(location = 6) in vec4 weights;\n"													\
+"layout(location = 7) in ivec4 ids;\n"														\
+"\n"																						\
+"out VS_OUT\n"																				\
+"{\n"																						\
+"	vec3 gPosition;\n"																		\
+"	vec3 gNormal;\n"																		\
+"	vec4 gColor;\n"																			\
+"	vec2 gTexCoord;\n"																		\
+"} vs_out;\n"																				\
+"\n"																						\
+"const int MAX_BONES = 160;\n"																\
+"uniform mat4 bones[MAX_BONES];\n"															\
+"uniform int animate;\n"																	\
+"\n"																						\
+"uniform mat4 model_matrix;\n"																\
+"uniform mat4 mvp_matrix;\n"																\
+"uniform mat3 normal_matrix;\n"																\
+"\n"																						\
+"void main()\n"																				\
+"{\n"																						\
+"	vec4 pos = vec4(position, 1.0);\n"														\
+"	vec4 norm = vec4(normal, 0.0);\n"														\
+"\n"																						\
+"	if (animate == 1)\n"																	\
+"	{\n"																					\
+"		mat4 boneTransform = bones[ids[0]] * weights[0];\n"									\
+"		boneTransform += bones[ids[1]] * weights[1];\n"										\
+"		boneTransform += bones[ids[2]] * weights[2];\n"										\
+"		boneTransform += bones[ids[3]] * weights[3];\n"										\
+"\n"																						\
+"		pos = boneTransform * pos;\n"														\
+"		norm = boneTransform * norm;\n"														\
+"	}\n"																					\
+"\n"																						\
+"	vs_out.gPosition = vec3(model_matrix * pos);\n"											\
+"	vs_out.gNormal = normalize(normal_matrix * norm.xyz);\n"								\
+"	vs_out.gColor = color;\n"																\
+"	vs_out.gTexCoord = texCoord;\n"															\
+"\n"																						\
+"	gl_Position = mvp_matrix * pos;\n"														\
 "}"
 
 #define fShaderTemplate															\
@@ -28,15 +59,22 @@
 "layout (location = 0) out vec4 gPosition;\n"									\
 "layout (location = 1) out vec4 gNormal;\n"										\
 "layout (location = 2) out vec4 gAlbedoSpec;\n"									\
-"in vec2 fTexCoord;\n"															\
-"in vec3 fPosition;\n"															\
-"in vec3 fNormal;\n"															\
+"\n"																			\
+"in VS_OUT\n"																	\
+"{\n"																			\
+"	vec3 gPosition;\n"															\
+"	vec3 gNormal;\n"															\
+"	vec4 gColor;\n"																\
+"	vec2 gTexCoord;\n"															\
+"} fs_in;\n"																	\
+"\n"																			\
 "uniform sampler2D diffuse;\n"													\
+"\n"																			\
 "void main()\n"																	\
 "{\n"																			\
-"	gPosition.rgb = fPosition;\n"												\
-"	gNormal.rgb = normalize(fNormal);\n"										\
-"	gAlbedoSpec.rgb = texture(diffuse,fTexCoord).rgb;\n"						\
+"	gPosition.rgb = fs_in.gPosition;\n"											\
+"	gNormal.rgb = normalize(fs_in.gNormal);\n"									\
+"	gAlbedoSpec.rgb = texture(diffuse, fs_in.gTexCoord).rgb;\n"					\
 "	gPosition.a = 1;\n"															\
 "	gNormal.a = 1;\n"															\
 "	gAlbedoSpec.a = 1;\n"														\
@@ -77,7 +115,7 @@
 "	float quadratic;\n" \
 "};\n" \
 "\n" \
-"const int NR_LIGHTS = 32;\n" \
+"const int NR_LIGHTS = 50;\n" \
 "\n" \
 "uniform Light lights[NR_LIGHTS];\n" \
 "\n" \
@@ -232,37 +270,9 @@
 "};\n" \
 "\n" \
 "uniform vec3 viewPos;\n" \
-"uniform Light light;\n" \
 "uniform Material material;\n" \
 "uniform float averageColor;\n" \
 "\n" \
-"vec3 phong(vec3 ambient, vec3 diffuse, vec3 specular, float shininess, bool blinn)\n" \
-"{\n" \
-"	// Ambient\n" \
-"	vec3 a = light.ambient * ambient;\n" \
-"\n" \
-"	// Diffuse\n" \
-"	vec3 lightDir = normalize(-light.direction);\n" \
-"	float diff = max(dot(fNormal, lightDir), 0.0);\n" \
-"	vec3 d = light.diffuse * (diff * diffuse);\n" \
-"\n" \
-"	// Specular\n" \
-"	vec3 viewDir = normalize(viewPos - fPosition);\n" \
-"	float spec = 0.0;\n" \
-"	if (blinn)\n" \
-"	{\n" \
-"		vec3 halfwayDir = normalize(lightDir + viewDir);\n" \
-"		spec = pow(max(dot(fNormal, halfwayDir), 0.0), shininess);\n" \
-"	}\n" \
-"	else\n" \
-"	{\n" \
-"		vec3 reflectDir = reflect(-lightDir, fNormal);\n" \
-"		spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);\n" \
-"	}\n" \
-"	vec3 s = light.specular * (spec * specular);\n" \
-"\n" \
-"	return a + d + s;\n" \
-"}\n" \
 "\n" \
 "void main()\n" \
 "{\n" \
@@ -270,11 +280,7 @@
 "	if (albedo.a < 0.1)\n" \
 "		discard;\n" \
 "\n" \
-"	vec3 a = vec3(albedo);\n" \
-"	vec3 s = vec3(texture(material.specular, fTexCoord));\n" \
-"	vec3 colorText = phong(a, a, s, 32.0, true);\n" \
-"	FragColor.xyz = mix(colorText, fColor.xyz, averageColor);\n" \
-"	FragColor.w = fColor.w;\n" \
+"	FragColor = albedo * fColor;\n;" \
 "}\n"
 #pragma endregion
 
@@ -389,36 +395,6 @@
 
 #pragma region CartoonShader
 
-#define CartoonVertex													\
-"#version 330 core\n"													\
-"\n"																	\
-"layout(location = 0) in vec3 position;\n"								\
-"layout(location = 1) in vec3 normal;\n"								\
-"layout(location = 2) in vec4 color;\n"									\
-"layout(location = 3) in vec2 texCoord;\n"								\
-"\n"																	\
-"uniform mat4 model_matrix;\n"											\
-"uniform mat4 mvp_matrix;\n"											\
-"uniform mat3 normal_matrix;\n"											\
-"\n"																	\
-"out VS_OUT\n"															\
-"{\n"																	\
-"  vec3 gPosition;\n"													\
-"  vec3 gNormal;\n"														\
-"  vec4 gColor;\n"														\
-"  vec2 gTexCoord;\n"													\
-"} vs_out;\n"															\
-"\n"																	\
-"void main()\n"															\
-"{\n"																	\
-"	vs_out.gPosition = vec3(model_matrix * vec4(position, 1.0));\n"		\
-"	vs_out.gNormal = normalize(normal_matrix * normal);\n"				\
-"	vs_out.gColor = color;\n"											\
-"	vs_out.gTexCoord = texCoord;\n"										\
-"\n"																	\
-"	gl_Position = mvp_matrix * vec4(position, 1.0);\n"					\
-"}"
-
 #define CartoonGeometry																				\
 "#version 330 core\n"																				\
 "\n"																								\
@@ -443,8 +419,8 @@
 "\n"																								\
 "flat out int fIsEdge; // which output primitives are silhouette edges\n"							\
 "\n"																								\
-"uniform float edgeWidth; // wdth of silhouette edge in clip\n"										\
-"uniform float pctExtend; // percentage to extend quad\n"											\
+"//uniform float edgeWidth; // width of silhouette edge in clip\n"									\
+"//uniform float pctExtend; // percentage to extend quad\n"											\
 "\n"																								\
 "bool isFrontFacing(vec3 a, vec3 b, vec3 c) // is a triangle front facing?\n"						\
 "{\n"																								\
@@ -454,6 +430,9 @@
 "\n"																								\
 "void emitEdgeQuad(vec3 e0, vec3 e1)\n"																\
 "{\n"																								\
+"	float edgeWidth = 0.002;\n"																		\
+"	float pctExtend = 0.0;\n"																		\
+"\n"																								\
 "	vec2 ext = pctExtend * (e1.xy - e0.xy);\n"														\
 "	vec2 v = normalize(e1.xy - e0.xy);\n"															\
 "	vec2 n = vec2(-v.y, v.x) * edgeWidth;\n"														\
@@ -544,11 +523,13 @@
 "uniform vec3 viewPos;\n"																\
 "uniform Material material;\n"															\
 "\n"																					\
-"uniform vec3 lineColor; // the silhouette edge color\n"								\
-"uniform int levels;\n"																	\
+"//uniform vec3 lineColor; // the silhouette edge color\n"								\
+"//uniform int levels;\n"																\
 "\n"																					\
 "void main()\n"																			\
 "{\n"																					\
+"	vec3 lineColor = vec3(0.0, 0.0, 0.0);\n"											\
+"	int levels = 2;\n"																	\
 "\n"																					\
 "	// If we're drawing an edge, use constant color\n"									\
 "	if (fIsEdge == 1)\n"																\
@@ -566,10 +547,67 @@
 "\n"																					\
 "		vec4 albedo = texture(material.albedo, fs_in.fTexCoord);\n"						\
 "		vec3 diffuse = vec3(albedo);\n"													\
-"		gAlbedoSpec = vec4(diffuse, albedo.a);\n"												\
+"		gAlbedoSpec = vec4(diffuse, albedo.a);\n"										\
 "	}\n"																				\
 "\n"																					\
-"	gPosition.rgb = fs_in.fPosition;\n"											\
+"	gPosition.rgb = fs_in.fPosition;\n"													\
+"	gNormal.rgb = normalize(fs_in.fNormal);\n"											\
+"}"
+
+#define CartoonFloorFragment																\
+"#version 330 core\n"																	\
+"\n"																					\
+"layout(location = 0) out vec4 gPosition;\n"											\
+"layout(location = 1) out vec4 gNormal;\n"												\
+"layout(location = 2) out vec4 gAlbedoSpec;\n"											\
+"\n"																					\
+"in GS_OUT\n"																			\
+"{\n"																					\
+"  vec3 fPosition;\n"																	\
+"  vec3 fNormal;\n"																		\
+"  vec4 fColor;\n"																		\
+"  vec2 fTexCoord;\n"																	\
+"} fs_in;\n"																			\
+"\n"																					\
+"flat in int fIsEdge; // whether or not we're drawing an edge\n"						\
+"\n"																					\
+"struct Material\n"																		\
+"{\n"																					\
+"	sampler2D albedo;\n"																\
+"};\n"																					\
+"\n"																					\
+"uniform vec3 viewPos;\n"																\
+"uniform Material material;\n"															\
+"uniform vec2 repeat = vec2(2, 2);\n"															\
+"\n"																					\
+"//uniform vec3 lineColor; // the silhouette edge color\n"								\
+"//uniform int levels;\n"																\
+"\n"																					\
+"void main()\n"																			\
+"{\n"																					\
+"	vec3 lineColor = vec3(0.0, 0.0, 0.0);\n"											\
+"	int levels = 2;\n"																	\
+"\n"																					\
+"	// If we're drawing an edge, use constant color\n"									\
+"	if (fIsEdge == 1)\n"																\
+"	{\n"																				\
+"		gNormal.a = 1;\n"																\
+"		gPosition.a = 3;\n"																\
+"\n"																					\
+"		gAlbedoSpec = vec4(lineColor, 1.0);\n"											\
+"	}\n"																				\
+"	// Otherwise, shade the poly\n"														\
+"	else\n"																				\
+"	{\n"																				\
+"		gNormal.a = levels;\n"															\
+"		gPosition.a = 2;\n"																\
+"\n"																					\
+"		vec4 albedo = texture2D(material.albedo, vec2(mod(fs_in.fTexCoord.x * repeat.x, 1), mod(fs_in.fTexCoord.y * repeat.y, 1)));\n"						\
+"		vec3 diffuse = vec3(albedo);\n"													\
+"		gAlbedoSpec = vec4(diffuse, albedo.a);\n"										\
+"	}\n"																				\
+"\n"																					\
+"	gPosition.rgb = fs_in.fPosition;\n"													\
 "	gNormal.rgb = normalize(fs_in.fNormal);\n"											\
 "}"
 

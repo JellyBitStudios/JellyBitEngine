@@ -8,8 +8,8 @@ class ComponentSphereCollider : public ComponentCollider
 {
 public:
 
-	ComponentSphereCollider(GameObject* parent);
-	ComponentSphereCollider(const ComponentSphereCollider& componentSphereCollider, GameObject* parent);
+	ComponentSphereCollider(GameObject* parent, bool include = true);
+	ComponentSphereCollider(const ComponentSphereCollider& componentSphereCollider, GameObject* parent, bool include = true);
 	~ComponentSphereCollider();
 
 	void OnUniqueEditor();

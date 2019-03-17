@@ -63,6 +63,7 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 {
 	strcpy_s(name, DEFAULT_BUF_SIZE, gameObject.name);
 
+	originalBoundingBox = gameObject.originalBoundingBox;
 	boundingBox = gameObject.boundingBox;
 
 	isActive = gameObject.isActive;
@@ -72,6 +73,7 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 	layer = gameObject.layer;
 
 	uuid = App->GenerateRandomNumber();
+
 
 	for (int i = 0; i < gameObject.components.size(); ++i)
 	{
@@ -120,7 +122,7 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			components.push_back(cmp_animation);
 			break;
 		case ComponentTypes::AnimatorComponent:
-			cmp_animator = new ComponentAnimator(*gameObject.cmp_animator, this);
+			cmp_animator = new ComponentAnimator(*gameObject.cmp_animator, this, includeComponents);
 			cmp_animator->SetParent(this);
 			components.push_back(cmp_animator);
 			break;
@@ -135,32 +137,32 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			components.push_back(cmp_projector);
 			break;
 		case ComponentTypes::RigidStaticComponent:
-			cmp_rigidActor = new ComponentRigidStatic(*(ComponentRigidStatic*)gameObject.cmp_rigidActor, this);
+			cmp_rigidActor = new ComponentRigidStatic(*(ComponentRigidStatic*)gameObject.cmp_rigidActor, this, includeComponents);
 			cmp_rigidActor->SetParent(this);
 			components.push_back(cmp_rigidActor);
 			break;
 		case ComponentTypes::RigidDynamicComponent:
-			cmp_rigidActor = new ComponentRigidDynamic(*(ComponentRigidDynamic*)gameObject.cmp_rigidActor, this);
+			cmp_rigidActor = new ComponentRigidDynamic(*(ComponentRigidDynamic*)gameObject.cmp_rigidActor, this, includeComponents);
 			cmp_rigidActor->SetParent(this);
 			components.push_back(cmp_rigidActor);
 			break;
 		case ComponentTypes::BoxColliderComponent:
-			cmp_collider = new ComponentBoxCollider(*(ComponentBoxCollider*)gameObject.cmp_collider, this);
+			cmp_collider = new ComponentBoxCollider(*(ComponentBoxCollider*)gameObject.cmp_collider, this, includeComponents);
 			cmp_collider->SetParent(this);
 			components.push_back(cmp_collider);
 			break;
 		case ComponentTypes::SphereColliderComponent:
-			cmp_collider = new ComponentSphereCollider(*(ComponentSphereCollider*)gameObject.cmp_collider, this);
+			cmp_collider = new ComponentSphereCollider(*(ComponentSphereCollider*)gameObject.cmp_collider, this, includeComponents);
 			cmp_collider->SetParent(this);
 			components.push_back(cmp_collider);
 			break;
 		case ComponentTypes::CapsuleColliderComponent:
-			cmp_collider = new ComponentCapsuleCollider(*(ComponentCapsuleCollider*)gameObject.cmp_collider, this);
+			cmp_collider = new ComponentCapsuleCollider(*(ComponentCapsuleCollider*)gameObject.cmp_collider, this, includeComponents);
 			cmp_collider->SetParent(this);
 			components.push_back(cmp_collider);
 			break;
 		case ComponentTypes::PlaneColliderComponent:
-			cmp_collider = new ComponentPlaneCollider(*(ComponentPlaneCollider*)gameObject.cmp_collider, this);
+			cmp_collider = new ComponentPlaneCollider(*(ComponentPlaneCollider*)gameObject.cmp_collider, this, includeComponents);
 			cmp_collider->SetParent(this);
 			components.push_back(cmp_collider);
 			break;
@@ -298,13 +300,15 @@ void GameObject::ToggleIsStatic()
 
 void GameObject::ToggleChildrenAndThisStatic(bool toStatic)
 {
-	isStatic = toStatic;
-	App->GOs->RecalculateVector(this, false);
-	for each(auto child in children)
+	std::vector<GameObject*> gos;
+	GetChildrenAndThisVectorFromLeaf(gos);
+
+	for each(auto go in gos)
 	{
-		child->ToggleChildrenAndThisStatic(toStatic);
-		App->GOs->RecalculateVector(this, false);
+		go->isStatic = toStatic;
+		App->GOs->RecalculateVector(go, false);
 	}
+
 	System_Event newEvent;
 	newEvent.type = System_Event_Type::RecreateQuadtree;
 	App->PushSystemEvent(newEvent);
@@ -312,11 +316,14 @@ void GameObject::ToggleChildrenAndThisStatic(bool toStatic)
 
 void GameObject::ToggleChildrenAndThisWalkable(bool walkable)
 {
-	if (cmp_mesh != 0)
-		cmp_mesh->nv_walkable = walkable;
+	std::vector<GameObject*> gos;
+	GetChildrenAndThisVectorFromLeaf(gos);
 
-	for each(auto go in children)
-		go->ToggleChildrenAndThisWalkable(walkable);
+	for each(auto go in gos)
+	{
+		if (go->cmp_mesh != 0)
+			go->cmp_mesh->nv_walkable = walkable;
+	}
 }
 
 bool GameObject::IsActive() const
@@ -608,27 +615,27 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		break;
 	case ComponentTypes::RigidStaticComponent:
 		assert(cmp_rigidActor == nullptr);
-		newComponent = cmp_rigidActor = new ComponentRigidStatic(this);
+		newComponent = cmp_rigidActor = new ComponentRigidStatic(this, includeInModules);
 		break;
 	case ComponentTypes::RigidDynamicComponent:
 		assert(cmp_rigidActor == nullptr);
-		newComponent = cmp_rigidActor = new ComponentRigidDynamic(this);
+		newComponent = cmp_rigidActor = new ComponentRigidDynamic(this, includeInModules);
 		break;
 	case ComponentTypes::BoxColliderComponent:
 		assert(cmp_collider == nullptr);
-		newComponent = cmp_collider = new ComponentBoxCollider(this);
+		newComponent = cmp_collider = new ComponentBoxCollider(this, includeInModules);
 		break;
 	case ComponentTypes::SphereColliderComponent:
 		assert(cmp_collider == nullptr);
-		newComponent = cmp_collider = new ComponentSphereCollider(this);
+		newComponent = cmp_collider = new ComponentSphereCollider(this, includeInModules);
 		break;
 	case ComponentTypes::CapsuleColliderComponent:
 		assert(cmp_collider == nullptr);
-		newComponent = cmp_collider = new ComponentCapsuleCollider(this);
+		newComponent = cmp_collider = new ComponentCapsuleCollider(this, includeInModules);
 		break;
 	case ComponentTypes::PlaneColliderComponent:
 		assert(cmp_collider == nullptr);
-		newComponent = cmp_collider = new ComponentPlaneCollider(this);
+		newComponent = cmp_collider = new ComponentPlaneCollider(this, includeInModules);
 		break;
 	case ComponentTypes::ScriptComponent:
 	{
@@ -636,7 +643,7 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		if(includeInModules)
 			App->scripting->AddScriptComponent((ComponentScript*)newComponent);
 		break;
-		}
+	}
 	case ComponentTypes::AudioListenerComponent:
 		newComponent = cmp_audioListener = new ComponentAudioListener(this);
 		break;

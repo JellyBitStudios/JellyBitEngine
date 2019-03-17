@@ -39,23 +39,27 @@ bool ModuleScene::Init(JSON_Object* jObject)
 
 bool ModuleScene::Start()
 {
+#ifndef GAMEMODE
 	grid = new PrimitiveGrid();
 	grid->ShowAxis(true);
-	root = new GameObject("Root", nullptr, true);
-	GameObject* directionalLight = App->GOs->CreateGameObject("Directional Light", root);
-	directionalLight->AddComponent(ComponentTypes::LightComponent);
+#endif
 
-	math::float3 axis;
-	float angle;
-	math::Quat rotation = rotation.identity;
-	rotation.ToAxisAngle(axis, angle);
-	axis *= angle;
-	axis *= RADTODEG;
-	axis[0] = -50;
-	axis[1] = 30;
-	axis *= DEGTORAD;
-	rotation.SetFromAxisAngle(axis.Normalized(), axis.Length());
-	directionalLight->transform->SetRotation(rotation);
+	root = new GameObject("Root", nullptr, true);
+	//GameObject* directionalLight = App->GOs->CreateGameObject("Directional Light", root);
+	//directionalLight->AddComponent(ComponentTypes::LightComponent);
+	//
+	//math::float3 axis;
+	//float angle;
+	//math::Quat rotation = rotation.identity;
+	//rotation.ToAxisAngle(axis, angle);
+	//axis *= angle;
+	//axis *= RADTODEG;
+	//axis[0] = -50;
+	//axis[1] = 30;
+	//axis *= DEGTORAD;
+	//rotation.SetFromAxisAngle(axis.Normalized(), axis.Length());
+	//directionalLight->transform->SetRotation(rotation);
+
 	return true;
 }
 
@@ -109,8 +113,8 @@ bool ModuleScene::CleanUp()
 {
 	bool ret = true;
 
-	RELEASE(grid);
 #ifndef GAMEMODE
+	RELEASE(grid);
 	SELECT(NULL);
 #endif
 
@@ -156,7 +160,7 @@ void ModuleScene::OnSystemEvent(System_Event event)
 
 #ifndef GAMEMODE
 	case System_Event_Type::GameObjectDestroyed:
-
+	{
 		// Remove GO in list if its deleted
 		if (selectedObject == event.goEvent.gameObject)
 			SELECT(NULL);
@@ -172,7 +176,15 @@ void ModuleScene::OnSystemEvent(System_Event event)
 			else
 				++iterator;
 		}
+	}
 		break;
+	case System_Event_Type::LoadFinished:
+	{
+		System_Event newEvent;
+		newEvent.type = System_Event_Type::RecreateQuadtree;
+		App->PushSystemEvent(newEvent);
+	}
+	break;
 #endif
 	}
 }
@@ -189,8 +201,10 @@ void ModuleScene::LoadStatus(const JSON_Object* jObject)
 
 void ModuleScene::Draw() const
 {
+#ifndef GAMEMODE
 	if (showGrid)
 		grid->Render();
+#endif
 }
 
 #ifndef GAMEMODE

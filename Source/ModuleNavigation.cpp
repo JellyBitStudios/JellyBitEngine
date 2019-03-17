@@ -85,10 +85,11 @@ update_status ModuleNavigation::Update()
 					memcpy(&direction, ag->vel, sizeof(float) * 3);
 					direction.Normalize();
 					float angle = math::Atan2(direction.x, direction.z);
-					math::Quat new_rotation;
-					new_rotation.SetFromAxisAngle(math::float3(0, 1, 0), angle);
+					math::Quat new_rotation = trm->GetRotation();
+					new_rotation = new_rotation.RotateY(angle);
 					trm->SetRotation(new_rotation);
 				}
+			//}
 		}
 	}
 
@@ -151,7 +152,7 @@ void ModuleNavigation::InitDetour()
 	status = m_navQuery->init(m_navMesh, 2048);
 	if (dtStatusFailed(status))
 	{
-		DEPRECATED_LOG("Could not init Detour navmesh query");
+		CONSOLE_LOG(LogTypes::Error, "Could not init Detour navmesh query");
 		return;
 	}
 

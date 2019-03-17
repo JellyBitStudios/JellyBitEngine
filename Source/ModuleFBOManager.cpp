@@ -29,6 +29,10 @@ void ModuleFBOManager::OnSystemEvent(System_Event event)
 
 void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 {
+	// Get default depth buffer bits in order to generate a proper depth fbo buffer
+	GLint depthBits;
+	glGetIntegerv(GL_DEPTH_BITS, &depthBits);
+
 	// DEFERRED SHADING G BUFFER
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
@@ -63,22 +67,19 @@ void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedoSpec, 0);
 
-	// - color + specular color buffer
-	glGenTextures(1, &gDecals);
-	glBindTexture(GL_TEXTURE_2D, gDecals);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gDecals, 0);
-
 	// - tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
-	unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
-	glDrawBuffers(4, attachments);
+	unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+	glDrawBuffers(3, attachments);
 
 	// then also add render buffer object as depth buffer and check for completeness.
 	glGenRenderbuffers(1, &rboDepth);
 	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+	if (depthBits == 16)
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
+	else if (depthBits == 24)
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+	else if (depthBits == 32)
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32, width, height);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
 	// finally check if framebuffer is complete
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -93,7 +94,6 @@ void ModuleFBOManager::UnloadGBuffer()
 	glDeleteTextures(1, &gPosition);
 	glDeleteTextures(1, &gNormal);
 	glDeleteTextures(1, &gAlbedoSpec);
-	glDeleteTextures(1, &gDecals);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -128,10 +128,6 @@ void ModuleFBOManager::DrawGBufferToScreen() const
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
 	location = glGetUniformLocation(resProgram->shaderProgram, "gAlbedoSpec");
 	glUniform1i(location, 2);
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, gDecals);
-	location = glGetUniformLocation(resProgram->shaderProgram, "gDecals");
-	glUniform1i(location, 3);
 
 	App->lights->UseLights(resProgram->shaderProgram);
 
@@ -157,7 +153,7 @@ void ModuleFBOManager::MergeDepthBuffer(uint width, uint height)
 {
 	// Here we write current depth buffer from gbuffer to default
 	// buffer so we can draw in forward rendering as we used to
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, rboDepth);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
 	glBlitFramebuffer(
 		0, 0, width, height, 0, 0, width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST

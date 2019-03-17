@@ -276,7 +276,7 @@ uint AnimationImporter::GenerateResourceFromFile(const char * file_path, uint ui
 	// Checking for errors
 	if (buffer == nullptr)
 	{
-		DEPRECATED_LOG("AnimationImporter: Unable to open file...");
+		CONSOLE_LOG(LogTypes::Error, "AnimationImporter: Unable to open file...");
 		return false;
 	}
 
@@ -392,7 +392,7 @@ void AnimationImporter::Load(const char * file_path, ResourceData & data, Resour
 	// Checking for errors
 	if (buffer == nullptr)
 	{
-		DEPRECATED_LOG("AnimationImporter: Unable to open file...");
+		CONSOLE_LOG(LogTypes::Error, "AnimationImporter: Unable to open file...");
 		
 	}
 

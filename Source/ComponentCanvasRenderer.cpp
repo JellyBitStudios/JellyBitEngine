@@ -62,7 +62,7 @@ void ComponentCanvasRenderer::Update()
 	if (cmp_image)
 		if (cmp_image->IsActive() && parent->IsActive())
 		{
-			if (cmp_image->UseColor())
+			if (cmp_image->isColorUsed())
 			{
 				for (ToUIRend* rend : rend_queue)
 				{

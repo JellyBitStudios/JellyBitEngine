@@ -10,7 +10,7 @@
 
 #include "imgui\imgui.h"
 
-ComponentCapsuleCollider::ComponentCapsuleCollider(GameObject* parent) : ComponentCollider(parent, ComponentTypes::CapsuleColliderComponent)
+ComponentCapsuleCollider::ComponentCapsuleCollider(GameObject* parent, bool include) : ComponentCollider(parent, ComponentTypes::CapsuleColliderComponent, include)
 {
 	EncloseGeometry();
 
@@ -18,17 +18,28 @@ ComponentCapsuleCollider::ComponentCapsuleCollider(GameObject* parent) : Compone
 
 	// -----
 
-	physx::PxShapeFlags shapeFlags = gShape->getFlags();
-	isTrigger = shapeFlags & physx::PxShapeFlag::Enum::eTRIGGER_SHAPE && !(shapeFlags & physx::PxShapeFlag::eSIMULATION_SHAPE);
-	participateInContactTests = shapeFlags & physx::PxShapeFlag::Enum::eSIMULATION_SHAPE;
-	participateInSceneQueries = shapeFlags & physx::PxShapeFlag::Enum::eSCENE_QUERY_SHAPE;
+	SetIsTrigger(isTrigger);
+	SetParticipateInContactTests(participateInContactTests);
+	SetParticipateInSceneQueries(participateInSceneQueries);
+	SetFiltering(filterGroup, filterMask);
+
+	// -----
+
+	SetRadius(radius);
+	SetHalfHeight(halfHeight);
+	SetDirection(direction);
+
+	SetCenter(center);
 }
 
-ComponentCapsuleCollider::ComponentCapsuleCollider(const ComponentCapsuleCollider& componentCapsuleCollider, GameObject* parent) : ComponentCollider(componentCapsuleCollider, parent, ComponentTypes::CapsuleColliderComponent)
+ComponentCapsuleCollider::ComponentCapsuleCollider(const ComponentCapsuleCollider& componentCapsuleCollider, GameObject* parent, bool include) : ComponentCollider(componentCapsuleCollider, parent, ComponentTypes::CapsuleColliderComponent, include)
 {
-	EncloseGeometry();
+	if (include)
+		EncloseGeometry();
 
 	colliderType = componentCapsuleCollider.colliderType;
+
+	// -----
 
 	SetIsTrigger(componentCapsuleCollider.isTrigger);
 	SetParticipateInContactTests(componentCapsuleCollider.participateInContactTests);
@@ -141,7 +152,7 @@ void ComponentCapsuleCollider::EncloseGeometry()
 		globalMatrix.Decompose(pos, rot, scale);
 
 		center = parent->boundingBox.CenterPoint() - pos;
-		math::float3 halfSize = parent->boundingBox.HalfSize();
+		math::float3 halfSize = parent->originalBoundingBox.HalfSize().Mul(scale);
 
 		switch (direction)
 		{
@@ -168,7 +179,8 @@ void ComponentCapsuleCollider::EncloseGeometry()
 		}
 	}
 
-	RecalculateShape();
+	//if (gShape != nullptr)
+		RecalculateShape();
 }
 
 void ComponentCapsuleCollider::RecalculateShape()
@@ -223,21 +235,24 @@ void ComponentCapsuleCollider::SetCenter(const math::float3& center)
 	case CapsuleDirection::CapsuleDirectionXAxis:
 	{
 		physx::PxTransform relativePose(physx::PxVec3(center.x, center.y, center.z));
-		gShape->setLocalPose(relativePose);
+		if (gShape != nullptr)
+			gShape->setLocalPose(relativePose);
 	}
 	break;
 	case CapsuleDirection::CapsuleDirectionYAxis:
 	{
 		math::float3 dir = math::float3(0.0f, 0.0f, 1.0f);
 		physx::PxTransform relativePose(physx::PxVec3(center.x, center.y, center.z), physx::PxQuat(physx::PxHalfPi, physx::PxVec3(dir.x, dir.y, dir.z)));
-		gShape->setLocalPose(relativePose);
+		if (gShape != nullptr)
+			gShape->setLocalPose(relativePose);
 	}
 	break;
 	case CapsuleDirection::CapsuleDirectionZAxis:
 	{
 		math::float3 dir = math::float3(0.0f, 1.0f, 0.0f);
 		physx::PxTransform relativePose(physx::PxVec3(center.x, center.y, center.z), physx::PxQuat(physx::PxHalfPi, physx::PxVec3(dir.x, dir.y, dir.z)));
-		gShape->setLocalPose(relativePose);
+		if (gShape != nullptr)
+			gShape->setLocalPose(relativePose);
 	}
 	break;
 	}
@@ -246,13 +261,15 @@ void ComponentCapsuleCollider::SetCenter(const math::float3& center)
 void ComponentCapsuleCollider::SetRadius(float radius)
 {
 	this->radius = radius;
-	gShape->setGeometry(physx::PxCapsuleGeometry(radius, halfHeight));
+	if (gShape != nullptr)
+		gShape->setGeometry(physx::PxCapsuleGeometry(radius, halfHeight));
 }
 
 void ComponentCapsuleCollider::SetHalfHeight(float halfHeight)
 {
 	this->halfHeight = halfHeight;
-	gShape->setGeometry(physx::PxCapsuleGeometry(radius, halfHeight));
+	if (gShape != nullptr)
+		gShape->setGeometry(physx::PxCapsuleGeometry(radius, halfHeight));
 }
 
 void ComponentCapsuleCollider::SetDirection(CapsuleDirection direction)
@@ -263,21 +280,24 @@ void ComponentCapsuleCollider::SetDirection(CapsuleDirection direction)
 	case CapsuleDirection::CapsuleDirectionXAxis:
 	{
 		physx::PxTransform relativePose(physx::PxVec3(center.x, center.y, center.z));
-		gShape->setLocalPose(relativePose);
+		if (gShape != nullptr)
+			gShape->setLocalPose(relativePose);
 	}
 	break;
 	case CapsuleDirection::CapsuleDirectionYAxis:
 	{
 		math::float3 dir = math::float3(0.0f, 0.0f, 1.0f);
 		physx::PxTransform relativePose(physx::PxVec3(center.x, center.y, center.z), physx::PxQuat(physx::PxHalfPi, physx::PxVec3(dir.x, dir.y, dir.z)));
-		gShape->setLocalPose(relativePose);
+		if (gShape != nullptr)
+			gShape->setLocalPose(relativePose);
 	}
 	break;
 	case CapsuleDirection::CapsuleDirectionZAxis:
 	{
 		math::float3 dir = math::float3(0.0f, 1.0f, 0.0f);
 		physx::PxTransform relativePose(physx::PxVec3(center.x, center.y, center.z), physx::PxQuat(physx::PxHalfPi, physx::PxVec3(dir.x, dir.y, dir.z)));
-		gShape->setLocalPose(relativePose);
+		if (gShape != nullptr)
+			gShape->setLocalPose(relativePose);
 	}
 	break;
 	}
@@ -288,6 +308,7 @@ void ComponentCapsuleCollider::SetDirection(CapsuleDirection direction)
 physx::PxCapsuleGeometry ComponentCapsuleCollider::GetCapsuleGeometry() const
 {
 	physx::PxCapsuleGeometry capsuleGeometry;
-	gShape->getCapsuleGeometry(capsuleGeometry);
+	if (gShape != nullptr)
+		gShape->getCapsuleGeometry(capsuleGeometry);
 	return capsuleGeometry;
 }

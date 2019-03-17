@@ -44,26 +44,31 @@ public:
 	bool SetRootUuid(uint rootUuid);
 	uint GetRootUuid() const;
 	std::vector<uint> GetBonesUuids() const;
+	void SetIsAnimated(bool animated);
+	bool GetIsAnimated() const;
 
 	// ----------------------------------------------------------------------------------------------------
 
-	void CreateSkeleton(GameObject* gameObject);
-	void AddBones(GameObject* gameObject) const;
+	void CreateSkeletonAndAddBones();
+	void ClearSkeletonAndBones();
 
 	void StepBones(uint animationUuid, float time, float blend = 1.0f);
 
 private:
 
+	void CreateSkeleton(GameObject* gameObject);
+	void AddBones(GameObject* gameObject) const;
+
 	void ClearSkeleton();
 	void ClearBones();
-	void ClearSkeletonAndBones();
 
 	bool LoadInMemory();
 	bool UnloadFromMemory();
 
 private:
 
-	std::unordered_map<const char*, uint> bones; // bone name, bone game object uuid
+	std::unordered_map<std::string, uint> bones; // bone name, bone game object uuid
+	bool animated = true;
 
 	ResourceAvatarData avatarData;
 };

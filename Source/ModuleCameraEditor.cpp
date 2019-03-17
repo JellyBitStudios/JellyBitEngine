@@ -137,8 +137,8 @@ update_status ModuleCameraEditor::Update()
 	}
 
 	// Select game object
-	if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_DOWN 
-		&& !App->gui->IsMouseHoveringAnyWindow() && !App->scene->IsGizmoValid())
+	if (App->input->GetMouseButton(SDL_BUTTON_MIDDLE) == KEY_DOWN
+		&& !App->gui->IsMouseHoveringAnyWindow())
 	{
 		float distance;
 		math::float3 hitPoint;
@@ -148,6 +148,10 @@ update_status ModuleCameraEditor::Update()
 		if (hitGameObject != nullptr)
 		{
 			SELECT(hitGameObject);
+
+			GameObject* parent = hitGameObject->GetParent();
+			if (parent)
+				OpenInHierarchy(parent);
 		}
 		else
 			SELECT(NULL);
@@ -156,9 +160,18 @@ update_status ModuleCameraEditor::Update()
 	return UPDATE_CONTINUE;
 }
 
+void ModuleCameraEditor::OpenInHierarchy(GameObject* curr)
+{
+	curr->openHierarchy = true;
+
+	GameObject* parent = curr->GetParent();
+	if (parent)
+		OpenInHierarchy(parent);
+}
+
 bool ModuleCameraEditor::CleanUp()
 {
-	DEPRECATED_LOG("Cleaning camera");
+	CONSOLE_LOG(LogTypes::Normal, "Cleaning camera");
 
 	return true;
 }

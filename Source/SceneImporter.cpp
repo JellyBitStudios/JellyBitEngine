@@ -476,7 +476,7 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 				bonesSize += sizeof(uint); // bonesWeightsSize
 				bonesSize += sizeof(float) * boneInfluences[i].bonesWeightsSize; // boneWeights
 				bonesSize += sizeof(uint) * boneInfluences[i].bonesWeightsSize; // boneIds
-				bonesSize += sizeof(char) * DEFAULT_BUF_SIZE; // boneName
+				bonesSize += sizeof(char) * nameSize; // boneName
 			}
 
 			uint size = sizeof(ranges) +
@@ -568,7 +568,7 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 				memcpy(cursor, boneInfluences[i].boneIds, bytes);
 				cursor += bytes;
 
-				bytes = sizeof(char) * DEFAULT_BUF_SIZE;
+				bytes = sizeof(char) * nameSize;
 				memcpy(cursor, boneInfluences[i].boneName, bytes);
 				cursor += bytes;
 			}
@@ -580,7 +580,7 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 			cursor += bytes;
 
 			// 10. Store name
-			bytes = sizeof(char) * DEFAULT_BUF_SIZE;
+			bytes = sizeof(char) * nameSize;
 			memcpy(cursor, meshName, bytes);
 
 			// Create the Mesh Resource
@@ -665,23 +665,22 @@ void SceneImporter::ImportAnimations(const aiScene * scene, GameObject* rootBone
 	for (uint i = 0; i < scene->mNumAnimations; ++i)
 	{
 		const aiAnimation* anim = scene->mAnimations[i];
-		DEPRECATED_LOG("Importing animation [%s] -----------------", anim->mName.C_Str());
+		CONSOLE_LOG(LogTypes::Normal, "Importing animation [%s] -----------------", anim->mName.C_Str());
 		std::string output;
 
 		if (rootBone)
 		{
-			ComponentAnimation* anim_co = (ComponentAnimation*)rootBone->AddComponent(ComponentTypes::AnimationComponent);
-
+			uint res_uuid = 0u;
 			GameObject* go = rootBone;
 			if (forcedUuids.size() > 0)
 			{
-				go->cmp_animation->res = forcedUuids.front();
+				res_uuid = forcedUuids.front();
 				forcedUuids.erase(forcedUuids.begin());
 			}
 			else
-				go->cmp_animation->res = App->GenerateRandomNumber();
+				res_uuid = App->GenerateRandomNumber();
 
-			std::string outputFile = std::to_string(go->cmp_animation->res);
+			std::string outputFile = std::to_string(res_uuid);
 
 			ResourceData data;
 			data.name = outputFile;
@@ -822,7 +821,9 @@ bool SceneImporter::Load(const void* buffer, uint size, ResourceData& outputData
 	cursor = texCoordsCursor;
 
 	// 8. Load bones
-	outputMeshData.boneInfluences = new BoneInfluence[outputMeshData.boneInfluencesSize];
+	if (outputMeshData.boneInfluencesSize > 0)
+		outputMeshData.boneInfluences = new BoneInfluence[outputMeshData.boneInfluencesSize];
+
 	for (uint i = 0; i < outputMeshData.boneInfluencesSize; ++i)
 	{
 		bytes = sizeof(uint);
@@ -949,13 +950,16 @@ void SceneImporter::GenerateVAO(uint& VAO, uint& VBO, uint attrFlag) const
 		glEnableVertexAttribArray(5);
 	}
 
-	// 7. Weights
-	glVertexAttribPointer(6, MAX_BONES, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, boneWeight)));
-	glEnableVertexAttribArray(6);
+	if (attrFlag & ResourceMeshImportSettings::ATTR_ANIMATION)
+	{
+		// 7. Weights
+		glVertexAttribPointer(6, MAX_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, boneWeight)));
+		glEnableVertexAttribArray(6);
 
-	// 8. Ids
-	glVertexAttribPointer(7, MAX_BONES, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, boneId)));
-	glEnableVertexAttribArray(7);
+		// 8. Ids
+		glVertexAttribIPointer(7, MAX_BONES_PER_VERTEX, GL_INT, sizeof(Vertex), (void*)(offsetof(Vertex, boneId)));
+		glEnableVertexAttribArray(7);
+	}
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
