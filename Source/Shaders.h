@@ -387,7 +387,7 @@
 "\n"																								\
 "void emitEdgeQuad(vec3 e0, vec3 e1)\n"																\
 "{\n"																								\
-"	float edgeWidth = 0.003;\n"																		\
+"	float edgeWidth = 0.002;\n"																		\
 "	float pctExtend = 0.0;\n"																		\
 "\n"																								\
 "	vec2 ext = pctExtend * (e1.xy - e0.xy);\n"														\
