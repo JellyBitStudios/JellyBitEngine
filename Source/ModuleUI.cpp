@@ -13,6 +13,7 @@
 #include "GameObject.h"
 
 #include "ComponentCamera.h"
+#include "ComponentCanvas.h"
 #include "ComponentRectTransform.h"
 #include "ComponentCanvasRenderer.h"
 #include "ComponentButton.h"
@@ -132,6 +133,7 @@ update_status ModuleUI::Update()
 #ifndef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 #endif // !GAMEMODE
+	/*
 	for (std::list<Component*>::iterator iteratorUI = componentsScreenRendererUI.begin(); iteratorUI != componentsScreenRendererUI.end(); ++iteratorUI)
 		(*iteratorUI)->Update();
 	for (std::list<Component*>::iterator iteratorUI = componentsWorldRendererUI.begin(); iteratorUI != componentsWorldRendererUI.end(); ++iteratorUI)
@@ -142,7 +144,9 @@ update_status ModuleUI::Update()
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
 		for (std::list<Component*>::iterator iteratorUI = componentsUI.begin(); iteratorUI != componentsUI.end(); ++iteratorUI)
 			(*iteratorUI)->Update();
-
+*/
+	for (std::list<GameObject*>::iterator iteratorUI = canvas.begin(); iteratorUI != canvas.end(); ++iteratorUI)
+		(*iteratorUI)->cmp_canvas->Update();
 	return update_status::UPDATE_CONTINUE;
 }
 
@@ -162,12 +166,6 @@ void ModuleUI::OnSystemEvent(System_Event event)
 	{
 		case System_Event_Type::LoadFinished:
 		{
-			std::vector<GameObject*> children;
-			App->scene->root->GetChildrenVector(children);
-			for each (GameObject* child in children)
-				if (std::strcmp(child->GetName(), "Canvas") == 0)
-					App->GOs->SetCanvas(child);
-
 			LinkAllRectsTransform();
 			break;
 		}
@@ -179,8 +177,6 @@ void ModuleUI::OnSystemEvent(System_Event event)
 			componentsScreenRendererUI.clear();
 			componentsWorldRendererUI.clear();
 			GOsWorldCanvas.clear();
-
-			App->GOs->DeleteCanvasPointer();
 			break;
 		}
 		case System_Event_Type::ComponentDestroyed:
@@ -214,13 +210,29 @@ void ModuleUI::OnSystemEvent(System_Event event)
 				componentsUI.remove(event.compEvent.component);
 				break;
 			}
+			case ComponentTypes::CanvasComponent:
+			{
+				ComponentCanvas* cmp_canvas = (ComponentCanvas*)event.compEvent.component;
+				GameObject* parentC = cmp_canvas->GetParent();
+				canvas.remove(parentC);
+				switch (cmp_canvas->GetType())
+				{
+				case ComponentCanvas::CanvasType::SCREEN:
+					canvas_screen.remove(parentC);
+					break;
+				case ComponentCanvas::CanvasType::WORLD_SCREEN:
+					canvas_worldScreen.remove(parentC);
+					break;
+				case ComponentCanvas::CanvasType::WORLD:
+					canvas_world.remove(parentC);
+					break;
+				}
+				break;
+			}
 			break;
 		}
 		case System_Event_Type::GameObjectDestroyed:
 		{
-			if (std::strcmp(event.goEvent.gameObject->GetName(), "Canvas") == 0)
-				App->GOs->DeleteCanvasPointer();
-
 			break;
 		}
 	}
@@ -401,6 +413,7 @@ void ModuleUI::OnWindowResize(uint width, uint height)
 
  void ModuleUI::LinkAllRectsTransform()
  {
+	 /*
 	 std::vector<GameObject*> gos;
 	 GameObject* canvas = App->GOs->GetCanvas();
 	 if (canvas)
@@ -434,10 +447,12 @@ void ModuleUI::OnWindowResize(uint width, uint height)
 		 }
 		 gos.clear();
 	 }
+	 */
 }
 
 bool ModuleUI::MouseInScreen()
 {
+	/*
 	if (App->GOs->ExistCanvas())
 	{
 		GameObject* canvas = App->GOs->GetCanvas();
@@ -463,7 +478,7 @@ bool ModuleUI::MouseInScreen()
 				}
 			}
 		}
-	}
+	}*/
 	return false;
 }
 

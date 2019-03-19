@@ -36,9 +36,12 @@ ComponentTransform::ComponentTransform(const ComponentTransform& componentTransf
 
 ComponentTransform::~ComponentTransform()
 {
-	parent->transform = nullptr;
-	parent->originalBoundingBox.SetNegativeInfinity();
-	parent->boundingBox.SetNegativeInfinity();
+	if (parent)
+	{
+		parent->transform = nullptr;
+		parent->originalBoundingBox.SetNegativeInfinity();
+		parent->boundingBox.SetNegativeInfinity();
+	}
 }
 
 void ComponentTransform::Update() {}
@@ -46,7 +49,8 @@ void ComponentTransform::Update() {}
 // Redefined cause there is no way that a transform component could be erased or moved.
 void ComponentTransform::OnEditor()
 {
-	OnUniqueEditor();
+	if(!parent->cmp_canvas)
+		OnUniqueEditor();
 }
 
 void ComponentTransform::OnUniqueEditor()
@@ -54,10 +58,13 @@ void ComponentTransform::OnUniqueEditor()
 #ifndef GAMEMODE
 	if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-		bool seenLastFrame = parent->seenLastFrame;
-		ImGui::Checkbox("Seen last frame", &seenLastFrame);
-		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
+		if (parent)
+		{
+			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			bool seenLastFrame = parent->seenLastFrame;
+			ImGui::Checkbox("Seen last frame", &seenLastFrame);
+			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, false);
+		}
 
 		math::float3 lastPosition = position;
 		math::Quat lastRotation = rotation;
@@ -72,7 +79,7 @@ void ComponentTransform::OnUniqueEditor()
 			UpdateGlobal();
 		}
 
-		math::float4x4 matrix = parent->transform->GetMatrix();
+		math::float4x4 matrix = GetMatrix();
 
 		ImGui::Text("Position");
 		if (ImGui::DragFloat3("##Pos", &position[0], 0.01f, 0.0f, 0.0f, "%.3f"))
@@ -104,7 +111,7 @@ void ComponentTransform::OnUniqueEditor()
 
 			UpdateGlobal();
 		}
-		if (!position.Equals(lastPosition) || !rotation.Equals(lastRotation) || !scale.Equals(lastScale))
+		if (parent && (!position.Equals(lastPosition) || !rotation.Equals(lastRotation) || !scale.Equals(lastScale)))
 		{
 			// Transform updated: if the game object has a camera, update its frustum
 			if (parent->cmp_camera != nullptr)
@@ -160,44 +167,49 @@ math::float4x4& ComponentTransform::GetMatrix() const
 
 void ComponentTransform::SetMatrixFromGlobal(math::float4x4& globalMatrix)
 {
-	if (parent->GetParent() == App->scene->root) 
-		globalMatrix.Decompose(position, rotation, scale);
-	else
+	if (parent)
 	{
-		math::float4x4 newMatrix = parent->GetParent()->transform->GetGlobalMatrix();
-		newMatrix = newMatrix.Inverted();
-		newMatrix = newMatrix * globalMatrix;
+		if (parent->GetParent() == App->scene->root)
+			globalMatrix.Decompose(position, rotation, scale);
+		else
+		{
+			math::float4x4 newMatrix = parent->GetParent()->transform->GetGlobalMatrix();
+			newMatrix = newMatrix.Inverted();
+			newMatrix = newMatrix * globalMatrix;
 
-		newMatrix.Decompose(position, rotation, scale);
-	}
+			newMatrix.Decompose(position, rotation, scale);
+		}
 
-	// Transform updated: if the game object has a camera, update its frustum
-	if (parent->cmp_camera != nullptr)
-		parent->cmp_camera->UpdateTransform();
+		// Transform updated: if the game object has a camera, update its frustum
+		if (parent->cmp_camera != nullptr)
+			parent->cmp_camera->UpdateTransform();
 
-	// Transform updated: if the game object has a projector, update its frustum
-	if (parent->cmp_projector != nullptr)
-		parent->cmp_projector->UpdateTransform();
+		// Transform updated: if the game object has a projector, update its frustum
+		if (parent->cmp_projector != nullptr)
+			parent->cmp_projector->UpdateTransform();
 
 #ifndef GAMEMODE
-	// Transform updated: if the game object is selected, update the camera reference
-	if (parent == App->scene->selectedObject.Get())
-		App->camera->SetReference(position);
+		// Transform updated: if the game object is selected, update the camera reference
+		if (parent == App->scene->selectedObject.Get())
+			App->camera->SetReference(position);
 #endif
 
-	//// Transform updated: recalculate bounding boxes -> // Bounding boxes are now automatically recalculated from ComponentTransform::UpdateGlobal()
-	//System_Event newEvent;
-	//newEvent.goEvent.gameObject = parent;
-	//newEvent.type = System_Event_Type::RecalculateBBoxes;
-	//App->PushSystemEvent(newEvent);
+		//// Transform updated: recalculate bounding boxes -> // Bounding boxes are now automatically recalculated from ComponentTransform::UpdateGlobal()
+		//System_Event newEvent;
+		//newEvent.goEvent.gameObject = parent;
+		//newEvent.type = System_Event_Type::RecalculateBBoxes;
+		//App->PushSystemEvent(newEvent);
 
-	if (parent->IsStatic())
-	{
-		// Bounding box changed: recreate quadtree
-		System_Event newEvent;
-		newEvent.type = System_Event_Type::RecreateQuadtree;
-		App->PushSystemEvent(newEvent);
+		if (parent->IsStatic())
+		{
+			// Bounding box changed: recreate quadtree
+			System_Event newEvent;
+			newEvent.type = System_Event_Type::RecreateQuadtree;
+			App->PushSystemEvent(newEvent);
+		}
 	}
+	else
+		globalMatrix.Decompose(position, rotation, scale);
 
 	UpdateGlobal();
 }
@@ -211,25 +223,30 @@ void ComponentTransform::UpdateGlobal()
 {
 	math::float4x4 local = GetMatrix();
 
-	GameObject* goParent = parent->GetParent();
-	if (goParent != nullptr && goParent->transform)
- 		globalMatrix = goParent->transform->GetGlobalMatrix().Mul(local);
+	if (parent)
+	{
+		GameObject* goParent = parent->GetParent();
+		if (goParent && goParent->transform)
+ 			globalMatrix = goParent->transform->GetGlobalMatrix().Mul(local);
+		else
+			globalMatrix = local;
+
+		if (parent->cmp_rigidActor != nullptr)
+			parent->cmp_rigidActor->UpdateTransform(globalMatrix);
+
+		for (std::vector<GameObject*>::iterator childs = parent->children.begin(); childs != parent->children.end(); ++childs)
+		{
+			if ((*childs)->transform)
+				(*childs)->transform->UpdateGlobal();
+		}
+
+		// Transform is updated, we have to recalculate the bounding box.
+		// As we are already in a recursive method, all bouding boxes will be updated by recalculating the current.
+		// Doing this we avoid calling another recusive method and improve performance.
+		parent->RecalculateBoundingBox();
+	}
 	else
 		globalMatrix = local;
-
-	if (parent->cmp_rigidActor != nullptr)
-		parent->cmp_rigidActor->UpdateTransform(globalMatrix);
-
-	for (std::vector<GameObject*>::iterator childs = parent->children.begin(); childs != parent->children.end(); ++childs)
-	{
-		if ((*childs)->transform)
-			(*childs)->transform->UpdateGlobal();
-	}
-
-	// Transform is updated, we have to recalculate the bounding box.
-	// As we are already in a recursive method, all bouding boxes will be updated by recalculating the current.
-	// Doing this we avoid calling another recusive method and improve performance.
-	parent->RecalculateBoundingBox();
 }
 
 

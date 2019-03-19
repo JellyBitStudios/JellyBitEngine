@@ -26,6 +26,7 @@
 #include "ComponentEmitter.h"
 #include "ComponentBone.h"
 #include "ComponentScript.h"
+#include "ComponentCanvas.h"
 #include "ComponentRectTransform.h"
 #include "ComponentCanvasRenderer.h"
 #include "ComponentImage.h"
@@ -165,6 +166,11 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			cmp_collider = new ComponentPlaneCollider(*(ComponentPlaneCollider*)gameObject.cmp_collider, this, includeComponents);
 			cmp_collider->SetParent(this);
 			components.push_back(cmp_collider);
+			break;
+		case ComponentTypes::CanvasComponent:
+			cmp_canvas = new ComponentCanvas(*(ComponentCanvas*)gameObject.cmp_canvas, this, includeComponents);
+			cmp_canvas->SetParent(this);
+			components.push_back(cmp_canvas);
 			break;
 		case ComponentTypes::RectTransformComponent:
 			cmp_rectTransform = new ComponentRectTransform(*(ComponentRectTransform*)gameObject.cmp_rectTransform, this, includeComponents);
@@ -572,6 +578,10 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 	case ComponentTypes::EmitterComponent:
 		assert(cmp_emitter == NULL);
 		newComponent = cmp_emitter = new ComponentEmitter(this);
+		break;
+	case ComponentTypes::CanvasComponent:
+		assert(cmp_canvas == nullptr);
+		newComponent = cmp_canvas = new ComponentCanvas(this);
 		break;
 	case ComponentTypes::RectTransformComponent:
 		assert(cmp_rectTransform == nullptr);

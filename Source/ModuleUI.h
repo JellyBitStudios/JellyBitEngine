@@ -75,6 +75,12 @@ private:
 	void UpdateRenderStates();
 
 public:
+	std::list<GameObject*> canvas;
+	std::list<GameObject*> canvas_screen;
+	std::list<GameObject*> canvas_worldScreen;
+	std::list<GameObject*> canvas_world;
+
+	//Old lists
 	std::list<Component*> componentsUI;
 	std::list<Component*> componentsWorldUI;
 	std::list<Component*> componentsScreenRendererUI;

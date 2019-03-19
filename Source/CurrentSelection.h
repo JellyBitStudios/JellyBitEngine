@@ -82,7 +82,7 @@ public:
 
 #ifndef GAMEMODE
 		// New game object selected. Update the camera reference
-		if(newSelection->GetLayer() != UILAYER)
+		if(newSelection->cmp_canvas == nullptr)
 			App->camera->SetReference(newSelection->transform->GetPosition());
 #endif
 

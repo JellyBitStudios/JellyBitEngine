@@ -93,6 +93,7 @@ public:
 	class ComponentCollider*		cmp_collider = nullptr;
 	class ComponentBone*			cmp_bone = nullptr;
 	class ComponentRectTransform*	cmp_rectTransform = nullptr;
+	class ComponentCanvas*			cmp_canvas = nullptr;
 	class ComponentCanvasRenderer*	cmp_canvasRenderer = nullptr;
 	class ComponentImage*			cmp_image = nullptr;
 	class ComponentButton*			cmp_button = nullptr;
