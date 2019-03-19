@@ -55,8 +55,8 @@ void ComponentLabel::Draw(uint ui_shader, uint VAO)
 				Character character;
 				character = charactersBitmap.find(*c)->second;
 
-				uint x = rect->GetRect()[0] + character.bearing.x;
-				uint y = rect->GetRect()[1] + (maxLabelSize - character.size.y) + ((character.size.y) - character.bearing.y);
+				uint x = rect->GetRect()[0] + character.bearing.x * sizeNorm;
+				uint y = rect->GetRect()[1] + ((maxLabelSize - character.size.y) + ((character.size.y) - character.bearing.y)) * sizeNorm;
 
 				rect->SetRect(x, y, character.size.x * sizeNorm, character.size.y * sizeNorm);
 
@@ -91,15 +91,96 @@ void ComponentLabel::Update()
 
 uint ComponentLabel::GetInternalSerializationBytes()
 {
-	return 0u;
+																			//SIZES		//SizeMap +  sizeString
+	return sizeof(color) + sizeof(char) * finalText.length() + sizeof(int) * 2 + sizeof(uint) * 3 + sizeof(Character)*(charactersBitmap.size()+1);
 }
 
 void ComponentLabel::OnInternalSave(char *& cursor)
 {
+	size_t bytes = sizeof(math::float4);
+	memcpy(cursor, &color, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(int);
+	memcpy(cursor, &size, bytes);
+	cursor += bytes;
+
+	memcpy(cursor, &sizeLoaded, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(uint);
+	uint nameLenght = finalText.length();
+	memcpy(cursor, &nameLenght, bytes);
+	cursor += bytes;
+
+	bytes = nameLenght;
+	memcpy(cursor, finalText.c_str(), bytes);
+	cursor += bytes;
+
+	bytes = sizeof(uint);
+	memcpy(cursor, &maxLabelSize, bytes);
+	cursor += bytes;
+
+	uint listSize = charactersBitmap.size();
+	memcpy(cursor, &listSize, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(Character);
+	for (std::map<char, Character>::iterator it = charactersBitmap.begin(); it != charactersBitmap.end(); ++it)
+	{
+		memcpy(cursor, &(*it).second, bytes);
+		cursor += bytes;
+	}
 }
 
 void ComponentLabel::OnInternalLoad(char *& cursor)
-{}
+{
+	size_t bytes = sizeof(math::float4);
+	memcpy(&color, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(int);
+	memcpy(&size, cursor, bytes);
+	cursor += bytes;
+
+	memcpy(&sizeLoaded, cursor, bytes);
+	cursor += bytes;
+
+	//Load lenght + string
+	bytes = sizeof(uint);
+	uint nameLenght;
+	memcpy(&nameLenght, cursor, bytes);
+	cursor += bytes;
+
+	bytes = nameLenght;
+	finalText.resize(nameLenght);
+	memcpy((void*)finalText.c_str(), cursor, bytes);
+	finalText.resize(nameLenght);
+	cursor += bytes;
+
+	uint i = 0;
+	for (std::string::iterator it = finalText.begin(); it != finalText.end(); ++it, ++i)
+	{
+		text[i] = *it;
+	}
+	bytes = sizeof(uint);
+	memcpy(&maxLabelSize, cursor, bytes);
+	cursor += bytes;
+
+	uint listSize = charactersBitmap.size();
+	memcpy(&listSize, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(Character);
+	for (int i = 0; i < listSize; ++i)
+	{
+		Character character;
+		memcpy(&character, cursor, bytes);
+		charactersBitmap.insert(std::pair<char, Character>(i, character));
+		cursor += bytes;
+	}
+
+}
 
 void ComponentLabel::OnUniqueEditor()
 {
@@ -119,7 +200,7 @@ void ComponentLabel::OnUniqueEditor()
 	if (ImGui::Button("Fix new size", ImVec2(125, 20)))
 	{
 		charactersBitmap.clear();
-		App->ft->LoadFont("../Game/Assets/Textures/Font/arial.ttf", size, charactersBitmap);
+		maxLabelSize = App->ft->LoadFont("../Game/Assets/Textures/Font/arial.ttf", size, charactersBitmap);
 		sizeLoaded = size;
 	}
 

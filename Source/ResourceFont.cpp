@@ -10,53 +10,6 @@
 
 ResourceFont::ResourceFont(ResourceTypes type, uint uuid, ResourceData data, FontData fontData) : Resource(type, uuid, data), fontData(fontData) 
 {
-	char* buffer = nullptr;
-	uint size = 0u;
-	size = App->fs->Load(data.file, &buffer);
-
-	if (size <= 0 && FT_New_Memory_Face(library, (FT_Byte*)buffer, size, 0, &face))
-	{
-		CONSOLE_LOG(LogTypes::Error, "The font file couldn't be opened, read or this format is unsupported");
-	}
-
-	else
-	{
-		FT_Set_Pixel_Sizes(face, 0, 20);
-
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
-
-		for (uint c = 0; c < 128; c++)
-		{
-			// Load character glyph 
-			if (FT_Load_Char(face, c, FT_LOAD_RENDER))
-			{
-				CONSOLE_LOG(LogTypes::Error, "Failed to load Glyph from Freetype");
-				continue;
-			}
-			// Generate texture
-			GLuint texture;
-			glGenTextures(1, &texture);
-			glBindTexture(GL_TEXTURE_2D, texture);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, face->glyph->bitmap.width, face->glyph->bitmap.rows, 0, GL_RGB, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
-
-			// Set texture options
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-			// Now store character for later use
-			CharacterData character = {
-				texture,
-				math::float2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
-				math::float2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-				face->glyph->advance.x
-			};
-			charactersMap.insert(std::pair<char, CharacterData>(c, character));
-		}
-		FT_Done_Face(face);
-		FT_Done_FreeType(library);
-	}
 }
 
 ResourceFont::~ResourceFont()
