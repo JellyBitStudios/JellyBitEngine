@@ -32,8 +32,11 @@ update_status ModuleFreetype::Update()
 {
 	return UPDATE_CONTINUE;
 }
-void ModuleFreetype::LoadFont(const char* path, int size, std::map<char, Character> &charactersBitmap)
+
+uint ModuleFreetype::LoadFont(const char* path, int size, std::map<char, Character> &charactersBitmap)
 {
+	uint ret = 0;
+
 	FT_Face face;      /* handle to face object */
 	if (FT_New_Face(library, path, 0, &face))
 	{
@@ -45,7 +48,7 @@ void ModuleFreetype::LoadFont(const char* path, int size, std::map<char, Charact
 		FT_Set_Pixel_Sizes(face, 0, size);
 
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
-		for (uint c = 0; c < 128; c++)
+		for (uint c = 32; c < 128; c++)
 		{
 			// Load character glyph 
 			if (FT_Load_Char(face, c, FT_LOAD_RENDER))
@@ -71,9 +74,14 @@ void ModuleFreetype::LoadFont(const char* path, int size, std::map<char, Charact
 				face->glyph->advance.x / 64
 			};
 			charactersBitmap.insert(std::pair<char, Character>(c, character));
+			if (face->glyph->bitmap.rows > ret)
+				ret = face->glyph->bitmap.rows;
+			if (c == 90)
+				int a = 0;
 		}
 		glBindTexture(GL_TEXTURE_2D, 0);
+		FT_Done_Face(face);
 	}
-	FT_Done_Face(face);
+	return ret;
 }
 

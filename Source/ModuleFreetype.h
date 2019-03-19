@@ -27,7 +27,7 @@ public:
 	bool Start();
 	update_status Update();
 
-	void LoadFont(const char * path, int size, std::map<char, Character>& charactersBitmap);
+	uint LoadFont(const char * path, int size, std::map<char, Character>& charactersBitmap);
 
 public:
 

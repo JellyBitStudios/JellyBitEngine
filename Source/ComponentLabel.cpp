@@ -18,7 +18,7 @@ ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType
 	if (parent->cmp_canvasRenderer == nullptr)
 		parent->AddComponent(ComponentTypes::CanvasRendererComponent);
 		
-	App->ft->LoadFont("../Game/Assets/Textures/Font/arial.ttf", size, charactersBitmap);
+	maxLabelSize = App->ft->LoadFont("../Game/Assets/Textures/Font/arial.ttf", size, charactersBitmap);
 	rect = new ComponentRectTransform(parent, RectTransformComponent,ComponentRectTransform::RectFrom::RECT);
 
 
@@ -46,43 +46,43 @@ void ComponentLabel::Draw(uint ui_shader, uint VAO)
 	uint* rectParent = parent->cmp_rectTransform->GetRect();
 	rect->SetRect(rectParent[0], rectParent[1], 0, 0);
 	float sizeNorm = size / (float)sizeLoaded;
-
-	for (std::string::const_iterator c = finalText.begin(); c != finalText.end(); ++c)
-	{
-
-		if ((int)(*c) >= 0 && (int)(*c) < 128 )
+	if (!charactersBitmap.empty())
+		for (std::string::const_iterator c = finalText.begin(); c != finalText.end(); ++c)
 		{
-			Character character;
-			character = charactersBitmap.find(*c)->second;
 
-			uint x = rect->GetRect()[0] + character.bearing.x;
-			uint y = rect->GetRect()[1] + (character.size.y - character.bearing.y);
+			if ((int)(*c) >= 0 && (int)(*c) < 128)
+			{
+				Character character;
+				character = charactersBitmap.find(*c)->second;
 
-			rect->SetRect(x, y, character.size.x * sizeNorm, character.size.y * sizeNorm);
+				uint x = rect->GetRect()[0] + character.bearing.x;
+				uint y = rect->GetRect()[1] + (maxLabelSize - character.size.y) + ((character.size.y) - character.bearing.y);
 
-			//Shader
-			glUseProgram(ui_shader);
-			SetRectToShader(ui_shader);
-			glUniform1i(glGetUniformLocation(ui_shader, "use_color"), 1);
-			glUniform1i(glGetUniformLocation(ui_shader, "isLabel"), 1);
+				rect->SetRect(x, y, character.size.x * sizeNorm, character.size.y * sizeNorm);
 
-			glUniform4f(glGetUniformLocation(ui_shader, "spriteColor"), color.x, color.y, color.z, color.w);
+				//Shader
+				glUseProgram(ui_shader);
+				SetRectToShader(ui_shader);
+				glUniform1i(glGetUniformLocation(ui_shader, "use_color"), 1);
+				glUniform1i(glGetUniformLocation(ui_shader, "isLabel"), 1);
 
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, character.textureID);
-			glUniform1ui(glGetUniformLocation(ui_shader, "image"), 0);
+				glUniform4f(glGetUniformLocation(ui_shader, "spriteColor"), color.x, color.y, color.z, color.w);
 
-			glBindVertexArray(VAO);
-			glDrawArrays(GL_TRIANGLES, 0, 6);
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, character.textureID);
+				glUniform1ui(glGetUniformLocation(ui_shader, "image"), 0);
 
-			glBindTexture(GL_TEXTURE_2D, 0);
-			glBindVertexArray(0);
+				glBindVertexArray(VAO);
+				glDrawArrays(GL_TRIANGLES, 0, 6);
 
-			glUseProgram(0);
+				glBindTexture(GL_TEXTURE_2D, 0);
+				glBindVertexArray(0);
 
-			rect->SetRectPos(rect->GetRect()[0] + character.advance * sizeNorm, rectParent[1]);
+				glUseProgram(0);
+
+				rect->SetRectPos(rect->GetRect()[0] + character.advance * sizeNorm, rectParent[1]);
+			}
 		}
-	}
 }
 
 void ComponentLabel::Update()

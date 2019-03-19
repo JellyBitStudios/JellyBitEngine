@@ -33,13 +33,17 @@ private:
 	void SetRectToShader(uint shader);
 
 private:
-	std::string finalText;
 	int size = 72;
 	int sizeLoaded = 72;
+	uint maxLabelSize = 0u;
+
 	ComponentRectTransform* rect = nullptr;
-	char text[300] = "Edit Text";
 	std::map<char, Character> charactersBitmap;
+	
+	std::string finalText;
+	char text[300] = "Edit Text";
 	math::float4 color = math::float4::one;
+
 
 };
 
