@@ -906,7 +906,7 @@ void ComponentScript::OnUniqueEditor()
 			{
 				//This field is public and not static.
 				//Show the field, check the type and adapt the gui to it.
-				
+
 				MonoType* type = mono_field_get_type(field);
 
 				std::string typeName = mono_type_full_name(type);
@@ -1200,7 +1200,7 @@ void ComponentScript::OnUniqueEditor()
 							ResourcePrefab* prefab = *(ResourcePrefab**)payload->Data;
 
 							if (ImGui::IsMouseReleased(0))
-							{						
+							{
 								MonoObject* oldObject;
 								mono_field_get_value(GetMonoComponent(), field, &oldObject);
 
@@ -1268,9 +1268,9 @@ void ComponentScript::OnUniqueEditor()
 						mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "destroyed"), &destroyed);
 
 						if (!destroyed)
-						{						
+						{
 							GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
-							
+
 							if (gameObject->prefab)
 								text = gameObject->GetName() + std::string(" (Prefab)");
 							else
@@ -1431,11 +1431,10 @@ void ComponentScript::OnUniqueEditor()
 						ImGui::PopItemWidth();
 					}
 				}
-
-				else if(flags & MONO_TYPE_ENUM)
+				else if (mono_class_is_enum(mono_type_get_class(type)))
 				{
 					//A public enum
-				
+
 					//Get the saved value, as int and as string
 					MonoClass* enumClass = mono_get_enum_class();
 
@@ -1450,7 +1449,7 @@ void ComponentScript::OnUniqueEditor()
 
 					MonoObject* ret = mono_runtime_invoke(ToStringMethod, enumOBJ, NULL, NULL);
 					MonoString* monoString = mono_object_to_string(ret, NULL);
-					
+
 					char* string = mono_string_to_utf8(monoString);
 
 					//Create the combo
@@ -1464,23 +1463,23 @@ void ComponentScript::OnUniqueEditor()
 						MonoMethod* GetValuesMethod = mono_method_desc_search_in_class(GetValuesDesc, enumClass);
 						mono_method_desc_free(GetValuesDesc);
 
-						MonoMethodDesc* GetTypeDesc = mono_method_desc_new("object::GetType", false);
-						MonoMethod* GetTypeMethod = mono_method_desc_search_in_class(GetTypeDesc, mono_get_object_class());
-						mono_method_desc_free(GetTypeDesc);
-
 						MonoMethodDesc* ParseDesc = mono_method_desc_new("Enum::Parse", false);
 						MonoMethod* ParseMethod = mono_method_desc_search_in_class(ParseDesc, enumClass);
 						mono_method_desc_free(ParseDesc);
 
+						MonoMethodDesc* GetTypeDesc = mono_method_desc_new("object::GetType", false);
+						MonoMethod* GetTypeMethod = mono_method_desc_search_in_class(GetTypeDesc, mono_get_object_class());
+						mono_method_desc_free(GetTypeDesc);
+
 						MonoObject* enumType = mono_runtime_invoke(GetTypeMethod, enumOBJ, NULL, NULL);
-						
+
 						void* params[1];
 						params[0] = enumType;
 
 						MonoArray* values = (MonoArray*)mono_runtime_invoke(GetValuesMethod, NULL, params, NULL);
-						
-						uint numValues = mono_array_length(values);						
-							
+
+						uint numValues = mono_array_length(values);
+
 						for (int i = 0; i < numValues; ++i)
 						{
 							void* nameParams[2];
@@ -1503,7 +1502,6 @@ void ComponentScript::OnUniqueEditor()
 
 						ImGui::EndCombo();
 					}
-
 
 					mono_free(string);
 				}
@@ -1701,7 +1699,7 @@ uint ComponentScript::GetPublicVarsSerializationBytes() const
 				uint nameLenght = fieldName.length();
 				bytes += (sizeof(varType) + sizeof(uint) + nameLenght + sizeof(uint32_t));
 			}
-			else if (flags & MONO_TYPE_ENUM)
+			else if (mono_class_is_enum(mono_type_get_class(type)))
 			{
 				varType = VarType::ENUM;
 
@@ -1973,7 +1971,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 				typeName == "JellyBitEngine.GameObject"		||
 				typeName == "JellyBitEngine.Transform"		||
 				typeName == "JellyBitEngine.LayerMask"		||
-				flags & MONO_TYPE_ENUM)
+				mono_class_is_enum(mono_type_get_class(type)))
 
 			//Only count the serializable ones
 			numVars++;
@@ -2445,7 +2443,7 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 				memcpy(cursor, &varState, bytes);
 				cursor += bytes;
 			}
-			else if (flags & MONO_TYPE_ENUM)
+			else if (mono_class_is_enum(mono_type_get_class(type)))
 			{
 				varType = VarType::ENUM;
 
@@ -3052,9 +3050,9 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 				uint32_t flags = mono_field_get_flags(field);
 				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
 				{
-					if (flags & MONO_TYPE_ENUM)
-					{
-						MonoType* type = mono_field_get_type(field);
+					MonoType* type = mono_field_get_type(field);
+					if (mono_class_is_enum(mono_type_get_class(type)))
+					{	
 						std::string typeName = mono_type_full_name(type);
 						std::string fieldName = mono_field_get_name(field);
 
