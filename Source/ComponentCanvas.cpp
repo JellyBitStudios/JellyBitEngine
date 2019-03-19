@@ -52,9 +52,11 @@ void ComponentCanvas::Update()
 		switch (type)
 		{
 		case CanvasType::SCREEN:
-
+			App->ui->canvas_screen.push_back(parent);
 			break;
 		case CanvasType::WORLD_SCREEN:
+			App->ui->canvas_worldScreen.push_back(parent);
+
 			if (!transform)
 				transform = new ComponentTransform(nullptr);
 			if (!fakeGo)
@@ -72,6 +74,7 @@ void ComponentCanvas::Update()
 			}
 			break;
 		case CanvasType::WORLD:
+			App->ui->canvas_world.push_back(parent);
 			break;
 		}
 
@@ -99,12 +102,25 @@ void ComponentCanvas::Update()
 
 void ComponentCanvas::OnEditor()
 {
+#ifndef GAMEMODE
 	ImGui::Text("Canvas");
 	int current_type = int(type);
 	if (ImGui::Combo("Using", &current_type, CANVAS_TYPE_STR))
 	{
 		if ((CanvasType)current_type != type)
 		{
+			switch (type)
+			{
+			case ComponentCanvas::SCREEN:
+				App->ui->canvas_screen.remove(parent);
+				break;
+			case ComponentCanvas::WORLD_SCREEN:
+				App->ui->canvas_worldScreen.remove(parent);
+				break;
+			case ComponentCanvas::WORLD:
+				App->ui->canvas_world.remove(parent);
+				break;
+			}
 			type = (CanvasType)current_type;
 			needed_change = true;
 		}
@@ -122,6 +138,7 @@ void ComponentCanvas::OnEditor()
 				App->scene->OnGizmos(parent);
 				parent->transform->OnUniqueEditor(); 
 			}
+#endif
 }
 
 uint ComponentCanvas::GetInternalSerializationBytes()
@@ -131,7 +148,6 @@ uint ComponentCanvas::GetInternalSerializationBytes()
 
 void ComponentCanvas::OnInternalSave(char *& cursor)
 {
-
 }
 
 void ComponentCanvas::OnInternalLoad(char *& cursor)
