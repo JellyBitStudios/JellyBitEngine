@@ -18,10 +18,13 @@
 
 ComponentButton::ComponentButton(GameObject* parent, ComponentTypes componentType) : Component(parent, ComponentTypes::ButtonComponent)
 {
-	App->ui->componentsUI.push_back(this);
 	state = UIState::IDLE;
 	input = "z";
 	button_blinded = (uint)SDL_GetScancodeFromKey(SDL_GetKeyFromName(input.c_str()));
+
+	if (parent->cmp_rectTransform == nullptr)
+		parent->AddComponent(ComponentTypes::RectTransformComponent);
+
 	if (parent->cmp_image == nullptr)
 		parent->AddComponent(ImageComponent);
 }
@@ -31,16 +34,13 @@ ComponentButton::ComponentButton(const ComponentButton & componentButton, GameOb
 	state = componentButton.state;
 	button_blinded = componentButton.button_blinded;
 	input = componentButton.input;
-	if(includeComponents)
-		App->ui->componentsUI.push_back(this);
-
 	scriptInstance = componentButton.scriptInstance;
 	methodToCall = componentButton.methodToCall;
 }
 
 ComponentButton::~ComponentButton()
 {
-	App->ui->componentsUI.remove(this);
+	parent->cmp_button = nullptr;
 }
 
 void ComponentButton::OnSystemEvent(System_Event event)
@@ -460,11 +460,6 @@ bool ComponentButton::MouseInScreen(const uint* rect) const
 
 	return mouseX > rect[ComponentRectTransform::Rect::X] && mouseX < rect[ComponentRectTransform::Rect::X] + rect[ComponentRectTransform::Rect::XDIST]
 		&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST];
-}
-
-void ComponentButton::LinkToUIModule()
-{
-	App->ui->componentsUI.push_back(this);
 }
 
 void ComponentButton::SetNewKey(const char * key)

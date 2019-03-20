@@ -16,8 +16,7 @@ public:
 	enum RenderTypes
 	{
 		RENDER_NULL,
-		COLOR_VECTOR,
-		TEXTURE,
+		IMAGE,
 		FONT
 	};
 
@@ -66,8 +65,6 @@ private:
 	void OnInternalSave(char*& cursor);
 	void OnInternalLoad(char*& cursor);
 	void OnUniqueEditor();
-
-	void LinkToUIModule();
 
 	std::vector<ToUIRend* > rend_queue;
 

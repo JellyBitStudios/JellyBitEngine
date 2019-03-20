@@ -2296,7 +2296,7 @@ bool ImageGetUseColor(MonoObject* imageComp)
 	ComponentImage* imageCompCpp = (ComponentImage*)App->scripting->ComponentFrom(imageComp);
 	if (imageCompCpp)
 	{
-		return imageCompCpp->isColorUsed();
+		return false;// imageCompCpp->isColorUsed();
 	}
 
 	return false;
@@ -2307,7 +2307,7 @@ void ImageSetUseColor(MonoObject* imageComp, bool value)
 	ComponentImage* imageCompCpp = (ComponentImage*)App->scripting->ComponentFrom(imageComp);
 	if (imageCompCpp)
 	{
-		imageCompCpp->UseColor(value);
+		//imageCompCpp->UseColor(value);
 	}
 }
 

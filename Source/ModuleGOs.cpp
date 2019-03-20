@@ -222,10 +222,6 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 	if (newGameObject && newGameObject->transform)
 		newGameObject->transform->UpdateGlobal();
 
-	//Calculate canvas
-	if(newGameObject && newGameObject->cmp_canvas)
-		App->ui->LinkAllRectsTransform();
-
 	return newGameObject;
 }
 

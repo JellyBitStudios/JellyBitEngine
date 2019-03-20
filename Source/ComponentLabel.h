@@ -20,8 +20,6 @@ private:
 	void OnInternalLoad(char*& cursor);
 	void OnUniqueEditor();
 	
-	void LinkToUIModule();
-
 private:
 	std::string finalText;
 };

@@ -3,6 +3,8 @@
 
 #include "Component.h"
 
+#include "MathGeoLib/include/Math/float4x4.h"
+
 class ComponentCanvas : public Component
 {
 public:
@@ -29,6 +31,9 @@ private:
 
 public: //Custom
 	CanvasType GetType()const;
+	math::float4x4 GetGlobal() const;
+
+	void ScreenChanged();
 
 private:
 	CanvasType type = CanvasType::SCREEN;

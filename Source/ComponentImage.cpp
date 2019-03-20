@@ -13,34 +13,30 @@
 
 ComponentImage::ComponentImage(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::ImageComponent)
 {
+	if (parent->cmp_rectTransform == nullptr)
+		parent->AddComponent(ComponentTypes::RectTransformComponent);
+
 	if (parent->cmp_canvasRenderer == nullptr)
 		parent->AddComponent(ComponentTypes::CanvasRendererComponent);
-
-	App->ui->componentsUI.push_back(this);
 }
 
 ComponentImage::ComponentImage(const ComponentImage & componentRectTransform, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::ImageComponent)
 {
-	use_color_vec = componentRectTransform.use_color_vec;
-	if (use_color_vec)
-		memcpy(color, componentRectTransform.color, sizeof(float) * 4);
-	else
+	memcpy(color, componentRectTransform.color, sizeof(float) * 4);
+	res_image = componentRectTransform.res_image;
+	if (includeComponents)
 	{
-		res_image = componentRectTransform.res_image;
-		if(includeComponents)
+		if(res_image > 0)
 			App->res->SetAsUsed(res_image);
 	}
-	if (includeComponents)
-		App->ui->componentsUI.push_back(this);
 }
 
 ComponentImage::~ComponentImage()
 {
-	App->ui->componentsUI.remove(this);
-}
+	if (res_image > 0)
+		App->res->SetAsUnused(res_image);
 
-void ComponentImage::Update()
-{
+	parent->cmp_image = nullptr;
 }
 
 const float * ComponentImage::GetColor() const
@@ -50,13 +46,13 @@ const float * ComponentImage::GetColor() const
 
 void ComponentImage::SetResImageUuid(uint res_image_uuid)
 {
-	if (this->res_image > 0)
-		App->res->SetAsUnused(this->res_image);
+	if (res_image > 0)
+		App->res->SetAsUnused(res_image);
+
+	res_image = res_image_uuid;
 
 	if (res_image > 0)
 		App->res->SetAsUsed(res_image);
-
-	this->res_image = res_image;
 }
 
 uint ComponentImage::GetResImageUuid() const
@@ -73,63 +69,34 @@ uint ComponentImage::GetResImage()const
 		return 0;
 }
 
-bool ComponentImage::isColorUsed() const
-{
-	return use_color_vec;
-}
-
-void ComponentImage::UseColor(bool boolean)
-{
-	use_color_vec = boolean;
-}
-
 uint ComponentImage::GetInternalSerializationBytes()
 {
-	if(use_color_vec)
-		return sizeof(bool) + sizeof(float) * 4;
-	else
-		return sizeof(bool) + sizeof(uint);
+	return sizeof(float) * 4 + sizeof(uint);
 }
 
 void ComponentImage::OnInternalSave(char *& cursor)
 {
-	size_t bytes = sizeof(bool);
-	memcpy(cursor, &use_color_vec, bytes);
+	size_t bytes = sizeof(float) * 4;
+	memcpy(cursor, &color, bytes);
 	cursor += bytes;
 
-	if (use_color_vec)
-	{
-		bytes = sizeof(float) * 4;
-		memcpy(cursor, &color, bytes);
-		cursor += bytes;
-	}
-	else
-	{
-		bytes = sizeof(uint);
-		memcpy(cursor, &res_image, bytes);
-		cursor += bytes;
-	}
+	bytes = sizeof(uint);
+	memcpy(cursor, &res_image, bytes);
+	cursor += bytes;
 }
 
 void ComponentImage::OnInternalLoad(char *& cursor)
 {
-	size_t bytes = sizeof(bool);
-	memcpy(&use_color_vec, cursor, bytes);
+	size_t bytes = sizeof(float) * 4;
+	memcpy(&color, cursor, bytes);
 	cursor += bytes;
-	if (use_color_vec)
-	{
-		bytes = sizeof(float) * 4;
-		memcpy(&color, cursor, bytes);
-		cursor += bytes;
-	}
-	else
-	{
-		bytes = sizeof(uint);
-		memcpy(&res_image, cursor, bytes);
-		cursor += bytes;
 
+	bytes = sizeof(uint);
+	memcpy(&res_image, cursor, bytes);
+	cursor += bytes;
+
+	if(res_image > 0)
 		App->res->SetAsUsed(res_image);
-	}
 }
 
 void ComponentImage::OnUniqueEditor()
@@ -138,61 +105,49 @@ void ComponentImage::OnUniqueEditor()
 	ImGui::Text("Image");
 	ImGui::Spacing();
 
-	ImGui::Checkbox("Use color vector", &use_color_vec);
-	if (use_color_vec)
+	float min = 0.0f;
+	float max_color = MAX_COLOR;
+	float max_alpha = MAX_ALPHA;
+
+	float color_r = color[COLOR_R] * 255.f;
+	float color_g = color[COLOR_G] * 255.f;
+	float color_b = color[COLOR_B] * 255.f;
+
+	ImGui::PushItemWidth(50.0f);
+	ImGui::Text("Color RGB with alpha");
+	if (ImGui::DragScalar("##ColorR", ImGuiDataType_Float, (void*)&color_r, 1.0f, &min, &max_color, "%1.f", 1.0f))
+		color[COLOR_R] = color_r / 255.f;
+	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+	if(ImGui::DragScalar("##ColorG", ImGuiDataType_Float, (void*)&color_g, 1.0f, &min, &max_color, "%1.f", 1.0f))
+		color[COLOR_G] = color_g / 255.f;
+	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+	if(ImGui::DragScalar("##ColorB", ImGuiDataType_Float, (void*)&color_b, 1.0f, &min, &max_color, "%1.f", 1.0f))
+		color[COLOR_B] = color_b / 255.f;
+	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);		
+	if (ImGui::DragScalar("##ColorA", ImGuiDataType_Float, (void*)&color[COLOR_A], 0.1f, &min, &max_alpha, "%0.1f", 1.0f))
+	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+
+	ResourceTexture* texture = nullptr;
+	if (res_image != 0)
+		texture = (ResourceTexture*)App->res->GetResource(res_image);
+	ImGui::Button(texture == nullptr ? "Empty texture" : texture->GetName(), ImVec2(150.0f, 0.0f));
+
+	if (ImGui::IsItemHovered())
 	{
-		float min = 0.0f;
-		float max_color = MAX_COLOR;
-		float max_alpha = MAX_ALPHA;
-
-		float color_r = color[COLOR_R] * 255.f;
-		float color_g = color[COLOR_G] * 255.f;
-		float color_b = color[COLOR_B] * 255.f;
-
-		ImGui::PushItemWidth(50.0f);
-		ImGui::Text("Color RGB with alpha");
-		if (ImGui::DragScalar("##ColorR", ImGuiDataType_Float, (void*)&color_r, 1.0f, &min, &max_color, "%1.f", 1.0f))
-			color[COLOR_R] = color_r / 255.f;
-		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-		if(ImGui::DragScalar("##ColorG", ImGuiDataType_Float, (void*)&color_g, 1.0f, &min, &max_color, "%1.f", 1.0f))
-			color[COLOR_G] = color_g / 255.f;
-		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-		if(ImGui::DragScalar("##ColorB", ImGuiDataType_Float, (void*)&color_b, 1.0f, &min, &max_color, "%1.f", 1.0f))
-			color[COLOR_B] = color_b / 255.f;
-		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);		
-		if (ImGui::DragScalar("##ColorA", ImGuiDataType_Float, (void*)&color[COLOR_A], 0.1f, &min, &max_alpha, "%0.1f", 1.0f))
-		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+		ImGui::BeginTooltip();
+		ImGui::Text("%u", res_image);
+		ImGui::EndTooltip();
 	}
-	else
+
+	if (ImGui::BeginDragDropTarget())
 	{
-		ResourceTexture* texture = nullptr;
-		if (res_image != 0)
-			texture = (ResourceTexture*)App->res->GetResource(res_image);
-		ImGui::Button(texture == nullptr ? "Empty texture" : texture->GetName(), ImVec2(150.0f, 0.0f));
-
-		if (ImGui::IsItemHovered())
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE_INSPECTOR_SELECTOR"))
 		{
-			ImGui::BeginTooltip();
-			ImGui::Text("%u", res_image);
-			ImGui::EndTooltip();
+			App->res->SetAsUnused(res_image);
+			res_image = *(uint*)payload->Data;
+			App->res->SetAsUsed(res_image);
 		}
-
-		if (ImGui::BeginDragDropTarget())
-		{
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE_INSPECTOR_SELECTOR"))
-			{
-				App->res->SetAsUnused(res_image);
-				res_image = *(uint*)payload->Data;
-				App->res->SetAsUsed(res_image);
-			}
-			ImGui::EndDragDropTarget();
-		}
+		ImGui::EndDragDropTarget();
 	}
 #endif
-}
-
-void ComponentImage::LinkToUIModule()
-{
-	App->ui->componentsUI.push_back(this);
-
 }

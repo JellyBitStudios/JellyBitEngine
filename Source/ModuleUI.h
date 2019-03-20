@@ -51,9 +51,9 @@ public:
 
 	uint* GetRectUI();
 
-	void LinkAllRectsTransform();
-
 	bool IsUIHovered();
+
+	GameObject* FindCanvas(GameObject* from); //TODO J Check if I can make this static
 
 private:
 
@@ -67,8 +67,7 @@ private:
 	void OnSystemEvent(System_Event event);
 
 	void initRenderData();
-	void DrawUIColor(ComponentRectTransform* rect, math::float4& color, float rotation = 0.0f);
-	void DrawUITexture(ComponentRectTransform* rect, uint texture = 0, float rotation = 0.0f);
+	void DrawUIImage(ComponentRectTransform* rect, math::float4& color, uint texture = 0, float rotation = 0.0f);
 
 	void SetRectToShader(ComponentRectTransform* rect);
 
@@ -79,13 +78,6 @@ public:
 	std::list<GameObject*> canvas_screen;
 	std::list<GameObject*> canvas_worldScreen;
 	std::list<GameObject*> canvas_world;
-
-	//Old lists
-	std::list<Component*> componentsUI;
-	std::list<Component*> componentsWorldUI;
-	std::list<Component*> componentsScreenRendererUI;
-	std::list<Component*> componentsWorldRendererUI;
-	std::list<GameObject*> GOsWorldCanvas;
 
 private:
 	uint ui_size_draw[4];

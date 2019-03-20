@@ -13,15 +13,6 @@
 
 ComponentCanvasRenderer::ComponentCanvasRenderer(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::CanvasRendererComponent)
 {
-
-	if(parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-		App->ui->componentsScreenRendererUI.push_back(this);
-	else
-	{
-		App->ui->componentsWorldRendererUI.push_back(this);
-		fromWorld = true;
-	}
-
 	rend_queue.push_back(new ToUIRend());
 	rend_queue.push_back(new ToUIRend());
 }
@@ -30,14 +21,6 @@ ComponentCanvasRenderer::ComponentCanvasRenderer(const ComponentCanvasRenderer &
 {
 	if (includeComponents)
 	{
-		if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-			App->ui->componentsScreenRendererUI.push_back(this);
-		else
-		{
-			App->ui->componentsWorldRendererUI.push_back(this);
-			fromWorld = true;
-		}
-
 		rend_queue.push_back(new ToUIRend());
 		rend_queue.push_back(new ToUIRend());
 	}
@@ -45,37 +28,23 @@ ComponentCanvasRenderer::ComponentCanvasRenderer(const ComponentCanvasRenderer &
 
 ComponentCanvasRenderer::~ComponentCanvasRenderer()
 {
-	if (!fromWorld)
-		App->ui->componentsScreenRendererUI.remove(this);
-	else
-		App->ui->componentsWorldRendererUI.remove(this);
-
 	for (ToUIRend* rend : rend_queue)
 		RELEASE(rend);
 	rend_queue.clear();
+
+	parent->cmp_canvasRenderer = nullptr;
 }
 
 void ComponentCanvasRenderer::Update()
 {
 	ComponentImage* cmp_image = (ComponentImage*)parent->GetComponent(ComponentTypes::ImageComponent);
 	if (cmp_image)
-		if (cmp_image->IsActive() && parent->IsActive())
+		if (cmp_image->IsTreeActive())
 		{
-			if (cmp_image->isColorUsed())
+			for (ToUIRend* rend : rend_queue)
 			{
-				for (ToUIRend* rend : rend_queue)
-				{
-					if (rend->isRendered())
-						rend->Set(RenderTypes::COLOR_VECTOR, cmp_image);
-				}
-			}
-			else
-			{
-				for (ToUIRend* rend : rend_queue)
-				{
-					if (rend->isRendered())
-						rend->Set(RenderTypes::TEXTURE, cmp_image);
-				}
+				if (rend->isRendered())
+					rend->Set(RenderTypes::IMAGE, cmp_image);
 			}
 		}
 }
@@ -113,7 +82,6 @@ void ComponentCanvasRenderer::OnInternalSave(char *& cursor)
 
 void ComponentCanvasRenderer::OnInternalLoad(char *& cursor)
 {
-	LinkToUIModule();
 }
 
 void ComponentCanvasRenderer::OnUniqueEditor()
@@ -121,21 +89,6 @@ void ComponentCanvasRenderer::OnUniqueEditor()
 #ifndef GAMEMODE
 	ImGui::Text("Canvas Renderer");
 #endif
-}
-
-void ComponentCanvasRenderer::LinkToUIModule()
-{
-	/*
-	if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-		App->ui->componentsScreenRendererUI.push_back(this);
-	else
-	{
-		App->ui->componentsWorldRendererUI.push_back(this);
-		fromWorld = true;
-	}
-	*/
-	//rend_queue.push_back(new ToUIRend());
-	//rend_queue.push_back(new ToUIRend());
 }
 
 //Rend Queue Struct

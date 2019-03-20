@@ -41,25 +41,33 @@ void ModuleUI::DrawCanvas()
 	if (cullFace)  glDisable(GL_CULL_FACE);
 	if (lighting) glDisable(GL_LIGHTING);
 
-	for (std::list<Component*>::iterator iteratorUI = componentsScreenRendererUI.begin(); iteratorUI != componentsScreenRendererUI.end(); ++iteratorUI)
+	for (GameObject* canvas : canvas_screen)
 	{
-		ComponentCanvasRenderer* renderer = (ComponentCanvasRenderer*)*iteratorUI;
-		ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
-		while (rend != nullptr)
-		{
-			switch (rend->GetType())
-			{
-			case ComponentCanvasRenderer::RenderTypes::COLOR_VECTOR:
-				DrawUIColor((ComponentRectTransform*)renderer->GetParent()->GetComponent(ComponentTypes::RectTransformComponent), rend->GetColor());
-				break;
-			case ComponentCanvasRenderer::RenderTypes::TEXTURE:
-				DrawUITexture((ComponentRectTransform*)renderer->GetParent()->GetComponent(ComponentTypes::RectTransformComponent), rend->GetTexture());
-				break;
-			}
 
-			rend = renderer->GetDrawAvaiable();
+		std::vector<GameObject*> renderers;
+		canvas->GetChildrenAndThisVectorFromLeaf(renderers);
+
+		for (GameObject* render : renderers)
+		{
+			ComponentCanvasRenderer* renderer = render->cmp_canvasRenderer;
+			if (renderer)
+			{
+				ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
+				while (rend != nullptr)
+				{
+					switch (rend->GetType())
+					{
+					case ComponentCanvasRenderer::RenderTypes::IMAGE:
+						DrawUIImage(render->cmp_rectTransform, rend->GetColor(), rend->GetTexture());
+						break;
+					}
+
+					rend = renderer->GetDrawAvaiable();
+				}
+			}
 		}
 	}
+	
 	if (depthTest) glEnable(GL_DEPTH_TEST);
 	if (cullFace) glEnable(GL_CULL_FACE);
 	if (lighting) glEnable(GL_LIGHTING);
@@ -73,25 +81,33 @@ void ModuleUI::DrawWorldCanvas()
 	if (!blend) glEnable(GL_BLEND);
 	if (lighting) glDisable(GL_LIGHTING);
 
-	for (std::list<Component*>::iterator iteratorUI = componentsWorldRendererUI.begin(); iteratorUI != componentsWorldRendererUI.end(); ++iteratorUI)
+	for (GameObject* canvas : canvas_world)
 	{
-		ComponentCanvasRenderer* renderer = (ComponentCanvasRenderer*)*iteratorUI;
-		ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
-		while (rend != nullptr)
-		{
-			switch (rend->GetType())
-			{
-			case ComponentCanvasRenderer::RenderTypes::COLOR_VECTOR:
-				DrawUIColor((ComponentRectTransform*)renderer->GetParent()->GetComponent(ComponentTypes::RectTransformComponent), rend->GetColor());
-				break;
-			case ComponentCanvasRenderer::RenderTypes::TEXTURE:
-				DrawUITexture((ComponentRectTransform*)renderer->GetParent()->GetComponent(ComponentTypes::RectTransformComponent), rend->GetTexture());
-				break;
-			}
 
-			rend = renderer->GetDrawAvaiable();
+		std::vector<GameObject*> renderers;
+		canvas->GetChildrenAndThisVectorFromLeaf(renderers);
+
+		for (GameObject* render : renderers)
+		{
+			ComponentCanvasRenderer* renderer = render->cmp_canvasRenderer;
+			if (renderer)
+			{
+				ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
+				while (rend != nullptr)
+				{
+					switch (rend->GetType())
+					{
+					case ComponentCanvasRenderer::RenderTypes::IMAGE:
+						DrawUIImage(render->cmp_rectTransform, rend->GetColor(), rend->GetTexture());
+						break;
+					}
+
+					rend = renderer->GetDrawAvaiable();
+				}
+			}
 		}
 	}
+
 	if (lighting) glEnable(GL_LIGHTING);
 }
 
@@ -133,18 +149,6 @@ update_status ModuleUI::Update()
 #ifndef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 #endif // !GAMEMODE
-	/*
-	for (std::list<Component*>::iterator iteratorUI = componentsScreenRendererUI.begin(); iteratorUI != componentsScreenRendererUI.end(); ++iteratorUI)
-		(*iteratorUI)->Update();
-	for (std::list<Component*>::iterator iteratorUI = componentsWorldRendererUI.begin(); iteratorUI != componentsWorldRendererUI.end(); ++iteratorUI)
-		(*iteratorUI)->Update();
-	for (std::list<Component*>::iterator iteratorUI = componentsWorldUI.begin(); iteratorUI != componentsWorldUI.end(); ++iteratorUI)
-		(*iteratorUI)->Update();
-
-	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
-		for (std::list<Component*>::iterator iteratorUI = componentsUI.begin(); iteratorUI != componentsUI.end(); ++iteratorUI)
-			(*iteratorUI)->Update();
-*/
 	for (std::list<GameObject*>::iterator iteratorUI = canvas.begin(); iteratorUI != canvas.end(); ++iteratorUI)
 		(*iteratorUI)->cmp_canvas->Update();
 	return update_status::UPDATE_CONTINUE;
@@ -166,68 +170,40 @@ void ModuleUI::OnSystemEvent(System_Event event)
 	{
 		case System_Event_Type::LoadFinished:
 		{
-			LinkAllRectsTransform();
 			break;
 		}
 		case System_Event_Type::LoadScene:
 		case System_Event_Type::Stop:
 		{
-			componentsUI.clear();
-			componentsWorldUI.clear();
-			componentsScreenRendererUI.clear();
-			componentsWorldRendererUI.clear();
-			GOsWorldCanvas.clear();
+			canvas.clear();
+			canvas_screen.clear();
+			canvas_worldScreen.clear();
+			canvas_world.clear();
 			break;
 		}
 		case System_Event_Type::ComponentDestroyed:
 		{
 			switch (event.compEvent.component->GetType())
 			{
-			case ComponentTypes::RectTransformComponent:
-			{
-				ComponentRectTransform* rect = (ComponentRectTransform*)event.compEvent.component;
-				if (rect->GetFrom() == ComponentRectTransform::RectFrom::WORLD)
+				case ComponentTypes::CanvasComponent:
 				{
-					componentsWorldUI.remove(rect);
-					GOsWorldCanvas.remove(rect->GetParent());
-				}
-				else
-					componentsUI.remove(rect);
-				break;
-			}
-			case ComponentTypes::CanvasRendererComponent:
-			{
-				ComponentCanvasRenderer* r_canvas = (ComponentCanvasRenderer*)event.compEvent.component;
-				if (r_canvas->IsWorld())
-					componentsWorldRendererUI.remove(r_canvas);
-				else
-					componentsScreenRendererUI.remove(r_canvas);
-				break;
-			}
-			case ComponentTypes::ButtonComponent:
-			case ComponentTypes::LabelComponent:
-			case ComponentTypes::ImageComponent:
-				componentsUI.remove(event.compEvent.component);
-				break;
-			}
-			case ComponentTypes::CanvasComponent:
-			{
-				ComponentCanvas* cmp_canvas = (ComponentCanvas*)event.compEvent.component;
-				GameObject* parentC = cmp_canvas->GetParent();
-				canvas.remove(parentC);
-				switch (cmp_canvas->GetType())
-				{
-				case ComponentCanvas::CanvasType::SCREEN:
-					canvas_screen.remove(parentC);
-					break;
-				case ComponentCanvas::CanvasType::WORLD_SCREEN:
-					canvas_worldScreen.remove(parentC);
-					break;
-				case ComponentCanvas::CanvasType::WORLD:
-					canvas_world.remove(parentC);
+					ComponentCanvas* cmp_canvas = (ComponentCanvas*)event.compEvent.component;
+					GameObject* parentC = cmp_canvas->GetParent();
+					canvas.remove(parentC);
+					switch (cmp_canvas->GetType())
+					{
+					case ComponentCanvas::CanvasType::SCREEN:
+						canvas_screen.remove(parentC);
+						break;
+					case ComponentCanvas::CanvasType::WORLD_SCREEN:
+						canvas_worldScreen.remove(parentC);
+						break;
+					case ComponentCanvas::CanvasType::WORLD:
+						canvas_world.remove(parentC);
+						break;
+					}
 					break;
 				}
-				break;
 			}
 			break;
 		}
@@ -268,30 +244,22 @@ void ModuleUI::initRenderData()
 	glBindVertexArray(0);
 }
 
-void ModuleUI::DrawUIColor(ComponentRectTransform* rect, math::float4& color, float rotation)
+void ModuleUI::DrawUIImage(ComponentRectTransform * rect, math::float4& color, uint id_texture, float rotation)
 {
 	use(ui_shader);
 	SetRectToShader(rect);
-	setBool(ui_shader, "use_color", true);
+
 	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
 
-	glBindVertexArray(reference_vertex);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-
-	glBindVertexArray(0);
-
-	use(0);
-}
-
-void ModuleUI::DrawUITexture(ComponentRectTransform * rect, uint id_texture, float rotation)
-{
-	use(ui_shader);
-	SetRectToShader(rect);
-	setBool(ui_shader, "use_color", false);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, id_texture);
-	setUnsignedInt(ui_shader, "image", 0);
+	if (id_texture > 0)
+	{
+		setBool(ui_shader, "using_texture", true);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, id_texture);
+		setUnsignedInt(ui_shader, "image", 0);
+	}
+	else
+		setBool(ui_shader, "using_texture", false);
 
 	glBindVertexArray(reference_vertex);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -386,6 +354,20 @@ bool ModuleUI::IsUIHovered()
 	return anyItemIsHovered;
 }
 
+GameObject * ModuleUI::FindCanvas(GameObject * from)
+{
+	GameObject* ret = nullptr;
+	GameObject* temp = from;
+
+	while (ret != nullptr || temp == nullptr)
+	{
+		if (temp->cmp_canvas)
+			ret = temp;
+		temp = temp->GetParent();
+	}
+	return (ret) ? ret : nullptr;
+}
+
 bool ModuleUI::GetUIMode() const
 {
 	return uiMode;
@@ -402,7 +384,8 @@ void ModuleUI::OnWindowResize(uint width, uint height)
 	ui_size_draw[Screen::HEIGHT] = height;
 
 #ifdef GAMEMODE
-	LinkAllRectsTransform();
+	for (GameObject* goScreenCanvas : canvas_screen)
+		goScreenCanvas->cmp_canvas->ScreenChanged();
 #endif // GAMEMODE
 }
 
@@ -411,74 +394,25 @@ void ModuleUI::OnWindowResize(uint width, uint height)
 	return ui_size_draw;
 }
 
- void ModuleUI::LinkAllRectsTransform()
- {
-	 /*
-	 std::vector<GameObject*> gos;
-	 GameObject* canvas = App->GOs->GetCanvas();
-	 if (canvas)
-	 {
-#ifdef GAMEMODE
-		 ComponentRectTransform* cmp_rect = (ComponentRectTransform*)canvas->GetComponent(ComponentTypes::RectTransformComponent);
-		 uint* rect = cmp_rect->GetRect();
-		 rect[ComponentRectTransform::Rect::X] = 0;
-		 rect[ComponentRectTransform::Rect::Y] = 0;
-		 rect[ComponentRectTransform::Rect::XDIST] = ui_size_draw[Screen::WIDTH];
-		 rect[ComponentRectTransform::Rect::YDIST] = ui_size_draw[Screen::HEIGHT];
-#endif // GAMEMODE
-
-		 canvas->GetChildrenAndThisVectorFromLeaf(gos);
-		 std::reverse(gos.begin(), gos.end());
-		 for (GameObject* go_rect : gos)
-		 {
-			 ComponentRectTransform* cmp_rect = (ComponentRectTransform*)go_rect->GetComponent(ComponentTypes::RectTransformComponent);
-			 cmp_rect->CheckParentRect();
-		 }
-		 gos.clear();
-	 }
-	 for (GameObject* world_canvas : GOsWorldCanvas)
-	 {
-		 world_canvas->GetChildrenAndThisVectorFromLeaf(gos);
-		 std::reverse(gos.begin(), gos.end());
-		 for (GameObject* go_rect : gos)
-		 {
-			 ComponentRectTransform* cmp_rect = (ComponentRectTransform*)go_rect->GetComponent(ComponentTypes::RectTransformComponent);
-			 cmp_rect->CheckParentRect();
-		 }
-		 gos.clear();
-	 }
-	 */
-}
-
 bool ModuleUI::MouseInScreen()
 {
-	/*
-	if (App->GOs->ExistCanvas())
+	for (GameObject* goScreenCanvas : canvas_screen)
 	{
-		GameObject* canvas = App->GOs->GetCanvas();
-
-		std::vector<GameObject*> gos;
-		canvas->GetChildrenAndThisVectorFromLeaf(gos);
-		std::reverse(gos.begin(), gos.end());
-
-		for (GameObject* go_rect : gos)
+		if (goScreenCanvas->IsActive())
 		{
-			if (go_rect->IsActive())
+			uint* rect = goScreenCanvas->cmp_rectTransform->GetRect();
+
+			if (rect)
 			{
-				uint* rect = ((ComponentRectTransform*)go_rect->GetComponent(ComponentTypes::RectTransformComponent))->GetRect();
+				uint mouseX = App->input->GetMouseX();
+				uint mouseY = App->input->GetMouseY();
 
-				if (rect)
-				{
-					uint mouseX = App->input->GetMouseX();
-					uint mouseY = App->input->GetMouseY();
-
-					if (mouseX > rect[ComponentRectTransform::Rect::X] && mouseX < rect[ComponentRectTransform::Rect::X] + rect[ComponentRectTransform::Rect::XDIST]
-						&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST])
-						return true;
-				}
+				if (mouseX > rect[ComponentRectTransform::Rect::X] && mouseX < rect[ComponentRectTransform::Rect::X] + rect[ComponentRectTransform::Rect::XDIST]
+					&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST])
+					return true;
 			}
 		}
-	}*/
+	}
 	return false;
 }
 

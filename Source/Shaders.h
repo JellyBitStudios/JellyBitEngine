@@ -337,15 +337,15 @@
 "#version 330 core\n" \
 "in vec2 TexCoords;\n" \
 "out vec4 FragColor;\n" \
-"uniform int use_color;\n"\
+"uniform int using_texture;\n"\
 "uniform sampler2D image;\n" \
 "uniform vec4 spriteColor;\n" \
 "void main()\n" \
 "{\n" \
-"	if(use_color == 1)\n"\
-"		FragColor = spriteColor;\n" \
+"	if(using_texture == 1)\n"\
+"		FragColor = spriteColor * texture(image, TexCoords);\n" \
 "	else\n"\
-"		FragColor = texture(image, TexCoords);\n" \
+"		FragColor = spriteColor;\n" \
 "}"
 
 #pragma endregion

@@ -7,6 +7,8 @@
 
 #include "GameObject.h"
 #include "ComponentTransform.h"
+#include "ComponentRectTransform.h"
+#include "ComponentCanvasRenderer.h"
 #include "ComponentCamera.h"
 
 #define CANVAS_TYPE_STR "Screen\0World Screen\0World"
@@ -38,6 +40,8 @@ ComponentCanvas::~ComponentCanvas()
 		RELEASE(transform);
 	if (fakeGo)
 		RELEASE(fakeGo);
+
+	parent->cmp_canvas = nullptr;
 }
 
 void ComponentCanvas::Update()
@@ -98,6 +102,16 @@ void ComponentCanvas::Update()
 	default:
 		break;
 	}
+
+	std::vector<GameObject*> childs;
+	parent->GetChildrenAndThisVectorFromLeaf(childs);
+	std::reverse(childs.begin(), childs.end());
+
+	for (GameObject* go : childs)
+	{
+		if (go->cmp_rectTransform) go->cmp_rectTransform->Update();
+		if (go->cmp_canvasRenderer) go->cmp_canvasRenderer->Update();
+	}
 }
 
 void ComponentCanvas::OnEditor()
@@ -143,18 +157,53 @@ void ComponentCanvas::OnEditor()
 
 uint ComponentCanvas::GetInternalSerializationBytes()
 {
-	return 0;
+	return sizeof(CanvasType);
 }
 
 void ComponentCanvas::OnInternalSave(char *& cursor)
 {
+	size_t bytes = sizeof(CanvasType);
+	memcpy(cursor, &type, bytes);
+	cursor += bytes;
 }
 
 void ComponentCanvas::OnInternalLoad(char *& cursor)
 {
+	size_t bytes = sizeof(CanvasType);
+	memcpy(&type, cursor, bytes);
+	cursor += bytes;
+
+	needed_change = true;
 }
 
 ComponentCanvas::CanvasType ComponentCanvas::GetType() const
 {
 	return type;
+}
+
+math::float4x4 ComponentCanvas::GetGlobal() const
+{
+	math::float4x4 ret = math::float4x4::identity;
+
+	switch (type)
+	{
+	case ComponentCanvas::WORLD_SCREEN:
+		ret = transform->GetGlobalMatrix();
+		break;
+	case ComponentCanvas::WORLD:
+		ret = parent->transform->GetGlobalMatrix();
+		break;
+	}
+
+	return ret;
+}
+
+void ComponentCanvas::ScreenChanged()
+{
+	std::vector<GameObject*> rectChilds;
+	parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
+	std::reverse(rectChilds.begin(), rectChilds.end());
+
+	for (GameObject* rect : rectChilds)
+		rect->cmp_rectTransform->ScreenChanged();
 }
