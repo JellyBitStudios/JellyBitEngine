@@ -14,7 +14,7 @@
 class ComponentImage : public Component
 {
 public:
-	ComponentImage(GameObject* parent, ComponentTypes componentType = ComponentTypes::ImageComponent);
+	ComponentImage(GameObject* parent, ComponentTypes componentType = ComponentTypes::ImageComponent, bool includeComponents = true);
 	ComponentImage(const ComponentImage& componentImage, GameObject* parent, bool includeComponents = true);
 	~ComponentImage();
 

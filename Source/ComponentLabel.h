@@ -7,7 +7,7 @@
 class ComponentLabel : public Component
 {
 public:
-	ComponentLabel(GameObject* parent, ComponentTypes componentType = ComponentTypes::LabelComponent);
+	ComponentLabel(GameObject* parent, ComponentTypes componentType = ComponentTypes::LabelComponent, bool includeComponents = true);
 	ComponentLabel(const ComponentLabel& componentLabel, GameObject* parent, bool includeComponents = true);
 	~ComponentLabel();
 

@@ -581,27 +581,27 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		break;
 	case ComponentTypes::CanvasComponent:
 		assert(cmp_canvas == nullptr);
-		newComponent = cmp_canvas = new ComponentCanvas(this);
+		newComponent = cmp_canvas = new ComponentCanvas(this, ComponentTypes::CanvasComponent, includeInModules);
 		break;
 	case ComponentTypes::RectTransformComponent:
 		assert(cmp_rectTransform == nullptr);
-		newComponent = cmp_rectTransform = new ComponentRectTransform(this);
+		newComponent = cmp_rectTransform = new ComponentRectTransform(this, ComponentTypes::RectTransformComponent, includeInModules);
 		break;
 	case ComponentTypes::CanvasRendererComponent:
 		assert(cmp_canvasRenderer == nullptr);
-		newComponent = cmp_canvasRenderer = new ComponentCanvasRenderer(this);
+		newComponent = cmp_canvasRenderer = new ComponentCanvasRenderer(this, ComponentTypes::CanvasRendererComponent, includeInModules);
 		break;
 	case ComponentTypes::ImageComponent:
 		assert(cmp_image == nullptr);
-		newComponent = cmp_image = new ComponentImage(this);
+		newComponent = cmp_image = new ComponentImage(this, ComponentTypes::ImageComponent, includeInModules);
 		break;
 	case ComponentTypes::ButtonComponent:
 		assert(cmp_button == nullptr);
-		newComponent = cmp_button = new ComponentButton(this);
+		newComponent = cmp_button = new ComponentButton(this, ComponentTypes::ButtonComponent, includeInModules);
 		break;
 	case ComponentTypes::LabelComponent:
 		assert(cmp_label == nullptr);
-		newComponent = cmp_label = new ComponentLabel(this);
+		newComponent = cmp_label = new ComponentLabel(this, ComponentTypes::LabelComponent, includeInModules);
 		break;
 	case ComponentTypes::BoneComponent:
 		assert(cmp_bone == NULL);

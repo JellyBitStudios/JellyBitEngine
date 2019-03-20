@@ -49,7 +49,7 @@ public:
 		bool isRendered_flag = true;
 	};
 
-	ComponentCanvasRenderer(GameObject* parent, ComponentTypes componentType = ComponentTypes::CanvasRendererComponent);
+	ComponentCanvasRenderer(GameObject* parent, ComponentTypes componentType = ComponentTypes::CanvasRendererComponent, bool includeComponents = true);
 	ComponentCanvasRenderer(const ComponentCanvasRenderer& componentRectTransform, GameObject* parent, bool includeComponents = true);
 	~ComponentCanvasRenderer();
 

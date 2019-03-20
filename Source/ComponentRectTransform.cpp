@@ -18,35 +18,38 @@
 #define PIVOT_POINTS_STR "Top Left\0Top Right\0Bottom Left\0Bottom Right\0Center\0Top\0Left\0Right\0Bottom"
 
 
-ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::RectTransformComponent)
+ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::RectTransformComponent)
 {
-	if (parent->GetParent())
+	if (includeComponents)
 	{
-		GameObject* goCanvas = ModuleUI::FindCanvas(parent);
-		if (goCanvas)
+		if (parent->GetParent())
 		{
-			ComponentCanvas* canvas = goCanvas->cmp_canvas;
-
-			if (canvas != parent->cmp_canvas)
-				if (!goCanvas->cmp_rectTransform)
-					goCanvas->AddComponent(ComponentTypes::RectTransformComponent);
-
-			switch (canvas->GetType())
+			GameObject* goCanvas = ModuleUI::FindCanvas(parent);
+			if (goCanvas)
 			{
-			case ComponentCanvas::CanvasType::SCREEN:
-				rFrom = RectFrom::RECT;
-				break;
-			case ComponentCanvas::CanvasType::WORLD_SCREEN:
-			case ComponentCanvas::CanvasType::WORLD:
-				if (canvas == parent->cmp_canvas)
-					rFrom = RectFrom::WORLD;
-				else
-					rFrom = RectFrom::RECT_WORLD;
-				break;
-			}
-		}
+				ComponentCanvas* canvas = goCanvas->cmp_canvas;
 
-		InitRect();
+				if (canvas != parent->cmp_canvas)
+					if (!goCanvas->cmp_rectTransform)
+						goCanvas->AddComponent(ComponentTypes::RectTransformComponent);
+
+				switch (canvas->GetType())
+				{
+				case ComponentCanvas::CanvasType::SCREEN:
+					rFrom = RectFrom::RECT;
+					break;
+				case ComponentCanvas::CanvasType::WORLD_SCREEN:
+				case ComponentCanvas::CanvasType::WORLD:
+					if (canvas == parent->cmp_canvas)
+						rFrom = RectFrom::WORLD;
+					else
+						rFrom = RectFrom::RECT_WORLD;
+					break;
+				}
+			}
+
+			InitRect();
+		}
 	}
 }
 
@@ -60,8 +63,11 @@ ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & co
 
 	memcpy(rectTransform, componentRectTransform.rectTransform, sizeof(uint) * 4);
 	memcpy(anchor, componentRectTransform.anchor, sizeof(uint) * 4);
+	memcpy(lastPositionChange, componentRectTransform.lastPositionChange, sizeof(uint) * 2);
 	memcpy(corners, componentRectTransform.corners, sizeof(math::float3) * 4);
 	memcpy(anchor_percenatges, componentRectTransform.anchor_percenatges, sizeof(float) * 4);
+
+	noUpdatefromCanvas = true;
 }
 
 ComponentRectTransform::~ComponentRectTransform()
@@ -190,6 +196,68 @@ void ComponentRectTransform::TransformUpdated()
 	needed_recalculate = true;
 }
 
+void ComponentRectTransform::ParentChanged(bool canvas_changed)
+{
+	if (!parent->cmp_canvas)
+	{
+		GameObject* gCanvas = ModuleUI::FindCanvas(parent);
+		if (gCanvas->cmp_canvas->GetType() == ComponentCanvas::CanvasType::SCREEN && rFrom == RectFrom::RECT_WORLD)
+			rFrom = RectFrom::RECT;
+		else if (gCanvas->cmp_canvas->GetType() != ComponentCanvas::CanvasType::SCREEN && rFrom == RectFrom::RECT)
+			rFrom = RectFrom::RECT_WORLD;
+
+		if(!canvas_changed)
+			RecalculateAndChilds();
+	}
+}
+
+void ComponentRectTransform::CanvasChanged()
+{
+	if (parent->cmp_canvas)
+	{
+		if (!noUpdatefromCanvas)
+		{
+			switch (parent->cmp_canvas->GetType())
+			{
+			case ComponentCanvas::CanvasType::SCREEN:
+			{
+				rFrom = RectFrom::RECT;
+				math::float3 scale = parent->transform->GetScale();
+
+				rectTransform[Rect::XDIST] = (uint)(scale.x * WORLDTORECT);
+				rectTransform[Rect::YDIST] = (uint)(scale.y * WORLDTORECT);
+
+				rectTransform[Rect::X] = lastPositionChange[0];
+				rectTransform[Rect::Y] = lastPositionChange[1];
+
+				rectTransform_modified = true;
+				break;
+			}
+			case ComponentCanvas::CanvasType::WORLD_SCREEN:
+			case ComponentCanvas::CanvasType::WORLD:
+			{
+				rFrom = RectFrom::WORLD;
+
+				math::float3 scale = parent->transform->GetScale();
+				parent->transform->SetScale({ (float)rectTransform[Rect::XDIST] / WORLDTORECT, (float)rectTransform[Rect::YDIST] / WORLDTORECT, scale.z });
+
+				lastPositionChange[0] = rectTransform[Rect::X];
+				lastPositionChange[1] = rectTransform[Rect::Y];
+				break;
+			}
+			}
+
+			std::vector<GameObject*> childs;
+			parent->GetChildrenAndThisVectorFromLeaf(childs);
+			for (GameObject* rectGo : childs) if (rectGo->cmp_rectTransform) rectGo->cmp_rectTransform->ParentChanged(true);
+
+			RecalculateAndChilds();
+		}
+
+		noUpdatefromCanvas = false;
+	}
+}
+
 void ComponentRectTransform::RecalculateRectByPercentage()
 {
 	uint* rectParent = nullptr;
@@ -219,6 +287,12 @@ void ComponentRectTransform::CalculateRectFromWorld()
 		math::float3 scale = math::float3::zero;
 		math::float4x4 global = parent->transform->GetGlobalMatrix();
 		global.Decompose(pos, rot, scale);
+
+		if (!scale.IsFinite())
+		{
+			scale = math::float3::one;
+			CONSOLE_LOG(LogTypes::Warning, "If canvas use billboard, you can't set size of transform to 0. Reset scale..")
+		}
 
 		parent->transform->SetMatrixFromGlobal(global.FromTRS(pos, math::Quat::identity * math::float3x3(xAxis, yAxis, zAxis).ToQuat(), scale));
 	}
@@ -391,7 +465,7 @@ void ComponentRectTransform::RecaculatePercentage()
 
 uint ComponentRectTransform::GetInternalSerializationBytes()
 {
-	return sizeof(RectFrom) + sizeof(RectPrivot) + sizeof(bool) * 2 + sizeof(math::float3) * 4 + sizeof(uint) * 8 + sizeof(float) * 5;
+	return sizeof(RectFrom) + sizeof(RectPrivot) + sizeof(bool) * 2 + sizeof(math::float3) * 4 + sizeof(uint) * 10 + sizeof(float) * 5;
 		
 }
 
@@ -421,6 +495,10 @@ void ComponentRectTransform::OnInternalSave(char *& cursor)
 	cursor += bytes;
 
 	memcpy(cursor, &anchor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(uint) * 2;
+	memcpy(cursor, &lastPositionChange, bytes);
 	cursor += bytes;
 
 	bytes = sizeof(float);
@@ -460,6 +538,10 @@ void ComponentRectTransform::OnInternalLoad(char *& cursor)
 	memcpy(&anchor, cursor, bytes);
 	cursor += bytes;
 
+	bytes = sizeof(uint) * 2;
+	memcpy(&lastPositionChange, cursor, bytes);
+	cursor += bytes;
+
 	bytes = sizeof(float);
 	memcpy(&z, cursor, bytes);
 	cursor += bytes;
@@ -467,6 +549,8 @@ void ComponentRectTransform::OnInternalLoad(char *& cursor)
 	bytes *= 4;
 	memcpy(&anchor_percenatges, cursor, bytes);
 	cursor += bytes;
+
+	noUpdatefromCanvas = true;
 }
 
 void ComponentRectTransform::OnUniqueEditor()

@@ -11,13 +11,16 @@
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
 
-ComponentImage::ComponentImage(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::ImageComponent)
+ComponentImage::ComponentImage(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::ImageComponent)
 {
-	if (parent->cmp_rectTransform == nullptr)
-		parent->AddComponent(ComponentTypes::RectTransformComponent);
+	if (includeComponents)
+	{
+		if (parent->cmp_rectTransform == nullptr)
+			parent->AddComponent(ComponentTypes::RectTransformComponent);
 
-	if (parent->cmp_canvasRenderer == nullptr)
-		parent->AddComponent(ComponentTypes::CanvasRendererComponent);
+		if (parent->cmp_canvasRenderer == nullptr)
+			parent->AddComponent(ComponentTypes::CanvasRendererComponent);
+	}
 }
 
 ComponentImage::ComponentImage(const ComponentImage & componentRectTransform, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::ImageComponent)

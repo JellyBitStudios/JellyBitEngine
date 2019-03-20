@@ -11,7 +11,7 @@
 #include "ComponentCanvasRenderer.h"
 #include "ComponentCamera.h"
 
-#define CANVAS_TYPE_STR "Screen\0World Screen\0World"
+#define CANVAS_TYPE_STR "Screen\0World Screen (Work In Progress)\0World"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -19,10 +19,13 @@
 #include "MathGeoLib\include\Math\float4x4.h"
 #include "MathGeoLib/include/Geometry/Frustum.h"
 
-ComponentCanvas::ComponentCanvas(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::CanvasComponent)
+ComponentCanvas::ComponentCanvas(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::CanvasComponent)
 {
-	App->ui->canvas.push_back(parent);
-	needed_change = true;
+	if (includeComponents)
+	{
+		App->ui->canvas.push_back(parent);
+		needed_change = true;
+	}
 }
 
 ComponentCanvas::ComponentCanvas(const ComponentCanvas & componentCanvas, GameObject * parent, bool includeComponents) : Component(parent, ComponentTypes::CanvasComponent)
@@ -83,25 +86,10 @@ void ComponentCanvas::Update()
 			break;
 		}
 
-		needed_change = false;
-	}
+		if (parent->cmp_rectTransform)
+			parent->cmp_rectTransform->CanvasChanged();
 
-	switch (type)
-	{
-	case ComponentCanvas::SCREEN:
-		break;
-	case ComponentCanvas::WORLD_SCREEN:
-		/*
-		if (!fakeGoTransform->GetParent())
-		{
-			math::float4x4 matrix = math::float4x4(App->renderer3D->GetCurrentCamera()->frustum.WorldMatrix());
-			fakeGoTransform->transform->SetMatrixFromGlobal(matrix);
-		}*/
-		break;
-	case ComponentCanvas::WORLD:
-		break;
-	default:
-		break;
+		needed_change = false;
 	}
 
 	std::vector<GameObject*> childs;

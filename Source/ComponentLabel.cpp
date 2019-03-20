@@ -7,13 +7,16 @@
 
 #include "imgui/imgui.h"
 
-ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::LabelComponent)
+ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::LabelComponent)
 {
-	if (parent->cmp_rectTransform == nullptr)
-		parent->AddComponent(ComponentTypes::RectTransformComponent);
+	if (includeComponents)
+	{
+		if (parent->cmp_rectTransform == nullptr)
+			parent->AddComponent(ComponentTypes::RectTransformComponent);
 
-	if (parent->cmp_canvasRenderer == nullptr)
-		parent->AddComponent(ComponentTypes::CanvasRendererComponent);
+		if (parent->cmp_canvasRenderer == nullptr)
+			parent->AddComponent(ComponentTypes::CanvasRendererComponent);
+	}
 }
 
 ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::LabelComponent)

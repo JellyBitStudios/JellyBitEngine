@@ -62,7 +62,7 @@ public:
 	};
 
 public:
-	ComponentRectTransform(GameObject* parent, ComponentTypes componentType = ComponentTypes::RectTransformComponent);
+	ComponentRectTransform(GameObject* parent, ComponentTypes componentType = ComponentTypes::RectTransformComponent, bool includeComponents = true);
 	ComponentRectTransform(const ComponentRectTransform& componentRectTransform, GameObject* parent, bool includeComponents = true);
 	~ComponentRectTransform();
 
@@ -90,6 +90,8 @@ public:
 	void ScreenChanged();
 
 	void TransformUpdated();
+	void ParentChanged(bool canvas_changed = false);
+	void CanvasChanged();
 
 private:
 	//From World
@@ -114,10 +116,12 @@ private:
 	//Recalculate at next frame
 	bool needed_recalculate = false;
 	bool rectTransform_modified = false;
+	bool noUpdatefromCanvas = false;
 
 	//From Rect
 	//x, y, x_dist, y_dist
 	uint rectTransform[4] = { 0, 0, 100, 100 };
+	uint lastPositionChange[2] = { 0,0 };//save when canvas change
 
 	//FromWorld
 	math::float3 corners[4] = { math::float3::zero, math::float3::zero, math::float3::zero, math::float3::zero };

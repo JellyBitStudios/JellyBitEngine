@@ -11,6 +11,7 @@
 #include "ModuleInternalResHandler.h"
 #include "ModuleResourceManager.h"
 #include "ModuleUI.h"
+#include "ComponentRectTransform.h"
 
 #include "SDL\include\SDL_scancode.h"
 #include "ModuleGOs.h"
@@ -271,14 +272,25 @@ void PanelHierarchy::SetGameObjectDragAndDropTarget(GameObject* target) const
 
 			if (!payload_n->IsChild(target, true))
 			{
+				//Checks for UI.
+				if (((!payload_n->cmp_canvas && payload_n->GetLayer() == UILAYER) && target->GetLayer() != UILAYER) //child of canvas can't be moved outside of any canvas.
+					|| (payload_n->cmp_canvas && target->GetLayer() == UILAYER) //Can't move canvas into canvas.
+					|| (payload_n->GetLayer() != UILAYER && target->GetLayer() == UILAYER)) //any gameobject can't be inside of canvas or canvas childs.
+				{
+					CONSOLE_LOG(LogTypes::Error, "ERROR: Invalid Target. UI limitation, if not the engine crash.");
+					ImGui::EndDragDropTarget();
+					return;
+				}
+				
 				math::float4x4 globalMatrix;
-				globalMatrix = payload_n->transform->GetGlobalMatrix();
+				if(payload_n->transform) globalMatrix = payload_n->transform->GetGlobalMatrix();
 
 				payload_n->GetParent()->EraseChild(payload_n);
 				target->AddChild(payload_n);
 				payload_n->SetParent(target);
 
-				payload_n->transform->SetMatrixFromGlobal(globalMatrix);
+				if (payload_n->transform) payload_n->transform->SetMatrixFromGlobal(globalMatrix);
+				if (payload_n->GetLayer() == UILAYER) if (payload_n->cmp_rectTransform) payload_n->cmp_rectTransform->ParentChanged();
 			}
 			else
 				CONSOLE_LOG(LogTypes::Error, "ERROR: Invalid Target. Don't be so badass ;)");

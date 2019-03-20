@@ -11,10 +11,13 @@
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
 
-ComponentCanvasRenderer::ComponentCanvasRenderer(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::CanvasRendererComponent)
+ComponentCanvasRenderer::ComponentCanvasRenderer(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::CanvasRendererComponent)
 {
-	rend_queue.push_back(new ToUIRend());
-	rend_queue.push_back(new ToUIRend());
+	if (includeComponents)
+	{
+		rend_queue.push_back(new ToUIRend());
+		rend_queue.push_back(new ToUIRend());
+	}
 }
 
 ComponentCanvasRenderer::ComponentCanvasRenderer(const ComponentCanvasRenderer & componentRectTransform, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::CanvasRendererComponent)

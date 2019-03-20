@@ -16,17 +16,20 @@
 
 #include <mono/metadata/attrdefs.h>
 
-ComponentButton::ComponentButton(GameObject* parent, ComponentTypes componentType) : Component(parent, ComponentTypes::ButtonComponent)
+ComponentButton::ComponentButton(GameObject* parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::ButtonComponent)
 {
 	state = UIState::IDLE;
 	input = "z";
 	button_blinded = (uint)SDL_GetScancodeFromKey(SDL_GetKeyFromName(input.c_str()));
 
-	if (parent->cmp_rectTransform == nullptr)
-		parent->AddComponent(ComponentTypes::RectTransformComponent);
+	if (includeComponents)
+	{
+		if (parent->cmp_rectTransform == nullptr)
+			parent->AddComponent(ComponentTypes::RectTransformComponent);
 
-	if (parent->cmp_image == nullptr)
-		parent->AddComponent(ImageComponent);
+		if (parent->cmp_image == nullptr)
+			parent->AddComponent(ImageComponent);
+	}
 }
 
 ComponentButton::ComponentButton(const ComponentButton & componentButton, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::ButtonComponent)

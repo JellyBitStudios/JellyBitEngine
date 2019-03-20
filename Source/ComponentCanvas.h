@@ -16,7 +16,7 @@ public:
 	};
 
 public:
-	ComponentCanvas(GameObject* parent, ComponentTypes componentType = ComponentTypes::CanvasComponent);
+	ComponentCanvas(GameObject* parent, ComponentTypes componentType = ComponentTypes::CanvasComponent, bool includeComponents = true);
 	ComponentCanvas(const ComponentCanvas& componentCanvas, GameObject* parent, bool includeComponents = true);
 	~ComponentCanvas();
 
