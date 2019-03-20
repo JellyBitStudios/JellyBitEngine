@@ -27,6 +27,10 @@ ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTyp
 		{
 			ComponentCanvas* canvas = goCanvas->cmp_canvas;
 
+			if (canvas != parent->cmp_canvas)
+				if (!goCanvas->cmp_rectTransform)
+					goCanvas->AddComponent(ComponentTypes::RectTransformComponent);
+
 			switch (canvas->GetType())
 			{
 			case ComponentCanvas::CanvasType::SCREEN:
@@ -52,12 +56,12 @@ ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & co
 	pivot = componentRectTransform.pivot;
 	usePivot = componentRectTransform.usePivot;
 	billboard = componentRectTransform.billboard;
+	z = componentRectTransform.z;
 
 	memcpy(rectTransform, componentRectTransform.rectTransform, sizeof(uint) * 4);
 	memcpy(anchor, componentRectTransform.anchor, sizeof(uint) * 4);
-
-	if (includeComponents)
-		needed_recalculate = true;
+	memcpy(corners, componentRectTransform.corners, sizeof(math::float3) * 4);
+	memcpy(anchor_percenatges, componentRectTransform.anchor_percenatges, sizeof(float) * 4);
 }
 
 ComponentRectTransform::~ComponentRectTransform()
@@ -72,39 +76,22 @@ void ComponentRectTransform::Update()
 		switch (rFrom)
 		{
 		case ComponentRectTransform::RECT:
-			if (usePivot)
-				RecaculateAnchors();
-			else
-				RecalculateRectByPercentage();
+			(rectTransform_modified) ? CalculateAnchors(true) :
+			((usePivot) ? RecaculateAnchors() : RecalculateRectByPercentage());
 			break;
 		case ComponentRectTransform::WORLD:
 			CalculateRectFromWorld();
 			break;
 		case ComponentRectTransform::RECT_WORLD:
-			if (usePivot)
-				RecaculateAnchors();
-			else
-				RecalculateRectByPercentage();
+			(rectTransform_modified) ? CalculateAnchors(true) :
+			((usePivot) ? RecaculateAnchors() : RecalculateRectByPercentage());
 			CalculateCornersFromRect();
 			break;
 		}
 
 		needed_recalculate = false;
+		rectTransform_modified = false;
 	}
-
-	switch (rFrom)
-	{
-	case ComponentRectTransform::RECT:
-		break;
-	case ComponentRectTransform::WORLD:
-		CalculateRectFromWorld();
-		break;
-	case ComponentRectTransform::RECT_WORLD:
-		break;
-	default:
-		break;
-	}
-
 }
 
 void ComponentRectTransform::OnEditor()
@@ -145,6 +132,9 @@ void ComponentRectTransform::InitRect()
 			{
 				uint* rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
 
+				rectTransform[Rect::X] = rectParent[Rect::X];
+				rectTransform[Rect::Y] = rectParent[Rect::Y];
+
 				if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
 					rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
 				if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
@@ -170,7 +160,7 @@ void ComponentRectTransform::InitRect()
 				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
 
 			CalculateCornersFromRect();
-			CalculateAnchors();
+			CalculateAnchors(true);
 			break;
 		}
 	}
@@ -195,6 +185,11 @@ void ComponentRectTransform::ScreenChanged()
 	RecalculateRectByPercentage();
 }
 
+void ComponentRectTransform::TransformUpdated()
+{
+	needed_recalculate = true;
+}
+
 void ComponentRectTransform::RecalculateRectByPercentage()
 {
 	uint* rectParent = nullptr;
@@ -204,11 +199,11 @@ void ComponentRectTransform::RecalculateRectByPercentage()
 		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
 
 	rectTransform[Rect::X] = (uint)(anchor_percenatges[RectPercentage::X0] * (float)rectParent[Rect::XDIST]) + rectParent[Rect::X];
-	rectTransform[Rect::XDIST] = rectParent[Rect::XDIST] - ((rectTransform[Rect::X] - rectParent[Rect::X]) + (uint)(anchor_percenatges[RectPercentage::X1] * (float)rectParent[Rect::XDIST]));
+	rectTransform[Rect::XDIST] = rectParent[Rect::XDIST] - (((rectTransform[Rect::X] - rectParent[Rect::X]) + (uint)(anchor_percenatges[RectPercentage::X1] * (float)rectParent[Rect::XDIST])));
 	rectTransform[Rect::Y] = (uint)(anchor_percenatges[RectPercentage::Y0] * (float)rectParent[Rect::YDIST]) + rectParent[Rect::Y];
 	rectTransform[Rect::YDIST] = rectParent[Rect::YDIST] - ((rectTransform[Rect::Y] - rectParent[Rect::Y]) + (uint)(anchor_percenatges[RectPercentage::Y1] * (float)rectParent[Rect::YDIST]));
 	
-	CalculateAnchors(true);
+	CalculateAnchors();
 }
 
 void ComponentRectTransform::CalculateRectFromWorld()
@@ -592,6 +587,9 @@ void ComponentRectTransform::OnUniqueEditor()
 
 		needed_recalculate = true;
 	}
+
+	if (needed_recalculate)
+		rectTransform_modified = true;
 
 	ImGui::Checkbox("Use Pivot", &usePivot);
 	if (usePivot)

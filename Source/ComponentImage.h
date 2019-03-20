@@ -31,7 +31,7 @@ private:
 
 private:
 	uint res_image = 0;
-	float color[4] = { 0.0f,0.0f,0.0f,1.0f };
+	float color[4] = { 1.0f,1.0f,1.0f,1.0f };
 };
 
 #endif

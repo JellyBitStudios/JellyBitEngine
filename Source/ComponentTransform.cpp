@@ -10,7 +10,7 @@
 #include "ComponentCamera.h"
 #include "ComponentProjector.h"
 #include "ComponentRigidActor.h"
-#include "ComponentRectTransform.h"
+#include "ComponentCanvas.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -121,6 +121,10 @@ void ComponentTransform::OnUniqueEditor()
 			if (parent->cmp_projector != nullptr)
 				parent->cmp_projector->UpdateTransform();
 
+			// Transform updated: if the game object has a canvas, Update the rectTransforms
+			if (parent->cmp_canvas != nullptr)
+				parent->cmp_canvas->TransformUpdated();
+
 #ifndef GAMEMODE
 			// Transform updated: if the game object is selected, update the camera reference
 			if (parent == App->scene->selectedObject.Get())
@@ -187,6 +191,10 @@ void ComponentTransform::SetMatrixFromGlobal(math::float4x4& globalMatrix)
 		// Transform updated: if the game object has a projector, update its frustum
 		if (parent->cmp_projector != nullptr)
 			parent->cmp_projector->UpdateTransform();
+
+		// Transform updated: if the game object has a canvas, Update the rectTransforms
+		if (parent->cmp_canvas != nullptr)
+			parent->cmp_canvas->TransformUpdated();
 
 #ifndef GAMEMODE
 		// Transform updated: if the game object is selected, update the camera reference

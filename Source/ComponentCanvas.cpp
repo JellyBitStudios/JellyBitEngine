@@ -22,6 +22,7 @@
 ComponentCanvas::ComponentCanvas(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::CanvasComponent)
 {
 	App->ui->canvas.push_back(parent);
+	needed_change = true;
 }
 
 ComponentCanvas::ComponentCanvas(const ComponentCanvas & componentCanvas, GameObject * parent, bool includeComponents) : Component(parent, ComponentTypes::CanvasComponent)
@@ -206,4 +207,12 @@ void ComponentCanvas::ScreenChanged()
 
 	for (GameObject* rect : rectChilds)
 		rect->cmp_rectTransform->ScreenChanged();
+}
+
+void ComponentCanvas::TransformUpdated()
+{
+	if (type != CanvasType::SCREEN)
+		if (parent->cmp_rectTransform)
+			parent->cmp_rectTransform->TransformUpdated();
+
 }

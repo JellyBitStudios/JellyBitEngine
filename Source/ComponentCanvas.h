@@ -34,6 +34,7 @@ public: //Custom
 	math::float4x4 GetGlobal() const;
 
 	void ScreenChanged();
+	void TransformUpdated();
 
 private:
 	CanvasType type = CanvasType::SCREEN;

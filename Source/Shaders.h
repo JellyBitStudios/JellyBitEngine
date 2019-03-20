@@ -343,7 +343,7 @@
 "void main()\n" \
 "{\n" \
 "	if(using_texture == 1)\n"\
-"		FragColor = spriteColor * texture(image, TexCoords);\n" \
+"		FragColor = texture(image, TexCoords) * spriteColor;\n" \
 "	else\n"\
 "		FragColor = spriteColor;\n" \
 "}"

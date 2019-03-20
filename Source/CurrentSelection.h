@@ -9,6 +9,7 @@
 #include "ResourceMesh.h"
 #include "PanelInspector.h"
 #include "ModuleGui.h"
+#include "ModuleUI.h"
 #include "Resource.h"
 
 #include <assert.h>
@@ -82,7 +83,8 @@ public:
 
 #ifndef GAMEMODE
 		// New game object selected. Update the camera reference
-		if(newSelection->cmp_canvas == nullptr)
+
+		if(newSelection->transform)
 			App->camera->SetReference(newSelection->transform->GetPosition());
 #endif
 

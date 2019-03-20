@@ -89,6 +89,8 @@ public:
 
 	void ScreenChanged();
 
+	void TransformUpdated();
+
 private:
 	//From World
 	void CalculateRectFromWorld();
@@ -111,6 +113,7 @@ private:
 
 	//Recalculate at next frame
 	bool needed_recalculate = false;
+	bool rectTransform_modified = false;
 
 	//From Rect
 	//x, y, x_dist, y_dist
