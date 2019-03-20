@@ -45,6 +45,8 @@ public:
 
 	void SavePublicVars(char*& cursor) const;
 	void LoadPublicVars(char*& cursor);
+	void TemporalSave();
+	void TemporalLoad();
 
 	void OnInternalSave(char*& cursor);
 	void OnInternalLoad(char*& cursor);

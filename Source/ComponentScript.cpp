@@ -3073,6 +3073,34 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 	}
 }
 
+void ComponentScript::TemporalSave()
+{
+	if (tempBuffer != nullptr)
+	{
+		CONSOLE_LOG(LogTypes::Error, "MEMORY LEAKS IN TEMPORAL SAVE OF SCRIPTS");
+	}
+
+	tempBufferBytes = GetPublicVarsSerializationBytes();
+	tempBuffer = new char[tempBufferBytes];
+
+	char* cursor = tempBuffer;
+
+	SavePublicVars(tempBuffer);
+}
+
+void ComponentScript::TemporalLoad()
+{
+	if (tempBuffer != nullptr)
+	{
+		char* cursor = tempBuffer;
+		LoadPublicVars(cursor);
+
+		delete[] tempBuffer;
+		tempBuffer = nullptr;
+		tempBufferBytes = 0u;
+	}
+}
+
 void ComponentScript::InstanceClass()
 {
 	if (scriptResUUID == 0)

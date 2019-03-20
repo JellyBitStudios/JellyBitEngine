@@ -87,6 +87,9 @@ public:
 
 	void FixedUpdate();
 
+	void TemporalSave();
+	void TemporalLoad();
+
 private:
 	void UpdateMethods();
 	void ExecuteCallbacks(GameObject* gameObject);
