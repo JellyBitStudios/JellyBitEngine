@@ -53,7 +53,7 @@ public:
 
 	bool IsUIHovered();
 
-	GameObject* FindCanvas(GameObject* from); //TODO J Check if I can make this static
+	static GameObject* FindCanvas(GameObject* from); //TODO J Check if I can make this static
 
 private:
 

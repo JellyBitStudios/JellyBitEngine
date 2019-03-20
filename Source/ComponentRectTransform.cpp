@@ -22,7 +22,7 @@ ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTyp
 {
 	if (parent->GetParent())
 	{
-		GameObject* goCanvas = App->ui->FindCanvas(parent);
+		GameObject* goCanvas = ModuleUI::FindCanvas(parent);
 		if (goCanvas)
 		{
 			ComponentCanvas* canvas = goCanvas->cmp_canvas;

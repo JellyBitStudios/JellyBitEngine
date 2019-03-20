@@ -359,7 +359,7 @@ GameObject * ModuleUI::FindCanvas(GameObject * from)
 	GameObject* ret = nullptr;
 	GameObject* temp = from;
 
-	while (ret != nullptr || temp == nullptr)
+	while (ret == nullptr && temp != nullptr)
 	{
 		if (temp->cmp_canvas)
 			ret = temp;
