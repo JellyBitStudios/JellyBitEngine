@@ -105,30 +105,12 @@ void ComponentImage::OnInternalLoad(char *& cursor)
 void ComponentImage::OnUniqueEditor()
 {
 #ifndef GAMEMODE
-	ImGui::Text("Image");
+	ImGui::Text("Image Component");
 	ImGui::Spacing();
 
-	float min = 0.0f;
-	float max_color = MAX_COLOR;
-	float max_alpha = MAX_ALPHA;
-
-	float color_r = color[COLOR_R] * 255.f;
-	float color_g = color[COLOR_G] * 255.f;
-	float color_b = color[COLOR_B] * 255.f;
-
-	ImGui::PushItemWidth(50.0f);
 	ImGui::Text("Color RGB with alpha");
-	if (ImGui::DragScalar("##ColorR", ImGuiDataType_Float, (void*)&color_r, 1.0f, &min, &max_color, "%1.f", 1.0f))
-		color[COLOR_R] = color_r / 255.f;
-	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-	if(ImGui::DragScalar("##ColorG", ImGuiDataType_Float, (void*)&color_g, 1.0f, &min, &max_color, "%1.f", 1.0f))
-		color[COLOR_G] = color_g / 255.f;
-	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-	if(ImGui::DragScalar("##ColorB", ImGuiDataType_Float, (void*)&color_b, 1.0f, &min, &max_color, "%1.f", 1.0f))
-		color[COLOR_B] = color_b / 255.f;
-	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);		
-	if (ImGui::DragScalar("##ColorA", ImGuiDataType_Float, (void*)&color[COLOR_A], 0.1f, &min, &max_alpha, "%0.1f", 1.0f))
-	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+	ImGui::PushItemWidth(200.0f);
+	ImGui::ColorEdit4("##Color_RGBA", color, ImGuiColorEditFlags_::ImGuiColorEditFlags_AlphaBar);
 
 	ResourceTexture* texture = nullptr;
 	if (res_image != 0)
@@ -141,7 +123,6 @@ void ComponentImage::OnUniqueEditor()
 		ImGui::Text("%u", res_image);
 		ImGui::EndTooltip();
 	}
-
 	if (ImGui::BeginDragDropTarget())
 	{
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE_INSPECTOR_SELECTOR"))
@@ -151,6 +132,33 @@ void ComponentImage::OnUniqueEditor()
 			App->res->SetAsUsed(res_image);
 		}
 		ImGui::EndDragDropTarget();
+	}
+	ImGui::SameLine(); ImGui::PushItemWidth(10.0f);
+	if (ImGui::Button("RC"))
+	{
+		color[COLOR_R] = 1.0f;
+		color[COLOR_G] = 1.0f;
+		color[COLOR_B] = 1.0f;
+		color[COLOR_A] = 1.0f;
+	}
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("Reset color");
+		ImGui::EndTooltip();
+	}
+	ImGui::SameLine(); ImGui::PushItemWidth(10.0f);
+	if (ImGui::Button("CT"))
+	{
+		if(res_image > 0)
+			App->res->SetAsUnused(res_image);
+		res_image = 0;
+	}
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("Clear Texture");
+		ImGui::EndTooltip();
 	}
 #endif
 }
