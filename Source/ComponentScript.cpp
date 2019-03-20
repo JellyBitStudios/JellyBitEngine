@@ -3085,7 +3085,7 @@ void ComponentScript::TemporalSave()
 
 	char* cursor = tempBuffer;
 
-	SavePublicVars(tempBuffer);
+	SavePublicVars(cursor);
 }
 
 void ComponentScript::TemporalLoad()
