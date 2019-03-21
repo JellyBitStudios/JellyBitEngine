@@ -43,7 +43,9 @@ enum ComponentTypes
 	D6JointComponent,
 	//Audio
 	AudioListenerComponent,
-	AudioSourceComponent
+	AudioSourceComponent,
+
+	TrailComponent
 };
 
 #endif
