@@ -33,6 +33,7 @@ public:
 
 	static bool ImportFile(const char* file, std::string& name, std::string& outputFile);
 	static bool ExportFile(ResourceData& data, FontData& font_data, std::string& outputFile, bool overwrite = false);
+	static uint SaveFile(ResourceData & data, FontData & materialData, std::string & outputFile, bool overwrite);
 	static uint CreateMeta(const char* file, uint font_uuid, std::string& name, std::string& outputMetaFile);
 	static bool ReadMeta(const char* metaFile, int64_t& lastModTime, uint& font_uuid, std::string& name);
 	static bool LoadFile(const char* file, FontData& font_data_output);
