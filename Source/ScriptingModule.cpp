@@ -920,6 +920,7 @@ void ScriptingModule::RecompileScripts()
 		System_Event event;
 		event.type = System_Event_Type::ScriptingDomainReloaded;
 		App->PushSystemEvent(event);
+		TemporalSave();
 	}
 }
 
@@ -956,6 +957,22 @@ void ScriptingModule::FixedUpdate()
 	for (int i = 0; i < scripts.size(); ++i)
 	{
 		scripts[i]->FixedUpdate();
+	}
+}
+
+void ScriptingModule::TemporalSave()
+{
+	for (int i = 0; i < scripts.size(); ++i)
+	{
+		scripts[i]->TemporalSave();
+	}
+}
+
+void ScriptingModule::TemporalLoad()
+{
+	for (int i = 0; i < scripts.size(); ++i)
+	{
+		scripts[i]->TemporalLoad();
 	}
 }
 

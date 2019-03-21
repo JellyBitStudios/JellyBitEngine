@@ -18,7 +18,6 @@
 #include "ComponentNavAgent.h"
 #include "ComponentEmitter.h"
 #include "ComponentBone.h"
-#include "ComponentAnimation.h"
 #include "ComponentLight.h"
 #include "ComponentScript.h"
 #include "ComponentCanvasRenderer.h"
@@ -73,10 +72,7 @@ void ModuleEvents::OnSystemEvent(System_Event event)
 	case System_Event_Type::Play:
 		assert(App->GOs->sceneStateBuffer == 0);
 		App->GOs->SerializeFromNode(App->scene->root, App->GOs->sceneStateBuffer, App->GOs->sceneStateSize);
-
-#ifdef GAMEMODE
 		App->SetEngineState(engine_states::ENGINE_PLAY);
-#endif
 
 		break;
 	case System_Event_Type::SaveScene:
@@ -98,6 +94,9 @@ void ModuleEvents::OnSystemEvent(System_Event event)
 		}
 
 		App->scripting->ReInstance();
+
+		App->scripting->TemporalLoad();
+
 		break;
 	}
 
