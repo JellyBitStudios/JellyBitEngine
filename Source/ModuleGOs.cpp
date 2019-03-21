@@ -16,7 +16,6 @@
 #include "ComponentMesh.h"
 #include "ComponentImage.h"
 #include "ComponentRectTransform.h"
-#include "ComponentAnimation.h"
 #include "ResourceShaderProgram.h"
 #include "ResourceAnimation.h"
 
@@ -262,20 +261,6 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 	}
 
 
-	if (copy->GetParent() == nullptr)
-	{
-		// TODO_G : Start resource animator here?
-		std::vector<GameObject*> gos;
-		this->GetGameobjects(gos);
-		for (uint i = 0u; i < gos.size(); i++)
-		{
-			ComponentAnimation* anim_co = (ComponentAnimation*)gos[i]->GetComponent(ComponentTypes::AnimationComponent);
-			if (anim_co) {
-				ResourceAnimation* anim = (ResourceAnimation*)App->res->GetResource(anim_co->res);
-			}
-
-		}
-	}
 	System_Event newEvent;
 	newEvent.type = System_Event_Type::RecreateQuadtree;
 	App->PushSystemEvent(newEvent);

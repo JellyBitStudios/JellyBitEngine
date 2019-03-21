@@ -18,7 +18,6 @@
 #include "ComponentNavAgent.h"
 #include "ComponentEmitter.h"
 #include "ComponentBone.h"
-#include "ComponentAnimation.h"
 #include "ComponentLight.h"
 #include "ComponentScript.h"
 #include "ComponentCanvasRenderer.h"
