@@ -103,6 +103,7 @@ public:
 	class ComponentProjector*		cmp_projector = nullptr;
 	class ComponentAudioListener*	cmp_audioListener = nullptr;
 	class ComponentAudioSource*		cmp_audioSource = nullptr;
+	class ComponentTrail*			cmp_trail = nullptr;
 
 	ResourcePrefab* prefab = nullptr;
 

@@ -36,6 +36,7 @@
 #include "ComponentAnimation.h"
 #include "ComponentAudioListener.h"
 #include "ComponentAudioSource.h"
+#include "ComponentTrail.h"
 
 #include "MathGeoLib\include\Geometry\OBB.h"
 #include "Brofiler/Brofiler.h"
@@ -649,6 +650,9 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		break;
 	case ComponentTypes::AudioSourceComponent:
 		newComponent = cmp_audioSource = new ComponentAudioSource(this);
+		break;
+	case ComponentTypes::TrailComponent:
+		newComponent = cmp_trail = new ComponentTrail(this);
 		break;
 	}
 
