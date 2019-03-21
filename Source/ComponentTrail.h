@@ -7,6 +7,12 @@
 
 #include "MathGeoLib/include/MathGeoLib.h"
 
+#include "Timer.h"
+#include <list>
+
+
+#define MAX_TRAIL_NODE 500
+
 struct TrailNode
 {
 	math::float3 originHigh = math::float3::zero;
@@ -33,11 +39,9 @@ public:
 
 public:
 
-	TrailNode test;
-	TrailNode test2;
+	std::list<TrailNode*> test;
+	Timer timer;
 
-	bool ready1 = false;
-	bool ready2 = false;
 
 private:
 

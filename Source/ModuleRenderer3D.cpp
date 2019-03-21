@@ -256,36 +256,36 @@ update_status ModuleRenderer3D::PostUpdate()
 			}
 			else if (gameObjects[i]->cmp_trail != nullptr)
 			{
-				if (gameObjects[i]->cmp_trail->ready1 && gameObjects[i]->cmp_trail->ready2)
+
+				glColor3f(1.0f, 1.0f, 1.0f);
+
+				glPushMatrix();
+				math::float4x4 trans = math::float4x4::identity;
+				glMultMatrixf(trans.Transposed().ptr());
+
+				glBegin(GL_TRIANGLES);
+
+				for (std::list<TrailNode*>::iterator curr = gameObjects[i]->cmp_trail->test.begin(); curr != gameObjects[i]->cmp_trail->test.end(); ++curr)
 				{
-					glColor3f(1.0f, 1.0f, 1.0f);
+					std::list<TrailNode*>::iterator next = curr;
+					++next;
+					if (next != gameObjects[i]->cmp_trail->test.end())
+					{
+						glVertex3fv((const GLfloat*)(*curr)->originHigh.ptr());
+						glVertex3fv((const GLfloat*)(*curr)->originLow.ptr());
+						glVertex3fv((const GLfloat*)(*next)->originHigh.ptr());
 
-					glPushMatrix();
-					math::float4x4 trans = math::float4x4::identity;
-					glMultMatrixf(trans.Transposed().ptr());
-
-					glBegin(GL_TRIANGLES);
-					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test.originHigh.ptr());
-					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test.originLow.ptr());
-					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test.destHigh.ptr());
-
-					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test.originLow.ptr());
-					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test.destLow.ptr());
-					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test.destHigh.ptr());
-
-
-					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test2.originHigh.ptr());
-					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test2.originLow.ptr());
-					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test2.destHigh.ptr());
-
-					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test2.originLow.ptr());
-					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test2.destLow.ptr());
-					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test2.destHigh.ptr());
-
-					glEnd();
-					glPopMatrix();
-
+						glVertex3fv((const GLfloat*)(*curr)->originLow.ptr());
+						glVertex3fv((const GLfloat*)(*next)->originLow.ptr());
+						glVertex3fv((const GLfloat*)(*next)->originHigh.ptr());
+					}
 				}
+
+
+				glEnd();
+				glPopMatrix();
+
+
 			}
 		}
 
