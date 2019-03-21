@@ -454,7 +454,6 @@ void Application::Play()
 		// Enter play mode
 		if (renderer3D->SetCurrentCamera())
 		{
-			engineState = engine_states::ENGINE_PLAY;
 			System_Event event;
 			event.type = System_Event_Type::Play;
 			PushSystemEvent(event);
