@@ -314,6 +314,13 @@ void PanelInspector::ShowGameObjectInspector() const
 					ImGui::CloseCurrentPopup();
 				}
 			}
+			if (gameObject->cmp_trail == nullptr) 
+			{
+				if (ImGui::Selectable("Trail")) {
+					gameObject->AddComponent(ComponentTypes::TrailComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			}
 		}
 		ImGui::EndPopup();
 	}
