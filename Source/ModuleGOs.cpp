@@ -19,6 +19,7 @@
 #include "ComponentAnimation.h"
 #include "ResourceShaderProgram.h"
 #include "ResourceAnimation.h"
+#include "ComponentTrail.h"
 
 #include <assert.h>
 
@@ -35,6 +36,11 @@ update_status ModuleGOs::Update() // TODO_G : for VS2 its ok but this have to be
 	{
 		if (ComponentAnimator* anim_co = (ComponentAnimator*)(*it)->GetComponent(ComponentTypes::AnimatorComponent)) {
 			anim_co->Update(); // hehehehhehehe
+		}
+
+		ComponentTrail* trail = (ComponentTrail*)(*it)->GetComponent(ComponentTypes::TrailComponent);
+		if (trail) {
+			trail->Update(); // hehehehhehehe
 		}
 	}
 	return update_status::UPDATE_CONTINUE;
@@ -272,8 +278,7 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 			ComponentAnimation* anim_co = (ComponentAnimation*)gos[i]->GetComponent(ComponentTypes::AnimationComponent);
 			if (anim_co) {
 				ResourceAnimation* anim = (ResourceAnimation*)App->res->GetResource(anim_co->res);
-			}
-
+			}	
 		}
 	}
 	System_Event newEvent;
