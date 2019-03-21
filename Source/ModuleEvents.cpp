@@ -98,6 +98,9 @@ void ModuleEvents::OnSystemEvent(System_Event event)
 		}
 
 		App->scripting->ReInstance();
+
+		App->scripting->TemporalLoad();
+
 		break;
 	}
 
