@@ -31,6 +31,8 @@
 #include "ComponentCamera.h"
 #include "ComponentProjector.h"
 
+#include "ComponentTrail.h"
+
 #include "ResourceMesh.h"
 #include "ResourceTexture.h"
 #include "ResourceMaterial.h"
@@ -251,6 +253,39 @@ update_status ModuleRenderer3D::PostUpdate()
 			{
 				math::float4x4 globalMatrix = gameObjects[i]->transform->GetGlobalMatrix();
 				App->debugDrawer->DebugDrawSphere(1.0f, Yellow, globalMatrix);
+			}
+			else if (gameObjects[i]->cmp_trail != nullptr)
+			{
+				if (gameObjects[i]->cmp_trail->ready1 && gameObjects[i]->cmp_trail->ready2)
+				{
+					glColor3f(1.0f, 1.0f, 1.0f);
+
+					glPushMatrix();
+					math::float4x4 trans = math::float4x4::identity;
+					glMultMatrixf(trans.Transposed().ptr());
+
+					glBegin(GL_TRIANGLES);
+					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test.originHigh.ptr());
+					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test.originLow.ptr());
+					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test.destHigh.ptr());
+
+					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test.originLow.ptr());
+					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test.destLow.ptr());
+					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test.destHigh.ptr());
+
+
+					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test2.originHigh.ptr());
+					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test2.originLow.ptr());
+					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test2.destHigh.ptr());
+
+					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test2.originLow.ptr());
+					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test2.destLow.ptr());
+					glVertex3fv((const GLfloat*)gameObjects[i]->cmp_trail->test2.destHigh.ptr());
+
+					glEnd();
+					glPopMatrix();
+
+				}
 			}
 		}
 
