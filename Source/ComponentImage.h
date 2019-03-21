@@ -18,16 +18,20 @@ public:
 	ComponentImage(const ComponentImage& componentImage, GameObject* parent, bool includeComponents = true);
 	~ComponentImage();
 
-	const float* GetColor()const;
-	void SetResImageUuid(uint res_image_uuid);
-	uint GetResImageUuid() const;
 	uint GetResImage()const;
 
-	void SetMask();
 	void RectChanged();
 
 	bool useMask() const;
 	float* GetMask();
+
+	//For scripting
+	float* GetColor();
+	void SetColor(float r, float g, float b, float a);
+	void ResetColor();
+	uint GetResImageUuid() const;
+	void SetResImageUuid(uint res_image_uuid);
+	void SetMask();
 
 private:
 	uint GetInternalSerializationBytes();

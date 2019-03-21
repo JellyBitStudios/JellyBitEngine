@@ -84,14 +84,14 @@ void ComponentRectTransform::Update()
 		{
 		case ComponentRectTransform::RECT:
 			(rectTransform_modified) ? CalculateAnchors(true) :
-			((usePivot) ? RecaculateAnchors() : RecalculateRectByPercentage());
+				((usePivot) ? RecaculateAnchors() : RecalculateRectByPercentage());
 			break;
 		case ComponentRectTransform::WORLD:
 			CalculateRectFromWorld();
 			break;
 		case ComponentRectTransform::RECT_WORLD:
 			(rectTransform_modified) ? CalculateAnchors(true) :
-			((usePivot) ? RecaculateAnchors() : RecalculateRectByPercentage());
+				((usePivot) ? RecaculateAnchors() : RecalculateRectByPercentage());
 			CalculateCornersFromRect();
 			break;
 		}

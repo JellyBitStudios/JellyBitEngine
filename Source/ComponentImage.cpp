@@ -48,9 +48,25 @@ ComponentImage::~ComponentImage()
 	parent->cmp_image = nullptr;
 }
 
-const float * ComponentImage::GetColor() const
+float * ComponentImage::GetColor()
 {
 	return color;
+}
+
+void ComponentImage::SetColor(float r, float g, float b, float a)
+{
+	color[Color::G] = r;
+	color[Color::G] = g;
+	color[Color::B] = b;
+	color[Color::A] = a;
+}
+
+void ComponentImage::ResetColor()
+{
+	color[Color::R] = 1.0f;
+	color[Color::G] = 1.0f;
+	color[Color::B] = 1.0f;
+	color[Color::A] = 1.0f;
 }
 
 void ComponentImage::SetResImageUuid(uint res_image_uuid)
@@ -204,12 +220,7 @@ void ComponentImage::OnUniqueEditor()
 	}
 	ImGui::SameLine(); ImGui::PushItemWidth(10.0f);
 	if (ImGui::Button("RC"))
-	{
-		color[Color::R] = 1.0f;
-		color[Color::G] = 1.0f;
-		color[Color::B] = 1.0f;
-		color[Color::A] = 1.0f;
-	}
+		ResetColor();
 	if (ImGui::IsItemHovered())
 	{
 		ImGui::BeginTooltip();

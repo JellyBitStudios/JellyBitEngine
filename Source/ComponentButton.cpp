@@ -73,7 +73,7 @@ void ComponentButton::OnSystemEvent(System_Event event)
 
 void ComponentButton::Update()
 {
-	if (isActive)
+	if (IsTreeActive())
 	{
 		const uint* rect = parent->cmp_rectTransform->GetRect();
 
