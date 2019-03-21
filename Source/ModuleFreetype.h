@@ -6,16 +6,8 @@
 
 #include "MathGeoLib/include/Math/float2.h"
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
+#include "ResourceFont.h"
 
-struct Character
-{
-	uint textureID;
-	math::float2 size;
-	math::float2 bearing;
-	uint advance;
-};
 class ModuleFreetype : public Module
 {
 
@@ -32,8 +24,7 @@ public:
 public:
 
 private:
-	FT_Library library;   /* handle to library     */
-
+	FT_Library library;
 
 };
 

@@ -9,9 +9,9 @@
 
 #include "MathGeoLib\include\Math\float2.h"
 
-struct CharacterData
+struct Character
 {
-	uint uuidTexture;
+	uint textureID;
 	math::float2 size;
 	math::float2 bearing;
 	uint advance;
@@ -20,6 +20,7 @@ struct CharacterData
 struct FontData
 {
 	uint fontSize;
+	std::map<char, Character> charactersMap;
 };
 class ResourceFont : public Resource
 {
@@ -42,7 +43,7 @@ public:
 
 public:
 
-	std::map<char, CharacterData> charactersMap;
+	//std::map<char, CharacterData> charactersMap;
 
 	FontData fontData;
 	FT_Library library;
