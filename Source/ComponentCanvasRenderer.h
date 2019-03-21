@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "MathGeoLib/include/Math/float4.h"
+#include "MathGeoLib/include/Math/float2.h"
 
 class ComponentCanvasRenderer : public Component
 {
@@ -38,6 +39,7 @@ public:
 		}
 		math::float4 GetColor();
 		uint GetTexture();
+		math::float2 GetMaskValues();
 
 		bool isRendered() {
 			return isRendered_flag;

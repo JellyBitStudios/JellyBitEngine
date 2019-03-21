@@ -100,11 +100,22 @@ math::float4 ComponentCanvasRenderer::ToUIRend::GetColor()
 {
 	isRendered_flag = true;
 	const float* colors = ((ComponentImage*)cmp)->GetColor();
-	return { colors[COLOR_R], colors[COLOR_G], colors[COLOR_B], colors[COLOR_A] };
+	return { colors[ComponentImage::Color::R], colors[ComponentImage::Color::G], colors[ComponentImage::Color::B], colors[ComponentImage::Color::A] };
 }
 
 uint ComponentCanvasRenderer::ToUIRend::GetTexture()
 {
 	isRendered_flag = true;
 	return ((ComponentImage*)cmp)->GetResImage();
+}
+
+math::float2 ComponentCanvasRenderer::ToUIRend::GetMaskValues()
+{
+	if (((ComponentImage*)cmp)->useMask())
+	{
+		float* mask = ((ComponentImage*)cmp)->GetMask();
+		return { mask[0], mask[1] };
+	}
+	else
+		return { -1.0f, -1.0f };
 }

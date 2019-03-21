@@ -59,7 +59,7 @@ void ModuleUI::DrawCanvas()
 					switch (rend->GetType())
 					{
 					case ComponentCanvasRenderer::RenderTypes::IMAGE:
-						DrawUIImage(render->cmp_rectTransform, rend->GetColor(), rend->GetTexture());
+						DrawUIImage(render->cmp_rectTransform, rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 						break;
 					}
 
@@ -99,7 +99,7 @@ void ModuleUI::DrawWorldCanvas()
 					switch (rend->GetType())
 					{
 					case ComponentCanvasRenderer::RenderTypes::IMAGE:
-						DrawUIImage(render->cmp_rectTransform, rend->GetColor(), rend->GetTexture());
+						DrawUIImage(render->cmp_rectTransform, rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 						break;
 					}
 
@@ -169,8 +169,19 @@ void ModuleUI::OnSystemEvent(System_Event event)
 {
 	switch (event.type)
 	{
-		case System_Event_Type::LoadFinished:
+		case System_Event_Type::Play:
 		{
+			/* Set mask on play, but now is on inspector.
+			for (GameObject* go_canvas : canvas)
+			{
+				std::vector<GameObject*> go_images;
+				go_canvas->GetChildrenAndThisVectorFromLeaf(go_images);
+
+				for (GameObject* cImage : go_images)
+					if (cImage->cmp_image)
+						cImage->cmp_image->SetMask();
+			}
+			*/
 			break;
 		}
 		case System_Event_Type::LoadScene:
@@ -208,10 +219,6 @@ void ModuleUI::OnSystemEvent(System_Event event)
 			}
 			break;
 		}
-		case System_Event_Type::GameObjectDestroyed:
-		{
-			break;
-		}
 	}
 }
 
@@ -245,10 +252,13 @@ void ModuleUI::initRenderData()
 	glBindVertexArray(0);
 }
 
-void ModuleUI::DrawUIImage(ComponentRectTransform * rect, math::float4& color, uint id_texture, float rotation)
+void ModuleUI::DrawUIImage(ComponentRectTransform * rect, math::float4& color, uint id_texture, math::float2& mask, float rotation)
 {
 	use(ui_shader);
 	SetRectToShader(rect);
+	
+	setBool(ui_shader, "useMask", (mask.x < 0) ? false : true);
+	setFloat(ui_shader, "coordsMask", mask.x, mask.y);
 
 	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
 

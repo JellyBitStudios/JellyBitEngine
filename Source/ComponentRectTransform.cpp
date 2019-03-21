@@ -8,6 +8,7 @@
 #include "ComponentCanvas.h"
 #include "ComponentTransform.h"
 #include "ComponentCamera.h"
+#include "ComponentImage.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -308,6 +309,10 @@ void ComponentRectTransform::CalculateRectFromWorld()
 	rectTransform[Rect::XDIST] = abs(math::Distance(corners[Rect::RTOPRIGHT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
 	rectTransform[Rect::YDIST] = abs(math::Distance(corners[Rect::RBOTTOMLEFT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
 
+	//Mask calcs
+	if (parent->cmp_image)
+		parent->cmp_image->RectChanged();
+
 	RecalculateAndChilds();
 }
 
@@ -339,6 +344,10 @@ void ComponentRectTransform::CalculateAnchors(bool needed_newPercentages)
 		rectParent = App->ui->GetRectUI();
 	else
 		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+
+	//Mask calcs
+	if (parent->cmp_image)
+		parent->cmp_image->RectChanged();
 
 	switch (pivot)
 	{

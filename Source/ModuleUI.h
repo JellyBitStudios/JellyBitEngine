@@ -4,6 +4,7 @@
 #include "Module.h"
 
 #include "MathGeoLib/include/Math/float4.h"
+#include "MathGeoLib/include/Math/float2.h"
 #include <list>
 
 class GameObject;
@@ -67,7 +68,7 @@ private:
 	void OnSystemEvent(System_Event event);
 
 	void initRenderData();
-	void DrawUIImage(ComponentRectTransform* rect, math::float4& color, uint texture = 0, float rotation = 0.0f);
+	void DrawUIImage(ComponentRectTransform* rect, math::float4& color, uint texture, math::float2& mask, float rotation = 0.0f);
 
 	void SetRectToShader(ComponentRectTransform* rect);
 

@@ -1,19 +1,19 @@
 #ifndef __COMPONENT_IMAGE_H__
 #define __COMPONENT_IMAGE_H__
 
-#define MAX_COLOR 255
-#define MAX_ALPHA 1
-
-#define COLOR_R 0
-#define COLOR_G 1
-#define COLOR_B 2
-#define COLOR_A 3
-
 #include "Component.h"
 
 class ComponentImage : public Component
 {
 public:
+	enum Color
+	{
+		R,
+		G,
+		B,
+		A
+	};
+
 	ComponentImage(GameObject* parent, ComponentTypes componentType = ComponentTypes::ImageComponent, bool includeComponents = true);
 	ComponentImage(const ComponentImage& componentImage, GameObject* parent, bool includeComponents = true);
 	~ComponentImage();
@@ -22,6 +22,12 @@ public:
 	void SetResImageUuid(uint res_image_uuid);
 	uint GetResImageUuid() const;
 	uint GetResImage()const;
+
+	void SetMask();
+	void RectChanged();
+
+	bool useMask() const;
+	float* GetMask();
 
 private:
 	uint GetInternalSerializationBytes();
@@ -32,6 +38,9 @@ private:
 private:
 	uint res_image = 0;
 	float color[4] = { 1.0f,1.0f,1.0f,1.0f };
+	bool mask = false;
+	float mask_values[2] = { 1.0f, 0.0f };
+	float rect_initValues[2] = { 0.0f,0.0f };
 };
 
 #endif
