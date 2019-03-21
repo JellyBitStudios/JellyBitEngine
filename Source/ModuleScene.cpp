@@ -95,7 +95,7 @@ update_status ModuleScene::Update()
 	if (selectedObject == CurrentSelection::SelectedType::gameObject)
 	{
 		GameObject* currentGameObject = (GameObject*)selectedObject.Get();
-		if(!currentGameObject->cmp_canvas)
+		if(!currentGameObject->cmp_canvas && currentGameObject->transform)
 			OnGizmos(currentGameObject);
 	}
 

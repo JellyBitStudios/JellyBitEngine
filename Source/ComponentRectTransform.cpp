@@ -78,6 +78,12 @@ ComponentRectTransform::~ComponentRectTransform()
 
 void ComponentRectTransform::Update()
 {
+	if (rFrom == RectFrom::WORLD)
+	{
+		CalculateRectFromWorld();
+		needed_recalculate = false;
+	}
+
 	if (needed_recalculate)
 	{
 		switch (rFrom)
