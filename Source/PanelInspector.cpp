@@ -208,7 +208,7 @@ void PanelInspector::ShowGameObjectInspector() const
 			ImGui::CloseCurrentPopup();
 		}
 
-		if (!gameObject->cmp_canvas)
+		if (gameObject->transform)
 		{
 			if (gameObject->cmp_mesh == nullptr)
 				if (ImGui::Selectable("Mesh")) {

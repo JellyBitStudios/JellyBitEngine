@@ -143,7 +143,11 @@ void ComponentRectTransform::InitRect()
 		{
 			if (!parent->cmp_canvas)
 			{
-				uint* rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+				uint* rectParent = nullptr;
+				if (parent->cmp_canvas)
+					rectParent = App->ui->GetRectUI();
+				else
+					rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
 
 				rectTransform[Rect::X] = rectParent[Rect::X];
 				rectTransform[Rect::Y] = rectParent[Rect::Y];
@@ -262,6 +266,16 @@ void ComponentRectTransform::CanvasChanged()
 		}
 
 		noUpdatefromCanvas = false;
+	}
+}
+
+void ComponentRectTransform::WorkSpaceChanged(uint diff, bool to)
+{
+	if (rFrom == RectFrom::RECT)
+	{
+		if (parent->cmp_canvas)
+			(to) ? (rectTransform[Rect::X] += diff) : (rectTransform[Rect::X] -= diff);
+		RecalculateAndChilds();
 	}
 }
 

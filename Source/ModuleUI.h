@@ -81,6 +81,7 @@ public:
 	std::list<GameObject*> canvas_world;
 
 private:
+	uint uiWorkSpace[4];
 	uint ui_size_draw[4];
 
 	//math::float4x4 orthonormalMatrix = math::float4x4::identity;

@@ -129,6 +129,12 @@ bool ModuleUI::Start()
 	ui_size_draw[Screen::WIDTH] = App->window->GetWindowWidth();
 	ui_size_draw[Screen::HEIGHT] = App->window->GetWindowHeight();
 
+	uiWorkSpace[Screen::WIDTH] = 1280;
+	uiWorkSpace[Screen::HEIGHT] = 720;
+	uiWorkSpace[Screen::X] = (((int)ui_size_draw[Screen::WIDTH] - (int)uiWorkSpace[Screen::WIDTH]) < 0) ? 0 : (ui_size_draw[Screen::WIDTH] - uiWorkSpace[Screen::WIDTH]);
+	uiWorkSpace[Screen::Y] = (((int)ui_size_draw[Screen::HEIGHT] - (int)uiWorkSpace[Screen::HEIGHT]) < 0) ? 0 : (ui_size_draw[Screen::HEIGHT] - uiWorkSpace[Screen::HEIGHT]);
+
+
 #ifdef GAMEMODE
 	uiMode = true;
 #endif // GAMEMODE
@@ -394,15 +400,33 @@ void ModuleUI::OnWindowResize(uint width, uint height)
 	ui_size_draw[Screen::WIDTH] = width;
 	ui_size_draw[Screen::HEIGHT] = height;
 
+
 #ifdef GAMEMODE
 	for (GameObject* goScreenCanvas : canvas_screen)
 		goScreenCanvas->cmp_canvas->ScreenChanged();
+
+#else
+	int diff_x = uiWorkSpace[Screen::X];
+	uiWorkSpace[Screen::X] = (((int)ui_size_draw[Screen::WIDTH] - (int)uiWorkSpace[Screen::WIDTH]) < 0) ? 0 : (ui_size_draw[Screen::WIDTH] - uiWorkSpace[Screen::WIDTH]);
+	uiWorkSpace[Screen::Y] = 0;
+
+	diff_x = (int)uiWorkSpace[Screen::X] - (int)diff_x;
+
+	if (diff_x != 0)
+		for (GameObject* goScreenCanvas : canvas_screen)
+			if (goScreenCanvas->cmp_rectTransform)
+				goScreenCanvas->cmp_rectTransform->WorkSpaceChanged(abs(diff_x), (diff_x > 0) ? true : false);
 #endif // GAMEMODE
 }
 
  uint* ModuleUI::GetRectUI()
 {
-	return ui_size_draw;
+#ifdef GAMEMODE
+	 return ui_size_draw;
+#else
+	return uiWorkSpace;
+#endif // GAMEMODE
+
 }
 
 bool ModuleUI::MouseInScreen()

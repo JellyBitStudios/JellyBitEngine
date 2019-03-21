@@ -92,6 +92,7 @@ public:
 	void TransformUpdated();
 	void ParentChanged(bool canvas_changed = false);
 	void CanvasChanged();
+	void WorkSpaceChanged(uint diff, bool to);
 
 private:
 	//From World
