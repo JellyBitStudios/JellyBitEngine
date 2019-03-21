@@ -82,6 +82,7 @@ public:
 
 	RectFrom GetFrom() const;
 
+	bool IsInRect(uint* rect);
 private:
 
 	RectFrom rFrom = RectFrom::RECT;

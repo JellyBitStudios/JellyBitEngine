@@ -46,41 +46,59 @@ void ComponentLabel::Draw(uint ui_shader, uint VAO)
 	uint* rectParent = parent->cmp_rectTransform->GetRect();
 	rect->SetRect(rectParent[0], rectParent[1], 0, 0);
 	float sizeNorm = size / (float)sizeLoaded;
+	uint contRows = 0;
 	if (!charactersBitmap.empty())
 		for (std::string::const_iterator c = finalText.begin(); c != finalText.end(); ++c)
 		{
 
-			if ((int)(*c) >= 0 && (int)(*c) < 128)
+			if ((int)(*c) >= 32 && (int)(*c) < 128)//ASCII TABLE
 			{
 				Character character;
 				character = charactersBitmap.find(*c)->second;
 
 				uint x = rect->GetRect()[0] + character.bearing.x * sizeNorm;
-				uint y = rect->GetRect()[1] + ((maxLabelSize - character.size.y) + ((character.size.y) - character.bearing.y)) * sizeNorm;
+				//								Normalize pos with all heights	 //	Check Y-ofset for letters that write below origin "p" //	 Control lines enters 
+				uint y = rect->GetRect()[1] + ((maxLabelSize - character.size.y) + ((character.size.y) - character.bearing.y)) * sizeNorm + contRows * maxLabelSize * sizeNorm;
 
+				if (x + character.size.x * sizeNorm > rectParent[0] + rectParent[2])
+				{
+					y += maxLabelSize * sizeNorm;
+					x = rectParent[0] + character.bearing.x * sizeNorm;
+					contRows++;
+				}
 				rect->SetRect(x, y, character.size.x * sizeNorm, character.size.y * sizeNorm);
 
-				//Shader
-				glUseProgram(ui_shader);
-				SetRectToShader(ui_shader);
-				glUniform1i(glGetUniformLocation(ui_shader, "use_color"), 1);
-				glUniform1i(glGetUniformLocation(ui_shader, "isLabel"), 1);
+				if (rect->IsInRect(rectParent))
+				{
+					//Shader
+					glUseProgram(ui_shader);
+					SetRectToShader(ui_shader);
+					glUniform1i(glGetUniformLocation(ui_shader, "use_color"), 1);
+					glUniform1i(glGetUniformLocation(ui_shader, "isLabel"), 1);
 
-				glUniform4f(glGetUniformLocation(ui_shader, "spriteColor"), color.x, color.y, color.z, color.w);
+					glUniform4f(glGetUniformLocation(ui_shader, "spriteColor"), color.x, color.y, color.z, color.w);
 
-				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, character.textureID);
-				glUniform1ui(glGetUniformLocation(ui_shader, "image"), 0);
+					glActiveTexture(GL_TEXTURE0);
+					glBindTexture(GL_TEXTURE_2D, character.textureID);
+					glUniform1ui(glGetUniformLocation(ui_shader, "image"), 0);
 
-				glBindVertexArray(VAO);
-				glDrawArrays(GL_TRIANGLES, 0, 6);
+					glBindVertexArray(VAO);
+					glDrawArrays(GL_TRIANGLES, 0, 6);
 
-				glBindTexture(GL_TEXTURE_2D, 0);
-				glBindVertexArray(0);
+					glBindTexture(GL_TEXTURE_2D, 0);
+					glBindVertexArray(0);
 
-				glUseProgram(0);
+					glUseProgram(0);
 
-				rect->SetRectPos(rect->GetRect()[0] + character.advance * sizeNorm, rectParent[1]);
+					rect->SetRectPos(rect->GetRect()[0] + character.advance * sizeNorm, rectParent[1]);
+				}
+				else
+					break;
+			}
+			else if ((int)(*c) == 10)//"\n"
+			{
+				contRows++;
+				rect->SetRectPos(rectParent[0], rectParent[1]);		
 			}
 		}
 }
@@ -176,7 +194,7 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 	{
 		Character character;
 		memcpy(&character, cursor, bytes);
-		charactersBitmap.insert(std::pair<char, Character>(i, character));
+		charactersBitmap.insert(std::pair<char, Character>(i + 32, character));
 		cursor += bytes;
 	}
 

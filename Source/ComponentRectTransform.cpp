@@ -209,6 +209,13 @@ ComponentRectTransform::RectFrom ComponentRectTransform::GetFrom() const
 	return rFrom;
 }
 
+bool ComponentRectTransform::IsInRect(uint* rect)
+{
+	return rectTransform[0] >= rect[0] && rectTransform[1] >= rect[1] && 
+			rectTransform[0] + rectTransform[2] <= rect[0] + rect[2] && 
+			rectTransform[1] + rectTransform[3] <= rect[1] + rect[3];
+}
+
 void ComponentRectTransform::ParentChanged(bool size_changed)
 {
 	if (size_changed)
@@ -309,6 +316,7 @@ void ComponentRectTransform::CalculateCornersFromRect()
 
 void ComponentRectTransform::RecaculateAnchors()
 {
+	
 	if (rectParent != nullptr)
 	{
 		if (anchor_flags[Anchor::LEFT] == RectPrivot::TOPLEFT)
@@ -353,6 +361,7 @@ void ComponentRectTransform::RecaculateAnchors()
 		else
 			anchor[Anchor::BOTTOM] = ui_rect[ModuleUI::Screen::HEIGHT] - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
 	}
+	
 }
 
 void ComponentRectTransform::RecaculateAnchors(int type)
@@ -397,6 +406,7 @@ void ComponentRectTransform::RecaculateAnchors(int type)
 
 void ComponentRectTransform::RecaculatePercentage()
 {
+	
 	if (rectParent != nullptr)
 	{
 		anchor_percenatges[RectPercentage::X0] = (float)(rectTransform[Rect::X] - rectParent[Rect::X]) / (float)rectParent[Rect::XDIST];
@@ -411,6 +421,7 @@ void ComponentRectTransform::RecaculatePercentage()
 		anchor_percenatges[RectPercentage::Y0] = (float)(rectTransform[Rect::Y] - ui_rect[ModuleUI::Screen::Y]) / (float)ui_rect[ModuleUI::Screen::HEIGHT];
 		anchor_percenatges[RectPercentage::Y1] = (float)((ui_rect[ModuleUI::Screen::Y] + ui_rect[ModuleUI::Screen::HEIGHT]) - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST])) / (float)ui_rect[ModuleUI::Screen::HEIGHT];
 	}
+	
 }
 
 uint ComponentRectTransform::GetInternalSerializationBytes()

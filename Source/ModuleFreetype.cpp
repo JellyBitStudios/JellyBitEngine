@@ -24,7 +24,6 @@ bool ModuleFreetype::Init(JSON_Object* jObject)
 }
 
 bool ModuleFreetype::Start() {
-	//LoadFont("../Game/Assets/Textures/Font/ariali.ttf",16);
 	return true;
 }
 
@@ -48,7 +47,7 @@ uint ModuleFreetype::LoadFont(const char* path, int size, std::map<char, Charact
 		FT_Set_Pixel_Sizes(face, 0, size);
 
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
-		for (uint c = 0; c < 128; c++)
+		for (uint c = 32; c < 128; c++)
 		{
 			// Load character glyph 
 			if (FT_Load_Char(face, c, FT_LOAD_RENDER))
