@@ -297,6 +297,7 @@
     <ClInclude Include="ComponentRectTransform.h" />
     <ClInclude Include="ComponentRevoluteJoint.h" />
     <ClInclude Include="ComponentSphericalJoint.h" />
+    <ClInclude Include="ComponentTrail.h" />
     <ClInclude Include="Lights.h" />
     <ClInclude Include="ModuleFBOManager.h" />
     <ClInclude Include="Freetype\freetype\config\ftheader.h" />
@@ -724,6 +725,7 @@
     <ClCompile Include="ComponentRectTransform.cpp" />
     <ClCompile Include="ComponentRevoluteJoint.cpp" />
     <ClCompile Include="ComponentSphericalJoint.cpp" />
+    <ClCompile Include="ComponentTrail.cpp" />
     <ClCompile Include="Lights.cpp" />
     <ClCompile Include="ModuleFBOManager.cpp" />
     <ClCompile Include="ModuleAudio.cpp" />
