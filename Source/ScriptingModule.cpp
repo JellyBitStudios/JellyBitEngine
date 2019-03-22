@@ -2308,24 +2308,78 @@ int ButtonGetState(MonoObject* buttonComp)
 	}
 }
 
-bool ImageGetUseColor(MonoObject* imageComp)
+MonoArray* ImageGetColor(MonoObject* monoImage)
 {
-	ComponentImage* imageCompCpp = (ComponentImage*)App->scripting->ComponentFrom(imageComp);
-	if (imageCompCpp)
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
 	{
-		return false;// imageCompCpp->isColorUsed();
+		float* color = image->GetColor();
+
+		MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_single_class(), 4);
+		mono_array_set(ret, float, 0, color[0]);
+		mono_array_set(ret, float, 1, color[1]);
+		mono_array_set(ret, float, 2, color[2]);
+		mono_array_set(ret, float, 3, color[3]);
+
+		return ret;
 	}
 
-	return false;
+	return nullptr;
 }
 
-void ImageSetUseColor(MonoObject* imageComp, bool value)
+void ImageSetColor(MonoObject* monoImage, MonoArray* newColor)
 {
-	ComponentImage* imageCompCpp = (ComponentImage*)App->scripting->ComponentFrom(imageComp);
-	if (imageCompCpp)
+	if (!newColor)
+		return;
+
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
 	{
-		//imageCompCpp->UseColor(value);
+		image->SetColor(mono_array_get(newColor, float, 0), mono_array_get(newColor, float, 1), mono_array_get(newColor, float, 2), mono_array_get(newColor, float, 3));
 	}
+}
+
+void ImageResetColor(MonoObject* monoImage)
+{
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
+	{
+		image->ResetColor();
+	}
+}
+
+MonoString* ImageGetResourceName(MonoObject* monoImage)
+{
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
+	{
+		std::string imageName = image->GetResImageName();
+		return mono_string_new(App->scripting->domain, imageName.c_str());
+	}
+	return nullptr;
+}
+
+void ImageSetResourceName(MonoObject* monoImage, MonoString* imageName)
+{
+	if (!imageName)
+		return;
+	
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
+	{
+		char* imageNameCpp = mono_string_to_utf8(imageName);
+
+		image->SetResImageName(imageNameCpp);
+
+		mono_free(imageNameCpp);
+	}
+}
+
+void ImageSetMask(MonoObject* monoImage)
+{
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
+		image->SetMask();
 }
 
 void PlayerPrefsSave()
@@ -2884,13 +2938,21 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Animator::PlayAnimation", (const void*)&PlayAnimation);
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Play", (const void*)&ParticleEmitterPlay);
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Stop", (const void*)&ParticleEmitterStop);
+
+	//UI
 	mono_add_internal_call("JellyBitEngine.UI.UI::UIHovered", (const void*)&UIHovered);
 	mono_add_internal_call("JellyBitEngine.UI.RectTransform::GetRect", (const void*)&RectTransform_GetRect);
 	mono_add_internal_call("JellyBitEngine.UI.RectTransform::SetRect", (const void*)&RectTransform_SetRect);
 	mono_add_internal_call("JellyBitEngine.UI.Button::SetKey", (const void*)&ButtonSetKey);
 	mono_add_internal_call("JellyBitEngine.UI.Button::GetState", (const void*)&ButtonGetState);
-	mono_add_internal_call("JellyBitEngine.UI.Image::GetUseColor", (const void*)&ImageGetUseColor);
-	mono_add_internal_call("JellyBitEngine.UI.Image::SetUseColor", (const void*)&ImageSetUseColor);
+	mono_add_internal_call("JellyBitEngine.UI.Image::GetColor", (const void*)&ImageGetColor);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetColor", (const void*)&ImageSetColor);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetColor", (const void*)&ImageSetColor);
+	mono_add_internal_call("JellyBitEngine.UI.Image::ResetColor", (const void*)&ImageResetColor);
+	mono_add_internal_call("JellyBitEngine.UI.Image::GetResource", (const void*)&ImageGetResourceName);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource", (const void*)&ImageSetResourceName);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetMask", (const void*)&ImageSetMask);
+
 	mono_add_internal_call("JellyBitEngine.GameObject::GetActive", (const void*)&GetGameObjectActive);
 	mono_add_internal_call("JellyBitEngine.GameObject::SetActive", (const void*)&SetGameObjectActive);
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);

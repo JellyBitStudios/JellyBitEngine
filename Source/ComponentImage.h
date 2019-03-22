@@ -2,6 +2,7 @@
 #define __COMPONENT_IMAGE_H__
 
 #include "Component.h"
+#include <string>
 
 class ComponentImage : public Component
 {
@@ -25,12 +26,15 @@ public:
 	bool useMask() const;
 	float* GetMask();
 
-	//For scripting
+	uint GetResImageUuid() const;
+	void SetResImageUuid(uint res_image_uuid);
+
+	//Scripting
 	float* GetColor();
 	void SetColor(float r, float g, float b, float a);
 	void ResetColor();
-	uint GetResImageUuid() const;
-	void SetResImageUuid(uint res_image_uuid);
+	std::string GetResImageName() const;
+	void SetResImageName(const std::string& name);
 	void SetMask();
 
 private:

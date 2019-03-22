@@ -55,7 +55,7 @@ float * ComponentImage::GetColor()
 
 void ComponentImage::SetColor(float r, float g, float b, float a)
 {
-	color[Color::G] = r;
+	color[Color::R] = r;
 	color[Color::G] = g;
 	color[Color::B] = b;
 	color[Color::A] = a;
@@ -83,6 +83,34 @@ void ComponentImage::SetResImageUuid(uint res_image_uuid)
 uint ComponentImage::GetResImageUuid() const
 {
 	return res_image;
+}
+
+std::string ComponentImage::GetResImageName() const
+{
+	if (res_image != 0u)
+	{
+		ResourceTexture* texture = (ResourceTexture*)App->res->GetResource(res_image);
+		if (texture)
+			return texture->GetName();
+		else
+			return "";
+	}
+	
+	return "";
+}
+
+void ComponentImage::SetResImageName(const std::string& name)
+{
+	std::vector<Resource*> textures = App->res->GetResourcesByType(ResourceTypes::TextureResource);
+	for (int i = 0; i < textures.size(); ++i)
+	{
+		ResourceTexture* texture = (ResourceTexture*)textures[i];
+		if (name == texture->GetName())
+		{
+			res_image = texture->GetUuid();
+			break;
+		}
+	}
 }
 
 uint ComponentImage::GetResImage()const
