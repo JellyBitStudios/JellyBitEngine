@@ -93,6 +93,7 @@ public:
 	class MaterialImporter*				materialImporter;
 	class SceneImporter*				sceneImporter;
 	class ShaderImporter*				shaderImporter;
+	class FontImporter*					fontImporter;
 	mutable class AnimationImporter*	animImporter;
 	class ModuleParticle*				particle;
 

@@ -16,6 +16,7 @@
 #include "MaterialImporter.h"
 #include "SceneImporter.h"
 #include "ShaderImporter.h"
+#include "FontImporter.h"
 #include "AnimationImporter.h"
 #include "DebugDrawer.h"
 #include "Raycaster.h"
@@ -50,6 +51,7 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	animImporter = new AnimationImporter();
 	sceneImporter = new SceneImporter();
 	shaderImporter = new ShaderImporter();
+	fontImporter = new FontImporter();
 	navigation = new ModuleNavigation();
 	particle = new ModuleParticle();
 	scripting = new ScriptingModule();

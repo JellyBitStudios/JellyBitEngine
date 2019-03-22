@@ -297,6 +297,7 @@
     <ClInclude Include="ComponentRectTransform.h" />
     <ClInclude Include="ComponentRevoluteJoint.h" />
     <ClInclude Include="ComponentSphericalJoint.h" />
+    <ClInclude Include="FontImporter.h" />
     <ClInclude Include="Freetype\include\freetype\config\ftconfig.h" />
     <ClInclude Include="Freetype\include\freetype\config\ftheader.h" />
     <ClInclude Include="Freetype\include\freetype\config\ftmodule.h" />
@@ -806,6 +807,7 @@
     <ClCompile Include="ComponentRectTransform.cpp" />
     <ClCompile Include="ComponentRevoluteJoint.cpp" />
     <ClCompile Include="ComponentSphericalJoint.cpp" />
+    <ClCompile Include="FontImporter.cpp" />
     <ClCompile Include="Lights.cpp" />
     <ClCompile Include="ModuleFBOManager.cpp" />
     <ClCompile Include="ModuleAudio.cpp" />

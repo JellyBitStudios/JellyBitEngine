@@ -8,6 +8,7 @@
 #include "SceneImporter.h"
 #include "MaterialImporter.h"
 #include "ShaderImporter.h"
+#include "FontImporter.h"
 #include "AnimationImporter.h"
 
 #include "ResourceTypes.h"
@@ -779,10 +780,45 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 	break;
 	case ResourceTypes::FontResource:
 	{
-		//resource = ResourceFont::ImportFile(file);
-		//resources[resource->GetUuid()] = resource;
-		break;
+		std::string outputFile;
+		std::string name;
+		if (ResourceFont::ImportFile(file, name, outputFile))
+		{
+			std::vector<uint> resourcesUuids;
+			if (!GetResourcesUuidsByFile(file, resourcesUuids))
+			{
+				// Create the resources
+				CONSOLE_LOG(LogTypes::Normal, "RESOURCE MANAGER: The Font file '%s' has resources that need to be created", file);
+
+				// 1. Texture
+				std::string fileName;
+				App->fs->GetFileName(outputFile.data(), fileName);
+				uint uuid = strtoul(fileName.data(), NULL, 0);
+				assert(uuid > 0);
+				resourcesUuids.push_back(uuid);
+				resourcesUuids.shrink_to_fit();
+
+				ResourceData data;
+				FontData fontData;
+				data.file = file;
+				data.exportedFile = outputFile.data();
+				App->fs->GetFileName(file, data.name);
+				App->fontImporter->Load(outputFile.data(), data, fontData);
+
+				resource = CreateResource(ResourceTypes::FontResource, data, &fontData, uuid);
+			}
+			else
+				resource = GetResource(resourcesUuids.front());
+
+			// 2. Meta
+			// TODO: only create meta if any of its fields has been modificated
+			std::string outputMetaFile;
+			int64_t lastModTime = ResourceFont::CreateMeta(file, resourcesUuids.front(), name, outputMetaFile);
+			assert(lastModTime > 0);
+		}
 	}
+	break;
+
 	case ResourceTypes::AvatarResource:
 	{
 		std::string outputFile;
