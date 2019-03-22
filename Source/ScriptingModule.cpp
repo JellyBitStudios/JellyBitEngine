@@ -2164,7 +2164,7 @@ void NavAgentSetParams(MonoObject* compAgent, uint params)
 
 bool OverlapSphere(float radius, MonoArray* center, MonoArray** overlapHit, uint filterMask, SceneQueryFlags sceneQueryFlags)
 {
-	if (!center || !overlapHit || !*overlapHit)
+	if (!center)
 		return false;
 
 	math::float3 centercpp(mono_array_get(center, float, 0), mono_array_get(center, float, 1), mono_array_get(center, float, 2));
