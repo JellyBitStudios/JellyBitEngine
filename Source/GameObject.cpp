@@ -539,7 +539,7 @@ bool GameObject::EqualsToChildrenOrThis(const void* isEqual) const
 
 Component* GameObject::AddComponent(ComponentTypes componentType, bool createDependencies, bool includeInModules)
 {
-	Component* newComponent;
+	Component* newComponent = nullptr;
 	Component* newMaterial = 0;
 
 	switch (componentType)
@@ -652,6 +652,9 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		break;
 	}
 
+
+	if (!newComponent)
+		int a = 2;
 	components.push_back(newComponent);
 
 	if (newMaterial)
