@@ -21,6 +21,8 @@ public:
 	virtual void Update();
 
 	bool PlayAnimation(const char* anim_name);
+
+	/*Returns -1 if anything goes wrong*/
 	int GetCurrentAnimationFrame();
 	const char* GetCurrentAnimationName();
 
