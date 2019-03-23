@@ -13,7 +13,7 @@ class ComponentRectTransform;
 class ComponentLabel : public Component
 {
 public:
-	ComponentLabel(GameObject* parent, ComponentTypes componentType = ComponentTypes::LabelComponent);
+	ComponentLabel(GameObject* parent, ComponentTypes componentType = ComponentTypes::LabelComponent, bool includeComponents = true);
 	ComponentLabel(const ComponentLabel& componentLabel, GameObject* parent, bool includeComponents = true);
 	~ComponentLabel();
 
@@ -27,8 +27,6 @@ private:
 	void OnInternalSave(char*& cursor);
 	void OnInternalLoad(char*& cursor);
 	void OnUniqueEditor();
-	
-	void LinkToUIModule();
 
 	void SetRectToShader(uint shader);
 
@@ -39,7 +37,7 @@ private:
 
 	ComponentRectTransform* rect = nullptr;
 	std::map<char, Character> charactersBitmap;
-	
+
 	std::string finalText;
 	char text[300] = "Edit Text";
 	math::float4 color = math::float4::one;

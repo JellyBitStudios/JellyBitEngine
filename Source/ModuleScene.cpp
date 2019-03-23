@@ -95,7 +95,8 @@ update_status ModuleScene::Update()
 	if (selectedObject == CurrentSelection::SelectedType::gameObject)
 	{
 		GameObject* currentGameObject = (GameObject*)selectedObject.Get();
-		OnGizmos(currentGameObject);
+		if(!currentGameObject->cmp_canvas && currentGameObject->transform)
+			OnGizmos(currentGameObject);
 	}
 
 	if(App->IsEditor() && !App->gui->WantTextInput())
@@ -210,7 +211,7 @@ void ModuleScene::Draw() const
 #ifndef GAMEMODE
 void ModuleScene::OnGizmos(GameObject* gameObject)
 {
-	if (gameObject->GetLayer() != UILAYER)
+	if (gameObject->transform)
 	{
 		ImGuiViewport* vport = ImGui::GetMainViewport();
 		ImGuizmo::SetRect(vport->Pos.x, vport->Pos.y, vport->Size.x, vport->Size.y);

@@ -18,7 +18,6 @@
 #include "ComponentMaterial.h"
 #include "ComponentTransform.h"
 #include "ComponentBone.h"
-#include "ComponentAnimation.h"
 
 #include "Assimp\include\cimport.h"
 #include "Assimp\include\scene.h"

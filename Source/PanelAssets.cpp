@@ -90,15 +90,22 @@ bool PanelAssets::Draw()
 			{
 				GameObject* gameObject = *(GameObject**)payload->Data;
 
-				ResourceData data;
-				data.file = DIR_ASSETS_PREFAB + std::string("/") + gameObject->GetName() + EXTENSION_PREFAB;
-				data.exportedFile = "";
-				data.name = gameObject->GetName();
+				if (!gameObject->cmp_canvas && gameObject->GetLayer() == UILAYER)
+				{
+					CONSOLE_LOG(LogTypes::Error, "TYou can't make a prefab of child canvas. Only from Canvas.");
+				}
+				else
+				{
+					ResourceData data;
+					data.file = DIR_ASSETS_PREFAB + std::string("/") + gameObject->GetName() + EXTENSION_PREFAB;
+					data.exportedFile = "";
+					data.name = gameObject->GetName();
 
-				PrefabData prefabData;
-				prefabData.root = gameObject;
+					PrefabData prefabData;
+					prefabData.root = gameObject;
 
-				App->res->ExportFile(ResourceTypes::PrefabResource, data, &prefabData, std::string());			
+					App->res->ExportFile(ResourceTypes::PrefabResource, data, &prefabData, std::string());
+				}
 			}
 			ImGui::EndDragDropTarget();
 		}

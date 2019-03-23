@@ -284,6 +284,7 @@
     <ClInclude Include="ComponentAudioListener.h" />
     <ClInclude Include="ComponentAudioSource.h" />
     <ClInclude Include="ComponentButton.h" />
+    <ClInclude Include="ComponentCanvas.h" />
     <ClInclude Include="ComponentCanvasRenderer.h" />
     <ClInclude Include="ComponentD6Joint.h" />
     <ClInclude Include="ComponentDistanceJoint.h" />
@@ -794,6 +795,7 @@
     <ClCompile Include="ComponentAudioListener.cpp" />
     <ClCompile Include="ComponentAudioSource.cpp" />
     <ClCompile Include="ComponentButton.cpp" />
+    <ClCompile Include="ComponentCanvas.cpp" />
     <ClCompile Include="ComponentCanvasRenderer.cpp" />
     <ClCompile Include="ComponentD6Joint.cpp" />
     <ClCompile Include="ComponentDistanceJoint.cpp" />

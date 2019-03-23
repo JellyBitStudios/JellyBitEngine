@@ -26,6 +26,7 @@
 #include "ComponentEmitter.h"
 #include "ComponentBone.h"
 #include "ComponentScript.h"
+#include "ComponentCanvas.h"
 #include "ComponentRectTransform.h"
 #include "ComponentCanvasRenderer.h"
 #include "ComponentImage.h"
@@ -33,7 +34,6 @@
 #include "ComponentLabel.h"
 #include "ComponentLight.h"
 #include "ComponentProjector.h"
-#include "ComponentAnimation.h"
 #include "ComponentAudioListener.h"
 #include "ComponentAudioSource.h"
 
@@ -116,11 +116,6 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			cmp_bone->SetParent(this);
 			components.push_back(cmp_bone);
 			break;
-		case ComponentTypes::AnimationComponent:
-			cmp_animation = new ComponentAnimation(*gameObject.cmp_animation, this);
-			cmp_animation->SetParent(this);
-			components.push_back(cmp_animation);
-			break;
 		case ComponentTypes::AnimatorComponent:
 			cmp_animator = new ComponentAnimator(*gameObject.cmp_animator, this, includeComponents);
 			cmp_animator->SetParent(this);
@@ -165,6 +160,11 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			cmp_collider = new ComponentPlaneCollider(*(ComponentPlaneCollider*)gameObject.cmp_collider, this, includeComponents);
 			cmp_collider->SetParent(this);
 			components.push_back(cmp_collider);
+			break;
+		case ComponentTypes::CanvasComponent:
+			cmp_canvas = new ComponentCanvas(*(ComponentCanvas*)gameObject.cmp_canvas, this, includeComponents);
+			cmp_canvas->SetParent(this);
+			components.push_back(cmp_canvas);
 			break;
 		case ComponentTypes::RectTransformComponent:
 			cmp_rectTransform = new ComponentRectTransform(*(ComponentRectTransform*)gameObject.cmp_rectTransform, this, includeComponents);
@@ -573,33 +573,33 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		assert(cmp_emitter == NULL);
 		newComponent = cmp_emitter = new ComponentEmitter(this);
 		break;
+	case ComponentTypes::CanvasComponent:
+		assert(cmp_canvas == nullptr);
+		newComponent = cmp_canvas = new ComponentCanvas(this, ComponentTypes::CanvasComponent, includeInModules);
+		break;
 	case ComponentTypes::RectTransformComponent:
 		assert(cmp_rectTransform == nullptr);
-		newComponent = cmp_rectTransform = new ComponentRectTransform(this);
+		newComponent = cmp_rectTransform = new ComponentRectTransform(this, ComponentTypes::RectTransformComponent, includeInModules);
 		break;
 	case ComponentTypes::CanvasRendererComponent:
 		assert(cmp_canvasRenderer == nullptr);
-		newComponent = cmp_canvasRenderer = new ComponentCanvasRenderer(this);
+		newComponent = cmp_canvasRenderer = new ComponentCanvasRenderer(this, ComponentTypes::CanvasRendererComponent, includeInModules);
 		break;
 	case ComponentTypes::ImageComponent:
 		assert(cmp_image == nullptr);
-		newComponent = cmp_image = new ComponentImage(this);
+		newComponent = cmp_image = new ComponentImage(this, ComponentTypes::ImageComponent, includeInModules);
 		break;
 	case ComponentTypes::ButtonComponent:
 		assert(cmp_button == nullptr);
-		newComponent = cmp_button = new ComponentButton(this);
+		newComponent = cmp_button = new ComponentButton(this, ComponentTypes::ButtonComponent, includeInModules);
 		break;
 	case ComponentTypes::LabelComponent:
 		assert(cmp_label == nullptr);
-		newComponent = cmp_label = new ComponentLabel(this);
+		newComponent = cmp_label = new ComponentLabel(this, ComponentTypes::LabelComponent, includeInModules);
 		break;
 	case ComponentTypes::BoneComponent:
 		assert(cmp_bone == NULL);
 		newComponent = cmp_bone = new ComponentBone(this);
-		break;
-	case ComponentTypes::AnimationComponent:
-		assert(cmp_animation == NULL);
-		newComponent = cmp_animation = new ComponentAnimation(this);
 		break;
 	case ComponentTypes::AnimatorComponent:
 		assert(cmp_animator == NULL);

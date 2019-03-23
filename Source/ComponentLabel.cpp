@@ -11,25 +11,25 @@
 #include "MathGeoLib/include/Geometry/Frustum.h"
 #include "imgui/imgui.h"
 
-ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::LabelComponent)
+ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::LabelComponent)
 {
-	App->ui->componentsUI.push_back(this);
+	if (includeComponents)
+	{
+		if (parent->cmp_rectTransform == nullptr)
+			parent->AddComponent(ComponentTypes::RectTransformComponent);
 
-	if (parent->cmp_canvasRenderer == nullptr)
-		parent->AddComponent(ComponentTypes::CanvasRendererComponent);
-		
-	maxLabelSize = App->ft->LoadFont("../Game/Assets/Textures/Font/arial.ttf", size, charactersBitmap);
-	rect = new ComponentRectTransform(parent, RectTransformComponent,ComponentRectTransform::RectFrom::RECT);
+		if (parent->cmp_canvasRenderer == nullptr)
+			parent->AddComponent(ComponentTypes::CanvasRendererComponent);
 
-
-
+		maxLabelSize = App->ft->LoadFont("../Game/Assets/Textures/Font/arial.ttf", size, charactersBitmap);
+		rect = new ComponentRectTransform(parent, RectTransformComponent, ComponentRectTransform::RectFrom::RECT);
+	}
 }
 
 ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::LabelComponent)
 {
 	if (includeComponents)
 	{
-		App->ui->componentsUI.push_back(this);
 		charactersBitmap = componentLabel.charactersBitmap;
 		rect = new ComponentRectTransform(*componentLabel.rect, parent, includeComponents);
 	}
@@ -37,8 +37,7 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 
 ComponentLabel::~ComponentLabel()
 {
-	App->ui->componentsUI.remove(this);
-	RELEASE(rect);
+	parent->cmp_label = nullptr;
 }
 
 void ComponentLabel::Draw(uint ui_shader, uint VAO)
@@ -57,7 +56,7 @@ void ComponentLabel::Draw(uint ui_shader, uint VAO)
 				character = charactersBitmap.find(*c)->second;
 
 				uint x = rect->GetRect()[0] + character.bearing.x * sizeNorm;
-				//								Normalize pos with all heights	 //	Check Y-ofset for letters that write below origin "p" //	 Control lines enters 
+				//								Normalize pos with all heights	 //	Check Y-ofset for letters that write below origin "p" //	 Control lines enters
 				uint y = rect->GetRect()[1] + ((maxLabelSize - character.size.y) + ((character.size.y) - character.bearing.y)) * sizeNorm + contRows * maxLabelSize * sizeNorm;
 
 				if (x + character.size.x * sizeNorm > rectParent[0] + rectParent[2])
@@ -98,7 +97,7 @@ void ComponentLabel::Draw(uint ui_shader, uint VAO)
 			else if ((int)(*c) == 10)//"\n"
 			{
 				contRows++;
-				rect->SetRectPos(rectParent[0], rectParent[1]);		
+				rect->SetRectPos(rectParent[0], rectParent[1]);
 			}
 		}
 }
@@ -228,12 +227,6 @@ void ComponentLabel::OnUniqueEditor()
 const char * ComponentLabel::GetFinalText() const
 {
 	return finalText.data();
-}
-
-void ComponentLabel::LinkToUIModule()
-{
-	App->ui->componentsUI.push_back(this);
-	rect = new ComponentRectTransform(parent, RectTransformComponent, ComponentRectTransform::RectFrom::RECT);
 }
 
 void ComponentLabel::SetRectToShader(uint shader)

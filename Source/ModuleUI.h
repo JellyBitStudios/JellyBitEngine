@@ -4,6 +4,7 @@
 #include "Module.h"
 
 #include "MathGeoLib/include/Math/float4.h"
+#include "MathGeoLib/include/Math/float2.h"
 #include <list>
 
 class GameObject;
@@ -51,9 +52,9 @@ public:
 
 	uint* GetRectUI();
 
-	void LinkAllRectsTransform();
-
 	bool IsUIHovered();
+
+	static GameObject* FindCanvas(GameObject* from); //TODO J Check if I can make this static
 
 private:
 
@@ -67,21 +68,20 @@ private:
 	void OnSystemEvent(System_Event event);
 
 	void initRenderData();
-	void DrawUIColor(ComponentRectTransform* rect, math::float4& color, float rotation = 0.0f);
-	void DrawUITexture(ComponentRectTransform* rect, uint texture = 0, float rotation = 0.0f);
+	void DrawUIImage(ComponentRectTransform* rect, math::float4& color, uint texture, math::float2& mask, float rotation = 0.0f);
 
 	void SetRectToShader(ComponentRectTransform* rect);
 
 	void UpdateRenderStates();
 
 public:
-	std::list<Component*> componentsUI;
-	std::list<Component*> componentsWorldUI;
-	std::list<Component*> componentsScreenRendererUI;
-	std::list<Component*> componentsWorldRendererUI;
-	std::list<GameObject*> GOsWorldCanvas;
+	std::list<GameObject*> canvas;
+	std::list<GameObject*> canvas_screen;
+	std::list<GameObject*> canvas_worldScreen;
+	std::list<GameObject*> canvas_world;
 
 private:
+	uint uiWorkSpace[4];
 	uint ui_size_draw[4];
 
 	//math::float4x4 orthonormalMatrix = math::float4x4::identity;

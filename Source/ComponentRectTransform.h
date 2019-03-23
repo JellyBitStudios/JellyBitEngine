@@ -1,13 +1,6 @@
 #ifndef __COMPONENT_RECTTRANSFORM_H__
 #define __COMPONENT_RECTTRANSFORM_H__
 
-#define LEFT_RECT_STR "Left"
-#define TOP_RECT_STR "Top"
-#define RIGHT_RECT_STR "Right"
-#define BOTTOM_RECT_STR "Bottom"
-
-#define ANCHORS_POINTS_STR "Begin\0End"
-
 #include "Component.h"
 
 #include "Globals.h"
@@ -50,8 +43,15 @@ public:
 
 	enum RectPrivot
 	{
-		TOPLEFT,
-		BOTTOMRIGHT
+		P_TOPLEFT,
+		P_TOPRIGHT,
+		P_BOTTOMLEFT,
+		P_BOTTOMRIGHT,
+		P_CENTER,
+		P_TOP,
+		P_LEFT,
+		P_RIGHT,
+		P_BOTTOM
 	};
 
 	enum RectFrom
@@ -62,7 +62,7 @@ public:
 	};
 
 public:
-	ComponentRectTransform(GameObject* parent, ComponentTypes componentType = ComponentTypes::RectTransformComponent, RectFrom rF = RectFrom::RECT);
+	ComponentRectTransform(GameObject* parent, ComponentTypes componentType = ComponentTypes::RectTransformComponent, bool includeComponents = true);
 	ComponentRectTransform(const ComponentRectTransform& componentRectTransform, GameObject* parent, bool includeComponents = true);
 	~ComponentRectTransform();
 
@@ -70,62 +70,74 @@ public:
 
 	void OnEditor();
 
+private:
+	virtual uint GetInternalSerializationBytes();
+	virtual void OnInternalSave(char*& cursor);
+	virtual void OnInternalLoad(char*& cursor);
+	void OnUniqueEditor(); //Todo J Add the 7 pivots left
+
+public:
 	void SetRect(uint x, uint y, uint x_dist, uint y_dist);
 	void SetRectPos(uint x, uint y);
 	void SetRectDim(uint x_dist, uint y_dist);
 
 	uint* GetRect();
 	math::float3* GetCorners();
-	void CheckParentRect();
+	void InitRect(); // Done, TODO J call methods of calculate anchors and percentage
 
-	void ChangeChildsRect(bool its_me = false, bool size_changed = false);
+	void RecalculateAndChilds();
 
 	RectFrom GetFrom() const;
 
 	bool IsInRect(uint* rect);
-private:
+	
+	void ScreenChanged();
 
+	void TransformUpdated();
+	void ParentChanged(bool canvas_changed = false);
+	void CanvasChanged();
+	void WorkSpaceChanged(uint diff, bool to);
+
+private:
+	//From World
+	void CalculateRectFromWorld();
+	//From World Rect
+	void CalculateCornersFromRect();
+
+	void CalculateAnchors(bool needed_newPercentages = false); //TODO J Add the 7 pivots left
+	void RecaculateAnchors(); //TODO J Add the 7 pivots left
+	void RecaculatePercentage();
+	void RecalculateRectByPercentage();
+
+	float GetZ() const;
+
+private:
+	//Where get the info
 	RectFrom rFrom = RectFrom::RECT;
+
+	//Billboard for world
+	bool billboard = false;
+
+	//Recalculate at next frame
+	bool needed_recalculate = false;
+	bool rectTransform_modified = false;
+	bool noUpdatefromCanvas = false;
 
 	//From Rect
 	//x, y, x_dist, y_dist
 	uint rectTransform[4] = { 0, 0, 100, 100 };
-	uint* ui_rect = nullptr;
-	uint* rectParent = nullptr;
+	uint lastPositionChange[2] = { 0,0 };//save when canvas change
 
 	//FromWorld
-	ComponentTransform* transformParent = nullptr;
 	math::float3 corners[4] = { math::float3::zero, math::float3::zero, math::float3::zero, math::float3::zero };
-	math::float3* parentCorners = nullptr;
+		//Z fighting
 	float z = 0.0f;
 
-	//True, references top-left. False, refernces bottom-right. For every point of rect.
-	bool use_margin = false;
+	//Pivot and anchor values
+	bool usePivot = false;
 	uint anchor[4] = {0,0,0,0};
-	bool anchor_flags[4] = { false, false, false, false };
+	RectPrivot pivot = RectPrivot::P_TOPLEFT;
 	float anchor_percenatges[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	bool billboard = false;
-
-private:
-	void CalculateRectFromWorld(bool individualcheck);
-	void CalculateCornersFromRect();
-
-	void RecaculateAnchors();
-	void RecaculateAnchors(int type);
-	void RecaculatePercentage();
-
-	void ParentChanged(bool size_changed = false);
-	void UseMarginChanged(bool useMargin);
-
-
-	virtual uint GetInternalSerializationBytes();
-	virtual void OnInternalSave(char*& cursor);
-	virtual void OnInternalLoad(char*& cursor);
-	void OnUniqueEditor();
-
-	float GetZ() const;
-
-	void LinkToUIModule();
 };
 
 #endif
