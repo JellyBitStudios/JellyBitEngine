@@ -8,7 +8,7 @@
 #include <assert.h>
 #pragma comment(lib, "Freetype/libx86/freetype.lib")
 
-ResourceFont::ResourceFont(ResourceTypes type, uint uuid, ResourceData data, FontData fontData) : Resource(type, uuid, data), fontData(fontData) 
+ResourceFont::ResourceFont(ResourceTypes type, uint uuid, ResourceData data, ResourceFontData fontData) : Resource(type, uuid, data), fontData(fontData) 
 {
 }
 
@@ -82,14 +82,14 @@ bool ResourceFont::ImportFile(const char * file, std::string & name, std::string
 	return true;
 }
 
-bool ResourceFont::ExportFile(ResourceData & data, FontData & fontData, std::string & outputFile, bool overwrite)
+bool ResourceFont::ExportFile(ResourceData & data, ResourceFontData & fontData, std::string & outputFile, bool overwrite)
 {
 	SaveFile(data, fontData, outputFile, overwrite);
 	return true;
 }
 
 
-uint ResourceFont::SaveFile(ResourceData& data, FontData& fontData, std::string& outputFile, bool overwrite)
+uint ResourceFont::SaveFile(ResourceData& data, ResourceFontData& fontData, std::string& outputFile, bool overwrite)
 {
 
 	uint size =	sizeof(uint) + sizeof(uint) +
@@ -136,7 +136,7 @@ uint ResourceFont::SaveFile(ResourceData& data, FontData& fontData, std::string&
 	return ret;
 }
 
-bool ResourceFont::LoadFile(const char * file, FontData & fontData)
+bool ResourceFont::LoadFile(const char * file, ResourceFontData & fontData)
 {
 	assert(file != nullptr);
 

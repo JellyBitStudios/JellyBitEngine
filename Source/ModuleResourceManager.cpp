@@ -790,20 +790,20 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 				// Create the resources
 				CONSOLE_LOG(LogTypes::Normal, "RESOURCE MANAGER: The Font file '%s' has resources that need to be created", file);
 
-				// 1. Texture
+				// 1. Font
 				std::string fileName;
 				App->fs->GetFileName(outputFile.data(), fileName);
-				uint uuid = strtoul(fileName.data(), NULL, 0);
+				uint uuid = outputFile.empty() ? App->GenerateRandomNumber() : strtoul(outputFile.data(), NULL, 0);
 				assert(uuid > 0);
 				resourcesUuids.push_back(uuid);
 				resourcesUuids.shrink_to_fit();
 
 				ResourceData data;
-				FontData fontData;
+				ResourceFontData fontData;
 				data.file = file;
 				data.exportedFile = outputFile.data();
 				App->fs->GetFileName(file, data.name);
-				App->fontImporter->Load(outputFile.data(), data, fontData);
+				App->fontImporter->Load(file, data, fontData);
 
 				resource = CreateResource(ResourceTypes::FontResource, data, &fontData, uuid);
 			}
@@ -1210,10 +1210,27 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 	break;
 	case ResourceTypes::FontResource:
 	{
-		//resource = ResourceFont::ImportFile(file);
-		//resources[resource->GetUuid()] = resource;
+		ResourceData data;
+		ResourceFontData fontData;
+		data.exportedFile = file;
+
+		// Search for the meta associated to the file
+		char metaFile[DEFAULT_BUF_SIZE];
+		strcpy_s(metaFile, strlen(file) + 1, file); // file
+		strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
+
+		uint uuid = 0;
+		if (App->fs->Exists(metaFile))
+		{
+			int64_t lastModTime = 0;
+			ResourceFont::ReadMeta(metaFile, lastModTime, uuid, data.name);
+		}
+
+		ResourceFont::LoadFile(file, fontData);
+
+		resource = CreateResource(ResourceTypes::FontResource, data, &fontData, uuid);
+		break;
 	}
-	break;
 	case ResourceTypes::AnimationResource:
 	{
 		std::string fileName;
@@ -1389,7 +1406,7 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 			resource = new ResourceScene(uuid, data, *(SceneData*)specificData);
 			break;
 		case ResourceTypes::FontResource:
-			resource = new ResourceFont(ResourceTypes::FontResource, uuid, data, *(FontData*)specificData);
+			resource = new ResourceFont(ResourceTypes::FontResource, uuid, data, *(ResourceFontData*)specificData);
 			break;
 		case ResourceTypes::AudioBankResource:
 			resource = new ResourceAudioBank(uuid, data, *(ResourceAudioBankData*)specificData);

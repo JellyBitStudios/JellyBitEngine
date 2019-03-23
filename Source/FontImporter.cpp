@@ -19,35 +19,21 @@
 
 FontImporter::FontImporter()
 {
-
+	if (FT_Init_FreeType(&library))
+		CONSOLE_LOG(LogTypes::Error, "Error when it's initialization FreeType");
 }
 
-FontImporter::~FontImporter() {}
-
-bool FontImporter::Import(const char* file, std::string& outputFile, const ResourceTextureImportSettings& importSettings, uint forcedUuid) const
+FontImporter::~FontImporter() 
 {
-	assert(file != nullptr);
-
-	bool ret = false;
-
-	std::string fileName;
-	App->fs->GetFileName(file, fileName);
-	outputFile = fileName.data();
-
-	char* buffer;
-	uint size = App->fs->Load(file, &buffer);
-	if (size > 0)
-	{
-		CONSOLE_LOG(LogTypes::Normal, "MATERIAL IMPORTER: Successfully loaded Texture '%s' (original format)", outputFile.data());
-		ret = Import(buffer, size, outputFile, importSettings, forcedUuid);
-		RELEASE_ARRAY(buffer);
-	}
-	else
-		CONSOLE_LOG(LogTypes::Error, "MATERIAL IMPORTER: Could not load Texture '%s' (original format)", outputFile.data());
-
-	return ret;
+	FT_Done_FreeType(library);
 }
 
+/*bool FontImporter::Import(const char * file, std::string & outputFile, const ResourceFontData & importSettings) const
+{
+
+
+}*/
+/*
 bool FontImporter::Import(const void* buffer, uint size, std::string& outputFile, const ResourceTextureImportSettings& importSettings, uint forcedUuid) const
 {
 	assert(buffer != nullptr && size > 0);
@@ -121,8 +107,8 @@ bool FontImporter::Import(const void* buffer, uint size, std::string& outputFile
 
 	return ret;
 }
-
-bool FontImporter::Load(const char* exportedFile, ResourceData& outputData, FontData& outputTextureData) const
+*/
+bool FontImporter::Load(const char* exportedFile, ResourceData& outputData, ResourceFontData& outputFontData) const
 {
 	assert(exportedFile != nullptr);
 
@@ -132,65 +118,63 @@ bool FontImporter::Load(const char* exportedFile, ResourceData& outputData, Font
 	uint size = App->fs->Load(exportedFile, &buffer);
 	if (size > 0)
 	{
-		CONSOLE_LOG(LogTypes::Normal, "MATERIAL IMPORTER: Successfully loaded Texture '%s' (own format)", exportedFile);
-		ret = Load(buffer, size, outputData, outputTextureData);
+		CONSOLE_LOG(LogTypes::Normal, "FONT IMPORTER: Successfully loaded Font '%s' (original format)", exportedFile);
+		uint maxCharHeight = 0;
+
+		FT_Face face;      /* handle to face object */
+		if (!FT_New_Memory_Face(library, (FT_Byte*)buffer, size, 0, &face))
+		{
+			uint fontSize = 48;
+			FT_Set_Pixel_Sizes(face, 0, fontSize);
+
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
+			for (uint c = 32; c < 128; c++)
+			{
+				// Load character glyph 
+				if (FT_Load_Char(face, c, FT_LOAD_RENDER))
+				{
+					CONSOLE_LOG(LogTypes::Error, "Failed to load Glyph from Freetype");
+					continue;
+				}
+				// Generate texture
+				GLuint texture;
+				glGenTextures(1, &texture);
+				glBindTexture(GL_TEXTURE_2D, texture);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, face->glyph->bitmap.width, face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
+
+				// Set texture options
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+				// Now store character for later use
+				Character character = {
+					texture,
+					math::float2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+					math::float2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+					face->glyph->advance.x / 64
+				};
+				outputFontData.charactersMap.insert(std::pair<char, Character>(c, character));
+				if (face->glyph->bitmap.rows > maxCharHeight)
+					maxCharHeight = face->glyph->bitmap.rows;
+			}
+			outputFontData.maxCharHeight = maxCharHeight;
+			outputFontData.fontSize = fontSize;
+			glBindTexture(GL_TEXTURE_2D, 0);
+			FT_Done_Face(face);
+		}
+		else
+			CONSOLE_LOG(LogTypes::Error, "The font file couldn't be opened, read or this format is unsupported");
+
 		RELEASE_ARRAY(buffer);
 	}
 	else
-		CONSOLE_LOG(LogTypes::Error, "MATERIAL IMPORTER: Could not load Texture '%s' (own format)", exportedFile);
-
-	return ret;
-}
-
-bool FontImporter::Load(const void* buffer, uint size, ResourceData& outputData, FontData& outputTextureData) const
-{
-	assert(buffer != nullptr && size > 0);
-
-	bool ret = false;
-
-	// Generate the image name
-	uint imageName = 0;
-	ilGenImages(1, &imageName);
-
-	// Bind the image
-	ilBindImage(imageName);
-
-	// Load the image
-	if (ilLoadL(IL_DDS, buffer, size))
-	{
-		ILinfo imageInfo;
-		iluGetImageInfo(&imageInfo);
-
-		if (imageInfo.Origin == IL_ORIGIN_UPPER_LEFT)
-			iluFlipImage();
-
-		// Convert the image into a suitable format to work with
-		if (ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE))
-		{
-			uint size = imageInfo.Width * imageInfo.Height * ilGetInteger(IL_IMAGE_BPP);
-			outputTextureData.data = new uchar[size];
-			memcpy(outputTextureData.data, ilGetData(), size);
-
-			outputTextureData.width = imageInfo.Width;
-			outputTextureData.height = imageInfo.Height;
-			outputTextureData.bpp = ilGetInteger(IL_IMAGE_BPP);
-
-			CONSOLE_LOG(LogTypes::Normal, "MATERIAL IMPORTER: New texture loaded with: %i x %i", imageInfo.Width, imageInfo.Height);
-			ret = true;
-		}
-		else
-			CONSOLE_LOG(LogTypes::Error, "MATERIAL IMPORTER: Image conversion failed. ERROR: %s", iluErrorString(ilGetError()));
-
-		ilDeleteImages(1, &imageName);
-	}
-	else
-		CONSOLE_LOG(LogTypes::Error, "MATERIAL IMPORTER: DevIL could not load the image. ERROR: %s", iluErrorString(ilGetError()));
+		CONSOLE_LOG(LogTypes::Error, "MATERIAL FONT: Could not load Font '%s' (original format)", exportedFile);
 
 	return ret;
 }
 
 // ----------------------------------------------------------------------------------------------------
-
+/*
 void FontImporter::LoadInMemory(uint& id, const FontData& textureData)
 {
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -310,3 +294,4 @@ void FontImporter::LoadInMemory(uint& id, const FontData& textureData)
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
+*/

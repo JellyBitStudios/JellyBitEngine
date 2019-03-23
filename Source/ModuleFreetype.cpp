@@ -12,7 +12,7 @@ ModuleFreetype::ModuleFreetype(bool start_enabled) : Module(start_enabled)
 
 ModuleFreetype::~ModuleFreetype()
 {
-	FT_Done_FreeType(library);
+	//FT_Done_FreeType(library);
 }
 
 bool ModuleFreetype::Init(JSON_Object* jObject)

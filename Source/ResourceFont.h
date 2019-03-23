@@ -17,27 +17,28 @@ struct Character
 	uint advance;
 };
 
-struct FontData
+struct ResourceFontData
 {
 	uint fontSize;
+	uint maxCharHeight;
 	std::map<char, Character> charactersMap;
 };
 class ResourceFont : public Resource
 {
 public:
 
-	ResourceFont(ResourceTypes type, uint uuid, ResourceData data, FontData boneData);
+	ResourceFont(ResourceTypes type, uint uuid, ResourceData data, ResourceFontData boneData);
 	~ResourceFont();
 
 	bool LoadInMemory();
 	bool UnloadFromMemory();
 
 	static bool ImportFile(const char* file, std::string& name, std::string& outputFile);
-	static bool ExportFile(ResourceData& data, FontData& font_data, std::string& outputFile, bool overwrite = false);
-	static uint SaveFile(ResourceData & data, FontData & materialData, std::string & outputFile, bool overwrite);
+	static bool ExportFile(ResourceData& data, ResourceFontData& font_data, std::string& outputFile, bool overwrite = false);
+	static uint SaveFile(ResourceData & data, ResourceFontData & materialData, std::string & outputFile, bool overwrite);
 	static uint CreateMeta(const char* file, uint font_uuid, std::string& name, std::string& outputMetaFile);
 	static bool ReadMeta(const char* metaFile, int64_t& lastModTime, uint& font_uuid, std::string& name);
-	static bool LoadFile(const char* file, FontData& font_data_output);
+	static bool LoadFile(const char* file, ResourceFontData& font_data_output);
 
 	void OnPanelAssets();
 
@@ -45,7 +46,7 @@ public:
 
 	//std::map<char, CharacterData> charactersMap;
 
-	FontData fontData;
+	ResourceFontData fontData;
 	FT_Library library;
 	FT_Face face;
 };
