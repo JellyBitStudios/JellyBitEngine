@@ -15,7 +15,8 @@ public class Test : JellyScript
     //Called every frame
     public override void Update()
     {
-        
+        Debug.ClearConsole();
+        Debug.Log("My gameObject layer's name is " + gameObject.GetLayer());
     }
 }
 

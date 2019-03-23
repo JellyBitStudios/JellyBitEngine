@@ -13,6 +13,7 @@
 #include "ResourceAnimation.h"
 #include "AnimationImporter.h"
 #include "ResourceAvatar.h"
+
 #ifndef GAMEMODE
 #include "imgui\imgui.h"
 #endif
