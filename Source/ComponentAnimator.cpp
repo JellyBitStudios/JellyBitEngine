@@ -182,6 +182,18 @@ bool ComponentAnimator::PlayAnimation(const char* anim_name)
 		return false;
 }
 
+const char * ComponentAnimator::GetCurrentAnimationName()
+{
+	ResourceAnimator* anim_res = (ResourceAnimator*)App->res->GetResource(res);
+	return anim_res->GetCurrentAnimation()->name.data();
+}
+
+int ComponentAnimator::GetCurrentAnimationFrame()
+{
+	ResourceAnimator* anim_res = (ResourceAnimator*)App->res->GetResource(res);
+	return 1;
+}
+
 void ComponentAnimator::OnEditor()
 {
 	OnUniqueEditor();
