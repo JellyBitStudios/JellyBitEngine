@@ -2238,6 +2238,27 @@ MonoString* GameObjectGetLayerName(MonoObject* monoObject)
 	return nullptr;
 }
 
+MonoArray* GameObjectGetChilds(MonoObject* monoObject)
+{
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	if (gameObject)
+	{
+		MonoArray* ret = mono_array_new(App->scripting->domain, 
+										mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "GameObject"), 
+										gameObject->children.size());
+
+		for (int i = 0; i < gameObject->children.size(); ++i)
+		{
+			GameObject* child = gameObject->children[i];
+			mono_array_setref(ret, i, App->scripting->MonoObjectFrom(child));
+		}
+
+		return ret;
+	}
+
+	return nullptr;
+}
+
 bool PlayAnimation(MonoObject* animatorComp, MonoString* animUUID)
 {
 	if (!animUUID)
@@ -2938,6 +2959,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.GameObject::SetActive", (const void*)&SetGameObjectActive);
 	mono_add_internal_call("JellyBitEngine.GameObject::GetLayerID", (const void*)&GameObjectGetLayerID);
 	mono_add_internal_call("JellyBitEngine.GameObject::GetLayer", (const void*)&GameObjectGetLayerName);
+	mono_add_internal_call("JellyBitEngine.GameObject::GetChilds", (const void*)&GameObjectGetChilds);
 
 	mono_add_internal_call("JellyBitEngine.Time::getDeltaTime", (const void*)&GetDeltaTime);
 	mono_add_internal_call("JellyBitEngine.Time::getRealDeltaTime", (const void*)&GetRealDeltaTime);

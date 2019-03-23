@@ -17,6 +17,12 @@ public class Test : JellyScript
     {
         Debug.ClearConsole();
         Debug.Log("My gameObject layer's name is " + gameObject.GetLayer());
+
+        foreach (GameObject child in gameObject.childs)
+        {
+            RaycastHit hit;
+            Debug.Log("My child " + child.name + " is very pretty");
+        }
     }
 }
 
