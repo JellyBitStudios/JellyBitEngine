@@ -11,6 +11,7 @@
 #include "ComponentAudioSource.h"
 #include "ComponentAudioListener.h"
 #include "ComponentRigidDynamic.h"
+#include "ComponentMaterial.h"
 
 #include "GameObject.h"
  
@@ -591,6 +592,11 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 		case ComponentTypes::AudioListenerComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "AudioListener"));
+			break;
+		}
+		case ComponentTypes::MaterialComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Material"));
 			break;
 		}
 	}
@@ -1835,6 +1841,20 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 
 		return App->scripting->MonoComponentFrom(comp);
 	}
+
+	else if (className == "Material")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::MaterialComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
 	else
 	{
 		//Check if this monoObject is destroyed
@@ -2901,6 +2921,20 @@ void RigidbodyClearTorque(MonoObject* monoComp)
 	rigidbody->ClearTorque();
 }
 
+void MaterialSetResource(MonoObject* monoMaterial, MonoString* newMatName)
+{
+	if (!newMatName)
+		return;
+
+	ComponentMaterial* material = (ComponentMaterial*)App->scripting->ComponentFrom(monoMaterial);
+	if (material)
+	{
+		char* newMatNameCpp = mono_string_to_utf8(newMatName);
+		material->SetResourceByName(newMatNameCpp);
+		mono_free(newMatNameCpp);
+	}
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -3065,6 +3099,9 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddTorque", (const void*)&RigidbodyAddTorque);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearForce", (const void*)&RigidbodyClearForce);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearTorque", (const void*)&RigidbodyClearTorque);
+
+	//Material
+	mono_add_internal_call("JellyBitEngine.Material::SetResource", (const void*)&MaterialSetResource);
 
 	ClearMap();
 

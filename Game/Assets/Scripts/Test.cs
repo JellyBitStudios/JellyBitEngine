@@ -16,13 +16,23 @@ public class Test : JellyScript
     public override void Update()
     {
         Debug.ClearConsole();
-        Debug.Log("My gameObject layer's name is " + gameObject.GetLayer());
 
-        foreach (GameObject child in gameObject.childs)
+        if(Input.GetKeyDown(KeyCode.KEY_1))
         {
-            RaycastHit hit;
-            Debug.Log("My child " + child.name + " is very pretty");
+            Material mat = gameObject.GetComponent<Material>();
+            if (mat != null)
+            {
+                mat.SetResource("Blue");
+            }
         }
+        if (Input.GetKeyDown(KeyCode.KEY_2))
+        {
+            Material mat = gameObject.GetComponent<Material>();
+            if (mat != null)
+            {
+                mat.SetResource("Default material");
+            }
+        }   
     }
 }
 

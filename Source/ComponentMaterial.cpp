@@ -4,6 +4,8 @@
 #include "ModuleResourceManager.h"
 #include "ModuleInternalResHandler.h"
 #include "Resource.h"
+#include "ResourceMaterial.h"
+
 #include "ModuleScene.h"
 
 #ifndef GAMEMODE
@@ -104,6 +106,30 @@ void ComponentMaterial::SetResource(uint materialUuid)
 {
 	if (res > 0)
 		App->res->SetAsUnused(res);
+
+	if (materialUuid > 0)
+		App->res->SetAsUsed(materialUuid);
+
+	res = materialUuid;
+}
+
+void ComponentMaterial::SetResourceByName(std::string materialName)
+{
+	if (res > 0)
+		App->res->SetAsUnused(res);
+
+	uint materialUuid = 0;
+
+	std::vector<Resource*> materials = App->res->GetResourcesByType(ResourceTypes::MaterialResource);
+	for (int i = 0; i < materials.size(); ++i)
+	{
+		ResourceMaterial* material = (ResourceMaterial*)materials[i];
+		if (materialName == material->GetName())
+		{
+			materialUuid = material->GetUuid();
+			break;
+		}
+	}
 
 	if (materialUuid > 0)
 		App->res->SetAsUsed(materialUuid);
