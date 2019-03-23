@@ -2294,6 +2294,26 @@ bool PlayAnimation(MonoObject* animatorComp, MonoString* animUUID)
 	return ret;
 }
 
+int AnimatorGetCurrFrame(MonoObject* monoAnim)
+{
+	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(monoAnim);
+	if (animator)
+	{
+		return animator->GetCurrentAnimationFrame();
+	}
+	return -1;
+}
+
+MonoString* AnimatorGetCurrName(MonoObject* monoAnim)
+{
+	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(monoAnim);
+	if (animator)
+	{
+		return mono_string_new(App->scripting->domain, animator->GetCurrentAnimationName());
+	}
+	return nullptr;
+}
+
 void ParticleEmitterPlay(MonoObject* particleComp)
 {
 	ComponentEmitter* emitter = (ComponentEmitter*)App->scripting->ComponentFrom(particleComp);
@@ -3019,7 +3039,13 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::_SetDestination", (const void*)&SetDestination);
 	mono_add_internal_call("JellyBitEngine.Physics::_OverlapSphere", (const void*)&OverlapSphere);
 	mono_add_internal_call("JellyBitEngine.Component::SetActive", (const void*)&SetCompActive);
+
+	//Animator
 	mono_add_internal_call("JellyBitEngine.Animator::PlayAnimation", (const void*)&PlayAnimation);
+	mono_add_internal_call("JellyBitEngine.Animator::GetCurrentAnimation", (const void*)&AnimatorGetCurrName);
+	mono_add_internal_call("JellyBitEngine.Animator::GetCurrentFrame", (const void*)&AnimatorGetCurrFrame);
+	
+	//Particle Emitter
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Play", (const void*)&ParticleEmitterPlay);
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Stop", (const void*)&ParticleEmitterStop);
 
