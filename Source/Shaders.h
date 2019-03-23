@@ -384,7 +384,8 @@
 "	{\n" \
 "	  vec4 sampled = vec4(1.0, 1.0, 1.0, texture(image, TexCoords).r);\n" \
 "		FragColor = spriteColor * sampled; \n" \
-"	}\n"
+"	}\n"\
+"}\n"
 #pragma endregion
 
 #pragma region CartoonShader

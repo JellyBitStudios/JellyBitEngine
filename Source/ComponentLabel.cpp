@@ -43,7 +43,8 @@ ComponentLabel::~ComponentLabel()
 void ComponentLabel::Draw(uint ui_shader, uint VAO)
 {
 	uint* rectParent = parent->cmp_rectTransform->GetRect();
-	rect->SetRect(rectParent[0], rectParent[1], 0, 0);
+	rect->SetRectPos(rectParent[0], rectParent[1]);
+	rect->Update();
 	float sizeNorm = size / (float)sizeLoaded;
 	uint contRows = 0;
 	if (!charactersBitmap.empty())
@@ -65,14 +66,16 @@ void ComponentLabel::Draw(uint ui_shader, uint VAO)
 					x = rectParent[0] + character.bearing.x * sizeNorm;
 					contRows++;
 				}
-				rect->SetRect(x, y, character.size.x * sizeNorm, character.size.y * sizeNorm);
+				rect->SetRectPos(x,y);
+				rect->SetRectDim(character.size.x * sizeNorm, character.size.y * sizeNorm);
+				rect->Update();
 
 				if (rect->IsInRect(rectParent))
 				{
 					//Shader
 					glUseProgram(ui_shader);
 					SetRectToShader(ui_shader);
-					glUniform1i(glGetUniformLocation(ui_shader, "use_color"), 1);
+					glUniform1i(glGetUniformLocation(ui_shader, "using_texture"), 0);
 					glUniform1i(glGetUniformLocation(ui_shader, "isLabel"), 1);
 
 					glUniform4f(glGetUniformLocation(ui_shader, "spriteColor"), color.x, color.y, color.z, color.w);
@@ -90,6 +93,7 @@ void ComponentLabel::Draw(uint ui_shader, uint VAO)
 					glUseProgram(0);
 
 					rect->SetRectPos(rect->GetRect()[0] + character.advance * sizeNorm, rectParent[1]);
+					rect->Update();
 				}
 				else
 					break;
@@ -98,6 +102,7 @@ void ComponentLabel::Draw(uint ui_shader, uint VAO)
 			{
 				contRows++;
 				rect->SetRectPos(rectParent[0], rectParent[1]);
+				rect->Update();
 			}
 		}
 }
@@ -238,16 +243,17 @@ void ComponentLabel::SetRectToShader(uint shader)
 
 	rect_points = rect->GetRect();
 	glUniform1i(glGetUniformLocation(shader, "isScreen"), 1);
+	glUniform1i(glGetUniformLocation(shader, "useMask"), 0);
 
 	w_width = App->ui->GetRectUI()[ModuleUI::Screen::WIDTH];
 	w_height = App->ui->GetRectUI()[ModuleUI::Screen::HEIGHT];
 
 	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[0], (float)rect_points[1] }, w_width, w_height);
-	glUniform3f(glGetUniformLocation(shader, "bottomLeft"), pos.x, pos.y, 0.0f);
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[0] + (float)rect_points[2], (float)rect_points[1] }, w_width, w_height);
-	glUniform3f(glGetUniformLocation(shader, "bottomRight"), pos.x, pos.y, 0.0f);
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[0], (float)rect_points[1] + (float)rect_points[3] }, w_width, w_height);
 	glUniform3f(glGetUniformLocation(shader, "topLeft"), pos.x, pos.y, 0.0f);
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[0] + (float)rect_points[2], (float)rect_points[1] + (float)rect_points[3] }, w_width, w_height);
+	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[0] + (float)rect_points[2], (float)rect_points[1] }, w_width, w_height);
 	glUniform3f(glGetUniformLocation(shader, "topRight"), pos.x, pos.y, 0.0f);
+	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[0], (float)rect_points[1] + (float)rect_points[3] }, w_width, w_height);
+	glUniform3f(glGetUniformLocation(shader, "bottomLeft"), pos.x, pos.y, 0.0f);
+	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[0] + (float)rect_points[2], (float)rect_points[1] + (float)rect_points[3] }, w_width, w_height);
+	glUniform3f(glGetUniformLocation(shader, "bottomRight"), pos.x, pos.y, 0.0f);
 }

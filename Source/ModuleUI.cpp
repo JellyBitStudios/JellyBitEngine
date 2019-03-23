@@ -269,6 +269,8 @@ void ModuleUI::DrawUIImage(ComponentRectTransform * rect, math::float4& color, u
 
 	setBool(ui_shader, "useMask", (mask.x < 0) ? false : true);
 	setFloat(ui_shader, "coordsMask", mask.x, mask.y);
+	glUniform1i(glGetUniformLocation(ui_shader, "isLabel"), 0);
+
 
 	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
 

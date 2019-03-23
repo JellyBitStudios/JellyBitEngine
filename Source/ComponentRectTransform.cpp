@@ -130,8 +130,7 @@ void ComponentRectTransform::SetRectPos(uint x, uint y)
 	rectTransform[Rect::X] = x;
 	rectTransform[Rect::Y] = y;
 
-	RecaculateAnchors();
-	RecaculatePercentage();
+	RecalculateAndChilds();
 }
 
 void ComponentRectTransform::SetRectDim(uint x_dist, uint y_dist)
@@ -139,9 +138,10 @@ void ComponentRectTransform::SetRectDim(uint x_dist, uint y_dist)
 	rectTransform[Rect::XDIST] = x_dist;
 	rectTransform[Rect::YDIST] = y_dist;
 
-	RecaculateAnchors();
-	RecaculatePercentage();
+	RecalculateAndChilds();
+	rectTransform_modified = true;
 }
+
 uint* ComponentRectTransform::GetRect()
 {
 	return rectTransform;
