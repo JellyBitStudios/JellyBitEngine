@@ -99,7 +99,7 @@ struct StartValues
 class ComponentEmitter : public Component
 {
 public:
-	ComponentEmitter(GameObject* gameObject);
+	ComponentEmitter(GameObject* gameObject, bool include = true);
 	ComponentEmitter(const ComponentEmitter & componentEmitter, GameObject* parent, bool include = true);
 	~ComponentEmitter();
 

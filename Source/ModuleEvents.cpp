@@ -67,6 +67,17 @@ void ModuleEvents::OnSystemEvent(System_Event event)
 			App->PushSystemEvent(event);
 		}
 #endif
+		// Mesh updated: recalculate bounding boxes
+		System_Event updateBB;
+		updateBB.goEvent.gameObject = App->scene->root;
+		updateBB.type = System_Event_Type::RecalculateBBoxes;
+		App->PushSystemEvent(updateBB);
+
+		// Bounding box changed: recreate quadtree
+		System_Event newEvent;
+		newEvent.type = System_Event_Type::RecreateQuadtree;
+		App->PushSystemEvent(newEvent);
+
 		break;
 	}
 	case System_Event_Type::Play:
@@ -146,10 +157,6 @@ void ModuleEvents::OnSystemEvent(System_Event event)
 					App->GOs->ClearScene();
 					App->GOs->LoadScene(sceneBuffer, sceneSize, true);
 					delete[] sceneBuffer;
-
-					System_Event newEvent;
-					newEvent.type = System_Event_Type::RecreateQuadtree;
-					App->PushSystemEvent(newEvent);
 				}
 				else
 					CONSOLE_LOG(LogTypes::Error, "Unable to find the Scene...");

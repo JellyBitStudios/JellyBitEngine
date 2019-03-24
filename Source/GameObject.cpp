@@ -571,7 +571,7 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		break;
 	case ComponentTypes::EmitterComponent:
 		assert(cmp_emitter == NULL);
-		newComponent = cmp_emitter = new ComponentEmitter(this);
+		newComponent = cmp_emitter = new ComponentEmitter(this, includeInModules);
 		break;
 	case ComponentTypes::CanvasComponent:
 		assert(cmp_canvas == nullptr);

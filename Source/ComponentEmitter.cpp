@@ -17,17 +17,19 @@
 #include "ModuleParticles.h"
 #include "imgui\imgui.h"
 
-ComponentEmitter::ComponentEmitter(GameObject* gameObject) : Component(gameObject, EmitterComponent)
+ComponentEmitter::ComponentEmitter(GameObject* gameObject, bool include) : Component(gameObject, EmitterComponent)
 {
-	SetAABB(math::float3::one);
-	if(gameObject->IsStatic())
-		App->scene->quadtree.Insert(gameObject);
-	App->particle->emitters.push_back(this);
+	if (include)
+	{
+		SetAABB(math::float3::one);
+		if (gameObject->IsStatic())
+			App->scene->quadtree.Insert(gameObject);
+		App->particle->emitters.push_back(this);
 
-	SetMaterialRes(App->resHandler->defaultMaterial);
+		SetMaterialRes(App->resHandler->defaultMaterial);
 
-
-	App->res->SetAsUsed(App->resHandler->plane);
+		App->res->SetAsUsed(App->resHandler->plane);
+	}
 }
 
 ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, GameObject* parent, bool include) : Component(parent, EmitterComponent)
@@ -89,20 +91,21 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 
 	startOnPlay = componentEmitter.startOnPlay;
 
-	if (parent)
-		App->scene->quadtree.Insert(parent);
-
 	if (include)
+	{
+		if (parent)
+			SetAABB(parent->boundingBox.Size(), posDifAABB);
 		App->particle->emitters.push_back(this);
 
-	if (App->res->GetResource(componentEmitter.materialRes) != nullptr)
-		SetMaterialRes(componentEmitter.materialRes);
-	else
-		SetMaterialRes(App->resHandler->defaultMaterial);
 
-	App->res->SetAsUsed(App->resHandler->plane);
+		if (App->res->GetResource(componentEmitter.materialRes) != nullptr)
+			SetMaterialRes(componentEmitter.materialRes);
+		else
+			SetMaterialRes(App->resHandler->defaultMaterial);
+
+		App->res->SetAsUsed(App->resHandler->plane);
+	}
 }
-
 
 ComponentEmitter::~ComponentEmitter()
 {
