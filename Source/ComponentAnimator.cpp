@@ -185,7 +185,10 @@ bool ComponentAnimator::PlayAnimation(const char* anim_name)
 const char * ComponentAnimator::GetCurrentAnimationName()
 {
 	ResourceAnimator* anim_res = (ResourceAnimator*)App->res->GetResource(res);
-	return anim_res->GetCurrentAnimation()->name.data();
+	if (!anim_res)
+		return nullptr;
+	else
+		return anim_res->GetCurrentAnimation()->name.data();
 }
 
 int ComponentAnimator::GetCurrentAnimationFrame()
