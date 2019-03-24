@@ -28,11 +28,71 @@ FontImporter::~FontImporter()
 	FT_Done_FreeType(library);
 }
 
-/*bool FontImporter::Import(const char * file, std::string & outputFile, const ResourceFontData & importSettings) const
+bool FontImporter::Import(const char * file, std::string & outputFile, const ResourceFontData & importSettings) const
 {
+	assert(file != nullptr);
 
+	bool ret = false;
 
-}*/
+	char* buffer;
+	uint size = App->fs->Load(file, &buffer);
+	if (size > 0)
+	{
+		CONSOLE_LOG(LogTypes::Normal, "FONT IMPORTER: Successfully loaded Font '%s' (original format)", file);
+		uint maxCharHeight = 0;
+
+		FT_Face face;      /* handle to face object */
+		if (!FT_New_Memory_Face(library, (FT_Byte*)buffer, size, 0, &face))
+		{
+			uint fontSize = 48;
+			FT_Set_Pixel_Sizes(face, 0, fontSize);
+
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
+			for (uint c = 32; c < 128; c++)
+			{
+				// Load character glyph 
+				if (FT_Load_Char(face, c, FT_LOAD_RENDER))
+				{
+					CONSOLE_LOG(LogTypes::Error, "Failed to load Glyph from Freetype");
+					continue;
+				}
+				// Generate texture
+				GLuint texture;
+				glGenTextures(1, &texture);
+				glBindTexture(GL_TEXTURE_2D, texture);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, face->glyph->bitmap.width, face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
+
+				// Set texture options
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+				// Now store character for later use
+				Character character = {
+					texture,
+					math::float2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+					math::float2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+					face->glyph->advance.x / 64
+				};
+				importSettings.charactersMap.insert(std::pair<char, Character>(c, character));
+				if (face->glyph->bitmap.rows > maxCharHeight)
+					maxCharHeight = face->glyph->bitmap.rows;
+			}
+			importSettings.maxCharHeight = maxCharHeight;
+			importSettings.fontSize = fontSize;
+			glBindTexture(GL_TEXTURE_2D, 0);
+			FT_Done_Face(face);
+		}
+		else
+			CONSOLE_LOG(LogTypes::Error, "The font file couldn't be opened, read or this format is unsupported");
+
+		RELEASE_ARRAY(buffer);
+	}
+	else
+		CONSOLE_LOG(LogTypes::Error, "MATERIAL FONT: Could not load Font '%s' (original format)", file);
+
+	return ret;
+
+}
 /*
 bool FontImporter::Import(const void* buffer, uint size, std::string& outputFile, const ResourceTextureImportSettings& importSettings, uint forcedUuid) const
 {
@@ -110,67 +170,7 @@ bool FontImporter::Import(const void* buffer, uint size, std::string& outputFile
 */
 bool FontImporter::Load(const char* exportedFile, ResourceData& outputData, ResourceFontData& outputFontData) const
 {
-	assert(exportedFile != nullptr);
 
-	bool ret = false;
-
-	char* buffer;
-	uint size = App->fs->Load(exportedFile, &buffer);
-	if (size > 0)
-	{
-		CONSOLE_LOG(LogTypes::Normal, "FONT IMPORTER: Successfully loaded Font '%s' (original format)", exportedFile);
-		uint maxCharHeight = 0;
-
-		FT_Face face;      /* handle to face object */
-		if (!FT_New_Memory_Face(library, (FT_Byte*)buffer, size, 0, &face))
-		{
-			uint fontSize = 48;
-			FT_Set_Pixel_Sizes(face, 0, fontSize);
-
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
-			for (uint c = 32; c < 128; c++)
-			{
-				// Load character glyph 
-				if (FT_Load_Char(face, c, FT_LOAD_RENDER))
-				{
-					CONSOLE_LOG(LogTypes::Error, "Failed to load Glyph from Freetype");
-					continue;
-				}
-				// Generate texture
-				GLuint texture;
-				glGenTextures(1, &texture);
-				glBindTexture(GL_TEXTURE_2D, texture);
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, face->glyph->bitmap.width, face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
-
-				// Set texture options
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-				// Now store character for later use
-				Character character = {
-					texture,
-					math::float2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
-					math::float2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-					face->glyph->advance.x / 64
-				};
-				outputFontData.charactersMap.insert(std::pair<char, Character>(c, character));
-				if (face->glyph->bitmap.rows > maxCharHeight)
-					maxCharHeight = face->glyph->bitmap.rows;
-			}
-			outputFontData.maxCharHeight = maxCharHeight;
-			outputFontData.fontSize = fontSize;
-			glBindTexture(GL_TEXTURE_2D, 0);
-			FT_Done_Face(face);
-		}
-		else
-			CONSOLE_LOG(LogTypes::Error, "The font file couldn't be opened, read or this format is unsupported");
-
-		RELEASE_ARRAY(buffer);
-	}
-	else
-		CONSOLE_LOG(LogTypes::Error, "MATERIAL FONT: Could not load Font '%s' (original format)", exportedFile);
-
-	return ret;
 }
 
 // ----------------------------------------------------------------------------------------------------

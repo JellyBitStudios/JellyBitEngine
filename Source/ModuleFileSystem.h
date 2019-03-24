@@ -23,6 +23,7 @@
 #define DIR_LIBRARY_SCENES "Library/Scenes"
 #define DIR_LIBRARY_SCRIPTS "Library/Scripts"
 #define DIR_LIBRARY_AUDIO "Library/Audio"
+#define DIR_LIBRARY_FONT "Library/Font"
 
 #define DIR_ASSETS "Assets"
 #define DIR_ASSETS_MESHES "Assets/Meshes"
@@ -49,6 +50,8 @@ enum FileTypes
 
 	MeshFile,
 	TextureFile,
+
+	FontFile,
 
 	BoneFile,
 	AvatarFile,

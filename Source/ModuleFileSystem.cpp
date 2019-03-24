@@ -587,6 +587,11 @@ uint ModuleFileSystem::SaveInGame(char* buffer, uint size, FileTypes fileType, s
 			outputFile.insert(strlen(DIR_ASSETS_SCENES), "/");
 			outputFile.append(EXTENSION_SCENE);
 			break;
+		case FileTypes::FontFile:
+			outputFile.insert(0, DIR_LIBRARY_FONT);
+			outputFile.insert(strlen(DIR_LIBRARY_FONT), "/");
+			outputFile.append(EXTENSION_FONT);
+			break;
 		}
 	}
 
