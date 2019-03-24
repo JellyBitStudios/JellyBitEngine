@@ -7,23 +7,25 @@
 
 #include "imgui/imgui.h"
 
-ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::LabelComponent)
+ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::LabelComponent)
 {
-	App->ui->componentsUI.push_back(this);
+	if (includeComponents)
+	{
+		if (parent->cmp_rectTransform == nullptr)
+			parent->AddComponent(ComponentTypes::RectTransformComponent);
 
-	if (parent->cmp_canvasRenderer == nullptr)
-		parent->AddComponent(ComponentTypes::CanvasRendererComponent);
+		if (parent->cmp_canvasRenderer == nullptr)
+			parent->AddComponent(ComponentTypes::CanvasRendererComponent);
+	}
 }
 
 ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::LabelComponent)
 {
-	if(includeComponents)
-		App->ui->componentsUI.push_back(this);
 }
 
 ComponentLabel::~ComponentLabel()
 {
-	App->ui->componentsUI.remove(this);
+	parent->cmp_label = nullptr;
 }
 
 void ComponentLabel::Update()
@@ -55,9 +57,4 @@ void ComponentLabel::OnUniqueEditor()
 	finalText = text;
 	ImGui::Text(finalText.c_str());
 #endif
-}
-
-void ComponentLabel::LinkToUIModule()
-{
-	App->ui->componentsUI.push_back(this);
 }

@@ -18,7 +18,6 @@
 #include "ComponentNavAgent.h"
 #include "ComponentEmitter.h"
 #include "ComponentBone.h"
-#include "ComponentAnimation.h"
 #include "ComponentLight.h"
 #include "ComponentScript.h"
 #include "ComponentCanvasRenderer.h"
@@ -68,15 +67,23 @@ void ModuleEvents::OnSystemEvent(System_Event event)
 			App->PushSystemEvent(event);
 		}
 #endif
+		// Mesh updated: recalculate bounding boxes
+		System_Event updateBB;
+		updateBB.goEvent.gameObject = App->scene->root;
+		updateBB.type = System_Event_Type::RecalculateBBoxes;
+		App->PushSystemEvent(updateBB);
+
+		// Bounding box changed: recreate quadtree
+		System_Event newEvent;
+		newEvent.type = System_Event_Type::RecreateQuadtree;
+		App->PushSystemEvent(newEvent);
+
 		break;
 	}
 	case System_Event_Type::Play:
 		assert(App->GOs->sceneStateBuffer == 0);
 		App->GOs->SerializeFromNode(App->scene->root, App->GOs->sceneStateBuffer, App->GOs->sceneStateSize);
-
-#ifdef GAMEMODE
 		App->SetEngineState(engine_states::ENGINE_PLAY);
-#endif
 
 		break;
 	case System_Event_Type::SaveScene:
@@ -98,6 +105,9 @@ void ModuleEvents::OnSystemEvent(System_Event event)
 		}
 
 		App->scripting->ReInstance();
+
+		App->scripting->TemporalLoad();
+
 		break;
 	}
 
@@ -147,10 +157,6 @@ void ModuleEvents::OnSystemEvent(System_Event event)
 					App->GOs->ClearScene();
 					App->GOs->LoadScene(sceneBuffer, sceneSize, true);
 					delete[] sceneBuffer;
-
-					System_Event newEvent;
-					newEvent.type = System_Event_Type::RecreateQuadtree;
-					App->PushSystemEvent(newEvent);
 				}
 				else
 					CONSOLE_LOG(LogTypes::Error, "Unable to find the Scene...");

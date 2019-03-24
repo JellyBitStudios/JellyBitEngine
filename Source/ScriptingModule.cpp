@@ -11,6 +11,7 @@
 #include "ComponentAudioSource.h"
 #include "ComponentAudioListener.h"
 #include "ComponentRigidDynamic.h"
+#include "ComponentMaterial.h"
 
 #include "GameObject.h"
  
@@ -593,6 +594,11 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "AudioListener"));
 			break;
 		}
+		case ComponentTypes::MaterialComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Material"));
+			break;
+		}
 	}
 
 	if (!monoComponent)
@@ -920,6 +926,7 @@ void ScriptingModule::RecompileScripts()
 		System_Event event;
 		event.type = System_Event_Type::ScriptingDomainReloaded;
 		App->PushSystemEvent(event);
+		TemporalSave();
 	}
 }
 
@@ -956,6 +963,22 @@ void ScriptingModule::FixedUpdate()
 	for (int i = 0; i < scripts.size(); ++i)
 	{
 		scripts[i]->FixedUpdate();
+	}
+}
+
+void ScriptingModule::TemporalSave()
+{
+	for (int i = 0; i < scripts.size(); ++i)
+	{
+		scripts[i]->TemporalSave();
+	}
+}
+
+void ScriptingModule::TemporalLoad()
+{
+	for (int i = 0; i < scripts.size(); ++i)
+	{
+		scripts[i]->TemporalLoad();
 	}
 }
 
@@ -1818,6 +1841,20 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 
 		return App->scripting->MonoComponentFrom(comp);
 	}
+
+	else if (className == "Material")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::MaterialComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
 	else
 	{
 		//Check if this monoObject is destroyed
@@ -2147,7 +2184,7 @@ void NavAgentSetParams(MonoObject* compAgent, uint params)
 
 bool OverlapSphere(float radius, MonoArray* center, MonoArray** overlapHit, uint filterMask, SceneQueryFlags sceneQueryFlags)
 {
-	if (!center || !overlapHit || !*overlapHit)
+	if (!center)
 		return false;
 
 	math::float3 centercpp(mono_array_get(center, float, 0), mono_array_get(center, float, 1), mono_array_get(center, float, 2));
@@ -2200,6 +2237,48 @@ bool GetGameObjectActive(MonoObject* monoObject, bool active)
 	return gameObject->IsActive();
 }
 
+uint GameObjectGetLayerID(MonoObject* monoObject)
+{
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	if (gameObject)
+	{
+		return gameObject->GetLayer();
+	}
+	return 0;
+}
+
+MonoString* GameObjectGetLayerName(MonoObject* monoObject)
+{
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	if (gameObject)
+	{
+		char* layerName = (char*)App->layers->NumberToName(gameObject->GetLayer());
+		return mono_string_new(App->scripting->domain, layerName);
+	}
+	return nullptr;
+}
+
+MonoArray* GameObjectGetChilds(MonoObject* monoObject)
+{
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	if (gameObject)
+	{
+		MonoArray* ret = mono_array_new(App->scripting->domain, 
+										mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "GameObject"), 
+										gameObject->children.size());
+
+		for (int i = 0; i < gameObject->children.size(); ++i)
+		{
+			GameObject* child = gameObject->children[i];
+			mono_array_setref(ret, i, App->scripting->MonoObjectFrom(child));
+		}
+
+		return ret;
+	}
+
+	return nullptr;
+}
+
 bool PlayAnimation(MonoObject* animatorComp, MonoString* animUUID)
 {
 	if (!animUUID)
@@ -2213,6 +2292,26 @@ bool PlayAnimation(MonoObject* animatorComp, MonoString* animUUID)
 	mono_free(anim);
 
 	return ret;
+}
+
+int AnimatorGetCurrFrame(MonoObject* monoAnim)
+{
+	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(monoAnim);
+	if (animator)
+	{
+		return animator->GetCurrentAnimationFrame();
+	}
+	return -1;
+}
+
+MonoString* AnimatorGetCurrName(MonoObject* monoAnim)
+{
+	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(monoAnim);
+	if (animator)
+	{
+		return mono_string_new(App->scripting->domain, animator->GetCurrentAnimationName());
+	}
+	return nullptr;
 }
 
 void ParticleEmitterPlay(MonoObject* particleComp)
@@ -2291,24 +2390,78 @@ int ButtonGetState(MonoObject* buttonComp)
 	}
 }
 
-bool ImageGetUseColor(MonoObject* imageComp)
+MonoArray* ImageGetColor(MonoObject* monoImage)
 {
-	ComponentImage* imageCompCpp = (ComponentImage*)App->scripting->ComponentFrom(imageComp);
-	if (imageCompCpp)
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
 	{
-		return imageCompCpp->isColorUsed();
+		float* color = image->GetColor();
+
+		MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_single_class(), 4);
+		mono_array_set(ret, float, 0, color[0]);
+		mono_array_set(ret, float, 1, color[1]);
+		mono_array_set(ret, float, 2, color[2]);
+		mono_array_set(ret, float, 3, color[3]);
+
+		return ret;
 	}
 
-	return false;
+	return nullptr;
 }
 
-void ImageSetUseColor(MonoObject* imageComp, bool value)
+void ImageSetColor(MonoObject* monoImage, MonoArray* newColor)
 {
-	ComponentImage* imageCompCpp = (ComponentImage*)App->scripting->ComponentFrom(imageComp);
-	if (imageCompCpp)
+	if (!newColor)
+		return;
+
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
 	{
-		imageCompCpp->UseColor(value);
+		image->SetColor(mono_array_get(newColor, float, 0), mono_array_get(newColor, float, 1), mono_array_get(newColor, float, 2), mono_array_get(newColor, float, 3));
 	}
+}
+
+void ImageResetColor(MonoObject* monoImage)
+{
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
+	{
+		image->ResetColor();
+	}
+}
+
+MonoString* ImageGetResourceName(MonoObject* monoImage)
+{
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
+	{
+		std::string imageName = image->GetResImageName();
+		return mono_string_new(App->scripting->domain, imageName.c_str());
+	}
+	return nullptr;
+}
+
+void ImageSetResourceName(MonoObject* monoImage, MonoString* imageName)
+{
+	if (!imageName)
+		return;
+	
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
+	{
+		char* imageNameCpp = mono_string_to_utf8(imageName);
+
+		image->SetResImageName(imageNameCpp);
+
+		mono_free(imageNameCpp);
+	}
+}
+
+void ImageSetMask(MonoObject* monoImage)
+{
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
+		image->SetMask();
 }
 
 void PlayerPrefsSave()
@@ -2788,6 +2941,20 @@ void RigidbodyClearTorque(MonoObject* monoComp)
 	rigidbody->ClearTorque();
 }
 
+void MaterialSetResource(MonoObject* monoMaterial, MonoString* newMatName)
+{
+	if (!newMatName)
+		return;
+
+	ComponentMaterial* material = (ComponentMaterial*)App->scripting->ComponentFrom(monoMaterial);
+	if (material)
+	{
+		char* newMatNameCpp = mono_string_to_utf8(newMatName);
+		material->SetResourceByName(newMatNameCpp);
+		mono_free(newMatNameCpp);
+	}
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -2826,7 +2993,6 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Debug::LogWarning", (const void*)&DebugLogWarningTranslator);
 	mono_add_internal_call("JellyBitEngine.Debug::LogError", (const void*)&DebugLogErrorTranslator);
 	mono_add_internal_call("JellyBitEngine.Debug::ClearConsole", (const void*)&ClearConsole);
-	mono_add_internal_call("JellyBitEngine.GameObject::_Instantiate", (const void*)&InstantiateGameObject);
 	mono_add_internal_call("JellyBitEngine.Input::GetKeyState", (const void*)&GetKeyStateCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetMouseButtonState", (const void*)&GetMouseStateCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetMousePos", (const void*)&GetMousePosCS);
@@ -2837,8 +3003,18 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Quaternion::quatVec3", (const void*)&QuatVec3);
 	mono_add_internal_call("JellyBitEngine.Quaternion::toEuler", (const void*)&ToEuler);
 	mono_add_internal_call("JellyBitEngine.Quaternion::RotateAxisAngle", (const void*)&RotateAxisAngle);
+
+	//GameObject
+	mono_add_internal_call("JellyBitEngine.GameObject::_Instantiate", (const void*)&InstantiateGameObject);
 	mono_add_internal_call("JellyBitEngine.GameObject::getName", (const void*)&GetGOName);
 	mono_add_internal_call("JellyBitEngine.GameObject::setName", (const void*)&SetGOName);
+	mono_add_internal_call("JellyBitEngine.GameObject::GetComponentByType", (const void*)&GetComponentByType);
+	mono_add_internal_call("JellyBitEngine.GameObject::GetActive", (const void*)&GetGameObjectActive);
+	mono_add_internal_call("JellyBitEngine.GameObject::SetActive", (const void*)&SetGameObjectActive);
+	mono_add_internal_call("JellyBitEngine.GameObject::GetLayerID", (const void*)&GameObjectGetLayerID);
+	mono_add_internal_call("JellyBitEngine.GameObject::GetLayer", (const void*)&GameObjectGetLayerName);
+	mono_add_internal_call("JellyBitEngine.GameObject::GetChilds", (const void*)&GameObjectGetChilds);
+
 	mono_add_internal_call("JellyBitEngine.Time::getDeltaTime", (const void*)&GetDeltaTime);
 	mono_add_internal_call("JellyBitEngine.Time::getRealDeltaTime", (const void*)&GetRealDeltaTime);
 	mono_add_internal_call("JellyBitEngine.Time::getTime", (const void*)&GetTime);
@@ -2856,7 +3032,6 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Transform::setGlobalPos", (const void*)&SetGlobalPos);
 	mono_add_internal_call("JellyBitEngine.Transform::setGlobalRotation", (const void*)&SetGlobalRot);
 	mono_add_internal_call("JellyBitEngine.Transform::setGlobalScale", (const void*)&SetGlobalScale);
-	mono_add_internal_call("JellyBitEngine.GameObject::GetComponentByType", (const void*)&GetComponentByType);
 	mono_add_internal_call("JellyBitEngine.Camera::getMainCamera", (const void*)&GetGameCamera);
 	mono_add_internal_call("JellyBitEngine.Physics::_ScreenToRay", (const void*)&ScreenToRay);
 	mono_add_internal_call("JellyBitEngine.LayerMask::GetMaskBit", (const void*)&LayerToBit);
@@ -2864,18 +3039,30 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::_SetDestination", (const void*)&SetDestination);
 	mono_add_internal_call("JellyBitEngine.Physics::_OverlapSphere", (const void*)&OverlapSphere);
 	mono_add_internal_call("JellyBitEngine.Component::SetActive", (const void*)&SetCompActive);
+
+	//Animator
 	mono_add_internal_call("JellyBitEngine.Animator::PlayAnimation", (const void*)&PlayAnimation);
+	mono_add_internal_call("JellyBitEngine.Animator::GetCurrentAnimation", (const void*)&AnimatorGetCurrName);
+	mono_add_internal_call("JellyBitEngine.Animator::GetCurrentFrame", (const void*)&AnimatorGetCurrFrame);
+	
+	//Particle Emitter
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Play", (const void*)&ParticleEmitterPlay);
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Stop", (const void*)&ParticleEmitterStop);
+
+	//UI
 	mono_add_internal_call("JellyBitEngine.UI.UI::UIHovered", (const void*)&UIHovered);
 	mono_add_internal_call("JellyBitEngine.UI.RectTransform::GetRect", (const void*)&RectTransform_GetRect);
 	mono_add_internal_call("JellyBitEngine.UI.RectTransform::SetRect", (const void*)&RectTransform_SetRect);
 	mono_add_internal_call("JellyBitEngine.UI.Button::SetKey", (const void*)&ButtonSetKey);
 	mono_add_internal_call("JellyBitEngine.UI.Button::GetState", (const void*)&ButtonGetState);
-	mono_add_internal_call("JellyBitEngine.UI.Image::GetUseColor", (const void*)&ImageGetUseColor);
-	mono_add_internal_call("JellyBitEngine.UI.Image::SetUseColor", (const void*)&ImageSetUseColor);
-	mono_add_internal_call("JellyBitEngine.GameObject::GetActive", (const void*)&GetGameObjectActive);
-	mono_add_internal_call("JellyBitEngine.GameObject::SetActive", (const void*)&SetGameObjectActive);
+	mono_add_internal_call("JellyBitEngine.UI.Image::GetColor", (const void*)&ImageGetColor);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetColor", (const void*)&ImageSetColor);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetColor", (const void*)&ImageSetColor);
+	mono_add_internal_call("JellyBitEngine.UI.Image::ResetColor", (const void*)&ImageResetColor);
+	mono_add_internal_call("JellyBitEngine.UI.Image::GetResource", (const void*)&ImageGetResourceName);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource", (const void*)&ImageSetResourceName);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetMask", (const void*)&ImageSetMask);
+
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::GetNumber", (const void*)&PlayerPrefsGetNumber);
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::SetNumber", (const void*)&PlayerPrefsSetNumber);
@@ -2938,6 +3125,9 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddTorque", (const void*)&RigidbodyAddTorque);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearForce", (const void*)&RigidbodyClearForce);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearTorque", (const void*)&RigidbodyClearTorque);
+
+	//Material
+	mono_add_internal_call("JellyBitEngine.Material::SetResource", (const void*)&MaterialSetResource);
 
 	ClearMap();
 

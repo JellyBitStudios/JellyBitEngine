@@ -15,7 +15,7 @@ class NetmanMeleeBehaviour : JellyScript
     int damage = 20;
 
     //Distance to move and offset
-    public float minDistance = 0.5f;
+    public float minDistance = 5.0f;
     public float offset = 1.0f;
 
     //Attack variables
@@ -61,6 +61,7 @@ class NetmanMeleeBehaviour : JellyScript
             case Enemy_State.GOING_TO_ATTK:
                 if (agent == null)
                     agent = gameObject.GetComponent<NavMeshAgent>();
+               
                 agent.SetDestination(alita.transform.position);
 
                 float diff = (float)(alita.transform.position - transform.position).magnitude;

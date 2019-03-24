@@ -11,7 +11,7 @@ enum UIState;
 class ComponentButton : public Component
 {
 public:
-	ComponentButton(GameObject * parent, ComponentTypes componentType = ComponentTypes::ButtonComponent);
+	ComponentButton(GameObject * parent, ComponentTypes componentType = ComponentTypes::ButtonComponent, bool includeComponents = true);
 	ComponentButton(const ComponentButton & componentButton, GameObject* parent, bool includeComponents = true);
 	
 	~ComponentButton();
@@ -42,8 +42,6 @@ private:
 	void OnUniqueEditor();
 
 	bool MouseInScreen(const uint* rect) const;
-
-	void LinkToUIModule();
 
 private:
 

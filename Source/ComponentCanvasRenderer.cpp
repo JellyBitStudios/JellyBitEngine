@@ -11,33 +11,19 @@
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
 
-ComponentCanvasRenderer::ComponentCanvasRenderer(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::CanvasRendererComponent)
+ComponentCanvasRenderer::ComponentCanvasRenderer(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::CanvasRendererComponent)
 {
-
-	if(parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-		App->ui->componentsScreenRendererUI.push_back(this);
-	else
+	if (includeComponents)
 	{
-		App->ui->componentsWorldRendererUI.push_back(this);
-		fromWorld = true;
+		rend_queue.push_back(new ToUIRend());
+		rend_queue.push_back(new ToUIRend());
 	}
-
-	rend_queue.push_back(new ToUIRend());
-	rend_queue.push_back(new ToUIRend());
 }
 
 ComponentCanvasRenderer::ComponentCanvasRenderer(const ComponentCanvasRenderer & componentRectTransform, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::CanvasRendererComponent)
 {
 	if (includeComponents)
 	{
-		if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-			App->ui->componentsScreenRendererUI.push_back(this);
-		else
-		{
-			App->ui->componentsWorldRendererUI.push_back(this);
-			fromWorld = true;
-		}
-
 		rend_queue.push_back(new ToUIRend());
 		rend_queue.push_back(new ToUIRend());
 	}
@@ -45,37 +31,23 @@ ComponentCanvasRenderer::ComponentCanvasRenderer(const ComponentCanvasRenderer &
 
 ComponentCanvasRenderer::~ComponentCanvasRenderer()
 {
-	if (!fromWorld)
-		App->ui->componentsScreenRendererUI.remove(this);
-	else
-		App->ui->componentsWorldRendererUI.remove(this);
-
 	for (ToUIRend* rend : rend_queue)
 		RELEASE(rend);
 	rend_queue.clear();
+
+	parent->cmp_canvasRenderer = nullptr;
 }
 
 void ComponentCanvasRenderer::Update()
 {
 	ComponentImage* cmp_image = (ComponentImage*)parent->GetComponent(ComponentTypes::ImageComponent);
 	if (cmp_image)
-		if (cmp_image->IsActive() && parent->IsActive())
+		if (cmp_image->IsTreeActive())
 		{
-			if (cmp_image->isColorUsed())
+			for (ToUIRend* rend : rend_queue)
 			{
-				for (ToUIRend* rend : rend_queue)
-				{
-					if (rend->isRendered())
-						rend->Set(RenderTypes::COLOR_VECTOR, cmp_image);
-				}
-			}
-			else
-			{
-				for (ToUIRend* rend : rend_queue)
-				{
-					if (rend->isRendered())
-						rend->Set(RenderTypes::TEXTURE, cmp_image);
-				}
+				if (rend->isRendered())
+					rend->Set(RenderTypes::IMAGE, cmp_image);
 			}
 		}
 }
@@ -113,7 +85,6 @@ void ComponentCanvasRenderer::OnInternalSave(char *& cursor)
 
 void ComponentCanvasRenderer::OnInternalLoad(char *& cursor)
 {
-	LinkToUIModule();
 }
 
 void ComponentCanvasRenderer::OnUniqueEditor()
@@ -123,32 +94,28 @@ void ComponentCanvasRenderer::OnUniqueEditor()
 #endif
 }
 
-void ComponentCanvasRenderer::LinkToUIModule()
-{
-	/*
-	if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-		App->ui->componentsScreenRendererUI.push_back(this);
-	else
-	{
-		App->ui->componentsWorldRendererUI.push_back(this);
-		fromWorld = true;
-	}
-	*/
-	//rend_queue.push_back(new ToUIRend());
-	//rend_queue.push_back(new ToUIRend());
-}
-
 //Rend Queue Struct
 
 math::float4 ComponentCanvasRenderer::ToUIRend::GetColor()
 {
 	isRendered_flag = true;
 	const float* colors = ((ComponentImage*)cmp)->GetColor();
-	return { colors[COLOR_R], colors[COLOR_G], colors[COLOR_B], colors[COLOR_A] };
+	return { colors[ComponentImage::Color::R], colors[ComponentImage::Color::G], colors[ComponentImage::Color::B], colors[ComponentImage::Color::A] };
 }
 
 uint ComponentCanvasRenderer::ToUIRend::GetTexture()
 {
 	isRendered_flag = true;
 	return ((ComponentImage*)cmp)->GetResImage();
+}
+
+math::float2 ComponentCanvasRenderer::ToUIRend::GetMaskValues()
+{
+	if (((ComponentImage*)cmp)->useMask())
+	{
+		float* mask = ((ComponentImage*)cmp)->GetMask();
+		return { mask[0], mask[1] };
+	}
+	else
+		return { -1.0f, -1.0f };
 }

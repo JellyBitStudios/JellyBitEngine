@@ -13,6 +13,7 @@
 #include "ResourceAnimation.h"
 #include "AnimationImporter.h"
 #include "ResourceAvatar.h"
+
 #ifndef GAMEMODE
 #include "imgui\imgui.h"
 #endif
@@ -179,6 +180,77 @@ bool ComponentAnimator::PlayAnimation(const char* anim_name)
 		return anim_res->SetCurrentAnimation(anim_name);
 	else
 		return false;
+}
+
+const char * ComponentAnimator::GetCurrentAnimationName()
+{
+	ResourceAnimator* anim_res = (ResourceAnimator*)App->res->GetResource(res);
+	if (!anim_res)
+		return nullptr;
+	else
+		return anim_res->GetCurrentAnimation()->name.data();
+}
+
+int ComponentAnimator::GetCurrentAnimationFrame()
+{
+	ResourceAnimator* animator_res = (ResourceAnimator*)App->res->GetResource(res);
+	if (!animator_res)
+		return -1;
+
+	ResourceAnimation* animation_res = (ResourceAnimation*)animator_res->GetCurrentAnimation();
+	if (!animation_res)
+		return -1;
+
+	float current_animation_time = animator_res->GetCurrentAnimationTime();
+
+	for (uint i = 0u; i < animation_res->animationData.numKeys; i++)
+	{
+		if (animation_res->animationData.boneKeys[i].positions.count > i)
+		{
+			for (uint j = 0; j < animation_res->animationData.boneKeys[i].positions.count; ++j)
+			{
+				if (current_animation_time < animation_res->animationData.boneKeys[i].positions.time[j])
+					return i - 1;
+				else if (current_animation_time == animation_res->animationData.boneKeys[i].positions.time[j])
+					return i;
+			}
+		}
+
+		if (animation_res->animationData.boneKeys[i].scalings.count > i)
+		{
+			for (uint j = 0; j < animation_res->animationData.boneKeys[i].scalings.count; ++j)
+			{
+				if (current_animation_time < animation_res->animationData.boneKeys[i].scalings.time[j])
+					return i - 1;
+				else if (current_animation_time == animation_res->animationData.boneKeys[i].scalings.time[j])
+					return i;
+			}
+		}
+
+		if (animation_res->animationData.boneKeys[i].scalings.count > i)
+		{
+			for (uint j = 0; j < animation_res->animationData.boneKeys[i].scalings.count; ++j)
+			{
+				if (current_animation_time < animation_res->animationData.boneKeys[i].scalings.time[j])
+					return i - 1;
+				else if (current_animation_time == animation_res->animationData.boneKeys[i].scalings.time[j])
+					return i;
+			}
+		}
+
+		if (animation_res->animationData.boneKeys[i].rotations.count > i)
+		{
+			for (uint j = 0; j < animation_res->animationData.boneKeys[i].rotations.count; ++j)
+			{
+				if (current_animation_time < animation_res->animationData.boneKeys[i].rotations.time[j])
+					return i - 1;
+				else if (current_animation_time == animation_res->animationData.boneKeys[i].rotations.time[j])
+					return i;
+			}
+		}
+	}
+
+	return -1;
 }
 
 void ComponentAnimator::OnEditor()

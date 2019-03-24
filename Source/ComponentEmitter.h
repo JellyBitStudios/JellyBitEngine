@@ -63,6 +63,7 @@ struct ParticleAnimation
 	float textureRowsNorm = 1.0f;
 	float textureColumnsNorm = 1.0f;
 	float animationSpeed = 0.1f;
+	bool randAnim = false;
 };
 
 struct StartValues
@@ -83,7 +84,6 @@ struct StartValues
 	math::float3 particleDirection = math::float3::unitY;
 
 	bool subEmitterActive = false;
-
 	StartValues()
 	{
 		ColorTime colorTime;
@@ -99,7 +99,7 @@ struct StartValues
 class ComponentEmitter : public Component
 {
 public:
-	ComponentEmitter(GameObject* gameObject);
+	ComponentEmitter(GameObject* gameObject, bool include = true);
 	ComponentEmitter(const ComponentEmitter & componentEmitter, GameObject* parent, bool include = true);
 	~ComponentEmitter();
 

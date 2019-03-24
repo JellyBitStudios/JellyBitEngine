@@ -15,17 +15,20 @@ enum ComponentTypes
 	BoneComponent,
 	AnimationComponent,
 	AnimatorComponent,
-	RectTransformComponent,
+	LightComponent = 16,
+	ProjectorComponent,
+
+	//UI
+	CanvasComponent = 32,
+	RectTransformComponent = 11,
 	CanvasRendererComponent,
 	ImageComponent,
 	ButtonComponent,
 	LabelComponent,
-	LightComponent,
-	ProjectorComponent,
 
 	// Physics
 	/// Rigid Actors
-	RigidStaticComponent,
+	RigidStaticComponent = 18,
 	RigidDynamicComponent,
 
 	/// Colliders
@@ -43,7 +46,9 @@ enum ComponentTypes
 	D6JointComponent,
 	//Audio
 	AudioListenerComponent,
-	AudioSourceComponent
+	AudioSourceComponent //31
+
+	//32 Canvas, defined before.
 };
 
 #endif

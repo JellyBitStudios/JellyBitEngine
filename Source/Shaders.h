@@ -292,6 +292,8 @@
 "layout(location = 1) in vec2 texture_coords; // <vec2 position, vec2 texCoords>\n" \
 "out vec2 TexCoords;\n" \
 "uniform int isScreen;\n" \
+"uniform int useMask;\n" \
+"uniform vec2 coordsMask;\n" \
 "uniform mat4 mvp_matrix;\n" \
 "uniform vec3 topRight;\n" \
 "uniform vec3 topLeft;\n" \
@@ -305,29 +307,57 @@
 "		position = topRight;\n" \
 "		if (isScreen == 0)\n" \
 "			TexCoords = vec2(0.0, 1.0);\n" \
+"		else\n"\
+"			if (useMask == 1)\n" \
+"				TexCoords = vec2(coordsMask.x,1.0);\n" \
 "	}"\
 "	else if (vertex.x > 0.0 && vertex.y < 0.0)\n" \
 "	{\n" \
 "		position = bottomRight;\n" \
 "		if (isScreen == 0)\n" \
-"			TexCoords = vec2(0.0,0.0);\n" \
+"		{\n" \
+"			if (useMask == 0)\n" \
+"				TexCoords = vec2(0.0,0.0);\n" \
+"			else\n"\
+"				TexCoords = vec2(0.0,coordsMask.y);\n" \
+"		}"\
+"		else\n"\
+"			if (useMask == 1)\n" \
+"				TexCoords = vec2(coordsMask.x,coordsMask.y);\n" \
 "	}"\
 "	else if (vertex.x < 0.0 && vertex.y > 0.0)\n" \
 "	{\n" \
 "		position = topLeft;\n" \
 "		if (isScreen == 0)\n" \
-"			TexCoords = vec2(1.0,1.0);\n" \
+"		{\n" \
+"			if (useMask == 0)\n" \
+"				TexCoords = vec2(1.0,1.0);\n" \
+"			else\n"\
+"				TexCoords = vec2(coordsMask.x,1.0);\n" \
+"		}"\
+"		else\n"\
+"			if (useMask == 1)\n" \
+"				TexCoords = vec2(0.0,1.0);\n" \
 "	}"\
 "	else if (vertex.x < 0.0 && vertex.y < 0.0)\n" \
 "	{\n" \
 "		position = bottomLeft;\n" \
 "		if (isScreen == 0)\n" \
-"			TexCoords = vec2(1.0,0.0);\n" \
+"		{\n" \
+"			if (useMask == 0)\n" \
+"				TexCoords = vec2(1.0,0.0);\n" \
+"			else\n"\
+"				TexCoords = vec2(coordsMask.x,coordsMask.y);\n" \
+"		}"\
+"		else\n"\
+"			if (useMask == 1)\n" \
+"				TexCoords = vec2(0.0,coordsMask.y);\n" \
 "	}"\
 "	if(isScreen == 1)\n"\
 "	{\n" \
 "		gl_Position = vec4(position, 1.0);\n" \
-"		TexCoords = texture_coords;\n" \
+"		if (useMask == 0)\n" \
+"			TexCoords = texture_coords;\n" \
 "	}"\
 "	else\n"\
 "		gl_Position = mvp_matrix * vec4(position, 1.0);\n" \
@@ -337,15 +367,15 @@
 "#version 330 core\n" \
 "in vec2 TexCoords;\n" \
 "out vec4 FragColor;\n" \
-"uniform int use_color;\n"\
+"uniform int using_texture;\n"\
 "uniform sampler2D image;\n" \
 "uniform vec4 spriteColor;\n" \
 "void main()\n" \
 "{\n" \
-"	if(use_color == 1)\n"\
-"		FragColor = spriteColor;\n" \
+"	if(using_texture == 1)\n"\
+"		FragColor = texture(image, TexCoords) * spriteColor;\n" \
 "	else\n"\
-"		FragColor = texture(image, TexCoords);\n" \
+"		FragColor = spriteColor;\n" \
 "}"
 
 #pragma endregion

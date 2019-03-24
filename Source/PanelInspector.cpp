@@ -117,19 +117,8 @@ void PanelInspector::ShowGameObjectInspector() const
 
 	ImGui::PushItemWidth(100.0f);
 	ImGuiInputTextFlags inputFlag = ImGuiInputTextFlags_EnterReturnsTrue;
-
-	if (std::strcmp(objName, "Canvas") == 0)
-		ImGui::Text("Canvas");
-	else
-	{
-		if (ImGui::InputText("##objName", objName, IM_ARRAYSIZE(objName), inputFlag))
-		{
-			if (std::strcmp(objName, "Canvas") != 0)
-				gameObject->SetName(objName);
-			else
-				CONSOLE_LOG(LogTypes::Warning, "Canvas is a reserved name.");
-		}
-	}
+	if (ImGui::InputText("##objName", objName, IM_ARRAYSIZE(objName), inputFlag))
+		gameObject->SetName(objName);
 	ImGui::PopItemWidth();
 
 	bool isStatic = gameObject->IsStatic();
@@ -195,36 +184,31 @@ void PanelInspector::ShowGameObjectInspector() const
 	bool scriptSelected = false;
 	if (ImGui::BeginPopupContextItem((const char*)0, 0))
 	{
-		if (gameObject->GetLayer() == UILAYER || gameObject->cmp_rectTransform)
+		if(gameObject->GetLayer() == UILAYER)
 		{
-
 			if (gameObject->cmp_image == nullptr)
 				if (ImGui::Selectable("Image UI")) {
 					gameObject->AddComponent(ComponentTypes::ImageComponent);
 					ImGui::CloseCurrentPopup();
 				}
-			if (gameObject->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-			{
-				if (gameObject->cmp_button == nullptr)
-					if (ImGui::Selectable("Button UI")) {
-						gameObject->AddComponent(ComponentTypes::ButtonComponent);
-						ImGui::CloseCurrentPopup();
-					}
-			}
+			if (gameObject->cmp_button == nullptr)
+				if (ImGui::Selectable("Button UI")) {
+					gameObject->AddComponent(ComponentTypes::ButtonComponent);
+					ImGui::CloseCurrentPopup();
+				}
 			if (gameObject->cmp_label == nullptr)
 				if (ImGui::Selectable("Text UI")) {
 					gameObject->AddComponent(ComponentTypes::LabelComponent);
 					ImGui::CloseCurrentPopup();
 				}
-
-			if (ImGui::Selectable("Script"))
-			{
-				//Open new Popup, with input text and autocompletion to select scripts by name
-				scriptSelected = true;
-				ImGui::CloseCurrentPopup();
-			}
 		}
-		else
+		if (ImGui::Selectable("Script")) {
+			//Open new Popup, with input text and autocompletion to select scripts by name
+			scriptSelected = true;
+			ImGui::CloseCurrentPopup();
+		}
+
+		if (gameObject->transform)
 		{
 			if (gameObject->cmp_mesh == nullptr)
 				if (ImGui::Selectable("Mesh")) {
@@ -256,13 +240,6 @@ void PanelInspector::ShowGameObjectInspector() const
 					gameObject->AddComponent(ComponentTypes::AnimatorComponent);
 					ImGui::CloseCurrentPopup();
 				}
-
-			if (ImGui::Selectable("Script"))
-			{
-				//Open new Popup, with input text and autocompletion to select scripts by name
-				scriptSelected = true;
-				ImGui::CloseCurrentPopup();
-			}
 
 			if (gameObject->cmp_navAgent == nullptr) {
 				if (ImGui::Selectable("Nav Agent")) {
@@ -301,7 +278,6 @@ void PanelInspector::ShowGameObjectInspector() const
 					ImGui::CloseCurrentPopup();
 				}
 			}
-
 			if (gameObject->cmp_audioListener == nullptr) {
 				if (ImGui::Selectable("Audio Listener")) {
 					gameObject->AddComponent(ComponentTypes::AudioListenerComponent);

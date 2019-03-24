@@ -2,6 +2,7 @@
 #define __COMPONENT_MATERIAL_H__
 
 #include "Component.h"
+#include <string>
 
 class ComponentMaterial : public Component
 {
@@ -20,6 +21,7 @@ public:
 	// ----------------------------------------------------------------------------------------------------
 
 	void SetResource(uint materialUuid);
+	void SetResourceByName(std::string materialName);
 
 public:
 

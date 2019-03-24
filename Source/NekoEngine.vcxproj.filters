@@ -1866,6 +1866,9 @@
     <ClInclude Include="ResourceScene.h">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClInclude>
+    <ClInclude Include="ComponentCanvas.h">
+      <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ModuleInput.cpp">
@@ -2422,6 +2425,9 @@
     </ClCompile>
     <ClCompile Include="ResourceScene.cpp">
       <Filter>Sources\Modules\Resources\Types</Filter>
+    </ClCompile>
+    <ClCompile Include="ComponentCanvas.cpp">
+      <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

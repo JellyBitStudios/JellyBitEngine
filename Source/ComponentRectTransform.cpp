@@ -5,8 +5,10 @@
 #include "ModuleRenderer3D.h"
 
 #include "GameObject.h"
+#include "ComponentCanvas.h"
 #include "ComponentTransform.h"
 #include "ComponentCamera.h"
+#include "ComponentImage.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -14,71 +16,94 @@
 #define WORLDTORECT 100.0f
 #define ZSEPARATOR 0.005f
 
-ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTypes componentType, RectFrom rF) : Component(parent, ComponentTypes::RectTransformComponent)
-{
-	rFrom = rF;
-	if (parent->GetParent() != nullptr)
-	{
-		if (rFrom == RectFrom::WORLD)
-		{
-			App->ui->componentsWorldUI.push_back(this);
-			App->ui->GOsWorldCanvas.push_back(parent);
-		}
-		else
-			App->ui->componentsUI.push_back(this);
+#define PIVOT_POINTS_STR "Top Left\0Top Right\0Bottom Left\0Bottom Right\0Center\0Top\0Left\0Right\0Bottom"
 
-		CheckParentRect();
+
+ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::RectTransformComponent)
+{
+	if (includeComponents)
+	{
+		if (parent->GetParent())
+		{
+			GameObject* goCanvas = ModuleUI::FindCanvas(parent);
+			if (goCanvas)
+			{
+				ComponentCanvas* canvas = goCanvas->cmp_canvas;
+
+				if (canvas != parent->cmp_canvas)
+					if (!goCanvas->cmp_rectTransform)
+						goCanvas->AddComponent(ComponentTypes::RectTransformComponent);
+
+				switch (canvas->GetType())
+				{
+				case ComponentCanvas::CanvasType::SCREEN:
+					rFrom = RectFrom::RECT;
+					break;
+				case ComponentCanvas::CanvasType::WORLD_SCREEN:
+				case ComponentCanvas::CanvasType::WORLD:
+					if (canvas == parent->cmp_canvas)
+						rFrom = RectFrom::WORLD;
+					else
+						rFrom = RectFrom::RECT_WORLD;
+					break;
+				}
+			}
+
+			InitRect();
+		}
 	}
 }
 
 ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & componentRectTransform, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::RectTransformComponent)
 {
 	rFrom = componentRectTransform.rFrom;
-
-	if (includeComponents)
-	{
-		if (rFrom == RectFrom::WORLD)
-		{
-			App->ui->componentsWorldUI.push_back(this);
-			App->ui->GOsWorldCanvas.push_back(parent);
-		}
-		else
-			App->ui->componentsUI.push_back(this);
-	}
+	pivot = componentRectTransform.pivot;
+	usePivot = componentRectTransform.usePivot;
+	billboard = componentRectTransform.billboard;
+	z = componentRectTransform.z;
 
 	memcpy(rectTransform, componentRectTransform.rectTransform, sizeof(uint) * 4);
 	memcpy(anchor, componentRectTransform.anchor, sizeof(uint) * 4);
-	memcpy(anchor_flags, componentRectTransform.anchor_flags, sizeof(bool) * 4);
-	use_margin = componentRectTransform.use_margin;
-	billboard = componentRectTransform.billboard;
+	memcpy(lastPositionChange, componentRectTransform.lastPositionChange, sizeof(uint) * 2);
+	memcpy(corners, componentRectTransform.corners, sizeof(math::float3) * 4);
+	memcpy(anchor_percenatges, componentRectTransform.anchor_percenatges, sizeof(float) * 4);
 
-	//heckParentRect();
+	noUpdatefromCanvas = true;
 }
 
 ComponentRectTransform::~ComponentRectTransform()
 {
-	if (rFrom == RectFrom::WORLD)
-	{
-		App->ui->componentsWorldUI.remove(this);
-		App->ui->GOsWorldCanvas.remove(parent);
-	}
-	else
-		App->ui->componentsUI.remove(this);
+	parent->cmp_rectTransform = nullptr;
 }
 
 void ComponentRectTransform::Update()
 {
-	switch (rFrom)
+	if (rFrom == RectFrom::WORLD)
 	{
-	case ComponentRectTransform::RECT:
-		break;
-	case ComponentRectTransform::WORLD:
-		CalculateRectFromWorld(false);
-		break;
-	case ComponentRectTransform::RECT_WORLD:
-		break;
-	default:
-		break;
+		CalculateRectFromWorld();
+		needed_recalculate = false;
+	}
+
+	if (needed_recalculate)
+	{
+		switch (rFrom)
+		{
+		case ComponentRectTransform::RECT:
+			(rectTransform_modified) ? CalculateAnchors(true) :
+				((usePivot) ? RecaculateAnchors() : RecalculateRectByPercentage());
+			break;
+		case ComponentRectTransform::WORLD:
+			CalculateRectFromWorld();
+			break;
+		case ComponentRectTransform::RECT_WORLD:
+			(rectTransform_modified) ? CalculateAnchors(true) :
+				((usePivot) ? RecaculateAnchors() : RecalculateRectByPercentage());
+			CalculateCornersFromRect();
+			break;
+		}
+
+		needed_recalculate = false;
+		rectTransform_modified = false;
 	}
 }
 
@@ -91,17 +116,12 @@ void ComponentRectTransform::SetRect(uint x, uint y, uint x_dist, uint y_dist)
 {
 	if (rFrom != ComponentRectTransform::WORLD)
 	{
-		bool size_changed = false;
 		rectTransform[Rect::X] = x;
 		rectTransform[Rect::Y] = y;
-		if (rectTransform[Rect::XDIST] != x_dist || rectTransform[Rect::YDIST] != y_dist)
-			size_changed = true;
 		rectTransform[Rect::XDIST] = x_dist;
 		rectTransform[Rect::YDIST] = y_dist;
     
-		RecaculateAnchors();
-		RecaculatePercentage();
-		ParentChanged(size_changed);
+		RecalculateAndChilds();
 	}      
 }
 
@@ -115,76 +135,61 @@ math::float3 * ComponentRectTransform::GetCorners()
 	return corners;
 }
 
-void ComponentRectTransform::CheckParentRect()
+void ComponentRectTransform::InitRect()
 {
-	Component* rect = nullptr;
 	switch (rFrom)
 	{
-	case ComponentRectTransform::RECT:
-		ui_rect = App->ui->GetRectUI();
-
-		if (parent->GetParent() != nullptr && (rect = parent->GetParent()->GetComponent(ComponentTypes::RectTransformComponent)) != nullptr)
+		case ComponentRectTransform::RECT:
 		{
-			rectParent = ((ComponentRectTransform*)rect)->GetRect();
+			if (!parent->cmp_canvas)
+			{
+				uint* rectParent = nullptr;
+				if (parent->cmp_canvas)
+					rectParent = App->ui->GetRectUI();
+				else
+					rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
 
-			if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
-				rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
-			if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
-				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
+				rectTransform[Rect::X] = rectParent[Rect::X];
+				rectTransform[Rect::Y] = rectParent[Rect::Y];
 
-			ParentChanged();
+				if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
+					rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
+				if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
+					rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
+			}
+			CalculateAnchors();
+			break;
 		}
-
-		RecaculateAnchors();
-		RecaculatePercentage();
-		break;
-	case ComponentRectTransform::WORLD:
-		if (parent != nullptr && (rect = parent->GetComponent(ComponentTypes::TransformComponent)) != nullptr)
+		case ComponentRectTransform::WORLD:
 		{
-			transformParent = (ComponentTransform*)rect;
-			transformParent->UpdateGlobal();
-			CalculateRectFromWorld(true);
+			CalculateRectFromWorld();
+			break;
 		}
-		break;
-	case ComponentRectTransform::RECT_WORLD:
-		if (parent->GetParent() != nullptr && (rect = parent->GetParent()->GetComponent(ComponentTypes::RectTransformComponent)) != nullptr)
+		case ComponentRectTransform::RECT_WORLD:
 		{
-			ComponentRectTransform* r = (ComponentRectTransform*)rect;
-			parentCorners = r->GetCorners();
-			rectParent = r->GetRect();
-			z = r->GetZ() + ZSEPARATOR;
+			ComponentRectTransform* rTParent = parent->GetParent()->cmp_rectTransform;
+			uint* rectParent = rTParent->GetRect();
+
+			z = rTParent->GetZ() + ZSEPARATOR;
 			if (rectTransform[Rect::XDIST] > rectParent[Rect::XDIST])
 				rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
 			if (rectTransform[Rect::YDIST] > rectParent[Rect::YDIST])
 				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
 
-			RecaculateAnchors();
-			RecaculatePercentage();
-
-			ParentChanged();
+			CalculateCornersFromRect();
+			CalculateAnchors(true);
+			break;
 		}
-		break;
 	}
 }
 
-void ComponentRectTransform::ChangeChildsRect(bool its_me, bool size_changed)
+void ComponentRectTransform::RecalculateAndChilds()
 {
-	if (!its_me)
-	{
-		if (use_margin)
-			ParentChanged(false);
-		else
-			ParentChanged(size_changed);
-	}
-
+	needed_recalculate = true;
 	std::vector<GameObject*> childs;
-	parent->GetChildrenVector(childs);
-	std::reverse(childs.begin(), childs.end());
+	parent->GetChildrenVector(childs, false);
 	for (GameObject* c_go : childs)
-	{
-		if (c_go != parent)
-			((ComponentRectTransform*)c_go->GetComponent(ComponentTypes::RectTransformComponent))->ChangeChildsRect(false, size_changed);
-	}
+		c_go->cmp_rectTransform->RecalculateAndChilds();
 }
 
 ComponentRectTransform::RectFrom ComponentRectTransform::GetFrom() const
@@ -192,55 +197,105 @@ ComponentRectTransform::RectFrom ComponentRectTransform::GetFrom() const
 	return rFrom;
 }
 
-void ComponentRectTransform::ParentChanged(bool size_changed)
+void ComponentRectTransform::ScreenChanged()
 {
-	if (size_changed)
+	RecalculateRectByPercentage();
+}
+
+void ComponentRectTransform::TransformUpdated()
+{
+	needed_recalculate = true;
+}
+
+void ComponentRectTransform::ParentChanged(bool canvas_changed)
+{
+	if (!parent->cmp_canvas)
 	{
-		rectTransform[Rect::X] = (uint)(anchor_percenatges[RectPercentage::X0] * (float)rectParent[Rect::XDIST]) + rectParent[Rect::X];
-		rectTransform[Rect::XDIST] = rectParent[Rect::XDIST] - ((rectTransform[Rect::X] - rectParent[Rect::X]) + (uint)(anchor_percenatges[RectPercentage::X1] * (float)rectParent[Rect::XDIST]));
-		rectTransform[Rect::Y] = (uint)(anchor_percenatges[RectPercentage::Y0] * (float)rectParent[Rect::YDIST]) + rectParent[Rect::Y];
-		rectTransform[Rect::YDIST] = rectParent[Rect::YDIST] - ((rectTransform[Rect::Y] - rectParent[Rect::Y]) + (uint)(anchor_percenatges[RectPercentage::Y1] * (float)rectParent[Rect::YDIST]));
-	
-		RecaculateAnchors();
+		GameObject* gCanvas = ModuleUI::FindCanvas(parent);
+		if (gCanvas->cmp_canvas->GetType() == ComponentCanvas::CanvasType::SCREEN && rFrom == RectFrom::RECT_WORLD)
+			rFrom = RectFrom::RECT;
+		else if (gCanvas->cmp_canvas->GetType() != ComponentCanvas::CanvasType::SCREEN && rFrom == RectFrom::RECT)
+			rFrom = RectFrom::RECT_WORLD;
+
+		if(!canvas_changed)
+			RecalculateAndChilds();
 	}
+}
+
+void ComponentRectTransform::CanvasChanged()
+{
+	if (parent->cmp_canvas)
+	{
+		if (!noUpdatefromCanvas)
+		{
+			switch (parent->cmp_canvas->GetType())
+			{
+			case ComponentCanvas::CanvasType::SCREEN:
+			{
+				rFrom = RectFrom::RECT;
+				math::float3 scale = parent->transform->GetScale();
+
+				rectTransform[Rect::XDIST] = (uint)(scale.x * WORLDTORECT);
+				rectTransform[Rect::YDIST] = (uint)(scale.y * WORLDTORECT);
+
+				rectTransform[Rect::X] = lastPositionChange[0];
+				rectTransform[Rect::Y] = lastPositionChange[1];
+
+				rectTransform_modified = true;
+				break;
+			}
+			case ComponentCanvas::CanvasType::WORLD_SCREEN:
+			case ComponentCanvas::CanvasType::WORLD:
+			{
+				rFrom = RectFrom::WORLD;
+
+				math::float3 scale = parent->transform->GetScale();
+				parent->transform->SetScale({ (float)rectTransform[Rect::XDIST] / WORLDTORECT, (float)rectTransform[Rect::YDIST] / WORLDTORECT, scale.z });
+
+				lastPositionChange[0] = rectTransform[Rect::X];
+				lastPositionChange[1] = rectTransform[Rect::Y];
+				break;
+			}
+			}
+
+			std::vector<GameObject*> childs;
+			parent->GetChildrenAndThisVectorFromLeaf(childs);
+			for (GameObject* rectGo : childs) if (rectGo->cmp_rectTransform) rectGo->cmp_rectTransform->ParentChanged(true);
+
+			RecalculateAndChilds();
+		}
+
+		noUpdatefromCanvas = false;
+	}
+}
+
+void ComponentRectTransform::WorkSpaceChanged(uint diff, bool to)
+{
+	if (rFrom == RectFrom::RECT)
+	{
+		if (parent->cmp_canvas)
+			(to) ? (rectTransform[Rect::X] += diff) : (rectTransform[Rect::X] -= diff);
+		RecalculateAndChilds();
+	}
+}
+
+void ComponentRectTransform::RecalculateRectByPercentage()
+{
+	uint* rectParent = nullptr;
+	if (parent->cmp_canvas)
+		rectParent = App->ui->GetRectUI();
 	else
-	{
-		if (anchor_flags[Anchor::LEFT] == RectPrivot::TOPLEFT)
-		{
-			rectTransform[Rect::X] = anchor[Anchor::LEFT] + rectParent[Rect::X];
-			rectTransform[Rect::Y] = anchor[Anchor::TOP] + rectParent[Rect::Y];
-			anchor[Anchor::RIGHT] = rectParent[Rect::XDIST] - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
-			anchor[Anchor::BOTTOM] = rectParent[Rect::YDIST] - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
-		}
-		else
-		{
-			rectTransform[Rect::X] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - anchor[Anchor::RIGHT] - rectTransform[Rect::XDIST];
-			rectTransform[Rect::Y] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - anchor[Anchor::BOTTOM] - rectTransform[Rect::YDIST];
-			anchor[Anchor::LEFT] = (rectTransform[Rect::X] + rectTransform[Rect::XDIST]) + anchor[Anchor::RIGHT];
-			anchor[Anchor::TOP] = (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]) + anchor[Anchor::BOTTOM];
-		}
-		RecaculatePercentage();
-	}
+		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
 
-	if (rFrom == RectFrom::RECT_WORLD)
-		CalculateCornersFromRect();
+	rectTransform[Rect::X] = (uint)(anchor_percenatges[RectPercentage::X0] * (float)rectParent[Rect::XDIST]) + rectParent[Rect::X];
+	rectTransform[Rect::XDIST] = rectParent[Rect::XDIST] - (((rectTransform[Rect::X] - rectParent[Rect::X]) + (uint)(anchor_percenatges[RectPercentage::X1] * (float)rectParent[Rect::XDIST])));
+	rectTransform[Rect::Y] = (uint)(anchor_percenatges[RectPercentage::Y0] * (float)rectParent[Rect::YDIST]) + rectParent[Rect::Y];
+	rectTransform[Rect::YDIST] = rectParent[Rect::YDIST] - ((rectTransform[Rect::Y] - rectParent[Rect::Y]) + (uint)(anchor_percenatges[RectPercentage::Y1] * (float)rectParent[Rect::YDIST]));
+	
+	CalculateAnchors();
 }
 
-void ComponentRectTransform::UseMarginChanged(bool useMargin)
-{
-	use_margin = useMargin;
-
-	std::vector<GameObject*> childs;
-	parent->GetChildrenVector(childs);
-	std::reverse(childs.begin(), childs.end());
-	for (GameObject* c_go : childs)
-	{
-		if (c_go != parent)
-			((ComponentRectTransform*)c_go->GetComponent(ComponentTypes::RectTransformComponent))->UseMarginChanged(useMargin);
-	}
-}
-
-void ComponentRectTransform::CalculateRectFromWorld(bool individualcheck)
+void ComponentRectTransform::CalculateRectFromWorld()
 {
 	if (billboard)
 	{
@@ -251,13 +306,19 @@ void ComponentRectTransform::CalculateRectFromWorld(bool individualcheck)
 		math::float3 pos = math::float3::zero;
 		math::Quat rot = math::Quat::identity;
 		math::float3 scale = math::float3::zero;
-		math::float4x4 global = transformParent->GetGlobalMatrix();
+		math::float4x4 global = parent->transform->GetGlobalMatrix();
 		global.Decompose(pos, rot, scale);
 
-		transformParent->SetMatrixFromGlobal(global.FromTRS(pos, math::Quat::identity * math::float3x3(xAxis, yAxis, zAxis).ToQuat(), scale));
+		if (!scale.IsFinite())
+		{
+			scale = math::float3::one;
+			CONSOLE_LOG(LogTypes::Warning, "If canvas use billboard, you can't set size of transform to 0. Reset scale..")
+		}
+
+		parent->transform->SetMatrixFromGlobal(global.FromTRS(pos, math::Quat::identity * math::float3x3(xAxis, yAxis, zAxis).ToQuat(), scale));
 	}
 
-	math::float4x4 globalmatrix = transformParent->GetGlobalMatrix();
+	math::float4x4 globalmatrix = parent->transform->GetGlobalMatrix();
 	corners[Rect::RTOPLEFT] = math::float4(globalmatrix * math::float4(-0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
 	corners[Rect::RTOPRIGHT] = math::float4(globalmatrix * math::float4(0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
 	corners[Rect::RBOTTOMLEFT] = math::float4(globalmatrix * math::float4(-0.5f, -0.5f, 0.0f, 1.0f)).Float3Part();
@@ -268,12 +329,18 @@ void ComponentRectTransform::CalculateRectFromWorld(bool individualcheck)
 	rectTransform[Rect::XDIST] = abs(math::Distance(corners[Rect::RTOPRIGHT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
 	rectTransform[Rect::YDIST] = abs(math::Distance(corners[Rect::RBOTTOMLEFT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
 
-	if(!individualcheck)
-		ChangeChildsRect(true);
+	//Mask calcs
+	if (parent->cmp_image)
+		parent->cmp_image->RectChanged();
+
+	RecalculateAndChilds();
 }
 
 void ComponentRectTransform::CalculateCornersFromRect()
 {
+	math::float3* parentCorners = parent->GetParent()->cmp_rectTransform->GetCorners();
+	uint* rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+
 	math::float3 xDirection = (parentCorners[Rect::RTOPLEFT] - parentCorners[Rect::RTOPRIGHT]).Normalized();
 	math::float3 yDirection = (parentCorners[Rect::RBOTTOMLEFT] - parentCorners[Rect::RTOPLEFT]).Normalized();
 
@@ -290,174 +357,229 @@ void ComponentRectTransform::CalculateCornersFromRect()
 	corners[Rect::RBOTTOMRIGHT] -= zDirection * z;
 }
 
-void ComponentRectTransform::RecaculateAnchors()
+void ComponentRectTransform::CalculateAnchors(bool needed_newPercentages)
 {
-	if (rectParent != nullptr)
-	{
-		if (anchor_flags[Anchor::LEFT] == RectPrivot::TOPLEFT)
-			anchor[Anchor::LEFT] = rectTransform[Rect::X] - rectParent[Rect::X];
-		else
-			anchor[Anchor::LEFT] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - rectTransform[Rect::X];
-
-		if (anchor_flags[Anchor::TOP] == RectPrivot::TOPLEFT)
-			anchor[Anchor::TOP] = rectTransform[Rect::Y] - rectParent[ModuleUI::Screen::Y];
-		else
-			anchor[Anchor::TOP] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - rectTransform[Rect::Y];
-
-		if (anchor_flags[Anchor::RIGHT] == RectPrivot::TOPLEFT)
-			anchor[Anchor::RIGHT] = (rectTransform[Rect::X] + rectTransform[Rect::XDIST]) - rectParent[Rect::X];
-		else
-			anchor[Anchor::RIGHT] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
-
-		if (anchor_flags[Anchor::BOTTOM] == RectPrivot::TOPLEFT)
-			anchor[Anchor::BOTTOM] = (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]) - rectParent[Rect::Y];
-		else
-			anchor[Anchor::BOTTOM] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
-	}
+	uint* rectParent = nullptr;
+	if (parent->cmp_canvas)
+		rectParent = App->ui->GetRectUI();
 	else
+		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+
+	//Mask calcs
+	if (parent->cmp_image)
+		parent->cmp_image->RectChanged();
+
+	switch (pivot)
 	{
-		if (anchor_flags[Anchor::LEFT] == RectPrivot::TOPLEFT)
-			anchor[Anchor::LEFT] = rectTransform[Rect::X] - ui_rect[ModuleUI::Screen::X];
-		else
-			anchor[Anchor::LEFT] = ui_rect[ModuleUI::Screen::WIDTH] - rectTransform[Rect::X];
-
-		if (anchor_flags[Anchor::TOP] == RectPrivot::TOPLEFT)
-			anchor[Anchor::TOP] = rectTransform[Rect::Y] - ui_rect[ModuleUI::Screen::Y];
-		else
-			anchor[Anchor::TOP] = ui_rect[ModuleUI::Screen::HEIGHT] - rectTransform[Rect::Y];
-
-		if (anchor_flags[Anchor::RIGHT] == RectPrivot::TOPLEFT)
-			anchor[Anchor::RIGHT] = (rectTransform[Rect::X] + rectTransform[Rect::XDIST]) - ui_rect[ModuleUI::Screen::X];
-		else
-			anchor[Anchor::RIGHT] = ui_rect[ModuleUI::Screen::WIDTH] - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
-
-		if (anchor_flags[Anchor::BOTTOM] == RectPrivot::TOPLEFT)
-			anchor[Anchor::BOTTOM] = (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]) - ui_rect[ModuleUI::Screen::X];
-		else
-			anchor[Anchor::BOTTOM] = ui_rect[ModuleUI::Screen::HEIGHT] - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
+		case ComponentRectTransform::P_TOPLEFT:
+		{
+			anchor[Anchor::LEFT] = rectTransform[Rect::X] - rectParent[Rect::X];
+			anchor[Anchor::TOP] = rectTransform[Rect::Y] - rectParent[ModuleUI::Screen::Y];
+			anchor[Anchor::RIGHT] = (rectTransform[Rect::X] + rectTransform[Rect::XDIST]) - rectParent[Rect::X];
+			anchor[Anchor::BOTTOM] = (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]) - rectParent[Rect::Y];
+			break;
+		}
+		case ComponentRectTransform::P_TOPRIGHT:
+		{
+			break;
+		}
+		case ComponentRectTransform::P_BOTTOMLEFT:
+		{
+			break;
+		}
+		case ComponentRectTransform::P_BOTTOMRIGHT:
+		{
+			anchor[Anchor::LEFT] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - rectTransform[Rect::X];
+			anchor[Anchor::TOP] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - rectTransform[Rect::Y];
+			anchor[Anchor::RIGHT] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
+			anchor[Anchor::BOTTOM] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
+			break;
+		}
+		case ComponentRectTransform::P_TOP:
+		{
+			break;
+		}
+		case ComponentRectTransform::P_LEFT:
+		{
+			break;
+		}
+		case ComponentRectTransform::P_RIGHT:
+		{
+			break;
+		}
+		case ComponentRectTransform::P_BOTTOM:
+		{
+			break;
+		}
+		case ComponentRectTransform::P_CENTER:
+		{
+			break;
+		}
 	}
+	if(needed_newPercentages)
+		RecaculatePercentage();
 }
 
-void ComponentRectTransform::RecaculateAnchors(int type)
+void ComponentRectTransform::RecaculateAnchors()
 {
-	if (RectPrivot::TOPLEFT == type)
+	uint* rectParent = nullptr;
+	if (parent->cmp_canvas)
+		rectParent = App->ui->GetRectUI();
+	else
+		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+
+	switch (pivot)
 	{
-		if (rectParent != nullptr)
+		case ComponentRectTransform::P_TOPLEFT:
 		{
 			rectTransform[Rect::X] = anchor[Anchor::LEFT] + rectParent[Rect::X];
 			rectTransform[Rect::Y] = anchor[Anchor::TOP] + rectParent[Rect::Y];
 			anchor[Anchor::RIGHT] = rectParent[Rect::XDIST] - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
 			anchor[Anchor::BOTTOM] = rectParent[Rect::YDIST] - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
+			break;
 		}
-		else
+		case ComponentRectTransform::P_TOPRIGHT:
 		{
-			rectTransform[Rect::X] = anchor[Anchor::LEFT] + ui_rect[ModuleUI::Screen::X];
-			rectTransform[Rect::Y] = anchor[Anchor::TOP] + ui_rect[ModuleUI::Screen::Y];
-			anchor[Anchor::RIGHT] = ui_rect[ModuleUI::Screen::WIDTH] - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
-			anchor[Anchor::BOTTOM] = ui_rect[ModuleUI::Screen::HEIGHT] - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
+			break;
 		}
-	}
-	else if (RectPrivot::BOTTOMRIGHT == type)
-	{
-		if (rectParent != nullptr)
+		case ComponentRectTransform::P_BOTTOMLEFT:
+		{
+			break;
+		}
+		case ComponentRectTransform::P_BOTTOMRIGHT:
 		{
 			rectTransform[Rect::X] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - anchor[Anchor::RIGHT] - rectTransform[Rect::XDIST];
 			rectTransform[Rect::Y] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - anchor[Anchor::BOTTOM] - rectTransform[Rect::YDIST];
 			anchor[Anchor::LEFT] = (rectTransform[Rect::X] + rectTransform[Rect::XDIST]) + anchor[Anchor::RIGHT];
 			anchor[Anchor::TOP] = (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]) + anchor[Anchor::BOTTOM];
+			break;
 		}
-		else
+		case ComponentRectTransform::P_TOP:
 		{
-			rectTransform[Rect::X] = (ui_rect[ModuleUI::Screen::WIDTH] + ui_rect[ModuleUI::Screen::X]) - anchor[Anchor::RIGHT] - rectTransform[Rect::XDIST];
-			rectTransform[Rect::Y] = (ui_rect[ModuleUI::Screen::HEIGHT] + ui_rect[ModuleUI::Screen::Y]) - anchor[Anchor::BOTTOM] - rectTransform[Rect::YDIST];
-			anchor[Anchor::LEFT] = (rectTransform[Rect::X] + rectTransform[Rect::XDIST]) + anchor[Anchor::RIGHT];
-			anchor[Anchor::TOP] = (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]) + anchor[Anchor::BOTTOM];
+			break;
+		}
+		case ComponentRectTransform::P_LEFT:
+		{
+			break;
+		}
+		case ComponentRectTransform::P_RIGHT:
+		{
+			break;
+		}
+		case ComponentRectTransform::P_BOTTOM:
+		{
+			break;
+		}
+		case ComponentRectTransform::P_CENTER:
+		{
+			break;
 		}
 	}
-
-	ChangeChildsRect(true);
+	RecaculatePercentage();
 }
 
 void ComponentRectTransform::RecaculatePercentage()
 {
-	if (rectParent != nullptr)
-	{
-		anchor_percenatges[RectPercentage::X0] = (float)(rectTransform[Rect::X] - rectParent[Rect::X]) / (float)rectParent[Rect::XDIST];
-		anchor_percenatges[RectPercentage::X1] = (float)((rectParent[Rect::X] + rectParent[Rect::XDIST]) - (rectTransform[Rect::X] + rectTransform[Rect::XDIST])) / (float)rectParent[Rect::XDIST];
-		anchor_percenatges[RectPercentage::Y0] = (float)(rectTransform[Rect::Y] - rectParent[Rect::Y]) / (float)rectParent[Rect::YDIST];
-		anchor_percenatges[RectPercentage::Y1] = (float)((rectParent[Rect::Y] + rectParent[Rect::YDIST]) - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST])) / (float)rectParent[Rect::YDIST];
-	}
+	uint* rectParent = nullptr;
+	if (parent->cmp_canvas)
+		rectParent = App->ui->GetRectUI();
 	else
-	{
-		anchor_percenatges[RectPercentage::X0] = (float)(rectTransform[Rect::X] - ui_rect[ModuleUI::Screen::X]) / (float)ui_rect[ModuleUI::Screen::WIDTH];
-		anchor_percenatges[RectPercentage::X1] = (float)((ui_rect[ModuleUI::Screen::X] + ui_rect[ModuleUI::Screen::WIDTH]) - (rectTransform[Rect::X] + rectTransform[Rect::XDIST])) / (float)ui_rect[ModuleUI::Screen::WIDTH];
-		anchor_percenatges[RectPercentage::Y0] = (float)(rectTransform[Rect::Y] - ui_rect[ModuleUI::Screen::Y]) / (float)ui_rect[ModuleUI::Screen::HEIGHT];
-		anchor_percenatges[RectPercentage::Y1] = (float)((ui_rect[ModuleUI::Screen::Y] + ui_rect[ModuleUI::Screen::HEIGHT]) - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST])) / (float)ui_rect[ModuleUI::Screen::HEIGHT];
-	}
+		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+
+	anchor_percenatges[RectPercentage::X0] = (float)(rectTransform[Rect::X] - rectParent[Rect::X]) / (float)rectParent[Rect::XDIST];
+	anchor_percenatges[RectPercentage::X1] = (float)((rectParent[Rect::X] + rectParent[Rect::XDIST]) - (rectTransform[Rect::X] + rectTransform[Rect::XDIST])) / (float)rectParent[Rect::XDIST];
+	anchor_percenatges[RectPercentage::Y0] = (float)(rectTransform[Rect::Y] - rectParent[Rect::Y]) / (float)rectParent[Rect::YDIST];
+	anchor_percenatges[RectPercentage::Y1] = (float)((rectParent[Rect::Y] + rectParent[Rect::YDIST]) - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST])) / (float)rectParent[Rect::YDIST];
 }
 
 uint ComponentRectTransform::GetInternalSerializationBytes()
 {
-	return sizeof(uint) * 8 + sizeof(bool) * 6 + sizeof(int);
+	return sizeof(RectFrom) + sizeof(RectPrivot) + sizeof(bool) * 2 + sizeof(math::float3) * 4 + sizeof(uint) * 10 + sizeof(float) * 5;
+		
 }
 
 void ComponentRectTransform::OnInternalSave(char *& cursor)
 {
-	size_t bytes = sizeof(uint) * 4;
-	memcpy(cursor, &rectTransform, bytes);
+	size_t bytes = sizeof(RectFrom);
+	memcpy(cursor, &rFrom, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(uint) * 4;
-	memcpy(cursor, &anchor, bytes);
-	cursor += bytes;
-
-	bytes = sizeof(bool) * 4;
-	memcpy(cursor, &anchor_flags, bytes);
-	cursor += bytes;
-
-	bytes = sizeof(bool);
-	memcpy(cursor, &use_margin, bytes);
+	bytes = sizeof(RectPrivot);
+	memcpy(cursor, &pivot, bytes);
 	cursor += bytes;
 
 	bytes = sizeof(bool);
 	memcpy(cursor, &billboard, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(int);
-	int i = (int)rFrom;
-	memcpy(cursor, &i, bytes);
+	memcpy(cursor, &usePivot, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(math::float3) * 4;
+	memcpy(cursor, &corners, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(uint) * 4;
+	memcpy(cursor, &rectTransform, bytes);
+	cursor += bytes;
+
+	memcpy(cursor, &anchor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(uint) * 2;
+	memcpy(cursor, &lastPositionChange, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(float);
+	memcpy(cursor, &z, bytes);
+	cursor += bytes;
+
+	bytes *= 4;
+	memcpy(cursor, &anchor_percenatges, bytes);
 	cursor += bytes;
 }
 
 void ComponentRectTransform::OnInternalLoad(char *& cursor)
 {
-	size_t bytes = sizeof(uint) * 4;
-	memcpy(&rectTransform, cursor, bytes);
+	size_t bytes = sizeof(RectFrom);
+	memcpy(&rFrom, cursor, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(uint) * 4;
-	memcpy(&anchor, cursor, bytes);
-	cursor += bytes;
-
-	bytes = sizeof(bool) * 4;
-	memcpy(&anchor_flags, cursor, bytes);
-	cursor += bytes;
-
-	bytes = sizeof(bool);
-	memcpy(&use_margin, cursor, bytes);
+	bytes = sizeof(RectPrivot);
+	memcpy(&pivot, cursor, bytes);
 	cursor += bytes;
 
 	bytes = sizeof(bool);
 	memcpy(&billboard, cursor, bytes);
 	cursor += bytes;
-	
-	bytes = sizeof(int);
-	int i = 0;
-	memcpy(&i, cursor, bytes);
+
+	memcpy(&usePivot, cursor, bytes);
 	cursor += bytes;
-	rFrom = (RectFrom)i;
-	
-	LinkToUIModule();
+
+	bytes = sizeof(math::float3) * 4;
+	memcpy(&corners, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(uint) * 4;
+	memcpy(&rectTransform, cursor, bytes);
+	cursor += bytes;
+
+	memcpy(&anchor, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(uint) * 2;
+	memcpy(&lastPositionChange, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(float);
+	memcpy(&z, cursor, bytes);
+	cursor += bytes;
+
+	bytes *= 4;
+	memcpy(&anchor_percenatges, cursor, bytes);
+	cursor += bytes;
+
+	noUpdatefromCanvas = true;
 }
 
 void ComponentRectTransform::OnUniqueEditor()
@@ -466,6 +588,12 @@ void ComponentRectTransform::OnUniqueEditor()
 
 	ImGui::Text("Rect Transform");
 	ImGui::Spacing();
+
+	uint* rectParent = nullptr;
+	if (parent->cmp_canvas)
+		rectParent = App->ui->GetRectUI();
+	else
+		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
 
 	uint r_height = 0;
 	uint r_width = 0;
@@ -482,34 +610,17 @@ void ComponentRectTransform::OnUniqueEditor()
 	switch (rFrom)
 	{
 	case ComponentRectTransform::RECT:
-		if (rectParent != nullptr)
-		{
-			r_width = rectParent[Rect::XDIST];
-			r_height = rectParent[Rect::YDIST];
+		r_width = rectParent[Rect::XDIST];
+		r_height = rectParent[Rect::YDIST];
 
-			max_xpos = r_width - rectTransform[Rect::XDIST];
-			max_ypos = r_height - rectTransform[Rect::YDIST];
+		max_xpos = r_width - rectTransform[Rect::XDIST];
+		max_ypos = r_height - rectTransform[Rect::YDIST];
 
-			x_editor = rectTransform[Rect::X] - rectParent[Rect::X];
-			y_editor = rectTransform[Rect::Y] - rectParent[Rect::Y];
+		x_editor = rectTransform[Rect::X] - rectParent[Rect::X];
+		y_editor = rectTransform[Rect::Y] - rectParent[Rect::Y];
 
-			max_xdist = r_width - x_editor;
-			max_ydist = r_height - y_editor;
-		}
-		else
-		{
-			r_height = ui_rect[ModuleUI::Screen::HEIGHT];
-			r_width = ui_rect[ModuleUI::Screen::WIDTH];
-
-			max_xpos = r_width - rectTransform[Rect::XDIST];
-			max_ypos = r_height - rectTransform[Rect::YDIST];
-
-			x_editor = rectTransform[Rect::X];
-			y_editor = rectTransform[Rect::Y];
-
-			max_xdist = r_width - x_editor;
-			max_ydist = r_height - y_editor;
-		}
+		max_xdist = r_width - x_editor;
+		max_ydist = r_height - y_editor;
 		break;
 	case ComponentRectTransform::WORLD:
 	{
@@ -521,9 +632,12 @@ void ComponentRectTransform::OnUniqueEditor()
 		ImGui::Text("X: %u | Y: %u", rectTransform[Rect::X], rectTransform[Rect::Y]);
 		ImGui::Text("Dist X & Y");
 		ImGui::Text("Dist X: %u | Dist Y: %u", rectTransform[Rect::XDIST], rectTransform[Rect::YDIST]);
-		bool tmp_billboard = billboard;
-		if (ImGui::Checkbox("Billboard", &tmp_billboard))
-			billboard = tmp_billboard;
+		if (parent->cmp_canvas->GetType() == ComponentCanvas::CanvasType::WORLD)
+		{
+			bool tmp_billboard = billboard;
+			if (ImGui::Checkbox("Billboard", &tmp_billboard))
+				billboard = tmp_billboard;
+		}
 		return;
 	}
 	case ComponentRectTransform::RECT_WORLD:
@@ -541,8 +655,6 @@ void ComponentRectTransform::OnUniqueEditor()
 		break;
 	}
 
-	bool needed_recalculate = false;
-	bool size_changed = false;
 
 	ImGui::PushItemWidth(50.0f);
 
@@ -579,7 +691,6 @@ void ComponentRectTransform::OnUniqueEditor()
 			rectTransform[Rect::XDIST] = max_xdist;
 
 		needed_recalculate = true;
-		size_changed = true;
 	}
 	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
 	if (ImGui::DragScalar("##SizeY", ImGuiDataType_U32, (void*)&rectTransform[Rect::YDIST], 1, 0, &max_ydist, "%u", 1.0f))
@@ -588,113 +699,100 @@ void ComponentRectTransform::OnUniqueEditor()
 			rectTransform[Rect::YDIST] = max_ydist;
 
 		needed_recalculate = true;
-		size_changed = true;
 	}
 
 	if (needed_recalculate)
-	{
-		RecaculateAnchors();
-		RecaculatePercentage();
-		ChangeChildsRect(true, size_changed);
-	}
+		rectTransform_modified = true;
 
-	ImGui::Checkbox("Use margin", &use_margin);
-	ImGui::SameLine();
-	if (ImGui::Button("Set to childs"))
-		UseMarginChanged(use_margin);
-
-	if (use_margin)
+	ImGui::Checkbox("Use Pivot", &usePivot);
+	if (usePivot)
 	{
 		ImGui::PushItemWidth(150.0f);
-		ImGui::Text("Anchor");
+		ImGui::Text("Pivot");
 		ImGui::PushItemWidth(50.0f);
 
-		int current_anchor_flag = (int)anchor_flags[Anchor::LEFT];
-		ImGui::Text("Reference points");
-		ImGui::Text("Begin - Top/Left");
-		ImGui::Text("End - Bottom/Right");
-		if (ImGui::Combo("Using: ", &current_anchor_flag, ANCHORS_POINTS_STR))
+		int current_anchor_flag = (int)pivot;
+		if (ImGui::Combo("Using: ", &current_anchor_flag, PIVOT_POINTS_STR))
 		{
-			anchor_flags[Anchor::LEFT] = current_anchor_flag;
-			anchor_flags[Anchor::TOP] = current_anchor_flag;
-			anchor_flags[Anchor::RIGHT] = current_anchor_flag;
-			anchor_flags[Anchor::BOTTOM] = current_anchor_flag;
+			pivot = (RectPrivot)current_anchor_flag;
 
-			RecaculateAnchors();
+			CalculateAnchors();
 		}
-
-		needed_recalculate = false;
 
 		ImGui::PushItemWidth(50.0f);
 
 		ImGui::Text("Margin");
-		if (current_anchor_flag == RectPrivot::TOPLEFT)
+
+		switch (pivot)
 		{
-			uint max_leftAnhor = 0;
-			uint max_topAnchor = 0;
-			if (rectParent)
+			case ComponentRectTransform::P_TOPLEFT:
 			{
+				uint max_leftAnhor = 0;
+				uint max_topAnchor = 0;
 				max_leftAnhor = rectParent[Rect::XDIST] - rectTransform[Rect::XDIST];
 				max_topAnchor = rectParent[Rect::YDIST] - rectTransform[Rect::YDIST];
+
+				ImGui::Text("Top Left");
+				if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_leftAnhor, "%u", 1.0f))
+					needed_recalculate = true;
+				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+				if (ImGui::DragScalar("##MTop", ImGuiDataType_U32, (void*)&anchor[Anchor::TOP], 1, 0, &max_topAnchor, "%u", 1.0f))
+					needed_recalculate = true;
+				break;
 			}
-			else
+			case ComponentRectTransform::P_TOPRIGHT:
 			{
-				max_leftAnhor = ui_rect[ModuleUI::Screen::WIDTH] - rectTransform[Rect::XDIST];
-				max_topAnchor = ui_rect[ModuleUI::Screen::HEIGHT] - rectTransform[Rect::YDIST];
+				break;
 			}
-
-			ImGui::Text("Left/Top");
-			if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_leftAnhor, "%u", 1.0f))
-				needed_recalculate = true;
-			ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-			if (ImGui::DragScalar("##MTop", ImGuiDataType_U32, (void*)&anchor[Anchor::TOP], 1, 0, &max_topAnchor, "%u", 1.0f))
-				needed_recalculate = true;
-
-			if (needed_recalculate)
-				RecaculateAnchors(RectPrivot::TOPLEFT);
-		}
-		else
-		{
-			uint max_rightAnhor = 0;
-			uint max_bottomAnchor = 0;
-
-			if (rectParent)
+			case ComponentRectTransform::P_BOTTOMLEFT:
 			{
+				break;
+			}
+			case ComponentRectTransform::P_BOTTOMRIGHT:
+			{
+				uint max_rightAnhor = 0;
+				uint max_bottomAnchor = 0;
+
 				max_rightAnhor = rectParent[Rect::XDIST] - rectTransform[Rect::XDIST];
 				max_bottomAnchor = rectParent[Rect::YDIST] - rectTransform[Rect::YDIST];
+
+				ImGui::Text("Bottom Right");
+				if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_rightAnhor, "%u", 1.0f))
+					needed_recalculate = true;
+				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+				if (ImGui::DragScalar("##MBottom", ImGuiDataType_U32, (void*)&anchor[Anchor::BOTTOM], 1, 0, &max_bottomAnchor, "%u", 1.0f))
+					needed_recalculate = true;
 			}
-			else
+				break;
+			case ComponentRectTransform::P_CENTER:
 			{
-				max_rightAnhor = ui_rect[ModuleUI::Screen::WIDTH] - rectTransform[Rect::XDIST];
-				max_bottomAnchor = ui_rect[ModuleUI::Screen::HEIGHT] - rectTransform[Rect::YDIST];
+				break;
 			}
-
-			ImGui::Text("Right/Bottom");
-			if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_rightAnhor, "%u", 1.0f))
-				needed_recalculate = true;
-			ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-			if (ImGui::DragScalar("##MBottom", ImGuiDataType_U32, (void*)&anchor[Anchor::BOTTOM], 1, 0, &max_bottomAnchor, "%u", 1.0f))
-				needed_recalculate = true;
-
-			if (needed_recalculate)
-				RecaculateAnchors(RectPrivot::BOTTOMRIGHT);
+			case ComponentRectTransform::P_TOP:
+			{
+				break;
+			}
+			case ComponentRectTransform::P_LEFT:
+			{
+				break;
+			}
+			case ComponentRectTransform::P_RIGHT:
+			{
+				break;
+			}
+			case ComponentRectTransform::P_BOTTOM:
+			{
+				break;
+			}
 		}
 	}
+
+	if (needed_recalculate)
+		RecalculateAndChilds();
 #endif
 }
 
 float ComponentRectTransform::GetZ() const
 {
 	return z;
-}
-
-void ComponentRectTransform::LinkToUIModule()
-{
-	if (rFrom == RectFrom::WORLD)
-	{
-		App->ui->componentsWorldUI.push_back(this);
-		App->ui->GOsWorldCanvas.push_back(parent);
-	}
-	else
-		App->ui->componentsUI.push_back(this);
 }
