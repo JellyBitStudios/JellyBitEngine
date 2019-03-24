@@ -54,6 +54,8 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 
 	circleCreation.r = componentEmitter.circleCreation.r;
 
+	coneHeight = componentEmitter.coneHeight;
+
 	normalShapeType = componentEmitter.normalShapeType;
 
 	startValues = componentEmitter.startValues;
@@ -77,6 +79,7 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 		particleAnim.textureColumns = componentEmitter.particleAnim.textureColumns;
 		particleAnim.textureRowsNorm = componentEmitter.particleAnim.textureRowsNorm;
 		particleAnim.textureColumnsNorm = componentEmitter.particleAnim.textureColumnsNorm;
+		particleAnim.randAnim = componentEmitter.particleAnim.randAnim;
 	}
 
 	dieOnAnimation = componentEmitter.dieOnAnimation;
@@ -487,9 +490,6 @@ void ComponentEmitter::ParticleColor()
 				startValues.color.sort();
 			}
 		}
-
-		ImGui::Text("Color Average");
-		ImGui::DragFloat("##AverageColor", &colorAverage, 0.05f, 0.0f, 1.0f, "%.2f");
 	}
 #endif
 }
@@ -605,6 +605,7 @@ void ComponentEmitter::ParticleTexture()
 				particleAnim.textureColumnsNorm = 1.0f / particleAnim.textureColumns;
 
 			ImGui::Checkbox("Kill particle with animation", &dieOnAnimation);
+			ImGui::Checkbox("Random Starting Frame", &particleAnim.randAnim);
 			if (dieOnAnimation)
 			{
 				checkLife = false;
@@ -810,7 +811,7 @@ uint ComponentEmitter::GetInternalSerializationBytes()
 		+ sizeof(gravity) + sizeof(posDifAABB) + sizeof(loop) + sizeof(burst) + sizeof(startOnPlay)
 		+ sizeof(minPart) + sizeof(maxPart) + sizeof(char) * burstTypeName.size() + sizeof(uint)//Size of name;
 		+ sizeof(math::float2) * 7 + sizeof(math::float3) * 2 + sizeof(bool) * 2 + sizeOfList//Bytes of all Start Values Struct
-		/*+ sizeof(localSpace)*/;		//TODO PROGRAMER -> Don't sum localSpace before load
+		+ sizeof(localSpace) + sizeof(coneHeight);		//TODO PROGRAMER -> Don't sum localSpace before load
 }
 
 math::float3 ComponentEmitter::GetPos()
@@ -875,8 +876,8 @@ void ComponentEmitter::OnInternalSave(char *& cursor)
 	memcpy(cursor, &startOnPlay, bytes);
 	cursor += bytes;
 
-	/*memcpy(cursor, &localSpace, bytes);
-	cursor += bytes;*/
+	memcpy(cursor, &localSpace, bytes);
+	cursor += bytes;
 
 	bytes = sizeof(int);
 	memcpy(cursor, &rateOverTime, bytes);
@@ -902,6 +903,9 @@ void ComponentEmitter::OnInternalSave(char *& cursor)
 	cursor += bytes;
 
 	memcpy(cursor, &gravity, bytes);
+	cursor += bytes;
+
+	memcpy(cursor, &coneHeight, bytes);
 	cursor += bytes;
 
 	uint uuid = 0u;
@@ -992,8 +996,8 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	cursor += bytes;
 
 	//TODO PROGRAMMER: Coment this two lines then save scene and Discomment it
-	/*memcpy(&localSpace, cursor, bytes);
-	cursor += bytes;*/
+	memcpy(&localSpace, cursor, bytes);
+	cursor += bytes;
 
 	bytes = sizeof(int);
 	memcpy(&rateOverTime, cursor, bytes);
@@ -1019,6 +1023,9 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	cursor += bytes;
 	
 	memcpy(&gravity, cursor, bytes);
+	cursor += bytes;
+
+	memcpy(&coneHeight, cursor, bytes);
 	cursor += bytes;
 
 	uint uuid = 0u;
