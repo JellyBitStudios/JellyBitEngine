@@ -64,6 +64,11 @@ struct ParticleAnimation
 	float textureColumnsNorm = 1.0f;
 	float animationSpeed = 0.1f;
 	bool randAnim = false;
+
+	uint GetPartAnimationSerializationBytes()
+	{ return sizeof(bool) + sizeof(float) * 3 + sizeof(int) * 2; }
+	void OnInternalSave(char *& cursor);
+	void OnInternalLoad(char *& cursor);
 };
 
 struct StartValues

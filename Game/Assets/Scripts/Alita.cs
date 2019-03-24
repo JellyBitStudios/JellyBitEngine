@@ -14,8 +14,10 @@ public class Alita : JellyScript
     //Abilities
     Dash dash = null;
     AreaAttk areaAttk = null;
+    BurstAttack burstAttk = null;
     private float ability_anim_timer = 0.0f; 
     public float area_time = 1.0f;
+    public float burst_time = 1.0f;
 
     // Raycast
     public LayerMask terrainMask = new LayerMask();
@@ -35,7 +37,7 @@ public class Alita : JellyScript
         GOING_TO_ATTK,
         ATTK,
         DASHING,
-        AREA_ATTK
+        ABILITY
     }
     Alita_State state = Alita_State.IDLE;
 
@@ -46,6 +48,14 @@ public class Alita : JellyScript
         THIRD_ATTK
     }
     Attack_State attkState = Attack_State.FIRST_ATTK;
+
+    private enum Abilities_States
+    {
+        NONE,
+        AREA_ATTACK,
+        BURST_ATTACK
+    }
+    Abilities_States abilState = Abilities_States.NONE;
 
     //Audio
     AlitaAudio soundFX;
@@ -77,6 +87,7 @@ public class Alita : JellyScript
         agent = gameObject.GetComponent<NavMeshAgent>();
         dash = gameObject.GetComponent<Dash>();
         areaAttk = gameObject.GetComponent<AreaAttk>();
+        burstAttk = gameObject.GetComponent<BurstAttack>();
         soundFX = gameObject.GetComponent<AlitaAudio>();
 
         if (animManag != null)
@@ -95,14 +106,14 @@ public class Alita : JellyScript
             if (enemyPressed)
                 CoolLeftMouseClickDown();
 
-            if (state != Alita_State.DASHING)
+            if (state != Alita_State.DASHING && state != Alita_State.ABILITY)
                 CheckForMouseClick();
 
             if (state == Alita_State.IDLE || state == Alita_State.RUNNING)
                 CheckForDash();
 
-            if (state != Alita_State.ATTK && state != Alita_State.AREA_ATTK && state != Alita_State.DASHING)
-                CheckForSPAttack(); //Only special attacks when no normal attacking
+            if (state != Alita_State.ATTK && state != Alita_State.ABILITY && state != Alita_State.DASHING)
+                CheckForSPAbility(); //Only special attacks when no normal attacking
         }
         else
             Debug.Log("AGENT IS NULL");
@@ -135,8 +146,18 @@ public class Alita : JellyScript
                 ExecuteDashing();
                 break;
 
-            case Alita_State.AREA_ATTK:
-                ExecuteAreaAttack();
+            case Alita_State.ABILITY:
+                switch (abilState) {
+                    case Abilities_States.AREA_ATTACK:
+                        ExecuteAreaAttack();
+                        break;
+                    case Abilities_States.BURST_ATTACK:
+                        ExecuteBurstAttack();
+                        break;
+                    default:
+                        SwitchStateIdle();
+                        break;
+                }
                 break;
         }
     }
@@ -161,7 +182,7 @@ public class Alita : JellyScript
         {
             bool dashing = false;
             if (dash != null)
-                dashing = dash.DashPush(agent);
+                dashing = dash.StartDash(agent);
 
             if (dashing)
             {
@@ -173,28 +194,51 @@ public class Alita : JellyScript
         }
     }
 
-    private void CheckForSPAttack()
+    private void CheckForSPAbility()
     {
-        if (!areaAttk.IsAreaCooldown())
+        //Area Attack
+        if (areaAttk != null)
+            if (!areaAttk.IsAreaCooldown())
+                CheckForAreaAttack();
+
+        //Burst Attack
+        if (burstAttk != null)
+            if (!burstAttk.IsBurstCoolDown())
+                CheckForBurstAttack();
+
+    }
+
+    private void CheckForAreaAttack() {
+
+        if (Input.GetKeyDown(KeyCode.KEY_Q))
         {
-            if (Input.GetKeyDown(KeyCode.KEY_Q))
+            areaAttk.ToggleAreaVisibility();
+        }
+
+        if (Input.GetKeyUp(KeyCode.KEY_Q))
+        {
+            bool areaActive = false;
+            areaActive = areaAttk.HideArea();
+
+            if (areaActive)
             {
-                areaAttk.ToggleAreaVisibility();
+                agent.maxSpeed = 0;
+
+                SwitchStateAreaAttack();
+                soundFX.CleanAlitaAudio();
             }
+        }
+    }
 
-            if (Input.GetKeyUp(KeyCode.KEY_Q))
-            {
-                bool areaActive = false;
-                areaActive = areaAttk.HideArea();
+    private void CheckForBurstAttack() {
+        if (Input.GetKeyDown(KeyCode.KEY_W))
+        {
+            agent.maxSpeed = 0;
 
-                if (areaActive)
-                {
-                    agent.maxSpeed = 0;
-
-                    SwitchStateAreaAttack();
-                    soundFX.CleanAlitaAudio();
-                }
-            }
+            SwitchStateBurstAttack();
+            burstAttk.StartBurstAttack();
+            Debug.Log("STARTING BURST");
+            soundFX.CleanAlitaAudio();
         }
     }
 
@@ -271,9 +315,6 @@ public class Alita : JellyScript
     private void NormalAttack()
     {
         attk_cool_down += Time.deltaTime;
-
-        //if (audioSource != null)
-        //    ModuleAudio.Instance.CleanAudio(audioSource);
 
         if(attk_cool_down >= 0.5f && !soundPunch)
         {
@@ -442,12 +483,26 @@ public class Alita : JellyScript
 
     void SwitchStateAreaAttack()
     {
-        state = Alita_State.AREA_ATTK;
+        state = Alita_State.ABILITY;
+        abilState = Abilities_States.AREA_ATTACK;
+
         if (anim != null)
             anim.PlayAreaAttack();
 
         Debug.Log("AREA ATTACK!!");
     }
+
+    void SwitchStateBurstAttack()
+    {
+        state = Alita_State.ABILITY;
+        abilState = Abilities_States.BURST_ATTACK;
+
+        //if (anim != null)
+        //    anim.PlayAreaAttack();
+
+        Debug.Log("BURST ATTACK!!");
+    }
+
     //Executing state methods
     //---------------------------------------------------------------------------------------------------------------------------------
     void ExecuteIdle()
@@ -496,7 +551,7 @@ public class Alita : JellyScript
     void ExecuteDashing()
     {
         bool dashing = true;
-        dashing = dash.CheckForPushDashEnd(agent);
+        dashing = dash.CheckForDashEnd(agent);
 
         if (!dashing)
         {
@@ -525,6 +580,18 @@ public class Alita : JellyScript
 
             soundFX.PlayAreaAttackHit();
 
+        }
+    }
+
+    void ExecuteBurstAttack()
+    {
+        //Purely animation execution and waiting it to finish
+        ability_anim_timer += Time.deltaTime;
+
+        if (ability_anim_timer >= burst_time)
+        {
+            ability_anim_timer = 0.0f;
+            SwitchStateIdle();
         }
     }
 

@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using JellyBitEngine;
-using JellyBitEngine.SceneManager;
 
 public class Unit : JellyScript
 {
@@ -28,7 +27,7 @@ public class Unit : JellyScript
     public GameObject fake_dead = null;
     private bool alita_dies = false;
     private float alita_die_timer = 0.0f;
-    public float alita_die_time = 0.1f;
+    public float alita_die_time = 1.0f;
 
     public enum Unit_Type
     {
@@ -49,16 +48,6 @@ public class Unit : JellyScript
 
     public override void Update()
     {
-        if (Input.GetKeyDown(KeyCode.KEY_M))
-        {
-            SceneManager.LoadScene("main scene");
-        }
-
-        if (current_life <= 0)
-        {
-            Die();
-        }
-
         if (hitted)
         {
             particle_time += Time.deltaTime;
@@ -74,7 +63,7 @@ public class Unit : JellyScript
         {
             if(alita_die_timer >= alita_die_time)
             {
-                SceneManager.LoadScene("main scene");
+                //scene should be loaded
             }
 
             else
@@ -94,6 +83,10 @@ public class Unit : JellyScript
             hitted = true;
         }
 
+        if (current_life <= 0)
+        {
+            Die();
+        }
         else
         {
             switch (unit_type)
@@ -107,7 +100,7 @@ public class Unit : JellyScript
                     ModuleAudio.Instance.PlayHittedActor(audioSource, unit_type, current_life, max_life, ModuleAudio.Instance.auchAlita_1,
                                                                                                         ModuleAudio.Instance.auchAlita_2,
                                                                                               ModuleAudio.Instance.auchAlita_3, 30.0f);
-                   
+                    alita_dies = true;
                     break;
                 case Unit_Type.ENEMY:
                     //play auchrobot
@@ -124,14 +117,16 @@ public class Unit : JellyScript
         switch (unit_type)
         {
             case Unit_Type.ALITA:
+                current_life = max_life;
                 Debug.Log("SEÑOR STARK NO ME ENCUENTRO MUY BIEN...");
                 ModuleAudio.Instance.CanPlayRunning();
                 ModuleAudio.Instance.ResetIdleCounter();
                 ModuleAudio.Instance.CleanAudio(audioSource);
                 ModuleAudio.Instance.PlayDiyingFX(audioSource);
-                alita_dies = true;
-                break;
 
+
+
+                break;
             case Unit_Type.ENEMY:
                 if (fake_dead != null)
                     GameObject.Instantiate(fake_dead, gameObject.transform.position, gameObject.transform.rotation);
