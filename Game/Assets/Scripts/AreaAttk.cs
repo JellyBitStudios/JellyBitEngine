@@ -12,8 +12,8 @@ public class AreaAttk : JellyScript
 
     //Area cooldown
     private bool isAreaCooldown = false;
-    float timeCoolDown = 3.0f;
-    float cooling = 0.0f;
+    public float timeCoolDown = 3.0f;
+    public float cooling = 0.0f;
 
     public override void Awake()
     {

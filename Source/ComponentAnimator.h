@@ -22,6 +22,10 @@ public:
 
 	bool PlayAnimation(const char* anim_name);
 
+	/*Returns -1 if anything goes wrong*/
+	int GetCurrentAnimationFrame();
+	const char* GetCurrentAnimationName();
+
 	void OnInternalSave(char*& cursor);
 	void OnInternalLoad(char*& cursor);
 	void OnEditor();

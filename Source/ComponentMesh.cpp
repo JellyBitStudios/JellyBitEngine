@@ -42,29 +42,6 @@ void ComponentMesh::SetResource(uint res_uuid)
 	Resource* resource = App->res->GetResource(res_uuid);
 
 	res = resource ? res_uuid : 0;
-
-	if (resource)
-	{
-		//Calculate the new mesh BoundingBox
-		System_Event createBB;
-		createBB.goEvent.gameObject = parent;
-		createBB.type = System_Event_Type::CalculateBBoxes;
-		App->PushSystemEvent(createBB);
-
-		// Mesh updated: recalculate bounding boxes
-		System_Event updateBB;
-		updateBB.goEvent.gameObject = parent;
-		updateBB.type = System_Event_Type::RecalculateBBoxes;
-		App->PushSystemEvent(updateBB);
-
-		if (parent->IsStatic())
-		{
-			// Bounding box changed: recreate quadtree
-			System_Event newEvent;
-			newEvent.type = System_Event_Type::RecreateQuadtree;
-			App->PushSystemEvent(newEvent);
-		}
-	}
 }
 
 void ComponentMesh::OnUniqueEditor()
@@ -97,6 +74,27 @@ void ComponentMesh::OnUniqueEditor()
 			{
 				uint payload_n = *(uint*)payload->Data;
 				SetResource(payload_n);
+
+				//Calculate the new mesh BoundingBox
+				System_Event createBB;
+				createBB.goEvent.gameObject = parent;
+				createBB.type = System_Event_Type::CalculateBBoxes;
+				App->PushSystemEvent(createBB);
+
+				// Mesh updated: recalculate bounding boxes
+				System_Event updateBB;
+				updateBB.goEvent.gameObject = parent;
+				updateBB.type = System_Event_Type::RecalculateBBoxes;
+				App->PushSystemEvent(updateBB);
+
+				if (parent->IsStatic())
+				{
+					// Bounding box changed: recreate quadtree
+					System_Event newEvent;
+					newEvent.type = System_Event_Type::RecreateQuadtree;
+					App->PushSystemEvent(newEvent);
+				}
+
 			}
 			ImGui::EndDragDropTarget();
 		}
@@ -128,6 +126,12 @@ void ComponentMesh::OnInternalLoad(char*& cursor)
 	memcpy(&loadedRes, cursor, bytes);
 	cursor += bytes;
 	SetResource(loadedRes);
+
+	//Calculate the new mesh BoundingBox
+	System_Event createBB;
+	createBB.goEvent.gameObject = parent;
+	createBB.type = System_Event_Type::CalculateBBoxes;
+	App->PushSystemEvent(createBB);
 
 	bytes = sizeof(bool);
 	memcpy(&nv_walkable, cursor, bytes);

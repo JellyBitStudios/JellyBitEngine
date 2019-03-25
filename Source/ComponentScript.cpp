@@ -3097,11 +3097,14 @@ void ComponentScript::TemporalSave()
 	}
 
 	tempBufferBytes = GetPublicVarsSerializationBytes();
-	tempBuffer = new char[tempBufferBytes];
+	if (tempBufferBytes != 0)
+	{
+		tempBuffer = new char[tempBufferBytes];
 
-	char* cursor = tempBuffer;
+		char* cursor = tempBuffer;
 
-	SavePublicVars(cursor);
+		SavePublicVars(cursor);
+	}
 }
 
 void ComponentScript::TemporalLoad()

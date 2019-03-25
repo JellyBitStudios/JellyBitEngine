@@ -20,7 +20,14 @@ public class Unit : JellyScript
     //Audio Source
     private AudioSource audioSource = null;
 
+    // UIController
+    public GameObject canvas = null;
+    private UIController ui_controller = null;
+
     public GameObject fake_dead = null;
+    private bool alita_dies = false;
+    private float alita_die_timer = 0.0f;
+    public float alita_die_time = 1.0f;
 
     public enum Unit_Type
     {
@@ -34,6 +41,9 @@ public class Unit : JellyScript
     public override void Start()
     {
         audioSource = gameObject.GetComponent<AudioSource>();
+
+        if (canvas != null)
+            ui_controller = canvas.GetComponent<UIController>();
     }
 
     public override void Update()
@@ -46,6 +56,19 @@ public class Unit : JellyScript
             {
                 particleHit.GetComponent<ParticleEmitter>().Stop();
                 particle_time = 0.0f;
+            }
+        }
+
+        else if (alita_dies)
+        {
+            if(alita_die_timer >= alita_die_time)
+            {
+                //scene should be loaded
+            }
+
+            else
+            {
+                alita_die_timer += Time.deltaTime;
             }
         }
     }
@@ -62,25 +85,7 @@ public class Unit : JellyScript
 
         if (current_life <= 0)
         {
-            switch (unit_type)
-            {
-                case Unit_Type.ALITA:
-                    current_life = max_life;
-                    Debug.Log("SEÑOR STARK NO ME ENCUENTRO MUY BIEN...");
-                    ModuleAudio.Instance.CanPlayRunning();
-                    ModuleAudio.Instance.ResetIdleCounter();
-                    ModuleAudio.Instance.CleanAudio(audioSource);
-                    ModuleAudio.Instance.PlayDiyingFX(audioSource);
-                    break;
-                case Unit_Type.ENEMY:
-                    if(fake_dead != null)
-                        GameObject.Instantiate(fake_dead, gameObject.transform.position,gameObject.transform.rotation);
-                    Destroy(gameObject);
-                    break;
-                case Unit_Type.NONE:
-                    Debug.Log("There is type of unit to damage!!!");
-                    break;
-            }
+            Die();
         }
         else
         {
@@ -92,9 +97,10 @@ public class Unit : JellyScript
                     ModuleAudio.Instance.CanPlayRunning();
                     ModuleAudio.Instance.ResetIdleCounter();
                     ModuleAudio.Instance.CleanAudio(audioSource);
-                    ModuleAudio.Instance.PlayHittedActor(audioSource,unit_type,current_life,max_life,ModuleAudio.Instance.auchAlita_1,
+                    ModuleAudio.Instance.PlayHittedActor(audioSource, unit_type, current_life, max_life, ModuleAudio.Instance.auchAlita_1,
                                                                                                         ModuleAudio.Instance.auchAlita_2,
-                                                                                                        ModuleAudio.Instance.auchAlita_3, 30.0f);
+                                                                                              ModuleAudio.Instance.auchAlita_3, 30.0f);
+                    alita_dies = true;
                     break;
                 case Unit_Type.ENEMY:
                     //play auchrobot
@@ -104,6 +110,43 @@ public class Unit : JellyScript
                     break;
             }
         }
+    }
+
+    public void Die()
+    {
+        switch (unit_type)
+        {
+            case Unit_Type.ALITA:
+                current_life = max_life;
+                Debug.Log("SEÑOR STARK NO ME ENCUENTRO MUY BIEN...");
+                ModuleAudio.Instance.CanPlayRunning();
+                ModuleAudio.Instance.ResetIdleCounter();
+                ModuleAudio.Instance.CleanAudio(audioSource);
+                ModuleAudio.Instance.PlayDiyingFX(audioSource);
+
+
+
+                break;
+            case Unit_Type.ENEMY:
+                if (fake_dead != null)
+                    GameObject.Instantiate(fake_dead, gameObject.transform.position, gameObject.transform.rotation);
+                gameObject.active = false;
+
+                if (ui_controller != null)
+                {
+                    Item item;
+                    item.id = 1;
+                    ui_controller.AddItem(item);
+                }
+
+                Destroy(gameObject);
+                break;
+            case Unit_Type.NONE:
+                Debug.Log("There is type of unit to damage!!!");
+                break;
+        }
+
+
     }
 
 }

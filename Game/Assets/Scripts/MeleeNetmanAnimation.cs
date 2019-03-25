@@ -4,7 +4,7 @@ using System;
 
 class MeleeNetmanAnimation : JellyScript
 {
-    public GameObject enemy;
+    public GameObject enemy = null;
 
     public float recoil_time = 1.0f;
     public float velocity_to_recoil = 1.0f;
@@ -30,9 +30,11 @@ class MeleeNetmanAnimation : JellyScript
 
     public override void Update()
     {
-        direction = (enemy.transform.position - transform.position).normalized();
+        if (enemy != null)
+        {
+            direction = (enemy.transform.position - transform.position).normalized();
 
-      
+
             if (!recoil_finish)
             {
                 if (actual_time <= recoil_time)
@@ -74,9 +76,7 @@ class MeleeNetmanAnimation : JellyScript
                     hit_finish = false;
                 }
             }
-  
-
-
+        }
     }
 
 }

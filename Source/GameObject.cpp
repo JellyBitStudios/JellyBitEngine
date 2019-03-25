@@ -539,7 +539,7 @@ bool GameObject::EqualsToChildrenOrThis(const void* isEqual) const
 
 Component* GameObject::AddComponent(ComponentTypes componentType, bool createDependencies, bool includeInModules)
 {
-	Component* newComponent;
+	Component* newComponent = nullptr;
 	Component* newMaterial = 0;
 
 	switch (componentType)
@@ -571,7 +571,7 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		break;
 	case ComponentTypes::EmitterComponent:
 		assert(cmp_emitter == NULL);
-		newComponent = cmp_emitter = new ComponentEmitter(this);
+		newComponent = cmp_emitter = new ComponentEmitter(this, includeInModules);
 		break;
 	case ComponentTypes::CanvasComponent:
 		assert(cmp_canvas == nullptr);
@@ -652,6 +652,9 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		break;
 	}
 
+
+	if (!newComponent)
+		int a = 2;
 	components.push_back(newComponent);
 
 	if (newMaterial)
