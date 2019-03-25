@@ -14,7 +14,8 @@
 
 ComponentPlaneCollider::ComponentPlaneCollider(GameObject* parent, bool include) : ComponentCollider(parent, ComponentTypes::PlaneColliderComponent, include)
 {
-	EncloseGeometry();
+	if (include)
+		EncloseGeometry();
 
 	colliderType = ColliderTypes::PlaneCollider;
 
@@ -129,8 +130,7 @@ void ComponentPlaneCollider::OnInternalLoad(char*& cursor)
 
 void ComponentPlaneCollider::EncloseGeometry()
 {
-	//if (gShape != nullptr)
-		RecalculateShape();
+	RecalculateShape();
 }
 
 void ComponentPlaneCollider::RecalculateShape()
@@ -158,13 +158,14 @@ void ComponentPlaneCollider::RecalculateShape()
 void ComponentPlaneCollider::SetNormal(const math::float3& normal)
 {
 	assert(normal.IsFinite());
-	this->normal = normal;
 
 	if (normal.IsZero())
 	{
 		CONSOLE_LOG(LogTypes::Warning, "The plane transform cannot be updated since the normal is zero");
 		return;
 	}
+
+	this->normal = normal;
 
 	physx::PxTransform relativePose = physx::PxTransformFromPlaneEquation(physx::PxPlane(normal.x, normal.y, normal.z, distance));
 	if (gShape != nullptr)

@@ -12,7 +12,8 @@
 
 ComponentCapsuleCollider::ComponentCapsuleCollider(GameObject* parent, bool include) : ComponentCollider(parent, ComponentTypes::CapsuleColliderComponent, include)
 {
-	EncloseGeometry();
+	if (include)
+		EncloseGeometry();
 
 	colliderType = ColliderTypes::CapsuleCollider;
 
@@ -179,8 +180,7 @@ void ComponentCapsuleCollider::EncloseGeometry()
 		}
 	}
 
-	//if (gShape != nullptr)
-		RecalculateShape();
+	RecalculateShape();
 }
 
 void ComponentCapsuleCollider::RecalculateShape()
