@@ -811,8 +811,8 @@ uint ComponentEmitter::GetInternalSerializationBytes()
 		+ sizeof(uint)/*size of particleColor list*/ + sizeof(boxCreation) + sizeof(burstType) + sizeof(float) * 2 //Circle and Sphere rad
 		+ sizeof(gravity) + sizeof(posDifAABB) + sizeof(loop) + sizeof(burst) + sizeof(startOnPlay)
 		+ sizeof(minPart) + sizeof(maxPart) + sizeof(char) * burstTypeName.size() + sizeof(uint)//Size of name;
-		+ sizeof(math::float2) * 7 + sizeof(math::float3) * 2 + sizeof(bool) * 2 + sizeOfList + 6//Bytes of all Start Values Struct
-		/*+ sizeof(localSpace) + sizeof(coneHeight)*/;		//TODO PROGRAMER -> Don't sum localSpace before load
+		+ sizeof(math::float2) * 7 + sizeof(math::float3) * 2 + sizeof(bool) * 2 + sizeOfList//Bytes of all Start Values Struct
+		+ sizeof(localSpace) + sizeof(coneHeight);		//TODO PROGRAMER -> Don't sum localSpace before load
 }
 
 math::float3 ComponentEmitter::GetPos()
@@ -995,8 +995,8 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	cursor += bytes;
 
 	//TODO PROGRAMMER: Coment this two lines then save scene and Discomment it
-	/*memcpy(&localSpace, cursor, bytes);
-	cursor += bytes;*/
+	memcpy(&localSpace, cursor, bytes);
+	cursor += bytes;
 
 	bytes = sizeof(int);
 	memcpy(&rateOverTime, cursor, bytes);
@@ -1024,8 +1024,8 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	memcpy(&gravity, cursor, bytes);
 	cursor += bytes;
 
-	/*memcpy(&coneHeight, cursor, bytes);
-	cursor += bytes;*/
+	memcpy(&coneHeight, cursor, bytes);
+	cursor += bytes;
 
 	uint uuid = 0u;
 	if (subEmitter)
@@ -1271,7 +1271,6 @@ void ParticleAnimation::OnInternalSave(char *& cursor)
 	memcpy(cursor, &randAnim, bytes);
 	cursor += bytes;
 	
-
 	bytes = sizeof(int);
 	memcpy(cursor, &textureRows, bytes);
 	cursor += bytes;
@@ -1296,9 +1295,9 @@ void ParticleAnimation::OnInternalLoad(char *& cursor)
 	memcpy(&isParticleAnimated, cursor, bytes);
 	cursor += bytes;
 
-	/*memcpy(&randAnim,cursor, bytes);
+	memcpy(&randAnim,cursor, bytes);
 	cursor += bytes;
-	*/
+	
 	bytes = sizeof(int);
 	memcpy(&textureRows, cursor, bytes);
 	cursor += bytes;

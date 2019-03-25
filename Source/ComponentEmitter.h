@@ -66,7 +66,7 @@ struct ParticleAnimation
 	bool randAnim = false;
 
 	uint GetPartAnimationSerializationBytes()
-	{ return sizeof(bool) + sizeof(float) * 3 + sizeof(int) * 2; }
+	{ return sizeof(bool) * 2 + sizeof(float) * 3 + sizeof(int) * 2; }
 	void OnInternalSave(char *& cursor);
 	void OnInternalLoad(char *& cursor);
 };
@@ -144,7 +144,7 @@ public:
 #endif
 	int GetEmition() const;
 
-	uint GetInternalSerializationBytes();
+	uint GetInternalSerializationBytes() override;
 	virtual void OnInternalSave(char*& cursor);
 	virtual void OnInternalLoad(char*& cursor);
 public:
