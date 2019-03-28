@@ -22,7 +22,10 @@ ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType
 			parent->AddComponent(ComponentTypes::CanvasRendererComponent);
 
 		maxLabelSize = App->ft->LoadFont("../Game/Assets/Textures/Font/arial.ttf", size, charactersBitmap);
-		rect = new ComponentRectTransform(parent, RectTransformComponent, ComponentRectTransform::RectFrom::RECT);
+
+		finalText = text;
+
+		needed_recaclculate = true;
 	}
 }
 
@@ -30,8 +33,11 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 {
 	if (includeComponents)
 	{
-		charactersBitmap = componentLabel.charactersBitmap;
-		rect = new ComponentRectTransform(*componentLabel.rect, parent, includeComponents);
+		charactersBitmap = componentLabel.charactersBitmap;		
+		color = componentLabel.color;
+		labelWord = componentLabel.labelWord;
+		finalText = componentLabel.finalText;
+		memcpy(text, finalText.data(), finalText.length());
 	}
 }
 
@@ -109,6 +115,75 @@ void ComponentLabel::Draw(uint ui_shader, uint VAO)
 
 void ComponentLabel::Update()
 {
+	if (needed_recaclculate)
+	{
+		uint* rect = parent->cmp_rectTransform->GetRect();
+		float sizeNorm = size / (float)sizeLoaded;
+		uint contRows = 0;
+		if (!charactersBitmap.empty())
+			for (std::string::const_iterator c = finalText.begin(); c != finalText.end(); ++c)
+			{
+				LabelLetter l;
+				strcpy(&l.letter, c._Ptr);
+
+				if ((int)(*c) >= 32 && (int)(*c) < 128)//ASCII TABLE
+				{
+					Character character;
+					character = charactersBitmap.find(*c)->second;
+
+					uint x = rect[ComponentRectTransform::Rect::X] + character.bearing.x * sizeNorm;
+					//								Normalize pos with all heights	 //	Check Y-ofset for letters that write below origin "p" //	 Control lines enters
+					uint y = rect[ComponentRectTransform::Rect::Y] + ((maxLabelSize - character.size.y) + ((character.size.y) - character.bearing.y)) * sizeNorm + contRows * maxLabelSize * sizeNorm;
+
+					if (x + character.size.x * sizeNorm > rectParent[0] + rectParent[2])
+					{
+						y += maxLabelSize * sizeNorm;
+						x = rectParent[0] + character.bearing.x * sizeNorm;
+						contRows++;
+					}
+					rect->SetRectPos(x, y);
+					rect->SetRectDim(character.size.x * sizeNorm, character.size.y * sizeNorm);
+					rect->Update();
+
+					if (rect->IsInRect(rectParent))
+					{
+						//Shader
+						glUseProgram(ui_shader);
+						SetRectToShader(ui_shader);
+						glUniform1i(glGetUniformLocation(ui_shader, "using_texture"), 0);
+						glUniform1i(glGetUniformLocation(ui_shader, "isLabel"), 1);
+
+						glUniform4f(glGetUniformLocation(ui_shader, "spriteColor"), color.x, color.y, color.z, color.w);
+
+						glActiveTexture(GL_TEXTURE0);
+						glBindTexture(GL_TEXTURE_2D, character.textureID);
+						glUniform1ui(glGetUniformLocation(ui_shader, "image"), 0);
+
+						glBindVertexArray(VAO);
+						glDrawArrays(GL_TRIANGLES, 0, 6);
+
+						glBindTexture(GL_TEXTURE_2D, 0);
+						glBindVertexArray(0);
+
+						glUseProgram(0);
+
+						rect->SetRectPos(rect->GetRect()[0] + character.advance * sizeNorm, rectParent[1]);
+						rect->Update();
+					}
+					else
+						break;
+				}
+				else if ((int)(*c) == 10)//"\n"
+				{
+					contRows++;
+					rect->SetRectPos(rectParent[0], rectParent[1]);
+					rect->Update();
+				}
+			}
+
+
+		needed_recaclculate = false;
+	}
 }
 
 uint ComponentLabel::GetInternalSerializationBytes()
@@ -211,8 +286,8 @@ void ComponentLabel::OnUniqueEditor()
 	ImGui::Separator();
 
 	float sizeX = ImGui::GetWindowWidth();
-	ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(sizeX, ImGui::GetTextLineHeight()*7), ImGuiInputTextFlags_AllowTabInput);
-	finalText = text;
+	if(ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(sizeX, ImGui::GetTextLineHeight()*7), ImGuiInputTextFlags_AllowTabInput))
+		finalText = text;
 
 	ImGui::PushItemWidth(200.0f);
 	ImGui::ColorEdit4("Color", &color.x, ImGuiColorEditFlags_AlphaBar);

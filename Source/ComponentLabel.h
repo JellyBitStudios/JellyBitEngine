@@ -10,6 +10,13 @@
 struct Character;
 class ComponentRectTransform;
 
+struct LabelLetter
+{
+	math::float4 rect  = math::float4::zero;
+	char letter = NULL;
+	uint textureID = 0;
+};
+
 class ComponentLabel : public Component
 {
 public:
@@ -29,20 +36,20 @@ private:
 	void OnUniqueEditor();
 
 	void SetRectToShader(uint shader);
-
 private:
 	int size = 72;
 	int sizeLoaded = 72;
 	uint maxLabelSize = 0u;
 
-	ComponentRectTransform* rect = nullptr;
 	std::map<char, Character> charactersBitmap;
 
 	std::string finalText;
 	char text[300] = "Edit Text";
 	math::float4 color = math::float4::one;
 
+	std::vector<LabelLetter> labelWord;
 
+	bool needed_recaclculate = false;
 };
 
 #endif
