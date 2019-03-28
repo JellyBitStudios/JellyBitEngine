@@ -46,141 +46,78 @@ ComponentLabel::~ComponentLabel()
 	parent->cmp_label = nullptr;
 }
 
-void ComponentLabel::Draw(uint ui_shader, uint VAO)
-{
-	uint* rectParent = parent->cmp_rectTransform->GetRect();
-	rect->SetRectPos(rectParent[0], rectParent[1]);
-	rect->Update();
-	float sizeNorm = size / (float)sizeLoaded;
-	uint contRows = 0;
-	if (!charactersBitmap.empty())
-		for (std::string::const_iterator c = finalText.begin(); c != finalText.end(); ++c)
-		{
-
-			if ((int)(*c) >= 32 && (int)(*c) < 128)//ASCII TABLE
-			{
-				Character character;
-				character = charactersBitmap.find(*c)->second;
-
-				uint x = rect->GetRect()[0] + character.bearing.x * sizeNorm;
-				//								Normalize pos with all heights	 //	Check Y-ofset for letters that write below origin "p" //	 Control lines enters
-				uint y = rect->GetRect()[1] + ((maxLabelSize - character.size.y) + ((character.size.y) - character.bearing.y)) * sizeNorm + contRows * maxLabelSize * sizeNorm;
-
-				if (x + character.size.x * sizeNorm > rectParent[0] + rectParent[2])
-				{
-					y += maxLabelSize * sizeNorm;
-					x = rectParent[0] + character.bearing.x * sizeNorm;
-					contRows++;
-				}
-				rect->SetRectPos(x,y);
-				rect->SetRectDim(character.size.x * sizeNorm, character.size.y * sizeNorm);
-				rect->Update();
-
-				if (rect->IsInRect(rectParent))
-				{
-					//Shader
-					glUseProgram(ui_shader);
-					SetRectToShader(ui_shader);
-					glUniform1i(glGetUniformLocation(ui_shader, "using_texture"), 0);
-					glUniform1i(glGetUniformLocation(ui_shader, "isLabel"), 1);
-
-					glUniform4f(glGetUniformLocation(ui_shader, "spriteColor"), color.x, color.y, color.z, color.w);
-
-					glActiveTexture(GL_TEXTURE0);
-					glBindTexture(GL_TEXTURE_2D, character.textureID);
-					glUniform1ui(glGetUniformLocation(ui_shader, "image"), 0);
-
-					glBindVertexArray(VAO);
-					glDrawArrays(GL_TRIANGLES, 0, 6);
-
-					glBindTexture(GL_TEXTURE_2D, 0);
-					glBindVertexArray(0);
-
-					glUseProgram(0);
-
-					rect->SetRectPos(rect->GetRect()[0] + character.advance * sizeNorm, rectParent[1]);
-					rect->Update();
-				}
-				else
-					break;
-			}
-			else if ((int)(*c) == 10)//"\n"
-			{
-				contRows++;
-				rect->SetRectPos(rectParent[0], rectParent[1]);
-				rect->Update();
-			}
-		}
-}
-
 void ComponentLabel::Update()
 {
 	if (needed_recaclculate)
 	{
-		uint* rect = parent->cmp_rectTransform->GetRect();
+		labelWord.clear();
+
+		uint x_moving = 0;
+		uint* rectParent = parent->cmp_rectTransform->GetRect();
+		math::float3* parentCorners = parent->cmp_rectTransform->GetCorners();
+		x_moving = rectParent[ComponentRectTransform::Rect::X];
 		float sizeNorm = size / (float)sizeLoaded;
 		uint contRows = 0;
 		if (!charactersBitmap.empty())
 			for (std::string::const_iterator c = finalText.begin(); c != finalText.end(); ++c)
 			{
-				LabelLetter l;
-				strcpy(&l.letter, c._Ptr);
-
 				if ((int)(*c) >= 32 && (int)(*c) < 128)//ASCII TABLE
 				{
+					LabelLetter l;
+					memcpy(&l.letter, c._Ptr, sizeof(char));
+
 					Character character;
 					character = charactersBitmap.find(*c)->second;
 
-					uint x = rect[ComponentRectTransform::Rect::X] + character.bearing.x * sizeNorm;
-					//								Normalize pos with all heights	 //	Check Y-ofset for letters that write below origin "p" //	 Control lines enters
-					uint y = rect[ComponentRectTransform::Rect::Y] + ((maxLabelSize - character.size.y) + ((character.size.y) - character.bearing.y)) * sizeNorm + contRows * maxLabelSize * sizeNorm;
+					l.textureID = character.textureID;
 
-					if (x + character.size.x * sizeNorm > rectParent[0] + rectParent[2])
+					uint x = x_moving + character.bearing.x * sizeNorm;
+					//								Normalize pos with all heights	 //	Check Y-ofset for letters that write below origin "p" //	 Control lines enters
+					uint y = rectParent[ComponentRectTransform::Rect::Y] + ((maxLabelSize - character.size.y) + ((character.size.y) - character.bearing.y)) * sizeNorm + contRows * maxLabelSize * sizeNorm;
+
+					if (x + character.size.x * sizeNorm > rectParent[ComponentRectTransform::Rect::X] + rectParent[ComponentRectTransform::Rect::XDIST])
 					{
 						y += maxLabelSize * sizeNorm;
-						x = rectParent[0] + character.bearing.x * sizeNorm;
+						x = rectParent[ComponentRectTransform::Rect::X] + character.bearing.x * sizeNorm;
 						contRows++;
 					}
-					rect->SetRectPos(x, y);
-					rect->SetRectDim(character.size.x * sizeNorm, character.size.y * sizeNorm);
-					rect->Update();
 
-					if (rect->IsInRect(rectParent))
+					if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
 					{
-						//Shader
-						glUseProgram(ui_shader);
-						SetRectToShader(ui_shader);
-						glUniform1i(glGetUniformLocation(ui_shader, "using_texture"), 0);
-						glUniform1i(glGetUniformLocation(ui_shader, "isLabel"), 1);
-
-						glUniform4f(glGetUniformLocation(ui_shader, "spriteColor"), color.x, color.y, color.z, color.w);
-
-						glActiveTexture(GL_TEXTURE0);
-						glBindTexture(GL_TEXTURE_2D, character.textureID);
-						glUniform1ui(glGetUniformLocation(ui_shader, "image"), 0);
-
-						glBindVertexArray(VAO);
-						glDrawArrays(GL_TRIANGLES, 0, 6);
-
-						glBindTexture(GL_TEXTURE_2D, 0);
-						glBindVertexArray(0);
-
-						glUseProgram(0);
-
-						rect->SetRectPos(rect->GetRect()[0] + character.advance * sizeNorm, rectParent[1]);
-						rect->Update();
+						l.rect[ComponentRectTransform::Rect::X] = x;
+						l.rect[ComponentRectTransform::Rect::Y] = y;
+						l.rect[ComponentRectTransform::Rect::XDIST] = character.size.x * sizeNorm;
+						l.rect[ComponentRectTransform::Rect::YDIST] = character.size.y * sizeNorm;
 					}
 					else
-						break;
+					{
+						math::float3 xDirection = (parentCorners[ComponentRectTransform::Rect::RTOPLEFT] - parentCorners[ComponentRectTransform::Rect::RTOPRIGHT]).Normalized();
+						math::float3 yDirection = (parentCorners[ComponentRectTransform::Rect::RBOTTOMLEFT] - parentCorners[ComponentRectTransform::Rect::RTOPLEFT]).Normalized();
+						
+						l.corners[ComponentRectTransform::Rect::RTOPRIGHT] = parentCorners[ComponentRectTransform::Rect::RTOPRIGHT] + (xDirection * ((float)(x - rectParent[ComponentRectTransform::Rect::X]) / WORLDTORECT)) + (yDirection * ((float)(y - rectParent[ComponentRectTransform::Rect::Y]) / WORLDTORECT));
+						l.corners[ComponentRectTransform::Rect::RTOPLEFT] = l.corners[ComponentRectTransform::Rect::RTOPRIGHT] + (xDirection * ((float)character.size.x * sizeNorm / WORLDTORECT));
+						l.corners[ComponentRectTransform::Rect::RBOTTOMLEFT] = l.corners[ComponentRectTransform::Rect::RTOPLEFT] + (yDirection * ((float)character.size.y * sizeNorm / WORLDTORECT));
+						l.corners[ComponentRectTransform::Rect::RBOTTOMRIGHT] = l.corners[ComponentRectTransform::Rect::RBOTTOMLEFT] - (xDirection * ((float)character.size.x * sizeNorm / WORLDTORECT));
+						
+						math::float3 zDirection = xDirection.Cross(yDirection);
+
+						float z = ZSEPARATOR + parent->cmp_rectTransform->GetZ();
+						l.corners[ComponentRectTransform::Rect::RTOPRIGHT] -= zDirection * z;
+						l.corners[ComponentRectTransform::Rect::RTOPLEFT] -= zDirection * z;
+						l.corners[ComponentRectTransform::Rect::RBOTTOMLEFT] -= zDirection * z;
+						l.corners[ComponentRectTransform::Rect::RBOTTOMRIGHT] -= zDirection * z;
+					}
+
+					x_moving += character.advance * sizeNorm;
+
+					labelWord.push_back(l);
 				}
 				else if ((int)(*c) == 10)//"\n"
 				{
 					contRows++;
-					rect->SetRectPos(rectParent[0], rectParent[1]);
-					rect->Update();
+					x_moving = rectParent[ComponentRectTransform::Rect::X];
 				}
 			}
-
 
 		needed_recaclculate = false;
 	}
@@ -286,8 +223,11 @@ void ComponentLabel::OnUniqueEditor()
 	ImGui::Separator();
 
 	float sizeX = ImGui::GetWindowWidth();
-	if(ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(sizeX, ImGui::GetTextLineHeight()*7), ImGuiInputTextFlags_AllowTabInput))
+	if (ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(sizeX, ImGui::GetTextLineHeight() * 7), ImGuiInputTextFlags_AllowTabInput))
+	{
 		finalText = text;
+		needed_recaclculate = true;
+	}
 
 	ImGui::PushItemWidth(200.0f);
 	ImGui::ColorEdit4("Color", &color.x, ImGuiColorEditFlags_AlphaBar);
@@ -309,26 +249,17 @@ const char * ComponentLabel::GetFinalText() const
 	return finalText.data();
 }
 
-void ComponentLabel::SetRectToShader(uint shader)
+std::vector<ComponentLabel::LabelLetter>* ComponentLabel::GetLetterQueue()
 {
-	uint* rect_points = nullptr;
-	math::float2 pos;
-	float w_width;
-	float w_height;
+	return &labelWord;
+}
 
-	rect_points = rect->GetRect();
-	glUniform1i(glGetUniformLocation(shader, "isScreen"), 1);
-	glUniform1i(glGetUniformLocation(shader, "useMask"), 0);
+math::float4 ComponentLabel::GetColor() const
+{
+	return color;
+}
 
-	w_width = App->ui->GetRectUI()[ModuleUI::Screen::WIDTH];
-	w_height = App->ui->GetRectUI()[ModuleUI::Screen::HEIGHT];
-
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[0], (float)rect_points[1] }, w_width, w_height);
-	glUniform3f(glGetUniformLocation(shader, "topLeft"), pos.x, pos.y, 0.0f);
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[0] + (float)rect_points[2], (float)rect_points[1] }, w_width, w_height);
-	glUniform3f(glGetUniformLocation(shader, "topRight"), pos.x, pos.y, 0.0f);
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[0], (float)rect_points[1] + (float)rect_points[3] }, w_width, w_height);
-	glUniform3f(glGetUniformLocation(shader, "bottomLeft"), pos.x, pos.y, 0.0f);
-	pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[0] + (float)rect_points[2], (float)rect_points[1] + (float)rect_points[3] }, w_width, w_height);
-	glUniform3f(glGetUniformLocation(shader, "bottomRight"), pos.x, pos.y, 0.0f);
+void ComponentLabel::RectChanged()
+{
+	needed_recaclculate = true;
 }

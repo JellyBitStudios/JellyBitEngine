@@ -10,6 +10,8 @@
 #include "MathGeoLib/include/Math/float4.h"
 #include "MathGeoLib/include/Math/float2.h"
 
+#include "ComponentLabel.h"
+
 class ComponentCanvasRenderer : public Component
 {
 public:
@@ -18,7 +20,7 @@ public:
 	{
 		RENDER_NULL,
 		IMAGE,
-		FONT
+		LABEL
 	};
 
 	struct ToUIRend
@@ -41,14 +43,10 @@ public:
 		uint GetTexture();
 		const char * GetText();
 		math::float2 GetMaskValues();
-
+		std::vector<ComponentLabel::LabelLetter>* GetWord();
 
 		bool isRendered() {
 			return isRendered_flag;
-		}
-
-		void ChangeRenderedFlag(bool flag) {
-			isRendered_flag = flag;
 		}
 	private:
 		RenderTypes type = RenderTypes::RENDER_NULL;

@@ -100,6 +100,7 @@ void ComponentCanvas::Update()
 	for (GameObject* go : childs)
 	{
 		if (go->cmp_rectTransform) go->cmp_rectTransform->Update();
+		if (go->cmp_label) go->cmp_label->Update();
 		if (go->cmp_canvasRenderer) go->cmp_canvasRenderer->Update();
 		if (App->GetEngineState() == engine_states::ENGINE_PLAY && go->cmp_button) go->cmp_button->Update();
 	}

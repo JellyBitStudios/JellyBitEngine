@@ -61,9 +61,8 @@ void ModuleUI::DrawCanvas()
 					case ComponentCanvasRenderer::RenderTypes::IMAGE:
 						DrawUIImage(render->cmp_rectTransform, rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 						break;
-					case ComponentCanvasRenderer::RenderTypes::FONT:
-						((ComponentLabel*)renderer->GetParent()->GetComponent(ComponentTypes::LabelComponent))->Draw(ui_shader, reference_vertex);
-						rend->ChangeRenderedFlag(true);
+					case ComponentCanvasRenderer::RenderTypes::LABEL:
+						DrawUILabel(rend->GetWord(), (int)render->cmp_rectTransform->GetFrom(), rend->GetColor());
 						break;
 					}
 
@@ -104,6 +103,9 @@ void ModuleUI::DrawWorldCanvas()
 					{
 					case ComponentCanvasRenderer::RenderTypes::IMAGE:
 						DrawUIImage(render->cmp_rectTransform, rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
+						break;
+					case ComponentCanvasRenderer::RenderTypes::LABEL:
+						DrawUILabel(rend->GetWord(), (int)render->cmp_rectTransform->GetFrom(), rend->GetColor());
 						break;
 					}
 
@@ -293,7 +295,37 @@ void ModuleUI::DrawUIImage(ComponentRectTransform * rect, math::float4& color, u
 	use(0);
 }
 
-void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
+void ModuleUI::DrawUILabel(std::vector<ComponentLabel::LabelLetter>* word_toDraw, uint rectFrom, math::float4& color)
+{
+	use(ui_shader);
+	setBool(ui_shader, "useMask", false);
+	setFloat(ui_shader, "coordsMask", -1, -1);
+	setBool(ui_shader, "isLabel", true);
+	setBool(ui_shader, "using_texture", true);
+	setUnsignedInt(ui_shader, "image", 0);
+	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
+
+	for (std::vector<ComponentLabel::LabelLetter>::const_iterator l_iter = word_toDraw->begin(); l_iter != word_toDraw->end(); ++l_iter)
+	{
+		ComponentLabel::LabelLetter *letter = l_iter._Ptr;
+
+		SetRectToShader(nullptr, rectFrom, letter->rect, letter->corners);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, letter->textureID);
+
+
+		glBindVertexArray(reference_vertex);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glBindVertexArray(0);
+
+	}
+	use(0);
+}
+
+void ModuleUI::SetRectToShader(ComponentRectTransform * rect, int rFrom, uint* rectLetter, math::float3* cornersLetter)
 {
 	uint* rect_points = nullptr;
 	math::float3* rect_world = nullptr;
@@ -304,10 +336,13 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 	math::float4x4 projection = math::float4x4::identity;
 	math::float4x4 mvp = math::float4x4::identity;
 
-	switch (rect->GetFrom())
+	ComponentRectTransform::RectFrom from;
+	(rect) ? from = rect->GetFrom() : from = (ComponentRectTransform::RectFrom)rFrom;
+
+	switch (from)
 	{
 	case ComponentRectTransform::RectFrom::RECT:
-		rect_points = rect->GetRect();
+		(rect) ? rect_points = rect->GetRect() : rect_points = rectLetter;
 		setBool(ui_shader, "isScreen", 1);
 
 		w_width = ui_size_draw[Screen::WIDTH];
@@ -324,7 +359,7 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 		break;
 
 	case ComponentRectTransform::RectFrom::WORLD:
-		rect_world = rect->GetCorners();
+		(rect) ? rect_world = rect->GetCorners() : rect_world = cornersLetter;
 		setBool(ui_shader, "isScreen", 0);
 		view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
 		projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();
@@ -339,7 +374,7 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect)
 		break;
 
 	case ComponentRectTransform::RectFrom::RECT_WORLD:
-		rect_world = rect->GetCorners();
+		(rect) ? rect_world = rect->GetCorners() : rect_world = cornersLetter;
 		setBool(ui_shader, "isScreen", 0);
 		view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
 		projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();

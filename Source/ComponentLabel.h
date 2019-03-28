@@ -4,30 +4,38 @@
 #include "Component.h"
 #include <string>
 #include <map>
+#include <vector>
 
 #include "MathGeoLib/include/Math/float4.h"
+#include "MathGeoLib/include/Math/float3.h"
 
 struct Character;
-class ComponentRectTransform;
 
-struct LabelLetter
-{
-	math::float4 rect  = math::float4::zero;
-	char letter = NULL;
-	uint textureID = 0;
-};
 
 class ComponentLabel : public Component
 {
+public:
+	struct LabelLetter
+	{
+		uint rect[4] = { 0, 0, 0, 0 };
+		math::float3 corners[4] = { math::float3::zero, math::float3::zero, math::float3::zero, math::float3::zero };
+		char letter = NULL;
+		uint textureID = 0;
+	};
+
 public:
 	ComponentLabel(GameObject* parent, ComponentTypes componentType = ComponentTypes::LabelComponent, bool includeComponents = true);
 	ComponentLabel(const ComponentLabel& componentLabel, GameObject* parent, bool includeComponents = true);
 	~ComponentLabel();
 
-	void Draw(uint ui_shader, uint VAO);
 	void Update();
 
 	const char* GetFinalText() const;
+
+	std::vector<LabelLetter>* GetLetterQueue();
+	math::float4 GetColor() const;
+
+	void RectChanged();
 
 private:
 	uint GetInternalSerializationBytes();
@@ -35,7 +43,6 @@ private:
 	void OnInternalLoad(char*& cursor);
 	void OnUniqueEditor();
 
-	void SetRectToShader(uint shader);
 private:
 	int size = 72;
 	int sizeLoaded = 72;

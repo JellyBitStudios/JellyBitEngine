@@ -7,6 +7,9 @@
 
 #include "MathGeoLib/include/Math/float3.h"
 
+#define WORLDTORECT 100.0f
+#define ZSEPARATOR 0.005f
+
 class ComponentTransform;
 
 class ComponentRectTransform : public Component
@@ -98,6 +101,8 @@ public:
 	void CanvasChanged();
 	void WorkSpaceChanged(uint diff, bool to);
 
+	float GetZ() const;
+
 private:
 	//From World
 	void CalculateRectFromWorld();
@@ -108,8 +113,6 @@ private:
 	void RecaculateAnchors(); //TODO J Add the 7 pivots left
 	void RecaculatePercentage();
 	void RecalculateRectByPercentage();
-
-	float GetZ() const;
 
 private:
 	//Where get the info
