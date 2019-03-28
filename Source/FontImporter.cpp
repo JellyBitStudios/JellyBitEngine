@@ -28,7 +28,7 @@ FontImporter::~FontImporter()
 	FT_Done_FreeType(library);
 }
 
-bool FontImporter::Import(const char * file, std::string & outputFile, const ResourceFontData & importSettings) const
+bool FontImporter::Import(const char * file, std::string & outputFile, ResourceFontData & importSettings) const
 {
 	assert(file != nullptr);
 
@@ -170,7 +170,7 @@ bool FontImporter::Import(const void* buffer, uint size, std::string& outputFile
 */
 bool FontImporter::Load(const char* exportedFile, ResourceData& outputData, ResourceFontData& outputFontData) const
 {
-
+	return true;
 }
 
 // ----------------------------------------------------------------------------------------------------

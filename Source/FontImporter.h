@@ -17,7 +17,7 @@ public:
 
 	bool Load(const char * exportedFile, ResourceData & outputData, ResourceFontData & outputFontData) const;
 
-	bool Import(const char * file, std::string& outputFile, const ResourceFontData& importSettings) const;
+	bool Import(const char * file, std::string& outputFile, ResourceFontData& importSettings) const;
 	
 /*
 	bool Load(const char* exportedFile, ResourceData& outputData, FontData & outputTextureData) const;
