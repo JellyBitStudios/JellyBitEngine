@@ -271,13 +271,24 @@ update_status ModuleRenderer3D::PostUpdate()
 					++next;
 					if (next != gameObjects[i]->cmp_trail->test.end())
 					{
+						math::float4x4 trans = math::float4x4::identity;
+						
+						glPushMatrix();
+
+						trans.SetRotatePart(math::float3x3::RotateFromTo((*curr)->direction, currentCamera->frustum.pos));
+						glMultMatrixf(trans.Transposed().ptr());
+
 						glVertex3fv((const GLfloat*)(*curr)->originHigh.ptr());
 						glVertex3fv((const GLfloat*)(*curr)->originLow.ptr());
 						glVertex3fv((const GLfloat*)(*next)->originHigh.ptr());
+						
 
 						glVertex3fv((const GLfloat*)(*curr)->originLow.ptr());
 						glVertex3fv((const GLfloat*)(*next)->originLow.ptr());
 						glVertex3fv((const GLfloat*)(*next)->originHigh.ptr());
+
+						glPopMatrix();
+
 					}
 				}
 

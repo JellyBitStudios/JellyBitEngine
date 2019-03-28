@@ -19,6 +19,8 @@ struct TrailNode
 	math::float3 originLow = math::float3::zero;
 	math::float3 destHigh = math::float3::zero;
 	math::float3 destLow = math::float3::zero;
+
+	math::float3 direction = math::float3::zero;
 };
 
 class ComponentTrail : public Component

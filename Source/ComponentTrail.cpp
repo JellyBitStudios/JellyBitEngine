@@ -34,6 +34,11 @@ void ComponentTrail::Update()
 		node->originHigh = parent->boundingBox.FaceCenterPoint(3);
 		node->originLow = parent->boundingBox.FaceCenterPoint(2);
 
+		if (!test.empty())
+		{
+			math::Plane plane = math::Plane(test.back()->destHigh, node->originHigh, node->originLow);
+			node->direction = plane.normal;
+		}
 
 		test.push_back(node);
 
