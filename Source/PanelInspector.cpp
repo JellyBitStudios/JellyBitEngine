@@ -318,6 +318,9 @@ void PanelInspector::ShowGameObjectInspector() const
 		ImGui::SetNextWindowContentSize({ 0, totalHeight});
 
 		//TODO: Add a maximum height, fix the totalHeight calculation
+
+		totalHeight = totalHeight > 300 ? 300 : totalHeight;
+
 		ImGui::BeginChild("Names Available", {inspectorSize.x - 15, totalHeight + windowPaddingY * 2}, true);
 
 		for (int i = 0; i < scriptNames.size(); ++i)
