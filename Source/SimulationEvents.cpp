@@ -165,12 +165,12 @@ void SimulationEventCallback::onContact(const physx::PxContactPairHeader& pairHe
 			// Collision B
 			math::float3 relativeVelocityB = math::float3::zero;
 			if (actorA != nullptr && actorB != nullptr
-				&& actorA->GetRigidActorType() == RigidActorTypes::RigidDynamic)
+				&& actorB->GetRigidActorType() == RigidActorTypes::RigidDynamic)
 			{
 				relativeVelocityB = ((ComponentRigidDynamic*)actorB)->GetLinearVelocity();
 			}
 			if (actorB != nullptr && actorA != nullptr
-				&& actorB->GetRigidActorType() == RigidActorTypes::RigidDynamic)
+				&& actorA->GetRigidActorType() == RigidActorTypes::RigidDynamic)
 			{
 				relativeVelocityB -= ((ComponentRigidDynamic*)actorA)->GetLinearVelocity();
 			}

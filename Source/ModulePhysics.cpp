@@ -650,12 +650,12 @@ void ModulePhysics::DestroyChest()
 		}
 	}
 }
+//_*****Debug*****
+
 float ModulePhysics::GetFixedDT()
 {
 	return PhysicsConstants::FIXED_DT;
 }
-
-//_*****Debug*****
 
 // ----------------------------------------------------------------------------------------------------
 
