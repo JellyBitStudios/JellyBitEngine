@@ -374,13 +374,17 @@ void ComponentRectTransform::CalculateAnchors(bool needed_newPercentages)
 		case ComponentRectTransform::P_TOPLEFT:
 		{
 			anchor[Anchor::LEFT] = rectTransform[Rect::X] - rectParent[Rect::X];
-			anchor[Anchor::TOP] = rectTransform[Rect::Y] - rectParent[ModuleUI::Screen::Y];
+			anchor[Anchor::TOP] = rectTransform[Rect::Y] - rectParent[Rect::Y];
 			anchor[Anchor::RIGHT] = (rectTransform[Rect::X] + rectTransform[Rect::XDIST]) - rectParent[Rect::X];
 			anchor[Anchor::BOTTOM] = (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]) - rectParent[Rect::Y];
 			break;
 		}
 		case ComponentRectTransform::P_TOPRIGHT:
 		{
+			anchor[Anchor::LEFT] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - rectTransform[Rect::X];
+			anchor[Anchor::TOP] = rectTransform[Rect::Y] - rectParent[Rect::Y];
+			anchor[Anchor::RIGHT] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
+			anchor[Anchor::BOTTOM] = (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]) - rectParent[Rect::Y];
 			break;
 		}
 		case ComponentRectTransform::P_BOTTOMLEFT:
@@ -434,12 +438,16 @@ void ComponentRectTransform::RecaculateAnchors()
 		{
 			rectTransform[Rect::X] = anchor[Anchor::LEFT] + rectParent[Rect::X];
 			rectTransform[Rect::Y] = anchor[Anchor::TOP] + rectParent[Rect::Y];
-			anchor[Anchor::RIGHT] = rectParent[Rect::XDIST] - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
-			anchor[Anchor::BOTTOM] = rectParent[Rect::YDIST] - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
+			anchor[Anchor::RIGHT] = anchor[Anchor::LEFT] + rectTransform[Rect::XDIST];
+			anchor[Anchor::BOTTOM] = anchor[Anchor::TOP] + rectTransform[Rect::YDIST];
 			break;
 		}
 		case ComponentRectTransform::P_TOPRIGHT:
 		{
+			rectTransform[Rect::X] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - anchor[Anchor::RIGHT] - rectTransform[Rect::XDIST];
+			rectTransform[Rect::Y] = rectParent[Rect::Y] + anchor[Anchor::TOP];
+			anchor[Anchor::BOTTOM] = anchor[Anchor::TOP] + rectTransform[Rect::YDIST];
+			anchor[Anchor::LEFT] = anchor[Anchor::RIGHT] + rectTransform[Rect::XDIST];
 			break;
 		}
 		case ComponentRectTransform::P_BOTTOMLEFT:
@@ -723,25 +731,29 @@ void ComponentRectTransform::OnUniqueEditor()
 
 		ImGui::Text("Margin");
 
+		uint max_yAnchor = rectParent[Rect::YDIST] - rectTransform[Rect::YDIST];
+		uint max_xAnhor = rectParent[Rect::XDIST] - rectTransform[Rect::XDIST];
+
 		switch (pivot)
 		{
 			case ComponentRectTransform::P_TOPLEFT:
 			{
-				uint max_leftAnhor = 0;
-				uint max_topAnchor = 0;
-				max_leftAnhor = rectParent[Rect::XDIST] - rectTransform[Rect::XDIST];
-				max_topAnchor = rectParent[Rect::YDIST] - rectTransform[Rect::YDIST];
-
 				ImGui::Text("Top Left");
-				if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_leftAnhor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MTop", ImGuiDataType_U32, (void*)&anchor[Anchor::TOP], 1, 0, &max_yAnchor, "%u", 1.0f))
 					needed_recalculate = true;
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-				if (ImGui::DragScalar("##MTop", ImGuiDataType_U32, (void*)&anchor[Anchor::TOP], 1, 0, &max_topAnchor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_xAnhor, "%u", 1.0f))
 					needed_recalculate = true;
 				break;
 			}
 			case ComponentRectTransform::P_TOPRIGHT:
 			{
+				ImGui::Text("Top Right");
+				if (ImGui::DragScalar("##MTop", ImGuiDataType_U32, (void*)&anchor[Anchor::TOP], 1, 0, &max_yAnchor, "%u", 1.0f))
+					needed_recalculate = true;
+				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+				if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_xAnhor, "%u", 1.0f))
+					needed_recalculate = true;
 				break;
 			}
 			case ComponentRectTransform::P_BOTTOMLEFT:
@@ -750,17 +762,11 @@ void ComponentRectTransform::OnUniqueEditor()
 			}
 			case ComponentRectTransform::P_BOTTOMRIGHT:
 			{
-				uint max_rightAnhor = 0;
-				uint max_bottomAnchor = 0;
-
-				max_rightAnhor = rectParent[Rect::XDIST] - rectTransform[Rect::XDIST];
-				max_bottomAnchor = rectParent[Rect::YDIST] - rectTransform[Rect::YDIST];
-
 				ImGui::Text("Bottom Right");
-				if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_rightAnhor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MBottom", ImGuiDataType_U32, (void*)&anchor[Anchor::BOTTOM], 1, 0, &max_yAnchor, "%u", 1.0f))
 					needed_recalculate = true;
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-				if (ImGui::DragScalar("##MBottom", ImGuiDataType_U32, (void*)&anchor[Anchor::BOTTOM], 1, 0, &max_bottomAnchor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_xAnhor, "%u", 1.0f))
 					needed_recalculate = true;
 			}
 				break;
