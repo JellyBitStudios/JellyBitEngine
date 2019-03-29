@@ -30,6 +30,10 @@ public:
 
 	void Update();
 
+	void WorldDraw(math::float3 * parentCorners, ComponentLabel::LabelLetter & l, const uint x, uint * rectParent, const uint y, Character character, float sizeNorm);
+
+	void ScreenDraw(ComponentLabel::LabelLetter & l, const uint x, const uint y, Character character, float sizeNorm);
+
 	const char* GetFinalText() const;
 
 	std::vector<LabelLetter>* GetLetterQueue();

@@ -18,7 +18,7 @@ class Resource;
 
 struct CurrentSelection
 {
-	enum class SelectedType { null, gameObject, scene, resource, meshImportSettings };
+	enum class SelectedType { null, gameObject, scene, resource, meshImportSettings, fontImportSettings };
 
 private:
 	void* cur = nullptr;

@@ -120,6 +120,7 @@ void ModuleUI::DrawWorldCanvas()
 
 bool ModuleUI::Init(JSON_Object * jObject)
 {
+
 	return true;
 }
 
@@ -144,6 +145,9 @@ bool ModuleUI::Start()
 #ifdef GAMEMODE
 	uiMode = true;
 #endif // GAMEMODE
+
+	if (FT_Init_FreeType(&library))
+		CONSOLE_LOG(LogTypes::Error, "Error when it's initialization FreeType");
 
 	return true;
 }
@@ -174,6 +178,7 @@ update_status ModuleUI::PostUpdate()
 
 bool ModuleUI::CleanUp()
 {
+	FT_Done_FreeType(library);
 	return true;
 }
 

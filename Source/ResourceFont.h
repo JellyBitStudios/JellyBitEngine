@@ -3,12 +3,18 @@
 
 #include "Resource.h"
 
+#include <vector>
 #include <map>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
 #include "MathGeoLib\include\Math\float2.h"
 
+struct FontImportSettings
+{
+	std::string fontPath;
+	std::vector<uint> sizes;
+};
 struct Character
 {
 	uint textureID;
@@ -27,17 +33,17 @@ class ResourceFont : public Resource
 {
 public:
 
-	ResourceFont(ResourceTypes type, uint uuid, ResourceData data, ResourceFontData boneData);
+	ResourceFont(uint uuid, ResourceData data, ResourceFontData boneData);
 	~ResourceFont();
 
 	bool LoadInMemory();
 	bool UnloadFromMemory();
 
-	static bool ImportFile(const char* file, std::string& name, std::string& outputFile);
+	static Resource* ImportFile(const char* file);
 	static bool ExportFile(ResourceData& data, ResourceFontData& font_data, std::string& outputFile, bool overwrite = false);
 	static uint SaveFile(ResourceData & data, ResourceFontData & materialData, std::string & outputFile, bool overwrite);
-	static uint CreateMeta(const char* file, uint font_uuid, std::string& name, std::string& outputMetaFile);
-	static bool ReadMeta(const char* metaFile, int64_t& lastModTime, uint& font_uuid, std::string& name);
+	static uint CreateMeta(const char* file, uint font_uuid, std::string& outputMetaFile, uint fontSize);
+	static bool ReadMeta(const char* metaFile, int64_t& lastModTime, uint& font_uuid, uint &fontSize);
 	static bool LoadFile(const char* file, ResourceFontData& font_data_output);
 
 	void OnPanelAssets();
@@ -46,6 +52,7 @@ public:
 
 	//std::map<char, CharacterData> charactersMap;
 
+	FontImportSettings importSettings;
 	ResourceFontData fontData;
 	FT_Library library;
 	FT_Face face;

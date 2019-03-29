@@ -782,7 +782,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 	{
 		std::string outputFile;
 		std::string name;
-		if (ResourceFont::ImportFile(file, name, outputFile))
+		if (ResourceFont::ImportFile(file))
 		{
 			std::vector<uint> resourcesUuids;
 			if (!GetResourcesUuidsByFile(file, resourcesUuids))
@@ -803,7 +803,8 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 				data.file = file;
 				data.exportedFile = outputFile.data();
 				App->fs->GetFileName(file, data.name);
-				App->fontImporter->Load(file, data, fontData);
+				ResourceFont::LoadFile(file, fontData);
+				//App->fontImporter->Load(file, data, fontData);
 
 				resource = CreateResource(ResourceTypes::FontResource, data, &fontData, uuid);
 			}
@@ -813,7 +814,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 			// 2. Meta
 			// TODO: only create meta if any of its fields has been modificated
 			std::string outputMetaFile;
-			int64_t lastModTime = ResourceFont::CreateMeta(file, resourcesUuids.front(), name, outputMetaFile);
+			int64_t lastModTime = ResourceFont::CreateMeta(file, resourcesUuids.front(), name, 0);
 			assert(lastModTime > 0);
 		}
 	}
@@ -1223,7 +1224,7 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		if (App->fs->Exists(metaFile))
 		{
 			int64_t lastModTime = 0;
-			ResourceFont::ReadMeta(metaFile, lastModTime, uuid, data.name);
+			ResourceFont::ReadMeta(metaFile, lastModTime, uuid);
 		}
 
 		ResourceFont::LoadFile(file, fontData);
@@ -1406,7 +1407,7 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 			resource = new ResourceScene(uuid, data, *(SceneData*)specificData);
 			break;
 		case ResourceTypes::FontResource:
-			resource = new ResourceFont(ResourceTypes::FontResource, uuid, data, *(ResourceFontData*)specificData);
+			resource = new ResourceFont(uuid, data, *(ResourceFontData*)specificData);
 			break;
 		case ResourceTypes::AudioBankResource:
 			resource = new ResourceAudioBank(uuid, data, *(ResourceAudioBankData*)specificData);

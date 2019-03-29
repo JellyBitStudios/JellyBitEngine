@@ -55,41 +55,42 @@ bool PanelInspector::Draw()
 	{
 		switch (App->scene->selectedObject.GetType())
 		{
-		case CurrentSelection::SelectedType::gameObject:
-			ShowGameObjectInspector();
-			break;
-		case CurrentSelection::SelectedType::resource:
-		{
-			switch (((Resource*)App->scene->selectedObject.Get())->GetType())
+			case CurrentSelection::SelectedType::gameObject:
+				ShowGameObjectInspector();
+				break;
+			case CurrentSelection::SelectedType::resource:
 			{
-			case ResourceTypes::MeshResource:
-				ShowMeshResourceInspector();
-				break;
-			case ResourceTypes::TextureResource:
-				ShowTextureResourceInspector();
-				ShowTextureImportSettingsInspector();
-				break;
-			case ResourceTypes::ShaderObjectResource:
-				ShowShaderObjectInspector();
-				break;
-			case ResourceTypes::ShaderProgramResource:
-				ShowShaderProgramInspector();
-				break;
-			case ResourceTypes::MaterialResource:
-				ShowMaterialInspector();
-				break;
-			case ResourceTypes::AvatarResource:
-				ShowAvatarInspector();
-				break;
-			case ResourceTypes::AnimationResource:
-				ShowAnimationInspector();
-				break;
-			}
+				switch (((Resource*)App->scene->selectedObject.Get())->GetType())
+				{
+					case ResourceTypes::MeshResource:
+						ShowMeshResourceInspector();
+						break;
+					case ResourceTypes::TextureResource:
+						ShowTextureResourceInspector();
+						ShowTextureImportSettingsInspector();
+						break;
+					case ResourceTypes::ShaderObjectResource:
+						ShowShaderObjectInspector();
+						break;
+					case ResourceTypes::ShaderProgramResource:
+						ShowShaderProgramInspector();
+						break;
+					case ResourceTypes::MaterialResource:
+						ShowMaterialInspector();
+						break;
+					case ResourceTypes::AvatarResource:
+						ShowAvatarInspector();
+						break;
+					case ResourceTypes::AnimationResource:
+						ShowAnimationInspector();
+						break;
+				}
 			break;
-		}
+			}
 		case CurrentSelection::SelectedType::meshImportSettings:
 			ShowMeshImportSettingsInspector();
 			break;
+
 		}
 	}
 	ImGui::End();

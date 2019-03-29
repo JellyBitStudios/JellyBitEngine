@@ -4,11 +4,13 @@
 #include "glew/include/GL/glew.h"
 #include "ModuleScene.h"
 #include "ModuleFileSystem.h"
+#include "ModuleResourceManager.h"
+#include "ModuleUi.h"
 
 #include <assert.h>
 #pragma comment(lib, "Freetype/libx86/freetype.lib")
 
-ResourceFont::ResourceFont(ResourceTypes type, uint uuid, ResourceData data, ResourceFontData fontData) : Resource(type, uuid, data), fontData(fontData) 
+ResourceFont::ResourceFont(uint uuid, ResourceData data, ResourceFontData fontData) : Resource(ResourceTypes::FontResource, uuid, data), fontData(fontData) 
 {
 }
 
@@ -56,11 +58,18 @@ void ResourceFont::OnPanelAssets()
 #endif 
 }
 
+/*void ResourceFont::OYECHAVALES_HANCAMBIADOESTEMETA()
+{
 
-bool ResourceFont::ImportFile(const char * file, std::string & name, std::string & outputFile)
+}*/
+
+Resource* ResourceFont::ImportFile(const char * file)
 {
 	assert(file != nullptr);
-	
+
+	if (!App->fs->Exists(file))
+		return nullptr;
+
 	// Search for the meta associated to the file
 	char metaFile[DEFAULT_BUF_SIZE];
 	strcpy_s(metaFile, strlen(file) + 1, file); // file
@@ -70,16 +79,55 @@ bool ResourceFont::ImportFile(const char * file, std::string & name, std::string
 	{
 		// Read the meta
 		uint uuid = 0;
-		int64_t lastModTime = 0;
-		bool result = ResourceFont::ReadMeta(metaFile, lastModTime, uuid, name);
+		uint fontSize;
+		int64_t lastModTimeMeta = 0;
+		bool result = ResourceFont::ReadMeta(metaFile, lastModTimeMeta, uuid, fontSize);
 		assert(result);
 
-		// The uuid of the resource would be the entry
-		char entry[DEFAULT_BUF_SIZE];
-		sprintf_s(entry, "%u", uuid);
-		outputFile = entry;
+
+
+		std::string name;
+		App->fs->GetFileName(file, name);
+		ResourceFont* resFont = (ResourceFont*)App->res->GetResource(uuid);
+		if (resFont)
+		{
+			//Actualizar recurso y archivo binario
+
+
+		}
+		else
+		{
+			//Exportar nuevo binario + Importar nuevo recurso
+
+		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		ResourceData data;
+		data.file = file;
+		App->fs->GetFileName(file, data.name);
+		data.exportedFile = "";
+		ResourceFont* font = new ResourceFont(uuid, data, ResourceFontData());
 	}
-	return true;
+	else
+	{
+		//Exportar nuevo binario + Importar nuevo recurso
+
+	
+	}
+
+	return nullptr;
 }
 
 bool ResourceFont::ExportFile(ResourceData & data, ResourceFontData & fontData, std::string & outputFile, bool overwrite)
@@ -87,7 +135,6 @@ bool ResourceFont::ExportFile(ResourceData & data, ResourceFontData & fontData, 
 	SaveFile(data, fontData, outputFile, overwrite);
 	return true;
 }
-
 
 uint ResourceFont::SaveFile(ResourceData& data, ResourceFontData& fontData, std::string& outputFile, bool overwrite)
 {
@@ -168,35 +215,26 @@ bool ResourceFont::LoadFile(const char * file, ResourceFontData & fontData)
 				cursor += bytes;
 		}
 
-		CONSOLE_LOG(LogTypes::Normal, "Resource Material: Successfully loaded Material '%s'", file);
+		CONSOLE_LOG(LogTypes::Normal, "Resource Font: Successfully loaded Font'%s'", file);
 		RELEASE_ARRAY(buffer);
 	}
 	else
-		CONSOLE_LOG(LogTypes::Error, "Resource Material: Could not load Material '%s'", file);
+		CONSOLE_LOG(LogTypes::Error, "Resource Font: Could not load Font'%s'", file);
 
 	return ret;
 }
 
-uint ResourceFont::CreateMeta(const char * file, uint fontUuid, std::string & name, std::string & outputMetaFile)
+uint ResourceFont::CreateMeta(const char * file, uint fontUuid, std::string & outputMetaFile, uint fontSize)
 {
 	assert(file != nullptr);
 
 	uint uuidsSize = 1;
-	uint nameSize = DEFAULT_BUF_SIZE;
-
-	// Name
-	char fontName[DEFAULT_BUF_SIZE];
-	strcpy_s(fontName, DEFAULT_BUF_SIZE, name.data());
-
 	// --------------------------------------------------
 
 	uint size =
 		sizeof(int64_t) +
-		sizeof(uint) +
-		sizeof(uint) * uuidsSize +
-
-		sizeof(uint) + // name size
-		sizeof(char) * nameSize; // name
+		sizeof(uint) * 2 +
+		sizeof(uint) * uuidsSize;
 
 	char* data = new char[size];
 	char* cursor = data;
@@ -206,30 +244,34 @@ uint ResourceFont::CreateMeta(const char * file, uint fontUuid, std::string & na
 	assert(lastModTime > 0);
 	uint bytes = sizeof(int64_t);
 	memcpy(cursor, &lastModTime, bytes);
-
 	cursor += bytes;
 
 	// 2. Store uuids size
 	bytes = sizeof(uint);
 	memcpy(cursor, &uuidsSize, bytes);
-
 	cursor += bytes;
 
 	// 3. Store material uuid
 	bytes = sizeof(uint) * uuidsSize;
 	memcpy(cursor, &fontUuid, bytes);
-
 	cursor += bytes;
 
-	// 4. Store material name size
+	//4. Store font size
 	bytes = sizeof(uint);
-	memcpy(cursor, &nameSize, bytes);
+	memcpy(cursor, &fontSize, bytes);
+	cursor += bytes;
+
+
+	uint sizesSize;
+	//4. Store font import Settings
+	bytes = sizeof(uint);
+	memcpy(&sizesSize, cursor, bytes);
 
 	cursor += bytes;
 
-	// 5. Store material name
-	bytes = sizeof(char) * nameSize;
-	memcpy(cursor, fontName, bytes);
+	importSettings.sizes.resize(sizesSize);
+	memcpy(importSettings.sizes.data(), cursor, sizesSize);
+
 
 	// --------------------------------------------------
 	// Build the path of the meta file and save it
@@ -249,7 +291,7 @@ uint ResourceFont::CreateMeta(const char * file, uint fontUuid, std::string & na
 	return lastModTime;
 }
 
-bool ResourceFont::ReadMeta(const char * metaFile, int64_t & lastModTime, uint & fontUuid, std::string & name)
+bool ResourceFont::ReadMeta(const char * metaFile, int64_t & lastModTime, uint & fontUuid, FontImportSettings &importSettings)
 {
 	assert(metaFile != nullptr);
 
@@ -279,19 +321,17 @@ bool ResourceFont::ReadMeta(const char * metaFile, int64_t & lastModTime, uint &
 
 		cursor += bytes;
 
-		// 4. Load material name size
-		uint nameSize = 0;
+		uint sizesSize;
+		//4. Load font import Settings
 		bytes = sizeof(uint);
-		memcpy(&nameSize, cursor, bytes);
-		assert(nameSize > 0);
+		memcpy(&sizesSize, cursor, bytes);
 
 		cursor += bytes;
 
-		// 5. Load material name
-		name.resize(nameSize);
-		bytes = sizeof(char) * nameSize;
-		memcpy(&name[0], cursor, bytes);		
-		
+		importSettings.sizes.resize(sizesSize);
+		memcpy(importSettings.sizes.data(), cursor, sizesSize);
+
+
 		CONSOLE_LOG(LogTypes::Normal, "Resource Material: Successfully loaded meta '%s'", metaFile);
 		RELEASE_ARRAY(buffer);
 	}

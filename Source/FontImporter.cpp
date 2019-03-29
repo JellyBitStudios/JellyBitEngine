@@ -1,4 +1,4 @@
-#include "FontImporter.h"
+/*#include "FontImporter.h"
 
 #include "Application.h"
 #include "Globals.h"
@@ -41,7 +41,7 @@ bool FontImporter::Import(const char * file, std::string & outputFile, ResourceF
 		CONSOLE_LOG(LogTypes::Normal, "FONT IMPORTER: Successfully loaded Font '%s' (original format)", file);
 		uint maxCharHeight = 0;
 
-		FT_Face face;      /* handle to face object */
+		FT_Face face;    
 		if (!FT_New_Memory_Face(library, (FT_Byte*)buffer, size, 0, &face))
 		{
 			uint fontSize = 48;
@@ -93,88 +93,51 @@ bool FontImporter::Import(const char * file, std::string & outputFile, ResourceF
 	return ret;
 
 }
-/*
-bool FontImporter::Import(const void* buffer, uint size, std::string& outputFile, const ResourceTextureImportSettings& importSettings, uint forcedUuid) const
+
+bool FontImporter::Load(const char* exportedFile, ResourceData& outputData, ResourceFontData& outputFontData) const
 {
-	assert(buffer != nullptr && size > 0);
+	assert(exportedFile != nullptr);
 
 	bool ret = false;
 
-	// Generate the image name
-	uint imageName = 0;
-	ilGenImages(1, &imageName);
-
-	// Bind the image
-	ilBindImage(imageName);
-
-	// Load the image
-	if (ilLoadL(IL_TYPE_UNKNOWN, buffer, size))
+	char* buffer;
+	uint size = App->fs->Load(exportedFile, &buffer);
+	if (size > 0)
 	{
-		ilEnable(IL_FILE_OVERWRITE);
+		char* cursor = (char*)buffer;
 
-		uint size = 0;
-		ILubyte* data = nullptr;
+		uint bytes = sizeof(uint);
+		memcpy(&outputFontData.fontSize, cursor, bytes);
+		cursor += bytes;
 
-		// Pick a specific DXT compression use
-		int compression = 0;
+		uint charactersSize = 0;
+		bytes = sizeof(uint);
+		memcpy(&charactersSize, cursor, bytes);
+		cursor += bytes;
 
-		switch (importSettings.compression)
+		bytes = sizeof(Character);
+		for (uint i = 0; i < charactersSize; ++i)
 		{
-		case ResourceTextureImportSettings::TextureCompression::DXT1:
-			compression = IL_DXT1;
-			break;
-		case ResourceTextureImportSettings::TextureCompression::DXT3:
-			compression = IL_DXT3;
-			break;
-		case ResourceTextureImportSettings::TextureCompression::DXT5:
-			compression = IL_DXT5;
-			break;
+			Character character;
+			memcpy(&character, cursor, bytes);
+			outputFontData.charactersMap.insert(std::pair<char, Character>(i + 32, character));
+
+			if (i < charactersSize - 1)
+				cursor += bytes;
 		}
 
-		ilSetInteger(IL_DXTC_FORMAT, compression);
-
-		// Get the size of the data buffer
-		size = ilSaveL(IL_DDS, NULL, 0);
-
-		if (size > 0)
-		{
-			ilEnable(IL_FILE_OVERWRITE);
-
-			// Allocate the data buffer
-			data = new ILubyte[size];
-
-			// Save to the buffer
-			if (ilSaveL(IL_DDS, data, size) > 0)
-			{
-				uint uuid = forcedUuid == 0 ? App->GenerateRandomNumber() : forcedUuid;
-				outputFile = std::to_string(uuid);
-				if (App->fs->SaveInGame((char*)data, size, FileTypes::TextureFile, outputFile) > 0)
-				{
-					CONSOLE_LOG(LogTypes::Normal, "MATERIAL IMPORTER: Successfully saved Texture '%s' to own format", outputFile.data());
-					ret = true;
-				}
-				else
-					CONSOLE_LOG(LogTypes::Error, "MATERIAL IMPORTER: Could not save Texture '%s' to own format", outputFile.data());
-			}
-
-			RELEASE_ARRAY(data);
-		}
-
-		ilDeleteImages(1, &imageName);
+		CONSOLE_LOG(LogTypes::Normal, "Resource Font: Successfully loaded Font'%s'", exportedFile);
+		RELEASE_ARRAY(buffer);
 	}
 	else
-		CONSOLE_LOG(LogTypes::Error, "MATERIAL IMPORTER: DevIL could not load the image. ERROR: %s", iluErrorString(ilGetError()));
+		CONSOLE_LOG(LogTypes::Error, "Resource Font: Could not load Font'%s'", exportedFile);
 
 	return ret;
-}
-*/
-bool FontImporter::Load(const char* exportedFile, ResourceData& outputData, ResourceFontData& outputFontData) const
-{
 	return true;
 }
 
 // ----------------------------------------------------------------------------------------------------
-/*
+
 void FontImporter::LoadInMemory(uint& id, const FontData& textureData)
 {
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

@@ -9,6 +9,9 @@
 
 #include "ComponentLabel.h"
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 class GameObject;
 
 //Possible Solution
@@ -82,6 +85,8 @@ public:
 	std::list<GameObject*> canvas_screen;
 	std::list<GameObject*> canvas_worldScreen;
 	std::list<GameObject*> canvas_world;
+
+	FT_Library library;
 
 private:
 	uint uiWorkSpace[4];

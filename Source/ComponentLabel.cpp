@@ -55,7 +55,7 @@ void ComponentLabel::Update()
 		uint x_moving = 0;
 		uint* rectParent = parent->cmp_rectTransform->GetRect();
 		math::float3* parentCorners = parent->cmp_rectTransform->GetCorners();
-		x_moving = rectParent[ComponentRectTransform::Rect::X];
+		x_moving = rectParent[0];
 		float sizeNorm = size / (float)sizeLoaded;
 		uint contRows = 0;
 		if (!charactersBitmap.empty())
@@ -73,40 +73,20 @@ void ComponentLabel::Update()
 
 					uint x = x_moving + character.bearing.x * sizeNorm;
 					//								Normalize pos with all heights	 //	Check Y-ofset for letters that write below origin "p" //	 Control lines enters
-					uint y = rectParent[ComponentRectTransform::Rect::Y] + ((maxLabelSize - character.size.y) + ((character.size.y) - character.bearing.y)) * sizeNorm + contRows * maxLabelSize * sizeNorm;
+					uint y = rectParent[1] + ((maxLabelSize - character.size.y) + ((character.size.y) - character.bearing.y)) * sizeNorm + contRows * maxLabelSize * sizeNorm;
 
-					if (x + character.size.x * sizeNorm > rectParent[ComponentRectTransform::Rect::X] + rectParent[ComponentRectTransform::Rect::XDIST])
+					if (x + character.size.x * sizeNorm > rectParent[0] + rectParent[2])
 					{
 						y += maxLabelSize * sizeNorm;
-						x = rectParent[ComponentRectTransform::Rect::X] + character.bearing.x * sizeNorm;
+						x = rectParent[0] + character.bearing.x * sizeNorm;
 						contRows++;
 					}
 
 					if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-					{
-						l.rect[ComponentRectTransform::Rect::X] = x;
-						l.rect[ComponentRectTransform::Rect::Y] = y;
-						l.rect[ComponentRectTransform::Rect::XDIST] = character.size.x * sizeNorm;
-						l.rect[ComponentRectTransform::Rect::YDIST] = character.size.y * sizeNorm;
-					}
-					else
-					{
-						math::float3 xDirection = (parentCorners[ComponentRectTransform::Rect::RTOPLEFT] - parentCorners[ComponentRectTransform::Rect::RTOPRIGHT]).Normalized();
-						math::float3 yDirection = (parentCorners[ComponentRectTransform::Rect::RBOTTOMLEFT] - parentCorners[ComponentRectTransform::Rect::RTOPLEFT]).Normalized();
-						
-						l.corners[ComponentRectTransform::Rect::RTOPRIGHT] = parentCorners[ComponentRectTransform::Rect::RTOPRIGHT] + (xDirection * ((float)(x - rectParent[ComponentRectTransform::Rect::X]) / WORLDTORECT)) + (yDirection * ((float)(y - rectParent[ComponentRectTransform::Rect::Y]) / WORLDTORECT));
-						l.corners[ComponentRectTransform::Rect::RTOPLEFT] = l.corners[ComponentRectTransform::Rect::RTOPRIGHT] + (xDirection * ((float)character.size.x * sizeNorm / WORLDTORECT));
-						l.corners[ComponentRectTransform::Rect::RBOTTOMLEFT] = l.corners[ComponentRectTransform::Rect::RTOPLEFT] + (yDirection * ((float)character.size.y * sizeNorm / WORLDTORECT));
-						l.corners[ComponentRectTransform::Rect::RBOTTOMRIGHT] = l.corners[ComponentRectTransform::Rect::RBOTTOMLEFT] - (xDirection * ((float)character.size.x * sizeNorm / WORLDTORECT));
-						
-						math::float3 zDirection = xDirection.Cross(yDirection);
+						ScreenDraw(l, x, y, character, sizeNorm);
 
-						float z = ZSEPARATOR + parent->cmp_rectTransform->GetZ();
-						l.corners[ComponentRectTransform::Rect::RTOPRIGHT] -= zDirection * z;
-						l.corners[ComponentRectTransform::Rect::RTOPLEFT] -= zDirection * z;
-						l.corners[ComponentRectTransform::Rect::RBOTTOMLEFT] -= zDirection * z;
-						l.corners[ComponentRectTransform::Rect::RBOTTOMRIGHT] -= zDirection * z;
-					}
+					else
+						WorldDraw(parentCorners, l, x, rectParent, y, character, sizeNorm);
 
 					x_moving += character.advance * sizeNorm;
 
@@ -115,7 +95,7 @@ void ComponentLabel::Update()
 				else if ((int)(*c) == 10)//"\n"
 				{
 					contRows++;
-					x_moving = rectParent[ComponentRectTransform::Rect::X];
+					x_moving = rectParent[0];
 				}
 			}
 
@@ -123,10 +103,37 @@ void ComponentLabel::Update()
 	}
 }
 
+void ComponentLabel::WorldDraw(math::float3 * parentCorners, ComponentLabel::LabelLetter &l, const uint x, uint * rectParent, const uint y, Character character, float sizeNorm)
+{
+	math::float3 xDirection = (parentCorners[0] - parentCorners[1]).Normalized();
+	math::float3 yDirection = (parentCorners[2] - parentCorners[3]).Normalized();
+
+	l.corners[1] = parentCorners[1] + (xDirection * ((float)(x - rectParent[0]) / WORLDTORECT)) + (yDirection * ((float)(y - rectParent[1]) / WORLDTORECT));
+	l.corners[0] = l.corners[1] + (xDirection * ((float)character.size.x * sizeNorm / WORLDTORECT));
+	l.corners[2] = l.corners[0] + (yDirection * ((float)character.size.y * sizeNorm / WORLDTORECT));
+	l.corners[2] = l.corners[2] - (xDirection * ((float)character.size.x * sizeNorm / WORLDTORECT));
+
+	math::float3 zDirection = xDirection.Cross(yDirection);
+
+	float z = ZSEPARATOR + parent->cmp_rectTransform->GetZ();
+	l.corners[1] -= zDirection * z;
+	l.corners[0] -= zDirection * z;
+	l.corners[2] -= zDirection * z;
+	l.corners[3] -= zDirection * z;
+}
+
+void ComponentLabel::ScreenDraw(ComponentLabel::LabelLetter &l, const uint x, const uint y, Character character, float sizeNorm)
+{
+	l.rect[0] = x;
+	l.rect[1] = y;
+	l.rect[2] = character.size.x * sizeNorm;
+	l.rect[3] = character.size.y * sizeNorm;
+}
+
 uint ComponentLabel::GetInternalSerializationBytes()
 {
 																			//SIZES		//SizeMap +  sizeString
-	return sizeof(color) + sizeof(char) * finalText.length() + sizeof(int) * 2 + sizeof(uint) * 3 + sizeof(Character)*(charactersBitmap.size()+1);
+	return sizeof(color) + sizeof(char) * finalText.length() + sizeof(int) * 2 + sizeof(uint) * 3 + sizeof(Character)*(charactersBitmap.size());
 }
 
 void ComponentLabel::OnInternalSave(char *& cursor)
@@ -233,12 +240,14 @@ void ComponentLabel::OnUniqueEditor()
 	ImGui::ColorEdit4("Color", &color.x, ImGuiColorEditFlags_AlphaBar);
 
 	ImGui::Separator();
-	ImGui::DragInt("Load new size", &size, 1.0f, 0, 72);
+	if (ImGui::DragInt("Load new size", &size, 1.0f, 0, 72))
+		needed_recaclculate = true;
 	if (ImGui::Button("Fix new size", ImVec2(125, 20)))
 	{
 		charactersBitmap.clear();
 		maxLabelSize = App->ft->LoadFont("../Game/Assets/Textures/Font/arial.ttf", size, charactersBitmap);
 		sizeLoaded = size;
+		needed_recaclculate = true;
 	}
 
 #endif

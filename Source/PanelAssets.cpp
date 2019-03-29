@@ -23,6 +23,7 @@
 #include "ResourceAvatar.h"
 #include "ResourceShaderProgram.h"
 #include "ResourcePrefab.h"
+#include "ResourceFont.h"
 
 #include "Shaders.h"
 
@@ -204,8 +205,8 @@ void PanelAssets::RecursiveDrawAssetsDir(const Directory& directory)
 
 		switch (resourceType)
 		{
-		case ResourceTypes::MeshResource:
-			{		
+			case ResourceTypes::MeshResource:
+				{		
 				ImGuiTreeNodeFlags flags = 0;
 				flags |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnArrow;
 
@@ -262,6 +263,65 @@ void PanelAssets::RecursiveDrawAssetsDir(const Directory& directory)
 				break;
 			}
 
+			case ResourceTypes::FontResource:
+			{
+				ImGuiTreeNodeFlags flags = 0;
+				flags |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnArrow;
+
+				if (App->scene->selectedObject == CurrentSelection::SelectedType::fontImportSettings)
+				{
+					FontImportSettings* importSettings = (FontImportSettings*)App->scene->selectedObject.Get();
+
+					if (strstr(importSettings->fontPath.data(), file.name.data()) != nullptr)
+						flags |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
+
+				}
+
+				char id[DEFAULT_BUF_SIZE];
+				sprintf(id, "%s##%s", file.name.data(), directory.fullPath.data());
+
+				bool fbxOpened = ImGui::TreeNodeEx(id, flags);
+
+				ImVec2 mouseDelta = ImGui::GetMouseDragDelta(0);
+				if (ImGui::IsMouseReleased(0) && ImGui::IsItemHovered(ImGuiHoveredFlags_None)
+					&& (ImGui::GetMousePos().x - ImGui::GetItemRectMin().x) > ImGui::GetTreeNodeToLabelSpacing())
+				{
+					std::vector<uint> uids;
+					std::vector<uint> bone_uuids;
+					std::vector<uint> anim_uuids;
+					ResourceMesh::ReadMeshesUuidsFromBuffer(cursor, uids, bone_uuids, anim_uuids);
+
+					ResourceMesh* tempRes = (ResourceMesh*)App->res->GetResource(uids[0]);
+
+					
+					SELECT(tempRes->GetSpecificData().meshImportSettings);
+				}
+
+				if (fbxOpened)
+				{
+					std::vector<uint> uids;
+					std::vector<uint> bone_uuids;
+					std::vector<uint> anim_uuids;
+					ResourceMesh::ReadMeshesUuidsFromBuffer(cursor, uids, bone_uuids, anim_uuids);
+
+					for (int i = 0; i < uids.size(); ++i)
+					{
+						Resource* res = (Resource*)App->res->GetResource(uids[i]);
+						if (res)
+							res->OnPanelAssets();
+					}
+
+					for (int i = 0; i < anim_uuids.size(); ++i)
+					{
+						Resource* res = (Resource*)App->res->GetResource(anim_uuids[i]);
+						if (res)
+							res->OnPanelAssets();
+					}
+
+					ImGui::TreePop();
+				}
+				break;
+			}
 			default:
 			{
 				uint uuid;

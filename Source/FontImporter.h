@@ -1,4 +1,4 @@
-#ifndef __FONT_IMPORTER_H__
+/*#ifndef __FONT_IMPORTER_H__
 #define __FONT_IMPORTER_H__
 
 #include <ft2build.h>
@@ -19,15 +19,15 @@ public:
 
 	bool Import(const char * file, std::string& outputFile, ResourceFontData& importSettings) const;
 	
-/*
+
 	bool Load(const char* exportedFile, ResourceData& outputData, FontData & outputTextureData) const;
 
 	// ----------------------------------------------------------------------------------------------------
 
 	void LoadInMemory(uint& id, const FontData & textureData);
-*/
+
 private:
 
 	FT_Library library;
 };
-#endif
+#endif*/
