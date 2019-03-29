@@ -348,14 +348,28 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect, int rFrom, uint* r
 		w_width = ui_size_draw[Screen::WIDTH];
 		w_height = ui_size_draw[Screen::HEIGHT];
 
-		pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
-		setFloat(ui_shader, "topLeft", pos.x, pos.y, 0.0f);
-		pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
-		setFloat(ui_shader, "topRight", pos.x, pos.y, 0.0f);
-		pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
-		setFloat(ui_shader, "bottomLeft", pos.x, pos.y, 0.0f);
-		pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
-		setFloat(ui_shader, "bottomRight", pos.x, pos.y, 0.0f);
+		if (rect)
+		{
+			pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
+			setFloat(ui_shader, "topLeft", pos.x, pos.y, 0.0f);
+			pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
+			setFloat(ui_shader, "topRight", pos.x, pos.y, 0.0f);
+			pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
+			setFloat(ui_shader, "bottomLeft", pos.x, pos.y, 0.0f);
+			pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
+			setFloat(ui_shader, "bottomRight", pos.x, pos.y, 0.0f);
+		}
+		else
+		{
+			pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
+			setFloat(ui_shader, "bottomLeft", pos.x, pos.y, 0.0f);
+			pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
+			setFloat(ui_shader, "bottomRight", pos.x, pos.y, 0.0f);
+			pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
+			setFloat(ui_shader, "topLeft", pos.x, pos.y, 0.0f);
+			pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
+			setFloat(ui_shader, "topRight", pos.x, pos.y, 0.0f);
+		}
 		break;
 
 	case ComponentRectTransform::RectFrom::WORLD:
