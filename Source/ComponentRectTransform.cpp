@@ -389,6 +389,10 @@ void ComponentRectTransform::CalculateAnchors(bool needed_newPercentages)
 		}
 		case ComponentRectTransform::P_BOTTOMLEFT:
 		{
+			anchor[Anchor::LEFT] = rectTransform[Rect::X] - rectParent[Rect::X];
+			anchor[Anchor::TOP] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - rectTransform[Rect::Y];
+			anchor[Anchor::RIGHT] = rectParent[Rect::X] + anchor[Anchor::LEFT] + rectTransform[Rect::XDIST];
+			anchor[Anchor::BOTTOM] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
 			break;
 		}
 		case ComponentRectTransform::P_BOTTOMRIGHT:
@@ -452,6 +456,10 @@ void ComponentRectTransform::RecaculateAnchors()
 		}
 		case ComponentRectTransform::P_BOTTOMLEFT:
 		{
+			rectTransform[Rect::X] = rectParent[Rect::X] + anchor[Anchor::LEFT];
+			rectTransform[Rect::Y] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - (anchor[Anchor::BOTTOM] + rectTransform[Rect::YDIST]);
+			anchor[Anchor::TOP] = anchor[Anchor::BOTTOM] + rectTransform[Rect::YDIST];
+			anchor[Anchor::RIGHT] = anchor[Anchor::LEFT] + rectTransform[Rect::XDIST];
 			break;
 		}
 		case ComponentRectTransform::P_BOTTOMRIGHT:
@@ -758,6 +766,12 @@ void ComponentRectTransform::OnUniqueEditor()
 			}
 			case ComponentRectTransform::P_BOTTOMLEFT:
 			{
+				ImGui::Text("Bottom Left");
+				if (ImGui::DragScalar("##MBottom", ImGuiDataType_U32, (void*)&anchor[Anchor::BOTTOM], 1, 0, &max_yAnchor, "%u", 1.0f))
+					needed_recalculate = true;
+				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+				if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_xAnhor, "%u", 1.0f))
+					needed_recalculate = true;
 				break;
 			}
 			case ComponentRectTransform::P_BOTTOMRIGHT:
