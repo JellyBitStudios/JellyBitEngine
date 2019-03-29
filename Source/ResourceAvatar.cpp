@@ -640,6 +640,9 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 					nextTime = animationResource->animationData.boneKeys[i].positions.time[j];
 					nextPos = &animationResource->animationData.boneKeys[i].positions.value[j * 3];
 
+					if (j == 0)
+						j = animationResource->animationData.boneKeys[i].positions.count;
+
 					prevTime = animationResource->animationData.boneKeys[i].positions.time[j - 1];
 					prevPos = &animationResource->animationData.boneKeys[i].positions.value[(j * 3) - 3];
 
@@ -682,6 +685,9 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 					nextTime = animationResource->animationData.boneKeys[i].scalings.time[j];
 					nextScale = &animationResource->animationData.boneKeys[i].scalings.value[j * 3];
 
+					if (j == 0)
+						j = animationResource->animationData.boneKeys[i].scalings.count;
+
 					prevTime = animationResource->animationData.boneKeys[i].scalings.time[j - 1];
 					prevScale = &animationResource->animationData.boneKeys[i].scalings.value[(j * 3) - 3];
 
@@ -723,6 +729,9 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 					// Save next and prev time and scale
 					nextTime = animationResource->animationData.boneKeys[i].rotations.time[j];
 					nextRot = &animationResource->animationData.boneKeys[i].rotations.value[j * 4];
+
+					if (j == 0)
+						j = animationResource->animationData.boneKeys[i].rotations.count;
 
 					prevTime = animationResource->animationData.boneKeys[i].rotations.time[j - 1];
 					prevRot = &animationResource->animationData.boneKeys[i].rotations.value[(j * 4) - 4];
