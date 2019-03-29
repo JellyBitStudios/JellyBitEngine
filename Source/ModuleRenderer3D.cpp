@@ -725,7 +725,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	// Animations
 	char boneName[DEFAULT_BUF_SIZE];
 	ResourceAvatar* avatarResource = (ResourceAvatar*)App->res->GetResource(toDraw->avatarResource);
-	bool animate = avatarResource != nullptr && avatarResource->GetIsAnimated();
+	bool animate = avatarResource != nullptr /*&& avatarResource->GetIsAnimated()*/;
 
 	location = glGetUniformLocation(shader, "animate");
 	glUniform1i(location, animate);
