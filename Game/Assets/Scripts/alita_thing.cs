@@ -17,7 +17,7 @@ public class alita_thing : JellyScript
             gameObject.GetComponent<Animator>().PlayAnimation("anim_run_alita_fist");
         }
         else if (Input.GetKeyDown(KeyCode.KEY_2))
-            gameObject.GetComponent<Animator>().PlayAnimation("anim_kick_alita_fist");
+            gameObject.GetComponent<Animator>().PlayAnimation("anim_special_attack_q_alita_fist");
     }
 }
 
