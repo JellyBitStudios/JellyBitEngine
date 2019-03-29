@@ -576,7 +576,7 @@ bool ResourceAnimator::Update()
 
 		ResourceAvatar* tmp_avatar = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
 		if (tmp_avatar) {
-			//tmp_avatar->StepBones(last_anim->animation_uuid, last_anim->anim_timer);
+			tmp_avatar->StepBones(last_anim->animation_uuid, last_anim->anim_timer);
 			tmp_avatar->StepBones(current_anim->animation_uuid, current_anim->anim_timer);
 		}
 	}
