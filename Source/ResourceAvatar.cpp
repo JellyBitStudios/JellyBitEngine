@@ -585,24 +585,18 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 	}
 
 	// Step all bones
-	for (uint i = 0u; i < animationResource->animationData.numKeys; ++i)
+	for (uint i = 0; i < animationResource->animationData.numKeys; ++i)
 	{
 		const char* boneName = animationResource->animationData.boneKeys[i].bone_name.data();
 		std::unordered_map<std::string, uint>::const_iterator it = bones.find(boneName);
 		if (it == bones.end())
-		{
-			CONSOLE_LOG(LogTypes::Error, "A bone does not exist...");
 			continue;
-		}
 
 		uint boneGameObjectUuid = it->second;
 
 		GameObject* boneGameObject = App->GOs->GetGameObjectByUID(boneGameObjectUuid);
 		if (boneGameObject == nullptr)
-		{
-			CONSOLE_LOG(LogTypes::Error, "A bone does not exist...");
 			continue;
-		}
 
 		// ----------
 
