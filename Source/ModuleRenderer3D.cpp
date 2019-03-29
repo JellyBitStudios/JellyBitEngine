@@ -751,17 +751,13 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 				continue;
 
 			math::float4x4 boneGlobalMatrix = boneComponent->GetParent()->transform->GetGlobalMatrix();
-
 			math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetGlobalMatrix().Inverted();
-			//math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetGlobalMatrix().Inverted();
-
 			math::float4x4 boneTransform = meshMatrix * boneGlobalMatrix * boneResource->boneData.offsetMatrix;
 
 			sprintf_s(boneName, "bones[%u]", i);
 			location = glGetUniformLocation(shader, boneName);
 			glUniformMatrix4fv(location, 1, GL_TRUE, boneTransform.ptr());
 		}
-		
 	}
 
 	// 3. Unknown mesh uniforms
@@ -787,7 +783,6 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
-
 
 	if (animate)
 	{

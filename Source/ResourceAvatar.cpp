@@ -620,38 +620,15 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 		float* nextPos = nullptr;
 		float timePos = 0.0f;
 
-		if (blend < 1.0f || blend > 1.0f) {
-			if (animationResource->animationData.boneKeys[i].positions.count > i)
-			{
-				for (uint j = 0; j < animationResource->animationData.boneKeys[i].positions.count; ++j)
-				{
-					if (time == animationResource->animationData.boneKeys[i].positions.time[j])
-					{
-						// Save next and prev pos
-						nextPos = prevPos = &animationResource->animationData.boneKeys[i].positions.value[j * 3];
+		if (animationResource->animationData.boneKeys[i].positions.count == 1)
+		{
+			// Save next and prev pos
+			nextPos = prevPos = &animationResource->animationData.boneKeys[i].positions.value[0];
 
-						// Does not need interpolation
-
-						break;
-					}
-					else if (animationResource->animationData.boneKeys[i].positions.time[j] > time)
-					{
-						// Save next and prev time and pos
-						nextTime = animationResource->animationData.boneKeys[i].positions.time[j];
-						nextPos = &animationResource->animationData.boneKeys[i].positions.value[j * 3];
-
-						prevTime = animationResource->animationData.boneKeys[i].positions.time[j - 1];
-						prevPos = &animationResource->animationData.boneKeys[i].positions.value[(j * 3) - 3];
-
-						// Needs interpolation
-						timePos = (time - prevTime) / (nextTime - prevTime);
-
-						break;
-					}
-				}
-			}
+			// Does not need interpolation
 		}
-		else {
+		else
+		{
 			for (uint j = 0; j < animationResource->animationData.boneKeys[i].positions.count; ++j)
 			{
 				if (time == animationResource->animationData.boneKeys[i].positions.time[j])
@@ -685,7 +662,14 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 		float* nextScale = nullptr;
 		float timeScale = 0.0f;
 
-		if (animationResource->animationData.boneKeys[i].scalings.count > i)
+		if (animationResource->animationData.boneKeys[i].scalings.count == 1)
+		{
+			// Save next and prev scale
+			nextScale = prevScale = &animationResource->animationData.boneKeys[i].scalings.value[0];
+
+			// Does not need interpolation
+		}
+		else
 		{
 			for (uint j = 0; j < animationResource->animationData.boneKeys[i].scalings.count; ++j)
 			{
@@ -720,40 +704,15 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 		float* nextRot = nullptr;
 		float timeRot = 0.0f;
 
-		
-		if (blend < 1.0f || blend > 1.0f) 
+		if (animationResource->animationData.boneKeys[i].rotations.count == 1)
 		{
-			if (animationResource->animationData.boneKeys[i].rotations.count > i)
-			{
-				for (uint j = 0; j < animationResource->animationData.boneKeys[i].rotations.count; ++j)
-				{
-					if (time == animationResource->animationData.boneKeys[i].rotations.time[j])
-					{
-						// Save next and prev scale
-						nextRot = prevRot = &animationResource->animationData.boneKeys[i].rotations.value[j * 4];
+			// Save next and prev scale
+			nextRot = prevRot = &animationResource->animationData.boneKeys[i].rotations.value[0];
 
-						// Does not need interpolation
-
-						break;
-					}
-					else if (animationResource->animationData.boneKeys[i].rotations.time[j] > time)
-					{
-						// Save next and prev time and scale
-						nextTime = animationResource->animationData.boneKeys[i].rotations.time[j];
-						nextRot = &animationResource->animationData.boneKeys[i].rotations.value[j * 4];
-
-						prevTime = animationResource->animationData.boneKeys[i].rotations.time[j - 1];
-						prevRot = &animationResource->animationData.boneKeys[i].rotations.value[(j * 4) - 4];
-
-						// Needs interpolation
-						timeRot = (time - prevTime) / (nextTime - prevTime);
-
-						break;
-					}
-				}
-			}
+			// Does not need interpolation
 		}
-		else {
+		else
+		{
 			for (uint j = 0; j < animationResource->animationData.boneKeys[i].rotations.count; ++j)
 			{
 				if (time == animationResource->animationData.boneKeys[i].rotations.time[j])
