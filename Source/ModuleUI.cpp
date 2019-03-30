@@ -132,7 +132,7 @@ bool ModuleUI::Start()
 	uiWorkSpace[Screen::WIDTH] = 1280;
 	uiWorkSpace[Screen::HEIGHT] = 720;
 	uiWorkSpace[Screen::X] = (((int)ui_size_draw[Screen::WIDTH] - (int)uiWorkSpace[Screen::WIDTH]) < 0) ? 0 : (ui_size_draw[Screen::WIDTH] - uiWorkSpace[Screen::WIDTH]);
-	uiWorkSpace[Screen::Y] = (((int)ui_size_draw[Screen::HEIGHT] - (int)uiWorkSpace[Screen::HEIGHT]) < 0) ? 0 : (ui_size_draw[Screen::HEIGHT] - uiWorkSpace[Screen::HEIGHT]);
+	uiWorkSpace[Screen::Y] = 0;
 
 
 #ifdef GAMEMODE

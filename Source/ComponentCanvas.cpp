@@ -87,10 +87,11 @@ void ComponentCanvas::Update()
 			break;
 		}
 
-		if (parent->cmp_rectTransform)
+		if (parent->cmp_rectTransform && !first_iterate)
 			parent->cmp_rectTransform->CanvasChanged();
 
 		needed_change = false;
+		first_iterate = false;
 	}
 
 	std::vector<GameObject*> childs;

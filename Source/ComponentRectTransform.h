@@ -134,6 +134,7 @@ private:
 	uint anchor[4] = {0,0,0,0};
 	RectPrivot pivot = RectPrivot::P_TOPLEFT;
 	float anchor_percenatges[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	int center = 0;
 };
 
 #endif

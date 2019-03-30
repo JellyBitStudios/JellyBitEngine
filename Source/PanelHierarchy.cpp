@@ -73,6 +73,7 @@ bool PanelHierarchy::Draw()
 			{
 				GameObject* go = App->GOs->CreateGameObject("Canvas", root);
 				go->AddComponent(ComponentTypes::CanvasComponent);
+				go->AddComponent(ComponentTypes::RectTransformComponent);
 				go->SetLayer(UILAYER);
 				SELECT(go);
 			}
@@ -217,6 +218,7 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 			{
 				GameObject* go = App->GOs->CreateGameObject("Canvas", child);
 				go->AddComponent(ComponentTypes::CanvasComponent);
+				go->AddComponent(ComponentTypes::RectTransformComponent);
 				go->SetLayer(UILAYER);
 				SELECT(go);
 			}
