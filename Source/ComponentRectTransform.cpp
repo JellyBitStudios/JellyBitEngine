@@ -409,10 +409,20 @@ void ComponentRectTransform::CalculateAnchors(bool needed_newPercentages)
 		}
 		case ComponentRectTransform::P_LEFT:
 		{
+			uint pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2) + center;
+			anchor[Anchor::TOP] = anchor[Anchor::BOTTOM] = (rectTransform[Rect::YDIST] / 2);
+			rectTransform[Rect::Y] = pyCenter - anchor[Anchor::TOP];
+			anchor[Anchor::LEFT] = rectTransform[Rect::X] - rectParent[Rect::X];
+			anchor[Anchor::RIGHT] = anchor[Anchor::LEFT] + rectTransform[Rect::XDIST];
 			break;
 		}
 		case ComponentRectTransform::P_RIGHT:
 		{
+			uint pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2) + center;
+			anchor[Anchor::TOP] = anchor[Anchor::BOTTOM] = (rectTransform[Rect::YDIST] / 2);
+			rectTransform[Rect::Y] = pyCenter - anchor[Anchor::TOP];
+			anchor[Anchor::RIGHT] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
+			anchor[Anchor::LEFT] = anchor[Anchor::RIGHT] + rectTransform[Rect::XDIST];
 			break;
 		}
 		case ComponentRectTransform::P_BOTTOM:
@@ -492,10 +502,20 @@ void ComponentRectTransform::RecaculateAnchors()
 		}
 		case ComponentRectTransform::P_LEFT:
 		{
+			uint pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2) + center;
+			anchor[Anchor::TOP] = anchor[Anchor::BOTTOM] = (rectTransform[Rect::YDIST] / 2);
+			rectTransform[Rect::X] = rectParent[Rect::X]  + anchor[Anchor::LEFT];
+			rectTransform[Rect::Y] = pyCenter - anchor[Anchor::TOP];
+			anchor[Anchor::RIGHT] = anchor[Anchor::LEFT] + rectTransform[Rect::XDIST];
 			break;
 		}
 		case ComponentRectTransform::P_RIGHT:
 		{
+			uint pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2) + center;
+			anchor[Anchor::TOP] = anchor[Anchor::BOTTOM] = (rectTransform[Rect::YDIST] / 2);
+			rectTransform[Rect::Y] = pyCenter - anchor[Anchor::TOP];
+			rectTransform[Rect::X] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - (anchor[Anchor::RIGHT] + rectTransform[Rect::XDIST]);
+			anchor[Anchor::LEFT] = anchor[Anchor::RIGHT] + rectTransform[Rect::XDIST];
 			break;
 		}
 		case ComponentRectTransform::P_BOTTOM:
@@ -759,10 +779,10 @@ void ComponentRectTransform::OnUniqueEditor()
 	{
 		ImGui::PushItemWidth(150.0f);
 		ImGui::Text("Pivot");
-		ImGui::PushItemWidth(50.0f);
+		ImGui::PushItemWidth(100.0f);
 
 		int current_anchor_flag = (int)pivot;
-		if (ImGui::Combo("Using: ", &current_anchor_flag, PIVOT_POINTS_STR))
+		if (ImGui::Combo("Using  ", &current_anchor_flag, PIVOT_POINTS_STR))
 		{
 			pivot = (RectPrivot)current_anchor_flag;
 
@@ -774,7 +794,7 @@ void ComponentRectTransform::OnUniqueEditor()
 		ImGui::Text("Margin");
 
 		uint max_yAnchor = rectParent[Rect::YDIST] - rectTransform[Rect::YDIST];
-		uint max_xAnhor = rectParent[Rect::XDIST] - rectTransform[Rect::XDIST];
+		uint max_xAnchor = rectParent[Rect::XDIST] - rectTransform[Rect::XDIST];
 
 		switch (pivot)
 		{
@@ -790,7 +810,7 @@ void ComponentRectTransform::OnUniqueEditor()
 					ImGui::EndTooltip();
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-				if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_xAnhor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_xAnchor, "%u", 1.0f))
 					needed_recalculate = true;
 				if (ImGui::IsItemHovered())
 				{
@@ -812,7 +832,7 @@ void ComponentRectTransform::OnUniqueEditor()
 					ImGui::EndTooltip();
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-				if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_xAnhor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_xAnchor, "%u", 1.0f))
 					needed_recalculate = true;
 				if (ImGui::IsItemHovered())
 				{
@@ -834,7 +854,7 @@ void ComponentRectTransform::OnUniqueEditor()
 					ImGui::EndTooltip();
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-				if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_xAnhor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_xAnchor, "%u", 1.0f))
 					needed_recalculate = true;
 				if (ImGui::IsItemHovered())
 				{
@@ -856,7 +876,7 @@ void ComponentRectTransform::OnUniqueEditor()
 					ImGui::EndTooltip();
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-				if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_xAnhor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_xAnchor, "%u", 1.0f))
 					needed_recalculate = true;
 				if (ImGui::IsItemHovered())
 				{
@@ -900,10 +920,50 @@ void ComponentRectTransform::OnUniqueEditor()
 			}
 			case ComponentRectTransform::P_LEFT:
 			{
+				int min_center = -((rectParent[Rect::YDIST] - rectTransform[Rect::YDIST]) / 2);
+				int max_center = (rectParent[Rect::YDIST] - rectTransform[Rect::YDIST]) / 2;
+				ImGui::Text("Left");
+				if (ImGui::DragScalar("##MCenter", ImGuiDataType_S32, (void*)&center, 1, &min_center, &max_center, "%i", 1.0f))
+					needed_recalculate = true;
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("Y Center");
+					ImGui::EndTooltip();
+				}
+				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+				if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_xAnchor, "%u", 1.0f))
+					needed_recalculate = true;
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("Left");
+					ImGui::EndTooltip();
+				}
 				break;
 			}
 			case ComponentRectTransform::P_RIGHT:
 			{
+				int min_center = -((rectParent[Rect::YDIST] - rectTransform[Rect::YDIST]) / 2);
+				int max_center = (rectParent[Rect::YDIST] - rectTransform[Rect::YDIST]) / 2;
+				ImGui::Text("Right");
+				if (ImGui::DragScalar("##MCenter", ImGuiDataType_S32, (void*)&center, 1, &min_center, &max_center, "%i", 1.0f))
+					needed_recalculate = true;
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("Y Center");
+					ImGui::EndTooltip();
+				}
+				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+				if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_xAnchor, "%u", 1.0f))
+					needed_recalculate = true;
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("Right");
+					ImGui::EndTooltip();
+				}
 				break;
 			}
 			case ComponentRectTransform::P_BOTTOM:
