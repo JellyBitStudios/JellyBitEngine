@@ -75,7 +75,7 @@ void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 	glGenTextures(1, &gDepth);
 	glBindTexture(GL_TEXTURE_2D, gDepth);
 	if (depthBits == 16)
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT32, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
 	else if (depthBits == 24)
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
 	else if (depthBits == 32)
