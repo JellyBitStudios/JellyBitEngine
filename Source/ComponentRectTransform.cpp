@@ -400,6 +400,11 @@ void ComponentRectTransform::CalculateAnchors(bool needed_newPercentages)
 		}
 		case ComponentRectTransform::P_TOP:
 		{
+			uint pCenter = rectParent[Rect::X] + (rectParent[Rect::XDIST] / 2) + center;
+			anchor[Anchor::LEFT] = anchor[Anchor::RIGHT] = (rectTransform[Rect::XDIST] / 2);
+			rectTransform[Rect::X] = pCenter - anchor[Anchor::LEFT];
+			anchor[Anchor::TOP] = rectTransform[Rect::Y] - rectParent[Rect::Y];
+			anchor[Anchor::BOTTOM] = anchor[Anchor::TOP] + rectTransform[Rect::YDIST];
 			break;
 		}
 		case ComponentRectTransform::P_LEFT:
@@ -478,6 +483,11 @@ void ComponentRectTransform::RecaculateAnchors()
 		}
 		case ComponentRectTransform::P_TOP:
 		{
+			uint pCenter = rectParent[Rect::X] + (rectParent[Rect::XDIST] / 2) + center;
+			anchor[Anchor::LEFT] = anchor[Anchor::RIGHT] = (rectTransform[Rect::XDIST] / 2);
+			rectTransform[Rect::X] = pCenter - anchor[Anchor::LEFT];
+			rectTransform[Rect::Y] = rectParent[Rect::Y] + anchor[Anchor::TOP];
+			anchor[Anchor::BOTTOM] = anchor[Anchor::TOP] + rectTransform[Rect::YDIST];
 			break;
 		}
 		case ComponentRectTransform::P_LEFT:
@@ -773,9 +783,21 @@ void ComponentRectTransform::OnUniqueEditor()
 				ImGui::Text("Top Left");
 				if (ImGui::DragScalar("##MTop", ImGuiDataType_U32, (void*)&anchor[Anchor::TOP], 1, 0, &max_yAnchor, "%u", 1.0f))
 					needed_recalculate = true;
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("Top");
+					ImGui::EndTooltip();
+				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
 				if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_xAnhor, "%u", 1.0f))
 					needed_recalculate = true;
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("Left");
+					ImGui::EndTooltip();
+				}
 				break;
 			}
 			case ComponentRectTransform::P_TOPRIGHT:
@@ -783,9 +805,21 @@ void ComponentRectTransform::OnUniqueEditor()
 				ImGui::Text("Top Right");
 				if (ImGui::DragScalar("##MTop", ImGuiDataType_U32, (void*)&anchor[Anchor::TOP], 1, 0, &max_yAnchor, "%u", 1.0f))
 					needed_recalculate = true;
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("Top");
+					ImGui::EndTooltip();
+				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
 				if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_xAnhor, "%u", 1.0f))
 					needed_recalculate = true;
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("Right");
+					ImGui::EndTooltip();
+				}
 				break;
 			}
 			case ComponentRectTransform::P_BOTTOMLEFT:
@@ -793,9 +827,21 @@ void ComponentRectTransform::OnUniqueEditor()
 				ImGui::Text("Bottom Left");
 				if (ImGui::DragScalar("##MBottom", ImGuiDataType_U32, (void*)&anchor[Anchor::BOTTOM], 1, 0, &max_yAnchor, "%u", 1.0f))
 					needed_recalculate = true;
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("Bottom");
+					ImGui::EndTooltip();
+				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
 				if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_xAnhor, "%u", 1.0f))
 					needed_recalculate = true;
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("Left");
+					ImGui::EndTooltip();
+				}
 				break;
 			}
 			case ComponentRectTransform::P_BOTTOMRIGHT:
@@ -803,9 +849,21 @@ void ComponentRectTransform::OnUniqueEditor()
 				ImGui::Text("Bottom Right");
 				if (ImGui::DragScalar("##MBottom", ImGuiDataType_U32, (void*)&anchor[Anchor::BOTTOM], 1, 0, &max_yAnchor, "%u", 1.0f))
 					needed_recalculate = true;
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("Bottom");
+					ImGui::EndTooltip();
+				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
 				if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_xAnhor, "%u", 1.0f))
 					needed_recalculate = true;
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("Right");
+					ImGui::EndTooltip();
+				}
 			}
 			break;
 			case ComponentRectTransform::P_CENTER:
@@ -818,6 +876,26 @@ void ComponentRectTransform::OnUniqueEditor()
 			}
 			case ComponentRectTransform::P_TOP:
 			{
+				int min_center = -((rectParent[Rect::XDIST] - rectTransform[Rect::XDIST]) / 2);
+				int max_center = (rectParent[Rect::XDIST] - rectTransform[Rect::XDIST]) / 2;
+				ImGui::Text("Top");
+				if (ImGui::DragScalar("##MCenter", ImGuiDataType_S32, (void*)&center, 1, &min_center, &max_center, "%i", 1.0f))
+					needed_recalculate = true;
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("X Center");
+					ImGui::EndTooltip();
+				}
+				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+				if (ImGui::DragScalar("##Top", ImGuiDataType_U32, (void*)&anchor[Anchor::TOP], 1, 0, &max_yAnchor, "%u", 1.0f))
+					needed_recalculate = true;
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("Top");
+					ImGui::EndTooltip();
+				}
 				break;
 			}
 			case ComponentRectTransform::P_LEFT:
@@ -835,9 +913,21 @@ void ComponentRectTransform::OnUniqueEditor()
 				ImGui::Text("Bottom");
 				if (ImGui::DragScalar("##MCenter", ImGuiDataType_S32, (void*)&center, 1, &min_center, &max_center, "%i", 1.0f))
 					needed_recalculate = true;
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("X Center");
+					ImGui::EndTooltip();
+				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
 				if (ImGui::DragScalar("##MBottom", ImGuiDataType_U32, (void*)&anchor[Anchor::BOTTOM], 1, 0, &max_yAnchor, "%u", 1.0f))
 					needed_recalculate = true;
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("Bottom");
+					ImGui::EndTooltip();
+				}
 				break;
 			}
 		}
