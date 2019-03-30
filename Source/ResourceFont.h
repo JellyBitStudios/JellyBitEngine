@@ -42,8 +42,8 @@ public:
 	static Resource* ImportFile(const char* file);
 	static bool ExportFile(ResourceData& data, ResourceFontData& font_data, std::string& outputFile, bool overwrite = false);
 	static uint SaveFile(ResourceData & data, ResourceFontData & materialData, std::string & outputFile, bool overwrite);
-	static uint CreateMeta(const char* file, uint font_uuid, std::string& outputMetaFile, uint fontSize);
-	static bool ReadMeta(const char* metaFile, int64_t& lastModTime, uint& font_uuid, uint &fontSize);
+	static uint CreateMeta(const char* file, uint font_uuid, std::string& outputMetaFile, FontImportSettings importSettings);
+	static bool ReadMeta(const char* metaFile, int64_t& lastModTime, uint& font_uuid, FontImportSettings &importSettings);
 	static bool LoadFile(const char* file, ResourceFontData& font_data_output);
 
 	void OnPanelAssets();

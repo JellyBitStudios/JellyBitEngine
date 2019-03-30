@@ -30,9 +30,9 @@ public:
 
 	void Update();
 
-	void WorldDraw(math::float3 * parentCorners, ComponentLabel::LabelLetter & l, const uint x, uint * rectParent, const uint y, Character character, float sizeNorm);
+	void WorldDraw(math::float3 * parentCorners, math::float3 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm);
 
-	void ScreenDraw(ComponentLabel::LabelLetter & l, const uint x, const uint y, Character character, float sizeNorm);
+	void ScreenDraw(uint rect[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm);
 
 	const char* GetFinalText() const;
 

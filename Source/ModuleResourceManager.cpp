@@ -5,6 +5,9 @@
 #include "ModuleInternalResHandler.h"
 #include "ScriptingModule.h"
 
+#include "ModuleGui.h"
+#include "PanelInspector.h"
+
 #include "SceneImporter.h"
 #include "MaterialImporter.h"
 #include "ShaderImporter.h"
@@ -814,7 +817,8 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 			// 2. Meta
 			// TODO: only create meta if any of its fields has been modificated
 			std::string outputMetaFile;
-			int64_t lastModTime = ResourceFont::CreateMeta(file, resourcesUuids.front(), name, 0);
+			App->fs->GetFileName(file, name);
+			int64_t lastModTime = ResourceFont::CreateMeta(file, resourcesUuids.front(), name,App->gui->panelInspector->GetFontImportSettings());
 			assert(lastModTime > 0);
 		}
 	}
@@ -1221,10 +1225,11 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
 
 		uint uuid = 0;
+		FontImportSettings importSettings;
 		if (App->fs->Exists(metaFile))
 		{
 			int64_t lastModTime = 0;
-			ResourceFont::ReadMeta(metaFile, lastModTime, uuid);
+			ResourceFont::ReadMeta(metaFile, lastModTime, uuid, importSettings);
 		}
 
 		ResourceFont::LoadFile(file, fontData);

@@ -79,12 +79,10 @@ Resource* ResourceFont::ImportFile(const char * file)
 	{
 		// Read the meta
 		uint uuid = 0;
-		uint fontSize;
+		FontImportSettings importerSettings;
 		int64_t lastModTimeMeta = 0;
-		bool result = ResourceFont::ReadMeta(metaFile, lastModTimeMeta, uuid, fontSize);
+		bool result = ResourceFont::ReadMeta(metaFile, lastModTimeMeta, uuid, importerSettings);
 		assert(result);
-
-
 
 		std::string name;
 		App->fs->GetFileName(file, name);
@@ -224,7 +222,7 @@ bool ResourceFont::LoadFile(const char * file, ResourceFontData & fontData)
 	return ret;
 }
 
-uint ResourceFont::CreateMeta(const char * file, uint fontUuid, std::string & outputMetaFile, uint fontSize)
+uint ResourceFont::CreateMeta(const char * file, uint fontUuid, std::string & outputMetaFile, FontImportSettings importSettings)
 {
 	assert(file != nullptr);
 
@@ -256,21 +254,14 @@ uint ResourceFont::CreateMeta(const char * file, uint fontUuid, std::string & ou
 	memcpy(cursor, &fontUuid, bytes);
 	cursor += bytes;
 
-	//4. Store font size
-	bytes = sizeof(uint);
-	memcpy(cursor, &fontSize, bytes);
-	cursor += bytes;
-
-
-	uint sizesSize;
+	uint sizesSize = importSettings.sizes.size();
 	//4. Store font import Settings
 	bytes = sizeof(uint);
-	memcpy(&sizesSize, cursor, bytes);
-
+	memcpy(cursor, &sizesSize, bytes);
 	cursor += bytes;
 
-	importSettings.sizes.resize(sizesSize);
-	memcpy(importSettings.sizes.data(), cursor, sizesSize);
+	memcpy(cursor, importSettings.sizes.data(), sizesSize);
+	cursor += sizesSize;
 
 
 	// --------------------------------------------------
@@ -330,6 +321,7 @@ bool ResourceFont::ReadMeta(const char * metaFile, int64_t & lastModTime, uint &
 
 		importSettings.sizes.resize(sizesSize);
 		memcpy(importSettings.sizes.data(), cursor, sizesSize);
+		cursor += sizesSize;
 
 
 		CONSOLE_LOG(LogTypes::Normal, "Resource Material: Successfully loaded meta '%s'", metaFile);

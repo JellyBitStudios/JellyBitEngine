@@ -83,10 +83,10 @@ void ComponentLabel::Update()
 					}
 
 					if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-						ScreenDraw(l, x, y, character, sizeNorm);
+						ScreenDraw(l.rect, x, y, character.size, sizeNorm);
 
 					else
-						WorldDraw(parentCorners, l, x, rectParent, y, character, sizeNorm);
+						WorldDraw(parentCorners, l.corners, rectParent, x, y, character.size, sizeNorm);
 
 					x_moving += character.advance * sizeNorm;
 
@@ -103,31 +103,31 @@ void ComponentLabel::Update()
 	}
 }
 
-void ComponentLabel::WorldDraw(math::float3 * parentCorners, ComponentLabel::LabelLetter &l, const uint x, uint * rectParent, const uint y, Character character, float sizeNorm)
+void ComponentLabel::WorldDraw(math::float3 * parentCorners, math::float3 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm)
 {
 	math::float3 xDirection = (parentCorners[0] - parentCorners[1]).Normalized();
-	math::float3 yDirection = (parentCorners[2] - parentCorners[3]).Normalized();
+	math::float3 yDirection = (parentCorners[2] - parentCorners[0]).Normalized();
 
-	l.corners[1] = parentCorners[1] + (xDirection * ((float)(x - rectParent[0]) / WORLDTORECT)) + (yDirection * ((float)(y - rectParent[1]) / WORLDTORECT));
-	l.corners[0] = l.corners[1] + (xDirection * ((float)character.size.x * sizeNorm / WORLDTORECT));
-	l.corners[2] = l.corners[0] + (yDirection * ((float)character.size.y * sizeNorm / WORLDTORECT));
-	l.corners[2] = l.corners[2] - (xDirection * ((float)character.size.x * sizeNorm / WORLDTORECT));
+	corners[1] = parentCorners[1] + (xDirection * ((float)(x - rectParent[0]) / WORLDTORECT)) + (yDirection * ((float)(y - rectParent[1]) / WORLDTORECT));
+	corners[0] = corners[1] + (xDirection * (characterSize.x * sizeNorm / WORLDTORECT));
+	corners[2] = corners[0] + (yDirection * (characterSize.y * sizeNorm / WORLDTORECT));
+	corners[3] = corners[2] - (xDirection * (characterSize.x * sizeNorm / WORLDTORECT));
 
 	math::float3 zDirection = xDirection.Cross(yDirection);
 
 	float z = ZSEPARATOR + parent->cmp_rectTransform->GetZ();
-	l.corners[1] -= zDirection * z;
-	l.corners[0] -= zDirection * z;
-	l.corners[2] -= zDirection * z;
-	l.corners[3] -= zDirection * z;
+	corners[1] -= zDirection * z;
+	corners[0] -= zDirection * z;
+	corners[2] -= zDirection * z;
+	corners[3] -= zDirection * z;
 }
 
-void ComponentLabel::ScreenDraw(ComponentLabel::LabelLetter &l, const uint x, const uint y, Character character, float sizeNorm)
+void ComponentLabel::ScreenDraw(uint rect[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm)
 {
-	l.rect[0] = x;
-	l.rect[1] = y;
-	l.rect[2] = character.size.x * sizeNorm;
-	l.rect[3] = character.size.y * sizeNorm;
+	rect[0] = x;
+	rect[1] = y;
+	rect[2] = characterSize.x * sizeNorm;
+	rect[3] = characterSize.y * sizeNorm;
 }
 
 uint ComponentLabel::GetInternalSerializationBytes()
