@@ -908,49 +908,49 @@ void SceneImporter::GenerateVAO(uint& VAO, uint& VBO, uint attrFlag) const
 	// Set the vertex attributes pointers
 
 	// 1. Position
-	if (attrFlag & ResourceMeshImportSettings::ATTR_POSITION)
-	{
+	//if (attrFlag & ResourceMeshImportSettings::ATTR_POSITION)
+	//{
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, position)));
 		glEnableVertexAttribArray(0);
-	}
+	//}
 
 	// 2. Normal
-	if (attrFlag & ResourceMeshImportSettings::ATTR_NORMAL)
-	{
+	//if (attrFlag & ResourceMeshImportSettings::ATTR_NORMAL)
+	//{
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, normal)));
 		glEnableVertexAttribArray(1);
-	}
+	//}
 
 	// 3. Color
-	if (attrFlag & ResourceMeshImportSettings::ATTR_COLOR)
-	{
+	//if (attrFlag & ResourceMeshImportSettings::ATTR_COLOR)
+	//{
 		glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void*)(offsetof(Vertex, color)));
 		glEnableVertexAttribArray(2);
-	}
+	//}
 
 	// 4. Tex coords
-	if (attrFlag & ResourceMeshImportSettings::ATTR_TEXCOORD)
-	{
+	//if (attrFlag & ResourceMeshImportSettings::ATTR_TEXCOORD)
+	//{
 		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, texCoord)));
 		glEnableVertexAttribArray(3);
-	}
+	//}
 
 	// 5. Tangents
-	if (attrFlag & ResourceMeshImportSettings::ATTR_TANGENT)
-	{
+	//if (attrFlag & ResourceMeshImportSettings::ATTR_TANGENT)
+	//{
 		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, tangent)));
 		glEnableVertexAttribArray(4);
-	}
+	//}
 
 	// 6. Bitangents
-	if (attrFlag & ResourceMeshImportSettings::ATTR_BITANGENT)
-	{
+	//if (attrFlag & ResourceMeshImportSettings::ATTR_BITANGENT)
+	//{
 		glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, bitangent)));
 		glEnableVertexAttribArray(5);
-	}
+	//}
 
-	if (attrFlag & ResourceMeshImportSettings::ATTR_ANIMATION)
-	{
+	//if (attrFlag & ResourceMeshImportSettings::ATTR_ANIMATION)
+	//{
 		// 7. Weights
 		glVertexAttribPointer(6, MAX_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, boneWeight)));
 		glEnableVertexAttribArray(6);
@@ -958,7 +958,7 @@ void SceneImporter::GenerateVAO(uint& VAO, uint& VBO, uint attrFlag) const
 		// 8. Ids
 		glVertexAttribIPointer(7, MAX_BONES_PER_VERTEX, GL_INT, sizeof(Vertex), (void*)(offsetof(Vertex, boneId)));
 		glEnableVertexAttribArray(7);
-	}
+	//}
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
