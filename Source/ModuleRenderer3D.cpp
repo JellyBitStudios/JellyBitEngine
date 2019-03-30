@@ -198,29 +198,27 @@ update_status ModuleRenderer3D::PostUpdate()
 			if (cameraComponents[i]->IsActive())
 				cameraComponents[i]->UpdateTransform();
 		}
-		/*
+
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
 			if (projectorComponents[i]->IsActive())
 				projectorComponents[i]->UpdateTransform();
 		}
-		*/
 
 		if (currentCamera->HasFrustumCulling())
 			FrustumCulling();
 
-		/*
+		for (uint i = 0; i < meshComponents.size(); ++i)
+		{
+			if (meshComponents[i]->GetParent()->IsActive() && meshComponents[i]->GetParent()->seenLastFrame
+				&& meshComponents[i]->IsActive())
+				DrawMesh(meshComponents[i]);
+		}
+
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
 			if (projectorComponents[i]->GetParent()->IsActive() && projectorComponents[i]->IsActive())
-				DrawProjectors(projectorComponents[i]);
-		}
-		*/
-		for (uint i = 0; i < meshComponents.size(); ++i)
-		{
-			if (meshComponents[i]->GetParent()->IsActive() && meshComponents[i]->IsActive() 
-				&& meshComponents[i]->GetParent()->seenLastFrame)
-				DrawMesh(meshComponents[i]);
+				projectorComponents[i]->Draw();
 		}
 	}
 
@@ -1014,6 +1012,7 @@ void ModuleRenderer3D::LoadGenericUniforms(uint shaderProgram) const
 {
 	uint location = glGetUniformLocation(shaderProgram, "viewPos");
 	glUniform3fv(location, 1, currentCamera->frustum.pos.ptr());
+
 	switch (App->GetEngineState())
 	{
 		// Game

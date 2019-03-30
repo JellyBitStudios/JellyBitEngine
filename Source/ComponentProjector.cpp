@@ -234,6 +234,58 @@ void ComponentProjector::OnInternalLoad(char*& cursor)
 
 // ----------------------------------------------------------------------------------------------------
 
+#include "ResourceMaterial.h"
+
+// Draws a decal
+void ComponentProjector::Draw() const
+{
+	ResourceMaterial* resourceMaterial = (ResourceMaterial*)App->res->GetResource(materialRes);
+	if (resourceMaterial == nullptr)
+		return;
+
+	const ResourceShaderProgram* resourceShaderProgram = (ResourceShaderProgram*)App->res->GetResource(resourceMaterial->GetShaderUuid());
+	if (resourceShaderProgram == nullptr) // TODO: or the shader is not a projector...
+		return;
+
+	/// Projective texture mapping shader
+	uint shaderProgram = resourceShaderProgram->shaderProgram;
+	glUseProgram(shaderProgram);
+
+	// 1. Generic uniforms
+	App->renderer3D->LoadGenericUniforms(shaderProgram);
+
+	// 2. Known projector uniforms
+	math::float4x4 bias_matrix = math::float4x4(
+		0.5f, 0.0f, 0.0f, 0.5f,
+		0.0f, 0.5f, 0.0f, 0.5f,
+		0.0f, 0.0f, 0.5f, 0.5f,
+		0.0f, 0.0f, 0.0f, 1.0f
+	);
+
+	math::float4x4 projector_view_matrix = GetOpenGLViewMatrix().Transposed();
+	math::float4x4 projector_proj_matrix = GetOpenGLProjectionMatrix().Transposed();
+	math::float4x4 projector_matrix = bias_matrix * projector_proj_matrix * projector_view_matrix;
+
+	uint location = glGetUniformLocation(shaderProgram, "projector_matrix");
+	glUniformMatrix4fv(location, 1, GL_TRUE, projector_matrix.ptr());
+
+	// 3. Unknown projector uniforms
+	uint textureUnit = 0;
+
+	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
+	App->renderer3D->LoadSpecificUniforms(textureUnit, uniforms);
+
+	for (uint i = 0; i < App->renderer3D->GetMaxTextureUnits(); ++i)
+	{
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	glUseProgram(0);
+}
+
+// ----------------------------------------------------------------------------------------------------
+
 void ComponentProjector::SetFOV(float fov)
 {
 	frustum.verticalFov = fov * DEGTORAD;
