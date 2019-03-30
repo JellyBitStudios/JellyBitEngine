@@ -188,7 +188,6 @@ update_status ModuleRenderer3D::PostUpdate()
 #ifndef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::Orchid);
 #endif
-
 	App->fbo->BindGBuffer();
 
 	if (currentCamera != nullptr)
@@ -234,7 +233,6 @@ update_status ModuleRenderer3D::PostUpdate()
 	App->particle->Draw();
 	if (!blend)
 		glDisable(GL_BLEND);
-
 
 #ifndef GAMEMODE
 

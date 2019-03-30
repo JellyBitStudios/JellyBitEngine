@@ -166,9 +166,7 @@
 "	}\n" \
 "	if (FragPosA == 3) // outline\n" \
 "		lighting = Albedo;\n" \
-"	//FragColor = vec4(lighting, 1.0);\n" \
-"	float d = texture(gDepth, TexCoords).r;\n" \
-"	FragColor = vec4(vec3(d), 1.0);\n" \
+"	FragColor = vec4(lighting, 1.0);\n" \
 "}"
 
 #pragma endregion
