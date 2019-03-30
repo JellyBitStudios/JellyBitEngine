@@ -1,9 +1,10 @@
 #ifndef __COMPONENT_BUTTON_H__
 #define __COMPONENT_BUTTON_H__
 
+//#include "ComponentRigidActor.h"
 #include "Component.h"
-#include <string>
 
+#include <string>
 #include <mono/metadata/class.h>
 
 enum UIState;
@@ -58,6 +59,10 @@ private:
 	MonoObject* scriptInstance = nullptr;
 
 	GameObject* draggedGO = nullptr;
+
+	//Physix plane for button when canvas is world
+	bool isWorld = false;
+	//physx::PxRigidActor* gActor = nullptr;
 };
 
 #endif
