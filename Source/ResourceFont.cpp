@@ -75,18 +75,30 @@ Resource* ResourceFont::ImportFile(const char * file)
 	strcpy_s(metaFile, strlen(file) + 1, file); // file
 	strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
 
+	//Si existe el meta tenemos que buscar todos los sizes en library i exportar los que falten
 	if (App->fs->Exists(metaFile))
 	{
 		// Read the meta
-		uint uuid = 0;
+		std::vector<uint> uuids;
 		FontImportSettings importerSettings;
 		int64_t lastModTimeMeta = 0;
-		bool result = ResourceFont::ReadMeta(metaFile, lastModTimeMeta, uuid, importerSettings);
+		bool result = ResourceFont::ReadMeta(metaFile, lastModTimeMeta, uuids, importerSettings);
 		assert(result);
-
 		std::string name;
 		App->fs->GetFileName(file, name);
-		ResourceFont* resFont = (ResourceFont*)App->res->GetResource(uuid);
+
+		for (size_t i = 0; i < importerSettings.sizes.size(); ++i)
+		{
+			char exportedFile[DEFAULT_BUF_SIZE];
+			sprintf(exportedFile, "%s/%s%i.fnt", DIR_LIBRARY_FONT, name.data(), importerSettings.sizes[i]);
+			if (!App->fs->Exists(exportedFile))
+			{
+
+			}
+		}
+
+
+		ResourceFont* resFont = (ResourceFont*)App->res->GetResource(uuids);
 		if (resFont)
 		{
 			//Actualizar recurso y archivo binario
@@ -118,6 +130,7 @@ Resource* ResourceFont::ImportFile(const char * file)
 		data.exportedFile = "";
 		ResourceFont* font = new ResourceFont(uuid, data, ResourceFontData());
 	}
+	//Si no existe el meta creamos creamos un meta con un size por defecto
 	else
 	{
 		//Exportar nuevo binario + Importar nuevo recurso
@@ -222,17 +235,19 @@ bool ResourceFont::LoadFile(const char * file, ResourceFontData & fontData)
 	return ret;
 }
 
-uint ResourceFont::CreateMeta(const char * file, uint fontUuid, std::string & outputMetaFile, FontImportSettings importSettings)
+uint ResourceFont::CreateMeta(const char * file, std::vector<uint> fontUuids, std::string & outputMetaFile, FontImportSettings importSettings)
 {
 	assert(file != nullptr);
 
-	uint uuidsSize = 1;
+	uint uuidsSize = fontUuids.size();
+	uint sizesSize = importSettings.sizes.size();
 	// --------------------------------------------------
 
 	uint size =
 		sizeof(int64_t) +
 		sizeof(uint) * 2 +
 		sizeof(uint) * uuidsSize;
+		sizeof(uint) * sizesSize;
 
 	char* data = new char[size];
 	char* cursor = data;
@@ -249,12 +264,11 @@ uint ResourceFont::CreateMeta(const char * file, uint fontUuid, std::string & ou
 	memcpy(cursor, &uuidsSize, bytes);
 	cursor += bytes;
 
-	// 3. Store material uuid
+	// 3. Store fonts uuids
 	bytes = sizeof(uint) * uuidsSize;
-	memcpy(cursor, &fontUuid, bytes);
+	memcpy(cursor, fontUuids.data(), bytes);
 	cursor += bytes;
 
-	uint sizesSize = importSettings.sizes.size();
 	//4. Store font import Settings
 	bytes = sizeof(uint);
 	memcpy(cursor, &sizesSize, bytes);
@@ -282,7 +296,7 @@ uint ResourceFont::CreateMeta(const char * file, uint fontUuid, std::string & ou
 	return lastModTime;
 }
 
-bool ResourceFont::ReadMeta(const char * metaFile, int64_t & lastModTime, uint & fontUuid, FontImportSettings &importSettings)
+bool ResourceFont::ReadMeta(const char * metaFile, int64_t & lastModTime, std::vector<uint> &fontUuids, FontImportSettings &importSettings)
 {
 	assert(metaFile != nullptr);
 
@@ -302,13 +316,12 @@ bool ResourceFont::ReadMeta(const char * metaFile, int64_t & lastModTime, uint &
 		uint uuidsSize = 0;
 		bytes = sizeof(uint);
 		memcpy(&uuidsSize, cursor, bytes);
-		assert(uuidsSize > 0);
-
 		cursor += bytes;
 
-		// 3. Load material uuid
+		// 3. Load font uuid
+		fontUuids.resize(uuidsSize);
 		bytes = sizeof(uint) * uuidsSize;
-		memcpy(&fontUuid, cursor, bytes);
+		memcpy(fontUuids.data(), cursor, bytes);
 
 		cursor += bytes;
 
@@ -324,12 +337,12 @@ bool ResourceFont::ReadMeta(const char * metaFile, int64_t & lastModTime, uint &
 		cursor += sizesSize;
 
 
-		CONSOLE_LOG(LogTypes::Normal, "Resource Material: Successfully loaded meta '%s'", metaFile);
+		CONSOLE_LOG(LogTypes::Normal, "Resource Font: Successfully loaded meta '%s'", metaFile);
 		RELEASE_ARRAY(buffer);
 	}
 	else
 	{
-		CONSOLE_LOG(LogTypes::Error, "Resource Material: Could not load meta '%s'", metaFile);
+		CONSOLE_LOG(LogTypes::Error, "Resource Font: Could not load meta '%s'", metaFile);
 		return false;
 	}
 
@@ -337,3 +350,98 @@ bool ResourceFont::ReadMeta(const char * metaFile, int64_t & lastModTime, uint &
 }
 
 
+bool ResourceFont::ReadMetaFromBuffer(char* cursor, int64_t & lastModTime, std::vector<uint> &fontUuids, FontImportSettings &importSettings)
+{
+
+	// 1. Load last modification time
+	uint bytes = sizeof(int64_t);
+	memcpy(&lastModTime, cursor, bytes);
+
+	cursor += bytes;
+
+	// 2. Load uuids size
+	uint uuidsSize = 0;
+	bytes = sizeof(uint);
+	memcpy(&uuidsSize, cursor, bytes);
+
+	cursor += bytes;
+
+	// 3. Load font uuid
+	fontUuids.resize(uuidsSize);
+	bytes = sizeof(uint) * uuidsSize;
+	memcpy(fontUuids.data(), cursor, bytes);
+
+	cursor += bytes;
+
+	uint sizesSize;
+	//4. Load font import Settings
+	bytes = sizeof(uint);
+	memcpy(&sizesSize, cursor, bytes);
+
+	cursor += bytes;
+
+	importSettings.sizes.resize(sizesSize);
+	memcpy(importSettings.sizes.data(), cursor, sizesSize);
+	cursor += sizesSize;
+
+	return true;
+}
+
+void ResourceFont::UpdateImportSettings(FontImportSettings importSettings)
+{
+
+	std::vector<uint> uuids;
+	FontImportSettings prevImportSettings;
+	int64_t lastModTimeMeta = 0;
+	bool result = ResourceFont::ReadMeta((importSettings.fontPath + ".meta").data(), lastModTimeMeta, uuids, prevImportSettings);
+	if (result)
+	{
+		for (size_t i = 0; i < prevImportSettings.sizes.size(); ++i)
+		{
+			if (std::find(importSettings.sizes.begin(), importSettings.sizes.end(), prevImportSettings.sizes[i]) == importSettings.sizes.end())
+			{
+				//Borrar recurso PAPU
+				for (size_t j = 0; j < uuids.size(); ++j)
+				{
+					ResourceFont* font = (ResourceFont*)App->res->GetResource(uuids[j]);
+					if (font)
+					{
+						if (font->size == prevImportSettings.sizes[i])
+						{
+							App->res->DeleteResource(uuids[j]);
+							break;
+						}
+					}
+				}
+			}
+		}
+		
+		ResourceFont::CreateMeta(importSettings.fontPath.data(),);
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		System_Event newEvent;
+		newEvent.type = System_Event_Type::DeleteUnusedFiles;
+		App->PushSystemEvent(newEvent);
+
+	}
+}

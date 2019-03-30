@@ -818,7 +818,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 			// TODO: only create meta if any of its fields has been modificated
 			std::string outputMetaFile;
 			App->fs->GetFileName(file, name);
-			int64_t lastModTime = ResourceFont::CreateMeta(file, resourcesUuids.front(), name,App->gui->panelInspector->GetFontImportSettings());
+			int64_t lastModTime = ResourceFont::CreateMeta(file, resourcesUuids.front(), name, App->gui->panelInspector->GetFontImportSettings());
 			assert(lastModTime > 0);
 		}
 	}

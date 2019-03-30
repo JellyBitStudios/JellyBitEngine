@@ -280,24 +280,22 @@ void PanelAssets::RecursiveDrawAssetsDir(const Directory& directory)
 				char id[DEFAULT_BUF_SIZE];
 				sprintf(id, "%s##%s", file.name.data(), directory.fullPath.data());
 
-				bool fbxOpened = ImGui::TreeNodeEx(id, flags);
+				bool fontOpened = ImGui::TreeNodeEx(id, flags);
 
 				ImVec2 mouseDelta = ImGui::GetMouseDragDelta(0);
 				if (ImGui::IsMouseReleased(0) && ImGui::IsItemHovered(ImGuiHoveredFlags_None)
 					&& (ImGui::GetMousePos().x - ImGui::GetItemRectMin().x) > ImGui::GetTreeNodeToLabelSpacing())
 				{
-					std::vector<uint> uids;
-					std::vector<uint> bone_uuids;
-					std::vector<uint> anim_uuids;
-					ResourceMesh::ReadMeshesUuidsFromBuffer(cursor, uids, bone_uuids, anim_uuids);
+					int64_t lastTime;
+					uint uuid;
+					FontImportSettings importSett;
 
-					ResourceMesh* tempRes = (ResourceMesh*)App->res->GetResource(uids[0]);
-
+					ResourceFont::ReadMetaFromBuffer(cursor, lastTime, uuid, importSett);
 					
-					SELECT(tempRes->GetSpecificData().meshImportSettings);
+					SELECT(importSett);
 				}
 
-				if (fbxOpened)
+				if (fontOpened)
 				{
 					std::vector<uint> uids;
 					std::vector<uint> bone_uuids;

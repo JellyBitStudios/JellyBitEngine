@@ -22,7 +22,6 @@ public:
 	void SetMeshImportSettings(ResourceMeshImportSettings& is) { m_is = is; }
 	void SetTextureImportSettings(ResourceTextureImportSettings& is) { t_is = is; }
 	void SetFontImportSettings(FontImportSettings& is) { f_is = is; }
-	FontImportSettings GetFontImportSettings()const { return f_is; };
 
 private:
 
@@ -32,6 +31,7 @@ private:
 	void ShowMeshResourceInspector() const;
 	void ShowTextureResourceInspector() const;
 	void ShowMeshImportSettingsInspector();
+	void ShowFontImportSettingsInspector();
 	void ShowTextureImportSettingsInspector() const;
 	void ShowShaderObjectInspector() const;
 	void ShowShaderProgramInspector() const;

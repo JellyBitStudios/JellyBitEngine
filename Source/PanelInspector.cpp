@@ -583,6 +583,34 @@ void PanelInspector::ShowMeshImportSettingsInspector()
 	}
 }
 
+void PanelInspector::ShowFontImportSettingsInspector()
+{
+	ImGui::Text("Font Import Settings");
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	ImGui::Spacing();
+	ImGui::Text("Import Settings");
+	ImGui::Spacing();
+
+	int sizesSize = f_is.sizes.size();
+
+	if (ImGui::InputInt("Sizes Amount", &sizesSize))
+		f_is.sizes.resize(sizesSize);
+	ImGui::Spacing();
+
+	for (uint i = 0; i < sizesSize; ++i)
+	{
+		std::string name = "Size " + std::to_string(i);
+		ImGui::InputInt(name.data(), (int*)&f_is.sizes[i]);
+	}
+
+	if (ImGui::Button("APPLY"))
+	{
+		ResourceFont::UpdateImportSettings(f_is);
+	}
+}
+
 void PanelInspector::ShowTextureImportSettingsInspector() const
 {
 	ImGui::Text("Texture Import Settings");
