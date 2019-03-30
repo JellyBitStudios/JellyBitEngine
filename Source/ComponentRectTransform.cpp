@@ -30,10 +30,6 @@ ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTyp
 			{
 				ComponentCanvas* canvas = goCanvas->cmp_canvas;
 
-				if (canvas != parent->cmp_canvas)
-					if (!goCanvas->cmp_rectTransform)
-						goCanvas->AddComponent(ComponentTypes::RectTransformComponent);
-
 				switch (canvas->GetType())
 				{
 				case ComponentCanvas::CanvasType::SCREEN:
@@ -142,23 +138,21 @@ void ComponentRectTransform::InitRect()
 	{
 		case ComponentRectTransform::RECT:
 		{
-			if (!parent->cmp_canvas)
-			{
-				uint* rectParent = nullptr;
-				if (parent->cmp_canvas)
-					rectParent = App->ui->GetRectUI();
-				else
-					rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+			uint* rectParent = nullptr;
+			if (parent->cmp_canvas)
+				rectParent = App->ui->GetRectUI();
+			else
+				rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
 
-				rectTransform[Rect::X] = rectParent[Rect::X];
-				rectTransform[Rect::Y] = rectParent[Rect::Y];
+			rectTransform[Rect::X] = rectParent[Rect::X];
+			rectTransform[Rect::Y] = rectParent[Rect::Y];
 
-				if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
-					rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
-				if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
-					rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
-			}
-			CalculateAnchors();
+			if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
+				rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
+			if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
+				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
+
+			CalculateAnchors(true);
 			break;
 		}
 		case ComponentRectTransform::WORLD:
