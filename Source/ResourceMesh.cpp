@@ -594,12 +594,12 @@ bool ResourceMesh::AddBones(const std::unordered_map<std::string, uint>& bones)
 				{
 					if (AddBone(meshData.boneInfluences[i].boneIds[j], meshData.boneInfluences[i].boneWeights[j], boneId))
 						++addedBones;
-					else
-						CONSOLE_LOG(LogTypes::Error, "Resource Mesh: The bone %s could not be added to the mesh", boneResource->boneData.name.data());
+					//else
+						//CONSOLE_LOG(LogTypes::Error, "Resource Mesh: The bone %s could not be added to the mesh", boneResource->boneData.name.data());
 				}
 			}
-			else
-				CONSOLE_LOG(LogTypes::Error, "Resource Mesh: The bone %s could not be found nor added to the mesh", boneResource->boneData.name.data());
+			//else
+				//CONSOLE_LOG(LogTypes::Error, "Resource Mesh: The bone %s could not be found nor added to the mesh", boneResource->boneData.name.data());
 		}
 	}
 
