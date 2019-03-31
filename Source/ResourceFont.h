@@ -56,7 +56,6 @@ public:
 	FontImportSettings importSettings;
 	ResourceFontData fontData;
 	FT_Library library;
-	FT_Face face;
 };
 
 #endif // __RESOURCE_FONT_H__

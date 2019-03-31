@@ -5,12 +5,15 @@
 #include "ModuleUI.h"
 #include "ModuleResourceManager.h"
 
+#include "ResourceFont.h"
+
 #include "GameObject.h"
 #include "Application.h"
 
 #include "glew/include/GL/glew.h"
 #include "MathGeoLib/include/Geometry/Frustum.h"
 #include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
 
 ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::LabelComponent)
 {
@@ -24,6 +27,8 @@ ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType
 
 		std::vector<Resource*> fonts = App->res->GetResourcesByType(ResourceTypes::FontResource);
 		fontUuid = !fonts.empty() ? fonts[0]->GetUuid() : 0u;
+		if (fontUuid)
+			size = ((ResourceFont*)fonts[0])->fontData.fontSize;
 
 		finalText = text;
 		needed_recaclculate = true;
@@ -200,9 +205,42 @@ void ComponentLabel::OnUniqueEditor()
 	ImGui::PushItemWidth(200.0f);
 	ImGui::ColorEdit4("Color", &color.x, ImGuiColorEditFlags_AlphaBar);
 
-	ImGui::Separator();
 	if (ImGui::DragInt("Load new size", &size, 1.0f, 0, 72))
 		needed_recaclculate = true;
+
+	//-----------------------------------------
+	ImGui::Separator();
+	uint buttonWidth = 0.65 * ImGui::GetWindowWidth();
+	ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+	ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+	ImGui::Text("Font: "); ImGui::SameLine();
+
+	cursorPos = ImGui::GetCursorScreenPos();
+	ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+	cursorPos = { cursorPos.x, cursorPos.y - 5 };
+
+	ImGui::ButtonEx("##Font", { (float)buttonWidth, 20 }, ImGuiButtonFlags_::ImGuiButtonFlags_Disabled);
+
+	//Case 1: Dragging Real GameObjects
+	if (ImGui::BeginDragDropTarget())
+	{
+		const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FONT_RESOURCE", ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
+		if (payload)
+		{
+			uint uuid = *(uint*)payload->Data;
+
+			if (ImGui::IsMouseReleased(0))
+			{
+				fontUuid = uuid;
+				needed_recaclculate = true;
+				size = ((ResourceFont*)App->res->GetResource(uuid))->fontData.fontSize;
+			}
+		}
+		ImGui::EndDragDropTarget();
+	}
+
 
 #endif
 }
