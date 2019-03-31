@@ -20,9 +20,7 @@
 ComponentProjector::ComponentProjector(GameObject* parent) : Component(parent, ComponentTypes::ProjectorComponent)
 {
 	SetMaterialRes(App->resHandler->defaultMaterial);
-
-	meshRes = App->resHandler->cube;
-	App->res->SetAsUsed(meshRes);
+	SetMeshRes(App->resHandler->cube);
 
 	// Init frustum
 	frustum.type = math::FrustumType::PerspectiveFrustum;
@@ -48,8 +46,10 @@ ComponentProjector::ComponentProjector(const ComponentProjector& componentProjec
 	else
 		SetMaterialRes(App->resHandler->defaultMaterial);
 
-	meshRes = App->resHandler->cube;
-	App->res->SetAsUsed(meshRes);
+	if (App->res->GetResource(componentProjector.meshRes) != nullptr)
+		SetMaterialRes(componentProjector.meshRes);
+	else
+		SetMaterialRes(App->resHandler->cube);
 
 	// Init frustum
 	frustum.type = componentProjector.frustum.type;
@@ -199,6 +199,7 @@ uint ComponentProjector::GetInternalSerializationBytes()
 {
 	return sizeof(math::Frustum) +
 		sizeof(uint) +
+		sizeof(uint) +
 		sizeof(uint);
 }
 
@@ -213,6 +214,10 @@ void ComponentProjector::OnInternalSave(char*& cursor)
 	cursor += bytes;
 
 	bytes = sizeof(uint);
+	memcpy(cursor, &meshRes, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(uint);
 	memcpy(cursor, &filterMask, bytes);
 	cursor += bytes;
 }
@@ -223,16 +228,25 @@ void ComponentProjector::OnInternalLoad(char*& cursor)
 	memcpy(&frustum, cursor, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(uint);
 	uint resource = 0;
+
+	bytes = sizeof(uint);
 	memcpy(&resource, cursor, bytes);
+	cursor += bytes;
 
 	if (App->res->GetResource(resource) != nullptr)
 		SetMaterialRes(resource);
 	else
 		SetMaterialRes(App->resHandler->defaultMaterial);
 
+	bytes = sizeof(uint);
+	memcpy(&resource, cursor, bytes);
 	cursor += bytes;
+
+	if (App->res->GetResource(resource) != nullptr)
+		SetMeshRes(resource);
+	else
+		SetMeshRes(App->resHandler->cube);
 
 	bytes = sizeof(uint);
 	memcpy(&filterMask, cursor, bytes);
@@ -310,20 +324,20 @@ void ComponentProjector::Draw() const
 		++textureUnit;
 	}
 
-	uint screenSize = App->window->GetScreenSize();
+	uint screenScale = App->window->GetScreenSize();
 	uint screenWidth = App->window->GetWindowWidth();
 	uint screenHeight = App->window->GetWindowHeight();
-	math::float2 viewport = math::float2(screenWidth * screenSize, screenHeight * screenSize);
+	math::float2 screenSize = math::float2(screenWidth * screenScale, screenHeight * screenScale);
 
-	location = glGetUniformLocation(shaderProgram, "viewportSize");
+	location = glGetUniformLocation(shaderProgram, "screenSize");
 	if (location != -1)
-		glUniform2fv(location, 1, viewport.ptr());
+		glUniform2fv(location, 1, screenSize.ptr());
 
 	// 3. Unknown uniforms
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
 	std::vector<const char*> ignore;
 	ignore.push_back("gBufferPosition");
-	ignore.push_back("viewportSize");
+	ignore.push_back("screenSize");
 	App->renderer3D->LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	// Mesh
@@ -388,6 +402,22 @@ void ComponentProjector::SetMaterialRes(uint materialUuid)
 uint ComponentProjector::GetMaterialRes() const
 {
 	return materialRes;
+}
+
+void ComponentProjector::SetMeshRes(uint meshUuid)
+{
+	if (meshRes > 0)
+		App->res->SetAsUnused(meshRes);
+
+	if (meshUuid > 0)
+		App->res->SetAsUsed(meshUuid);
+
+	meshRes = meshUuid;
+}
+
+uint ComponentProjector::GetMeshRes() const
+{
+	return meshRes;
 }
 
 void ComponentProjector::SetFilterMask(uint filterMask)

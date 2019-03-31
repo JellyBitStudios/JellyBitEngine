@@ -14,21 +14,33 @@ in VS_OUT
 uniform sampler2D projectorTex;
 
 uniform sampler2D gBufferPosition;
+uniform mat4 model_matrix;
 uniform mat4 projectorMatrix;
-uniform vec2 viewportSize;
+uniform vec2 screenSize;
 
 void main()
 {
+    // fragment's screen pos
     vec2 screenPos = gl_FragCoord.xy;
-    screenPos.x /= viewportSize.x;
-    screenPos.y /= viewportSize.y;
+    screenPos.x /= screenSize.x;
+    screenPos.y /= screenSize.y;
     
-    // gBuffer fragment's screen pos (2D)
-    vec4 modelPosition = texture(gBufferPosition, screenPos);
-    vec4 projectorTexCoord = projectorMatrix * modelPosition;
+    // gBuffer fragment's world pos
+    vec4 worldPos = texture(gBufferPosition, screenPos);
+    // gBuffer fragment's object pos
+    vec4 objectPos = inverse(model_matrix) * worldPos;
     
-    vec4 color = vec4(0.0);
-    color = textureProj(projectorTex, projectorTexCoord);
+    // Bounds check
+    if (abs(objectPos.xyz) > 0.5)
+    discard;
+    
+    
+    
+    
+    //vec4 projectorTexCoord = projectorMatrix * modelPosition;
+    
+    vec4 color = vec4(1.0, 0.0, 0.0, 1.0);
+    //color = textureProj(projectorTex, projectorTexCoord);
 
 	gPosition.rgb = fs_in.gPosition;
 	gNormal.rgb = normalize(fs_in.gNormal);

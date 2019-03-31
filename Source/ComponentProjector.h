@@ -46,6 +46,8 @@ public:
 
 	void SetMaterialRes(uint materialUuid);
 	uint GetMaterialRes() const;
+	void SetMeshRes(uint meshUuid);
+	uint GetMeshRes() const;
 	void SetFilterMask(uint filterMask);
 	uint GetFilterMask() const;
 
