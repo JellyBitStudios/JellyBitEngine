@@ -120,7 +120,6 @@ public:
 	class Lights*						lights;
 	class ModuleNavigation*				navigation;
 	class ModuleLayers*					layers;
-	class ModuleFreetype*				ft;
 
 	pcg32_random_t						rng;
 

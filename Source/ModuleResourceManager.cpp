@@ -11,7 +11,6 @@
 #include "SceneImporter.h"
 #include "MaterialImporter.h"
 #include "ShaderImporter.h"
-#include "FontImporter.h"
 #include "AnimationImporter.h"
 
 #include "ResourceTypes.h"

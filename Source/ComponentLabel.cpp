@@ -1,7 +1,6 @@
 #include "ComponentLabel.h"
 #include "ComponentRectTransform.h"
 
-#include "ModuleFreetype.h"
 #include "ModuleUI.h"
 #include "ModuleResourceManager.h"
 

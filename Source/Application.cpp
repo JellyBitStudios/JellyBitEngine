@@ -16,7 +16,6 @@
 #include "MaterialImporter.h"
 #include "SceneImporter.h"
 #include "ShaderImporter.h"
-#include "FontImporter.h"
 #include "AnimationImporter.h"
 #include "DebugDrawer.h"
 #include "Raycaster.h"
@@ -28,7 +27,6 @@
 #include "ModuleLayers.h"
 #include "ModuleAudio.h"
 #include "ModuleLayers.h"
-#include "ModuleFreetype.h"
 #include "Lights.h"
 
 #include "parson\parson.h"
@@ -61,7 +59,6 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	ui = new ModuleUI();
 	audio = new ModuleAudio();
 	layers = new ModuleLayers();
-	ft = new ModuleFreetype();
 
 	lights = new Lights();
 
@@ -97,7 +94,6 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	AddModule(scripting);
 	AddModule(navigation);
 	AddModule(fbo);
-	AddModule(ft);
 
 	// Renderer last!
 	AddModule(renderer3D);
