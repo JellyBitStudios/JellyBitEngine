@@ -90,6 +90,15 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			cmp_mesh = new ComponentMesh(*gameObject.cmp_mesh, this, includeComponents);
 			cmp_mesh->SetParent(this);
 			components.push_back(cmp_mesh);
+
+			System_Event newEvent;
+			newEvent.goEvent.type = System_Event_Type::CalculateBBoxes;
+			newEvent.goEvent.gameObject = this;
+			App->PushSystemEvent(newEvent);
+
+			newEvent.goEvent.type = System_Event_Type::RecalculateBBoxes;
+			newEvent.goEvent.gameObject = this;
+			App->PushSystemEvent(newEvent);
 			break;
 		case ComponentTypes::MaterialComponent:
 			cmp_material = new ComponentMaterial(*gameObject.cmp_material, this);

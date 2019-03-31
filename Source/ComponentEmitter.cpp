@@ -158,6 +158,7 @@ void ComponentEmitter::ChangeGameState(SimulatedGame state)
 
 void ComponentEmitter::Update()
 {
+
 	if (isPlaying)
 	{
 		if (rateOverTime > 0)
