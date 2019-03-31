@@ -59,6 +59,7 @@
 "layout (location = 0) out vec4 gPosition;\n"									\
 "layout (location = 1) out vec4 gNormal;\n"										\
 "layout (location = 2) out vec4 gAlbedoSpec;\n"									\
+"layout (location = 3) out vec4 gInfo;\n"										\
 "\n"																			\
 "in VS_OUT\n"																	\
 "{\n"																			\
@@ -70,6 +71,8 @@
 "\n"																			\
 "uniform sampler2D diffuse;\n"													\
 "\n"																			\
+"uniform uint layer;\n"															\
+"\n"																			\
 "void main()\n"																	\
 "{\n"																			\
 "	gPosition.rgb = fs_in.gPosition;\n"											\
@@ -78,6 +81,10 @@
 "	gPosition.a = 1;\n"															\
 "	gNormal.a = 1;\n"															\
 "	gAlbedoSpec.a = 1;\n"														\
+"	gInfo.r = layer;\n"															\
+"	gInfo.g = 0;\n"																\
+"	gInfo.b = 0;\n"																\
+"	gInfo.a = 0;\n"																\
 "}"
 
 #pragma endregion
@@ -104,6 +111,7 @@
 "uniform sampler2D gPosition;\n" \
 "uniform sampler2D gNormal;\n" \
 "uniform sampler2D gAlbedoSpec;\n" \
+"uniform sampler2D gInfo;\n" \
 "uniform sampler2D gDepth;\n" \
 "\n" \
 "struct Light\n" \
@@ -132,6 +140,7 @@
 "	vec4 AlbedoTexture = texture(gAlbedoSpec, TexCoords);\n" \
 "	vec3 Albedo = AlbedoTexture.rgb;\n" \
 "	float AlbedoA = AlbedoTexture.a;\n" \
+"	vec4 InfoTexture = texture(gInfo, TexCoords);\n" \
 "	vec3 lighting = Albedo * 0.3; // hard-coded ambient component\n" \
 "	for (int i = 0; i < NR_LIGHTS; ++i)\n" \
 "	{\n" \
@@ -492,6 +501,7 @@
 "layout(location = 0) out vec4 gPosition;\n"											\
 "layout(location = 1) out vec4 gNormal;\n"												\
 "layout(location = 2) out vec4 gAlbedoSpec;\n"											\
+"layout(location = 3) out vec4 gInfo;\n"												\
 "\n"																					\
 "in GS_OUT\n"																			\
 "{\n"																					\
@@ -548,6 +558,7 @@
 "layout(location = 0) out vec4 gPosition;\n"											\
 "layout(location = 1) out vec4 gNormal;\n"												\
 "layout(location = 2) out vec4 gAlbedoSpec;\n"											\
+"layout (location = 3) out vec4 gInfo;\n"												\
 "\n"																					\
 "in GS_OUT\n"																			\
 "{\n"																					\

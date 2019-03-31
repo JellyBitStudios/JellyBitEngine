@@ -336,6 +336,15 @@ void ComponentProjector::Draw() const
 		++textureUnit;
 	}
 
+	glActiveTexture(GL_TEXTURE0 + textureUnit);
+	glBindTexture(GL_TEXTURE_2D, App->fbo->gInfo);
+	location = glGetUniformLocation(shaderProgram, "gBufferInfo");
+	if (location != -1)
+	{
+		glUniform1i(location, textureUnit);
+		++textureUnit;
+	}
+
 	uint screenScale = App->window->GetScreenSize();
 	uint screenWidth = App->window->GetWindowWidth();
 	uint screenHeight = App->window->GetWindowHeight();
@@ -345,12 +354,18 @@ void ComponentProjector::Draw() const
 	if (location != -1)
 		glUniform2fv(location, 1, screenSize.ptr());
 
+	location = glGetUniformLocation(shaderProgram, "filterMask");
+	if (location != -1)
+		glUniform1i(location, filterMask);
+
 	// 3. Unknown uniforms
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
 	std::vector<const char*> ignore;
 	ignore.push_back("gBufferPosition");
 	ignore.push_back("gBufferNormal");
+	ignore.push_back("gBufferInfo");
 	ignore.push_back("screenSize");
+	ignore.push_back("filterMask");
 	App->renderer3D->LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	/// Camera-box intersection test

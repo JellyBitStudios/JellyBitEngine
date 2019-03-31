@@ -2,6 +2,7 @@
 layout (location = 0) out vec4 gPosition;
 layout (location = 1) out vec4 gNormal;
 layout (location = 2) out vec4 gAlbedoSpec;
+layout (location = 3) out vec4 gInfo;
 
 in VS_OUT
 {
@@ -13,12 +14,14 @@ in VS_OUT
 
 uniform sampler2D gBufferPosition;
 uniform sampler2D gBufferNormal;
+uniform usampler2D gBufferInfo;
 
 uniform sampler2D projectorTex;
 
 uniform mat4 model_matrix;
 uniform mat4 projectorMatrix;
 uniform vec2 screenSize;
+uniform uint filterMask;
 
 void main()
 {
@@ -26,6 +29,12 @@ void main()
     vec2 screenPos = gl_FragCoord.xy;
     screenPos.x /= screenSize.x;
     screenPos.y /= screenSize.y;
+    
+    // gBuffer fragment's info
+    uvec4 info = texture(gBufferInfo, screenPos);
+    uint layer = 1u << info.r;
+    if ((filterMask & layer) == 1u)
+    discard;
     
     // gBuffer fragment's world pos
     vec4 worldPos = texture(gBufferPosition, screenPos);
