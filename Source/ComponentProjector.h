@@ -58,6 +58,7 @@ private:
 
 	math::Frustum frustum;
 	uint materialRes = 0;
+	uint meshRes = 0;
 	uint filterMask = 0;
 };
 

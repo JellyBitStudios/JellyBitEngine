@@ -7,8 +7,9 @@
 #include "ModuleInternalResHandler.h"
 #include "ModuleLayers.h"
 #include "ModuleScene.h"
+#include "ModuleFBOManager.h"
 
-#include "Resource.h"
+#include "ResourceMaterial.h"
 #include "GameObject.h"
 #include "ComponentTransform.h"
 
@@ -20,6 +21,9 @@ ComponentProjector::ComponentProjector(GameObject* parent) : Component(parent, C
 {
 	SetMaterialRes(App->resHandler->defaultMaterial);
 
+	meshRes = App->resHandler->cube;
+	App->res->SetAsUsed(meshRes);
+
 	// Init frustum
 	frustum.type = math::FrustumType::PerspectiveFrustum;
 
@@ -28,7 +32,7 @@ ComponentProjector::ComponentProjector(GameObject* parent) : Component(parent, C
 	frustum.up = math::float3::unitY;
 
 	frustum.nearPlaneDistance = 1.0f;
-	frustum.farPlaneDistance = 500.0f;
+	frustum.farPlaneDistance = 5.0f;
 	frustum.verticalFov = 60.0f * DEGTORAD;
 	frustum.horizontalFov = 60.0f * DEGTORAD;
 
@@ -43,6 +47,9 @@ ComponentProjector::ComponentProjector(const ComponentProjector& componentProjec
 		SetMaterialRes(componentProjector.materialRes);
 	else
 		SetMaterialRes(App->resHandler->defaultMaterial);
+
+	meshRes = App->resHandler->cube;
+	App->res->SetAsUsed(meshRes);
 
 	// Init frustum
 	frustum.type = componentProjector.frustum.type;
@@ -234,8 +241,6 @@ void ComponentProjector::OnInternalLoad(char*& cursor)
 
 // ----------------------------------------------------------------------------------------------------
 
-#include "ResourceMaterial.h"
-
 // Draws a decal
 void ComponentProjector::Draw() const
 {
@@ -266,14 +271,71 @@ void ComponentProjector::Draw() const
 	math::float4x4 projector_proj_matrix = GetOpenGLProjectionMatrix().Transposed();
 	math::float4x4 projector_matrix = bias_matrix * projector_proj_matrix * projector_view_matrix;
 
-	uint location = glGetUniformLocation(shaderProgram, "projector_matrix");
-	glUniformMatrix4fv(location, 1, GL_TRUE, projector_matrix.ptr());
+	int location = glGetUniformLocation(shaderProgram, "projectorMatrix");
+	if (location != -1)
+		glUniformMatrix4fv(location, 1, GL_TRUE, projector_matrix.ptr());
 
-	// 3. Unknown projector uniforms
+	math::AABB aabb = frustum.MinimalEnclosingAABB();
+	math::float3 aabbPosition = aabb.CenterPoint();
+	math::float3 aabbScaling = aabb.HalfSize();
+	math::float4x4 aabbMatrix = math::float4x4::FromTRS(aabbPosition, math::Quat::identity, aabbScaling);
+
+	math::float4x4 model_matrix = aabbMatrix;
+	model_matrix = model_matrix.Transposed();
+	math::float4x4 view_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLViewMatrix();
+	math::float4x4 proj_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLProjectionMatrix();
+	math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
+	math::float4x4 normal_matrix = model_matrix;
+	normal_matrix.Inverse();
+	normal_matrix.Transpose();
+
+	location = glGetUniformLocation(shaderProgram, "model_matrix");
+	if (location != -1)
+		glUniformMatrix4fv(location, 1, GL_FALSE, model_matrix.ptr());
+	location = glGetUniformLocation(shaderProgram, "mvp_matrix");
+	if (location != -1)
+		glUniformMatrix4fv(location, 1, GL_FALSE, mvp_matrix.ptr());
+	location = glGetUniformLocation(shaderProgram, "normal_matrix");
+	if (location != -1)
+		glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
+
 	uint textureUnit = 0;
 
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, App->fbo->gPosition);
+	location = glGetUniformLocation(shaderProgram, "gBufferPosition");
+	if (location != -1)
+	{
+		glUniform1i(location, textureUnit);
+		++textureUnit;
+	}
+
+	uint screenSize = App->window->GetScreenSize();
+	uint screenWidth = App->window->GetWindowWidth();
+	uint screenHeight = App->window->GetWindowHeight();
+	math::float2 viewport = math::float2(screenWidth * screenSize, screenHeight * screenSize);
+
+	location = glGetUniformLocation(shaderProgram, "viewportSize");
+	if (location != -1)
+		glUniform2fv(location, 1, viewport.ptr());
+
+	// 3. Unknown uniforms
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
-	App->renderer3D->LoadSpecificUniforms(textureUnit, uniforms);
+	std::vector<const char*> ignore;
+	ignore.push_back("gBufferPosition");
+	ignore.push_back("viewportSize");
+	App->renderer3D->LoadSpecificUniforms(textureUnit, uniforms, ignore);
+
+	// Mesh
+	const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(meshRes);
+
+	glBindVertexArray(mesh->GetVAO());
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIBO());
+
+	glDrawElements(GL_TRIANGLES, mesh->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 
 	for (uint i = 0; i < App->renderer3D->GetMaxTextureUnits(); ++i)
 	{
