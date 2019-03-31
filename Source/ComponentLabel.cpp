@@ -3,6 +3,7 @@
 
 #include "ModuleFreetype.h"
 #include "ModuleUI.h"
+#include "ModuleResourceManager.h"
 
 #include "GameObject.h"
 #include "Application.h"
@@ -21,10 +22,10 @@ ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType
 		if (parent->cmp_canvasRenderer == nullptr)
 			parent->AddComponent(ComponentTypes::CanvasRendererComponent);
 
-		maxLabelSize = App->ft->LoadFont("../Game/Assets/Textures/Font/arial.ttf", size, charactersBitmap);
+		std::vector<Resource*> fonts = App->res->GetResourcesByType(ResourceTypes::FontResource);
+		fontUuid = !fonts.empty() ? fonts[0]->GetUuid() : 0u;
 
 		finalText = text;
-
 		needed_recaclculate = true;
 	}
 }
@@ -33,7 +34,6 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 {
 	if (includeComponents)
 	{
-		charactersBitmap = componentLabel.charactersBitmap;		
 		color = componentLabel.color;
 		labelWord = componentLabel.labelWord;
 		finalText = componentLabel.finalText;
@@ -52,13 +52,17 @@ void ComponentLabel::Update()
 	{
 		labelWord.clear();
 
-		uint x_moving = 0;
-		uint* rectParent = parent->cmp_rectTransform->GetRect();
-		math::float3* parentCorners = parent->cmp_rectTransform->GetCorners();
-		x_moving = rectParent[0];
-		float sizeNorm = size / (float)sizeLoaded;
-		uint contRows = 0;
-		if (!charactersBitmap.empty())
+		ResourceFont* fontRes = fontUuid != 0 ? (ResourceFont*)App->res->GetResource(fontUuid) : nullptr;
+
+		if (fontRes && !fontRes->fontData.charactersMap.empty())
+		{
+			uint x_moving = 0;
+			uint* rectParent = parent->cmp_rectTransform->GetRect();
+			math::float3* parentCorners = parent->cmp_rectTransform->GetCorners();
+			x_moving = rectParent[0];
+			float sizeNorm = size / (float)fontRes->fontData.fontSize;
+			uint contRows = 0;
+
 			for (std::string::const_iterator c = finalText.begin(); c != finalText.end(); ++c)
 			{
 				if ((int)(*c) >= 32 && (int)(*c) < 128)//ASCII TABLE
@@ -67,17 +71,17 @@ void ComponentLabel::Update()
 					memcpy(&l.letter, c._Ptr, sizeof(char));
 
 					Character character;
-					character = charactersBitmap.find(*c)->second;
+					character = fontRes->fontData.charactersMap.find(*c)->second;
 
 					l.textureID = character.textureID;
 
 					uint x = x_moving + character.bearing.x * sizeNorm;
 					//								Normalize pos with all heights	 //	Check Y-ofset for letters that write below origin "p" //	 Control lines enters
-					uint y = rectParent[1] + ((maxLabelSize - character.size.y) + ((character.size.y) - character.bearing.y)) * sizeNorm + contRows * maxLabelSize * sizeNorm;
+					uint y = rectParent[1] + ((fontRes->fontData.maxCharHeight - character.size.y) + ((character.size.y) - character.bearing.y)) * sizeNorm + contRows * fontRes->fontData.maxCharHeight * sizeNorm;
 
 					if (x + character.size.x * sizeNorm > rectParent[0] + rectParent[2])
 					{
-						y += maxLabelSize * sizeNorm;
+						y += fontRes->fontData.maxCharHeight * sizeNorm;
 						x = rectParent[0] + character.bearing.x * sizeNorm;
 						contRows++;
 					}
@@ -98,7 +102,7 @@ void ComponentLabel::Update()
 					x_moving = rectParent[0];
 				}
 			}
-
+		}
 		needed_recaclculate = false;
 	}
 }
@@ -131,9 +135,8 @@ void ComponentLabel::ScreenDraw(uint rect[4], const uint x, const uint y, math::
 }
 
 uint ComponentLabel::GetInternalSerializationBytes()
-{
-																			//SIZES		//SizeMap +  sizeString
-	return sizeof(color) + sizeof(char) * finalText.length() + sizeof(int) * 2 + sizeof(uint) * 3 + sizeof(Character)*(charactersBitmap.size());
+{																		
+	return sizeof(color) + sizeof(int) + sizeof(uint) + sizeof(char) * finalText.length();
 }
 
 void ComponentLabel::OnInternalSave(char *& cursor)
@@ -146,9 +149,6 @@ void ComponentLabel::OnInternalSave(char *& cursor)
 	memcpy(cursor, &size, bytes);
 	cursor += bytes;
 
-	memcpy(cursor, &sizeLoaded, bytes);
-	cursor += bytes;
-
 	bytes = sizeof(uint);
 	uint nameLenght = finalText.length();
 	memcpy(cursor, &nameLenght, bytes);
@@ -157,21 +157,6 @@ void ComponentLabel::OnInternalSave(char *& cursor)
 	bytes = nameLenght;
 	memcpy(cursor, finalText.c_str(), bytes);
 	cursor += bytes;
-
-	bytes = sizeof(uint);
-	memcpy(cursor, &maxLabelSize, bytes);
-	cursor += bytes;
-
-	uint listSize = charactersBitmap.size();
-	memcpy(cursor, &listSize, bytes);
-	cursor += bytes;
-
-	bytes = sizeof(Character);
-	for (std::map<char, Character>::iterator it = charactersBitmap.begin(); it != charactersBitmap.end(); ++it)
-	{
-		memcpy(cursor, &(*it).second, bytes);
-		cursor += bytes;
-	}
 }
 
 void ComponentLabel::OnInternalLoad(char *& cursor)
@@ -182,9 +167,6 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 
 	bytes = sizeof(int);
 	memcpy(&size, cursor, bytes);
-	cursor += bytes;
-
-	memcpy(&sizeLoaded, cursor, bytes);
 	cursor += bytes;
 
 	//Load lenght + string
@@ -199,28 +181,7 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 	finalText.resize(nameLenght);
 	cursor += bytes;
 
-	uint i = 0;
-	for (std::string::iterator it = finalText.begin(); it != finalText.end(); ++it, ++i)
-	{
-		text[i] = *it;
-	}
-	bytes = sizeof(uint);
-	memcpy(&maxLabelSize, cursor, bytes);
-	cursor += bytes;
-
-	uint listSize = charactersBitmap.size();
-	memcpy(&listSize, cursor, bytes);
-	cursor += bytes;
-
-	bytes = sizeof(Character);
-	for (int i = 0; i < listSize; ++i)
-	{
-		Character character;
-		memcpy(&character, cursor, bytes);
-		charactersBitmap.insert(std::pair<char, Character>(i + 32, character));
-		cursor += bytes;
-	}
-
+	strcmp(text, finalText.data());
 }
 
 void ComponentLabel::OnUniqueEditor()
@@ -242,13 +203,6 @@ void ComponentLabel::OnUniqueEditor()
 	ImGui::Separator();
 	if (ImGui::DragInt("Load new size", &size, 1.0f, 0, 72))
 		needed_recaclculate = true;
-	if (ImGui::Button("Fix new size", ImVec2(125, 20)))
-	{
-		charactersBitmap.clear();
-		maxLabelSize = App->ft->LoadFont("../Game/Assets/Textures/Font/arial.ttf", size, charactersBitmap);
-		sizeLoaded = size;
-		needed_recaclculate = true;
-	}
 
 #endif
 }

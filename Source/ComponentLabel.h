@@ -48,11 +48,9 @@ private:
 	void OnUniqueEditor();
 
 private:
-	int size = 72;
-	int sizeLoaded = 72;
-	uint maxLabelSize = 0u;
+	uint fontUuid = 0u;
 
-	std::map<char, Character> charactersBitmap;
+	int size = 72;
 
 	std::string finalText;
 	char text[300] = "Edit Text";

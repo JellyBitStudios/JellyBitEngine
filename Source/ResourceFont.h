@@ -53,8 +53,6 @@ public:
 
 public:
 
-	std::map<char, Character> charactersMap;
-
 	FontImportSettings importSettings;
 	ResourceFontData fontData;
 	FT_Library library;

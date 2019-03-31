@@ -86,13 +86,12 @@ Resource* ResourceFont::ImportFile(const char * file)
 		for (size_t i = 0; i < importerSettings.sizes.size(); ++i)
 		{
 			char exportedFile[DEFAULT_BUF_SIZE];
-			sprintf(exportedFile, "%s/%s%i_%u.fnt", DIR_LIBRARY_FONT, name.data(), importerSettings.sizes[i],uuids[i]);
+			sprintf(exportedFile, "%s/%s%i_%u.fnt", DIR_LIBRARY_FONT, name.data(), importerSettings.sizes[i], uuids[i]);
 			ResourceFont* resFont = nullptr;
 			if (!App->fs->Exists(exportedFile))
 			{
 				//We supposed that there aren't resources in memory at this point
-				resFont = ResourceFont::ImportFontBySize(file, importerSettings.sizes[i]);
-				recalculateMeta = true;
+				resFont = ResourceFont::ImportFontBySize(file, importerSettings.sizes[i],uuids[i]);
 			}
 			else
 			{
@@ -107,13 +106,13 @@ Resource* ResourceFont::ImportFile(const char * file)
 						found = true;
 					}
 				}
-				if(!found)
-					resFont = ResourceFont::LoadFile(file);
+				if (!found)
+					resFont = ResourceFont::LoadFile(exportedFile);
 			}
-			if(resFont)
+			if (resFont)
+			{
 				App->res->AddResource(resFont);
-			if (recalculateMeta)
-				ResourceFont::CreateMeta(file, uuids, importerSettings);
+			}
 		}
 	}
 	//If meta doesn't exist we create it with default font size
@@ -224,7 +223,7 @@ ResourceFont* ResourceFont::LoadFile(const char * file)
 		RELEASE_ARRAY(buffer);
 		
 		ResourceData data;
-		data.name = filePath.substr(0, filePath.find(std::to_string(fontData.fontSize)));
+		data.name = filePath.substr(0, filePath.find("_"));
 		data.file = DIR_ASSETS_FONT + std::string("/") + data.name + EXTENSION_FONT;
 		data.exportedFile = file;
 

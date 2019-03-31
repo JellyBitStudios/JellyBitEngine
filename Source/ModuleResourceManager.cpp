@@ -1513,8 +1513,9 @@ void ModuleResourceManager::RecursiveDeleteUnusedMetas(const char* dir, std::str
 		else
 		{
 			std::string extension;
+			std::string completeFile = *it;
 			App->fs->GetExtension(*it, extension);
-			if (IS_META(extension.data()))
+			if (IS_META(extension.data()) && completeFile.find(".ttf.meta") == std::string::npos)
 			{
 				// Search for the file associated to the meta
 				std::string file;
