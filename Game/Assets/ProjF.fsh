@@ -27,7 +27,6 @@ void main()
     
     // gBuffer fragment's world pos
     vec4 worldPos = texture(gBufferPosition, screenPos);
-    worldPos.xyz / worldPos.w;
     // gBuffer fragment's object pos
     vec4 objectPos = inverse(model_matrix) * worldPos;
     
@@ -38,14 +37,12 @@ void main()
     if (objX < 0.0 || objY < 0.0 || objZ < 0.0)
     discard;
     
+    // Calculate tex coord
     vec2 texCoord = objectPos.xz + 0.5;
-     
-    //vec4 projectorTexCoord = projectorMatrix * modelPosition;
-
-    //vec4 color = texture(projectorTex, texCoord);
-    //if (color.a < 0.1)
-    //discard;
-    vec4 color = vec4(1.0, 0.0, 0.0, 1.0);
+    vec4 color = texture(projectorTex, texCoord);
+    if (color.a < 0.1)
+    discard;
+    //vec4 color = vec4(1.0, 0.0, 0.0, 1.0);
 
 	gPosition.rgb = fs_in.gPosition;
 	gNormal.rgb = normalize(fs_in.gNormal);
