@@ -104,6 +104,7 @@
 "uniform sampler2D gPosition;\n" \
 "uniform sampler2D gNormal;\n" \
 "uniform sampler2D gAlbedoSpec;\n" \
+"uniform sampler2D gDepth;\n" \
 "\n" \
 "struct Light\n" \
 "{\n" \

@@ -111,7 +111,7 @@ bool PanelCodeEditor::Draw()
 		case ShaderObjectTypes::FragmentType:
 			ImGui::Text("%6d/%-6d %6d lines  | %s | %s | %s | %s", cpos.mLine + 1, cpos.mColumn + 1, editor.GetTotalLines(),
 				editor.GetLanguageDefinition().mName.c_str(), fileToEdit,
-				"Vertex Shader",
+				"Fragment Shader",
 				shaderObject->GetName());
 			break;
 		case ShaderObjectTypes::GeometryType:

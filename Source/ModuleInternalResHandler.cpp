@@ -117,25 +117,37 @@ void ModuleInternalResHandler::CreateCube()
 
 	float verticesPosition[24]
 	{
-		-1, -1, -1,
-		 1, -1, -1,
-		 1,  1, -1,
-		-1,  1, -1,
-		-1, -1,  1,
-		 1, -1,  1,
-		 1,  1,  1,
-		-1,  1,  1
+		0.5f, 0.5f, 0.5f, // v0
+		-0.5f, 0.5f, 0.5f, // v1
+		-0.5f, -0.5f, 0.5f, // v2
+		0.5f, -0.5f, 0.5f, // v3
+		0.5f, -0.5f, -0.5f, // v4
+		0.5f, 0.5f, -0.5f, // v5
+		-0.5f, 0.5f, -0.5f, // v6
+		-0.5f, -0.5f, -0.5f // v7
 	};
 
 	specificData.indicesSize = 36;
 	specificData.indices = new uint[specificData.indicesSize]
 	{
-		0, 1, 3, 3, 1, 2,
-		1, 5, 2, 2, 5, 6,
-		5, 4, 6, 6, 4, 7,
-		4, 0, 7, 7, 0, 3,
-		3, 2, 7, 7, 2, 6,
-		4, 5, 0, 0, 5, 1
+		// Front
+		1, 2, 3,
+		3, 0, 1,
+		// Right
+		0, 3, 4,
+		4, 5, 0,
+		// Back
+		5, 4, 7,
+		7, 6, 5,
+		// Left
+		6, 7, 2,
+		2, 1, 6,
+		// Top
+		6, 1, 0,
+		0, 5, 6,
+		// Bottom
+		7, 2, 3,
+		3, 4, 7
 	};
 
 	// Vertices
