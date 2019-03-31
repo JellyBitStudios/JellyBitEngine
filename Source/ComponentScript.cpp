@@ -3182,8 +3182,6 @@ void ComponentScript::InstanceClass(MonoObject* _classInstance)
 	if (!klass)
 		return;
 
-	mono_runtime_object_init(_classInstance);
-
 	int gameObjectAddress = (int)GetParent();
 	int componentAddress = (int)this;
 
