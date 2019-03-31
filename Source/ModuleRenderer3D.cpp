@@ -209,14 +209,14 @@ update_status ModuleRenderer3D::PostUpdate()
 
 		for (uint i = 0; i < meshComponents.size(); ++i)
 		{
-			if (meshComponents[i]->GetParent()->IsActive() && meshComponents[i]->GetParent()->seenLastFrame
-				&& meshComponents[i]->IsActive())
+			//if (meshComponents[i]->GetParent()->IsActive() && meshComponents[i]->GetParent()->seenLastFrame
+				//&& meshComponents[i]->IsActive())
 				DrawMesh(meshComponents[i]);
 		}
 
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
-			if (projectorComponents[i]->GetParent()->IsActive() && projectorComponents[i]->IsActive())
+			//if (projectorComponents[i]->GetParent()->IsActive() && projectorComponents[i]->IsActive())
 				projectorComponents[i]->Draw();
 		}
 	}
