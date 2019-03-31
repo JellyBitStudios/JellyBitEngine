@@ -158,9 +158,6 @@ void ComponentEmitter::ChangeGameState(SimulatedGame state)
 
 void ComponentEmitter::Update()
 {
-	CONSOLE_LOG(LogTypes::Normal, "STRUCT: %i", (sizeof(particleAnim) - sizeof(bool)));
-	CONSOLE_LOG(LogTypes::Normal, "ONE BY ONE: %i", (sizeof(bool) + sizeof(float) * 3 + sizeof(int) * 2));
-
 	if (isPlaying)
 	{
 		if (rateOverTime > 0)
