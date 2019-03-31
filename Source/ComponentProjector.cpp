@@ -291,7 +291,7 @@ void ComponentProjector::Draw() const
 
 	math::AABB aabb = frustum.MinimalEnclosingAABB();
 	math::float3 aabbPosition = aabb.CenterPoint();
-	math::float3 aabbScaling = aabb.HalfSize();
+	math::float3 aabbScaling = aabb.Size();
 	math::float4x4 aabbMatrix = math::float4x4::FromTRS(aabbPosition, math::Quat::identity, aabbScaling);
 
 	math::float4x4 model_matrix = aabbMatrix;

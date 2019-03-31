@@ -281,7 +281,10 @@ update_status ModuleRenderer3D::PostUpdate()
 				App->debugDrawer->DebugDraw(cameraComponents[i]->frustum, frustumsColor);
 
 			for (uint i = 0; i < projectorComponents.size(); ++i)
+			{
 				App->debugDrawer->DebugDraw(projectorComponents[i]->GetFrustum(), frustumsColor);
+				App->debugDrawer->DebugDraw(projectorComponents[i]->GetFrustum().MinimalEnclosingAABB());
+			}
 		}
 
 		if (drawColliders)
