@@ -33,6 +33,10 @@ public:
 
 	// ----------------------------------------------------------------------------------------------------
 
+	void Draw() const;
+
+	// ----------------------------------------------------------------------------------------------------
+
 	// Sets
 	void SetFOV(float fov);
 	float GetFOV() const;
@@ -42,6 +46,8 @@ public:
 
 	void SetMaterialRes(uint materialUuid);
 	uint GetMaterialRes() const;
+	void SetMeshRes(uint meshUuid);
+	uint GetMeshRes() const;
 	void SetFilterMask(uint filterMask);
 	uint GetFilterMask() const;
 
@@ -54,6 +60,7 @@ private:
 
 	math::Frustum frustum;
 	uint materialRes = 0;
+	uint meshRes = 0;
 	uint filterMask = 0;
 };
 

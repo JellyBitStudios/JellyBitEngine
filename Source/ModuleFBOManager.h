@@ -26,6 +26,7 @@ public:
 	uint gPosition;
 	uint gNormal;
 	uint gAlbedoSpec;
+	uint gDepth;
 	uint rboDepth;
 };
 

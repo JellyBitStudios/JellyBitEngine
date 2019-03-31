@@ -12,6 +12,7 @@
 enum ShaderProgramTypes
 {
 	Standard,
+	Projector,
 	Particles,
 	UI,
 	Source,

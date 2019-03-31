@@ -411,7 +411,7 @@ bool ResourceAvatar::SetHipsUuid(uint hipsUuid)
 	GameObject* skeleton = App->GOs->GetGameObjectByUID(hipsUuid);
 	if (skeleton == nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
+		//CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
 		return false;
 	}
 
@@ -430,7 +430,7 @@ bool ResourceAvatar::SetHipsUuid(uint hipsUuid)
 	GameObject* root = App->GOs->GetGameObjectByUID(avatarData.rootUuid);
 	if (root == nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "The root game object does not exist...");
+		//CONSOLE_LOG(LogTypes::Error, "The root game object does not exist...");
 		return false;
 	}
 	AddBones(root);
@@ -458,7 +458,7 @@ bool ResourceAvatar::SetRootUuid(uint rootUuid)
 	GameObject* root = App->GOs->GetGameObjectByUID(rootUuid);
 	if (root == nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "The root game object does not exist...");
+		//CONSOLE_LOG(LogTypes::Error, "The root game object does not exist...");
 		return false;
 	}
 
@@ -524,7 +524,7 @@ void ResourceAvatar::CreateSkeleton(GameObject* gameObject)
 		const char* boneName = boneResource->boneData.name.data();
 		bones[boneName] = children[i]->GetUUID();
 
-		CONSOLE_LOG(LogTypes::Normal, "The bone %s has been loaded correctly", boneName);
+		//CONSOLE_LOG(LogTypes::Normal, "The bone %s has been loaded correctly", boneName);
 	}
 }
 
@@ -557,7 +557,7 @@ void ResourceAvatar::CreateSkeletonAndAddBones()
 	GameObject* skeleton = App->GOs->GetGameObjectByUID(avatarData.hipsUuid);
 	if (skeleton == nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
+		//CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
 		return;
 	}
 	CreateSkeleton(skeleton);
@@ -566,7 +566,7 @@ void ResourceAvatar::CreateSkeletonAndAddBones()
 	GameObject* root = App->GOs->GetGameObjectByUID(avatarData.rootUuid);
 	if (root == nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "The root game object does not exist...");
+		//CONSOLE_LOG(LogTypes::Error, "The root game object does not exist...");
 		return;
 	}
 	AddBones(root);
@@ -580,7 +580,7 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 	ResourceAnimation* animationResource = (ResourceAnimation*)App->res->GetResource(animationUuid);
 	if (animationResource == nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "The animation that needs to be stepped does not exist...");
+		//CONSOLE_LOG(LogTypes::Error, "The animation that needs to be stepped does not exist...");
 		return;
 	}
 
@@ -832,7 +832,7 @@ void ResourceAvatar::ClearBones()
 	GameObject* root = App->GOs->GetGameObjectByUID(avatarData.hipsUuid);
 	if (root == nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
+		//CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
 		return;
 	}
 
