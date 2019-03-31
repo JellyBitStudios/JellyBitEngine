@@ -42,12 +42,13 @@ public:
 	static Resource* ImportFile(const char* file);
 	static bool ExportFile(ResourceData& data, ResourceFontData& font_data, std::string& outputFile, bool overwrite = false);
 	static uint SaveFile(ResourceData & data, ResourceFontData & materialData, std::string & outputFile, bool overwrite);
+	static bool LoadFile(const char* file, ResourceFontData& font_data_output);
 	static uint CreateMeta(const char * file, std::vector<uint> fontUuids, std::string & outputMetaFile, FontImportSettings importSettings);
 	static bool ReadMeta(const char * metaFile, int64_t & lastModTime, std::vector<uint>& fontUuids, FontImportSettings & importSettings);
 	static bool ReadMetaFromBuffer(char * cursor, int64_t & lastModTime, std::vector<uint>& fontUuids, FontImportSettings & importSettings);
-	static bool LoadFile(const char* file, ResourceFontData& font_data_output);
-
 	static void UpdateImportSettings(FontImportSettings importSettings);
+	static ResourceFont * ImportFontBySize(const char * file, uint size);
+
 	void OnPanelAssets();
 
 public:

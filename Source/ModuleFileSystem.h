@@ -38,6 +38,7 @@
 #define DIR_ASSETS_SCENES "Assets/Scenes"
 #define DIR_ASSETS_SCRIPTS "Assets/Scripts"
 #define DIR_ASSETS_AUDIO "Assets/Audio"
+#define DIR_ASSETS_FONT "Assets/Font"
 
 #define IS_SCENE(extension) strcmp(extension, EXTENSION_SCENE) == 0
 #define IS_META(extension) strcmp(extension, EXTENSION_META) == 0

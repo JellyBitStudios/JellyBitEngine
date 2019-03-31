@@ -1590,6 +1590,11 @@ void ModuleResourceManager::RecursiveDeleteUnusedMetas(const char* dir, std::str
 
 // ----------------------------------------------------------------------------------------------------
 
+void ModuleResourceManager::AddResource(Resource * resource)
+{
+	resources[resource->GetUuid()] = resource;
+}
+
 Resource* ModuleResourceManager::GetResource(uint uuid) const
 {
 	std::unordered_map<uint, Resource*>::const_iterator it = resources.find(uuid);

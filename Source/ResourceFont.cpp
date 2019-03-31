@@ -58,11 +58,6 @@ void ResourceFont::OnPanelAssets()
 #endif 
 }
 
-/*void ResourceFont::OYECHAVALES_HANCAMBIADOESTEMETA()
-{
-
-}*/
-
 Resource* ResourceFont::ImportFile(const char * file)
 {
 	assert(file != nullptr);
@@ -75,7 +70,7 @@ Resource* ResourceFont::ImportFile(const char * file)
 	strcpy_s(metaFile, strlen(file) + 1, file); // file
 	strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
 
-	//Si existe el meta tenemos que buscar todos los sizes en library i exportar los que falten
+	//If .meta exists we have to search all sizes in library and exports those that are missing
 	if (App->fs->Exists(metaFile))
 	{
 		// Read the meta
@@ -93,6 +88,14 @@ Resource* ResourceFont::ImportFile(const char * file)
 			sprintf(exportedFile, "%s/%s%i.fnt", DIR_LIBRARY_FONT, name.data(), importerSettings.sizes[i]);
 			if (!App->fs->Exists(exportedFile))
 			{
+				//We supposed that there aren't resources in memory at this point
+				ResourceFont* resFont = ResourceFont::ImportFontBySize(file, importerSettings.sizes[i]);
+				App->res->AddResource(resFont);
+			}
+			else
+			{
+				//Make sure that resource is in memory
+
 
 			}
 		}
@@ -107,7 +110,7 @@ Resource* ResourceFont::ImportFile(const char * file)
 		}
 		else
 		{
-			//Exportar nuevo binario + Importar nuevo recurso
+			//Exportar new binary + Import new resource
 
 		}
 
@@ -130,12 +133,18 @@ Resource* ResourceFont::ImportFile(const char * file)
 		data.exportedFile = "";
 		ResourceFont* font = new ResourceFont(uuid, data, ResourceFontData());
 	}
-	//Si no existe el meta creamos creamos un meta con un size por defecto
+	//If meta doesn't exist we create it with default font size
 	else
 	{
-		//Exportar nuevo binario + Importar nuevo recurso
-
+		//Exportar new binary + Import new resource
+		std::vector<uint> uuids;
+		uuids.push_back(App->GenerateRandomNumber());
+		FontImportSettings fontImport;
+		fontImport.sizes.push_back(48);//Default size
+		ResourceFont::CreateMeta(file, uuids, std::string(), fontImport);
 	
+		ResourceFont* resource = ResourceFont::ImportFontBySize(file, 48);
+		return resource;
 	}
 
 	return nullptr;
@@ -143,14 +152,14 @@ Resource* ResourceFont::ImportFile(const char * file)
 
 bool ResourceFont::ExportFile(ResourceData & data, ResourceFontData & fontData, std::string & outputFile, bool overwrite)
 {
-	SaveFile(data, fontData, outputFile, overwrite);
+	ResourceFont::SaveFile(data, fontData, outputFile, overwrite);
 	return true;
 }
 
 uint ResourceFont::SaveFile(ResourceData& data, ResourceFontData& fontData, std::string& outputFile, bool overwrite)
 {
 
-	uint size =	sizeof(uint) + sizeof(uint) +
+	uint size =	sizeof(uint) * 2 + sizeof(uint) +
 		sizeof(Character) * fontData.charactersMap.size();
 
 	char* buffer = new char[size];
@@ -158,6 +167,9 @@ uint ResourceFont::SaveFile(ResourceData& data, ResourceFontData& fontData, std:
 
 	uint bytes = sizeof(uint);
 	memcpy(cursor, &fontData.fontSize, bytes);
+	cursor += bytes;
+
+	memcpy(cursor, &fontData.maxCharHeight, bytes);
 	cursor += bytes;
 
 	uint listSize = fontData.charactersMap.size();
@@ -172,18 +184,13 @@ uint ResourceFont::SaveFile(ResourceData& data, ResourceFontData& fontData, std:
 	}
 	// --------------------------------------------------
 
-	// Build the path of the file
-	if (overwrite)
-		outputFile = data.file;
-	else
-		outputFile = data.name;
+	outputFile = data.exportedFile;
 
-	bool ret;
 	// Save the file
-	ret = App->fs->SaveInGame(buffer, size, FileTypes::MaterialFile, outputFile, overwrite) > 0;
+	uint ret = App->fs->Save(data.exportedFile, buffer, size);
 
-	if (ret)
-	{
+	if (ret > 0)
+	{ 
 		CONSOLE_LOG(LogTypes::Normal, "Resource Material: Successfully saved Material '%s'", outputFile.data());
 	}
 	else
@@ -210,6 +217,9 @@ bool ResourceFont::LoadFile(const char * file, ResourceFontData & fontData)
 		memcpy(&fontData.fontSize, cursor, bytes);
 		cursor += bytes;
 
+		memcpy(&fontData.maxCharHeight, cursor, bytes);
+		cursor += bytes;
+
 		uint charactersSize = 0;
 		bytes = sizeof(uint);
 		memcpy(&charactersSize, cursor, bytes);
@@ -228,6 +238,8 @@ bool ResourceFont::LoadFile(const char * file, ResourceFontData & fontData)
 
 		CONSOLE_LOG(LogTypes::Normal, "Resource Font: Successfully loaded Font'%s'", file);
 		RELEASE_ARRAY(buffer);
+		
+	
 	}
 	else
 		CONSOLE_LOG(LogTypes::Error, "Resource Font: Could not load Font'%s'", file);
@@ -349,7 +361,6 @@ bool ResourceFont::ReadMeta(const char * metaFile, int64_t & lastModTime, std::v
 	return true;
 }
 
-
 bool ResourceFont::ReadMetaFromBuffer(char* cursor, int64_t & lastModTime, std::vector<uint> &fontUuids, FontImportSettings &importSettings)
 {
 
@@ -444,4 +455,73 @@ void ResourceFont::UpdateImportSettings(FontImportSettings importSettings)
 		App->PushSystemEvent(newEvent);
 
 	}
+}
+
+ResourceFont* ResourceFont::ImportFontBySize(const char * file, uint size)
+{
+	ResourceFont* res = nullptr;
+	uint maxHeight = 0;
+	std::map<char, Character> charactersBitmap;
+
+	FT_Face face;      /* handle to face object */
+	if (FT_New_Face(App->ui->library, file, 0, &face))
+	{
+		CONSOLE_LOG(LogTypes::Error, "The font file couldn't be opened, read or this format is unsupported");
+	}
+
+	else
+	{
+		FT_Set_Pixel_Sizes(face, 0, size);
+
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
+		for (uint c = 32; c < 128; c++)
+		{
+			// Load character glyph 
+			if (FT_Load_Char(face, c, FT_LOAD_RENDER))
+			{
+				CONSOLE_LOG(LogTypes::Error, "Failed to load Glyph from Freetype");
+				continue;
+			}
+			// Generate texture
+			GLuint texture;
+			glGenTextures(1, &texture);
+			glBindTexture(GL_TEXTURE_2D, texture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, face->glyph->bitmap.width, face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
+
+			// Set texture options
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			// Now store character for later use
+			Character character = {
+				texture,
+				math::float2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+				math::float2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+				face->glyph->advance.x / 64
+			};
+			charactersBitmap.insert(std::pair<char, Character>(c, character));
+			if (face->glyph->bitmap.rows > maxHeight)
+				maxHeight = face->glyph->bitmap.rows;
+		}
+		glBindTexture(GL_TEXTURE_2D, 0);
+		FT_Done_Face(face);
+	
+	
+		ResourceData data;
+		data.file = file;
+		App->fs->GetFileName(file, data.name);
+		uint uuid = App->GenerateRandomNumber();
+		data.exportedFile = DIR_LIBRARY_FONT + std::string("/") + data.name + std::to_string(size) + "_" + std::to_string(uuid) + ".ftn";
+
+		ResourceFontData fontData;
+		fontData.charactersMap = charactersBitmap;
+		fontData.fontSize = size;
+		fontData.maxCharHeight = maxHeight;
+
+		res = new ResourceFont(uuid, data, fontData);
+
+		ResourceFont::ExportFile(data, fontData, std::string());
+	}
+
+	return res;
 }
