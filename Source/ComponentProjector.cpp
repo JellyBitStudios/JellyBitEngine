@@ -255,6 +255,8 @@ void ComponentProjector::OnInternalLoad(char*& cursor)
 
 // ----------------------------------------------------------------------------------------------------
 
+#include "MathGeoLib\include\Geometry\Sphere.h"
+
 // Draws a decal
 void ComponentProjector::Draw() const
 {
@@ -296,8 +298,9 @@ void ComponentProjector::Draw() const
 
 	math::float4x4 model_matrix = aabbMatrix;
 	model_matrix = model_matrix.Transposed();
-	math::float4x4 view_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLViewMatrix();
-	math::float4x4 proj_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLProjectionMatrix();
+	ComponentCamera* camera = App->renderer3D->GetCurrentCamera();
+	math::float4x4 view_matrix = camera->GetOpenGLViewMatrix();
+	math::float4x4 proj_matrix = camera->GetOpenGLProjectionMatrix();
 	math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
 	math::float4x4 normal_matrix = model_matrix;
 	normal_matrix.Inverse();
@@ -340,6 +343,19 @@ void ComponentProjector::Draw() const
 	ignore.push_back("screenSize");
 	App->renderer3D->LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
+	/// Camera-box intersection test
+	math::Sphere sphere = math::Sphere(camera->frustum.pos, camera->frustum.nearPlaneDistance);
+	if (sphere.Intersects(aabb))
+	{
+		glFrontFace(GL_CW); // cull mode: clockwise
+		glDepthFunc(GL_GREATER);
+	}
+	else
+	{
+		glFrontFace(GL_CCW); // cull mode: counterclockwise (default)
+		glDepthFunc(GL_LESS);
+	}
+
 	// Mesh
 	const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(meshRes);
 
@@ -358,6 +374,9 @@ void ComponentProjector::Draw() const
 	}
 
 	glUseProgram(0);
+
+	glFrontFace(GL_CCW); // cull mode: counterclockwise (default)
+	glDepthFunc(GL_LESS);
 }
 
 // ----------------------------------------------------------------------------------------------------

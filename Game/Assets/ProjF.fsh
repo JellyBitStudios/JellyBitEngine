@@ -40,16 +40,23 @@ void main()
     discard;
     
     // Calculate tex coord
-    vec2 texCoord = objectPos.xy + 0.5;
-    vec4 color = texture(projectorTex, texCoord);
+    //vec2 texCoord = objectPos.xy + 0.5;
+    //vec4 color = texture(projectorTex, texCoord);
+    vec4 texCoord = projectorMatrix * worldPos;
+    vec4 color = textureProj(projectorTex, texCoord);
     if (color.a < 0.1)
     discard;
-    //vec4 color = vec4(1.0, 0.0, 0.0, 1.0);
+    
+    //////////
 
 	gPosition.rgb = fs_in.gPosition;
 	gNormal.rgb = normalize(fs_in.gNormal);
-	gAlbedoSpec.rgb = color.rgb;
-	gPosition.a = 1;
-	gNormal.a = 1;
-	gAlbedoSpec.a = 1;
+	gAlbedoSpec.rgba = color;
+	//gPosition.a = 1;
+	//gNormal.a = 1;
+	
+	// ***Cartoon***
+	int levels = 2;
+	gPosition.a = 2;
+	gNormal.a = levels;
 }
