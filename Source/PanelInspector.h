@@ -21,7 +21,7 @@ public:
 	
 	void SetMeshImportSettings(ResourceMeshImportSettings& is) { m_is = is; }
 	void SetTextureImportSettings(ResourceTextureImportSettings& is) { t_is = is; }
-	void SetFontImportSettings(FontImportSettings& is) { f_is = is; }
+	FontImportSettings* SetFontImportSettings(FontImportSettings is) { f_is = is; return &f_is; }
 
 private:
 

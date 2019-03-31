@@ -287,31 +287,27 @@ void PanelAssets::RecursiveDrawAssetsDir(const Directory& directory)
 					&& (ImGui::GetMousePos().x - ImGui::GetItemRectMin().x) > ImGui::GetTreeNodeToLabelSpacing())
 				{
 					int64_t lastTime;
-					uint uuid;
+					std::vector<uint> uuids;
 					FontImportSettings importSett;
 
-					ResourceFont::ReadMetaFromBuffer(cursor, lastTime, uuid, importSett);
+					ResourceFont::ReadMetaFromBuffer(cursor, lastTime, uuids, importSett);
 					
+					importSett.fontPath = directory.fullPath + "/" + file.name;
 					SELECT(importSett);
+					
 				}
 
 				if (fontOpened)
 				{
-					std::vector<uint> uids;
-					std::vector<uint> bone_uuids;
-					std::vector<uint> anim_uuids;
-					ResourceMesh::ReadMeshesUuidsFromBuffer(cursor, uids, bone_uuids, anim_uuids);
+					int64_t lastTime;
+					std::vector<uint> uuids;
+					FontImportSettings importSett;
 
-					for (int i = 0; i < uids.size(); ++i)
-					{
-						Resource* res = (Resource*)App->res->GetResource(uids[i]);
-						if (res)
-							res->OnPanelAssets();
-					}
+					ResourceFont::ReadMetaFromBuffer(cursor, lastTime, uuids, importSett);
 
-					for (int i = 0; i < anim_uuids.size(); ++i)
+					for (int i = 0; i < uuids.size(); ++i)
 					{
-						Resource* res = (Resource*)App->res->GetResource(anim_uuids[i]);
+						Resource* res = (Resource*)App->res->GetResource(uuids[i]);
 						if (res)
 							res->OnPanelAssets();
 					}

@@ -60,12 +60,14 @@ ModuleFileSystem::ModuleFileSystem(bool start_enabled) : Module(start_enabled)
 	CreateDir(DIR_ASSETS_SCENES);
 	CreateDir(DIR_ASSETS_SCRIPTS);
 	CreateDir(DIR_ASSETS_AUDIO);
+	CreateDir(DIR_ASSETS_FONT);
 #endif
 
 	if (CreateDir(DIR_LIBRARY))
 	{
 		AddPath("./Library/", "Library");
 
+		CreateDir(DIR_LIBRARY_FONT);
 		CreateDir(DIR_LIBRARY_MESHES);
 		CreateDir(DIR_LIBRARY_ANIMATIONS);
 		CreateDir(DIR_LIBRARY_ANIMATORS);

@@ -90,7 +90,9 @@ bool PanelInspector::Draw()
 		case CurrentSelection::SelectedType::meshImportSettings:
 			ShowMeshImportSettingsInspector();
 			break;
-
+		case CurrentSelection::SelectedType::fontImportSettings:
+			ShowFontImportSettingsInspector();
+			break;
 		}
 	}
 	ImGui::End();

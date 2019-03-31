@@ -782,46 +782,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 	}
 	break;
 	case ResourceTypes::FontResource:
-	{
-		std::string outputFile;
-		std::string name;
-		if (ResourceFont::ImportFile(file))
-		{
-			std::vector<uint> resourcesUuids;
-			if (!GetResourcesUuidsByFile(file, resourcesUuids))
-			{
-				// Create the resources
-				CONSOLE_LOG(LogTypes::Normal, "RESOURCE MANAGER: The Font file '%s' has resources that need to be created", file);
-
-				// 1. Font
-				std::string fileName;
-				App->fs->GetFileName(outputFile.data(), fileName);
-				uint uuid = outputFile.empty() ? App->GenerateRandomNumber() : strtoul(outputFile.data(), NULL, 0);
-				assert(uuid > 0);
-				resourcesUuids.push_back(uuid);
-				resourcesUuids.shrink_to_fit();
-
-				ResourceData data;
-				ResourceFontData fontData;
-				data.file = file;
-				data.exportedFile = outputFile.data();
-				App->fs->GetFileName(file, data.name);
-				ResourceFont::LoadFile(file, fontData);
-				//App->fontImporter->Load(file, data, fontData);
-
-				resource = CreateResource(ResourceTypes::FontResource, data, &fontData, uuid);
-			}
-			else
-				resource = GetResource(resourcesUuids.front());
-
-			// 2. Meta
-			// TODO: only create meta if any of its fields has been modificated
-			std::string outputMetaFile;
-			App->fs->GetFileName(file, name);
-			int64_t lastModTime = ResourceFont::CreateMeta(file, resourcesUuids.front(), name, App->gui->panelInspector->GetFontImportSettings());
-			assert(lastModTime > 0);
-		}
-	}
+		ResourceFont::ImportFile(file);
 	break;
 
 	case ResourceTypes::AvatarResource:
@@ -1215,26 +1176,9 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 	break;
 	case ResourceTypes::FontResource:
 	{
-		ResourceData data;
-		ResourceFontData fontData;
-		data.exportedFile = file;
+		resource = ResourceFont::LoadFile(file);
+		resources[resource->GetUuid()] = resource;
 
-		// Search for the meta associated to the file
-		char metaFile[DEFAULT_BUF_SIZE];
-		strcpy_s(metaFile, strlen(file) + 1, file); // file
-		strcat_s(metaFile, strlen(metaFile) + strlen(EXTENSION_META) + 1, EXTENSION_META); // extension
-
-		uint uuid = 0;
-		FontImportSettings importSettings;
-		if (App->fs->Exists(metaFile))
-		{
-			int64_t lastModTime = 0;
-			ResourceFont::ReadMeta(metaFile, lastModTime, uuid, importSettings);
-		}
-
-		ResourceFont::LoadFile(file, fontData);
-
-		resource = CreateResource(ResourceTypes::FontResource, data, &fontData, uuid);
 		break;
 	}
 	case ResourceTypes::AnimationResource:
@@ -1719,7 +1663,7 @@ ResourceTypes ModuleResourceManager::GetLibraryResourceTypeByExtension(const cha
 		return ResourceTypes::PrefabResource;
 	else if (strcmp(extension, EXTENSION_SCENE) == 0)
 		return ResourceTypes::SceneResource;
-	else if (strcmp(extension, EXTENSION_FONT) == 0)
+	else if (strcmp(extension, ".fnt") == 0)
 		return ResourceTypes::FontResource;
 	else if (strcmp(extension, EXTENSION_AUDIOBANK) == 0)
 		return ResourceTypes::AudioBankResource;

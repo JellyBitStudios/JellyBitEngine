@@ -137,10 +137,10 @@ public:
 	//Font Import Settings ----------------------------------
 	CurrentSelection& operator=(FontImportSettings& newSelection)
 	{
-		cur = (void*)&newSelection;
-		type = SelectedType::fontImportSettings;
+		FontImportSettings* selection = App->gui->panelInspector->SetFontImportSettings(newSelection);
 
-		App->gui->panelInspector->SetFontImportSettings(newSelection);
+		cur = (void*)selection;
+		type = SelectedType::fontImportSettings;
 
 		return *this;
 	}
