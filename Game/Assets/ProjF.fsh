@@ -11,9 +11,11 @@ in VS_OUT
 	vec2 gTexCoord;
 } fs_in;
 
+uniform sampler2D gBufferPosition;
+uniform sampler2D gBufferNormal;
+
 uniform sampler2D projectorTex;
 
-uniform sampler2D gBufferPosition;
 uniform mat4 model_matrix;
 uniform mat4 projectorMatrix;
 uniform vec2 screenSize;
@@ -50,8 +52,8 @@ void main()
     //////////
 
 	gPosition.rgb = fs_in.gPosition;
-	gNormal.rgb = normalize(fs_in.gNormal);
-	gAlbedoSpec.rgba = color;
+	gNormal.rgb = texture(gBufferNormal, screenPos).xyz;
+	gAlbedoSpec = color;
 	//gPosition.a = 1;
 	//gNormal.a = 1;
 	

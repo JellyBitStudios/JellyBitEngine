@@ -318,9 +318,18 @@ void ComponentProjector::Draw() const
 
 	uint textureUnit = 0;
 
-	glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0 + textureUnit);
 	glBindTexture(GL_TEXTURE_2D, App->fbo->gPosition);
 	location = glGetUniformLocation(shaderProgram, "gBufferPosition");
+	if (location != -1)
+	{
+		glUniform1i(location, textureUnit);
+		++textureUnit;
+	}
+
+	glActiveTexture(GL_TEXTURE0 + textureUnit);
+	glBindTexture(GL_TEXTURE_2D, App->fbo->gNormal);
+	location = glGetUniformLocation(shaderProgram, "gBufferNormal");
 	if (location != -1)
 	{
 		glUniform1i(location, textureUnit);
@@ -340,6 +349,7 @@ void ComponentProjector::Draw() const
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
 	std::vector<const char*> ignore;
 	ignore.push_back("gBufferPosition");
+	ignore.push_back("gBufferNormal");
 	ignore.push_back("screenSize");
 	App->renderer3D->LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
