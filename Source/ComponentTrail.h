@@ -17,8 +17,6 @@ struct TrailNode
 {
 	math::float3 originHigh = math::float3::zero;
 	math::float3 originLow = math::float3::zero;
-	math::float3 destHigh = math::float3::zero;
-	math::float3 destLow = math::float3::zero;
 
 	math::float3 direction = math::float3::zero;
 };
@@ -44,7 +42,7 @@ public:
 	std::list<TrailNode*> test;
 	Timer timer;
 
-
+	bool create = true;
 private:
 
 

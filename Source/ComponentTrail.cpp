@@ -27,7 +27,7 @@ ComponentTrail::~ComponentTrail()
 void ComponentTrail::Update() 
 {
 
-	//if (timer.Read() > 1000)
+	if (timer.Read() > 1000 && create)
 	{
 		TrailNode* node = new TrailNode();
 
@@ -36,8 +36,8 @@ void ComponentTrail::Update()
 
 		if (!test.empty())
 		{
-			math::Plane plane = math::Plane(test.back()->destHigh, node->originHigh, node->originLow);
-			node->direction = plane.normal;
+			//math::Plane plane = math::Plane(test.back()->destHigh, node->originHigh, node->originLow);
+			//node->direction = plane.normal;
 		}
 
 		test.push_back(node);
@@ -48,5 +48,9 @@ void ComponentTrail::Update()
 	if (App->input->GetKey(SDL_SCANCODE_1) == KEY_DOWN)
 	{
 		test.clear();
+	}
+	if (App->input->GetKey(SDL_SCANCODE_2) == KEY_DOWN)
+	{
+		create = !create;
 	}
 }

@@ -265,18 +265,37 @@ update_status ModuleRenderer3D::PostUpdate()
 
 				glBegin(GL_TRIANGLES);
 
+				std::list<TrailNode*>::iterator prev = gameObjects[i]->cmp_trail->test.begin();
 				for (std::list<TrailNode*>::iterator curr = gameObjects[i]->cmp_trail->test.begin(); curr != gameObjects[i]->cmp_trail->test.end(); ++curr)
 				{
 					std::list<TrailNode*>::iterator next = curr;
 					++next;
 					if (next != gameObjects[i]->cmp_trail->test.end())
 					{
-						math::float4x4 trans = math::float4x4::identity;
-						
-						glPushMatrix();
+						math::float4x4 trans = math::float4x4::FromTRS(math::float3::zero, math::Quat::identity, math::float3::one);
 
-						trans.SetRotatePart(math::float3x3::RotateFromTo((*curr)->direction, currentCamera->frustum.pos));
-						glMultMatrixf(trans.Transposed().ptr());
+						math::Plane plane = math::Plane((*curr)->originHigh, (*next)->originLow, (*next)->originHigh);
+
+
+						float rotation = math::float3x3::RotateFromTo(plane.normal, -currentCamera->frustum.front).ToEulerXYZ().x;
+
+						if (rotation > 0.0001f || rotation < 0.0001f)
+						{
+							CONSOLE_LOG(LogTypes::Normal, "Rotation = %f", rotation);
+
+							math::float3 xdelplano = ((*curr)->originHigh - (*next)->originHigh).Normalized();
+							trans = math::float4x4::RotateAxisAngle(xdelplano, rotation);
+
+
+
+							math::float4x4 cOH = math::float4x4::FromTRS((*next)->originHigh, math::Quat::identity, math::float3::zero);
+							cOH = trans.Mul(cOH);
+							(*next)->originHigh = cOH.TranslatePart();
+
+							math::float4x4 cOL = math::float4x4::FromTRS((*next)->originLow, math::Quat::identity, math::float3::zero);
+							cOL = trans.Mul(cOL);
+							(*next)->originLow = cOL.TranslatePart();
+						}
 
 						glVertex3fv((const GLfloat*)(*curr)->originHigh.ptr());
 						glVertex3fv((const GLfloat*)(*curr)->originLow.ptr());
@@ -286,8 +305,6 @@ update_status ModuleRenderer3D::PostUpdate()
 						glVertex3fv((const GLfloat*)(*curr)->originLow.ptr());
 						glVertex3fv((const GLfloat*)(*next)->originLow.ptr());
 						glVertex3fv((const GLfloat*)(*next)->originHigh.ptr());
-
-						glPopMatrix();
 
 					}
 				}
