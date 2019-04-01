@@ -34,9 +34,12 @@ public:
 
 	void ScreenDraw(uint rect[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm);
 
+	void SetFinalText(const char* newText);
 	const char* GetFinalText() const;
 
 	std::vector<LabelLetter>* GetLetterQueue();
+
+	void SetColor(math::float4 newColor);
 	math::float4 GetColor() const;
 
 	void RectChanged();
@@ -52,8 +55,8 @@ private:
 
 	int size = 72;
 
-	std::string finalText;
-	char text[300] = "Edit Text";
+	std::string finalText = "Edit Text";
+
 	math::float4 color = math::float4::one;
 
 	std::vector<LabelLetter> labelWord;

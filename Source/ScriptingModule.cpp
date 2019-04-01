@@ -8,6 +8,7 @@
 #include "ComponentRectTransform.h"
 #include "ComponentButton.h"
 #include "ComponentImage.h"
+#include "ComponentLabel.h"
 #include "ComponentAudioSource.h"
 #include "ComponentAudioListener.h"
 #include "ComponentRigidDynamic.h"
@@ -572,6 +573,11 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 		case ComponentTypes::ImageComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine.UI", "Image"));
+			break;
+		}
+		case ComponentTypes::LabelComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine.UI", "Label"));
 			break;
 		}
 		case ComponentTypes::RigidDynamicComponent:
@@ -1789,6 +1795,19 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 
 		return App->scripting->MonoComponentFrom(comp);
 	}
+	else if (className == "Label")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::LabelComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
 	else if (className == "Rigidbody")
 	{
 		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
@@ -2464,6 +2483,65 @@ void ImageSetMask(MonoObject* monoImage)
 		image->SetMask();
 }
 
+MonoString* LabelGetText(MonoObject* monoLabel)
+{
+	ComponentLabel* label = (ComponentLabel*)App->scripting->ComponentFrom(monoLabel);
+	if (label)
+		return mono_string_new(App->scripting->domain, label->GetFinalText());
+	return nullptr;
+}
+
+void LabelSetText(MonoObject* monoLabel, MonoString* newText)
+{
+	if (!newText)
+		return;
+
+	ComponentLabel* label = (ComponentLabel*)App->scripting->ComponentFrom(monoLabel);
+	if (label)
+	{
+		char* newTextcpp = mono_string_to_utf8(newText);
+
+		label->SetFinalText(newTextcpp);
+
+		mono_free(newTextcpp);
+	}
+}
+
+MonoArray* LabelGetColor(MonoObject* monoLabel)
+{
+	ComponentLabel* label = (ComponentLabel*)App->scripting->ComponentFrom(monoLabel);
+	if (label)
+	{
+		math::float4 color = label->GetColor();
+
+		MonoArray* colorCSharp = mono_array_new(App->scripting->domain, mono_get_single_class(), 4);
+		mono_array_set(colorCSharp, float, 0, color.x);
+		mono_array_set(colorCSharp, float, 1, color.y);
+		mono_array_set(colorCSharp, float, 2, color.z);
+		mono_array_set(colorCSharp, float, 3, color.w);
+
+		return colorCSharp;
+	}
+	return nullptr;
+}
+
+void LabelSetColor(MonoObject* monoLabel, MonoArray* newColorCSharp)
+{
+	if (!newColorCSharp)
+		return;
+
+	ComponentLabel* label = (ComponentLabel*)App->scripting->ComponentFrom(monoLabel);
+	if (label)
+	{
+		math::float4 newColor = 
+		{							mono_array_get(newColorCSharp, float, 0), mono_array_get(newColorCSharp, float, 1), 
+									mono_array_get(newColorCSharp, float, 2), mono_array_get(newColorCSharp, float, 3) 
+		};
+
+		label->SetColor(newColor);
+	}
+}
+
 void PlayerPrefsSave()
 {
 	uint size = json_serialization_size(App->scripting->playerPrefs);
@@ -3062,6 +3140,10 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Image::GetResource", (const void*)&ImageGetResourceName);
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource", (const void*)&ImageSetResourceName);
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetMask", (const void*)&ImageSetMask);
+	mono_add_internal_call("JellyBitEngine.UI.Label::SetText", (const void*)&LabelSetText);
+	mono_add_internal_call("JellyBitEngine.UI.Label::GetText", (const void*)&LabelGetText);
+	mono_add_internal_call("JellyBitEngine.UI.Label::SetColor", (const void*)&LabelSetColor);
+	mono_add_internal_call("JellyBitEngine.UI.Label::GetColor", (const void*)&LabelGetColor);
 
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::GetNumber", (const void*)&PlayerPrefsGetNumber);

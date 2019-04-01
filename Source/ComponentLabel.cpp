@@ -30,7 +30,6 @@ ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType
 		if (fontUuid)
 			size = ((ResourceFont*)fonts[0])->fontData.fontSize;
 
-		finalText = text;
 		needed_recaclculate = true;
 	}
 }
@@ -42,7 +41,6 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 		color = componentLabel.color;
 		labelWord = componentLabel.labelWord;
 		finalText = componentLabel.finalText;
-		memcpy(text, finalText.data(), finalText.length());
 	}
 }
 
@@ -185,8 +183,6 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 	memcpy((void*)finalText.c_str(), cursor, bytes);
 	finalText.resize(nameLenght);
 	cursor += bytes;
-
-	strcmp(text, finalText.data());
 }
 
 void ComponentLabel::OnUniqueEditor()
@@ -196,10 +192,8 @@ void ComponentLabel::OnUniqueEditor()
 	ImGui::Separator();
 
 	float sizeX = ImGui::GetWindowWidth();
-	//ImGui::InputTextMultiline()
-	if (ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(sizeX, ImGui::GetTextLineHeight() * 7), ImGuiInputTextFlags_AllowTabInput))
+	if (ImGui::InputTextMultiline("##source", &finalText, ImVec2(sizeX, ImGui::GetTextLineHeight() * 7), ImGuiInputTextFlags_AllowTabInput))
 	{
-		finalText = text;
 		needed_recaclculate = true;
 	}
 
@@ -246,6 +240,12 @@ void ComponentLabel::OnUniqueEditor()
 #endif
 }
 
+void ComponentLabel::SetFinalText(const char * newText)
+{
+	finalText = newText;
+	needed_recaclculate = true;
+}
+
 const char * ComponentLabel::GetFinalText() const
 {
 	return finalText.data();
@@ -254,6 +254,11 @@ const char * ComponentLabel::GetFinalText() const
 std::vector<ComponentLabel::LabelLetter>* ComponentLabel::GetLetterQueue()
 {
 	return &labelWord;
+}
+
+void ComponentLabel::SetColor(math::float4 newColor)
+{
+	color = newColor;
 }
 
 math::float4 ComponentLabel::GetColor() const
