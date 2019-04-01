@@ -265,7 +265,7 @@ void ComponentProjector::Draw() const
 		return;
 
 	const ResourceShaderProgram* resourceShaderProgram = (ResourceShaderProgram*)App->res->GetResource(resourceMaterial->GetShaderUuid());
-	if (resourceShaderProgram == nullptr) // TODO: or the shader is not a projector...
+	if (resourceShaderProgram == nullptr)
 		return;
 
 	/// Projective texture mapping shader

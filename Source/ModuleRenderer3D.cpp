@@ -722,8 +722,9 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
 
 	location = glGetUniformLocation(shader, "layer");
+	uint layerGroup = BIT_SHIFT(toDraw->GetParent()->GetLayer());
 	if (location != -1)
-		glUniform1i(location, toDraw->GetParent()->GetLayer());
+		glUniform1i(location, layerGroup);
 
 	// Animations
 	char boneName[DEFAULT_BUF_SIZE];

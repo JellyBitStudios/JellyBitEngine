@@ -2,7 +2,7 @@
 layout (location = 0) out vec4 gPosition;
 layout (location = 1) out vec4 gNormal;
 layout (location = 2) out vec4 gAlbedoSpec;
-layout (location = 3) out vec4 gInfo;
+layout (location = 3) out uvec4 gInfo;
 
 in VS_OUT
 {
@@ -32,8 +32,8 @@ void main()
     
     // gBuffer fragment's info
     uvec4 info = texture(gBufferInfo, screenPos);
-    uint layer = 1u << info.r;
-    if ((filterMask & layer) == 1u)
+    //uint layer = 1u << info.r;
+    if ((filterMask & info.r) == 1u)
     discard;
     
     // gBuffer fragment's world pos
