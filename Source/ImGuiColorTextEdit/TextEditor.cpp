@@ -2518,14 +2518,14 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::GLSLCustom
 	if (!inited)
 	{
 		static const char* const keywords[] = {
-			"int", "uint", "float", "bool", "true", "false", "vec2", "vec3", "vec4", "mat3", "mat4", "uniform", "sampler2D", "usampler2D", "samplerCube", "const", "discard"
+			"int", "uint", "float", "bool", "true", "false", "vec2", "vec3", "vec4", "mat3", "mat4", "uniform", "sampler2D", "usampler2D", "samplerCube", "const"
 		};
 
 		for (auto& k : keywords)
 			langDef.mKeywords.insert(k);
 
 		static const char* const identifiers[] = {
-			"for", "while", "continue", "return", "break", "void", "if", "else", "goto" ,"in", "out", "struct"
+			"for", "while", "continue", "return", "break", "void", "if", "else", "goto" ,"in", "out", "struct", "discard"
 		};
 
 		for (auto& k : identifiers)

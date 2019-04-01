@@ -207,17 +207,30 @@ update_status ModuleRenderer3D::PostUpdate()
 		if (currentCamera->HasFrustumCulling())
 			FrustumCulling();
 
+		// Draw static meshes
 		for (uint i = 0; i < meshComponents.size(); ++i)
 		{
-			//if (meshComponents[i]->GetParent()->IsActive() && meshComponents[i]->GetParent()->seenLastFrame
-				//&& meshComponents[i]->IsActive())
+			if (meshComponents[i]->GetParent()->IsStatic()
+				&& meshComponents[i]->GetParent()->IsActive() && meshComponents[i]->GetParent()->seenLastFrame
+				&& meshComponents[i]->IsActive())
 				DrawMesh(meshComponents[i]);
 		}
 
+		// Draw decals
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
-			//if (projectorComponents[i]->GetParent()->IsActive() && projectorComponents[i]->IsActive())
+			if (projectorComponents[i]->GetParent()->IsActive() 
+				&& projectorComponents[i]->IsActive())
 				projectorComponents[i]->Draw();
+		}
+
+		// Draw dynamic meshes
+		for (uint i = 0; i < meshComponents.size(); ++i)
+		{
+			if (!meshComponents[i]->GetParent()->IsStatic()
+				&& meshComponents[i]->GetParent()->IsActive() && meshComponents[i]->GetParent()->seenLastFrame
+				&& meshComponents[i]->IsActive())
+				DrawMesh(meshComponents[i]);
 		}
 	}
 
