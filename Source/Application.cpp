@@ -49,6 +49,7 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	animImporter = new AnimationImporter();
 	sceneImporter = new SceneImporter();
 	shaderImporter = new ShaderImporter();
+	//fontImporter = new FontImporter();
 	navigation = new ModuleNavigation();
 	particle = new ModuleParticle();
 	scripting = new ScriptingModule();

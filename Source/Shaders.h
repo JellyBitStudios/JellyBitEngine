@@ -104,6 +104,7 @@
 "uniform sampler2D gPosition;\n" \
 "uniform sampler2D gNormal;\n" \
 "uniform sampler2D gAlbedoSpec;\n" \
+"uniform sampler2D gDepth;\n" \
 "\n" \
 "struct Light\n" \
 "{\n" \
@@ -299,6 +300,7 @@
 "uniform vec3 topLeft;\n" \
 "uniform vec3 bottomLeft;\n" \
 "uniform vec3 bottomRight;\n" \
+"uniform int isLabel;\n" \
 "void main()\n" \
 "{\n" \
 "	vec3 position = topRight;\n" \
@@ -306,7 +308,12 @@
 "	{\n" \
 "		position = topRight;\n" \
 "		if (isScreen == 0)\n" \
-"			TexCoords = vec2(0.0, 1.0);\n" \
+"		{\n" \
+"			if (isLabel == 0)\n" \
+"				TexCoords = vec2(0.0, 1.0);\n" \
+"			else\n"\
+"				TexCoords = vec2(0.0, 0.0);\n" \
+"		}"\
 "		else\n"\
 "			if (useMask == 1)\n" \
 "				TexCoords = vec2(coordsMask.x,1.0);\n" \
@@ -316,10 +323,15 @@
 "		position = bottomRight;\n" \
 "		if (isScreen == 0)\n" \
 "		{\n" \
-"			if (useMask == 0)\n" \
-"				TexCoords = vec2(0.0,0.0);\n" \
+"			if (isLabel == 0)\n" \
+"			{\n" \
+"				if (useMask == 0)\n" \
+"					TexCoords = vec2(0.0,0.0);\n" \
+"				else\n"\
+"					TexCoords = vec2(0.0,coordsMask.y);\n" \
+"			}"\
 "			else\n"\
-"				TexCoords = vec2(0.0,coordsMask.y);\n" \
+"				TexCoords = vec2(0.0,1.0);\n" \
 "		}"\
 "		else\n"\
 "			if (useMask == 1)\n" \
@@ -330,10 +342,15 @@
 "		position = topLeft;\n" \
 "		if (isScreen == 0)\n" \
 "		{\n" \
-"			if (useMask == 0)\n" \
-"				TexCoords = vec2(1.0,1.0);\n" \
+"			if (isLabel == 0)\n" \
+"			{\n" \
+"				if (useMask == 0)\n" \
+"					TexCoords = vec2(1.0,1.0);\n" \
+"				else\n"\
+"					TexCoords = vec2(coordsMask.x,1.0);\n" \
+"			}"\
 "			else\n"\
-"				TexCoords = vec2(coordsMask.x,1.0);\n" \
+"				TexCoords = vec2(1.0,0.0);\n" \
 "		}"\
 "		else\n"\
 "			if (useMask == 1)\n" \
@@ -344,10 +361,15 @@
 "		position = bottomLeft;\n" \
 "		if (isScreen == 0)\n" \
 "		{\n" \
-"			if (useMask == 0)\n" \
-"				TexCoords = vec2(1.0,0.0);\n" \
+"			if (isLabel == 0)\n" \
+"			{\n" \
+"				if (useMask == 0)\n" \
+"					TexCoords = vec2(1.0,0.0);\n" \
+"				else\n"\
+"					TexCoords = vec2(coordsMask.x,coordsMask.y);\n" \
+"			}"\
 "			else\n"\
-"				TexCoords = vec2(coordsMask.x,coordsMask.y);\n" \
+"				TexCoords = vec2(1.0,1.0);\n" \
 "		}"\
 "		else\n"\
 "			if (useMask == 1)\n" \
@@ -370,14 +392,22 @@
 "uniform int using_texture;\n"\
 "uniform sampler2D image;\n" \
 "uniform vec4 spriteColor;\n" \
+"uniform int isLabel;\n" \
 "void main()\n" \
 "{\n" \
-"	if(using_texture == 1)\n"\
-"		FragColor = texture(image, TexCoords) * spriteColor;\n" \
+" if(isLabel == 0)\n"\
+" {\n"\
+"	  if(using_texture == 1)\n"\
+"		 FragColor = texture(image, TexCoords) * spriteColor;\n" \
+"	  else\n"\
+"	  	FragColor = spriteColor;\n" \
+" }\n"\
 "	else\n"\
-"		FragColor = spriteColor;\n" \
-"}"
-
+"	{\n" \
+"	  vec4 sampled = vec4(1.0, 1.0, 1.0, texture(image, TexCoords).r);\n" \
+"		FragColor = spriteColor * sampled; \n" \
+"	}\n"\
+"}\n"
 #pragma endregion
 
 #pragma region CartoonShader

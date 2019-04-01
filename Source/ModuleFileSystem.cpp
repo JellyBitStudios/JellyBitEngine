@@ -60,12 +60,14 @@ ModuleFileSystem::ModuleFileSystem(bool start_enabled) : Module(start_enabled)
 	CreateDir(DIR_ASSETS_SCENES);
 	CreateDir(DIR_ASSETS_SCRIPTS);
 	CreateDir(DIR_ASSETS_AUDIO);
+	CreateDir(DIR_ASSETS_FONT);
 #endif
 
 	if (CreateDir(DIR_LIBRARY))
 	{
 		AddPath("./Library/", "Library");
 
+		CreateDir(DIR_LIBRARY_FONT);
 		CreateDir(DIR_LIBRARY_MESHES);
 		CreateDir(DIR_LIBRARY_ANIMATIONS);
 		CreateDir(DIR_LIBRARY_ANIMATORS);
@@ -586,6 +588,11 @@ uint ModuleFileSystem::SaveInGame(char* buffer, uint size, FileTypes fileType, s
 			outputFile.insert(0, DIR_ASSETS_SCENES);
 			outputFile.insert(strlen(DIR_ASSETS_SCENES), "/");
 			outputFile.append(EXTENSION_SCENE);
+			break;
+		case FileTypes::FontFile:
+			outputFile.insert(0, DIR_LIBRARY_FONT);
+			outputFile.insert(strlen(DIR_LIBRARY_FONT), "/");
+			outputFile.append(EXTENSION_FONT);
 			break;
 		}
 	}

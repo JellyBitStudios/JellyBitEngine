@@ -7,6 +7,11 @@
 #include "MathGeoLib/include/Math/float2.h"
 #include <list>
 
+#include "ComponentLabel.h"
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 class GameObject;
 
 //Possible Solution
@@ -69,8 +74,9 @@ private:
 
 	void initRenderData();
 	void DrawUIImage(ComponentRectTransform* rect, math::float4& color, uint texture, math::float2& mask, float rotation = 0.0f);
+	void DrawUILabel(std::vector<ComponentLabel::LabelLetter>* word_toDraw, uint rectFrom, math::float4& color);
 
-	void SetRectToShader(ComponentRectTransform* rect);
+	void SetRectToShader(ComponentRectTransform* rect, int rFrom = -1, uint* rectLetter = nullptr, math::float3* cornersLetter = nullptr);
 
 	void UpdateRenderStates();
 
@@ -79,6 +85,8 @@ public:
 	std::list<GameObject*> canvas_screen;
 	std::list<GameObject*> canvas_worldScreen;
 	std::list<GameObject*> canvas_world;
+
+	FT_Library library;
 
 private:
 	uint uiWorkSpace[4];

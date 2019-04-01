@@ -13,9 +13,6 @@
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
 
-#define WORLDTORECT 100.0f
-#define ZSEPARATOR 0.005f
-
 #define PIVOT_POINTS_STR "Top Left\0Top Right\0Bottom Left\0Bottom Right\0Center\0Top\0Left\0Right\0Bottom"
 
 
@@ -78,6 +75,7 @@ void ComponentRectTransform::Update()
 	if (rFrom == RectFrom::WORLD)
 	{
 		CalculateRectFromWorld();
+		if (parent->cmp_label) parent->cmp_label->RectChanged();
 		needed_recalculate = false;
 	}
 
@@ -98,6 +96,8 @@ void ComponentRectTransform::Update()
 				CalculateCornersFromRect();
 				break;
 		}
+
+		if (parent->cmp_label) parent->cmp_label->RectChanged();
 
 		needed_recalculate = false;
 		rectTransform_modified = false;
@@ -190,6 +190,14 @@ void ComponentRectTransform::RecalculateAndChilds()
 ComponentRectTransform::RectFrom ComponentRectTransform::GetFrom() const
 {
 	return rFrom;
+}
+
+
+bool ComponentRectTransform::IsInRect(uint* rect)
+{
+	return rectTransform[0] >= rect[0] && rectTransform[1] >= rect[1] &&
+			rectTransform[0] + rectTransform[2] <= rect[0] + rect[2] &&
+			rectTransform[1] + rectTransform[3] <= rect[1] + rect[3];
 }
 
 void ComponentRectTransform::ScreenChanged()

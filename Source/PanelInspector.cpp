@@ -55,40 +55,43 @@ bool PanelInspector::Draw()
 	{
 		switch (App->scene->selectedObject.GetType())
 		{
-		case CurrentSelection::SelectedType::gameObject:
-			ShowGameObjectInspector();
-			break;
-		case CurrentSelection::SelectedType::resource:
-		{
-			switch (((Resource*)App->scene->selectedObject.Get())->GetType())
+			case CurrentSelection::SelectedType::gameObject:
+				ShowGameObjectInspector();
+				break;
+			case CurrentSelection::SelectedType::resource:
 			{
-			case ResourceTypes::MeshResource:
-				ShowMeshResourceInspector();
-				break;
-			case ResourceTypes::TextureResource:
-				ShowTextureResourceInspector();
-				ShowTextureImportSettingsInspector();
-				break;
-			case ResourceTypes::ShaderObjectResource:
-				ShowShaderObjectInspector();
-				break;
-			case ResourceTypes::ShaderProgramResource:
-				ShowShaderProgramInspector();
-				break;
-			case ResourceTypes::MaterialResource:
-				ShowMaterialInspector();
-				break;
-			case ResourceTypes::AvatarResource:
-				ShowAvatarInspector();
-				break;
-			case ResourceTypes::AnimationResource:
-				ShowAnimationInspector();
-				break;
-			}
+				switch (((Resource*)App->scene->selectedObject.Get())->GetType())
+				{
+					case ResourceTypes::MeshResource:
+						ShowMeshResourceInspector();
+						break;
+					case ResourceTypes::TextureResource:
+						ShowTextureResourceInspector();
+						ShowTextureImportSettingsInspector();
+						break;
+					case ResourceTypes::ShaderObjectResource:
+						ShowShaderObjectInspector();
+						break;
+					case ResourceTypes::ShaderProgramResource:
+						ShowShaderProgramInspector();
+						break;
+					case ResourceTypes::MaterialResource:
+						ShowMaterialInspector();
+						break;
+					case ResourceTypes::AvatarResource:
+						ShowAvatarInspector();
+						break;
+					case ResourceTypes::AnimationResource:
+						ShowAnimationInspector();
+						break;
+				}
 			break;
-		}
+			}
 		case CurrentSelection::SelectedType::meshImportSettings:
 			ShowMeshImportSettingsInspector();
+			break;
+		case CurrentSelection::SelectedType::fontImportSettings:
+			ShowFontImportSettingsInspector();
 			break;
 		}
 	}
@@ -582,6 +585,34 @@ void PanelInspector::ShowMeshImportSettingsInspector()
 	}
 }
 
+void PanelInspector::ShowFontImportSettingsInspector()
+{
+	ImGui::Text("Font Import Settings");
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	ImGui::Spacing();
+	ImGui::Text("Import Settings");
+	ImGui::Spacing();
+
+	int sizesSize = f_is.sizes.size();
+
+	if (ImGui::InputInt("Sizes Amount", &sizesSize))
+		f_is.sizes.resize(sizesSize);
+	ImGui::Spacing();
+
+	for (uint i = 0; i < sizesSize; ++i)
+	{
+		std::string name = "Size " + std::to_string(i);
+		ImGui::InputInt(name.data(), (int*)&f_is.sizes[i]);
+	}
+
+	if (ImGui::Button("APPLY"))
+	{
+		ResourceFont::UpdateImportSettings(f_is);
+	}
+}
+
 void PanelInspector::ShowTextureImportSettingsInspector() const
 {
 	ImGui::Text("Texture Import Settings");
@@ -819,7 +850,7 @@ void PanelInspector::ShowMaterialInspector() const
 	ResourceShaderProgram* shader = (ResourceShaderProgram*)App->res->GetResource(material->GetShaderUuid());
 	assert(shader != nullptr);
 
-	const char* shaderTypes[] = { "Standard", "Particles", "UI", "Source", "Custom" };
+	const char* shaderTypes[] = { "Standard", "Projector", "Particles", "UI", "Source", "Custom" };
 
 	if (ImGui::Button("Shader"))
 		ImGui::OpenPopup("shader_popup");
