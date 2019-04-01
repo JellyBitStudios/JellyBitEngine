@@ -584,6 +584,15 @@ bool ResourceAnimator::Update()
 	return true;
 }
 
+void ResourceAnimator::ClearAnimations() {
+	for (uint i = 0u; i < animations.size(); i++)
+	{
+		Animation* animation = animations[i];
+		delete animation;
+	}
+	animations.clear();
+}
+
 void ResourceAnimator::AddAnimationFromAnimationResource(ResourceAnimation * res)
 {
 	Animation* animation = new Animation();

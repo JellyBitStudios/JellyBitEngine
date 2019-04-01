@@ -18,6 +18,8 @@ public:
 	bool SetResourceAvatar(uint resource);
 	bool SetResourceAnimation(uint resource);
 
+	bool CleanAnimations();
+
 	virtual void Update();
 
 	bool PlayAnimation(const char* anim_name);
