@@ -13,6 +13,7 @@
 #include "MathGeoLib/include/Geometry/Frustum.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
+#include "imgui/imgui_stl.h"
 
 ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::LabelComponent)
 {
@@ -195,6 +196,7 @@ void ComponentLabel::OnUniqueEditor()
 	ImGui::Separator();
 
 	float sizeX = ImGui::GetWindowWidth();
+	//ImGui::InputTextMultiline()
 	if (ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(sizeX, ImGui::GetTextLineHeight() * 7), ImGuiInputTextFlags_AllowTabInput))
 	{
 		finalText = text;
