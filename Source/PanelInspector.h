@@ -3,7 +3,7 @@
 
 #include "ResourceMesh.h"
 #include "ResourceTexture.h"
-
+#include "ResourceFont.h"
 #ifndef GAMEMODE
 
 #include "Panel.h"
@@ -21,6 +21,7 @@ public:
 	
 	void SetMeshImportSettings(ResourceMeshImportSettings& is) { m_is = is; }
 	void SetTextureImportSettings(ResourceTextureImportSettings& is) { t_is = is; }
+	FontImportSettings* SetFontImportSettings(FontImportSettings is) { f_is = is; return &f_is; }
 
 private:
 
@@ -30,6 +31,7 @@ private:
 	void ShowMeshResourceInspector() const;
 	void ShowTextureResourceInspector() const;
 	void ShowMeshImportSettingsInspector();
+	void ShowFontImportSettingsInspector();
 	void ShowTextureImportSettingsInspector() const;
 	void ShowShaderObjectInspector() const;
 	void ShowShaderProgramInspector() const;
@@ -39,6 +41,7 @@ private:
 
 	ResourceMeshImportSettings m_is;
 	ResourceTextureImportSettings t_is;
+	FontImportSettings f_is;
 };
 
 #endif

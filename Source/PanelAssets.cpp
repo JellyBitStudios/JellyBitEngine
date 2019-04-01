@@ -23,6 +23,7 @@
 #include "ResourceAvatar.h"
 #include "ResourceShaderProgram.h"
 #include "ResourcePrefab.h"
+#include "ResourceFont.h"
 
 #include "Shaders.h"
 
@@ -204,8 +205,8 @@ void PanelAssets::RecursiveDrawAssetsDir(const Directory& directory)
 
 		switch (resourceType)
 		{
-		case ResourceTypes::MeshResource:
-			{		
+			case ResourceTypes::MeshResource:
+				{		
 				ImGuiTreeNodeFlags flags = 0;
 				flags |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnArrow;
 
@@ -262,6 +263,59 @@ void PanelAssets::RecursiveDrawAssetsDir(const Directory& directory)
 				break;
 			}
 
+			case ResourceTypes::FontResource:
+			{
+				ImGuiTreeNodeFlags flags = 0;
+				flags |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnArrow;
+
+				if (App->scene->selectedObject == CurrentSelection::SelectedType::fontImportSettings)
+				{
+					FontImportSettings* importSettings = (FontImportSettings*)App->scene->selectedObject.Get();
+
+					if (strstr(importSettings->fontPath.data(), file.name.data()) != nullptr)
+						flags |= ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
+
+				}
+
+				char id[DEFAULT_BUF_SIZE];
+				sprintf(id, "%s##%s", file.name.data(), directory.fullPath.data());
+
+				bool fontOpened = ImGui::TreeNodeEx(id, flags);
+
+				ImVec2 mouseDelta = ImGui::GetMouseDragDelta(0);
+				if (ImGui::IsMouseReleased(0) && ImGui::IsItemHovered(ImGuiHoveredFlags_None)
+					&& (ImGui::GetMousePos().x - ImGui::GetItemRectMin().x) > ImGui::GetTreeNodeToLabelSpacing())
+				{
+					int64_t lastTime;
+					std::vector<uint> uuids;
+					FontImportSettings importSett;
+
+					ResourceFont::ReadMetaFromBuffer(cursor, lastTime, uuids, importSett);
+					
+					importSett.fontPath = directory.fullPath + "/" + file.name;
+					SELECT(importSett);
+					
+				}
+
+				if (fontOpened)
+				{
+					int64_t lastTime;
+					std::vector<uint> uuids;
+					FontImportSettings importSett;
+
+					ResourceFont::ReadMetaFromBuffer(cursor, lastTime, uuids, importSett);
+
+					for (int i = 0; i < uuids.size(); ++i)
+					{
+						Resource* res = (Resource*)App->res->GetResource(uuids[i]);
+						if (res)
+							res->OnPanelAssets();
+					}
+
+					ImGui::TreePop();
+				}
+				break;
+			}
 			default:
 			{
 				uint uuid;

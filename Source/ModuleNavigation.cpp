@@ -135,8 +135,14 @@ void ModuleNavigation::OnSystemEvent(System_Event e)
 		dtFreeNavMeshQuery(m_navQuery);
 		m_crowd = 0;
 		m_navQuery = 0;
-	}
 		break;
+	}
+	case System_Event_Type::LoadFinished:
+	{
+		if (App->IsPlay())
+			InitDetour();
+		break;
+	}
 	}
 }
 

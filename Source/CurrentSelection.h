@@ -18,7 +18,7 @@ class Resource;
 
 struct CurrentSelection
 {
-	enum class SelectedType { null, gameObject, scene, resource, meshImportSettings };
+	enum class SelectedType { null, gameObject, scene, resource, meshImportSettings, fontImportSettings };
 
 private:
 	void* cur = nullptr;
@@ -134,6 +134,17 @@ public:
 	}
 	//-------------------------------------------------------
 
+	//Font Import Settings ----------------------------------
+	CurrentSelection& operator=(FontImportSettings& newSelection)
+	{
+		FontImportSettings* selection = App->gui->panelInspector->SetFontImportSettings(newSelection);
+
+		cur = (void*)selection;
+		type = SelectedType::fontImportSettings;
+
+		return *this;
+	}
+	//-------------------------------------------------------
 	// Add operators in case of new kinds of selection :)
 };
 

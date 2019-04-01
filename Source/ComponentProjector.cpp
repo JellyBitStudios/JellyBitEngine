@@ -7,8 +7,10 @@
 #include "ModuleInternalResHandler.h"
 #include "ModuleLayers.h"
 #include "ModuleScene.h"
+#include "ModuleFBOManager.h"
 
-#include "Resource.h"
+#include "ResourceMaterial.h"
+#include "ResourceMesh.h"
 #include "GameObject.h"
 #include "ComponentTransform.h"
 
@@ -19,6 +21,7 @@
 ComponentProjector::ComponentProjector(GameObject* parent) : Component(parent, ComponentTypes::ProjectorComponent)
 {
 	SetMaterialRes(App->resHandler->defaultMaterial);
+	SetMeshRes(App->resHandler->cube);
 
 	// Init frustum
 	frustum.type = math::FrustumType::PerspectiveFrustum;
@@ -28,7 +31,7 @@ ComponentProjector::ComponentProjector(GameObject* parent) : Component(parent, C
 	frustum.up = math::float3::unitY;
 
 	frustum.nearPlaneDistance = 1.0f;
-	frustum.farPlaneDistance = 500.0f;
+	frustum.farPlaneDistance = 5.0f;
 	frustum.verticalFov = 60.0f * DEGTORAD;
 	frustum.horizontalFov = 60.0f * DEGTORAD;
 
@@ -43,6 +46,11 @@ ComponentProjector::ComponentProjector(const ComponentProjector& componentProjec
 		SetMaterialRes(componentProjector.materialRes);
 	else
 		SetMaterialRes(App->resHandler->defaultMaterial);
+
+	if (App->res->GetResource(componentProjector.meshRes) != nullptr)
+		SetMaterialRes(componentProjector.meshRes);
+	else
+		SetMaterialRes(App->resHandler->cube);
 
 	// Init frustum
 	frustum.type = componentProjector.frustum.type;
@@ -192,6 +200,7 @@ uint ComponentProjector::GetInternalSerializationBytes()
 {
 	return sizeof(math::Frustum) +
 		sizeof(uint) +
+		sizeof(uint) +
 		sizeof(uint);
 }
 
@@ -206,6 +215,10 @@ void ComponentProjector::OnInternalSave(char*& cursor)
 	cursor += bytes;
 
 	bytes = sizeof(uint);
+	memcpy(cursor, &meshRes, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(uint);
 	memcpy(cursor, &filterMask, bytes);
 	cursor += bytes;
 }
@@ -216,20 +229,165 @@ void ComponentProjector::OnInternalLoad(char*& cursor)
 	memcpy(&frustum, cursor, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(uint);
 	uint resource = 0;
+
+	bytes = sizeof(uint);
 	memcpy(&resource, cursor, bytes);
+	cursor += bytes;
 
 	if (App->res->GetResource(resource) != nullptr)
 		SetMaterialRes(resource);
 	else
 		SetMaterialRes(App->resHandler->defaultMaterial);
 
+	bytes = sizeof(uint);
+	memcpy(&resource, cursor, bytes);
 	cursor += bytes;
+
+	if (App->res->GetResource(resource) != nullptr)
+		SetMeshRes(resource);
+	else
+		SetMeshRes(App->resHandler->cube);
 
 	bytes = sizeof(uint);
 	memcpy(&filterMask, cursor, bytes);
 	cursor += bytes;
+}
+
+// ----------------------------------------------------------------------------------------------------
+
+#include "MathGeoLib\include\Geometry\Sphere.h"
+
+// Draws a decal
+void ComponentProjector::Draw() const
+{
+	ResourceMaterial* resourceMaterial = (ResourceMaterial*)App->res->GetResource(materialRes);
+	if (resourceMaterial == nullptr)
+		return;
+
+	const ResourceShaderProgram* resourceShaderProgram = (ResourceShaderProgram*)App->res->GetResource(resourceMaterial->GetShaderUuid());
+	if (resourceShaderProgram == nullptr) // TODO: or the shader is not a projector...
+		return;
+
+	/// Projective texture mapping shader
+	uint shaderProgram = resourceShaderProgram->shaderProgram;
+	glUseProgram(shaderProgram);
+
+	// 1. Generic uniforms
+	App->renderer3D->LoadGenericUniforms(shaderProgram);
+
+	// 2. Known projector uniforms
+	math::float4x4 bias_matrix = math::float4x4(
+		0.5f, 0.0f, 0.0f, 0.5f,
+		0.0f, 0.5f, 0.0f, 0.5f,
+		0.0f, 0.0f, 0.5f, 0.5f,
+		0.0f, 0.0f, 0.0f, 1.0f
+	);
+
+	math::float4x4 projector_view_matrix = GetOpenGLViewMatrix().Transposed();
+	math::float4x4 projector_proj_matrix = GetOpenGLProjectionMatrix().Transposed();
+	math::float4x4 projector_matrix = bias_matrix * projector_proj_matrix * projector_view_matrix;
+
+	int location = glGetUniformLocation(shaderProgram, "projectorMatrix");
+	if (location != -1)
+		glUniformMatrix4fv(location, 1, GL_TRUE, projector_matrix.ptr());
+
+	math::AABB aabb = frustum.MinimalEnclosingAABB();
+	math::float3 aabbPosition = aabb.CenterPoint();
+	math::float3 aabbScaling = aabb.Size();
+	math::float4x4 aabbMatrix = math::float4x4::FromTRS(aabbPosition, math::Quat::identity, aabbScaling);
+
+	math::float4x4 model_matrix = aabbMatrix;
+	model_matrix = model_matrix.Transposed();
+	ComponentCamera* camera = App->renderer3D->GetCurrentCamera();
+	math::float4x4 view_matrix = camera->GetOpenGLViewMatrix();
+	math::float4x4 proj_matrix = camera->GetOpenGLProjectionMatrix();
+	math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
+	math::float4x4 normal_matrix = model_matrix;
+	normal_matrix.Inverse();
+	normal_matrix.Transpose();
+
+	location = glGetUniformLocation(shaderProgram, "model_matrix");
+	if (location != -1)
+		glUniformMatrix4fv(location, 1, GL_FALSE, model_matrix.ptr());
+	location = glGetUniformLocation(shaderProgram, "mvp_matrix");
+	if (location != -1)
+		glUniformMatrix4fv(location, 1, GL_FALSE, mvp_matrix.ptr());
+	location = glGetUniformLocation(shaderProgram, "normal_matrix");
+	if (location != -1)
+		glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
+
+	uint textureUnit = 0;
+
+	glActiveTexture(GL_TEXTURE0 + textureUnit);
+	glBindTexture(GL_TEXTURE_2D, App->fbo->gPosition);
+	location = glGetUniformLocation(shaderProgram, "gBufferPosition");
+	if (location != -1)
+	{
+		glUniform1i(location, textureUnit);
+		++textureUnit;
+	}
+
+	glActiveTexture(GL_TEXTURE0 + textureUnit);
+	glBindTexture(GL_TEXTURE_2D, App->fbo->gNormal);
+	location = glGetUniformLocation(shaderProgram, "gBufferNormal");
+	if (location != -1)
+	{
+		glUniform1i(location, textureUnit);
+		++textureUnit;
+	}
+
+	uint screenScale = App->window->GetScreenSize();
+	uint screenWidth = App->window->GetWindowWidth();
+	uint screenHeight = App->window->GetWindowHeight();
+	math::float2 screenSize = math::float2(screenWidth * screenScale, screenHeight * screenScale);
+
+	location = glGetUniformLocation(shaderProgram, "screenSize");
+	if (location != -1)
+		glUniform2fv(location, 1, screenSize.ptr());
+
+	// 3. Unknown uniforms
+	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
+	std::vector<const char*> ignore;
+	ignore.push_back("gBufferPosition");
+	ignore.push_back("gBufferNormal");
+	ignore.push_back("screenSize");
+	App->renderer3D->LoadSpecificUniforms(textureUnit, uniforms, ignore);
+
+	/// Camera-box intersection test
+	math::Sphere sphere = math::Sphere(camera->frustum.pos, camera->frustum.nearPlaneDistance);
+	if (sphere.Intersects(aabb))
+	{
+		glFrontFace(GL_CW); // cull mode: clockwise
+		glDepthFunc(GL_GREATER);
+	}
+	else
+	{
+		glFrontFace(GL_CCW); // cull mode: counterclockwise (default)
+		glDepthFunc(GL_LESS);
+	}
+
+	// Mesh
+	const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(meshRes);
+
+	glBindVertexArray(mesh->GetVAO());
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIBO());
+
+	glDrawElements(GL_TRIANGLES, mesh->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	for (uint i = 0; i < App->renderer3D->GetMaxTextureUnits(); ++i)
+	{
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	glUseProgram(0);
+
+	glFrontFace(GL_CCW); // cull mode: counterclockwise (default)
+	glDepthFunc(GL_LESS);
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -274,6 +432,22 @@ void ComponentProjector::SetMaterialRes(uint materialUuid)
 uint ComponentProjector::GetMaterialRes() const
 {
 	return materialRes;
+}
+
+void ComponentProjector::SetMeshRes(uint meshUuid)
+{
+	if (meshRes > 0)
+		App->res->SetAsUnused(meshRes);
+
+	if (meshUuid > 0)
+		App->res->SetAsUsed(meshUuid);
+
+	meshRes = meshUuid;
+}
+
+uint ComponentProjector::GetMeshRes() const
+{
+	return meshRes;
 }
 
 void ComponentProjector::SetFilterMask(uint filterMask)

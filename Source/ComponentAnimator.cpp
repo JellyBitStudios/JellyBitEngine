@@ -160,6 +160,16 @@ bool ComponentAnimator::SetResourceAnimation(uint resource)
 	return true;
 }
 
+bool ComponentAnimator::CleanAnimations() {
+
+	res_animations.clear();
+	ResourceAnimator* animator = (ResourceAnimator*)App->res->GetResource(res);
+
+	animator->ClearAnimations();
+
+	return true;
+}
+
 void ComponentAnimator::Update()
 {
 	if (res != 0) {
@@ -278,30 +288,37 @@ void ComponentAnimator::OnUniqueEditor()
 			ImGui::Text("Avatar UUID: %i", resource->animator_data.avatar_uuid);
 			ImGui::Text("Meshes affected: %i", resource->animator_data.meshes_uuids.size());
 			ImGui::Text("Animations size: %i", resource->animator_data.animations_uuids.size());
+
+			if (ImGui::Button("PLAY"))
+				resource->PlayAnimation();
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("PAUSE"))
+				resource->PauseAnimation();
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("STOP"))
+				resource->StopAnimation();
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("FORWARD"))
+				resource->StepForward();
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("BACKWARDS"))
+				resource->StepBackwards();
+
+			if (ImGui::Button("CLEAN ANIMATIONS")) {
+				
+			}
+				
 		}
 
-		if (ImGui::Button("PLAY"))
-			resource->PlayAnimation();
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("PAUSE"))
-			resource->PauseAnimation();
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("STOP"))
-			resource->StopAnimation();
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("FORWARD"))
-			resource->StepForward();
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("BACKWARDS"))
-			resource->StepBackwards();
+		
 
 		ImGui::PushID("animator");
 		ImGui::Button(fileName.data(), ImVec2(150.0f, 0.0f));

@@ -50,6 +50,18 @@ void ComponentCanvasRenderer::Update()
 					rend->Set(RenderTypes::IMAGE, cmp_image);
 			}
 		}
+	ComponentLabel* cmp_label = (ComponentLabel*)parent->GetComponent(ComponentTypes::LabelComponent);
+	if (cmp_label)
+	{
+		if (cmp_label->IsActive() && parent->IsActive())
+		{
+			for (ToUIRend* rend : rend_queue)
+			{
+				if (rend->isRendered())
+					rend->Set(RenderTypes::LABEL, cmp_label);
+			}
+		}
+	}
 }
 
 void ComponentCanvasRenderer::OnEditor()
@@ -99,14 +111,27 @@ void ComponentCanvasRenderer::OnUniqueEditor()
 math::float4 ComponentCanvasRenderer::ToUIRend::GetColor()
 {
 	isRendered_flag = true;
-	const float* colors = ((ComponentImage*)cmp)->GetColor();
-	return { colors[ComponentImage::Color::R], colors[ComponentImage::Color::G], colors[ComponentImage::Color::B], colors[ComponentImage::Color::A] };
+	if(type == RenderTypes::IMAGE)
+	{
+		const float* colors = ((ComponentImage*)cmp)->GetColor();
+		return { colors[ComponentImage::Color::R], colors[ComponentImage::Color::G], colors[ComponentImage::Color::B], colors[ComponentImage::Color::A] }; 
+	}
+	else
+	{
+		return ((ComponentLabel*)cmp)->GetColor();
+	}
 }
 
 uint ComponentCanvasRenderer::ToUIRend::GetTexture()
 {
 	isRendered_flag = true;
 	return ((ComponentImage*)cmp)->GetResImage();
+}
+
+const char* ComponentCanvasRenderer::ToUIRend::GetText()
+{
+	isRendered_flag = true;
+	return ((ComponentLabel*)cmp)->GetFinalText();
 }
 
 math::float2 ComponentCanvasRenderer::ToUIRend::GetMaskValues()
@@ -118,4 +143,10 @@ math::float2 ComponentCanvasRenderer::ToUIRend::GetMaskValues()
 	}
 	else
 		return { -1.0f, -1.0f };
+}
+
+std::vector<ComponentLabel::LabelLetter>* ComponentCanvasRenderer::ToUIRend::GetWord()
+{
+	isRendered_flag = true;
+	return ((ComponentLabel*)cmp)->GetLetterQueue();
 }

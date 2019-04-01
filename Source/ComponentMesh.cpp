@@ -98,6 +98,19 @@ void ComponentMesh::OnUniqueEditor()
 			}
 			ImGui::EndDragDropTarget();
 		}
+
+		if (ImGui::CheckboxFlags("Render last", &rendererFlags, RENDERER_FLAGS::DRAWLAST))
+		{
+			if (rendererFlags & RENDERER_FLAGS::DRAWLAST)
+				App->renderer3D->rendererLast.push_back(this);
+			else
+			{
+				App->renderer3D->rendererLast.erase(std::remove(App->renderer3D->rendererLast.begin(),
+													App->renderer3D->rendererLast.end(), this),
+													App->renderer3D->rendererLast.end());
+				
+			}
+		}
 	}
 #endif
 }
