@@ -55,57 +55,59 @@ void ComponentAudioSource::UpdateSourcePos()
 void ComponentAudioSource::OnUniqueEditor()
 {
 #ifndef GAMEMODE
+	if (ImGui::CollapsingHeader("AudioSource", ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		ImGui::Text("AudioClip");
+		if (ImGui::InputText("", audio_to_play, DEFAULT_BUF_SIZE, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue)) {
+			SetAudio(audio_to_play);
+		}
 
-	ImGui::Text("AudioClip");
-	if (ImGui::InputText("", audio_to_play, DEFAULT_BUF_SIZE, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue)) {
-		SetAudio(audio_to_play);
-	}
-	
-	if (ImGui::Button("Play")) {
-		PlayAudio();
-	}
-	ImGui::SameLine();
-	ImGui::SameLine();
-	if (ImGui::Button("Stop")) {
-		StopAudio();
-	}
+		if (ImGui::Button("Play")) {
+			PlayAudio();
+		}
+		ImGui::SameLine();
+		ImGui::SameLine();
+		if (ImGui::Button("Stop")) {
+			StopAudio();
+		}
 
-	bool muted = isMuted();
-	if (ImGui::Checkbox("Mute", &muted)) {
-		SetMuted(muted);
-	}
+		bool muted = isMuted();
+		if (ImGui::Checkbox("Mute", &muted)) {
+			SetMuted(muted);
+		}
 
-	bool play_awake = GetPlayOnAwake();
-	if (ImGui::Checkbox("Play On Awake", &play_awake)) {
-		SetPlayOnAwake(play_awake);
-	}
+		bool play_awake = GetPlayOnAwake();
+		if (ImGui::Checkbox("Play On Awake", &play_awake)) {
+			SetPlayOnAwake(play_awake);
+		}
 
-	int prior = GetPriority();
-	if (ImGui::SliderInt("Priority", &prior, 1, 100)) {
-		SetPriority(prior);
-	}
+		int prior = GetPriority();
+		if (ImGui::SliderInt("Priority", &prior, 1, 100)) {
+			SetPriority(prior);
+		}
 
-	float vol = GetVolume();
-	if (ImGui::SliderFloat("Volume", &vol, 0, 10)) {
-		SetVolume(vol);
-	}
+		float vol = GetVolume();
+		if (ImGui::SliderFloat("Volume", &vol, 0, 10)) {
+			SetVolume(vol);
+		}
 
-	float audio_pitch = GetPitch();
-	if (ImGui::SliderFloat("Pitch", &audio_pitch, 0, 15)) {
-		SetPitch(audio_pitch);
-	}
+		float audio_pitch = GetPitch();
+		if (ImGui::SliderFloat("Pitch", &audio_pitch, 0, 15)) {
+			SetPitch(audio_pitch);
+		}
 
-	ImGui::Separator();
-	ImGui::Text("Only for 2D tracks:");
-	ImGui::Separator();
+		ImGui::Separator();
+		ImGui::Text("Only for 2D tracks:");
+		ImGui::Separator();
 
-	int pan_l = GetStereoPanLeft();
-	if (ImGui::SliderInt("Pan Left difference", &pan_l, 0, 100)) {
-		SetStereoPanLeft(pan_l);
-	}
-	int pan_r = GetStereoPanRight();
-	if (ImGui::SliderInt("Pan Right difference", &pan_r, 0, 100)) {
-		SetStereoPanRight(pan_r);
+		int pan_l = GetStereoPanLeft();
+		if (ImGui::SliderInt("Pan Left difference", &pan_l, 0, 100)) {
+			SetStereoPanLeft(pan_l);
+		}
+		int pan_r = GetStereoPanRight();
+		if (ImGui::SliderInt("Pan Right difference", &pan_r, 0, 100)) {
+			SetStereoPanRight(pan_r);
+		}
 	}
 
 #endif // !GAMEMODE
