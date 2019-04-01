@@ -60,7 +60,7 @@ void main()
     
     //////////
 
-	gPosition.rgb = fs_in.gPosition;
+	gPosition.rgb = worldPos.rgb;
 	gNormal.rgb = texture(gBufferNormal, screenPos).xyz;
 	gAlbedoSpec = color;
 	//gPosition.a = 1;

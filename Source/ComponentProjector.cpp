@@ -368,6 +368,8 @@ void ComponentProjector::Draw() const
 	ignore.push_back("filterMask");
 	App->renderer3D->LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
+	glDepthMask(false);
+
 	/// Camera-box intersection test
 	math::Sphere sphere = math::Sphere(camera->frustum.pos, camera->frustum.nearPlaneDistance);
 	if (sphere.Intersects(aabb))
@@ -402,6 +404,8 @@ void ComponentProjector::Draw() const
 
 	glFrontFace(GL_CCW); // cull mode: counterclockwise (default)
 	glDepthFunc(GL_LESS);
+
+	glDepthMask(true); // :)
 }
 
 // ----------------------------------------------------------------------------------------------------
