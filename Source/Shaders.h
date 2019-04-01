@@ -524,6 +524,8 @@
 "//uniform vec3 lineColor; // the silhouette edge color\n"								\
 "//uniform int levels;\n"																\
 "\n"																					\
+"uniform uint layer;\n"																	\
+"\n"																					\
 "void main()\n"																			\
 "{\n"																					\
 "	vec3 lineColor = vec3(0.0, 0.0, 0.0);\n"											\
@@ -550,9 +552,13 @@
 "\n"																					\
 "	gPosition.rgb = fs_in.fPosition;\n"													\
 "	gNormal.rgb = normalize(fs_in.fNormal);\n"											\
+"	gInfo.r = layer;\n"																	\
+"	gInfo.g = 0;\n"															 			\
+"	gInfo.b = 0;\n"																		\
+"	gInfo.a = 0;\n"																		\
 "}"
 
-#define CartoonFloorFragment																\
+#define CartoonFloorFragment															\
 "#version 330 core\n"																	\
 "\n"																					\
 "layout(location = 0) out vec4 gPosition;\n"											\
@@ -577,10 +583,12 @@
 "\n"																					\
 "uniform vec3 viewPos;\n"																\
 "uniform Material material;\n"															\
-"uniform vec2 repeat = vec2(2, 2);\n"															\
+"uniform vec2 repeat = vec2(2, 2);\n"													\
 "\n"																					\
 "//uniform vec3 lineColor; // the silhouette edge color\n"								\
 "//uniform int levels;\n"																\
+"\n"																					\
+"uniform uint layer;\n"																	\
 "\n"																					\
 "void main()\n"																			\
 "{\n"																					\
@@ -608,6 +616,10 @@
 "\n"																					\
 "	gPosition.rgb = fs_in.fPosition;\n"													\
 "	gNormal.rgb = normalize(fs_in.fNormal);\n"											\
+"	gInfo.r = layer;\n"																	\
+"	gInfo.g = 0;\n"															 			\
+"	gInfo.b = 0;\n"																		\
+"	gInfo.a = 0;\n"																		\
 "}"
 
 #pragma endregion

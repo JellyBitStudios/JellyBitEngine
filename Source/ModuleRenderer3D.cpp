@@ -714,7 +714,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	normal_matrix.Inverse();
 	normal_matrix.Transpose();
 
-	uint location = glGetUniformLocation(shader, "model_matrix");
+	int location = glGetUniformLocation(shader, "model_matrix");
 	glUniformMatrix4fv(location, 1, GL_FALSE, model_matrix.ptr());
 	location = glGetUniformLocation(shader, "mvp_matrix");
 	glUniformMatrix4fv(location, 1, GL_FALSE, mvp_matrix.ptr());
@@ -722,7 +722,8 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
 
 	location = glGetUniformLocation(shader, "layer");
-	glUniform1i(location, toDraw->GetParent()->GetLayer());
+	if (location != -1)
+		glUniform1i(location, toDraw->GetParent()->GetLayer());
 
 	// Animations
 	char boneName[DEFAULT_BUF_SIZE];
