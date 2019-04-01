@@ -33,8 +33,8 @@ void main()
     // gBuffer fragment's info
     uvec4 info = texture(gBufferInfo, screenPos);
     //uint layer = 1u << info.r;
-    if ((filterMask & info.r) == 1u)
-    discard;
+    //if ((filterMask & info.r) == 1u)
+    //discard;
     
     // gBuffer fragment's world pos
     vec4 worldPos = texture(gBufferPosition, screenPos);
@@ -60,8 +60,8 @@ void main()
     
     //////////
 
-	//gPosition.rgb = fs_in.gPosition;
-	//gNormal.rgb = texture(gBufferNormal, screenPos).xyz;
+	gPosition.rgb = fs_in.gPosition;
+	gNormal.rgb = texture(gBufferNormal, screenPos).xyz;
 	gAlbedoSpec = color;
 	//gPosition.a = 1;
 	//gNormal.a = 1;
