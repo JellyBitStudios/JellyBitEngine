@@ -32,7 +32,8 @@ public class AlitaController : JellyScript
 
     public void Listening(object type)
     {
-        if (type.GetType().Equals(Event_Type.None))
+        Event listenedEvent = (Event)type;
+        if (listenedEvent.type == Event_Type.None)
             Debug.Log("Listened");
         else
             Debug.Log("Bad call");
