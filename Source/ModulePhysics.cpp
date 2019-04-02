@@ -459,7 +459,6 @@ void ModulePhysics::DrawColliders() const
 {
 	Color collidersColor = Green;
 
-	std::vector<ComponentCollider*> colliderComponents = GetColliderComponents();
 	for (uint i = 0; i < colliderComponents.size(); ++i)
 	{
 		if (colliderComponents[i]->GetParent()->cmp_rigidActor == nullptr)
@@ -517,7 +516,6 @@ void ModulePhysics::DrawRigidActors() const
 {
 	Color rigidActorsColor = Red;
 
-	std::vector<ComponentRigidActor*> rigidActorComponents = App->physics->GetRigidActorComponents();
 	for (uint i = 0; i < rigidActorComponents.size(); ++i)
 	{
 		physx::PxRigidActor* gActor = rigidActorComponents[i]->GetActor();

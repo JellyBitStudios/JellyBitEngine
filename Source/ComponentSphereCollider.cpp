@@ -98,6 +98,7 @@ void ComponentSphereCollider::OnInternalLoad(char*& cursor)
 
 	size_t bytes = sizeof(float);
 	memcpy(&radius, cursor, bytes);
+	SetRadius(radius);
 	cursor += bytes;
 }
 

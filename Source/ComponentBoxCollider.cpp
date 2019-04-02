@@ -100,6 +100,7 @@ void ComponentBoxCollider::OnInternalLoad(char*& cursor)
 
 	size_t bytes = sizeof(math::float3);
 	memcpy(&halfSize, cursor, bytes);
+	SetHalfSize(halfSize);
 	cursor += bytes;
 }
 

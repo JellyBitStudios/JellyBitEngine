@@ -78,6 +78,7 @@ void ComponentRigidActor::OnInternalLoad(char*& cursor)
 {
 	size_t bytes = sizeof(bool);
 	memcpy(&useGravity, cursor, bytes);
+	SetUseGravity(useGravity);
 	cursor += bytes;
 
 	bytes = sizeof(RigidActorTypes);
@@ -87,7 +88,7 @@ void ComponentRigidActor::OnInternalLoad(char*& cursor)
 	math::float4x4 globalMatrix;
 	bytes = sizeof(math::float4x4);
 	memcpy(&globalMatrix, cursor, bytes);
-	//UpdateTransform(globalMatrix);
+	UpdateTransform(globalMatrix);
 	cursor += bytes;
 }
 
@@ -135,20 +136,23 @@ void ComponentRigidActor::ClearActor()
 void ComponentRigidActor::UpdateTransform(math::float4x4& globalMatrix) const
 {
 	assert(globalMatrix.IsFinite());
-	math::float3 position = math::float3::zero;
-	math::Quat rotation = math::Quat::identity;
-	math::float3 scale = math::float3::zero;
-	globalMatrix.Decompose(position, rotation, scale);
-
-	if (!position.IsFinite() || !rotation.IsFinite())
-	{
-		CONSOLE_LOG(LogTypes::Warning, "The rigid actor transform cannot be updated since the position or the rotation of the game object is infinite");
-		return;
-	}
 
 	if (gActor != nullptr)
+	{
+		math::float3 position = math::float3::zero;
+		math::Quat rotation = math::Quat::identity;
+		math::float3 scale = math::float3::zero;
+		globalMatrix.Decompose(position, rotation, scale);
+
+		if (!position.IsFinite() || !rotation.IsFinite())
+		{
+			CONSOLE_LOG(LogTypes::Warning, "The rigid actor transform cannot be updated since the position or the rotation of the game object is infinite");
+			return;
+		}
+
 		gActor->setGlobalPose(physx::PxTransform(physx::PxVec3(position.x, position.y, position.z),
 			physx::PxQuat(rotation.x, rotation.y, rotation.z, rotation.w)));
+	}
 }
 
 void ComponentRigidActor::UpdateGameObjectTransform() const
