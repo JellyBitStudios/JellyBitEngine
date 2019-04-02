@@ -189,13 +189,13 @@ update_status ModuleRenderer3D::PostUpdate()
 	{
 		for (uint i = 0; i < cameraComponents.size(); ++i)
 		{
-			if (cameraComponents[i]->IsActive())
+			if (cameraComponents[i]->IsTreeActive())
 				cameraComponents[i]->UpdateTransform();
 		}
 
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
-			if (projectorComponents[i]->IsActive())
+			if (projectorComponents[i]->IsTreeActive())
 				projectorComponents[i]->UpdateTransform();
 		}
 
@@ -206,8 +206,8 @@ update_status ModuleRenderer3D::PostUpdate()
 		for (uint i = 0; i < meshComponents.size(); ++i)
 		{
 			if (meshComponents[i]->GetParent()->IsStatic()
-				&& meshComponents[i]->GetParent()->IsActive() && meshComponents[i]->GetParent()->seenLastFrame
-				&& meshComponents[i]->IsActive())
+				&& meshComponents[i]->GetParent()->seenLastFrame
+				&& meshComponents[i]->IsTreeActive())
 				DrawMesh(meshComponents[i]);
 		}
 
@@ -215,7 +215,7 @@ update_status ModuleRenderer3D::PostUpdate()
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
 			if (projectorComponents[i]->GetParent()->IsActive() 
-				&& projectorComponents[i]->IsActive())
+				&& projectorComponents[i]->IsTreeActive())
 				projectorComponents[i]->Draw();
 		}
 
@@ -223,8 +223,8 @@ update_status ModuleRenderer3D::PostUpdate()
 		for (uint i = 0; i < meshComponents.size(); ++i)
 		{
 			if (!meshComponents[i]->GetParent()->IsStatic()
-				&& meshComponents[i]->GetParent()->IsActive() && meshComponents[i]->GetParent()->seenLastFrame
-				&& meshComponents[i]->IsActive())
+				&& meshComponents[i]->GetParent()->seenLastFrame
+				&& meshComponents[i]->IsTreeActive())
 				DrawMesh(meshComponents[i]);
 		}
 	}
@@ -246,6 +246,12 @@ update_status ModuleRenderer3D::PostUpdate()
 
 	if (debugDraw)
 	{
+		App->lights->DebugDrawLights();
+
+		App->navigation->Draw();
+
+		App->debugDrawer->StartDebugDraw();
+
 		// Bones debug draw
 		std::vector<GameObject*> gameObjects;
 		App->GOs->GetGameobjects(gameObjects);
@@ -257,12 +263,6 @@ update_status ModuleRenderer3D::PostUpdate()
 				App->debugDrawer->DebugDrawSphere(1.0f, Yellow, globalMatrix);
 			}
 		}
-
-		App->lights->DebugDrawLights();
-
-		App->navigation->Draw();
-
-		App->debugDrawer->StartDebugDraw();
 
 		App->scene->Draw();
 

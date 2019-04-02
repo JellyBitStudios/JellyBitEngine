@@ -99,10 +99,6 @@ void ComponentSphereCollider::OnInternalLoad(char*& cursor)
 	size_t bytes = sizeof(float);
 	memcpy(&radius, cursor, bytes);
 	cursor += bytes;
-
-	// -----
-
-	EncloseGeometry();
 }
 
 // ----------------------------------------------------------------------------------------------------

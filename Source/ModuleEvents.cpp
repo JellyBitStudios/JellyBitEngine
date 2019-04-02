@@ -3,10 +3,29 @@
 
 #include "ComponentTypes.h"
 #include "Component.h"
+
 #include "ComponentTransform.h"
 #include "ComponentMesh.h"
 #include "ComponentMaterial.h"
 #include "ComponentCamera.h"
+#include "ComponentNavAgent.h"
+#include "ComponentEmitter.h"
+#include "ComponentScript.h"
+#include "ComponentBone.h"
+#include "ComponentAnimation.h"
+#include "ComponentAnimator.h"
+#include "ComponentLight.h"
+#include "ComponentProjector.h"
+
+// UI
+#include "ComponentCanvas.h"
+#include "ComponentCanvasRenderer.h"
+#include "ComponentRectTransform.h"
+#include "ComponentImage.h"
+#include "ComponentButton.h"
+#include "ComponentLabel.h"
+
+// Physics
 #include "ComponentCollider.h"
 #include "ComponentBoxCollider.h"
 #include "ComponentCapsuleCollider.h"
@@ -15,17 +34,10 @@
 #include "ComponentRigidActor.h"
 #include "ComponentRigidStatic.h"
 #include "ComponentRigidDynamic.h"
-#include "ComponentNavAgent.h"
-#include "ComponentEmitter.h"
-#include "ComponentBone.h"
-#include "ComponentLight.h"
-#include "ComponentScript.h"
-#include "ComponentCanvasRenderer.h"
-#include "ComponentImage.h"
-#include "ComponentRectTransform.h"
-#include "ComponentButton.h"
-#include "ComponentLabel.h"
+
+// Audio
 #include "ComponentAudioListener.h"
+#include "ComponentAudioSource.h"
 
 #include "ResourceScene.h"
 #include "ResourceScript.h"

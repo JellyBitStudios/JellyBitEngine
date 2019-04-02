@@ -120,10 +120,6 @@ void ComponentPlaneCollider::OnInternalLoad(char*& cursor)
 	bytes = sizeof(float);
 	memcpy(&distance, cursor, bytes);
 	cursor += bytes;
-
-	// -----
-
-	EncloseGeometry();
 }
 
 // ----------------------------------------------------------------------------------------------------
