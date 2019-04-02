@@ -215,6 +215,14 @@ void ComponentLabel::OnUniqueEditor()
 		needed_recaclculate = true;
 
 	//-----------------------------------------
+
+	DragDropFont();
+
+#endif
+}
+
+void ComponentLabel::DragDropFont() 
+{
 	ImGui::Separator();
 	uint buttonWidth = 0.65 * ImGui::GetWindowWidth();
 	ImVec2 cursorPos = ImGui::GetCursorScreenPos();
@@ -247,8 +255,28 @@ void ComponentLabel::OnUniqueEditor()
 		ImGui::EndDragDropTarget();
 	}
 
+	//Text in quat
+	std::string name;
+	if (fontUuid > 0)
+	{
+		ResourceFont* font = (ResourceFont*)App->res->GetResource(fontUuid);
+		name = font->GetName();
+	}
+	std::string originalText = fontUuid > 0 ? name : "Waiting font";
+	std::string clampedText;
 
-#endif
+	ImVec2 textSize = ImGui::CalcTextSize(originalText.data());
+
+	if (textSize.x > buttonWidth - 5)
+	{
+		uint maxTextLenght = originalText.length() * (buttonWidth - 5) / textSize.x;
+		clampedText = originalText.substr(0, maxTextLenght - 5);
+		clampedText.append("(...)");
+	}
+	else
+		clampedText = originalText;
+
+	ImGui::Text(clampedText.data());
 }
 
 const char * ComponentLabel::GetFinalText() const

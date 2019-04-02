@@ -46,6 +46,7 @@ private:
 	void OnInternalSave(char*& cursor);
 	void OnInternalLoad(char*& cursor);
 	void OnUniqueEditor();
+	void DragDropFont();
 
 private:
 	uint fontUuid = 0u;
