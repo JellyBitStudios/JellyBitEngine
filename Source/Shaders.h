@@ -396,7 +396,7 @@
 "#version 330 core\n"																				\
 "\n"																								\
 "layout(triangles_adjacency) in;\n"																	\
-"layout(triangle_strip, max_vertices = 255) out;\n"													\
+"layout(triangle_strip, max_vertices = 15) out;\n"													\
 "\n"																								\
 "in VS_OUT\n"																						\
 "{\n"																								\
@@ -414,7 +414,7 @@
 "  vec2 fTexCoord;\n"																				\
 "} gs_out;\n"																						\
 "\n"																								\
-"flat out float fIsEdge; // which output primitives are silhouette edges\n"							\
+"flat out int fIsEdge; // which output primitives are silhouette edges\n"							\
 "\n"																								\
 "//uniform float edgeWidth; // width of silhouette edge in clip\n"									\
 "//uniform float pctExtend; // percentage to extend quad\n"											\
@@ -435,7 +435,7 @@
 "	vec2 n = vec2(-v.y, v.x) * edgeWidth;\n"														\
 "\n"																								\
 "	// Emit the quad\n"																				\
-"	fIsEdge = 1.0; // this is part of an edge\n"													\
+"	fIsEdge = 1; // this is part of an edge\n"														\
 "\n"																								\
 "	gl_Position = vec4(e0.xy - ext, e0.z, 1.0);\n"													\
 "	EmitVertex();\n"																				\
@@ -469,7 +469,7 @@
 "	}\n"																							\
 "\n"																								\
 "	// Output the original triangle\n"																\
-"	fIsEdge = 0.0; // this is not part of an edge\n"												\
+"	fIsEdge = 0; // this is not part of an edge\n"													\
 "\n"																								\
 "	gs_out.fPosition = gs_in[0].gPosition;\n"														\
 "	gs_out.fNormal = gs_in[0].gNormal;\n"															\
@@ -511,7 +511,7 @@
 "  vec2 fTexCoord;\n"																	\
 "} fs_in;\n"																			\
 "\n"																					\
-"flat in float fIsEdge; // whether or not we're drawing an edge\n"						\
+"flat in int fIsEdge; // whether or not we're drawing an edge\n"						\
 "\n"																					\
 "struct Material\n"																		\
 "{\n"																					\
@@ -532,7 +532,7 @@
 "	int levels = 2;\n"																	\
 "\n"																					\
 "	// If we're drawing an edge, use constant color\n"									\
-"	if (fIsEdge == 1.0)\n"																\
+"	if (fIsEdge == 1)\n"																\
 "	{\n"																				\
 "		gNormal.a = 1;\n"																\
 "		gPosition.a = 3;\n"																\

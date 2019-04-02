@@ -150,11 +150,6 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 			App->materialImporter->SetIsAnisotropySupported(true);
 			App->materialImporter->SetLargestSupportedAnisotropy(largestSupportedAnisotropy);
 		}
-
-		// Shader Importer: binary formats
-		GLint formats = 0;
-		glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS, &formats);
-		App->shaderImporter->SetBinaryFormats(formats);
 	}
 
 #ifndef GAMEMODE
