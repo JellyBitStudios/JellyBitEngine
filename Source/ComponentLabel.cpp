@@ -64,7 +64,7 @@ void ComponentLabel::Update()
 			uint x_moving = 0;
 			uint* rectParent = parent->cmp_rectTransform->GetRect();
 			math::float3* parentCorners = parent->cmp_rectTransform->GetCorners();
-			x_moving = rectParent[0];
+			x_moving = rectParent[X_UI_RECT];
 			float sizeNorm = size / (float)fontRes->fontData.fontSize;
 			uint contRows = 0;
 
@@ -82,12 +82,13 @@ void ComponentLabel::Update()
 
 					uint x = x_moving + character.bearing.x * sizeNorm;
 					//								Normalize pos with all heights	 //	Check Y-ofset for letters that write below origin "p" //	 Control lines enters
-					uint y = rectParent[1] + ((fontRes->fontData.maxCharHeight - character.size.y) + ((character.size.y) - character.bearing.y)) * sizeNorm + contRows * fontRes->fontData.maxCharHeight * sizeNorm;
+					uint y = rectParent[Y_UI_RECT] + ((fontRes->fontData.maxCharHeight - character.size.y) + ((character.size.y) - character.bearing.y)) * sizeNorm + contRows * fontRes->fontData.maxCharHeight * sizeNorm;
 
-					if (x + character.size.x * sizeNorm > rectParent[0] + rectParent[2])
+					if (x + character.size.x * sizeNorm > rectParent[X_UI_RECT] + rectParent[W_UI_RECT])
 					{
 						y += fontRes->fontData.maxCharHeight * sizeNorm;
-						x = rectParent[0] + character.bearing.x * sizeNorm;
+						x = rectParent[X_UI_RECT] + character.bearing.x * sizeNorm;
+						x_moving = x;
 						contRows++;
 					}
 
@@ -97,46 +98,51 @@ void ComponentLabel::Update()
 					else
 						WorldDraw(parentCorners, l.corners, rectParent, x, y, character.size, sizeNorm);
 
-					x_moving += character.advance * sizeNorm;
+					if (y + character.size.y * sizeNorm < rectParent[Y_UI_RECT] + rectParent[H_UI_RECT])
+						labelWord.push_back(l);
+					else
+						break;
 
-					labelWord.push_back(l);
+					x_moving += character.advance * sizeNorm;
 				}
 				else if ((int)(*c) == 10)//"\n"
 				{
 					contRows++;
-					x_moving = rectParent[0];
+					x_moving = rectParent[X_UI_RECT];
 				}
 			}
 		}
 		needed_recaclculate = false;
 	}
+	/*else if(!labelWord.empty() && !App->res->GetResource(fontUuid))
+	{
+		labelWord.clear();
+	}*/
 }
 
 void ComponentLabel::WorldDraw(math::float3 * parentCorners, math::float3 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm)
 {
-	math::float3 xDirection = (parentCorners[0] - parentCorners[1]).Normalized();
-	math::float3 yDirection = (parentCorners[2] - parentCorners[0]).Normalized();
+	math::float3 xDirection = (parentCorners[CORNER_TOP_LEFT] - parentCorners[CORNER_TOP_RIGHT]).Normalized();
+	math::float3 yDirection = (parentCorners[2] - parentCorners[CORNER_TOP_LEFT]).Normalized();
 
-	corners[1] = parentCorners[1] + (xDirection * ((float)(x - rectParent[0]) / WORLDTORECT)) + (yDirection * ((float)(y - rectParent[1]) / WORLDTORECT));
-	corners[0] = corners[1] + (xDirection * (characterSize.x * sizeNorm / WORLDTORECT));
-	corners[2] = corners[0] + (yDirection * (characterSize.y * sizeNorm / WORLDTORECT));
-	corners[3] = corners[2] - (xDirection * (characterSize.x * sizeNorm / WORLDTORECT));
+	corners[CORNER_TOP_RIGHT] = parentCorners[CORNER_TOP_RIGHT] + (xDirection * ((float)(x - rectParent[X_UI_RECT]) / WORLDTORECT)) + (yDirection * ((float)(y - rectParent[Y_UI_RECT]) / WORLDTORECT));
+	corners[CORNER_TOP_LEFT] = corners[CORNER_TOP_RIGHT] + (xDirection * (characterSize.x * sizeNorm / WORLDTORECT));
+	corners[CORNER_BOTTOM_LEFT] = corners[CORNER_TOP_LEFT] + (yDirection * (characterSize.y * sizeNorm / WORLDTORECT));
+	corners[CORNER_BOTTOM_RIGHT] = corners[CORNER_BOTTOM_LEFT] - (xDirection * (characterSize.x * sizeNorm / WORLDTORECT));
 
 	math::float3 zDirection = xDirection.Cross(yDirection);
 
 	float z = ZSEPARATOR + parent->cmp_rectTransform->GetZ();
-	corners[1] -= zDirection * z;
-	corners[0] -= zDirection * z;
-	corners[2] -= zDirection * z;
-	corners[3] -= zDirection * z;
+	for (uint i = 0; i < 4; ++i) //Change All Corners (TopLeft / TopRight / BottomLeft / BottomRight)
+		corners[i] -= zDirection * z;
 }
 
 void ComponentLabel::ScreenDraw(uint rect[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm)
 {
-	rect[0] = x;
-	rect[1] = y;
-	rect[2] = characterSize.x * sizeNorm;
-	rect[3] = characterSize.y * sizeNorm;
+	rect[X_UI_RECT] = x;
+	rect[Y_UI_RECT] = y;
+	rect[W_UI_RECT] = characterSize.x * sizeNorm;
+	rect[H_UI_RECT] = characterSize.y * sizeNorm;
 }
 
 uint ComponentLabel::GetInternalSerializationBytes()
