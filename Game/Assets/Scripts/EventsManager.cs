@@ -4,22 +4,17 @@ using System.Collections.Generic;
 
 // This class is not tested, but it should work.
 
-public enum Event_Type { None = -1 }
+public enum Event_Type { None = 0 }
 
-// This class can be overloaded for future events
+// This struct can be overloaded for future events
 public struct Event
 {
     public Event_Type type;
-
-    public static explicit operator JellyBitEngine.Object(Event v)
-    {
-        throw new NotImplementedException();
-    }
 }
 
 public struct Listener
 {
-    public List<Event_Type> events;
+    public string name;
     public object script;
     public string listener;
 }
@@ -43,40 +38,35 @@ public sealed class EventsManager : JellyScript
 
     public override void PreUpdate()
     {
-        if (eventsQueue.Count > 0)
+        if (instance.eventsQueue.Count > 0)
         {
-            Event newEvent = eventsQueue.Dequeue();
-            foreach(Listener listener in listeners)
-            {
-                if (listener.events.Contains(newEvent.type))
-                    listener.script.GetType().GetMethod(listener.listener).Invoke(listener.script, new object[] { newEvent });
-            }
+            Event newEvent = instance.eventsQueue.Dequeue();
+            foreach(Listener listener in instance.listeners)
+                listener.script.GetType().GetMethod(listener.listener).Invoke(listener.script, new object[] { newEvent });
         }
     }
 
-    public bool StartListening(Event_Type type, object script, string listener)
+    public bool StartListening(string name, object script, string listener)
     {
         Listener listenerInstance = new Listener();
-        listenerInstance.events.Add(type);
+
+        listenerInstance.name = name;
         listenerInstance.script = script;
         listenerInstance.listener = listener;
         if (!listeners.Contains(listenerInstance))
         {
-            Debug.Log("LISTENER PUSHED: from script " + script.GetType().ToString() + " with listener " + listener + " for event " + type.ToString());
+            Debug.Log("LISTENER PUSHED: from script " + script.GetType().ToString() + " with listener " + listener);
             listeners.Add(listenerInstance);
             return true;
         }
-        //listeners.;
+        Debug.Log("LISTENER NOT PUSHED: " +  "with name " + name + " from script " + script.GetType().ToString() + " with listener " + listener);
         return false;
     }
 
-    public void StopListening(Event_Type type, object script, string listener)
+    public void StopListening(string name)
     {
-        Listener listenerInstance = new Listener();
-        listenerInstance.events = type;
-        listenerInstance.script = script;
-        listenerInstance.listener = listener;
-        listeners.Remove(listenerInstance);
+        Listener list = listeners.Find(item => item.name == name);
+        listeners.Remove(list);
     }
 
     public void PushEvent(Event newEvent)

@@ -27,7 +27,7 @@ public class AlitaController : JellyScript
         //animator = gameObject.GetComponent<Animator>();
         UseIdle();
         //InitAlita();
-        EventsManager.Call.StartListening(Event_Type.None, this, "Listening");
+        EventsManager.Call.StartListening("Alita Listener", this, "Listening");
     }
 
     public void Listening(object type)
