@@ -191,7 +191,7 @@ ResourceFont* ResourceFont::LoadFile(const char * file)
 		std::string filePath = file;
 		App->fs->GetFileName(file, filePath);
 		std::string uuidStr = filePath.substr(filePath.find("_") + 1, filePath.find("."));
-		uint uuid = std::atoi(uuidStr.data());
+		uint uuid = std::stoul(uuidStr.data());
 
 		ResourceFontData fontData;
 		char* cursor = (char*)buffer;
@@ -473,6 +473,9 @@ ResourceFont* ResourceFont::ImportFontBySize(const char * file, uint size, uint 
 			// Set texture options
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
 			// Now store character for later use
 			Character character = {
