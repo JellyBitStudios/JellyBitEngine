@@ -41,6 +41,8 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 		color = componentLabel.color;
 		labelWord = componentLabel.labelWord;
 		finalText = componentLabel.finalText;
+		memcpy(text, finalText.data(), finalText.length());
+		fontUuid = componentLabel.fontUuid;
 	}
 }
 
@@ -138,8 +140,8 @@ void ComponentLabel::ScreenDraw(uint rect[4], const uint x, const uint y, math::
 }
 
 uint ComponentLabel::GetInternalSerializationBytes()
-{																		
-	return sizeof(color) + sizeof(int) + sizeof(uint) + sizeof(char) * finalText.length();
+{
+	return sizeof(color) + sizeof(int) + sizeof(uint) * 2 + sizeof(char) * finalText.length();
 }
 
 void ComponentLabel::OnInternalSave(char *& cursor)
@@ -153,6 +155,9 @@ void ComponentLabel::OnInternalSave(char *& cursor)
 	cursor += bytes;
 
 	bytes = sizeof(uint);
+	memcpy(cursor, &fontUuid, bytes);
+	cursor += bytes;
+
 	uint nameLenght = finalText.length();
 	memcpy(cursor, &nameLenght, bytes);
 	cursor += bytes;
@@ -174,6 +179,9 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 
 	//Load lenght + string
 	bytes = sizeof(uint);
+	memcpy(&fontUuid, cursor, bytes);
+	cursor += bytes;
+
 	uint nameLenght;
 	memcpy(&nameLenght, cursor, bytes);
 	cursor += bytes;
@@ -183,6 +191,8 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 	memcpy((void*)finalText.c_str(), cursor, bytes);
 	finalText.resize(nameLenght);
 	cursor += bytes;
+
+	sprintf(text, "%s", finalText.data());
 }
 
 void ComponentLabel::OnUniqueEditor()
@@ -202,11 +212,19 @@ void ComponentLabel::OnUniqueEditor()
 		if (ImGui::DragInt("Load new size", &size, 1.0f, 0, 72))
 			needed_recaclculate = true;
 
-		//-----------------------------------------
-		ImGui::Separator();
-		uint buttonWidth = 0.65 * ImGui::GetWindowWidth();
-		ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-		ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+	//-----------------------------------------
+
+	DragDropFont();
+
+#endif
+}
+
+void ComponentLabel::DragDropFont()
+{
+	ImGui::Separator();
+	uint buttonWidth = 0.60 * ImGui::GetWindowWidth();
+	ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+	ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
 
 		ImGui::Text("Font: "); ImGui::SameLine();
 
@@ -235,7 +253,33 @@ void ComponentLabel::OnUniqueEditor()
 			ImGui::EndDragDropTarget();
 		}
 	}
-#endif
+
+	//Text in quat
+	std::string name;
+	ResourceFont* font = nullptr;
+	if (fontUuid > 0)
+	{
+		font = (ResourceFont*)App->res->GetResource(fontUuid);
+		if(font)
+			name = font->GetName();
+	}
+	std::string originalText = (fontUuid > 0 && font) ? name : "Waiting font...";
+	std::string clampedText;
+
+	ImVec2 textSize = ImGui::CalcTextSize(originalText.data());
+
+	if (textSize.x > buttonWidth - 7)
+	{
+		uint maxTextLenght = originalText.length() * (buttonWidth - 7) / textSize.x;
+		clampedText = originalText.substr(0, maxTextLenght - 7);
+		clampedText.append("(...)");
+	}
+	else
+		clampedText = originalText;
+
+	cursorPos = { cursorPos.x + 12, cursorPos.y + 3 };
+	ImGui::SetCursorScreenPos(cursorPos);
+	ImGui::Text(clampedText.data());
 }
 
 void ComponentLabel::SetFinalText(const char * newText)
