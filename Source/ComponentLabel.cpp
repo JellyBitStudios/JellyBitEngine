@@ -41,7 +41,7 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 		color = componentLabel.color;
 		labelWord = componentLabel.labelWord;
 		finalText = componentLabel.finalText;
-		memcpy(text, finalText.data(), finalText.length());
+		//memcpy(text, finalText.data(), finalText.length());
 		fontUuid = componentLabel.fontUuid;
 	}
 }
@@ -192,7 +192,7 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 	finalText.resize(nameLenght);
 	cursor += bytes;
 
-	sprintf(text, "%s", finalText.data());
+	//sprintf(text, "%s", finalText.data());
 }
 
 void ComponentLabel::OnUniqueEditor()
@@ -212,15 +212,16 @@ void ComponentLabel::OnUniqueEditor()
 		if (ImGui::DragInt("Load new size", &size, 1.0f, 0, 72))
 			needed_recaclculate = true;
 
-	//-----------------------------------------
+		//-----------------------------------------
 
-	DragDropFont();
-
+		DragDropFont();
+	}
 #endif
 }
 
 void ComponentLabel::DragDropFont()
 {
+#ifndef GAMEMODE
 	ImGui::Separator();
 	uint buttonWidth = 0.60 * ImGui::GetWindowWidth();
 	ImVec2 cursorPos = ImGui::GetCursorScreenPos();
@@ -252,7 +253,7 @@ void ComponentLabel::DragDropFont()
 			}
 			ImGui::EndDragDropTarget();
 		}
-	}
+	
 
 	//Text in quat
 	std::string name;
@@ -280,6 +281,7 @@ void ComponentLabel::DragDropFont()
 	cursorPos = { cursorPos.x + 12, cursorPos.y + 3 };
 	ImGui::SetCursorScreenPos(cursorPos);
 	ImGui::Text(clampedText.data());
+#endif
 }
 
 void ComponentLabel::SetFinalText(const char * newText)

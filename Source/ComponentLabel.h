@@ -11,6 +11,16 @@
 
 struct Character;
 
+#define X_UI_RECT 0
+#define Y_UI_RECT 1
+#define W_UI_RECT 2
+#define H_UI_RECT 3
+
+#define CORNER_TOP_LEFT 0
+#define CORNER_TOP_RIGHT 1
+#define CORNER_BOTTOM_LEFT 2
+#define CORNER_BOTTOM_RIGHT 3
+
 
 class ComponentLabel : public Component
 {
