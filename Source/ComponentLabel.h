@@ -17,9 +17,7 @@ class ComponentLabel : public Component
 public:
 	struct LabelLetter
 	{
-		uint rect[4] = { 0, 0, 0, 0 };
 		math::float3 corners[4] = { math::float3::zero, math::float3::zero, math::float3::zero, math::float3::zero };
-		char letter = NULL;
 		uint textureID = 0;
 	};
 
@@ -32,7 +30,7 @@ public:
 
 	void WorldDraw(math::float3 * parentCorners, math::float3 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm);
 
-	void ScreenDraw(uint rect[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm);
+	void ScreenDraw(math::float3 corners[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm);
 
 	void SetFinalText(const char* newText);
 	const char* GetFinalText() const;

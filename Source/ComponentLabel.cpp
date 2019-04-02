@@ -71,7 +71,6 @@ void ComponentLabel::Update()
 				if ((int)(*c) >= 32 && (int)(*c) < 128)//ASCII TABLE
 				{
 					LabelLetter l;
-					memcpy(&l.letter, c._Ptr, sizeof(char));
 
 					Character character;
 					character = fontRes->fontData.charactersMap.find(*c)->second;
@@ -90,7 +89,7 @@ void ComponentLabel::Update()
 					}
 
 					if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-						ScreenDraw(l.rect, x, y, character.size, sizeNorm);
+						ScreenDraw(l.corners, x, y, character.size, sizeNorm);
 
 					else
 						WorldDraw(parentCorners, l.corners, rectParent, x, y, character.size, sizeNorm);
@@ -129,12 +128,16 @@ void ComponentLabel::WorldDraw(math::float3 * parentCorners, math::float3 corner
 	corners[3] -= zDirection * z;
 }
 
-void ComponentLabel::ScreenDraw(uint rect[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm)
+void ComponentLabel::ScreenDraw(math::float3 corners[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm)
 {
-	rect[0] = x;
-	rect[1] = y;
-	rect[2] = characterSize.x * sizeNorm;
-	rect[3] = characterSize.y * sizeNorm;
+	uint* screen = App->ui->GetScreen();
+	uint w_width = screen[ModuleUI::Screen::WIDTH];
+	uint w_height = screen[ModuleUI::Screen::HEIGHT];
+
+	corners[ComponentRectTransform::Rect::RBOTTOMLEFT] = { math::Frustum::ScreenToViewportSpace({ (float)x, (float)y }, w_width, w_height), 0.0f };
+	corners[ComponentRectTransform::Rect::RBOTTOMRIGHT] = { math::Frustum::ScreenToViewportSpace({ (float)x + (float)characterSize.x * sizeNorm, (float)y }, w_width, w_height), 0.0f };
+	corners[ComponentRectTransform::Rect::RTOPLEFT] = { math::Frustum::ScreenToViewportSpace({ (float)x, (float)y + (float)characterSize.y * sizeNorm }, w_width, w_height), 0.0f };
+	corners[ComponentRectTransform::Rect::RTOPRIGHT] = { math::Frustum::ScreenToViewportSpace({ (float)x + (float)characterSize.x * sizeNorm, (float)y + (float)characterSize.y * sizeNorm }, w_width, w_height), 0.0f };
 }
 
 uint ComponentLabel::GetInternalSerializationBytes()

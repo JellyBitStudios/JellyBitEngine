@@ -343,7 +343,7 @@ void ModuleUI::DrawUILabel(std::vector<ComponentLabel::LabelLetter>* word_toDraw
 	{
 		ComponentLabel::LabelLetter *letter = l_iter._Ptr;
 
-		SetRectToShader(nullptr, rectFrom, letter->rect, letter->corners);
+		SetRectToShader(nullptr, rectFrom, letter->corners);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, letter->textureID);
@@ -365,13 +365,9 @@ void ModuleUI::DrawUILabel(std::vector<ComponentLabel::LabelLetter>* word_toDraw
 	}
 }
 
-void ModuleUI::SetRectToShader(ComponentRectTransform * rect, int rFrom, uint* rectLetter, math::float3* cornersLetter)
+void ModuleUI::SetRectToShader(ComponentRectTransform * rect, int rFrom, math::float3* cornersLetter)
 {
-	uint* rect_points = nullptr;
 	math::float3* rect_world = nullptr;
-	math::float3 pos;
-	float w_width;
-	float w_height;
 	math::float4x4 view = math::float4x4::identity;
 	math::float4x4 projection = math::float4x4::identity;
 	math::float4x4 mvp = math::float4x4::identity;
@@ -382,38 +378,17 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect, int rFrom, uint* r
 	switch (from)
 	{
 	case ComponentRectTransform::RectFrom::RECT:
-		(rect) ? rect_points = rect->GetRect() : rect_points = rectLetter;
+		(rect) ? rect_world = rect->GetCorners() : rect_world = cornersLetter;
 
-		w_width = ui_size_draw[Screen::WIDTH];
-		w_height = ui_size_draw[Screen::HEIGHT];
+		memcpy(&uiShader_data.topLeft, &rect_world[ComponentRectTransform::Rect::RTOPLEFT], sizeof(uiShader_data.topLeft));
+		memcpy(&uiShader_data.topRight, &rect_world[ComponentRectTransform::Rect::RTOPRIGHT], sizeof(uiShader_data.topRight));
+		memcpy(&uiShader_data.bottomLeft, &rect_world[ComponentRectTransform::Rect::RBOTTOMLEFT], sizeof(uiShader_data.bottomLeft));
+		memcpy(&uiShader_data.bottomRight, &rect_world[ComponentRectTransform::Rect::RBOTTOMRIGHT], sizeof(uiShader_data.bottomRight));
 
-		if (rect)
-		{
-			pos = { math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height), 0.0f };
-			memcpy(&uiShader_data.topLeft, pos.ptr(), sizeof(uiShader_data.topLeft));
-			pos = { math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height), 0.0f };
-			memcpy(&uiShader_data.topRight, pos.ptr(), sizeof(uiShader_data.topRight));
-			pos = { math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height), 0.0f };
-			memcpy(&uiShader_data.bottomLeft, pos.ptr(), sizeof(uiShader_data.bottomLeft));
-			pos = { math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height), 0.0f };
-			memcpy(&uiShader_data.bottomRight, pos.ptr(), sizeof(uiShader_data.bottomRight));
-		}
-		else
-		{
-			pos = { math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height), 0.0f };
-			memcpy(&uiShader_data.bottomLeft, pos.ptr(), sizeof(uiShader_data.bottomLeft));
-			pos = { math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height), 0.0f };
-			memcpy(&uiShader_data.bottomRight, pos.ptr(), sizeof(uiShader_data.bottomRight));
-			pos = { math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height), 0.0f };
-			memcpy(&uiShader_data.topLeft, pos.ptr(), sizeof(uiShader_data.topLeft));
-			pos = { math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height), 0.0f };
-			memcpy(&uiShader_data.topRight, pos.ptr(), sizeof(uiShader_data.topRight));
-		}
 		break;
 	case ComponentRectTransform::RectFrom::WORLD:
 	case ComponentRectTransform::RectFrom::RECT_WORLD:
 		(rect) ? rect_world = rect->GetCorners() : rect_world = cornersLetter;
-		setBool(ui_shader, "isScreen", 0);
 		view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
 		projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();
 		mvp = view * projection;
@@ -508,6 +483,11 @@ void ModuleUI::OnWindowResize(uint width, uint height)
 #endif // GAMEMODE
 
 }
+
+ uint * ModuleUI::GetScreen()
+ {
+	 return ui_size_draw;
+ }
 
 bool ModuleUI::MouseInScreen()
 {

@@ -104,6 +104,8 @@ public:
 	float GetZ() const;
 
 private:
+	//From Sreen
+	void CalculateScreenCorners();
 	//From World
 	void CalculateRectFromWorld();
 	//From World Rect

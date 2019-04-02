@@ -56,6 +56,7 @@ public:
 	void OnWindowResize(uint width, uint height);
 
 	uint* GetRectUI();
+	uint* GetScreen();
 
 	bool IsUIHovered();
 
@@ -76,7 +77,7 @@ private:
 	void DrawUIImage(ComponentRectTransform* rect, math::float4& color, uint texture, math::float2& mask, float rotation = 0.0f);
 	void DrawUILabel(std::vector<ComponentLabel::LabelLetter>* word_toDraw, uint rectFrom, math::float4& color);
 
-	void SetRectToShader(ComponentRectTransform* rect, int rFrom = -1, uint* rectLetter = nullptr, math::float3* cornersLetter = nullptr);
+	void SetRectToShader(ComponentRectTransform* rect, int rFrom = -1, math::float3* cornersLetter = nullptr);
 
 	void UpdateRenderStates();
 

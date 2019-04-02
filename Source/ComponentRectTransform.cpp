@@ -86,9 +86,7 @@ void ComponentRectTransform::Update()
 			case ComponentRectTransform::RECT:
 				(rectTransform_modified) ? CalculateAnchors(true) :
 					((usePivot) ? RecaculateAnchors() : RecalculateRectByPercentage());
-				break;
-			case ComponentRectTransform::WORLD:
-				CalculateRectFromWorld();
+				CalculateScreenCorners();
 				break;
 			case ComponentRectTransform::RECT_WORLD:
 				(rectTransform_modified) ? CalculateAnchors(true) :
@@ -296,6 +294,17 @@ void ComponentRectTransform::RecalculateRectByPercentage()
 	rectTransform[Rect::YDIST] = rectParent[Rect::YDIST] - ((rectTransform[Rect::Y] - rectParent[Rect::Y]) + (uint)(anchor_percenatges[RectPercentage::Y1] * (float)rectParent[Rect::YDIST]));
 
 	CalculateAnchors();
+}
+
+void ComponentRectTransform::CalculateScreenCorners()
+{
+	uint* screen = App->ui->GetScreen();
+	uint w_width = screen[ModuleUI::Screen::WIDTH];
+	uint w_height = screen[ModuleUI::Screen::HEIGHT];
+	corners[Rect::RTOPLEFT] = { math::Frustum::ScreenToViewportSpace({ (float)rectTransform[ComponentRectTransform::Rect::X], (float)rectTransform[ComponentRectTransform::Rect::Y] }, w_width, w_height), 0.0f };
+	corners[Rect::RTOPRIGHT] = { math::Frustum::ScreenToViewportSpace({ (float)rectTransform[ComponentRectTransform::Rect::X] + (float)rectTransform[ComponentRectTransform::Rect::XDIST], (float)rectTransform[ComponentRectTransform::Rect::Y] }, w_width, w_height), 0.0f };
+	corners[Rect::RBOTTOMLEFT] = { math::Frustum::ScreenToViewportSpace({ (float)rectTransform[ComponentRectTransform::Rect::X], (float)rectTransform[ComponentRectTransform::Rect::Y] + (float)rectTransform[ComponentRectTransform::Rect::YDIST] }, w_width, w_height), 0.0f };
+	corners[Rect::RBOTTOMRIGHT] = { math::Frustum::ScreenToViewportSpace({ (float)rectTransform[ComponentRectTransform::Rect::X] + (float)rectTransform[ComponentRectTransform::Rect::XDIST], (float)rectTransform[ComponentRectTransform::Rect::Y] + (float)rectTransform[ComponentRectTransform::Rect::YDIST] }, w_width, w_height), 0.0f };
 }
 
 void ComponentRectTransform::CalculateRectFromWorld()
