@@ -287,126 +287,131 @@
 
 #pragma region ShaderUI
 //UI
-#define uivShader 																		 \
-"#version 330 core\n" \																	 \
-"layout(location = 0) in vec2 vertex; // <vec2 position, vec2 texCoords>\n" 			 \
-"layout(location = 1) in vec2 texture_coords; // <vec2 position, vec2 texCoords>\n" 	 \
-"out vec2 TexCoords;\n"																	 \
-"uniform int isScreen;\n" 																 \
-"uniform int useMask;\n" 																 \
-"uniform vec2 coordsMask;\n" 															 \
-"uniform mat4 mvp_matrix;\n" 															 \
-"uniform vec3 topRight;\n" 																 \
-"uniform vec3 topLeft;\n" 																 \
-"uniform vec3 bottomLeft;\n" 															 \
-"uniform vec3 bottomRight;\n" 															 \
-"uniform int isLabel;\n" 																 \
-"void main()\n" 																		 \
-"{\n" 																					 \
-"	vec3 position = topRight;\n" 														 \
-"	if (vertex.x > 0.0 && vertex.y > 0.0)\n" 											 \
-"	{\n" 																				 \
-"		position = topRight;\n" 														 \
-"		if (isScreen == 0)\n" 															 \
-"		{\n" 																			 \
-"			if (isLabel == 0)\n" 														 \
-"				TexCoords = vec2(0.0, 1.0);\n" 											 \
-"			else\n"																		 \
-"				TexCoords = vec2(0.0, 0.0);\n" 											 \
-"		}"																				 \
-"		else\n"																			 \
-"			if (useMask == 1)\n" 														 \
-"				TexCoords = vec2(coordsMask.x,1.0);\n" 									 \
-"	}"																					 \
-"	else if (vertex.x > 0.0 && vertex.y < 0.0)\n" 										 \
-"	{\n" 																				 \
-"		position = bottomRight;\n" 														 \
-"		if (isScreen == 0)\n" 															 \
-"		{\n" 																			 \
-"			if (isLabel == 0)\n" 														 \
-"			{\n" 																		 \
-"				if (useMask == 0)\n" 													 \
-"					TexCoords = vec2(0.0,0.0);\n" 										 \
-"				else\n"																	 \
-"					TexCoords = vec2(0.0,coordsMask.y);\n" 								 \
-"			}"																			 \
-"			else\n"																		 \
-"				TexCoords = vec2(0.0,1.0);\n" 											 \
-"		}"																				 \
-"		else\n"																			 \
-"			if (useMask == 1)\n" 														 \
-"				TexCoords = vec2(coordsMask.x,coordsMask.y);\n" 						 \
-"	}"																					 \
-"	else if (vertex.x < 0.0 && vertex.y > 0.0)\n" 										 \
-"	{\n" 																				 \
-"		position = topLeft;\n" 															 \
-"		if (isScreen == 0)\n" 															 \
-"		{\n" 																			 \
-"			if (isLabel == 0)\n" 														 \
-"			{\n" 																		 \
-"				if (useMask == 0)\n" 													 \
-"					TexCoords = vec2(1.0,1.0);\n" 										 \
-"				else\n"																	 \
-"					TexCoords = vec2(coordsMask.x,1.0);\n" 								 \
-"			}"																			 \
-"			else\n"																		 \
-"				TexCoords = vec2(1.0,0.0);\n" 											 \
-"		}"																				 \
-"		else\n"																			 \
-"			if (useMask == 1)\n" 														 \
-"				TexCoords = vec2(0.0,1.0);\n" 											 \
-"	}"																					 \
-"	else if (vertex.x < 0.0 && vertex.y < 0.0)\n" 										 \
-"	{\n" 																				 \
-"		position = bottomLeft;\n" 														 \
-"		if (isScreen == 0)\n" 															 \
-"		{\n" 																			 \
-"			if (isLabel == 0)\n" 														 \
-"			{\n" 																		 \
-"				if (useMask == 0)\n" 													 \
-"					TexCoords = vec2(1.0,0.0);\n" 										 \
-"				else\n"																	 \
-"					TexCoords = vec2(coordsMask.x,coordsMask.y);\n" 					 \
-"			}"																			 \
-"			else\n"																		 \
-"				TexCoords = vec2(1.0,1.0);\n" 											 \
-"		}"																				 \
-"		else\n"																			 \
-"			if (useMask == 1)\n" 														 \
-"				TexCoords = vec2(0.0,coordsMask.y);\n" 									 \
-"	}"																					 \
-"	if(isScreen == 1)\n"																 \
-"	{\n" 																				 \
-"		gl_Position = vec4(position, 1.0);\n" 											 \
-"		if (useMask == 0)\n" 															 \
-"			TexCoords = texture_coords;\n" 												 \
-"	}"																					 \
-"	else\n"																				 \
-"		gl_Position = mvp_matrix * vec4(position, 1.0);\n" 								 \
+#define uivShader 																		\
+"#version 330 core\n" 																	\
+"#extension GL_ARB_enhanced_layouts : enable\n"											\
+"layout(location = 0) in vec2 vertex; // <vec2 position, vec2 texCoords>\n" 			\
+"layout(location = 1) in vec2 texture_coords; // <vec2 position, vec2 texCoords>\n" 	\
+"out vec2 TexCoords;\n"																	\
+"uniform int isScreen;\n" 																\
+"uniform mat4 mvp_matrix;\n" 															\
+"\n"																					\
+"layout (std140) uniform UIBlock {\n"													\
+"	layout (offset = 0) int useMask;\n" 												\
+"	layout (offset = 8) vec2 coordsMask;\n" 											\
+"	layout (offset = 16) vec3 topLeft;\n"												\
+"	layout (offset = 32) vec3 topRight;\n"												\
+"	layout (offset = 48) vec3 bottomLeft;\n"											\
+"	layout (offset = 64) vec3 bottomRight;\n"											\
+"};\n"																					\
+"\n"																					\
+"uniform int isLabel;\n" 																\
+"void main()\n" 																		\
+"{\n" 																					\
+"	vec3 position = topRight;\n" 														\
+"	if (vertex.x > 0.0 && vertex.y > 0.0)\n" 											\
+"	{\n" 																				\
+"		position = topRight;\n" 														\
+"		if (isScreen == 0)\n" 															\
+"		{\n" 																			\
+"			if (isLabel == 0)\n" 														\
+"				TexCoords = vec2(0.0, 1.0);\n" 											\
+"			else\n"																		\
+"				TexCoords = vec2(0.0, 0.0);\n" 											\
+"		}"																				\
+"		else\n"																			\
+"			if (useMask == 1)\n" 														\
+"				TexCoords = vec2(coordsMask.x,1.0);\n" 									\
+"	}"																					\
+"	else if (vertex.x > 0.0 && vertex.y < 0.0)\n" 										\
+"	{\n" 																				\
+"		position = bottomRight;\n" 														\
+"		if (isScreen == 0)\n" 															\
+"		{\n" 																			\
+"			if (isLabel == 0)\n" 														\
+"			{\n" 																		\
+"				if (useMask == 0)\n" 												\
+"					TexCoords = vec2(0.0,0.0);\n" 										\
+"				else\n"																	\
+"					TexCoords = vec2(0.0,coordsMask.y);\n" 								\
+"			}"																			\
+"			else\n"																		\
+"				TexCoords = vec2(0.0,1.0);\n" 											\
+"		}"																				\
+"		else\n"																			\
+"			if (useMask == 1)\n" 													\
+"				TexCoords = vec2(coordsMask.x,coordsMask.y);\n" 						\
+"	}"																					\
+"	else if (vertex.x < 0.0 && vertex.y > 0.0)\n" 										\
+"	{\n" 																				\
+"		position = topLeft;\n" 															\
+"		if (isScreen == 0)\n" 															\
+"		{\n" 																			\
+"			if (isLabel == 0)\n" 														\
+"			{\n" 																		\
+"				if (useMask == 0)\n" 												\
+"					TexCoords = vec2(1.0,1.0);\n" 										\
+"				else\n"																	\
+"					TexCoords = vec2(coordsMask.x,1.0);\n" 								\
+"			}"																			\
+"			else\n"																		\
+"				TexCoords = vec2(1.0,0.0);\n" 											\
+"		}"																				\
+"		else\n"																			\
+"			if (useMask == 1)\n" 													\
+"				TexCoords = vec2(0.0,1.0);\n" 											\
+"	}"																					\
+"	else if (vertex.x < 0.0 && vertex.y < 0.0)\n" 										\
+"	{\n" 																				\
+"		position = bottomLeft;\n" 														\
+"		if (isScreen == 0)\n" 															\
+"		{\n" 																			\
+"			if (isLabel == 0)\n" 														\
+"			{\n" 																		\
+"				if (useMask == 0)\n" 												\
+"					TexCoords = vec2(1.0,0.0);\n" 										\
+"				else\n"																	\
+"					TexCoords = vec2(coordsMask.x,coordsMask.y);\n" 					\
+"			}"																			\
+"			else\n"																		\
+"				TexCoords = vec2(1.0,1.0);\n" 											\
+"		}"																				\
+"		else\n"																			\
+"			if (useMask == 1)\n" 													\
+"				TexCoords = vec2(0.0,coordsMask.y);\n" 									\
+"	}"																					\
+"	if(isScreen == 1)\n"																\
+"	{\n" 																				\
+"		gl_Position = vec4(position,1.0);\n" 														\
+"		if (useMask == 0)\n" 														\
+"			TexCoords = texture_coords;\n" 												\
+"	}"																					\
+"	else\n"																				\
+"		gl_Position = mvp_matrix *  vec4(position, 1.0);\n" 									\
 "}"
 
-#define uifShader 																		 \
-"#version 330 core\n" 																	 \
-"in vec2 TexCoords;\n" 																	 \
-"out vec4 FragColor;\n" 																 \
-"uniform int using_texture;\n"															 \
-"uniform sampler2D image;\n" 															 \
-"uniform vec4 spriteColor;\n" 															 \
-"uniform int isLabel;\n" 																 \
-"void main()\n" 																		 \
-"{\n" 																					 \
-" if(isLabel == 0)\n"																	 \
-" {\n"																					 \
-"	  if(using_texture == 1)\n"															 \
-"		 FragColor = texture(image, TexCoords) * spriteColor;\n" 						 \
-"	  else\n"																			 \
-"	  	FragColor = spriteColor;\n" 													 \
-" }\n"																					 \
-"	else\n"																				 \
-"	{\n" 																				 \
-"	  vec4 sampled = vec4(1.0, 1.0, 1.0, texture(image, TexCoords).r);\n" 				 \
-"		FragColor = spriteColor * sampled; \n" 											 \
-"	}\n"																				 \
+#define uifShader 																		\
+"#version 330 core\n" 																	\
+"in vec2 TexCoords;\n" 																	\
+"out vec4 FragColor;\n" 																\
+"uniform int using_texture;\n"															\
+"uniform sampler2D image;\n" 															\
+"uniform vec4 spriteColor;\n" 															\
+"uniform int isLabel;\n" 																\
+"void main()\n" 																		\
+"{\n" 																					\
+" if(isLabel == 0)\n"																	\
+" {\n"																					\
+"	  if(using_texture == 1)\n"															\
+"		 FragColor = texture(image, TexCoords) * spriteColor;\n" 						\
+"	  else\n"																			\
+"	  	FragColor = spriteColor;\n" 													\
+" }\n"																					\
+"	else\n"																				\
+"	{\n" 																				\
+"	  vec4 sampled = vec4(1.0, 1.0, 1.0, texture(image, TexCoords).r);\n" 				\
+"		FragColor = spriteColor * sampled; \n" 											\
+"	}\n"																				\
 "}\n"
 #pragma endregion
 

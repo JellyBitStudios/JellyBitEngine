@@ -103,6 +103,23 @@ private:
 
 	bool depthTest, cullFace, lighting, blend;
 
+	//uniform buffer
+	uint uboTestUI = 0;
+	struct uiShader_data_t
+	{
+		int useMask;
+		int offsetint1;
+		float coordsMask[2];
+		float topLeft[3];
+		float toffsetfloat1;
+		float topRight[3];
+		float toffsetfloat2;
+		float bottomLeft[3];
+		float toffsetfloat3;
+		float bottomRight[3];
+		float tofsetfloat4;
+	} uiShader_data;
+
 private:
 	bool MouseInScreen();
 

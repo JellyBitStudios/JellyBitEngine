@@ -35,89 +35,6 @@ ModuleUI::~ModuleUI()
 {
 }
 
-void ModuleUI::DrawCanvas()
-{
-	if (depthTest) glDisable(GL_DEPTH_TEST);
-	if (cullFace)  glDisable(GL_CULL_FACE);
-	if (lighting) glDisable(GL_LIGHTING);
-
-	for (GameObject* canvas : canvas_screen)
-	{
-
-		std::vector<GameObject*> renderers;
-		canvas->GetChildrenAndThisVectorFromLeaf(renderers);
-		std::reverse(renderers.begin(), renderers.end());
-
-		for (GameObject* render : renderers)
-		{
-			ComponentCanvasRenderer* renderer = render->cmp_canvasRenderer;
-			if (renderer)
-			{
-				ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
-				while (rend != nullptr)
-				{
-					switch (rend->GetType())
-					{
-					case ComponentCanvasRenderer::RenderTypes::IMAGE:
-						DrawUIImage(render->cmp_rectTransform, rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
-						break;
-					case ComponentCanvasRenderer::RenderTypes::LABEL:
-						DrawUILabel(rend->GetWord(), (int)render->cmp_rectTransform->GetFrom(), rend->GetColor());
-						break;
-					}
-
-					rend = renderer->GetDrawAvaiable();
-				}
-			}
-		}
-	}
-
-	if (depthTest) glEnable(GL_DEPTH_TEST);
-	if (cullFace) glEnable(GL_CULL_FACE);
-	if (lighting) glEnable(GL_LIGHTING);
-	if (!blend) glDisable(GL_BLEND);
-
-}
-
-void ModuleUI::DrawWorldCanvas()
-{
-	UpdateRenderStates();
-	if (!blend) glEnable(GL_BLEND);
-	if (lighting) glDisable(GL_LIGHTING);
-
-	for (GameObject* canvas : canvas_world)
-	{
-
-		std::vector<GameObject*> renderers;
-		canvas->GetChildrenAndThisVectorFromLeaf(renderers);
-
-		for (GameObject* render : renderers)
-		{
-			ComponentCanvasRenderer* renderer = render->cmp_canvasRenderer;
-			if (renderer)
-			{
-				ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
-				while (rend != nullptr)
-				{
-					switch (rend->GetType())
-					{
-					case ComponentCanvasRenderer::RenderTypes::IMAGE:
-						DrawUIImage(render->cmp_rectTransform, rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
-						break;
-					case ComponentCanvasRenderer::RenderTypes::LABEL:
-						DrawUILabel(rend->GetWord(), (int)render->cmp_rectTransform->GetFrom(), rend->GetColor());
-						break;
-					}
-
-					rend = renderer->GetDrawAvaiable();
-				}
-			}
-		}
-	}
-
-	if (lighting) glEnable(GL_LIGHTING);
-}
-
 bool ModuleUI::Init(JSON_Object * jObject)
 {
 
@@ -126,10 +43,10 @@ bool ModuleUI::Init(JSON_Object * jObject)
 
 bool ModuleUI::Start()
 {
-	initRenderData();
-
 	//Shader
 	ui_shader = App->resHandler->UIShaderProgram;
+
+	initRenderData();
 
 	ui_size_draw[Screen::X] = 0;
 	ui_size_draw[Screen::Y] = 0;
@@ -186,56 +103,56 @@ void ModuleUI::OnSystemEvent(System_Event event)
 {
 	switch (event.type)
 	{
-		case System_Event_Type::Play:
+	case System_Event_Type::Play:
+	{
+		/* Set mask on play, but now is on inspector.
+		for (GameObject* go_canvas : canvas)
 		{
-			/* Set mask on play, but now is on inspector.
-			for (GameObject* go_canvas : canvas)
-			{
-				std::vector<GameObject*> go_images;
-				go_canvas->GetChildrenAndThisVectorFromLeaf(go_images);
+			std::vector<GameObject*> go_images;
+			go_canvas->GetChildrenAndThisVectorFromLeaf(go_images);
 
-				for (GameObject* cImage : go_images)
-					if (cImage->cmp_image)
-						cImage->cmp_image->SetMask();
-			}
-			*/
-			break;
+			for (GameObject* cImage : go_images)
+				if (cImage->cmp_image)
+					cImage->cmp_image->SetMask();
 		}
-		case System_Event_Type::LoadScene:
-		case System_Event_Type::Stop:
+		*/
+		break;
+	}
+	case System_Event_Type::LoadScene:
+	case System_Event_Type::Stop:
+	{
+		canvas.clear();
+		canvas_screen.clear();
+		canvas_worldScreen.clear();
+		canvas_world.clear();
+		break;
+	}
+	case System_Event_Type::ComponentDestroyed:
+	{
+		switch (event.compEvent.component->GetType())
 		{
-			canvas.clear();
-			canvas_screen.clear();
-			canvas_worldScreen.clear();
-			canvas_world.clear();
-			break;
-		}
-		case System_Event_Type::ComponentDestroyed:
+		case ComponentTypes::CanvasComponent:
 		{
-			switch (event.compEvent.component->GetType())
+			ComponentCanvas* cmp_canvas = (ComponentCanvas*)event.compEvent.component;
+			GameObject* parentC = cmp_canvas->GetParent();
+			canvas.remove(parentC);
+			switch (cmp_canvas->GetType())
 			{
-				case ComponentTypes::CanvasComponent:
-				{
-					ComponentCanvas* cmp_canvas = (ComponentCanvas*)event.compEvent.component;
-					GameObject* parentC = cmp_canvas->GetParent();
-					canvas.remove(parentC);
-					switch (cmp_canvas->GetType())
-					{
-					case ComponentCanvas::CanvasType::SCREEN:
-						canvas_screen.remove(parentC);
-						break;
-					case ComponentCanvas::CanvasType::WORLD_SCREEN:
-						canvas_worldScreen.remove(parentC);
-						break;
-					case ComponentCanvas::CanvasType::WORLD:
-						canvas_world.remove(parentC);
-						break;
-					}
-					break;
-				}
+			case ComponentCanvas::CanvasType::SCREEN:
+				canvas_screen.remove(parentC);
+				break;
+			case ComponentCanvas::CanvasType::WORLD_SCREEN:
+				canvas_worldScreen.remove(parentC);
+				break;
+			case ComponentCanvas::CanvasType::WORLD:
+				canvas_world.remove(parentC);
+				break;
 			}
 			break;
 		}
+		}
+		break;
+	}
 	}
 }
 
@@ -267,20 +184,126 @@ void ModuleUI::initRenderData()
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)(2 * sizeof(GLfloat)));
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+
+	//-------- Uniform Buffer Object -------------
+	GLuint binding_point_index = 1;
+	// Create shaderstorage buffer object
+	glGenBuffers(1, &uboTestUI);
+	glBindBufferBase(GL_UNIFORM_BUFFER, binding_point_index, uboTestUI);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(uiShader_data), nullptr, GL_DYNAMIC_DRAW);
+
+	// Bind UBO to shader Interface Block
+	GLuint loc = glGetUniformBlockIndex(ui_shader, "UIBlock");
+	glUniformBlockBinding(ui_shader, loc, binding_point_index);
+	//-------------
+}
+
+void ModuleUI::DrawCanvas()
+{
+	if (depthTest) glDisable(GL_DEPTH_TEST);
+	if (cullFace)  glDisable(GL_CULL_FACE);
+	if (lighting) glDisable(GL_LIGHTING);
+
+	if (!canvas_screen.empty())
+	{
+		use(ui_shader);
+		setBool(ui_shader, "isScreen", 1);
+		for (GameObject* canvas : canvas_screen)
+		{
+
+			std::vector<GameObject*> renderers;
+			canvas->GetChildrenAndThisVectorFromLeaf(renderers);
+			std::reverse(renderers.begin(), renderers.end());
+
+			for (GameObject* render : renderers)
+			{
+				ComponentCanvasRenderer* renderer = render->cmp_canvasRenderer;
+				if (renderer)
+				{
+					ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
+					while (rend != nullptr)
+					{
+						switch (rend->GetType())
+						{
+						case ComponentCanvasRenderer::RenderTypes::IMAGE:
+							DrawUIImage(render->cmp_rectTransform, rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
+							break;
+						case ComponentCanvasRenderer::RenderTypes::LABEL:
+							DrawUILabel(rend->GetWord(), (int)render->cmp_rectTransform->GetFrom(), rend->GetColor());
+							break;
+						}
+
+						rend = renderer->GetDrawAvaiable();
+					}
+				}
+			}
+		}
+		use(0);
+	}
+
+	if (depthTest) glEnable(GL_DEPTH_TEST);
+	if (cullFace) glEnable(GL_CULL_FACE);
+	if (lighting) glEnable(GL_LIGHTING);
+	if (!blend) glDisable(GL_BLEND);
+}
+
+void ModuleUI::DrawWorldCanvas()
+{
+	UpdateRenderStates();
+	if (!blend) glEnable(GL_BLEND);
+	if (lighting) glDisable(GL_LIGHTING);
+
+	if (!canvas_world.empty())
+	{
+		use(ui_shader);
+		setBool(ui_shader, "isScreen", 0);
+		for (GameObject* canvas : canvas_world)
+		{
+			std::vector<GameObject*> renderers;
+			canvas->GetChildrenAndThisVectorFromLeaf(renderers);
+
+			for (GameObject* render : renderers)
+			{
+				ComponentCanvasRenderer* renderer = render->cmp_canvasRenderer;
+				if (renderer)
+				{
+					ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
+					while (rend != nullptr)
+					{
+						switch (rend->GetType())
+						{
+						case ComponentCanvasRenderer::RenderTypes::IMAGE:
+							DrawUIImage(render->cmp_rectTransform, rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
+							break;
+						case ComponentCanvasRenderer::RenderTypes::LABEL:
+							DrawUILabel(rend->GetWord(), (int)render->cmp_rectTransform->GetFrom(), rend->GetColor());
+							break;
+						}
+
+						rend = renderer->GetDrawAvaiable();
+					}
+				}
+			}
+		}
+		use(0);
+	}
+
+	if (lighting) glEnable(GL_LIGHTING);
 }
 
 void ModuleUI::DrawUIImage(ComponentRectTransform * rect, math::float4& color, uint id_texture, math::float2& mask, float rotation)
 {
-	use(ui_shader);
 	SetRectToShader(rect);
 
-	setBool(ui_shader, "useMask", (mask.x < 0) ? false : true);
-	setFloat(ui_shader, "coordsMask", mask.x, mask.y);
+	int useMask = (mask.x < 0) ? false : true;
+	memcpy(&uiShader_data.useMask, &useMask, sizeof(uiShader_data.useMask));
+	if(useMask)
+		memcpy(&uiShader_data.coordsMask, mask.ptr(), sizeof(uiShader_data.coordsMask));
+
+
+	use(ui_shader);
 	glUniform1i(glGetUniformLocation(ui_shader, "isLabel"), 0);
-
-
 	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
-
 	if (id_texture > 0)
 	{
 		setBool(ui_shader, "using_texture", true);
@@ -291,20 +314,26 @@ void ModuleUI::DrawUIImage(ComponentRectTransform * rect, math::float4& color, u
 	else
 		setBool(ui_shader, "using_texture", false);
 
+	//-------- Uniform Buffer Object -------------
+	// Update buffer
+	glBindBuffer(GL_UNIFORM_BUFFER, uboTestUI);
+	void* buff_ptr = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
+	std::memcpy(buff_ptr, &uiShader_data, sizeof(uiShader_data));
+	glUnmapBuffer(GL_UNIFORM_BUFFER);
+	// -------------
+
 	glBindVertexArray(reference_vertex);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glBindVertexArray(0);
 
-	use(0);
 }
 
 void ModuleUI::DrawUILabel(std::vector<ComponentLabel::LabelLetter>* word_toDraw, uint rectFrom, math::float4& color)
 {
-	use(ui_shader);
-	setBool(ui_shader, "useMask", false);
-	setFloat(ui_shader, "coordsMask", -1, -1);
+	int useMask = false;
+	memcpy(&uiShader_data.useMask, &useMask, sizeof(uiShader_data.useMask));
 	setBool(ui_shader, "isLabel", true);
 	setBool(ui_shader, "using_texture", true);
 	setUnsignedInt(ui_shader, "image", 0);
@@ -319,6 +348,13 @@ void ModuleUI::DrawUILabel(std::vector<ComponentLabel::LabelLetter>* word_toDraw
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, letter->textureID);
 
+		//-------- Uniform Buffer Object -------------
+		// Update buffer
+		glBindBuffer(GL_UNIFORM_BUFFER, uboTestUI);
+		void* buff_ptr = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
+		std::memcpy(buff_ptr, &uiShader_data, sizeof(uiShader_data));
+		glUnmapBuffer(GL_UNIFORM_BUFFER);
+		// -------------
 
 		glBindVertexArray(reference_vertex);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -327,14 +363,13 @@ void ModuleUI::DrawUILabel(std::vector<ComponentLabel::LabelLetter>* word_toDraw
 		glBindVertexArray(0);
 
 	}
-	use(0);
 }
 
 void ModuleUI::SetRectToShader(ComponentRectTransform * rect, int rFrom, uint* rectLetter, math::float3* cornersLetter)
 {
 	uint* rect_points = nullptr;
 	math::float3* rect_world = nullptr;
-	math::float2 pos;
+	math::float3 pos;
 	float w_width;
 	float w_height;
 	math::float4x4 view = math::float4x4::identity;
@@ -348,50 +383,34 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect, int rFrom, uint* r
 	{
 	case ComponentRectTransform::RectFrom::RECT:
 		(rect) ? rect_points = rect->GetRect() : rect_points = rectLetter;
-		setBool(ui_shader, "isScreen", 1);
 
 		w_width = ui_size_draw[Screen::WIDTH];
 		w_height = ui_size_draw[Screen::HEIGHT];
 
 		if (rect)
 		{
-			pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
-			setFloat(ui_shader, "topLeft", pos.x, pos.y, 0.0f);
-			pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
-			setFloat(ui_shader, "topRight", pos.x, pos.y, 0.0f);
-			pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
-			setFloat(ui_shader, "bottomLeft", pos.x, pos.y, 0.0f);
-			pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
-			setFloat(ui_shader, "bottomRight", pos.x, pos.y, 0.0f);
+			pos = { math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height), 0.0f };
+			memcpy(&uiShader_data.topLeft, pos.ptr(), sizeof(uiShader_data.topLeft));
+			pos = { math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height), 0.0f };
+			memcpy(&uiShader_data.topRight, pos.ptr(), sizeof(uiShader_data.topRight));
+			pos = { math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height), 0.0f };
+			memcpy(&uiShader_data.bottomLeft, pos.ptr(), sizeof(uiShader_data.bottomLeft));
+			pos = { math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height), 0.0f };
+			memcpy(&uiShader_data.bottomRight, pos.ptr(), sizeof(uiShader_data.bottomRight));
 		}
 		else
 		{
-			pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
-			setFloat(ui_shader, "bottomLeft", pos.x, pos.y, 0.0f);
-			pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height);
-			setFloat(ui_shader, "bottomRight", pos.x, pos.y, 0.0f);
-			pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
-			setFloat(ui_shader, "topLeft", pos.x, pos.y, 0.0f);
-			pos = math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height);
-			setFloat(ui_shader, "topRight", pos.x, pos.y, 0.0f);
+			pos = { math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height), 0.0f };
+			memcpy(&uiShader_data.bottomLeft, pos.ptr(), sizeof(uiShader_data.bottomLeft));
+			pos = { math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] }, w_width, w_height), 0.0f };
+			memcpy(&uiShader_data.bottomRight, pos.ptr(), sizeof(uiShader_data.bottomRight));
+			pos = { math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height), 0.0f };
+			memcpy(&uiShader_data.topLeft, pos.ptr(), sizeof(uiShader_data.topLeft));
+			pos = { math::Frustum::ScreenToViewportSpace({ (float)rect_points[ComponentRectTransform::Rect::X] + (float)rect_points[ComponentRectTransform::Rect::XDIST], (float)rect_points[ComponentRectTransform::Rect::Y] + (float)rect_points[ComponentRectTransform::Rect::YDIST] }, w_width, w_height), 0.0f };
+			memcpy(&uiShader_data.topRight, pos.ptr(), sizeof(uiShader_data.topRight));
 		}
 		break;
-
 	case ComponentRectTransform::RectFrom::WORLD:
-		(rect) ? rect_world = rect->GetCorners() : rect_world = cornersLetter;
-		setBool(ui_shader, "isScreen", 0);
-		view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
-		projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();
-		mvp = view * projection;
-
-		setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
-
-		setFloat(ui_shader, "topLeft", rect_world[ComponentRectTransform::Rect::RTOPLEFT]);
-		setFloat(ui_shader, "topRight", rect_world[ComponentRectTransform::Rect::RTOPRIGHT]);
-		setFloat(ui_shader, "bottomLeft", rect_world[ComponentRectTransform::Rect::RBOTTOMLEFT]);
-		setFloat(ui_shader, "bottomRight", rect_world[ComponentRectTransform::Rect::RBOTTOMRIGHT]);
-		break;
-
 	case ComponentRectTransform::RectFrom::RECT_WORLD:
 		(rect) ? rect_world = rect->GetCorners() : rect_world = cornersLetter;
 		setBool(ui_shader, "isScreen", 0);
@@ -401,10 +420,11 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect, int rFrom, uint* r
 
 		setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
 
-		setFloat(ui_shader, "topLeft", rect_world[ComponentRectTransform::Rect::RTOPLEFT]);
-		setFloat(ui_shader, "topRight", rect_world[ComponentRectTransform::Rect::RTOPRIGHT]);
-		setFloat(ui_shader, "bottomLeft", rect_world[ComponentRectTransform::Rect::RBOTTOMLEFT]);
-		setFloat(ui_shader, "bottomRight", rect_world[ComponentRectTransform::Rect::RBOTTOMRIGHT]);
+		memcpy(&uiShader_data.topLeft, &rect_world[ComponentRectTransform::Rect::RTOPLEFT], sizeof(uiShader_data.topLeft));
+		memcpy(&uiShader_data.topRight, &rect_world[ComponentRectTransform::Rect::RTOPRIGHT], sizeof(uiShader_data.topRight));
+		memcpy(&uiShader_data.bottomLeft, &rect_world[ComponentRectTransform::Rect::RBOTTOMLEFT], sizeof(uiShader_data.bottomLeft));
+		memcpy(&uiShader_data.bottomRight, &rect_world[ComponentRectTransform::Rect::RBOTTOMRIGHT], sizeof(uiShader_data.bottomRight));
+
 		break;
 	}
 }
