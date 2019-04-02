@@ -136,7 +136,7 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			components.push_back(cmp_light);
 			break;
 		case ComponentTypes::ProjectorComponent:
-			cmp_projector = new ComponentProjector(*gameObject.cmp_projector, this);
+			cmp_projector = new ComponentProjector(*gameObject.cmp_projector, this, includeComponents);
 			cmp_projector->SetParent(this);
 			components.push_back(cmp_projector);
 			break;
@@ -620,7 +620,7 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		break;
 	case ComponentTypes::ProjectorComponent:
 		assert(cmp_projector == NULL);
-		newComponent = cmp_projector = new ComponentProjector(this);
+		newComponent = cmp_projector = new ComponentProjector(this, includeInModules);
 		break;
 	case ComponentTypes::RigidStaticComponent:
 		assert(cmp_rigidActor == nullptr);

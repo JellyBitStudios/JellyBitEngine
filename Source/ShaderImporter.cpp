@@ -6,6 +6,8 @@
 #include "ResourceShaderObject.h"
 #include "ResourceShaderProgram.h"
 
+#include "glew\include\GL\glew.h"
+
 #include <assert.h>
 
 ShaderImporter::ShaderImporter() {}
@@ -177,6 +179,18 @@ bool ShaderImporter::LoadShaderProgram(const char* programFile, ResourceShaderPr
 	return ret;
 }
 
+// ----------------------------------------------------------------------------------------------------
+
+uint ShaderImporter::GetBinaryFormats() const
+{
+	GLint formats = 0;
+	glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS, &formats);
+
+	return formats;
+}
+
+// ----------------------------------------------------------------------------------------------------
+
 bool ShaderImporter::LoadShaderProgram(const void* buffer, uint size, ResourceShaderProgramData& outputShaderProgramData, uint& shaderProgram) const
 {
 	assert(buffer != nullptr && size > 0);
@@ -193,16 +207,4 @@ bool ShaderImporter::LoadShaderProgram(const void* buffer, uint size, ResourceSh
 		CONSOLE_LOG(LogTypes::Error, "SHADER IMPORTER: Shader Program with size %u could not be loaded", size);
 
 	return false;
-}
-
-// ----------------------------------------------------------------------------------------------------
-
-void ShaderImporter::SetBinaryFormats(int formats)
-{
-	this->formats = formats;
-}
-
-int ShaderImporter::GetBinaryFormats() const
-{
-	return formats;
 }
