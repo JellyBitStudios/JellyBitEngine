@@ -42,6 +42,7 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 		labelWord = componentLabel.labelWord;
 		finalText = componentLabel.finalText;
 		memcpy(text, finalText.data(), finalText.length());
+		fontUuid = componentLabel.fontUuid;
 	}
 }
 
@@ -140,7 +141,7 @@ void ComponentLabel::ScreenDraw(uint rect[4], const uint x, const uint y, math::
 
 uint ComponentLabel::GetInternalSerializationBytes()
 {																		
-	return sizeof(color) + sizeof(int) + sizeof(uint) + sizeof(char) * finalText.length();
+	return sizeof(color) + sizeof(int) + sizeof(uint) * 2 + sizeof(char) * finalText.length();
 }
 
 void ComponentLabel::OnInternalSave(char *& cursor)
@@ -154,6 +155,9 @@ void ComponentLabel::OnInternalSave(char *& cursor)
 	cursor += bytes;
 
 	bytes = sizeof(uint);
+	memcpy(cursor, &fontUuid, bytes);
+	cursor += bytes;
+
 	uint nameLenght = finalText.length();
 	memcpy(cursor, &nameLenght, bytes);
 	cursor += bytes;
@@ -175,6 +179,9 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 
 	//Load lenght + string
 	bytes = sizeof(uint);
+	memcpy(&fontUuid, cursor, bytes);
+	cursor += bytes;
+
 	uint nameLenght;
 	memcpy(&nameLenght, cursor, bytes);
 	cursor += bytes;
