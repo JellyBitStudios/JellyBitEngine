@@ -185,7 +185,7 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 	finalText.resize(nameLenght);
 	cursor += bytes;
 
-	strcmp(text, finalText.data());
+	sprintf(text, "%s", finalText.data());
 }
 
 void ComponentLabel::OnUniqueEditor()
