@@ -10,11 +10,16 @@ public enum Event_Type { None = -1 }
 public struct Event
 {
     public Event_Type type;
+
+    public static explicit operator JellyBitEngine.Object(Event v)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 public struct Listener
 {
-    public Event_Type events;
+    public List<Event_Type> events;
     public object script;
     public string listener;
 }
@@ -23,7 +28,7 @@ public sealed class EventsManager : JellyScript
 {
     private static readonly EventsManager instance = new EventsManager();
 
-    List<Event> eventsQueue = new List<Event>();
+    Queue<Event> eventsQueue = new Queue<Event>();
     List<Listener> listeners = new List<Listener>();
 
     private EventsManager() {}
@@ -38,24 +43,21 @@ public sealed class EventsManager : JellyScript
 
     public override void PreUpdate()
     {
-        //eventsQueue.Reverse();
-        foreach (Event newEvent in eventsQueue)
+        if (eventsQueue.Count > 0)
         {
-            Debug.Log("Iterating Queue");
-            foreach (Listener listener in listeners)
+            Event newEvent = eventsQueue.Dequeue();
+            foreach(Listener listener in listeners)
             {
-                Debug.Log("Calling");
-                listener.script.GetType().GetMethod(listener.listener).Invoke(listener.script, new object[] { newEvent });
+                if (listener.events.Contains(newEvent.type))
+                    listener.script.GetType().GetMethod(listener.listener).Invoke(listener.script, new object[] { newEvent });
             }
         }
-
-        //eventsQueue.Clear();
     }
 
     public bool StartListening(Event_Type type, object script, string listener)
     {
         Listener listenerInstance = new Listener();
-        listenerInstance.events = type;
+        listenerInstance.events.Add(type);
         listenerInstance.script = script;
         listenerInstance.listener = listener;
         if (!listeners.Contains(listenerInstance))
@@ -64,6 +66,7 @@ public sealed class EventsManager : JellyScript
             listeners.Add(listenerInstance);
             return true;
         }
+        //listeners.;
         return false;
     }
 
@@ -79,7 +82,7 @@ public sealed class EventsManager : JellyScript
     public void PushEvent(Event newEvent)
     {
         Debug.Log("event pushed");
-        eventsQueue.Add(newEvent);
+        eventsQueue.Enqueue(newEvent);
     }
 }
 
