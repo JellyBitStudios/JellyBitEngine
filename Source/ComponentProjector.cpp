@@ -13,11 +13,13 @@
 #include "GameObject.h"
 #include "ComponentTransform.h"
 
+#include "MathGeoLib\include\Geometry\Sphere.h"
+
 #include "imgui\imgui.h"
 
 #include <assert.h>
 
-ComponentProjector::ComponentProjector(GameObject* parent) : Component(parent, ComponentTypes::ProjectorComponent)
+ComponentProjector::ComponentProjector(GameObject* parent, bool include) : Component(parent, ComponentTypes::ProjectorComponent)
 {
 	SetMaterialRes(App->resHandler->defaultMaterial);
 	SetMeshRes(App->resHandler->cube);
@@ -36,10 +38,11 @@ ComponentProjector::ComponentProjector(GameObject* parent) : Component(parent, C
 
 	// -----
 
-	App->renderer3D->AddProjectorComponent(this);
+	if (include)
+		App->renderer3D->AddProjectorComponent(this);
 }
 
-ComponentProjector::ComponentProjector(const ComponentProjector& componentProjector, GameObject* parent) : Component(parent, ComponentTypes::ProjectorComponent)
+ComponentProjector::ComponentProjector(const ComponentProjector& componentProjector, GameObject* parent, bool include) : Component(parent, ComponentTypes::ProjectorComponent)
 {
 	if (App->res->GetResource(componentProjector.materialRes) != nullptr)
 		SetMaterialRes(componentProjector.materialRes);
@@ -65,14 +68,17 @@ ComponentProjector::ComponentProjector(const ComponentProjector& componentProjec
 
 	// -----
 
-	App->renderer3D->AddProjectorComponent(this);
+	if (include)
+		App->renderer3D->AddProjectorComponent(this);
 }
 
 ComponentProjector::~ComponentProjector()
 {
 	App->renderer3D->EraseProjectorComponent(this);
 	parent->cmp_projector = nullptr;
+
 	SetMaterialRes(0);
+	SetMeshRes(0);
 }
 
 void ComponentProjector::UpdateTransform()
@@ -254,8 +260,6 @@ void ComponentProjector::OnInternalLoad(char*& cursor)
 }
 
 // ----------------------------------------------------------------------------------------------------
-
-#include "MathGeoLib\include\Geometry\Sphere.h"
 
 // Draws a decal
 void ComponentProjector::Draw() const
