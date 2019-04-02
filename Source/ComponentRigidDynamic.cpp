@@ -49,16 +49,24 @@ ComponentRigidDynamic::ComponentRigidDynamic(GameObject* parent, bool include) :
 
 	// -----
 
-	//SetMass(componentRigidDynamic.mass);
-	//SetCMass(componentRigidDynamic.cMass);
-	//SetInertia(componentRigidDynamic.inertia);
-	SetLinearDamping(linearDamping);
-	SetAngularDamping(angularDamping);
-	SetMaxLinearVelocity(maxLinearVelocity);
-	SetMaxAngularVelocity(maxAngularVelocity);
-	FreezePosition(freezePosition[0], freezePosition[1], freezePosition[2]);
-	FreezeRotation(freezeRotation[0], freezeRotation[1], freezeRotation[2]);
-	SetIsKinematic(isKinematic);
+	mass = gActor->is<physx::PxRigidDynamic>()->getMass();
+	physx::PxVec3 gCMass = gActor->is<physx::PxRigidDynamic>()->getCMassLocalPose().p;
+	cMass = math::float3(gCMass.x, gCMass.y, gCMass.z);
+	physx::PxVec3 gInertia = gActor->is<physx::PxRigidDynamic>()->getMassSpaceInertiaTensor();
+	inertia = math::float3(gInertia.x, gInertia.y, gInertia.z);
+	linearDamping = gActor->is<physx::PxRigidDynamic>()->getLinearDamping();
+	angularDamping = gActor->is<physx::PxRigidDynamic>()->getAngularDamping();
+	maxLinearVelocity = gActor->is<physx::PxRigidDynamic>()->getMaxLinearVelocity();
+	maxAngularVelocity = gActor->is<physx::PxRigidDynamic>()->getMaxAngularVelocity();
+	physx::PxRigidDynamicLockFlags rigidDynamicLockFlags = gActor->is<physx::PxRigidDynamic>()->getRigidDynamicLockFlags();
+	freezePosition[0] = rigidDynamicLockFlags & physx::PxRigidDynamicLockFlag::eLOCK_LINEAR_X;
+	freezePosition[1] = rigidDynamicLockFlags & physx::PxRigidDynamicLockFlag::eLOCK_LINEAR_Y;
+	freezePosition[2] = rigidDynamicLockFlags & physx::PxRigidDynamicLockFlag::eLOCK_LINEAR_Z;
+	freezeRotation[0] = rigidDynamicLockFlags & physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_X;
+	freezeRotation[1] = rigidDynamicLockFlags & physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_Y;
+	freezeRotation[2] = rigidDynamicLockFlags & physx::PxRigidDynamicLockFlag::eLOCK_ANGULAR_Z;
+	physx::PxRigidBodyFlags rigidBodyFlags = gActor->is<physx::PxRigidBody>()->getRigidBodyFlags();
+	isKinematic = rigidBodyFlags & physx::PxRigidBodyFlag::Enum::eKINEMATIC;
 }
 
 ComponentRigidDynamic::ComponentRigidDynamic(const ComponentRigidDynamic& componentRigidDynamic, GameObject* parent, bool include) : ComponentRigidActor(componentRigidDynamic, parent, ComponentTypes::RigidDynamicComponent, include)

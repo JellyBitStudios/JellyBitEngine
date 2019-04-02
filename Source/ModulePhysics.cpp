@@ -248,7 +248,7 @@ update_status ModulePhysics::FixedUpdate()
 		return UPDATE_CONTINUE;
 #endif
 
-	//Call the FixedUpdate in all the active scripts
+	// Call FixedUpdate in all the active scripts
 	App->scripting->FixedUpdate();
 
 	//Debug();

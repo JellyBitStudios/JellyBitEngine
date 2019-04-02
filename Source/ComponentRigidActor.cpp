@@ -87,7 +87,7 @@ void ComponentRigidActor::OnInternalLoad(char*& cursor)
 	math::float4x4 globalMatrix;
 	bytes = sizeof(math::float4x4);
 	memcpy(&globalMatrix, cursor, bytes);
-	UpdateTransform(globalMatrix);
+	//UpdateTransform(globalMatrix);
 	cursor += bytes;
 }
 
