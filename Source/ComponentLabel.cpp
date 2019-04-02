@@ -13,6 +13,7 @@
 #include "MathGeoLib/include/Geometry/Frustum.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
+#include "imgui/imgui_stl.h"
 
 ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::LabelComponent)
 {
@@ -29,7 +30,6 @@ ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType
 		if (fontUuid)
 			size = ((ResourceFont*)fonts[0])->fontData.fontSize;
 
-		finalText = text;
 		needed_recaclculate = true;
 	}
 }
@@ -41,7 +41,6 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 		color = componentLabel.color;
 		labelWord = componentLabel.labelWord;
 		finalText = componentLabel.finalText;
-		memcpy(text, finalText.data(), finalText.length());
 	}
 }
 
@@ -184,64 +183,65 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 	memcpy((void*)finalText.c_str(), cursor, bytes);
 	finalText.resize(nameLenght);
 	cursor += bytes;
-
-	strcmp(text, finalText.data());
 }
 
 void ComponentLabel::OnUniqueEditor()
 {
 #ifndef GAMEMODE
-	ImGui::Text("Text");
-	ImGui::Separator();
-
-	float sizeX = ImGui::GetWindowWidth();
-	if (ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(sizeX, ImGui::GetTextLineHeight() * 7), ImGuiInputTextFlags_AllowTabInput))
+	if (ImGui::CollapsingHeader("Label", ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		finalText = text;
-		needed_recaclculate = true;
-	}
-
-	ImGui::PushItemWidth(200.0f);
-	ImGui::ColorEdit4("Color", &color.x, ImGuiColorEditFlags_AlphaBar);
-
-	if (ImGui::DragInt("Load new size", &size, 1.0f, 0, 72))
-		needed_recaclculate = true;
-
-	//-----------------------------------------
-	ImGui::Separator();
-	uint buttonWidth = 0.65 * ImGui::GetWindowWidth();
-	ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-	ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
-
-	ImGui::Text("Font: "); ImGui::SameLine();
-
-	cursorPos = ImGui::GetCursorScreenPos();
-	ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
-
-	cursorPos = { cursorPos.x, cursorPos.y - 5 };
-
-	ImGui::ButtonEx("##Font", { (float)buttonWidth, 20 }, ImGuiButtonFlags_::ImGuiButtonFlags_Disabled);
-
-	//Case 1: Dragging Real GameObjects
-	if (ImGui::BeginDragDropTarget())
-	{
-		const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FONT_RESOURCE", ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
-		if (payload)
+		float sizeX = ImGui::GetWindowWidth();
+		if (ImGui::InputTextMultiline("##source", &finalText, ImVec2(sizeX, ImGui::GetTextLineHeight() * 7), ImGuiInputTextFlags_AllowTabInput))
 		{
-			uint uuid = *(uint*)payload->Data;
-
-			if (ImGui::IsMouseReleased(0))
-			{
-				fontUuid = uuid;
-				needed_recaclculate = true;
-				size = ((ResourceFont*)App->res->GetResource(uuid))->fontData.fontSize;
-			}
+			needed_recaclculate = true;
 		}
-		ImGui::EndDragDropTarget();
+
+		ImGui::PushItemWidth(200.0f);
+		ImGui::ColorEdit4("Color", &color.x, ImGuiColorEditFlags_AlphaBar);
+
+		if (ImGui::DragInt("Load new size", &size, 1.0f, 0, 72))
+			needed_recaclculate = true;
+
+		//-----------------------------------------
+		ImGui::Separator();
+		uint buttonWidth = 0.65 * ImGui::GetWindowWidth();
+		ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+		ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+		ImGui::Text("Font: "); ImGui::SameLine();
+
+		cursorPos = ImGui::GetCursorScreenPos();
+		ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+		cursorPos = { cursorPos.x, cursorPos.y - 5 };
+
+		ImGui::ButtonEx("##Font", { (float)buttonWidth, 20 }, ImGuiButtonFlags_::ImGuiButtonFlags_Disabled);
+
+		//Case 1: Dragging Real GameObjects
+		if (ImGui::BeginDragDropTarget())
+		{
+			const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FONT_RESOURCE", ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
+			if (payload)
+			{
+				uint uuid = *(uint*)payload->Data;
+
+				if (ImGui::IsMouseReleased(0))
+				{
+					fontUuid = uuid;
+					needed_recaclculate = true;
+					size = ((ResourceFont*)App->res->GetResource(uuid))->fontData.fontSize;
+				}
+			}
+			ImGui::EndDragDropTarget();
+		}
 	}
-
-
 #endif
+}
+
+void ComponentLabel::SetFinalText(const char * newText)
+{
+	finalText = newText;
+	needed_recaclculate = true;
 }
 
 const char * ComponentLabel::GetFinalText() const
@@ -252,6 +252,11 @@ const char * ComponentLabel::GetFinalText() const
 std::vector<ComponentLabel::LabelLetter>* ComponentLabel::GetLetterQueue()
 {
 	return &labelWord;
+}
+
+void ComponentLabel::SetColor(math::float4 newColor)
+{
+	color = newColor;
 }
 
 math::float4 ComponentLabel::GetColor() const

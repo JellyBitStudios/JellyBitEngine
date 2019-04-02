@@ -10,6 +10,7 @@
 #include "ModuleFBOManager.h"
 
 #include "ResourceMaterial.h"
+#include "ResourceMesh.h"
 #include "GameObject.h"
 #include "ComponentTransform.h"
 

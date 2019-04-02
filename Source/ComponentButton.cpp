@@ -347,157 +347,156 @@ void ComponentButton::OnLoadOnClick(char*& tempBuffer)
 void ComponentButton::OnUniqueEditor()
 {
 #ifndef GAMEMODE
-
-
-	if (ImGui::InputText("Blind key", &input), ImGuiInputTextFlags_EnterReturnsTrue)
+	if (ImGui::CollapsingHeader("Button", ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		if (input[0] != '\0')
+		if (ImGui::InputText("Blind key", &input), ImGuiInputTextFlags_EnterReturnsTrue)
 		{
-			input[1] = '\0';
-			button_blinded = (uint)SDL_GetScancodeFromKey(SDL_GetKeyFromName(input.data()));
-		}
-		else
-			button_blinded = 0;
-	}
-
-	ImGui::Text(SDL_GetKeyName(SDL_GetKeyFromScancode((SDL_Scancode)button_blinded)));
-
-	switch (state)
-	{
-	case IDLE:
-		ImGui::Text("This button is IDLE.");
-		break;
-	case HOVERED:
-		ImGui::Text("This button is Hovered.");
-		break;
-	case R_CLICK:
-		ImGui::Text("This button is Right Clicked.");
-		break;
-	case L_CLICK:
-		ImGui::Text("This button is Left Clicked.");
-		break;
-	}
-
-	ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-
-	ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 4 });
-
-	ImGui::Text("OnClick: "); ImGui::SameLine();
-
-	cursorPos = ImGui::GetCursorScreenPos();
-
-	ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 4 });
-
-	uint buttonWidth = 0.65 * ImGui::GetWindowWidth();
-	cursorPos = ImGui::GetCursorScreenPos();
-	ImGui::ButtonEx(("##" + std::to_string(UUID)).data(), { (float)buttonWidth, 20 }, ImGuiButtonFlags_::ImGuiButtonFlags_Disabled);
-
-	bool dragged = false;
-
-	//Dragging GameObjects
-	if (ImGui::BeginDragDropTarget())
-	{
-		const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY", ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
-		if (payload)
-		{
-			GameObject* go = *(GameObject**)payload->Data;
-
-			if (ImGui::IsMouseReleased(0))
+			if (input[0] != '\0')
 			{
-				draggedGO = go;
-				dragged = true;
+				input[1] = '\0';
+				button_blinded = (uint)SDL_GetScancodeFromKey(SDL_GetKeyFromName(input.data()));
 			}
+			else
+				button_blinded = 0;
 		}
-		ImGui::EndDragDropTarget();
-	}
 
-	if(dragged)
-		ImGui::OpenPopup("OnClick Method");
+		ImGui::Text(SDL_GetKeyName(SDL_GetKeyFromScancode((SDL_Scancode)button_blinded)));
 
-	if (ImGui::BeginPopup("OnClick Method", 0))
-	{
-		std::vector<Component*> scripts = draggedGO->GetComponents(ComponentTypes::ScriptComponent);
-		for (int i = 0; i < scripts.size(); ++i)
+		switch (state)
 		{
-			ComponentScript* script = (ComponentScript*)scripts[i];
-			if (ImGui::BeginMenu(script->scriptName.data()))
-			{
-				MonoObject* compInstance = script->GetMonoComponent();
-				MonoClass* compClass = mono_object_get_class(compInstance);
-
-				const char* className = mono_class_get_name(compClass);
-
-				bool somethingClicked = false;
-
-				void* iterator = 0;
-				MonoMethod* method = mono_class_get_methods(compClass, &iterator);
-				while (method)
-				{
-					uint32_t flags = 0;
-					uint32_t another = mono_method_get_flags(method, &flags);
-					if (another & MONO_METHOD_ATTR_PUBLIC && !(another & MONO_METHOD_ATTR_STATIC))
-					{
-						std::string name = mono_method_get_name(method);
-						if (name != ".ctor")
-						{
-							if (ImGui::MenuItem((name + "()").data()))
-							{
-								//Set this method and instance to be called
-								methodToCall = method;
-								scriptInstance = compInstance;
-								somethingClicked = true;
-								break;
-							}
-						}
-					}
-					method = mono_class_get_methods(compClass, &iterator);
-				}
-
-				ImGui::EndMenu();
-
-				if (somethingClicked)
-					break;
-			}
+		case IDLE:
+			ImGui::Text("This button is IDLE.");
+			break;
+		case HOVERED:
+			ImGui::Text("This button is Hovered.");
+			break;
+		case R_CLICK:
+			ImGui::Text("This button is Right Clicked.");
+			break;
+		case L_CLICK:
+			ImGui::Text("This button is Left Clicked.");
+			break;
 		}
 
-		ImGui::EndPopup();
-	}
+		ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 
-	if (ImGui::IsItemClicked(0))
-	{
-		ImDrawList* drawList = ImGui::GetWindowDrawList();
-		drawList->AddRectFilled(cursorPos, { cursorPos.x + buttonWidth, cursorPos.y + 20 }, ImGui::GetColorU32(ImGuiCol_::ImGuiCol_ButtonActive));
-	}
-	else if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
-	{
-		ImDrawList* drawList = ImGui::GetWindowDrawList();
-		drawList->AddRectFilled(cursorPos, { cursorPos.x + buttonWidth, cursorPos.y + 20 }, ImGui::GetColorU32(ImGuiCol_::ImGuiCol_ButtonHovered));
-
-		if (App->input->GetKey(SDL_SCANCODE_BACKSPACE) == KEY_DOWN)
-		{
-			methodToCall = nullptr;
-			scriptInstance = nullptr;
-		}
-	}
-
-	//Button text
-
-	std::string text;
-
-	if (methodToCall)
-	{
-		text = mono_method_get_name(methodToCall) + std::string("()");
-
-		ImGui::SetCursorScreenPos({ cursorPos.x + 7, cursorPos.y + 3 });
-
-		ImGui::Text(text.data());
-
-		cursorPos = ImGui::GetCursorScreenPos();
 		ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 4 });
 
+		ImGui::Text("OnClick: "); ImGui::SameLine();
+
+		cursorPos = ImGui::GetCursorScreenPos();
+
+		ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 4 });
+
+		uint buttonWidth = 0.65 * ImGui::GetWindowWidth();
+		cursorPos = ImGui::GetCursorScreenPos();
+		ImGui::ButtonEx(("##" + std::to_string(UUID)).data(), { (float)buttonWidth, 20 }, ImGuiButtonFlags_::ImGuiButtonFlags_Disabled);
+
+		bool dragged = false;
+
+		//Dragging GameObjects
+		if (ImGui::BeginDragDropTarget())
+		{
+			const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY", ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
+			if (payload)
+			{
+				GameObject* go = *(GameObject**)payload->Data;
+
+				if (ImGui::IsMouseReleased(0))
+				{
+					draggedGO = go;
+					dragged = true;
+				}
+			}
+			ImGui::EndDragDropTarget();
+		}
+
+		if (dragged)
+			ImGui::OpenPopup("OnClick Method");
+
+		if (ImGui::BeginPopup("OnClick Method", 0))
+		{
+			std::vector<Component*> scripts = draggedGO->GetComponents(ComponentTypes::ScriptComponent);
+			for (int i = 0; i < scripts.size(); ++i)
+			{
+				ComponentScript* script = (ComponentScript*)scripts[i];
+				if (ImGui::BeginMenu(script->scriptName.data()))
+				{
+					MonoObject* compInstance = script->GetMonoComponent();
+					MonoClass* compClass = mono_object_get_class(compInstance);
+
+					const char* className = mono_class_get_name(compClass);
+
+					bool somethingClicked = false;
+
+					void* iterator = 0;
+					MonoMethod* method = mono_class_get_methods(compClass, &iterator);
+					while (method)
+					{
+						uint32_t flags = 0;
+						uint32_t another = mono_method_get_flags(method, &flags);
+						if (another & MONO_METHOD_ATTR_PUBLIC && !(another & MONO_METHOD_ATTR_STATIC))
+						{
+							std::string name = mono_method_get_name(method);
+							if (name != ".ctor")
+							{
+								if (ImGui::MenuItem((name + "()").data()))
+								{
+									//Set this method and instance to be called
+									methodToCall = method;
+									scriptInstance = compInstance;
+									somethingClicked = true;
+									break;
+								}
+							}
+						}
+						method = mono_class_get_methods(compClass, &iterator);
+					}
+
+					ImGui::EndMenu();
+
+					if (somethingClicked)
+						break;
+				}
+			}
+
+			ImGui::EndPopup();
+		}
+
+		if (ImGui::IsItemClicked(0))
+		{
+			ImDrawList* drawList = ImGui::GetWindowDrawList();
+			drawList->AddRectFilled(cursorPos, { cursorPos.x + buttonWidth, cursorPos.y + 20 }, ImGui::GetColorU32(ImGuiCol_::ImGuiCol_ButtonActive));
+		}
+		else if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
+		{
+			ImDrawList* drawList = ImGui::GetWindowDrawList();
+			drawList->AddRectFilled(cursorPos, { cursorPos.x + buttonWidth, cursorPos.y + 20 }, ImGui::GetColorU32(ImGuiCol_::ImGuiCol_ButtonHovered));
+
+			if (App->input->GetKey(SDL_SCANCODE_BACKSPACE) == KEY_DOWN)
+			{
+				methodToCall = nullptr;
+				scriptInstance = nullptr;
+			}
+		}
+
+		//Button text
+
+		std::string text;
+
+		if (methodToCall)
+		{
+			text = mono_method_get_name(methodToCall) + std::string("()");
+
+			ImGui::SetCursorScreenPos({ cursorPos.x + 7, cursorPos.y + 3 });
+
+			ImGui::Text(text.data());
+
+			cursorPos = ImGui::GetCursorScreenPos();
+			ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 4 });
+
+		}
 	}
-
-
 #endif
 }
 

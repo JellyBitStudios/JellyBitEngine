@@ -89,6 +89,7 @@ public:
 	void InitAnimator();
 	bool Update();
 
+	void ClearAnimations();
 	void AddAnimationFromAnimationResource(ResourceAnimation* res);
 
 	float GetCurrentAnimationTime() const;

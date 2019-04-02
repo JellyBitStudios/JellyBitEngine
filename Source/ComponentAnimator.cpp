@@ -160,6 +160,16 @@ bool ComponentAnimator::SetResourceAnimation(uint resource)
 	return true;
 }
 
+bool ComponentAnimator::CleanAnimations() {
+
+	res_animations.clear();
+	ResourceAnimator* animator = (ResourceAnimator*)App->res->GetResource(res);
+
+	animator->ClearAnimations();
+
+	return true;
+}
+
 void ComponentAnimator::Update()
 {
 	if (res != 0) {
@@ -303,7 +313,7 @@ void ComponentAnimator::OnUniqueEditor()
 				resource->StepBackwards();
 
 			if (ImGui::Button("CLEAN ANIMATIONS")) {
-				// TODO!
+				
 			}
 				
 		}
