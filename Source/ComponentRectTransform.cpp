@@ -664,29 +664,29 @@ void ComponentRectTransform::OnUniqueEditor()
 {
 #ifndef GAMEMODE
 
-	ImGui::Text("Rect Transform");
-	ImGui::Spacing();
-
-	uint* rectParent = nullptr;
-	if (parent->cmp_canvas)
-		rectParent = App->ui->GetRectUI();
-	else
-		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
-
-	uint r_height = 0;
-	uint r_width = 0;
-
-	uint max_xpos = 0;
-	uint max_ypos = 0;
-
-	uint max_xdist = 0;
-	uint max_ydist = 0;
-
-	uint x_editor = 0;
-	uint y_editor = 0;
-	int i = 0;
-	switch (rFrom)
+	if (ImGui::CollapsingHeader("Rect Transform", ImGuiTreeNodeFlags_DefaultOpen))
 	{
+
+		uint* rectParent = nullptr;
+		if (parent->cmp_canvas)
+			rectParent = App->ui->GetRectUI();
+		else
+			rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+
+		uint r_height = 0;
+		uint r_width = 0;
+
+		uint max_xpos = 0;
+		uint max_ypos = 0;
+
+		uint max_xdist = 0;
+		uint max_ydist = 0;
+
+		uint x_editor = 0;
+		uint y_editor = 0;
+		int i = 0;
+		switch (rFrom)
+		{
 		case ComponentRectTransform::RECT:
 			r_width = rectParent[Rect::XDIST];
 			r_height = rectParent[Rect::YDIST];
@@ -731,81 +731,81 @@ void ComponentRectTransform::OnUniqueEditor()
 			max_xdist = r_width - x_editor;
 			max_ydist = r_height - y_editor;
 			break;
-	}
-
-
-	ImGui::PushItemWidth(50.0f);
-
-	ImGui::Text("Positions X & Y");
-	if (ImGui::DragScalar("##PosX", ImGuiDataType_U32, &x_editor, 1, 0, &max_xpos, "%u", 1.0f))
-	{
-		if (x_editor > max_xpos)
-			x_editor = max_xpos;
-
-		if (rectParent != nullptr)
-			rectTransform[Rect::X] = x_editor + rectParent[Rect::X];
-		else
-			rectTransform[Rect::X] = x_editor;
-
-		needed_recalculate = true;
-	}
-	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-	if (ImGui::DragScalar("##PosY", ImGuiDataType_U32, &y_editor, 1, 0, &max_ypos, "%u", 1.0f))
-	{
-		if (y_editor > max_ypos)
-			y_editor = max_ypos;
-
-		if (rectParent != nullptr)
-			rectTransform[Rect::Y] = y_editor + rectParent[Rect::Y];
-		else
-			rectTransform[Rect::Y] = y_editor;
-
-		needed_recalculate = true;
-	}
-	ImGui::Text("Size X & Y");
-	if (ImGui::DragScalar("##SizeX", ImGuiDataType_U32, (void*)&rectTransform[Rect::XDIST], 1, 0, &max_xdist, "%u", 1.0f))
-	{
-		if (rectTransform[Rect::XDIST] > max_xdist)
-			rectTransform[Rect::XDIST] = max_xdist;
-
-		needed_recalculate = true;
-	}
-	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-	if (ImGui::DragScalar("##SizeY", ImGuiDataType_U32, (void*)&rectTransform[Rect::YDIST], 1, 0, &max_ydist, "%u", 1.0f))
-	{
-		if (rectTransform[Rect::YDIST] > max_ydist)
-			rectTransform[Rect::YDIST] = max_ydist;
-
-		needed_recalculate = true;
-	}
-
-	if (needed_recalculate)
-		rectTransform_modified = true;
-
-	ImGui::Checkbox("Use Pivot", &usePivot);
-	if (usePivot)
-	{
-		ImGui::PushItemWidth(150.0f);
-		ImGui::Text("Pivot");
-		ImGui::PushItemWidth(100.0f);
-
-		int current_anchor_flag = (int)pivot;
-		if (ImGui::Combo("Using  ", &current_anchor_flag, PIVOT_POINTS_STR))
-		{
-			pivot = (RectPrivot)current_anchor_flag;
-
-			CalculateAnchors();
 		}
+
 
 		ImGui::PushItemWidth(50.0f);
 
-		ImGui::Text("Margin");
-
-		uint max_yAnchor = rectParent[Rect::YDIST] - rectTransform[Rect::YDIST];
-		uint max_xAnchor = rectParent[Rect::XDIST] - rectTransform[Rect::XDIST];
-
-		switch (pivot)
+		ImGui::Text("Positions X & Y");
+		if (ImGui::DragScalar("##PosX", ImGuiDataType_U32, &x_editor, 1, 0, &max_xpos, "%u", 1.0f))
 		{
+			if (x_editor > max_xpos)
+				x_editor = max_xpos;
+
+			if (rectParent != nullptr)
+				rectTransform[Rect::X] = x_editor + rectParent[Rect::X];
+			else
+				rectTransform[Rect::X] = x_editor;
+
+			needed_recalculate = true;
+		}
+		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+		if (ImGui::DragScalar("##PosY", ImGuiDataType_U32, &y_editor, 1, 0, &max_ypos, "%u", 1.0f))
+		{
+			if (y_editor > max_ypos)
+				y_editor = max_ypos;
+
+			if (rectParent != nullptr)
+				rectTransform[Rect::Y] = y_editor + rectParent[Rect::Y];
+			else
+				rectTransform[Rect::Y] = y_editor;
+
+			needed_recalculate = true;
+		}
+		ImGui::Text("Size X & Y");
+		if (ImGui::DragScalar("##SizeX", ImGuiDataType_U32, (void*)&rectTransform[Rect::XDIST], 1, 0, &max_xdist, "%u", 1.0f))
+		{
+			if (rectTransform[Rect::XDIST] > max_xdist)
+				rectTransform[Rect::XDIST] = max_xdist;
+
+			needed_recalculate = true;
+		}
+		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+		if (ImGui::DragScalar("##SizeY", ImGuiDataType_U32, (void*)&rectTransform[Rect::YDIST], 1, 0, &max_ydist, "%u", 1.0f))
+		{
+			if (rectTransform[Rect::YDIST] > max_ydist)
+				rectTransform[Rect::YDIST] = max_ydist;
+
+			needed_recalculate = true;
+		}
+
+		if (needed_recalculate)
+			rectTransform_modified = true;
+
+		ImGui::Checkbox("Use Pivot", &usePivot);
+		if (usePivot)
+		{
+			ImGui::PushItemWidth(150.0f);
+			ImGui::Text("Pivot");
+			ImGui::PushItemWidth(100.0f);
+
+			int current_anchor_flag = (int)pivot;
+			if (ImGui::Combo("Using  ", &current_anchor_flag, PIVOT_POINTS_STR))
+			{
+				pivot = (RectPrivot)current_anchor_flag;
+
+				CalculateAnchors();
+			}
+
+			ImGui::PushItemWidth(50.0f);
+
+			ImGui::Text("Margin");
+
+			uint max_yAnchor = rectParent[Rect::YDIST] - rectTransform[Rect::YDIST];
+			uint max_xAnchor = rectParent[Rect::XDIST] - rectTransform[Rect::XDIST];
+
+			switch (pivot)
+			{
 			case ComponentRectTransform::P_TOPLEFT:
 			{
 				ImGui::Text("Top Left");
@@ -998,11 +998,12 @@ void ComponentRectTransform::OnUniqueEditor()
 				}
 				break;
 			}
+			}
 		}
-	}
 
-	if (needed_recalculate)
-		RecalculateAndChilds();
+		if (needed_recalculate)
+			RecalculateAndChilds();
+	}
 #endif
 }
 

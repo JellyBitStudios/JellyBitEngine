@@ -52,8 +52,7 @@ void ComponentCanvasRenderer::Update()
 		}
 	ComponentLabel* cmp_label = (ComponentLabel*)parent->GetComponent(ComponentTypes::LabelComponent);
 	if (cmp_label)
-	{
-		if (cmp_label->IsActive() && parent->IsActive())
+		if (cmp_label->IsTreeActive())
 		{
 			for (ToUIRend* rend : rend_queue)
 			{
@@ -61,7 +60,6 @@ void ComponentCanvasRenderer::Update()
 					rend->Set(RenderTypes::LABEL, cmp_label);
 			}
 		}
-	}
 }
 
 void ComponentCanvasRenderer::OnEditor()

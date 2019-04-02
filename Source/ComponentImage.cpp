@@ -209,64 +209,64 @@ void ComponentImage::OnInternalLoad(char *& cursor)
 void ComponentImage::OnUniqueEditor()
 {
 #ifndef GAMEMODE
-	ImGui::Text("Image Component");
-	ImGui::Spacing();
-
-	ImGui::Text("Color RGB with alpha");
-	ImGui::PushItemWidth(200.0f);
-	ImGui::ColorEdit4("##Color_RGBA", color, ImGuiColorEditFlags_::ImGuiColorEditFlags_AlphaBar);
-
-	ResourceTexture* texture = nullptr;
-	if (res_image != 0)
-		texture = (ResourceTexture*)App->res->GetResource(res_image);
-	ImGui::Button(texture == nullptr ? "Empty texture" : texture->GetName(), ImVec2(100.0f, 0.0f));
-
-	if (ImGui::IsItemHovered())
+	if (ImGui::CollapsingHeader("Image", ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		ImGui::BeginTooltip();
-		ImGui::Text("%u", res_image);
-		ImGui::EndTooltip();
-	}
-	if (ImGui::BeginDragDropTarget())
-	{
-		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE_INSPECTOR_SELECTOR"))
+		ImGui::Text("Color RGB with alpha");
+		ImGui::PushItemWidth(200.0f);
+		ImGui::ColorEdit4("##Color_RGBA", color, ImGuiColorEditFlags_::ImGuiColorEditFlags_AlphaBar);
+
+		ResourceTexture* texture = nullptr;
+		if (res_image != 0)
+			texture = (ResourceTexture*)App->res->GetResource(res_image);
+		ImGui::Button(texture == nullptr ? "Empty texture" : texture->GetName(), ImVec2(100.0f, 0.0f));
+
+		if (ImGui::IsItemHovered())
 		{
-			App->res->SetAsUnused(res_image);
-			res_image = *(uint*)payload->Data;
-			App->res->SetAsUsed(res_image);
+			ImGui::BeginTooltip();
+			ImGui::Text("%u", res_image);
+			ImGui::EndTooltip();
 		}
-		ImGui::EndDragDropTarget();
-	}
-	ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-	if (ImGui::Checkbox("M", &mask))
-		SetMask();
-	if (ImGui::IsItemHovered())
-	{
-		ImGui::BeginTooltip();
-		ImGui::Text("Mask\nActivate if the size is final.");
-		ImGui::EndTooltip();
-	}
-	ImGui::SameLine(); ImGui::PushItemWidth(10.0f);
-	if (ImGui::Button("RC"))
-		ResetColor();
-	if (ImGui::IsItemHovered())
-	{
-		ImGui::BeginTooltip();
-		ImGui::Text("Reset color");
-		ImGui::EndTooltip();
-	}
-	ImGui::SameLine(); ImGui::PushItemWidth(10.0f);
-	if (ImGui::Button("CT"))
-	{
-		if(res_image > 0)
-			App->res->SetAsUnused(res_image);
-		res_image = 0;
-	}
-	if (ImGui::IsItemHovered())
-	{
-		ImGui::BeginTooltip();
-		ImGui::Text("Clear Texture");
-		ImGui::EndTooltip();
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE_INSPECTOR_SELECTOR"))
+			{
+				App->res->SetAsUnused(res_image);
+				res_image = *(uint*)payload->Data;
+				App->res->SetAsUsed(res_image);
+			}
+			ImGui::EndDragDropTarget();
+		}
+		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+		if (ImGui::Checkbox("M", &mask))
+			SetMask();
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Mask\nActivate if the size is final.");
+			ImGui::EndTooltip();
+		}
+		ImGui::SameLine(); ImGui::PushItemWidth(10.0f);
+		if (ImGui::Button("RC"))
+			ResetColor();
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Reset color");
+			ImGui::EndTooltip();
+		}
+		ImGui::SameLine(); ImGui::PushItemWidth(10.0f);
+		if (ImGui::Button("CT"))
+		{
+			if (res_image > 0)
+				App->res->SetAsUnused(res_image);
+			res_image = 0;
+		}
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Clear Texture");
+			ImGui::EndTooltip();
+		}
 	}
 #endif
 }
