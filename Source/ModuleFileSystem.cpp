@@ -91,6 +91,7 @@ update_status ModuleFileSystem::PreUpdate()
 {
 #ifndef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	/*
 	static float updateAssetsCounter = 0.0f;
 	updateAssetsCounter += App->timeManager->GetRealDt();
 	if (updateAssetsCounter >= 1.0f / updateAssetsRate)
@@ -99,6 +100,7 @@ update_status ModuleFileSystem::PreUpdate()
 
 		UpdateAssetsDir();
 	}
+	*/
 #endif
 	return update_status::UPDATE_CONTINUE;
 }
