@@ -87,7 +87,7 @@ void ComponentRigidActor::OnInternalLoad(char*& cursor)
 	math::float4x4 globalMatrix;
 	bytes = sizeof(math::float4x4);
 	memcpy(&globalMatrix, cursor, bytes);
-	UpdateTransform(globalMatrix);
+	//UpdateTransform(globalMatrix);
 	cursor += bytes;
 }
 
@@ -95,36 +95,31 @@ void ComponentRigidActor::OnInternalLoad(char*& cursor)
 
 void ComponentRigidActor::UpdateShape(physx::PxShape* shape) const
 {
-	bool attach = true;
-
 	// Detach current shape
-	if (gActor)
+	if (gActor != nullptr)
 	{
+		bool attach = true;
+
 		uint nbShapes = gActor->getNbShapes();
 		if (nbShapes > 0)
 		{
 			physx::PxShape* gShape = nullptr;
 			gActor->getShapes(&gShape, 1);
 
-			if (gShape == shape && shape != nullptr)
-				attach = false;
+			if (gShape != nullptr)
+			{
+				if (gShape == shape)
+					attach = false;
+				else
+					gActor->detachShape(*gShape);
+			}
 			else
-				gActor->detachShape(*gShape);
+				attach = false;
 		}
-	}
 
-	// Attach current shape
-	if (shape == nullptr)
-	{
-		if (parent->boundingBox.IsFinite())
-			shape = App->physics->CreateShape(physx::PxBoxGeometry(parent->boundingBox.HalfSize().x, parent->boundingBox.HalfSize().y, parent->boundingBox.HalfSize().z), *App->physics->GetDefaultMaterial());
-		else
-			shape = App->physics->CreateShape(physx::PxBoxGeometry(PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE), *App->physics->GetDefaultMaterial());
-		//assert(shape != nullptr);
+		if (attach && shape != nullptr)
+			gActor->attachShape(*shape);
 	}
-
-	if (attach && gActor)
-		gActor->attachShape(*shape);
 }
 
 void ComponentRigidActor::ClearActor()

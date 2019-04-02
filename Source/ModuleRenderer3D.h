@@ -72,7 +72,6 @@ public:
 	void FrustumCulling() const;
 
 	void DrawMesh(ComponentMesh* toDraw) const;
-	void DrawProjectors(ComponentProjector* toDraw) const;
 
 	void RecursiveDrawQuadtree(QuadtreeNode* node) const;
 

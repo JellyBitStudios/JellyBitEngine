@@ -132,7 +132,6 @@ private:
 
 	// Physics
 	uint layer = 0; // in the range [0...31]
-
 };
 
 #endif

@@ -132,10 +132,6 @@ void ComponentCapsuleCollider::OnInternalLoad(char*& cursor)
 	bytes = sizeof(CapsuleDirection);
 	memcpy(&direction, cursor, bytes);
 	cursor += bytes;
-
-	// -----
-
-	EncloseGeometry();
 }
 
 // ----------------------------------------------------------------------------------------------------
