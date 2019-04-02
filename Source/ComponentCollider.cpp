@@ -15,9 +15,6 @@ ComponentCollider::ComponentCollider(GameObject* parent, ComponentTypes componen
 	gMaterial = App->physics->GetDefaultMaterial();
 	assert(gMaterial != nullptr);
 
-	if (parent->cmp_rigidActor == nullptr)
-		CONSOLE_LOG(LogTypes::Warning, "Component Collider: You need to create a Component Rigid Actor in order to use the collider");
-
 	if (include)
 		App->physics->AddColliderComponent(this);
 }
@@ -162,8 +159,6 @@ void ComponentCollider::OnInternalLoad(char*& cursor)
 	uint mask = 0;
 	memcpy(&mask, cursor, bytes);
 	cursor += bytes;
-
-	SetFiltering(group, mask);
 }
 
 // ----------------------------------------------------------------------------------------------------

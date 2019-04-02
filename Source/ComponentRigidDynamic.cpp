@@ -79,7 +79,6 @@ ComponentRigidDynamic::ComponentRigidDynamic(const ComponentRigidDynamic& compon
 
 		gActor = App->physics->CreateRigidDynamic(physx::PxTransform(physx::PxIDENTITY()), *gShape, density, isKinematic);
 		assert(gActor != nullptr);
-
 		App->physics->AddActor(*gActor);
 
 		gActor->setActorFlag(physx::PxActorFlag::eSEND_SLEEP_NOTIFIES, true);

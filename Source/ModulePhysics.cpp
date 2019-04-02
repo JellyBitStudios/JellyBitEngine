@@ -252,7 +252,7 @@ update_status ModulePhysics::FixedUpdate()
 	App->scripting->FixedUpdate();
 
 	//Debug();
-	DestroyChest();
+	//DestroyChest();
 
 	return UPDATE_CONTINUE;
 }
@@ -469,7 +469,11 @@ void ModulePhysics::DrawColliders() const
 		if (gShape == nullptr)
 			continue;
 
-		physx::PxTransform actorGlobalPose = gShape->getActor()->getGlobalPose();
+		physx::PxRigidActor* gActor = gShape->getActor();
+		if (gActor == nullptr)
+			continue;
+
+		physx::PxTransform actorGlobalPose = gActor->getGlobalPose();
 		physx::PxTransform shapeLocalPose = gShape->getLocalPose();
 		physx::PxTransform globalPose = actorGlobalPose * shapeLocalPose;
 
@@ -517,6 +521,8 @@ void ModulePhysics::DrawRigidActors() const
 	for (uint i = 0; i < rigidActorComponents.size(); ++i)
 	{
 		physx::PxRigidActor* gActor = rigidActorComponents[i]->GetActor();
+		if (gActor == nullptr)
+			continue;
 
 		physx::PxShape* gShape = nullptr;
 		gActor->getShapes(&gShape, 1);
