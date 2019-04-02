@@ -339,6 +339,14 @@ void ModuleUI::DrawUILabel(std::vector<ComponentLabel::LabelLetter>* word_toDraw
 	setUnsignedInt(ui_shader, "image", 0);
 	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
 
+	//-------- Uniform Buffer Object -------------
+// Update buffer
+	glBindBuffer(GL_UNIFORM_BUFFER, uboTestUI);
+	void* buff_ptr = glMapBufferRange(GL_UNIFORM_BUFFER, 0, sizeof(float) * 4, GL_MAP_WRITE_BIT);
+	std::memcpy(buff_ptr, &uiShader_data, sizeof(float) * 4);
+	glUnmapBuffer(GL_UNIFORM_BUFFER);
+	// -------------
+
 	for (std::vector<ComponentLabel::LabelLetter>::const_iterator l_iter = word_toDraw->begin(); l_iter != word_toDraw->end(); ++l_iter)
 	{
 		ComponentLabel::LabelLetter *letter = l_iter._Ptr;
@@ -351,8 +359,8 @@ void ModuleUI::DrawUILabel(std::vector<ComponentLabel::LabelLetter>* word_toDraw
 		//-------- Uniform Buffer Object -------------
 		// Update buffer
 		glBindBuffer(GL_UNIFORM_BUFFER, uboTestUI);
-		void* buff_ptr = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
-		std::memcpy(buff_ptr, &uiShader_data, sizeof(uiShader_data));
+		void* lbuff_ptr = glMapBufferRange(GL_UNIFORM_BUFFER, sizeof(float) * 4, sizeof(float) * 16, GL_MAP_WRITE_BIT);
+		std::memcpy(lbuff_ptr, &uiShader_data.topLeft, sizeof(float) * 16);
 		glUnmapBuffer(GL_UNIFORM_BUFFER);
 		// -------------
 
