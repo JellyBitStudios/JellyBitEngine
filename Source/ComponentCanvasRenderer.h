@@ -58,6 +58,10 @@ public:
 	ComponentCanvasRenderer(const ComponentCanvasRenderer& componentRectTransform, GameObject* parent, bool includeComponents = true);
 	~ComponentCanvasRenderer();
 
+	//NOTE: If you override this method, make sure to call the base class method. 
+	//(Component::OnSystemEvent(event); at start)
+	void OnSystemEvent(System_Event event);
+
 	void Update();
 	void OnEditor();
 

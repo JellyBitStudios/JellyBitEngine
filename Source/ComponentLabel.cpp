@@ -30,7 +30,7 @@ ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType
 		if (fontUuid)
 			size = ((ResourceFont*)fonts[0])->fontData.fontSize;
 
-		needed_recaclculate = true;
+		needed_recalculate = true;
 	}
 }
 
@@ -51,9 +51,27 @@ ComponentLabel::~ComponentLabel()
 	parent->cmp_label = nullptr;
 }
 
+void ComponentLabel::OnSystemEvent(System_Event event)
+{
+	switch (event.type)
+	{
+	case System_Event_Type::CanvasChanged:
+	case System_Event_Type::RectTransformUpdated:
+	{
+		needed_recalculate = true;
+		break;
+	}
+	case System_Event_Type::ScreenChanged:
+	{
+		//change size by z & y
+		break;
+	}
+	}
+}
+
 void ComponentLabel::Update()
 {
-	if (needed_recaclculate)
+	if (needed_recalculate)
 	{
 		labelWord.clear();
 
@@ -111,7 +129,7 @@ void ComponentLabel::Update()
 				}
 			}
 		}
-		needed_recaclculate = false;
+		needed_recalculate = false;
 	}
 	/*else if(!labelWord.empty() && !App->res->GetResource(fontUuid))
 	{
@@ -212,14 +230,14 @@ void ComponentLabel::OnUniqueEditor()
 		float sizeX = ImGui::GetWindowWidth();
 		if (ImGui::InputTextMultiline("##source", &finalText, ImVec2(sizeX, ImGui::GetTextLineHeight() * 7), ImGuiInputTextFlags_AllowTabInput))
 		{
-			needed_recaclculate = true;
+			needed_recalculate = true;
 		}
 
 		ImGui::PushItemWidth(200.0f);
 		ImGui::ColorEdit4("Color", &color.x, ImGuiColorEditFlags_AlphaBar);
 
 		if (ImGui::DragInt("Load new size", &size, 1.0f, 0, 72))
-			needed_recaclculate = true;
+			needed_recalculate = true;
 
 		//-----------------------------------------
 
@@ -256,7 +274,7 @@ void ComponentLabel::DragDropFont()
 				if (ImGui::IsMouseReleased(0))
 				{
 					fontUuid = uuid;
-					needed_recaclculate = true;
+					needed_recalculate = true;
 					size = ((ResourceFont*)App->res->GetResource(uuid))->fontData.fontSize;
 				}
 			}
@@ -296,7 +314,7 @@ void ComponentLabel::DragDropFont()
 void ComponentLabel::SetFinalText(const char * newText)
 {
 	finalText = newText;
-	needed_recaclculate = true;
+	needed_recalculate = true;
 }
 
 const char * ComponentLabel::GetFinalText() const
@@ -317,9 +335,4 @@ void ComponentLabel::SetColor(math::float4 newColor)
 math::float4 ComponentLabel::GetColor() const
 {
 	return color;
-}
-
-void ComponentLabel::RectChanged()
-{
-	needed_recaclculate = true;
 }

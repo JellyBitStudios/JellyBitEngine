@@ -19,9 +19,11 @@ public:
 	ComponentImage(const ComponentImage& componentImage, GameObject* parent, bool includeComponents = true);
 	~ComponentImage();
 
-	uint GetResImage()const;
+	//NOTE: If you override this method, make sure to call the base class method. 
+	//(Component::OnSystemEvent(event); at start)
+	void OnSystemEvent(System_Event event);
 
-	void RectChanged();
+	uint GetResImage()const;
 
 	bool useMask() const;
 	float* GetMask();

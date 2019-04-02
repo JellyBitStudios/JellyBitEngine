@@ -36,6 +36,10 @@ public:
 	ComponentLabel(const ComponentLabel& componentLabel, GameObject* parent, bool includeComponents = true);
 	~ComponentLabel();
 
+	//NOTE: If you override this method, make sure to call the base class method. 
+	//(Component::OnSystemEvent(event); at start)
+	void OnSystemEvent(System_Event event);
+
 	void Update();
 
 	void WorldDraw(math::float3 * parentCorners, math::float3 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm);
@@ -49,8 +53,6 @@ public:
 
 	void SetColor(math::float4 newColor);
 	math::float4 GetColor() const;
-
-	void RectChanged();
 
 private:
 	uint GetInternalSerializationBytes();
@@ -70,7 +72,7 @@ private:
 
 	std::vector<LabelLetter> labelWord;
 
-	bool needed_recaclculate = false;
+	bool needed_recalculate = false;
 };
 
 #endif

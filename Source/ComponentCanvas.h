@@ -20,6 +20,10 @@ public:
 	ComponentCanvas(const ComponentCanvas& componentCanvas, GameObject* parent, bool includeComponents = true);
 	~ComponentCanvas();
 
+	//NOTE: If you override this method, make sure to call the base class method. 
+	//(Component::OnSystemEvent(event); at start)
+	void OnSystemEvent(System_Event event);
+
 	void Update();
 
 private:
@@ -32,9 +36,6 @@ private:
 public: //Custom
 	CanvasType GetType()const;
 	math::float4x4 GetGlobal() const;
-
-	void ScreenChanged();
-	void TransformUpdated();
 
 private:
 	CanvasType type = CanvasType::SCREEN;

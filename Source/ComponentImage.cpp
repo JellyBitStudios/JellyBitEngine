@@ -113,6 +113,23 @@ void ComponentImage::SetResImageName(const std::string& name)
 	}
 }
 
+void ComponentImage::OnSystemEvent(System_Event event)
+{
+	switch (event.type)
+	{
+	case System_Event_Type::RectTransformUpdated:
+	{
+		if (mask)
+		{
+			uint* rect = parent->cmp_rectTransform->GetRect();
+			mask_values[1] = ((rect_initValues[1] - (float)rect[ComponentRectTransform::Rect::YDIST]) / rect_initValues[1]);
+			mask_values[0] = 1.0f - ((rect_initValues[0] - (float)rect[ComponentRectTransform::Rect::XDIST]) / rect_initValues[0]);
+		}
+		break;
+	}
+	}
+}
+
 uint ComponentImage::GetResImage()const
 {
 	ResourceTexture* texture = (ResourceTexture*)App->res->GetResource(res_image);
@@ -131,16 +148,6 @@ void ComponentImage::SetMask()
 		uint* rect = parent->cmp_rectTransform->GetRect();
 		rect_initValues[0] = rect[ComponentRectTransform::Rect::XDIST];
 		rect_initValues[1] = rect[ComponentRectTransform::Rect::YDIST];
-	}
-}
-
-void ComponentImage::RectChanged()
-{
-	if (mask)
-	{
-		uint* rect = parent->cmp_rectTransform->GetRect();
-		mask_values[1] = ((rect_initValues[1] - (float)rect[ComponentRectTransform::Rect::YDIST]) / rect_initValues[1]);
-		mask_values[0] = 1.0f - ((rect_initValues[0] - (float)rect[ComponentRectTransform::Rect::XDIST]) / rect_initValues[0]);
 	}
 }
 

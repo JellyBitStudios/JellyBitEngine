@@ -38,6 +38,10 @@ ComponentCanvasRenderer::~ComponentCanvasRenderer()
 	parent->cmp_canvasRenderer = nullptr;
 }
 
+void ComponentCanvasRenderer::OnSystemEvent(System_Event event)
+{
+}
+
 void ComponentCanvasRenderer::Update()
 {
 	ComponentImage* cmp_image = (ComponentImage*)parent->GetComponent(ComponentTypes::ImageComponent);

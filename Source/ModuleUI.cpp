@@ -103,21 +103,6 @@ void ModuleUI::OnSystemEvent(System_Event event)
 {
 	switch (event.type)
 	{
-	case System_Event_Type::Play:
-	{
-		/* Set mask on play, but now is on inspector.
-		for (GameObject* go_canvas : canvas)
-		{
-			std::vector<GameObject*> go_images;
-			go_canvas->GetChildrenAndThisVectorFromLeaf(go_images);
-
-			for (GameObject* cImage : go_images)
-				if (cImage->cmp_image)
-					cImage->cmp_image->SetMask();
-		}
-		*/
-		break;
-	}
 	case System_Event_Type::LoadScene:
 	case System_Event_Type::Stop:
 	{
@@ -465,8 +450,10 @@ void ModuleUI::OnWindowResize(uint width, uint height)
 
 
 #ifdef GAMEMODE
+	System_Event windowChanged;
+	windowChanged.type = System_Event_Type::ScreenChanged;
 	for (GameObject* goScreenCanvas : canvas_screen)
-		goScreenCanvas->cmp_canvas->ScreenChanged();
+		goScreenCanvas->OnSystemEvent(windowChanged);
 
 #else
 	int diff_x = uiWorkSpace[Screen::X];
@@ -478,7 +465,7 @@ void ModuleUI::OnWindowResize(uint width, uint height)
 	if (diff_x != 0)
 		for (GameObject* goScreenCanvas : canvas_screen)
 			if (goScreenCanvas->cmp_rectTransform)
-				goScreenCanvas->cmp_rectTransform->WorkSpaceChanged(abs(diff_x), (diff_x > 0) ? true : false);
+				goScreenCanvas->cmp_rectTransform->WorkSpaceChanged(diff_x);
 #endif // GAMEMODE
 }
 

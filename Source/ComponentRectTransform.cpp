@@ -70,12 +70,35 @@ ComponentRectTransform::~ComponentRectTransform()
 	parent->cmp_rectTransform = nullptr;
 }
 
+void ComponentRectTransform::OnSystemEvent(System_Event event)
+{
+	switch (event.type)
+	{
+	case System_Event_Type::ScreenChanged:
+	{
+		RecalculateRectByPercentage();
+		CalculateScreenCorners();
+		break;
+	}
+	case System_Event_Type::RectTransformUpdated:
+	{
+		needed_recalculate = true;
+		break;
+	}
+	case System_Event_Type::CanvasChanged:
+	{
+		(parent->cmp_canvas) ? CanvasChanged() : ParentChanged();
+		needed_recalculate = true;
+		break;
+	}
+	}
+}
+
 void ComponentRectTransform::Update()
 {
 	if (rFrom == RectFrom::WORLD)
 	{
 		CalculateRectFromWorld();
-		if (parent->cmp_label) parent->cmp_label->RectChanged();
 		needed_recalculate = false;
 	}
 
@@ -94,8 +117,6 @@ void ComponentRectTransform::Update()
 				CalculateCornersFromRect();
 				break;
 		}
-
-		if (parent->cmp_label) parent->cmp_label->RectChanged();
 
 		needed_recalculate = false;
 		rectTransform_modified = false;
@@ -116,7 +137,14 @@ void ComponentRectTransform::SetRect(uint x, uint y, uint x_dist, uint y_dist)
 		rectTransform[Rect::XDIST] = x_dist;
 		rectTransform[Rect::YDIST] = y_dist;
 
-		RecalculateAndChilds();
+		System_Event rectChanged;
+		rectChanged.type = System_Event_Type::RectTransformUpdated;
+
+		std::vector<GameObject*> rectChilds;
+		parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
+
+		for (std::vector<GameObject*>::const_reverse_iterator go = rectChilds.crbegin(); go != rectChilds.crend(); go++)
+			(*go)->OnSystemEvent(rectChanged);
 	}
 }
 
@@ -151,6 +179,7 @@ void ComponentRectTransform::InitRect()
 				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
 
 			CalculateAnchors(true);
+			CalculateScreenCorners();
 			break;
 		}
 		case ComponentRectTransform::WORLD:
@@ -176,15 +205,6 @@ void ComponentRectTransform::InitRect()
 	}
 }
 
-void ComponentRectTransform::RecalculateAndChilds()
-{
-	needed_recalculate = true;
-	std::vector<GameObject*> childs;
-	parent->GetChildrenVector(childs, false);
-	for (GameObject* c_go : childs)
-		c_go->cmp_rectTransform->RecalculateAndChilds();
-}
-
 ComponentRectTransform::RectFrom ComponentRectTransform::GetFrom() const
 {
 	return rFrom;
@@ -198,29 +218,13 @@ bool ComponentRectTransform::IsInRect(uint* rect)
 			rectTransform[1] + rectTransform[3] <= rect[1] + rect[3];
 }
 
-void ComponentRectTransform::ScreenChanged()
+void ComponentRectTransform::ParentChanged()
 {
-	RecalculateRectByPercentage();
-}
-
-void ComponentRectTransform::TransformUpdated()
-{
-	needed_recalculate = true;
-}
-
-void ComponentRectTransform::ParentChanged(bool canvas_changed)
-{
-	if (!parent->cmp_canvas)
-	{
-		GameObject* gCanvas = ModuleUI::FindCanvas(parent);
-		if (gCanvas->cmp_canvas->GetType() == ComponentCanvas::CanvasType::SCREEN && rFrom == RectFrom::RECT_WORLD)
-			rFrom = RectFrom::RECT;
-		else if (gCanvas->cmp_canvas->GetType() != ComponentCanvas::CanvasType::SCREEN && rFrom == RectFrom::RECT)
-			rFrom = RectFrom::RECT_WORLD;
-
-		if (!canvas_changed)
-			RecalculateAndChilds();
-	}
+	GameObject* gCanvas = ModuleUI::FindCanvas(parent);
+	if (gCanvas->cmp_canvas->GetType() == ComponentCanvas::CanvasType::SCREEN && rFrom == RectFrom::RECT_WORLD)
+		rFrom = RectFrom::RECT;
+	else if (gCanvas->cmp_canvas->GetType() != ComponentCanvas::CanvasType::SCREEN && rFrom == RectFrom::RECT)
+		rFrom = RectFrom::RECT_WORLD;
 }
 
 void ComponentRectTransform::CanvasChanged()
@@ -258,25 +262,26 @@ void ComponentRectTransform::CanvasChanged()
 					break;
 				}
 			}
-
-			std::vector<GameObject*> childs;
-			parent->GetChildrenAndThisVectorFromLeaf(childs);
-			for (GameObject* rectGo : childs) if (rectGo->cmp_rectTransform) rectGo->cmp_rectTransform->ParentChanged(true);
-
-			RecalculateAndChilds();
 		}
 
 		noUpdatefromCanvas = false;
 	}
 }
 
-void ComponentRectTransform::WorkSpaceChanged(uint diff, bool to)
+void ComponentRectTransform::WorkSpaceChanged(int diff)
 {
 	if (rFrom == RectFrom::RECT)
 	{
 		if (parent->cmp_canvas)
-			(to) ? (rectTransform[Rect::X] += diff) : (rectTransform[Rect::X] -= diff);
-		RecalculateAndChilds();
+			rectTransform[Rect::X] += diff;
+		System_Event workSpace;
+		workSpace.type = System_Event_Type::RectTransformUpdated;
+
+		std::vector<GameObject*> rectChilds;
+		parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
+
+		for (std::vector<GameObject*>::const_reverse_iterator go = rectChilds.crbegin(); go != rectChilds.crend(); go++)
+			(*go)->OnSystemEvent(workSpace);
 	}
 }
 
@@ -340,12 +345,6 @@ void ComponentRectTransform::CalculateRectFromWorld()
 	rectTransform[Rect::Y] = 0;
 	rectTransform[Rect::XDIST] = abs(math::Distance(corners[Rect::RTOPRIGHT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
 	rectTransform[Rect::YDIST] = abs(math::Distance(corners[Rect::RBOTTOMLEFT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
-
-	//Mask calcs
-	if (parent->cmp_image)
-		parent->cmp_image->RectChanged();
-
-	RecalculateAndChilds();
 }
 
 void ComponentRectTransform::CalculateCornersFromRect()
@@ -376,10 +375,6 @@ void ComponentRectTransform::CalculateAnchors(bool needed_newPercentages)
 		rectParent = App->ui->GetRectUI();
 	else
 		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
-
-	//Mask calcs
-	if (parent->cmp_image)
-		parent->cmp_image->RectChanged();
 
 	switch (pivot)
 	{
@@ -804,6 +799,7 @@ void ComponentRectTransform::OnUniqueEditor()
 				pivot = (RectPrivot)current_anchor_flag;
 
 				CalculateAnchors();
+				needed_recalculate = true;
 			}
 
 			ImGui::PushItemWidth(50.0f);
@@ -1011,7 +1007,16 @@ void ComponentRectTransform::OnUniqueEditor()
 		}
 
 		if (needed_recalculate)
-			RecalculateAndChilds();
+		{
+			System_Event rectChanged;
+			rectChanged.type = System_Event_Type::RectTransformUpdated;
+
+			std::vector<GameObject*> rectChilds;
+			parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
+
+			for (std::vector<GameObject*>::const_reverse_iterator go = rectChilds.crbegin(); go != rectChilds.crend(); go++)
+				(*go)->OnSystemEvent(rectChanged);
+		}
 	}
 #endif
 }
