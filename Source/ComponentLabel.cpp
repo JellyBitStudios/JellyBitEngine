@@ -224,7 +224,7 @@ void ComponentLabel::OnUniqueEditor()
 void ComponentLabel::DragDropFont() 
 {
 	ImGui::Separator();
-	uint buttonWidth = 0.65 * ImGui::GetWindowWidth();
+	uint buttonWidth = 0.60 * ImGui::GetWindowWidth();
 	ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 	ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
 
@@ -257,25 +257,29 @@ void ComponentLabel::DragDropFont()
 
 	//Text in quat
 	std::string name;
+	ResourceFont* font = nullptr;
 	if (fontUuid > 0)
 	{
-		ResourceFont* font = (ResourceFont*)App->res->GetResource(fontUuid);
-		name = font->GetName();
+		font = (ResourceFont*)App->res->GetResource(fontUuid);
+		if(font)
+			name = font->GetName();
 	}
-	std::string originalText = fontUuid > 0 ? name : "Waiting font";
+	std::string originalText = (fontUuid > 0 && font) ? name : "Waiting font...";
 	std::string clampedText;
 
 	ImVec2 textSize = ImGui::CalcTextSize(originalText.data());
 
-	if (textSize.x > buttonWidth - 5)
+	if (textSize.x > buttonWidth - 7)
 	{
-		uint maxTextLenght = originalText.length() * (buttonWidth - 5) / textSize.x;
-		clampedText = originalText.substr(0, maxTextLenght - 5);
+		uint maxTextLenght = originalText.length() * (buttonWidth - 7) / textSize.x;
+		clampedText = originalText.substr(0, maxTextLenght - 7);
 		clampedText.append("(...)");
 	}
 	else
 		clampedText = originalText;
 
+	cursorPos = { cursorPos.x + 12, cursorPos.y + 3 };
+	ImGui::SetCursorScreenPos(cursorPos);
 	ImGui::Text(clampedText.data());
 }
 
