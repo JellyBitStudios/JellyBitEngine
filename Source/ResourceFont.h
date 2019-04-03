@@ -28,6 +28,7 @@ struct ResourceFontData
 	uint fontSize;
 	uint maxCharHeight;
 	std::map<char, Character> charactersMap;
+	std::vector<uint8_t*> fontBuffer;
 };
 class ResourceFont : public Resource
 {
@@ -48,6 +49,8 @@ public:
 	static bool ReadMetaFromBuffer(char *& cursor, int64_t & lastModTime, std::vector<uint>& fontUuids, FontImportSettings & importSettings);
 	static void UpdateImportSettings(FontImportSettings importSettings);
 	static ResourceFont * ImportFontBySize(const char * file, uint size, uint uuid = 0);
+
+	static uint LoadTextureCharacter(uint width, uint height, uchar * buffer);
 
 	void OnPanelAssets();
 

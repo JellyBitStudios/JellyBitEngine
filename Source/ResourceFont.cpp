@@ -160,6 +160,16 @@ uint ResourceFont::SaveFile(ResourceData& data, ResourceFontData& fontData)
 		memcpy(cursor, &(*it).second, bytes);
 		cursor += bytes;
 	}
+
+	for (uint i = 1; i < fontData.fontBuffer.size(); ++i)
+	{
+		uint width = fontData.charactersMap[i + 32].size.x;
+		uint height = fontData.charactersMap[i + 32].size.y;
+
+		bytes = sizeof(uint8_t) * width * height;
+		memcpy(cursor, &fontData.fontBuffer[i], bytes);
+		cursor += bytes;
+	}
 	// --------------------------------------------------
 
 	// Save the file
@@ -215,8 +225,19 @@ ResourceFont* ResourceFont::LoadFile(const char * file)
 			memcpy(&character, cursor, bytes);
 			fontData.charactersMap.insert(std::pair<char, Character>(i + 32, character));
 
-			if (i < charactersSize - 1)
-				cursor += bytes;
+			cursor += bytes;
+		}
+
+		for (uint i = 1; i < charactersSize; ++i)
+		{
+			uint width = fontData.charactersMap[i + 32].size.x;
+			uint height = fontData.charactersMap[i + 32].size.y;
+
+			bytes = sizeof(uint8_t) * width * height;
+			memcpy(fontData.fontBuffer[i], cursor, bytes);
+			ResourceFont::LoadTextureCharacter(width, height, fontData.fontBuffer[i]);
+
+			cursor += bytes;
 		}
 
 		CONSOLE_LOG(LogTypes::Normal, "Resource Font: Successfully loaded Font'%s'", file);
@@ -453,6 +474,7 @@ ResourceFont* ResourceFont::ImportFontBySize(const char * file, uint size, uint 
 
 	else
 	{
+		ResourceFontData fontData;
 		FT_Set_Pixel_Sizes(face, 0, size);
 
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
@@ -464,18 +486,7 @@ ResourceFont* ResourceFont::ImportFontBySize(const char * file, uint size, uint 
 				CONSOLE_LOG(LogTypes::Error, "Failed to load Glyph from Freetype");
 				continue;
 			}
-			// Generate texture
-			GLuint texture;
-			glGenTextures(1, &texture);
-			glBindTexture(GL_TEXTURE_2D, texture);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, face->glyph->bitmap.width, face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
-
-			// Set texture options
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+			GLuint texture = ResourceFont::LoadTextureCharacter(face->glyph->bitmap.width, face->glyph->bitmap.rows, face->glyph->bitmap.buffer);
 
 			// Now store character for later use
 			Character character = {
@@ -487,6 +498,37 @@ ResourceFont* ResourceFont::ImportFontBySize(const char * file, uint size, uint 
 			charactersBitmap.insert(std::pair<char, Character>(c, character));
 			if (face->glyph->bitmap.rows > maxHeight)
 				maxHeight = face->glyph->bitmap.rows;
+
+
+			uint8_t* characterBuffer = new uint8_t[face->glyph->bitmap.width * face->glyph->bitmap.rows];
+			uint bytes = sizeof(uint8_t) * face->glyph->bitmap.width * face->glyph->bitmap.rows;
+			memcpy(characterBuffer, (uint8_t*)face->glyph->bitmap.buffer, bytes);			
+
+			fontData.fontBuffer.push_back(characterBuffer);
+
+
+
+
+			/*int textureWidth = 2;
+			while (textureWidth < face->glyph->bitmap.width)
+			{
+				textureWidth = textureWidth <<= 1;
+			}
+
+			int textureHeight = 2;
+			while (textureHeight < face->glyph->bitmap.rows)
+			{
+				textureHeight = textureHeight <<= 1;
+			}
+			GLubyte* TextureBuffer = new GLubyte[textureWidth * textureHeight]; ///
+			for (int j = 0; j < face->glyph->bitmap.rows; ++j)
+			{
+				for (int i = 0; i < face->glyph->bitmap.width; ++i)
+				{
+					TextureBuffer[j*textureWidth + i] = (j >= face->glyph->bitmap.rows || i >= face->glyph->bitmap.width ? 0 : face->glyph->bitmap.buffer[j*face->glyph->bitmap.width + i]);
+				}
+			}
+			*/
 		}
 		glBindTexture(GL_TEXTURE_2D, 0);
 		FT_Done_Face(face);
@@ -499,7 +541,6 @@ ResourceFont* ResourceFont::ImportFontBySize(const char * file, uint size, uint 
 		uuid = uuid != 0 ? uuid : App->GenerateRandomNumber();
 		data.exportedFile = DIR_LIBRARY_FONT + std::string("/") + data.name + "_" + std::to_string(uuid) + ".fnt";
 
-		ResourceFontData fontData;
 		fontData.charactersMap = charactersBitmap;
 		fontData.fontSize = size;
 		fontData.maxCharHeight = maxHeight;
@@ -512,3 +553,22 @@ ResourceFont* ResourceFont::ImportFontBySize(const char * file, uint size, uint 
 
 	return res;
 }
+
+uint ResourceFont::LoadTextureCharacter(uint width, uint height, uchar* buffer)
+{
+	// Generate texture
+	GLuint texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, buffer);
+
+	// Set texture options
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+	return texture;
+}
+
