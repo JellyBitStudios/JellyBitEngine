@@ -26,18 +26,14 @@ class ComponentLabel : public Component
 {
 public:
 	struct LetterBuffer {
-		float topLeft[3];
-		float offsetFloat1;
-		float topRight[3];
-		float offsetFloat2;
-		float bottomLeft[3];
-		float offsetFloat3;
-		float bottomRight[3];
-		float offsetFloat4;
+		float topLeft[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		float topRight[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		float bottomLeft[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		float bottomRight[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	};
 	struct LabelBuffer {
 		float aligment[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		float offsetFloat[4];
+		float offsetFloat[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 		LetterBuffer* word = nullptr;
 	};
 	struct LabelLetter

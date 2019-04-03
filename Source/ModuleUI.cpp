@@ -199,6 +199,7 @@ void ModuleUI::initRenderData()
 	// Bind UBO to shader Interface Block
 	GLuint sloc = glGetProgramResourceIndex(uiLabel_shader, GL_SHADER_STORAGE_BLOCK, "UIWord");
 	glShaderStorageBlockBinding(uiLabel_shader, sloc, bind_UILabel_index);
+	glBufferStorage(GL_SHADER_STORAGE_BUFFER, maxBufferLabelStorage,nullptr, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 	//-------------
 }
 
@@ -356,27 +357,16 @@ void ModuleUI::DrawUILabel(void* bufferWord, uint sizeBuffer, uint wordSize, std
 	setFloat(uiLabel_shader, "spriteColor", color.x, color.y, color.z, color.w);
 
 	//-------- Shader Storage Buffer Object -------------
-	// Update buffer
-	//glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 2, ssboLabel, 0, sizeBuffer);
-	//glError();
-	//void* buff_ptr = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeBuffer, GL_MAP_WRITE_BIT);
-	//glError();
-	//std::memcpy(buff_ptr, &bufferWord, sizeBuffer);
-	//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-	//glError();
-	//glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-	//glError();
-	//-----
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboLabel);
-	void* buff_ptr = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeBuffer, GL_MAP_WRITE_BIT);
+	void* buff_ptr = glMapNamedBufferRange(ssboLabel, 0, sizeBuffer, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
 	std::memcpy(buff_ptr, bufferWord, sizeBuffer);
+	glFlushMappedNamedBufferRange(ssboLabel, 0, sizeBuffer);
 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-	// -------------
+	//-----
 
 	for (uint i = 0; i < wordSize; i++)
 	{
-		setInt(uiLabel_shader, "letter_index", i);
+		use(uiLabel_shader);
+		setFloat(uiLabel_shader, "letter_index", (float)i);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texturesWord->at(i));
