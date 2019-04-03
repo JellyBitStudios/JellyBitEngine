@@ -18,7 +18,7 @@ struct TrailNode
 	math::float3 originHigh = math::float3::zero;
 	math::float3 originLow = math::float3::zero;
 
-	math::float3 direction = math::float3::zero;
+	math::Quat rotaion = math::Quat::identity;
 };
 
 class ComponentTrail : public Component
@@ -30,6 +30,10 @@ public:
 	~ComponentTrail();
 
 	void Update();
+
+	void OnUniqueEditor();
+
+	void SetMaterialRes(uint materialUuid);
 
 
 	//Serialization
@@ -43,6 +47,9 @@ public:
 	Timer timer;
 
 	bool create = true;
+
+	uint materialRes = 0;
+
 private:
 
 

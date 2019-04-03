@@ -2,10 +2,14 @@
 
 #include "Application.h"
 #include "ModuleInput.h"
+#include "ModuleResourceManager.h"
 
 #include "GameObject.h"
+#include "ComponentTransform.h"
 
 #include "glew/include/GL/glew.h"
+
+#include "imgui\imgui.h"
 
 
 
@@ -27,12 +31,14 @@ ComponentTrail::~ComponentTrail()
 void ComponentTrail::Update() 
 {
 
-	if (timer.Read() > 1000 && create)
+	if (timer.Read() > 500 && create)
 	{
 		TrailNode* node = new TrailNode();
 
-		node->originHigh = parent->boundingBox.FaceCenterPoint(3);
-		node->originLow = parent->boundingBox.FaceCenterPoint(2);
+		node->originHigh = parent->boundingBox.FaceCenterPoint(5);
+		node->originLow = parent->boundingBox.FaceCenterPoint(4);
+
+		node->rotaion = parent->transform->GetRotation();
 
 		if (!test.empty())
 		{
@@ -53,4 +59,34 @@ void ComponentTrail::Update()
 	{
 		create = !create;
 	}
+}
+
+
+void ComponentTrail::OnUniqueEditor()
+{
+	if (ImGui::CollapsingHeader("Particle Texture", ImGuiTreeNodeFlags_FramePadding))
+	{
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MATERIAL_INSPECTOR_SELECTOR"))
+			{
+				uint payload_n = *(uint*)payload->Data;
+				SetMaterialRes(payload_n);
+			}
+			ImGui::EndDragDropTarget();
+		}
+	}
+
+}
+
+
+void ComponentTrail::SetMaterialRes(uint materialUuid)
+{
+	if (materialRes > 0)
+		App->res->SetAsUnused(materialRes);
+
+	if (materialUuid > 0)
+		App->res->SetAsUsed(materialUuid);
+
+	materialRes = materialUuid;
 }
