@@ -1,48 +1,64 @@
 ﻿using JellyBitEngine;
+using System;
 
 public class AlitaController : JellyScript
 {
+    #region PUBLIC_VARS
     // public in order to show in inspector
     public LayerMask        raycastLayer = new LayerMask(); // ADD ENEMY LAYER AND TERRAIN LAYER // SOMEWAY TO HARDCODE IT?
 
+    [HideInInspector]
+    public bool             inputEnabled = true; // USED TO CHECK IF THE PLAYER HAS CONTROL OVER ALITA OR NOT EX: Inventory opened?, Dialogs, etc
+    #endregion
+
+    #region PRIVATE_VARS
     // public in order to show in inspector
-    public AlitaCharacter   stats;
-    NavMeshAgent            agent;
-    Animator                animator;
-    GameObject              currentTarget;
+    AlitaCharacter          m_character = new AlitaCharacter();
+    NavMeshAgent            m_agent;
+    Animator                m_animator;
+    GameObject              m_currentTarget;
 
     enum AlitaStates        { Idle, Walking, WalkingToEnemy, Attacking };
     enum PickingStates      { None = -1, Terrain = 1, Enemy = 2 };
     enum CurrentAttack      { FirstAttack, SecondAttack, ThirdAttack };
-    AlitaStates             state = AlitaStates.Idle;
-    CurrentAttack           currentAttack = CurrentAttack.FirstAttack;
+    AlitaStates             m_state = AlitaStates.Idle;
+    CurrentAttack           m_currentAttack = CurrentAttack.FirstAttack;
+    PickingStates           m_lastPick = PickingStates.None;
+    #endregion
 
-    bool                    inputEnabled = true; // USED TO CHECK IF THE PLAYER HAS CONTROL OVER ALITA OR NOT EX: Inventory opened?, Dialogs, etc
-    
     // ONCE THIS IS DONE -> ADD FX -> COMBO ATTACKS -> TARGET OUTLINE? -> DASH -> SKILLS -> DEAD
 
     public override void Awake()
     {
-        agent = gameObject.GetComponent<NavMeshAgent>();
+        m_agent = gameObject.GetComponent<NavMeshAgent>();
         //animator = gameObject.GetComponent<Animator>();
         UseIdle();
         //InitAlita();
-        EventsManager.Call.StartListening("Alita Listener", this, "Listening");
+        EventsManager.Call.StartListening("Target Dead", this, "Listening");
     }
 
     public void Listening(object type)
     {
         Event listenedEvent = (Event)type;
-        if (listenedEvent.type == Event_Type.None)
-            Debug.Log("Listened");
-        else
-            Debug.Log("Bad call");
+        switch (listenedEvent.type)
+        {
+            case Event_Type.EnemyDead:
+                EnemyDead_Event EDEvent = (EnemyDead_Event)listenedEvent;
+                if (EDEvent.reference == null)
+                {
+                    Debug.Log("Invalid Reference: Event " + EDEvent.type.ToString() + " At " + ToString());
+                    return;
+                }
+                m_currentTarget = null;
+                UseIdle();
+                break;
+        }
     }
 
     public void InitAlita()
     {
-        agent.maxAcceleration = stats.accSpeed;
-        agent.maxSpeed = stats.velSpeed;
+        m_agent.maxAcceleration = m_character.accSpeed;
+        m_agent.maxSpeed = m_character.velSpeed;
         UseIdle();
     }
 
@@ -51,34 +67,33 @@ public class AlitaController : JellyScript
         // HERE WE HANDLE MOUSE INPUT AND SET DESTINATIONS
         if (Input.GetMouseButton(MouseKeyCode.MOUSE_RIGHT) && inputEnabled)
         {
-            PickingStates returned = HandleMousePicking();
-            if (returned == PickingStates.Terrain && state != AlitaStates.Walking)
+            m_lastPick = HandleMousePicking();
+            if (m_lastPick == PickingStates.Terrain && m_state != AlitaStates.Walking)
                 UseWalking();
-            else if (returned == PickingStates.Enemy && state != AlitaStates.WalkingToEnemy)
+            else if (m_lastPick == PickingStates.Enemy && m_state != AlitaStates.WalkingToEnemy)
                 UseWalkingToEnemy();
         }
 
         // HERE WE HANDLE ALITA STATES
-        switch (state)
+        switch (m_state)
         {
             case AlitaStates.Walking:
-                if (!agent.isWalking())
+                if (!m_agent.isWalking())
                     UseIdle();
                 break;
             case AlitaStates.WalkingToEnemy:
-                if (!agent.isWalking())
-                    UseAttacking(currentAttack);
+                if (!m_agent.isWalking())
+                    UseAttacking(m_currentAttack);
                 break;
             case AlitaStates.Attacking:
                 // TODO: ROTATE ALITA TO FOCUS TARGET USING currentTarget
-                // float angle = atan2(gameobject.transform.forward, currentTarget.transform.position);
-                // gameobject.transform.rotation.rotateAxisAngle(alita.transform.position.up, angle * Time.deltaTime * stats.attackRotConst);
+                Vector3 dir = transform.position - m_currentTarget.transform.position;
+                double angle = Math.Atan2(transform.forward.magnitude, dir.magnitude);
+                // if (angle > threshold?)
+                transform.rotation = Quaternion.Rotate(transform.up, (float)angle * Time.deltaTime * AlitaCharacter.attackRotConst) * transform.rotation;
 
-                // IF ANIM FINISHED
-                //      IF LEFT CLICK IS RELEASE
-                //          // USE IDLE
-                //      ELSE
-                //          // USE NEXT ATTACK
+                if (m_animator.GetCurrentFrame() == 2) // TODO: swap for last frame method...
+                    UseAttacking(m_currentAttack);
 
                 // IF ENEMY IS DEAD
                 //      currentTarget = null
@@ -87,23 +102,28 @@ public class AlitaController : JellyScript
         }
     }
 
-    PickingStates HandleMousePicking()
+   PickingStates HandleMousePicking()
     {
         Ray ray = Physics.ScreenToRay(Input.GetMousePosition(), Camera.main);
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, float.MaxValue, raycastLayer, SceneQueryFlags.Dynamic | SceneQueryFlags.Static))
         {
-            if (hit.gameObject.GetLayer() == "Terrain")
+            string layer = hit.gameObject.GetLayer();
+            if (layer == "Terrain")
             {
-                agent.SetDestination(hit.point);
+                m_agent.SetDestination(hit.point);
                 return PickingStates.Terrain;
             }
             else // in case of enemy. If target options increase add layer comparasion with "Enemy" layer
             {
-                currentTarget = hit.gameObject;
-                Vector3 dir = (currentTarget.transform.position - transform.position).normalized();
+                m_currentTarget = hit.gameObject;
+                Vector3 dir = (m_currentTarget.transform.position - transform.position).normalized();
                 dir *= AlitaCharacter.attackRadiusConst;
-                agent.SetDestination(currentTarget.transform.position + dir);
+                m_agent.SetDestination(m_currentTarget.transform.position + dir);
+
+                //if (lastPick != PickingStates.Enemy)
+                // set red outline material for enemy
+
                 return PickingStates.Enemy;
             }
         }
@@ -112,8 +132,8 @@ public class AlitaController : JellyScript
 
     void UseIdle()
     {
-        state = AlitaStates.Idle;
-        //animator.PlayAnimation("idle_animation_alita");
+        m_state = AlitaStates.Idle;
+        m_animator.PlayAnimation("idle_alita_anim");
         Debug.Log("Stop");
     }
 
@@ -122,34 +142,34 @@ public class AlitaController : JellyScript
         Event newEvent = new Event();
         newEvent.type = Event_Type.None;
         EventsManager.Call.PushEvent(newEvent);
-        state = AlitaStates.Walking;
-        //animator.PlayAnimation("walk_animation_alita");
+        m_state = AlitaStates.Walking;
+        m_animator.PlayAnimation("walk_animation_alita");
         Debug.Log("Walking");
     }
 
     void UseWalkingToEnemy()
     {
-        state = AlitaStates.WalkingToEnemy;
-       // animator.PlayAnimation("walk_animation_alita");
+        m_state = AlitaStates.WalkingToEnemy;
+        m_animator.PlayAnimation("walk_animation_alita");
         Debug.Log("Walking to enemy");
     }
 
     void UseAttacking(CurrentAttack current)
     {
-        state = AlitaStates.Attacking;
+        m_state = AlitaStates.Attacking;
         if (current == CurrentAttack.FirstAttack)
         {
-            //animator.PlayAnimation("secondAttack_animation_alita");
+            m_animator.PlayAnimation("secondAttack_animation_alita");
             current = CurrentAttack.SecondAttack;
         }
         else if (current == CurrentAttack.SecondAttack)
         {
-            //animator.PlayAnimation("thirdAttack_animation_alita");
+            m_animator.PlayAnimation("thirdAttack_animation_alita");
             current = CurrentAttack.ThirdAttack;
         }
         else
         {
-            //animator.PlayAnimation("firstAttack_animation_alita");
+            m_animator.PlayAnimation("firstAttack_animation_alita");
             current = CurrentAttack.FirstAttack;
         }
         Debug.Log("Fightning");

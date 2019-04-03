@@ -4,12 +4,17 @@ using System.Collections.Generic;
 
 // This class is not tested, but it should work.
 
-public enum Event_Type { None = 0 }
+public enum Event_Type { None = 0, EnemyDead }
 
 // This struct can be overloaded for future events
-public struct Event
+public class Event
 {
     public Event_Type type;
+}
+
+public class EnemyDead_Event : Event
+{
+    public GameObject reference;
 }
 
 public struct Listener

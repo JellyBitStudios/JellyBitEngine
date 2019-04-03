@@ -9,9 +9,9 @@
 
 public class AlitaCharacter : Character
 {
-    public uint             lvl = 1;
-    public const float      expPerLvlModifier = 20.0f;
-    public float            currentExp
+    public uint lvl = 1;
+    public const float expPerLvlModifier = 20.0f;
+    public float currentExp
     {
         get //get method for returning value
         {
@@ -19,7 +19,6 @@ public class AlitaCharacter : Character
         }
         set
         {
-            currentExp = value;
             if (value >= lvl * expPerLvlModifier)
             {
                 lvl += 1;
@@ -28,12 +27,12 @@ public class AlitaCharacter : Character
             else
                 currentExp = value;
         }
-}
+    }
 
 
-    float                   dashDistance;
-    public const float      attackRotConst = 10.0f;
-    public const float      attackRadiusConst = 2.0f;
+    float dashDistance;
+    public const float attackRotConst = 10.0f;
+    public const float attackRadiusConst = 2.0f;
 }
 
 
