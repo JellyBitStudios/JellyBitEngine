@@ -451,7 +451,7 @@
 "bool isFrontFacing(vec3 a, vec3 b, vec3 c) // is a triangle front facing?\n"						\
 "{\n"																								\
 "	// Compute the triangle's z coordinate of the normal vector (cross product)\n"					\
-"	return ((a.x * b.y - b.x * a.y) + (b.x * c.y - c.x * b.y) + (c.x * a.y - a.x * c.y)) > 0;\n"	\
+"	return ((a.x * b.y - b.x * a.y) + (b.x * c.y - c.x * b.y) + (c.x * a.y - a.x * c.y)) > 0.0;\n"	\
 "}\n"																								\
 "\n"																								\
 "void emitEdgeQuad(vec3 e0, vec3 e1)\n"																\
@@ -487,7 +487,7 @@
 "	vec3 p4 = gl_in[4].gl_Position.xyz / gl_in[4].gl_Position.w;\n"									\
 "	vec3 p5 = gl_in[5].gl_Position.xyz / gl_in[5].gl_Position.w;\n"									\
 "\n"																								\
-"	if (isFrontFacing(p0, p2, p4))\n"																\
+"	if (gl_in[0].gl_Position.w > 0.0 && gl_in[1].gl_Position.w > 0.0 && gl_in[2].gl_Position.w > 0.0 && gl_in[3].gl_Position.w > 0.0 && gl_in[4].gl_Position.w > 0.0 && gl_in[5].gl_Position.w > 0.0 && isFrontFacing(p0, p2, p4))\n" \
 "	{\n"																							\
 "		if (!isFrontFacing(p0, p1, p2))\n"															\
 "			emitEdgeQuad(p0, p2);\n"																\

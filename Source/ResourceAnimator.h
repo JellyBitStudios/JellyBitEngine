@@ -89,7 +89,10 @@ public:
 	void InitAnimator();
 	bool Update();
 
+	/* ----- SCRIPTING CALLS ----- */
 	void ClearAnimations();
+	/* ----- SCRIPTING CALLS ----- */
+
 	void AddAnimationFromAnimationResource(ResourceAnimation* res);
 
 	float GetCurrentAnimationTime() const;
