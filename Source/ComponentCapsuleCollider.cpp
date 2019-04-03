@@ -123,14 +123,17 @@ void ComponentCapsuleCollider::OnInternalLoad(char*& cursor)
 
 	size_t bytes = sizeof(float);
 	memcpy(&radius, cursor, bytes);
+	SetRadius(radius);
 	cursor += bytes;
 
 	bytes = sizeof(float);
 	memcpy(&halfHeight, cursor, bytes);
+	SetHalfHeight(halfHeight);
 	cursor += bytes;
 
 	bytes = sizeof(CapsuleDirection);
 	memcpy(&direction, cursor, bytes);
+	SetDirection(direction);
 	cursor += bytes;
 }
 

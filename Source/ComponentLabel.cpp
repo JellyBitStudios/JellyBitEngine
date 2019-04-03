@@ -41,7 +41,6 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 		color = componentLabel.color;
 		labelWord = componentLabel.labelWord;
 		finalText = componentLabel.finalText;
-		//memcpy(text, finalText.data(), finalText.length());
 		fontUuid = componentLabel.fontUuid;
 	}
 }
@@ -157,10 +156,6 @@ void ComponentLabel::Update()
 
 		needed_recalculate = false;
 	}
-	/*else if(!labelWord.empty() && !App->res->GetResource(fontUuid))
-	{
-		labelWord.clear();
-	}*/
 }
 
 void ComponentLabel::WorldDraw(math::float3 * parentCorners, math::float3 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm)
@@ -246,8 +241,6 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 	memcpy((void*)finalText.c_str(), cursor, bytes);
 	finalText.resize(nameLenght);
 	cursor += bytes;
-
-	//sprintf(text, "%s", finalText.data());
 }
 
 void ComponentLabel::OnUniqueEditor()
@@ -319,7 +312,12 @@ void ComponentLabel::DragDropFont()
 		if(font)
 			name = font->GetName();
 	}
-	std::string originalText = (fontUuid > 0 && font) ? name : "Waiting font...";
+	std::string originalText = "Waiting font...";
+	if (fontUuid > 0 && font)
+		originalText = name;
+	else if (!labelWord.empty())
+		labelWord.clear();
+	
 	std::string clampedText;
 
 	ImVec2 textSize = ImGui::CalcTextSize(originalText.data());
