@@ -388,10 +388,10 @@
 "uniform mat4 mvp_matrix;\n" 															\
 "\n"																					\
 "struct Letter {\n"																		\
-"	vec4 topLeft;\n"																	\
-"	vec4 topRight;\n"																	\
-"	vec4 bottomLeft;\n"																	\
-"	vec4 bottomRight;\n"																\
+"	vec3 topLeft;\n"																	\
+"	vec3 topRight;\n"																	\
+"	vec3 bottomLeft;\n"																	\
+"	vec3 bottomRight;\n"																\
 "};\n"																					\
 "\n"																					\
 "layout (std430, binding = 2) buffer UIWord {\n"										\
@@ -401,28 +401,28 @@
 "\n"																					\
 "void main()\n" 																		\
 "{\n" 																					\
-"	vec3 position = word[letter_index].topRight.xyz;\n" 								\
+"	vec3 position = word[letter_index].topRight;\n" 								\
 "	if (vertex.x > 0.0 && vertex.y > 0.0)\n" 											\
 "	{\n" 																				\
-"		position = word[letter_index].topRight.xyz;\n" 										\
+"		position = word[letter_index].topRight;\n" 										\
 "		if (isScreen == 0)\n" 															\
 "			TexCoords = vec2(0.0, 0.0);\n" 												\
 "	}"																					\
 "	else if (vertex.x > 0.0 && vertex.y < 0.0)\n" 										\
 "	{\n" 																				\
-"		position = word[letter_index].bottomRight.xyz;\n" 									\
+"		position = word[letter_index].bottomRight;\n" 									\
 "		if (isScreen == 0)\n" 															\
 "			TexCoords = vec2(0.0,1.0);\n" 												\
 "	}"																					\
 "	else if (vertex.x < 0.0 && vertex.y > 0.0)\n" 										\
 "	{\n" 																				\
-"		position = word[letter_index].topLeft.xyz;\n" 										\
+"		position = word[letter_index].topLeft;\n" 										\
 "		if (isScreen == 0)\n" 															\
 "			TexCoords = vec2(1.0,0.0);\n" 												\
 "	}"																					\
 "	else if (vertex.x < 0.0 && vertex.y < 0.0)\n" 										\
 "	{\n" 																				\
-"		position = word[letter_index].bottomLeft.xyz;\n" 									\
+"		position = word[letter_index].bottomLeft;\n" 									\
 "		if (isScreen == 0)\n" 															\
 "			TexCoords = vec2(1.0,1.0);\n" 												\
 "	}"																					\

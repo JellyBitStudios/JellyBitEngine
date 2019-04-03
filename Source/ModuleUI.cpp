@@ -371,6 +371,7 @@ void ModuleUI::DrawUILabel(void* bufferWord, uint sizeBuffer, uint wordSize, std
 	void* buff_ptr = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeBuffer, GL_MAP_WRITE_BIT);
 	std::memcpy(buff_ptr, bufferWord, sizeBuffer);
 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	// -------------
 
 	for (uint i = 0; i < wordSize; i++)

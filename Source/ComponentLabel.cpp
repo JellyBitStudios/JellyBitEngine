@@ -135,22 +135,26 @@ void ComponentLabel::Update()
 			if (!labelWord.empty())
 			{
 				if (labelWord.size() != last_word_size)
+				{
 					if (buffer.word)
 						RELEASE_ARRAY(buffer.word);
+					buffer.word = new LetterBuffer[labelWord.size()];
+				}
 				buffer_size = sizeof(float) * 8;
-				buffer.word = new LetterBuffer[labelWord.size()];
 				for (uint i = 0; i < labelWord.size(); i++)
 				{
-					memcpy(buffer.word[i].topLeft, labelWord[i].corners[ComponentRectTransform::Rect::RTOPLEFT].ptr(), sizeof(float)*3);
-					memcpy(buffer.word[i].topRight, labelWord[i].corners[ComponentRectTransform::Rect::RTOPRIGHT].ptr(), sizeof(float)*3);
-					memcpy(buffer.word[i].bottomLeft, labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMLEFT].ptr(), sizeof(float)*3);
-					memcpy(buffer.word[i].bottomRight, labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMRIGHT].ptr(), sizeof(float)*3);
+					memcpy(buffer.word[i].topLeft, labelWord[i].corners[ComponentRectTransform::Rect::RTOPLEFT].ptr(), sizeof(float) * 3);
+					memcpy(buffer.word[i].topRight, labelWord[i].corners[ComponentRectTransform::Rect::RTOPRIGHT].ptr(), sizeof(float) * 3);
+					memcpy(buffer.word[i].bottomLeft, labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMLEFT].ptr(), sizeof(float) * 3);
+					memcpy(buffer.word[i].bottomRight, labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMRIGHT].ptr(), sizeof(float) * 3);
 					buffer_size += sizeof(float) * 16;
 				}
+				last_word_size = labelWord.size();
 			}
+			else
+				last_word_size = 0;
 		}
 
-		last_word_size = labelWord.size();
 		needed_recalculate = false;
 	}
 	/*else if(!labelWord.empty() && !App->res->GetResource(fontUuid))
