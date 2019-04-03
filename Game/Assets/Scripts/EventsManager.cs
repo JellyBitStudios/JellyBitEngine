@@ -21,12 +21,15 @@ public struct Listener
 
 public sealed class EventsManager : JellyScript
 {
-    private static readonly EventsManager instance = new EventsManager();
+    private static EventsManager instance;
 
     Queue<Event> eventsQueue = new Queue<Event>();
     List<Listener> listeners = new List<Listener>();
 
-    private EventsManager() {}
+    public EventsManager()
+    {
+        instance = this;
+    }
 
     public static EventsManager Call
     {
@@ -46,8 +49,18 @@ public sealed class EventsManager : JellyScript
         }
     }
 
+    public override void OnStop()
+    {
+        instance.listeners = null;
+    }
+
     public bool StartListening(string name, object script, string listener)
     {
+        foreach (Listener listnr in listeners)
+        {
+            Debug.Log(listnr.name);
+        }
+
         Listener listenerInstance = new Listener();
 
         listenerInstance.name = name;
