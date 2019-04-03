@@ -232,7 +232,7 @@ bool ResourceScript::referenceMethods()
 	mono_method_desc_free(desc);
 
 	desc = mono_method_desc_new((scriptName + ":OnTriggerExit(Collider)").data(), false);
-	fixedUpdateMethod = mono_method_desc_search_in_image(desc, App->scripting->scriptsImage);
+	OnTriggerExitMethod = mono_method_desc_search_in_image(desc, App->scripting->scriptsImage);
 	mono_method_desc_free(desc);
 
 	return true;
