@@ -170,9 +170,17 @@ bool ComponentAnimator::CleanAnimations() {
 	return true;
 }
 
-bool ComponentAnimator::AnimationFinished()
+bool ComponentAnimator::AnimationFinished()const
 {
-	return true;
+	ResourceAnimator* animator_res = (ResourceAnimator*)App->res->GetResource(res);
+	if (!animator_res)
+		return false;
+
+	ResourceAnimation* animation_res = (ResourceAnimation*)animator_res->GetCurrentAnimation();
+	if (!animation_res)
+		return false;
+
+	return (animation_res->animationData.numKeys == GetCurrentAnimationFrame());
 }
 
 void ComponentAnimator::Update()
@@ -206,7 +214,7 @@ const char * ComponentAnimator::GetCurrentAnimationName()
 		return anim_res->GetCurrentAnimation()->name.data();
 }
 
-int ComponentAnimator::GetCurrentAnimationFrame()
+int ComponentAnimator::GetCurrentAnimationFrame()const
 {
 	ResourceAnimator* animator_res = (ResourceAnimator*)App->res->GetResource(res);
 	if (!animator_res)

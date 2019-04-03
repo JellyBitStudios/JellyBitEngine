@@ -24,11 +24,11 @@ public:
 
 	/* ----- SCRIPTING CALLS ----- */
 	/*Returns -1 if anything goes wrong*/
-	int GetCurrentAnimationFrame();
+	int GetCurrentAnimationFrame()const;
 	const char* GetCurrentAnimationName();
 	bool PlayAnimation(const char* anim_name);
 	bool CleanAnimations();
-	bool AnimationFinished();
+	bool AnimationFinished()const;
 	/* ----- SCRIPTING CALLS ----- */
 
 	void OnInternalSave(char*& cursor);
