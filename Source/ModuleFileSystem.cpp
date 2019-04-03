@@ -1364,3 +1364,18 @@ void ModuleFileSystem::RecursiveBuild(const Directory& dir, char * toPath, bool 
 		}
 	}
 }
+
+std::string ModuleFileSystem::PathToWindowsNotation(std::string path)
+{
+	std::string ret = path;
+
+	uint pos = ret.find("/");
+	while (pos != std::string::npos)
+	{
+		ret.replace(pos, 1, "\\");
+
+		pos = ret.find("/");
+	}
+
+	return ret;
+}

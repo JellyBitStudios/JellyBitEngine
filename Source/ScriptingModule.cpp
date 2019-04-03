@@ -748,7 +748,10 @@ void ScriptingModule::IncludeCSFiles(pugi::xml_node& nodeToAppend, const Directo
 		if (extension != ".cs")
 			continue;
 
-		nodeToAppend.append_child("Compile").append_attribute("Include").set_value(std::string("Assets\\Scripts\\" + dir.files[i].name).data());
+		std::string path = dir.fullPath + "/" + dir.files[i].name;
+		path = App->fs->PathToWindowsNotation(path);
+
+		nodeToAppend.append_child("Compile").append_attribute("Include").set_value((path).data());
 	}
 
 	for (int i = 0; i < dir.directories.size(); ++i)
