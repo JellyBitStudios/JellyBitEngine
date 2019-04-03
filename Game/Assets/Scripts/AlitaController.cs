@@ -16,7 +16,20 @@ public class AlitaController : JellyScript
     AlitaCharacter          m_character = new AlitaCharacter();
     NavMeshAgent            m_agent;
     Animator                m_animator;
-    GameObject              m_currentTarget;
+    GameObject              m_currentTarget
+    {
+        set
+        {
+            m_currentTarget = value;
+            m_currentTargetMaterial = value.GetComponent<Material>();
+        }
+
+        get
+        {
+            return m_currentTarget;
+        }
+    }
+    Material                m_currentTargetMaterial;
 
     enum AlitaStates        { Idle, Walking, WalkingToEnemy, Attacking };
     enum PickingStates      { None = -1, Terrain = 1, Enemy = 2 };
@@ -46,7 +59,7 @@ public class AlitaController : JellyScript
                 EnemyDead_Event EDEvent = (EnemyDead_Event)listenedEvent;
                 if (EDEvent.reference == null)
                 {
-                    Debug.Log("Invalid Reference: Event " + EDEvent.type.ToString() + " At " + ToString());
+                    Debug.LogError("Invalid Reference: Event " + EDEvent.type.ToString() + " At " + ToString());
                     return;
                 }
                 m_currentTarget = null;
@@ -111,18 +124,19 @@ public class AlitaController : JellyScript
             string layer = hit.gameObject.GetLayer();
             if (layer == "Terrain")
             {
+                if (m_lastPick == PickingStates.Enemy) { }
+                    // TODO: m_currentTargetMaterial.SetResource("Red Outline");
                 m_agent.SetDestination(hit.point);
                 return PickingStates.Terrain;
             }
             else // in case of enemy. If target options increase add layer comparasion with "Enemy" layer
             {
+                if (m_lastPick == PickingStates.Terrain) { }
+                    // TODO: m_currentTargetMaterial.SetResource("Black Outline");
                 m_currentTarget = hit.gameObject;
                 Vector3 dir = (m_currentTarget.transform.position - transform.position).normalized();
                 dir *= AlitaCharacter.attackRadiusConst;
                 m_agent.SetDestination(m_currentTarget.transform.position + dir);
-
-                //if (lastPick != PickingStates.Enemy)
-                // set red outline material for enemy
 
                 return PickingStates.Enemy;
             }
