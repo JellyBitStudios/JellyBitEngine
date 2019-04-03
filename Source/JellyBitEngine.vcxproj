@@ -73,6 +73,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Game|Win32'">
     <IncludePath>$(ProjectDir)\Freetype\include;$(ProjectDir)..\Game\Mono\include\mono-2.0;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <OutDir>$(SolutionDir)/Debug</OutDir>
+    <IntDir>Debug</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(ProjectDir)\Freetype\include;$(ProjectDir)..\Game\Mono\include\mono-2.0;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
@@ -80,6 +81,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Game_Release|Win32'">
     <IncludePath>$(ProjectDir)\Freetype\include;$(ProjectDir)..\Game\Mono\include\mono-2.0;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <OutDir>$(SolutionDir)/Release</OutDir>
+    <IntDir>Release</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
