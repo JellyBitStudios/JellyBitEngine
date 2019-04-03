@@ -246,7 +246,11 @@ void ModuleFileSystem::OnSystemEvent(System_Event event)
 					strcpy(destinationDir, DIR_ASSETS_TEXTURES);
 					break;
 				}
-
+				case ResourceTypes::FontResource:
+				{
+					strcpy(destinationDir, DIR_ASSETS_FONT);
+					break;
+				}
 				// TODO ADD NEW RESOURCES
 			}
 
