@@ -170,6 +170,11 @@ bool ComponentAnimator::CleanAnimations() {
 	return true;
 }
 
+bool ComponentAnimator::AnimationFinished()
+{
+	return true;
+}
+
 void ComponentAnimator::Update()
 {
 	if (res != 0) {
