@@ -11,7 +11,7 @@ public class AlitaCharacter : Character
 {
     public uint             lvl = 1;
     public const float      expPerLvlModifier = 20.0f;
-    public float            currentExp
+    public float currentExp
     {
         get //get method for returning value
         {
@@ -28,7 +28,7 @@ public class AlitaCharacter : Character
             else
                 currentExp = value;
         }
-}
+    }
 
 
     float                   dashDistance;
