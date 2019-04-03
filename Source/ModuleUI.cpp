@@ -26,6 +26,15 @@
 
 #include "MathGeoLib/include/Geometry/Frustum.h"
 
+#define glError() { \
+    GLenum err = glGetError(); \
+    while (err != GL_NO_ERROR) { \
+    CONSOLE_LOG(LogTypes::Normal, "glError: %s", \
+           (char*)gluErrorString(err)); \
+    err = glGetError(); \
+    } \
+    }
+
 ModuleUI::ModuleUI(bool start_enabled) : Module(start_enabled)
 {
 	//math::Frustum::ViewportToScreenSpace();
@@ -45,7 +54,7 @@ bool ModuleUI::Start()
 {
 	//Shader
 	ui_shader = App->resHandler->UIShaderProgram;
-
+	uiLabel_shader = App->resHandler->UILabelShaderProgram;
 	initRenderData();
 
 	ui_size_draw[Screen::X] = 0;
@@ -171,15 +180,25 @@ void ModuleUI::initRenderData()
 	glBindVertexArray(0);
 
 	//-------- Uniform Buffer Object -------------
-	GLuint binding_point_index = 1;
+	GLuint bind_UI_index = 1;
 	// Create shaderstorage buffer object
-	glGenBuffers(1, &uboTestUI);
-	glBindBufferBase(GL_UNIFORM_BUFFER, binding_point_index, uboTestUI);
+	glGenBuffers(1, &uboUI);
+	glBindBufferBase(GL_UNIFORM_BUFFER, bind_UI_index, uboUI);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(uiShader_data), nullptr, GL_DYNAMIC_DRAW);
 
 	// Bind UBO to shader Interface Block
-	GLuint loc = glGetUniformBlockIndex(ui_shader, "UIBlock");
-	glUniformBlockBinding(ui_shader, loc, binding_point_index);
+	GLuint bloc = glGetUniformBlockIndex(ui_shader, "UIBlock");
+	glUniformBlockBinding(ui_shader, bloc, bind_UI_index);
+	//-------------
+		//-------- Shader Storage Buffer Object -------------
+	GLuint bind_UILabel_index = 2;
+	// Create shaderstorage buffer object
+	glGenBuffers(1, &ssboLabel);
+	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bind_UILabel_index, ssboLabel, 0, maxBufferLabelStorage);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, maxBufferLabelStorage, nullptr, GL_DYNAMIC_DRAW);
+	// Bind UBO to shader Interface Block
+	GLuint sloc = glGetProgramResourceIndex(uiLabel_shader, GL_SHADER_STORAGE_BLOCK, "UIWord");
+	glShaderStorageBlockBinding(uiLabel_shader, sloc, bind_UILabel_index);
 	//-------------
 }
 
@@ -193,6 +212,9 @@ void ModuleUI::DrawCanvas()
 	{
 		use(ui_shader);
 		setBool(ui_shader, "isScreen", 1);
+		use(uiLabel_shader);
+		setBool(uiLabel_shader, "isScreen", 1);
+
 		for (GameObject* canvas : canvas_screen)
 		{
 
@@ -214,7 +236,7 @@ void ModuleUI::DrawCanvas()
 							DrawUIImage(render->cmp_rectTransform, rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 							break;
 						case ComponentCanvasRenderer::RenderTypes::LABEL:
-							DrawUILabel(rend->GetWord(), (int)render->cmp_rectTransform->GetFrom(), rend->GetColor());
+							DrawUILabel(rend->GetBufferWord(), rend->GetBufferSize(), rend->GetWordSize(), rend->texturesWord(), rend->GetColor());
 							break;
 						}
 
@@ -240,8 +262,16 @@ void ModuleUI::DrawWorldCanvas()
 
 	if (!canvas_world.empty())
 	{
+		math::float4x4 view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
+		math::float4x4 projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();
+		math::float4x4 mvp = view * projection;
 		use(ui_shader);
 		setBool(ui_shader, "isScreen", 0);
+		setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
+		use(uiLabel_shader);
+		setBool(uiLabel_shader, "isScreen", 0);
+		setFloat4x4(uiLabel_shader, "mvp_matrix", mvp.ptr());
+
 		for (GameObject* canvas : canvas_world)
 		{
 			std::vector<GameObject*> renderers;
@@ -261,7 +291,7 @@ void ModuleUI::DrawWorldCanvas()
 							DrawUIImage(render->cmp_rectTransform, rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 							break;
 						case ComponentCanvasRenderer::RenderTypes::LABEL:
-							DrawUILabel(rend->GetWord(), (int)render->cmp_rectTransform->GetFrom(), rend->GetColor());
+							DrawUILabel(rend->GetBufferWord(), rend->GetBufferSize(), rend->GetWordSize(),rend->texturesWord(), rend->GetColor());
 							break;
 						}
 
@@ -278,6 +308,8 @@ void ModuleUI::DrawWorldCanvas()
 
 void ModuleUI::DrawUIImage(ComponentRectTransform * rect, math::float4& color, uint id_texture, math::float2& mask, float rotation)
 {
+	use(ui_shader);
+
 	SetRectToShader(rect);
 
 	int useMask = (mask.x < 0) ? false : true;
@@ -301,7 +333,7 @@ void ModuleUI::DrawUIImage(ComponentRectTransform * rect, math::float4& color, u
 
 	//-------- Uniform Buffer Object -------------
 	// Update buffer
-	glBindBuffer(GL_UNIFORM_BUFFER, uboTestUI);
+	glBindBuffer(GL_UNIFORM_BUFFER, uboUI);
 	void* buff_ptr = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
 	std::memcpy(buff_ptr, &uiShader_data, sizeof(uiShader_data));
 	glUnmapBuffer(GL_UNIFORM_BUFFER);
@@ -315,56 +347,50 @@ void ModuleUI::DrawUIImage(ComponentRectTransform * rect, math::float4& color, u
 
 }
 
-void ModuleUI::DrawUILabel(std::vector<ComponentLabel::LabelLetter>* word_toDraw, uint rectFrom, math::float4& color)
+void ModuleUI::DrawUILabel(void* bufferWord, uint sizeBuffer, uint wordSize, std::vector<uint>* texturesWord, math::float4& color)
 {
-	int useMask = false;
-	memcpy(&uiShader_data.useMask, &useMask, sizeof(uiShader_data.useMask));
-	setBool(ui_shader, "isLabel", true);
-	setBool(ui_shader, "using_texture", true);
-	setUnsignedInt(ui_shader, "image", 0);
-	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
+	use(uiLabel_shader);
+	setBool(uiLabel_shader, "isLabel", true);
+	setBool(uiLabel_shader, "using_texture", true);
+	setUnsignedInt(uiLabel_shader, "image", 0);
+	setFloat(uiLabel_shader, "spriteColor", color.x, color.y, color.z, color.w);
 
-	//-------- Uniform Buffer Object -------------
-// Update buffer
-	glBindBuffer(GL_UNIFORM_BUFFER, uboTestUI);
-	void* buff_ptr = glMapBufferRange(GL_UNIFORM_BUFFER, 0, sizeof(float) * 4, GL_MAP_WRITE_BIT);
-	std::memcpy(buff_ptr, &uiShader_data, sizeof(float) * 4);
-	glUnmapBuffer(GL_UNIFORM_BUFFER);
+	//-------- Shader Storage Buffer Object -------------
+	// Update buffer
+	//glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 2, ssboLabel, 0, sizeBuffer);
+	//glError();
+	//void* buff_ptr = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeBuffer, GL_MAP_WRITE_BIT);
+	//glError();
+	//std::memcpy(buff_ptr, &bufferWord, sizeBuffer);
+	//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	//glError();
+	//glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	//glError();
+	//-----
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboLabel);
+	void* buff_ptr = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeBuffer, GL_MAP_WRITE_BIT);
+	std::memcpy(buff_ptr, bufferWord, sizeBuffer);
+	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 	// -------------
 
-	for (std::vector<ComponentLabel::LabelLetter>::const_iterator l_iter = word_toDraw->begin(); l_iter != word_toDraw->end(); ++l_iter)
+	for (uint i = 0; i < wordSize; i++)
 	{
-		ComponentLabel::LabelLetter *letter = l_iter._Ptr;
-
-		SetRectToShader(nullptr, rectFrom, letter->corners);
+		setInt(uiLabel_shader, "letter_index", i);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, letter->textureID);
-
-		//-------- Uniform Buffer Object -------------
-		// Update buffer
-		glBindBuffer(GL_UNIFORM_BUFFER, uboTestUI);
-		void* lbuff_ptr = glMapBufferRange(GL_UNIFORM_BUFFER, sizeof(float) * 4, sizeof(float) * 16, GL_MAP_WRITE_BIT);
-		std::memcpy(lbuff_ptr, &uiShader_data.topLeft, sizeof(float) * 16);
-		glUnmapBuffer(GL_UNIFORM_BUFFER);
-		// -------------
+		glBindTexture(GL_TEXTURE_2D, texturesWord->at(i));
 
 		glBindVertexArray(reference_vertex);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glBindVertexArray(0);
-
 	}
 }
 
 void ModuleUI::SetRectToShader(ComponentRectTransform * rect, int rFrom, math::float3* cornersLetter)
 {
 	math::float3* rect_world = nullptr;
-	math::float4x4 view = math::float4x4::identity;
-	math::float4x4 projection = math::float4x4::identity;
-	math::float4x4 mvp = math::float4x4::identity;
-
 	ComponentRectTransform::RectFrom from;
 	(rect) ? from = rect->GetFrom() : from = (ComponentRectTransform::RectFrom)rFrom;
 
@@ -382,11 +408,6 @@ void ModuleUI::SetRectToShader(ComponentRectTransform * rect, int rFrom, math::f
 	case ComponentRectTransform::RectFrom::WORLD:
 	case ComponentRectTransform::RectFrom::RECT_WORLD:
 		(rect) ? rect_world = rect->GetCorners() : rect_world = cornersLetter;
-		view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
-		projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();
-		mvp = view * projection;
-
-		setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
 
 		memcpy(&uiShader_data.topLeft, &rect_world[ComponentRectTransform::Rect::RTOPLEFT], sizeof(uiShader_data.topLeft));
 		memcpy(&uiShader_data.topRight, &rect_world[ComponentRectTransform::Rect::RTOPRIGHT], sizeof(uiShader_data.topRight));

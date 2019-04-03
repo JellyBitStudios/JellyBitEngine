@@ -75,7 +75,7 @@ private:
 
 	void initRenderData();
 	void DrawUIImage(ComponentRectTransform* rect, math::float4& color, uint texture, math::float2& mask, float rotation = 0.0f);
-	void DrawUILabel(std::vector<ComponentLabel::LabelLetter>* word_toDraw, uint rectFrom, math::float4& color);
+	void DrawUILabel(void* bufferWord, uint sizeBuffer, uint wordSize, std::vector<uint>* texturesWord, math::float4& color);
 
 	void SetRectToShader(ComponentRectTransform* rect, int rFrom = -1, math::float3* cornersLetter = nullptr);
 
@@ -97,6 +97,7 @@ private:
 	uint reference_vertex;
 
 	uint ui_shader = 0;
+	uint uiLabel_shader = 0;
 
 	bool uiMode = true;
 	
@@ -105,7 +106,7 @@ private:
 	bool depthTest, cullFace, lighting, blend;
 
 	//uniform buffer
-	uint uboTestUI = 0;
+	uint uboUI = 0;
 	struct uiShader_data_t
 	{
 		int useMask;
@@ -120,6 +121,10 @@ private:
 		float bottomRight[3];
 		float tofsetfloat4;
 	} uiShader_data;
+
+	//shader storage buffer onject
+	uint ssboLabel;
+	uint maxBufferLabelStorage = 16348;//16kb
 
 private:
 	bool MouseInScreen();

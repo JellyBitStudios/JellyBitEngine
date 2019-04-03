@@ -147,8 +147,23 @@ math::float2 ComponentCanvasRenderer::ToUIRend::GetMaskValues()
 		return { -1.0f, -1.0f };
 }
 
-std::vector<ComponentLabel::LabelLetter>* ComponentCanvasRenderer::ToUIRend::GetWord()
+void * ComponentCanvasRenderer::ToUIRend::GetBufferWord()
 {
 	isRendered_flag = true;
-	return ((ComponentLabel*)cmp)->GetLetterQueue();
+	return ((ComponentLabel*)cmp)->GetBuffer();
+}
+
+uint ComponentCanvasRenderer::ToUIRend::GetBufferSize() const
+{
+	return ((ComponentLabel*)cmp)->GetBufferSize();
+}
+
+uint ComponentCanvasRenderer::ToUIRend::GetWordSize() const
+{
+	return ((ComponentLabel*)cmp)->GetWordSize();
+}
+
+std::vector<uint>* ComponentCanvasRenderer::ToUIRend::texturesWord()
+{
+	return ((ComponentLabel*)cmp)->GetWordTextureIDs();
 }

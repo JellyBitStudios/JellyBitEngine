@@ -15,6 +15,7 @@
 #define CARTOON_FLOOR_SHADER_PROGRAM_UUID 3828343447
 #define DEFAULT_SHADER_PROGRAM_PARTICLE_UUID 2628722347
 #define DEFAULT_SHADER_PROGRAM_UI_UUID 1246832795 
+#define DEFAULT_SHADER_PROGRAM_UILABEL_UUID 1236832795 
 #define CUBEMAP_SHADER_PROGRAM_UUID 1676961097
 #define DEFAULT_MATERIAL_UUID 2168314292
 #define REPLACE_ME_TEXTURE_UUID 3462814329
@@ -67,8 +68,10 @@ public:
 	uint billboardShaderProgram;
 	uint particleShaderProgram;
 	uint UIVertexShaderObject;
+	uint UILabelVertexShaderObject;
 	uint UIFragmentShaderObject;
 	uint UIShaderProgram;
+	uint UILabelShaderProgram;
 	uint cartoonShaderProgram;
 	uint cartoonFloorProgram;
 

@@ -43,7 +43,10 @@ public:
 		uint GetTexture();
 		const char * GetText();
 		math::float2 GetMaskValues();
-		std::vector<ComponentLabel::LabelLetter>* GetWord();
+		void* GetBufferWord();
+		uint GetBufferSize()const;
+		uint GetWordSize()const;
+		std::vector<uint>* texturesWord();
 
 		bool isRendered() {
 			return isRendered_flag;

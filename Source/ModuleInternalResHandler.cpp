@@ -461,6 +461,17 @@ void ModuleInternalResHandler::CreateUIShaderProgram()
 		vObj->isValid = false;
 	UIVertexShaderObject = vObj->shaderObject;
 
+	ResourceData labelvertexData;
+	ResourceShaderObjectData vertexLabelShaderData;
+	labelvertexData.name = "UILabel vertex object";
+	labelvertexData.internal = true;
+	vertexLabelShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
+	vertexLabelShaderData.SetSource(uiLabelvShader, strlen(uiLabelvShader));
+	ResourceShaderObject* LvObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, labelvertexData, &vertexLabelShaderData);
+	if (!LvObj->Compile())
+		LvObj->isValid = false;
+	UILabelVertexShaderObject = LvObj->shaderObject;
+
 	ResourceData fragmentData;
 	ResourceShaderObjectData fragmentShaderData;
 	fragmentData.name = "UI fragment object";
@@ -483,6 +494,18 @@ void ModuleInternalResHandler::CreateUIShaderProgram()
 	if (!pShader->Link())
 		pShader->isValid = false;
 	UIShaderProgram = pShader->shaderProgram;
+
+	ResourceData LshaderData;
+	ResourceShaderProgramData LprogramShaderData;
+	LshaderData.name = "UILabel shader program";
+	LshaderData.internal = true;
+	LprogramShaderData.shaderObjectsUuids.push_back(LvObj->GetUuid());
+	LprogramShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
+	LprogramShaderData.shaderProgramType = ShaderProgramTypes::UI;
+	ResourceShaderProgram* LpShader = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, LshaderData, &LprogramShaderData, DEFAULT_SHADER_PROGRAM_UILABEL_UUID);
+	if (!LpShader->Link())
+		LpShader->isValid = false;
+	UILabelShaderProgram = LpShader->shaderProgram;
 }
 
 void ModuleInternalResHandler::CreateDefaultMaterial()

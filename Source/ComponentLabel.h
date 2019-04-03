@@ -25,6 +25,21 @@ struct Character;
 class ComponentLabel : public Component
 {
 public:
+	struct LetterBuffer {
+		float topLeft[3];
+		float offsetFloat1;
+		float topRight[3];
+		float offsetFloat2;
+		float bottomLeft[3];
+		float offsetFloat3;
+		float bottomRight[3];
+		float offsetFloat4;
+	};
+	struct LabelBuffer {
+		float aligment[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		float offsetFloat[4];
+		LetterBuffer* word = nullptr;
+	};
 	struct LabelLetter
 	{
 		math::float3 corners[4] = { math::float3::zero, math::float3::zero, math::float3::zero, math::float3::zero };
@@ -49,10 +64,12 @@ public:
 	void SetFinalText(const char* newText);
 	const char* GetFinalText() const;
 
-	std::vector<LabelLetter>* GetLetterQueue();
-
 	void SetColor(math::float4 newColor);
 	math::float4 GetColor() const;
+	void* GetBuffer();
+	uint GetBufferSize()const;
+	uint GetWordSize()const;
+	std::vector<uint>* GetWordTextureIDs();
 
 private:
 	uint GetInternalSerializationBytes();
@@ -71,6 +88,10 @@ private:
 	math::float4 color = math::float4::one;
 
 	std::vector<LabelLetter> labelWord;
+	std::vector<uint> textureWord;
+	LabelBuffer buffer;
+	uint last_word_size = 0;
+	uint buffer_size = 0;
 
 	bool needed_recalculate = false;
 };
