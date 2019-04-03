@@ -21,8 +21,13 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{746CC4C3-787F-4B0E-AA66-E388FE3FF4F6}</ProjectGuid>
     <RootNamespace>SDLGame</RootNamespace>
+<<<<<<< HEAD:Source/NekoEngine.vcxproj
     <ProjectName>NekoEngine</ProjectName>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+=======
+    <ProjectName>JellyBitEngine</ProjectName>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+>>>>>>> master:Source/JellyBitEngine.vcxproj
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -73,6 +78,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Game|Win32'">
     <IncludePath>$(ProjectDir)\Freetype\include;$(ProjectDir)..\Game\Mono\include\mono-2.0;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <OutDir>$(SolutionDir)/Debug</OutDir>
+    <IntDir>Debug</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(ProjectDir)\Freetype\include;$(ProjectDir)..\Game\Mono\include\mono-2.0;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
@@ -80,6 +86,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Game_Release|Win32'">
     <IncludePath>$(ProjectDir)\Freetype\include;$(ProjectDir)..\Game\Mono\include\mono-2.0;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <OutDir>$(SolutionDir)/Release</OutDir>
+    <IntDir>Release</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
