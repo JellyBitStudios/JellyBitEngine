@@ -34,7 +34,7 @@ void ModuleTrails::Draw()
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 #endif // !GAMEMODE
 
-	for (std::list<ComponentTrail*>::iterator trail = trails.begin; trail != trails.end(); ++trail)
+	for (std::list<ComponentTrail*>::iterator trail = trails.begin(); trail != trails.end(); ++trail)
 	{
 		if ((*trail)->trailVertex.empty())
 		{
