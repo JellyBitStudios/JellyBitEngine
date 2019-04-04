@@ -200,7 +200,7 @@ bool ResourcePrefab::UpdateFromMeta()
 bool ResourcePrefab::UpdateRoot()
 {
 	if (prefabData.root)
-	{
+	{			
 		UnloadFromMemory();
 		LoadInMemory();
 	}
@@ -245,6 +245,58 @@ bool ResourcePrefab::UnloadFromMemory()
 		prefabData.root->DestroyTemplate();
 		prefabData.root = nullptr;
 	}
-
 	return true;
+}
+
+void ResourcePrefab::Save()
+{
+	if (prefabData.root)
+	{
+		GameObject* root = prefabData.root;
+
+		saveBytes = root->GetSerializationBytes();
+		saveBuffer = new char[saveBytes];
+
+		char* cursor = saveBuffer;
+		root->OnSave(cursor);
+	}
+}
+
+void ResourcePrefab::Load()
+{
+	if (prefabData.root && saveBuffer)
+	{
+		GameObject* root = prefabData.root;
+		root->DestroyTemplate();
+
+		root = prefabData.root = new GameObject("root", nullptr);
+
+		char* cursor = saveBuffer;
+		root->OnLoad(cursor, false);
+
+		System_Event event;
+		event.type = System_Event_Type::LoadFinished;
+		root->OnSystemEvent(event);
+
+		delete[] saveBuffer;
+		saveBuffer = nullptr;
+		saveBytes = 0u;
+	}
+}
+
+void ResourcePrefab::OnSystemEvent(System_Event event)
+{
+	switch (event.type)
+	{
+		case System_Event_Type::ScriptingDomainReloaded:
+		case System_Event_Type::Stop:
+		{
+			if (prefabData.root)
+			{
+				prefabData.root->OnSystemEvent(event);
+			}
+			break;
+		}
+	}
+
 }

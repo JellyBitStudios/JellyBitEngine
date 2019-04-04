@@ -357,8 +357,6 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 	break;
 
 	// Prefabs events
-	case System_Event_Type::ScriptingDomainReloaded:
-	case System_Event_Type::Stop:
 	case System_Event_Type::LoadScene:
 	{
 		for (auto res = resources.begin(); res != resources.end(); ++res)
@@ -366,7 +364,32 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			if (res->second->GetType() == ResourceTypes::PrefabResource)
 			{
 				ResourcePrefab* prefab = (ResourcePrefab*)res->second;
-				prefab->UpdateRoot();
+				prefab->Save();
+			}
+		}
+		break;
+	}
+	case System_Event_Type::ScriptingDomainReloaded:
+	case System_Event_Type::Stop:
+	{
+		for (auto res = resources.begin(); res != resources.end(); ++res)
+		{
+			if (res->second->GetType() == ResourceTypes::PrefabResource)
+			{
+				ResourcePrefab* prefab = (ResourcePrefab*)res->second;
+				prefab->OnSystemEvent(event);
+			}
+		}
+		break;
+	}
+	case System_Event_Type::Play:
+	{
+		for (auto res = resources.begin(); res != resources.end(); ++res)
+		{
+			if (res->second->GetType() == ResourceTypes::PrefabResource)
+			{
+				ResourcePrefab* prefab = (ResourcePrefab*)res->second;
+				prefab->Save();
 			}
 		}
 		break;
@@ -391,6 +414,15 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			ResourceAvatar* avatar = (ResourceAvatar*)avatars[i];
 			avatar->ClearSkeletonAndBones();
 			avatar->CreateSkeletonAndAddBones();
+		}
+
+		for (auto res = resources.begin(); res != resources.end(); ++res)
+		{
+			if (res->second->GetType() == ResourceTypes::PrefabResource)
+			{
+				ResourcePrefab* prefab = (ResourcePrefab*)res->second;
+				prefab->Load();
+			}
 		}
 	}
 	break;
