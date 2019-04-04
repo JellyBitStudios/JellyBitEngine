@@ -61,6 +61,15 @@ bool PanelHierarchy::Draw()
 				go->AddComponent(ComponentTypes::MeshComponent);
 				go->cmp_mesh->SetResource(App->resHandler->cube);
 				SELECT(go);
+
+				System_Event newEvent;
+				newEvent.goEvent.type = System_Event_Type::CalculateBBoxes;
+				newEvent.goEvent.gameObject = go;
+				App->PushSystemEvent(newEvent);
+
+				newEvent.goEvent.type = System_Event_Type::RecalculateBBoxes;
+				newEvent.goEvent.gameObject = go;
+				App->PushSystemEvent(newEvent);
 			}
 			if (ImGui::Selectable("Create Plane"))
 			{
@@ -68,6 +77,15 @@ bool PanelHierarchy::Draw()
 				go->AddComponent(ComponentTypes::MeshComponent);
 				go->cmp_mesh->SetResource(App->resHandler->plane);
 				SELECT(go);
+
+				System_Event newEvent;
+				newEvent.goEvent.type = System_Event_Type::CalculateBBoxes;
+				newEvent.goEvent.gameObject = go;
+				App->PushSystemEvent(newEvent);
+
+				newEvent.goEvent.type = System_Event_Type::RecalculateBBoxes;
+				newEvent.goEvent.gameObject = go;
+				App->PushSystemEvent(newEvent);
 			}
 			if (ImGui::Selectable("Create Canvas"))
 			{
@@ -213,6 +231,15 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 				go->AddComponent(ComponentTypes::MeshComponent);
 				go->cmp_mesh->SetResource(App->resHandler->cube);
 				ImGui::CloseCurrentPopup();
+
+				System_Event newEvent;
+				newEvent.goEvent.type = System_Event_Type::CalculateBBoxes;
+				newEvent.goEvent.gameObject = go;
+				App->PushSystemEvent(newEvent);
+
+				newEvent.goEvent.type = System_Event_Type::RecalculateBBoxes;
+				newEvent.goEvent.gameObject = go;
+				App->PushSystemEvent(newEvent);
 			}
 			if (ImGui::Selectable("Create Canvas"))
 			{

@@ -28,6 +28,7 @@ public:
 
 	// Gets
 	physx::PxSphereGeometry GetSphereGeometry() const;
+	inline float GetRadius() { return radius; }
 
 private:
 

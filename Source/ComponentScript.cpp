@@ -646,7 +646,7 @@ void ComponentScript::OnCollisionExit(Collision& collision)
 			void* params[1];
 			params[0] = collisionOBJ;
 
-			mono_runtime_invoke(scriptRes->OnCollisionExitMethod, GetMonoComponent(), NULL, &exc);
+			mono_runtime_invoke(scriptRes->OnCollisionExitMethod, GetMonoComponent(), params, &exc);
 			if (exc)
 			{
 				System_Event event;
@@ -844,7 +844,7 @@ void ComponentScript::OnUniqueEditor()
 		drawingPos = { drawingPos.x - 10, drawingPos.y };
 		ImGui::SetCursorScreenPos(drawingPos);
 
-		uint buttonWidth = 2 * ImGui::GetWindowWidth() / 3;
+		float buttonWidth = 2 * ImGui::GetWindowWidth() / 3;
 		ImGui::ButtonEx("##csFile", { (float)buttonWidth, 15 }, ImGuiButtonFlags_::ImGuiButtonFlags_Disabled);
 
 		if (ImGui::IsItemHovered())
@@ -875,10 +875,10 @@ void ComponentScript::OnUniqueEditor()
 
 		ImVec2 textSize = ImGui::CalcTextSize(originalText.data());
 
-		if (textSize.x > buttonWidth - 5)
+		if (textSize.x > buttonWidth)
 		{
-			uint maxTextLenght = originalText.length() * (buttonWidth - 5) / textSize.x;
-			clampedText = originalText.substr(0, maxTextLenght - 5);
+			float maxTextLenght = (originalText.length() * (buttonWidth)) / textSize.x;
+			clampedText = originalText.substr(0, maxTextLenght - 7);
 			clampedText.append("(...)");
 		}
 		else
@@ -1285,11 +1285,13 @@ void ComponentScript::OnUniqueEditor()
 							if (!destroyed)
 							{
 								GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
-
-								if (gameObject->prefab)
-									text = gameObject->GetName() + std::string(" (Prefab)");
-								else
-									text = gameObject->GetName() + std::string(" (GameObject)");
+								if (gameObject)
+								{
+									if (gameObject->prefab)
+										text = gameObject->GetName() + std::string(" (Prefab)");
+									else
+										text = gameObject->GetName() + std::string(" (GameObject)");
+								}
 							}
 							else
 							{

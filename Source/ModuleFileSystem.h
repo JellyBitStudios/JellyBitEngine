@@ -343,6 +343,8 @@ public:
 	//GenerateBuild  methods
 	void RecursiveBuild(const Directory& dir, char* toPath, bool meta = false, bool inZIP = false);
 
+	std::string PathToWindowsNotation(std::string path);
+
 public:
 	Directory rootDir;
 
