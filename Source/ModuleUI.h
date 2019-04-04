@@ -75,7 +75,7 @@ private:
 
 	void initRenderData();
 	void DrawUIImage(ComponentRectTransform* rect, math::float4& color, uint texture, math::float2& mask, float rotation = 0.0f);
-	void DrawUILabel(void* bufferWord, uint sizeBuffer, uint wordSize, std::vector<uint>* texturesWord, math::float4& color);
+	void DrawUILabel(signed char* bufferWord, uint sizeBuffer, uint wordSize, std::vector<uint>* texturesWord, math::float4& color);
 
 	void SetRectToShader(ComponentRectTransform* rect, int rFrom = -1, math::float3* cornersLetter = nullptr);
 
@@ -92,7 +92,6 @@ public:
 private:
 	uint uiWorkSpace[4];
 	uint ui_size_draw[4];
-
 	//math::float4x4 orthonormalMatrix = math::float4x4::identity;
 	uint reference_vertex;
 

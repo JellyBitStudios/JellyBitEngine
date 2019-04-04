@@ -380,52 +380,49 @@
 //Label
 #define uiLabelvShader 																	\
 "#version 430 core\n" 																	\
-"#extension GL_ARB_shader_storage_buffer_object : require\n" 							\
+"#extension GL_ARB_shader_storage_buffer_object : enable\n" 							\
 "layout(location = 0) in vec2 vertex; // <vec2 position, vec2 texCoords>\n" 			\
 "layout(location = 1) in vec2 texture_coords; // <vec2 position, vec2 texCoords>\n" 	\
 "out vec2 TexCoords;\n"																	\
 "uniform int isScreen;\n" 																\
 "uniform float letter_index;\n" 														\
 "uniform mat4 mvp_matrix;\n" 															\
-"\n"																					\
-"struct Letter {\n"																		\
-"	vec4 topLeft;\n"																	\
-"	vec4 topRight;\n"																	\
-"	vec4 bottomLeft;\n"																	\
-"	vec4 bottomRight;\n"																\
-"};\n"																					\
+"uniform vec4 aligment;\n" 																\
 "\n"																					\
 "layout (std430, binding = 2) buffer UIWord {\n"										\
-"	vec4 aligment;\n"																	\
-"	vec4 lul;\n"																		\
-"	Letter word[];\n"																	\
-"};\n"																					\
+"	vec4 corners[];\n"																	\
+"	//0 vec4 topLeft;\n"																\
+"	//1 vec4 topRight;\n"																\
+"	//2 vec4 bottomLeft;\n"																\
+"	//3 vec4 bottomRight;\n"															\
+"	//indexCorner + indexarray;\n"														\
+"};\n"																			\
 "\n"																					\
 "void main()\n" 																		\
 "{\n" 																					\
 "	highp int index = int(letter_index);" 												\
-"	vec4 position = word[index].topRight;\n" 											\
+"	vec4 position = corners[index + 1];\n" 											\
 "	if (vertex.x > 0.0 && vertex.y > 0.0)\n" 											\
 "	{\n" 																				\
-"		position = word[index].topRight;\n" 											\
+"		position = corners[index + 1];\n" 											\
 "		if (isScreen == 0)\n" 															\
 "			TexCoords = vec2(0.0, 0.0);\n" 												\
 "	}"																					\
 "	else if (vertex.x > 0.0 && vertex.y < 0.0)\n" 										\
 "	{\n" 																				\
-"		position = word[index].bottomRight;\n" 											\
+"		position = corners[index + 3];\n" 											\
 "		if (isScreen == 0)\n" 															\
 "			TexCoords = vec2(0.0,1.0);\n" 												\
 "	}"																					\
 "	else if (vertex.x < 0.0 && vertex.y > 0.0)\n" 										\
 "	{\n" 																				\
-"		position = word[index].topLeft;\n" 												\
+"		position = corners[index];\n" 												\
 "		if (isScreen == 0)\n" 															\
 "			TexCoords = vec2(1.0,0.0);\n" 												\
 "	}"																					\
 "	else if (vertex.x < 0.0 && vertex.y < 0.0)\n" 										\
 "	{\n" 																				\
-"		position = word[index].bottomLeft;\n" 											\
+"		position = corners[index + 2];\n" 											\
 "		if (isScreen == 0)\n" 															\
 "			TexCoords = vec2(1.0,1.0);\n" 												\
 "	}"																					\

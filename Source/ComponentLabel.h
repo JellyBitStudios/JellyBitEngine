@@ -25,17 +25,6 @@ struct Character;
 class ComponentLabel : public Component
 {
 public:
-	struct LetterBuffer {
-		float topLeft[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-		float topRight[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-		float bottomLeft[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-		float bottomRight[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	};
-	struct LabelBuffer {
-		float aligment[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		float offsetFloat[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		LetterBuffer* word = nullptr;
-	};
 	struct LabelLetter
 	{
 		math::float3 corners[4] = { math::float3::zero, math::float3::zero, math::float3::zero, math::float3::zero };
@@ -62,7 +51,7 @@ public:
 
 	void SetColor(math::float4 newColor);
 	math::float4 GetColor() const;
-	void* GetBuffer();
+	signed char* GetBuffer();
 	uint GetBufferSize()const;
 	uint GetWordSize()const;
 	std::vector<uint>* GetWordTextureIDs();
@@ -85,7 +74,7 @@ private:
 
 	std::vector<LabelLetter> labelWord;
 	std::vector<uint> textureWord;
-	LabelBuffer buffer;
+	signed char* buffer = nullptr;
 	uint last_word_size = 0;
 	uint buffer_size = 0;
 

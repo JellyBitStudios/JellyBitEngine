@@ -348,7 +348,7 @@ void ModuleUI::DrawUIImage(ComponentRectTransform * rect, math::float4& color, u
 
 }
 
-void ModuleUI::DrawUILabel(void* bufferWord, uint sizeBuffer, uint wordSize, std::vector<uint>* texturesWord, math::float4& color)
+void ModuleUI::DrawUILabel(GLbyte* bufferWord, uint sizeBuffer, uint wordSize, std::vector<uint>* texturesWord, math::float4& color)
 {
 	use(uiLabel_shader);
 	setBool(uiLabel_shader, "isLabel", true);

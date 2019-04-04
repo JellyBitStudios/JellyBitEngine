@@ -135,18 +135,28 @@ void ComponentLabel::Update()
 			{
 				if (labelWord.size() != last_word_size)
 				{
-					if (buffer.word)
-						RELEASE_ARRAY(buffer.word);
-					buffer.word = new LetterBuffer[labelWord.size()];
+					buffer_size = labelWord.size() * sizeof(float) * 16;
+					if (buffer)
+						RELEASE_ARRAY(buffer);
+					buffer = new GLbyte[buffer_size];
 				}
-				buffer_size = sizeof(float) * 8;
+				GLbyte* cursor = buffer;
+				size_t bytes = sizeof(float) * 3;
+				float value4 = 1.0f;
 				for (uint i = 0; i < labelWord.size(); i++)
 				{
-					memcpy(buffer.word[i].topLeft, labelWord[i].corners[ComponentRectTransform::Rect::RTOPLEFT].ptr(), sizeof(float) * 3);
-					memcpy(buffer.word[i].topRight, labelWord[i].corners[ComponentRectTransform::Rect::RTOPRIGHT].ptr(), sizeof(float) * 3);
-					memcpy(buffer.word[i].bottomLeft, labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMLEFT].ptr(), sizeof(float) * 3);
-					memcpy(buffer.word[i].bottomRight, labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMRIGHT].ptr(), sizeof(float) * 3);
-					buffer_size += sizeof(float) * 16;
+					memcpy(cursor, labelWord[i].corners[ComponentRectTransform::Rect::RTOPLEFT].ptr(), sizeof(float) * 3);
+					cursor += bytes;
+					memcpy(cursor++, &value4, sizeof(float));
+					memcpy(cursor, labelWord[i].corners[ComponentRectTransform::Rect::RTOPRIGHT].ptr(), sizeof(float) * 3);
+					cursor += bytes;
+					memcpy(cursor++, &value4, sizeof(float));
+					memcpy(cursor, labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMLEFT].ptr(), sizeof(float) * 3);
+					cursor += bytes;
+					memcpy(cursor++, &value4, sizeof(float));
+					memcpy(cursor, labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMRIGHT].ptr(), sizeof(float) * 3);
+					cursor += bytes;
+					memcpy(cursor++, &value4, sizeof(float));
 				}
 				last_word_size = labelWord.size();
 			}
@@ -358,9 +368,9 @@ math::float4 ComponentLabel::GetColor() const
 	return color;
 }
 
-void* ComponentLabel::GetBuffer()
+GLbyte* ComponentLabel::GetBuffer()
 {
-	return &buffer;
+	return buffer;
 }
 
 uint ComponentLabel::GetBufferSize() const
