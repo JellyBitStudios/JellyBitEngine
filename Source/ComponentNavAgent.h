@@ -36,6 +36,7 @@ public:
 	unsigned int params = 0;
 	float separationWeight = 2.0f;
 	int avoidanceQuality = 3;
+	float stopAtLength = 0.3f;
 
 	int index = -1;
 };

@@ -44,7 +44,7 @@ public class AlitaController : JellyScript
     public override void Awake()
     {
         m_agent = gameObject.GetComponent<NavMeshAgent>();
-        //animator = gameObject.GetComponent<Animator>();
+        m_animator = gameObject.childs[0].GetComponent<Animator>();
         UseIdle();
         //InitAlita();
         EventsManager.Call.StartListening("Target Dead", this, "Listening");
@@ -105,7 +105,7 @@ public class AlitaController : JellyScript
                 // if (angle > threshold?)
                 transform.rotation = Quaternion.Rotate(transform.up, (float)angle * Time.deltaTime * AlitaCharacter.attackRotConst) * transform.rotation;
 
-                if (m_animator.GetCurrentFrame() == 2) // TODO: swap for last frame method...
+                if (m_animator.AnimationFinished())
                     UseAttacking(m_currentAttack);
 
                 // IF ENEMY IS DEAD
@@ -157,14 +157,14 @@ public class AlitaController : JellyScript
         newEvent.type = Event_Type.None;
         EventsManager.Call.PushEvent(newEvent);
         m_state = AlitaStates.Walking;
-        m_animator.PlayAnimation("walk_animation_alita");
+        m_animator.PlayAnimation("anim_run_alita_fist");
         Debug.Log("Walking");
     }
 
     void UseWalkingToEnemy()
     {
         m_state = AlitaStates.WalkingToEnemy;
-        m_animator.PlayAnimation("walk_animation_alita");
+        m_animator.PlayAnimation("anim_run_alita_fist");
         Debug.Log("Walking to enemy");
     }
 
@@ -183,7 +183,7 @@ public class AlitaController : JellyScript
         }
         else
         {
-            m_animator.PlayAnimation("firstAttack_animation_alita");
+            m_animator.PlayAnimation("anim_basic_attack_alita_fist");
             current = CurrentAttack.FirstAttack;
         }
         Debug.Log("Fightning");
