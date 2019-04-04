@@ -1,6 +1,8 @@
 #include "ScriptingModule.h"
 #include "ComponentScript.h"
 #include "ResourceScript.h"
+#include "ResourcePrefab.h"
+
 #include "ComponentTransform.h"
 #include "ComponentNavAgent.h"
 #include "ComponentAnimator.h"
@@ -794,9 +796,34 @@ std::string ScriptingModule::clearSpaces(std::string& scriptName)
 
 void ScriptingModule::ReInstance()
 {
+	//Reinstance scripts
 	for (int i = 0; i < scripts.size(); ++i)
 	{	
 		scripts[i]->InstanceClass();
+	}
+
+	//Reinstance scripts inside prefabs
+	std::vector<Resource*> prefabResources = App->res->GetResourcesByType(ResourceTypes::PrefabResource);
+	for (Resource* resource : prefabResources)
+	{
+		ResourcePrefab* prefab = (ResourcePrefab*)resource;
+
+		GameObject* root = prefab->GetRoot();
+		if (root)
+		{
+			std::vector<GameObject*> gameObjects;
+			root->GetChildrenVector(gameObjects);
+
+			for (GameObject* go : gameObjects)
+			{
+				std::vector<Component*> components = go->GetComponents(ComponentTypes::ScriptComponent);
+				for (Component* component : components)
+				{
+					ComponentScript* script = (ComponentScript*)component;
+					script->InstanceClass();
+				}
+			}
+		}
 	}
 }
 
@@ -983,17 +1010,67 @@ void ScriptingModule::FixedUpdate()
 
 void ScriptingModule::TemporalSave()
 {
+	//Temporal save for scripts
 	for (int i = 0; i < scripts.size(); ++i)
 	{
 		scripts[i]->TemporalSave();
+	}
+
+	//Temporal save for scripts inside prefabs
+	std::vector<Resource*> prefabResources = App->res->GetResourcesByType(ResourceTypes::PrefabResource);
+	for (Resource* resource : prefabResources)
+	{
+		ResourcePrefab* prefab = (ResourcePrefab*)resource;
+
+		GameObject* root = prefab->GetRoot();
+		if (root)
+		{
+			std::vector<GameObject*> gameObjects;
+			root->GetChildrenVector(gameObjects);
+
+			for (GameObject* go : gameObjects)
+			{
+				std::vector<Component*> components = go->GetComponents(ComponentTypes::ScriptComponent);
+				for (Component* component : components)
+				{
+					ComponentScript* script = (ComponentScript*)component;
+					script->TemporalSave();
+				}
+			}
+		}
 	}
 }
 
 void ScriptingModule::TemporalLoad()
 {
+	//Temporal load for scripts
 	for (int i = 0; i < scripts.size(); ++i)
 	{
 		scripts[i]->TemporalLoad();
+	}
+
+	//Temporal load for scripts inside prefabs
+	std::vector<Resource*> prefabResources = App->res->GetResourcesByType(ResourceTypes::PrefabResource);
+	for (Resource* resource : prefabResources)
+	{
+		ResourcePrefab* prefab = (ResourcePrefab*)resource;
+
+		GameObject* root = prefab->GetRoot();
+		if (root)
+		{
+			std::vector<GameObject*> gameObjects;
+			root->GetChildrenVector(gameObjects);
+
+			for (GameObject* go : gameObjects)
+			{
+				std::vector<Component*> components = go->GetComponents(ComponentTypes::ScriptComponent);
+				for (Component* component : components)
+				{
+					ComponentScript* script = (ComponentScript*)component;
+					script->TemporalLoad();
+				}
+			}
+		}
 	}
 }
 
