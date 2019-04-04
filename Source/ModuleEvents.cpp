@@ -27,6 +27,7 @@
 #include "ComponentButton.h"
 #include "ComponentLabel.h"
 #include "ComponentAudioListener.h"
+#include "ComponentTrail.h"
 
 #include "ResourceScene.h"
 #include "ResourceScript.h"
