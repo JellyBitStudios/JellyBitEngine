@@ -36,13 +36,17 @@ ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType
 
 ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::LabelComponent)
 {
+	color = componentLabel.color;
+	labelWord = componentLabel.labelWord;
+	finalText = componentLabel.finalText;
+	fontUuid = componentLabel.fontUuid;
+	size = componentLabel.size;
+	labelWord = componentLabel.labelWord;
+	textureWord = componentLabel.textureWord;
+
 	if (includeComponents)
-	{
-		color = componentLabel.color;
-		labelWord = componentLabel.labelWord;
-		finalText = componentLabel.finalText;
-		fontUuid = componentLabel.fontUuid;
-	}
+		if (!labelWord.empty())
+			FIllBuffer();
 }
 
 ComponentLabel::~ComponentLabel()
@@ -132,29 +136,7 @@ void ComponentLabel::Update()
 				}
 			}
 			if (!labelWord.empty())
-			{
-				if (labelWord.size() != last_word_size)
-				{
-					if (buffer)
-						RELEASE_ARRAY(buffer);
-					buffer_size = labelWord.size() * sizeof(float) * 16;
-					buffer = new char[buffer_size];
-				}
-				char* cursor = buffer;
-				size_t bytes = sizeof(float) * 4;
-				for (uint i = 0; i < labelWord.size(); i++)
-				{
-					memcpy(cursor, &labelWord[i].corners[ComponentRectTransform::Rect::RTOPLEFT], bytes);
-					cursor += bytes;
-					memcpy(cursor, &labelWord[i].corners[ComponentRectTransform::Rect::RTOPRIGHT], bytes);
-					cursor += bytes;
-					memcpy(cursor, &labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMLEFT], bytes);
-					cursor += bytes;
-					memcpy(cursor, &labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMRIGHT], bytes);
-					cursor += bytes;
-				}
-				last_word_size = labelWord.size();
-			}
+				FIllBuffer();
 			else
 				last_word_size = 0;
 		}
@@ -251,6 +233,8 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 	memcpy((void*)finalText.c_str(), cursor, bytes);
 	finalText.resize(nameLenght);
 	cursor += bytes;
+
+	needed_recalculate = true;
 }
 
 void ComponentLabel::OnUniqueEditor()
@@ -345,6 +329,31 @@ void ComponentLabel::DragDropFont()
 	ImGui::SetCursorScreenPos(cursorPos);
 	ImGui::Text(clampedText.data());
 #endif
+}
+
+void ComponentLabel::FIllBuffer()
+{
+	if (labelWord.size() != last_word_size)
+	{
+		if (buffer)
+			RELEASE_ARRAY(buffer);
+		buffer_size = labelWord.size() * sizeof(float) * 16;
+		buffer = new char[buffer_size];
+	}
+	char* cursor = buffer;
+	size_t bytes = sizeof(float) * 4;
+	for (uint i = 0; i < labelWord.size(); i++)
+	{
+		memcpy(cursor, &labelWord[i].corners[ComponentRectTransform::Rect::RTOPLEFT], bytes);
+		cursor += bytes;
+		memcpy(cursor, &labelWord[i].corners[ComponentRectTransform::Rect::RTOPRIGHT], bytes);
+		cursor += bytes;
+		memcpy(cursor, &labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMLEFT], bytes);
+		cursor += bytes;
+		memcpy(cursor, &labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMRIGHT], bytes);
+		cursor += bytes;
+	}
+	last_word_size = labelWord.size();
 }
 
 void ComponentLabel::SetFinalText(const char * newText)
