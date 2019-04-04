@@ -115,15 +115,13 @@ void ComponentPlaneCollider::OnInternalLoad(char*& cursor)
 
 	size_t bytes = sizeof(math::float3);
 	memcpy(&normal, cursor, bytes);
+	SetNormal(normal);
 	cursor += bytes;
 
 	bytes = sizeof(float);
 	memcpy(&distance, cursor, bytes);
+	SetDistance(distance);
 	cursor += bytes;
-
-	// -----
-
-	EncloseGeometry();
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -167,9 +165,11 @@ void ComponentPlaneCollider::SetNormal(const math::float3& normal)
 
 	this->normal = normal;
 
-	physx::PxTransform relativePose = physx::PxTransformFromPlaneEquation(physx::PxPlane(normal.x, normal.y, normal.z, distance));
 	if (gShape != nullptr)
+	{
+		physx::PxTransform relativePose = physx::PxTransformFromPlaneEquation(physx::PxPlane(normal.x, normal.y, normal.z, distance));
 		gShape->setLocalPose(relativePose);
+	}
 }
 
 void ComponentPlaneCollider::SetDistance(float distance)
@@ -182,9 +182,11 @@ void ComponentPlaneCollider::SetDistance(float distance)
 		return;
 	}
 
-	physx::PxTransform relativePose = physx::PxTransformFromPlaneEquation(physx::PxPlane(normal.x, normal.y, normal.z, distance));
 	if (gShape != nullptr)
+	{
+		physx::PxTransform relativePose = physx::PxTransformFromPlaneEquation(physx::PxPlane(normal.x, normal.y, normal.z, distance));
 		gShape->setLocalPose(relativePose);
+	}
 }
 
 // ----------------------------------------------------------------------------------------------------

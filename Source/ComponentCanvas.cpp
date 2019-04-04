@@ -110,41 +110,43 @@ void ComponentCanvas::Update()
 void ComponentCanvas::OnEditor()
 {
 #ifndef GAMEMODE
-	ImGui::Text("Canvas");
-	int current_type = int(type);
-	if (ImGui::Combo("Using", &current_type, CANVAS_TYPE_STR))
+	if (ImGui::CollapsingHeader("Canvas", ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		if ((CanvasType)current_type != type)
+		int current_type = int(type);
+		if (ImGui::Combo("Using", &current_type, CANVAS_TYPE_STR))
 		{
-			switch (type)
+			if ((CanvasType)current_type != type)
 			{
-			case ComponentCanvas::SCREEN:
-				App->ui->canvas_screen.remove(parent);
-				break;
-			case ComponentCanvas::WORLD_SCREEN:
-				App->ui->canvas_worldScreen.remove(parent);
-				break;
-			case ComponentCanvas::WORLD:
-				App->ui->canvas_world.remove(parent);
-				break;
+				switch (type)
+				{
+				case ComponentCanvas::SCREEN:
+					App->ui->canvas_screen.remove(parent);
+					break;
+				case ComponentCanvas::WORLD_SCREEN:
+					App->ui->canvas_worldScreen.remove(parent);
+					break;
+				case ComponentCanvas::WORLD:
+					App->ui->canvas_world.remove(parent);
+					break;
+				}
+				type = (CanvasType)current_type;
+				needed_change = true;
 			}
-			type = (CanvasType)current_type;
-			needed_change = true;
 		}
+		if (!needed_change)
+			if (parent->transform && type != CanvasType::SCREEN)
+				if (type == CanvasType::WORLD_SCREEN)
+				{
+					if (fakeGo->GetParent())
+						App->scene->OnGizmos(fakeGo);
+					transform->OnUniqueEditor();
+				}
+				else
+				{
+					App->scene->OnGizmos(parent);
+					parent->transform->OnUniqueEditor();
+				}
 	}
-	if(!needed_change)
-		if (parent->transform && type != CanvasType::SCREEN)
-			if (type == CanvasType::WORLD_SCREEN)
-			{
-				if (fakeGo->GetParent())
-					App->scene->OnGizmos(fakeGo);
-				transform->OnUniqueEditor();
-			}
-			else
-			{
-				App->scene->OnGizmos(parent);
-				parent->transform->OnUniqueEditor(); 
-			}
 #endif
 }
 

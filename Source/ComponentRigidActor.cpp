@@ -78,6 +78,7 @@ void ComponentRigidActor::OnInternalLoad(char*& cursor)
 {
 	size_t bytes = sizeof(bool);
 	memcpy(&useGravity, cursor, bytes);
+	SetUseGravity(useGravity);
 	cursor += bytes;
 
 	bytes = sizeof(RigidActorTypes);
@@ -95,36 +96,31 @@ void ComponentRigidActor::OnInternalLoad(char*& cursor)
 
 void ComponentRigidActor::UpdateShape(physx::PxShape* shape) const
 {
-	bool attach = true;
-
 	// Detach current shape
-	if (gActor)
+	if (gActor != nullptr)
 	{
+		bool attach = true;
+
 		uint nbShapes = gActor->getNbShapes();
 		if (nbShapes > 0)
 		{
 			physx::PxShape* gShape = nullptr;
 			gActor->getShapes(&gShape, 1);
 
-			if (gShape == shape && shape != nullptr)
-				attach = false;
+			if (gShape != nullptr)
+			{
+				if (gShape == shape)
+					attach = false;
+				else
+					gActor->detachShape(*gShape);
+			}
 			else
-				gActor->detachShape(*gShape);
+				attach = false;
 		}
-	}
 
-	// Attach current shape
-	if (shape == nullptr)
-	{
-		if (parent->boundingBox.IsFinite())
-			shape = App->physics->CreateShape(physx::PxBoxGeometry(parent->boundingBox.HalfSize().x, parent->boundingBox.HalfSize().y, parent->boundingBox.HalfSize().z), *App->physics->GetDefaultMaterial());
-		else
-			shape = App->physics->CreateShape(physx::PxBoxGeometry(PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE, PhysicsConstants::GEOMETRY_HALF_SIZE), *App->physics->GetDefaultMaterial());
-		//assert(shape != nullptr);
+		if (attach && shape != nullptr)
+			gActor->attachShape(*shape);
 	}
-
-	if (attach && gActor)
-		gActor->attachShape(*shape);
 }
 
 void ComponentRigidActor::ClearActor()
@@ -140,20 +136,23 @@ void ComponentRigidActor::ClearActor()
 void ComponentRigidActor::UpdateTransform(math::float4x4& globalMatrix) const
 {
 	assert(globalMatrix.IsFinite());
-	math::float3 position = math::float3::zero;
-	math::Quat rotation = math::Quat::identity;
-	math::float3 scale = math::float3::zero;
-	globalMatrix.Decompose(position, rotation, scale);
-
-	if (!position.IsFinite() || !rotation.IsFinite())
-	{
-		CONSOLE_LOG(LogTypes::Warning, "The rigid actor transform cannot be updated since the position or the rotation of the game object is infinite");
-		return;
-	}
 
 	if (gActor != nullptr)
+	{
+		math::float3 position = math::float3::zero;
+		math::Quat rotation = math::Quat::identity;
+		math::float3 scale = math::float3::zero;
+		globalMatrix.Decompose(position, rotation, scale);
+
+		if (!position.IsFinite() || !rotation.IsFinite())
+		{
+			CONSOLE_LOG(LogTypes::Warning, "The rigid actor transform cannot be updated since the position or the rotation of the game object is infinite");
+			return;
+		}
+
 		gActor->setGlobalPose(physx::PxTransform(physx::PxVec3(position.x, position.y, position.z),
 			physx::PxQuat(rotation.x, rotation.y, rotation.z, rotation.w)));
+	}
 }
 
 void ComponentRigidActor::UpdateGameObjectTransform() const

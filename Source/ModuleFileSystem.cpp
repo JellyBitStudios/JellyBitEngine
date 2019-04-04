@@ -246,7 +246,11 @@ void ModuleFileSystem::OnSystemEvent(System_Event event)
 					strcpy(destinationDir, DIR_ASSETS_TEXTURES);
 					break;
 				}
-
+				case ResourceTypes::FontResource:
+				{
+					strcpy(destinationDir, DIR_ASSETS_FONT);
+					break;
+				}
 				// TODO ADD NEW RESOURCES
 			}
 
@@ -1359,4 +1363,19 @@ void ModuleFileSystem::RecursiveBuild(const Directory& dir, char * toPath, bool 
 			meta = false;
 		}
 	}
+}
+
+std::string ModuleFileSystem::PathToWindowsNotation(std::string path)
+{
+	std::string ret = path;
+
+	uint pos = ret.find("/");
+	while (pos != std::string::npos)
+	{
+		ret.replace(pos, 1, "\\");
+
+		pos = ret.find("/");
+	}
+
+	return ret;
 }

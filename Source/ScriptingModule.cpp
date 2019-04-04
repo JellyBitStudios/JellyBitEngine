@@ -1,6 +1,8 @@
 #include "ScriptingModule.h"
 #include "ComponentScript.h"
 #include "ResourceScript.h"
+#include "ResourcePrefab.h"
+
 #include "ComponentTransform.h"
 #include "ComponentNavAgent.h"
 #include "ComponentAnimator.h"
@@ -8,10 +10,12 @@
 #include "ComponentRectTransform.h"
 #include "ComponentButton.h"
 #include "ComponentImage.h"
+#include "ComponentLabel.h"
 #include "ComponentAudioSource.h"
 #include "ComponentAudioListener.h"
 #include "ComponentRigidDynamic.h"
 #include "ComponentMaterial.h"
+#include "ComponentSphereCollider.h"
 
 #include "GameObject.h"
  
@@ -537,9 +541,14 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 		case ComponentTypes::BoxColliderComponent:
 		case ComponentTypes::CapsuleColliderComponent:
 		case ComponentTypes::PlaneColliderComponent:
-		case ComponentTypes::SphereColliderComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Collider"));
+			break;
+		}
+
+		case ComponentTypes::SphereColliderComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "SphereCollider"));
 			break;
 		}
 
@@ -572,6 +581,11 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 		case ComponentTypes::ImageComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine.UI", "Image"));
+			break;
+		}
+		case ComponentTypes::LabelComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine.UI", "Label"));
 			break;
 		}
 		case ComponentTypes::RigidDynamicComponent:
@@ -736,7 +750,10 @@ void ScriptingModule::IncludeCSFiles(pugi::xml_node& nodeToAppend, const Directo
 		if (extension != ".cs")
 			continue;
 
-		nodeToAppend.append_child("Compile").append_attribute("Include").set_value(std::string("Assets\\Scripts\\" + dir.files[i].name).data());
+		std::string path = dir.fullPath + "/" + dir.files[i].name;
+		path = App->fs->PathToWindowsNotation(path);
+
+		nodeToAppend.append_child("Compile").append_attribute("Include").set_value((path).data());
 	}
 
 	for (int i = 0; i < dir.directories.size(); ++i)
@@ -779,9 +796,34 @@ std::string ScriptingModule::clearSpaces(std::string& scriptName)
 
 void ScriptingModule::ReInstance()
 {
+	//Reinstance scripts
 	for (int i = 0; i < scripts.size(); ++i)
 	{	
 		scripts[i]->InstanceClass();
+	}
+
+	//Reinstance scripts inside prefabs
+	std::vector<Resource*> prefabResources = App->res->GetResourcesByType(ResourceTypes::PrefabResource);
+	for (Resource* resource : prefabResources)
+	{
+		ResourcePrefab* prefab = (ResourcePrefab*)resource;
+
+		GameObject* root = prefab->GetRoot();
+		if (root)
+		{
+			std::vector<GameObject*> gameObjects;
+			root->GetChildrenVector(gameObjects);
+
+			for (GameObject* go : gameObjects)
+			{
+				std::vector<Component*> components = go->GetComponents(ComponentTypes::ScriptComponent);
+				for (Component* component : components)
+				{
+					ComponentScript* script = (ComponentScript*)component;
+					script->InstanceClass();
+				}
+			}
+		}
 	}
 }
 
@@ -968,17 +1010,67 @@ void ScriptingModule::FixedUpdate()
 
 void ScriptingModule::TemporalSave()
 {
+	//Temporal save for scripts
 	for (int i = 0; i < scripts.size(); ++i)
 	{
 		scripts[i]->TemporalSave();
+	}
+
+	//Temporal save for scripts inside prefabs
+	std::vector<Resource*> prefabResources = App->res->GetResourcesByType(ResourceTypes::PrefabResource);
+	for (Resource* resource : prefabResources)
+	{
+		ResourcePrefab* prefab = (ResourcePrefab*)resource;
+
+		GameObject* root = prefab->GetRoot();
+		if (root)
+		{
+			std::vector<GameObject*> gameObjects;
+			root->GetChildrenVector(gameObjects);
+
+			for (GameObject* go : gameObjects)
+			{
+				std::vector<Component*> components = go->GetComponents(ComponentTypes::ScriptComponent);
+				for (Component* component : components)
+				{
+					ComponentScript* script = (ComponentScript*)component;
+					script->TemporalSave();
+				}
+			}
+		}
 	}
 }
 
 void ScriptingModule::TemporalLoad()
 {
+	//Temporal load for scripts
 	for (int i = 0; i < scripts.size(); ++i)
 	{
 		scripts[i]->TemporalLoad();
+	}
+
+	//Temporal load for scripts inside prefabs
+	std::vector<Resource*> prefabResources = App->res->GetResourcesByType(ResourceTypes::PrefabResource);
+	for (Resource* resource : prefabResources)
+	{
+		ResourcePrefab* prefab = (ResourcePrefab*)resource;
+
+		GameObject* root = prefab->GetRoot();
+		if (root)
+		{
+			std::vector<GameObject*> gameObjects;
+			root->GetChildrenVector(gameObjects);
+
+			for (GameObject* go : gameObjects)
+			{
+				std::vector<Component*> components = go->GetComponents(ComponentTypes::ScriptComponent);
+				for (Component* component : components)
+				{
+					ComponentScript* script = (ComponentScript*)component;
+					script->TemporalLoad();
+				}
+			}
+		}
 	}
 }
 
@@ -1789,6 +1881,19 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 
 		return App->scripting->MonoComponentFrom(comp);
 	}
+	else if (className == "Label")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::LabelComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
 	else if (className == "Rigidbody")
 	{
 		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
@@ -1855,6 +1960,45 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 
 		return App->scripting->MonoComponentFrom(comp);
 	}
+	else if (className == "Collider")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::BoxColliderComponent);
+
+		if (!comp)
+		{
+			comp = gameObject->GetComponent(ComponentTypes::SphereColliderComponent);
+			if (!comp)
+			{
+				comp = gameObject->GetComponent(ComponentTypes::CapsuleColliderComponent);
+				if (!comp)
+				{
+					comp = gameObject->GetComponent(ComponentTypes::PlaneColliderComponent);
+					if (!comp)
+						return nullptr;
+				}	
+			}
+		}
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
+	else if (className == "SphereCollider")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::SphereColliderComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);	
+	}
+
 	else
 	{
 		//Check if this monoObject is destroyed
@@ -1943,75 +2087,6 @@ uint LayerToBit(MonoString* layerName)
 	mono_free(layerCName);
 
 	return bits;
-}
-
-bool Raycast(MonoArray* origin, MonoArray* direction, MonoObject** hitInfo, float maxDistance, uint filterMask, SceneQueryFlags sceneQueryFlags)
-{
-	if (!origin || !direction)
-		return false;
-
-	math::float3 originCpp{mono_array_get(origin, float, 0), mono_array_get(origin, float, 1), mono_array_get(origin, float, 2)};
-	math::float3 directionCpp{mono_array_get(direction, float, 0), mono_array_get(direction, float, 1), mono_array_get(direction, float, 2)};
-
-	RaycastHit hitInfocpp;
-	bool ret = App->physics->Raycast(originCpp, directionCpp, hitInfocpp, maxDistance, filterMask, sceneQueryFlags);
-
-	if (ret)
-	{
-		//Create the HitInfo object
-		MonoClass* raycastHitClass = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "RaycastHit");
-		*hitInfo = mono_object_new(App->scripting->domain, raycastHitClass);
-		mono_runtime_object_init(*hitInfo);
-
-		//Setup the gameObject and collider fields
-		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "gameObject"), App->scripting->MonoObjectFrom(hitInfocpp.GetGameObject()));
-		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "collider"), App->scripting->MonoComponentFrom((Component*)hitInfocpp.GetCollider()));
-
-		//Setup the point field
-		MonoClass* Vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
-		MonoObject* pointObj = mono_object_new(App->scripting->domain, Vector3Class);
-		mono_runtime_object_init(pointObj);
-
-		math::float3 point = hitInfocpp.GetPoint();
-		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "_x"), &point.x);
-		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "_y"), &point.y);
-		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "_z"), &point.z);
-
-		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "point"), pointObj);
-
-		//Setup the normal field
-		MonoObject* normalObj = mono_object_new(App->scripting->domain, Vector3Class);
-		mono_runtime_object_init(normalObj);
-
-		math::float3 normal = hitInfocpp.GetNormal();
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "_x"), &normal.x);
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "_y"), &normal.y);
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "_z"), &normal.z);
-
-		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "normal"), normalObj);
-
-		//Setup the texCoord field
-		MonoClass* Vector2Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector2");
-		MonoObject* texCoordObj = mono_object_new(App->scripting->domain, Vector2Class);
-		mono_runtime_object_init(texCoordObj);
-
-		math::float2 texCoord = hitInfocpp.GetTexCoord();
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector2Class, "x"), &texCoord.x);
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector2Class, "y"), &texCoord.y);
-
-		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "texCoord"), texCoordObj);
-
-		//Setup the distance and the faceIndex fields
-		float distance = hitInfocpp.GetDistance();
-		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "distance"), &distance);
-
-		uint faceIndex = hitInfocpp.GetFaceIndex();
-		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "faceIndex"), &faceIndex);
-	}
-	else
-		*hitInfo = nullptr;
-
-	return ret;
 }
 
 void SetDestination(MonoObject* navMeshAgent, MonoArray* newDestination)
@@ -2182,43 +2257,6 @@ void NavAgentSetParams(MonoObject* compAgent, uint params)
 	}
 }
 
-bool OverlapSphere(float radius, MonoArray* center, MonoArray** overlapHit, uint filterMask, SceneQueryFlags sceneQueryFlags)
-{
-	if (!center)
-		return false;
-
-	math::float3 centercpp(mono_array_get(center, float, 0), mono_array_get(center, float, 1), mono_array_get(center, float, 2));
-
-	std::vector<OverlapHit> hits;
-	if (App->physics->OverlapSphere(radius, centercpp, hits, filterMask, sceneQueryFlags))
-	{
-		uint hitsCount = hits.size();
-
-		MonoClass* overlapClass = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "OverlapHit");
-
-		*overlapHit = mono_array_new(App->scripting->domain, overlapClass, hitsCount);
-
-		for (int i = 0; i < hitsCount; ++i)
-		{
-			MonoObject* hitCSharp = mono_object_new(App->scripting->domain, overlapClass);
-			mono_runtime_object_init(hitCSharp);
-
-			OverlapHit hitCpp = hits[i];
-			mono_field_set_value(hitCSharp, mono_class_get_field_from_name(overlapClass, "gameObject"), App->scripting->MonoObjectFrom(hitCpp.GetGameObject()));
-			mono_field_set_value(hitCSharp, mono_class_get_field_from_name(overlapClass, "collider"), App->scripting->MonoComponentFrom((Component*)hitCpp.GetCollider()));
-
-			uint faceIndex = hitCpp.GetFaceIndex();
-			mono_field_set_value(hitCSharp, mono_class_get_field_from_name(overlapClass, "faceIndex"), &faceIndex);
-
-			mono_array_setref(*overlapHit, i, hitCSharp);
-		}
-
-		return true;
-	}
-	else
-		return false;
-}
-
 void SetCompActive(MonoObject* monoComponent, bool active)
 {
 	Component* component = App->scripting->ComponentFrom(monoComponent);
@@ -2302,6 +2340,16 @@ int AnimatorGetCurrFrame(MonoObject* monoAnim)
 		return animator->GetCurrentAnimationFrame();
 	}
 	return -1;
+}
+
+bool AnimatorAnimationFinished(MonoObject* monoAnim)
+{
+	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(monoAnim);
+	if (animator)
+	{
+		return animator->AnimationFinished();
+	}
+	return false;
 }
 
 MonoString* AnimatorGetCurrName(MonoObject* monoAnim)
@@ -2462,6 +2510,65 @@ void ImageSetMask(MonoObject* monoImage)
 	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
 	if (image)
 		image->SetMask();
+}
+
+MonoString* LabelGetText(MonoObject* monoLabel)
+{
+	ComponentLabel* label = (ComponentLabel*)App->scripting->ComponentFrom(monoLabel);
+	if (label)
+		return mono_string_new(App->scripting->domain, label->GetFinalText());
+	return nullptr;
+}
+
+void LabelSetText(MonoObject* monoLabel, MonoString* newText)
+{
+	if (!newText)
+		return;
+
+	ComponentLabel* label = (ComponentLabel*)App->scripting->ComponentFrom(monoLabel);
+	if (label)
+	{
+		char* newTextcpp = mono_string_to_utf8(newText);
+
+		label->SetFinalText(newTextcpp);
+
+		mono_free(newTextcpp);
+	}
+}
+
+MonoArray* LabelGetColor(MonoObject* monoLabel)
+{
+	ComponentLabel* label = (ComponentLabel*)App->scripting->ComponentFrom(monoLabel);
+	if (label)
+	{
+		math::float4 color = label->GetColor();
+
+		MonoArray* colorCSharp = mono_array_new(App->scripting->domain, mono_get_single_class(), 4);
+		mono_array_set(colorCSharp, float, 0, color.x);
+		mono_array_set(colorCSharp, float, 1, color.y);
+		mono_array_set(colorCSharp, float, 2, color.z);
+		mono_array_set(colorCSharp, float, 3, color.w);
+
+		return colorCSharp;
+	}
+	return nullptr;
+}
+
+void LabelSetColor(MonoObject* monoLabel, MonoArray* newColorCSharp)
+{
+	if (!newColorCSharp)
+		return;
+
+	ComponentLabel* label = (ComponentLabel*)App->scripting->ComponentFrom(monoLabel);
+	if (label)
+	{
+		math::float4 newColor = 
+		{							mono_array_get(newColorCSharp, float, 0), mono_array_get(newColorCSharp, float, 1), 
+									mono_array_get(newColorCSharp, float, 2), mono_array_get(newColorCSharp, float, 3) 
+		};
+
+		label->SetColor(newColor);
+	}
 }
 
 void PlayerPrefsSave()
@@ -2941,6 +3048,121 @@ void RigidbodyClearTorque(MonoObject* monoComp)
 	rigidbody->ClearTorque();
 }
 
+bool OverlapSphere(float radius, MonoArray* center, MonoArray** overlapHit, uint filterMask, SceneQueryFlags sceneQueryFlags)
+{
+	if (!center)
+		return false;
+
+	math::float3 centercpp(mono_array_get(center, float, 0), mono_array_get(center, float, 1), mono_array_get(center, float, 2));
+
+	std::vector<OverlapHit> hits;
+	if (App->physics->OverlapSphere(radius, centercpp, hits, filterMask, sceneQueryFlags))
+	{
+		uint hitsCount = hits.size();
+
+		MonoClass* overlapClass = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "OverlapHit");
+
+		*overlapHit = mono_array_new(App->scripting->domain, overlapClass, hitsCount);
+
+		for (int i = 0; i < hitsCount; ++i)
+		{
+			MonoObject* hitCSharp = mono_object_new(App->scripting->domain, overlapClass);
+			mono_runtime_object_init(hitCSharp);
+
+			OverlapHit hitCpp = hits[i];
+			mono_field_set_value(hitCSharp, mono_class_get_field_from_name(overlapClass, "gameObject"), App->scripting->MonoObjectFrom(hitCpp.GetGameObject()));
+			mono_field_set_value(hitCSharp, mono_class_get_field_from_name(overlapClass, "collider"), App->scripting->MonoComponentFrom((Component*)hitCpp.GetCollider()));
+
+			uint faceIndex = hitCpp.GetFaceIndex();
+			mono_field_set_value(hitCSharp, mono_class_get_field_from_name(overlapClass, "faceIndex"), &faceIndex);
+
+			mono_array_setref(*overlapHit, i, hitCSharp);
+		}
+
+		return true;
+	}
+	else
+		return false;
+}
+
+bool Raycast(MonoArray* origin, MonoArray* direction, MonoObject** hitInfo, float maxDistance, uint filterMask, SceneQueryFlags sceneQueryFlags)
+{
+	if (!origin || !direction)
+		return false;
+
+	math::float3 originCpp{ mono_array_get(origin, float, 0), mono_array_get(origin, float, 1), mono_array_get(origin, float, 2) };
+	math::float3 directionCpp{ mono_array_get(direction, float, 0), mono_array_get(direction, float, 1), mono_array_get(direction, float, 2) };
+
+	RaycastHit hitInfocpp;
+	bool ret = App->physics->Raycast(originCpp, directionCpp, hitInfocpp, maxDistance, filterMask, sceneQueryFlags);
+
+	if (ret)
+	{
+		//Create the HitInfo object
+		MonoClass* raycastHitClass = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "RaycastHit");
+		*hitInfo = mono_object_new(App->scripting->domain, raycastHitClass);
+		mono_runtime_object_init(*hitInfo);
+
+		//Setup the gameObject and collider fields
+		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "gameObject"), App->scripting->MonoObjectFrom(hitInfocpp.GetGameObject()));
+		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "collider"), App->scripting->MonoComponentFrom((Component*)hitInfocpp.GetCollider()));
+
+		//Setup the point field
+		MonoClass* Vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
+		MonoObject* pointObj = mono_object_new(App->scripting->domain, Vector3Class);
+		mono_runtime_object_init(pointObj);
+
+		math::float3 point = hitInfocpp.GetPoint();
+		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "_x"), &point.x);
+		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "_y"), &point.y);
+		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "_z"), &point.z);
+
+		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "point"), pointObj);
+
+		//Setup the normal field
+		MonoObject* normalObj = mono_object_new(App->scripting->domain, Vector3Class);
+		mono_runtime_object_init(normalObj);
+
+		math::float3 normal = hitInfocpp.GetNormal();
+		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "_x"), &normal.x);
+		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "_y"), &normal.y);
+		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "_z"), &normal.z);
+
+		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "normal"), normalObj);
+
+		//Setup the texCoord field
+		MonoClass* Vector2Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector2");
+		MonoObject* texCoordObj = mono_object_new(App->scripting->domain, Vector2Class);
+		mono_runtime_object_init(texCoordObj);
+
+		math::float2 texCoord = hitInfocpp.GetTexCoord();
+		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector2Class, "x"), &texCoord.x);
+		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector2Class, "y"), &texCoord.y);
+
+		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "texCoord"), texCoordObj);
+
+		//Setup the distance and the faceIndex fields
+		float distance = hitInfocpp.GetDistance();
+		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "distance"), &distance);
+
+		uint faceIndex = hitInfocpp.GetFaceIndex();
+		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "faceIndex"), &faceIndex);
+	}
+	else
+		*hitInfo = nullptr;
+
+	return ret;
+}
+
+float ColliderSphereGetRadius(MonoObject* monoSphere)
+{
+	ComponentSphereCollider* sphere = (ComponentSphereCollider*)App->scripting->ComponentFrom(monoSphere);
+	if (sphere)
+	{
+		return sphere->GetRadius();
+	}
+}
+
 void MaterialSetResource(MonoObject* monoMaterial, MonoString* newMatName)
 {
 	if (!newMatName)
@@ -3035,19 +3257,27 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Camera::getMainCamera", (const void*)&GetGameCamera);
 	mono_add_internal_call("JellyBitEngine.Physics::_ScreenToRay", (const void*)&ScreenToRay);
 	mono_add_internal_call("JellyBitEngine.LayerMask::GetMaskBit", (const void*)&LayerToBit);
-	mono_add_internal_call("JellyBitEngine.Physics::_Raycast", (const void*)&Raycast);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::_SetDestination", (const void*)&SetDestination);
-	mono_add_internal_call("JellyBitEngine.Physics::_OverlapSphere", (const void*)&OverlapSphere);
 	mono_add_internal_call("JellyBitEngine.Component::SetActive", (const void*)&SetCompActive);
 
 	//Animator
 	mono_add_internal_call("JellyBitEngine.Animator::PlayAnimation", (const void*)&PlayAnimation);
 	mono_add_internal_call("JellyBitEngine.Animator::GetCurrentAnimation", (const void*)&AnimatorGetCurrName);
 	mono_add_internal_call("JellyBitEngine.Animator::GetCurrentFrame", (const void*)&AnimatorGetCurrFrame);
+	mono_add_internal_call("JellyBitEngine.Animator::AnimationFinished", (const void*)&AnimatorAnimationFinished);
 	
 	//Particle Emitter
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Play", (const void*)&ParticleEmitterPlay);
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Stop", (const void*)&ParticleEmitterStop);
+
+	//Physics
+	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddForce", (const void*)&RigidbodyAddForce);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddTorque", (const void*)&RigidbodyAddTorque);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearForce", (const void*)&RigidbodyClearForce);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearTorque", (const void*)&RigidbodyClearTorque);
+	mono_add_internal_call("JellyBitEngine.Physics::_OverlapSphere", (const void*)&OverlapSphere);
+	mono_add_internal_call("JellyBitEngine.Physics::_Raycast", (const void*)&Raycast);
+	mono_add_internal_call("JellyBitEngine.SphereCollider::GetRadius", (const void*)ColliderSphereGetRadius);
 
 	//UI
 	mono_add_internal_call("JellyBitEngine.UI.UI::UIHovered", (const void*)&UIHovered);
@@ -3062,6 +3292,10 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Image::GetResource", (const void*)&ImageGetResourceName);
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource", (const void*)&ImageSetResourceName);
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetMask", (const void*)&ImageSetMask);
+	mono_add_internal_call("JellyBitEngine.UI.Label::SetText", (const void*)&LabelSetText);
+	mono_add_internal_call("JellyBitEngine.UI.Label::GetText", (const void*)&LabelGetText);
+	mono_add_internal_call("JellyBitEngine.UI.Label::SetColor", (const void*)&LabelSetColor);
+	mono_add_internal_call("JellyBitEngine.UI.Label::GetColor", (const void*)&LabelGetColor);
 
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::GetNumber", (const void*)&PlayerPrefsGetNumber);
@@ -3121,11 +3355,6 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.AudioSource::PauseAudio", (const void*)&AudioSourcePauseAudio);
 	mono_add_internal_call("JellyBitEngine.AudioSource::ResumeAudio", (const void*)&AudioSourceResumeAudio);
 	mono_add_internal_call("JellyBitEngine.AudioSource::StopAudio", (const void*)&AudioSourceStopAudio);
-	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddForce", (const void*)&RigidbodyAddForce);
-	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddTorque", (const void*)&RigidbodyAddTorque);
-	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearForce", (const void*)&RigidbodyClearForce);
-	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearTorque", (const void*)&RigidbodyClearTorque);
-
 	//Material
 	mono_add_internal_call("JellyBitEngine.Material::SetResource", (const void*)&MaterialSetResource);
 

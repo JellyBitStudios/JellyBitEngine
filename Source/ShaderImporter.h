@@ -30,8 +30,7 @@ public:
 	
 	// ----------------------------------------------------------------------------------------------------
 
-	void SetBinaryFormats(int formats);
-	int GetBinaryFormats() const;
+	uint GetBinaryFormats() const;
 
 private:
 
@@ -40,10 +39,6 @@ private:
 	
 	bool LoadShaderObject(const void* buffer, uint size, ResourceShaderObjectData& outputShaderObjectData, uint& shaderObject) const;
 	bool LoadShaderProgram(const void* buffer, uint size, ResourceShaderProgramData& outputShaderProgramData, uint& shaderProgram) const;
-
-private:
-
-	int formats = 0;
 };
 
 #endif

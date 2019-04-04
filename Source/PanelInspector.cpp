@@ -200,7 +200,7 @@ void PanelInspector::ShowGameObjectInspector() const
 					ImGui::CloseCurrentPopup();
 				}
 			if (gameObject->cmp_label == nullptr)
-				if (ImGui::Selectable("Text UI")) {
+				if (ImGui::Selectable("Label UI")) {
 					gameObject->AddComponent(ComponentTypes::LabelComponent);
 					ImGui::CloseCurrentPopup();
 				}

@@ -118,6 +118,9 @@ struct dtCrowdAgent
 	/// True if the agent is active, false if the agent is in an unused slot in the agent pool.
 	bool active;
 
+	/// not original from detour
+	bool walking = false;
+
 	/// The type of mesh polygon the agent is traversing. (See: #CrowdAgentState)
 	unsigned char state;
 
