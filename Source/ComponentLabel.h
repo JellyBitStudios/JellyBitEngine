@@ -27,7 +27,7 @@ class ComponentLabel : public Component
 public:
 	struct LabelLetter
 	{
-		math::float3 corners[4] = { math::float3::zero, math::float3::zero, math::float3::zero, math::float3::zero };
+		math::float4 corners[4] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } };
 		uint textureID = 0;
 	};
 
@@ -42,16 +42,16 @@ public:
 
 	void Update();
 
-	void WorldDraw(math::float3 * parentCorners, math::float3 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm);
+	void WorldDraw(math::float3 * parentCorners, math::float4 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm);
 
-	void ScreenDraw(math::float3 corners[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm);
+	void ScreenDraw(math::float4 corners[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm);
 
 	void SetFinalText(const char* newText);
 	const char* GetFinalText() const;
 
 	void SetColor(math::float4 newColor);
 	math::float4 GetColor() const;
-	signed char* GetBuffer();
+	char* GetBuffer();
 	uint GetBufferSize()const;
 	uint GetWordSize()const;
 	std::vector<uint>* GetWordTextureIDs();
@@ -74,7 +74,7 @@ private:
 
 	std::vector<LabelLetter> labelWord;
 	std::vector<uint> textureWord;
-	signed char* buffer = nullptr;
+	char* buffer = nullptr;
 	uint last_word_size = 0;
 	uint buffer_size = 0;
 

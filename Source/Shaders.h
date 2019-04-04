@@ -396,33 +396,33 @@
 "	//2 vec4 bottomLeft;\n"																\
 "	//3 vec4 bottomRight;\n"															\
 "	//indexCorner + indexarray;\n"														\
-"};\n"																			\
+"};\n"																					\
 "\n"																					\
 "void main()\n" 																		\
 "{\n" 																					\
 "	highp int index = int(letter_index);" 												\
-"	vec4 position = corners[index + 1];\n" 											\
+"	vec4 position = corners[index + 1];\n" 												\
 "	if (vertex.x > 0.0 && vertex.y > 0.0)\n" 											\
 "	{\n" 																				\
-"		position = corners[index + 1];\n" 											\
+"		position = corners[index + 1];\n" 												\
 "		if (isScreen == 0)\n" 															\
 "			TexCoords = vec2(0.0, 0.0);\n" 												\
 "	}"																					\
 "	else if (vertex.x > 0.0 && vertex.y < 0.0)\n" 										\
 "	{\n" 																				\
-"		position = corners[index + 3];\n" 											\
+"		position = corners[index + 3];\n" 												\
 "		if (isScreen == 0)\n" 															\
 "			TexCoords = vec2(0.0,1.0);\n" 												\
 "	}"																					\
 "	else if (vertex.x < 0.0 && vertex.y > 0.0)\n" 										\
 "	{\n" 																				\
-"		position = corners[index];\n" 												\
+"		position = corners[index];\n" 													\
 "		if (isScreen == 0)\n" 															\
 "			TexCoords = vec2(1.0,0.0);\n" 												\
 "	}"																					\
 "	else if (vertex.x < 0.0 && vertex.y < 0.0)\n" 										\
 "	{\n" 																				\
-"		position = corners[index + 2];\n" 											\
+"		position = corners[index + 2];\n" 												\
 "		if (isScreen == 0)\n" 															\
 "			TexCoords = vec2(1.0,1.0);\n" 												\
 "	}"																					\

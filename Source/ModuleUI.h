@@ -75,7 +75,7 @@ private:
 
 	void initRenderData();
 	void DrawUIImage(ComponentRectTransform* rect, math::float4& color, uint texture, math::float2& mask, float rotation = 0.0f);
-	void DrawUILabel(signed char* bufferWord, uint sizeBuffer, uint wordSize, std::vector<uint>* texturesWord, math::float4& color);
+	void DrawUILabel(char* bufferWord, uint sizeBuffer, uint wordSize, std::vector<uint>* texturesWord, math::float4& color);
 
 	void SetRectToShader(ComponentRectTransform* rect, int rFrom = -1, math::float3* cornersLetter = nullptr);
 

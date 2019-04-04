@@ -43,7 +43,7 @@ public:
 		uint GetTexture();
 		const char * GetText();
 		math::float2 GetMaskValues();
-		signed char* GetBufferWord();
+		char* GetBufferWord();
 		uint GetBufferSize()const;
 		uint GetWordSize()const;
 		std::vector<uint>* texturesWord();

@@ -135,28 +135,23 @@ void ComponentLabel::Update()
 			{
 				if (labelWord.size() != last_word_size)
 				{
-					buffer_size = labelWord.size() * sizeof(float) * 16;
 					if (buffer)
 						RELEASE_ARRAY(buffer);
-					buffer = new GLbyte[buffer_size];
+					buffer_size = labelWord.size() * sizeof(float) * 16;
+					buffer = new char[buffer_size];
 				}
-				GLbyte* cursor = buffer;
-				size_t bytes = sizeof(float) * 3;
-				float value4 = 1.0f;
+				char* cursor = buffer;
+				size_t bytes = sizeof(float) * 4;
 				for (uint i = 0; i < labelWord.size(); i++)
 				{
-					memcpy(cursor, labelWord[i].corners[ComponentRectTransform::Rect::RTOPLEFT].ptr(), sizeof(float) * 3);
+					memcpy(cursor, &labelWord[i].corners[ComponentRectTransform::Rect::RTOPLEFT], bytes);
 					cursor += bytes;
-					memcpy(cursor++, &value4, sizeof(float));
-					memcpy(cursor, labelWord[i].corners[ComponentRectTransform::Rect::RTOPRIGHT].ptr(), sizeof(float) * 3);
+					memcpy(cursor, &labelWord[i].corners[ComponentRectTransform::Rect::RTOPRIGHT], bytes);
 					cursor += bytes;
-					memcpy(cursor++, &value4, sizeof(float));
-					memcpy(cursor, labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMLEFT].ptr(), sizeof(float) * 3);
+					memcpy(cursor, &labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMLEFT], bytes);
 					cursor += bytes;
-					memcpy(cursor++, &value4, sizeof(float));
-					memcpy(cursor, labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMRIGHT].ptr(), sizeof(float) * 3);
+					memcpy(cursor, &labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMRIGHT], bytes);
 					cursor += bytes;
-					memcpy(cursor++, &value4, sizeof(float));
 				}
 				last_word_size = labelWord.size();
 			}
@@ -168,35 +163,40 @@ void ComponentLabel::Update()
 	}
 }
 
-void ComponentLabel::WorldDraw(math::float3 * parentCorners, math::float3 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm)
+void ComponentLabel::WorldDraw(math::float3 * parentCorners, math::float4 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm)
 {
 	math::float3 xDirection = (parentCorners[CORNER_TOP_LEFT] - parentCorners[CORNER_TOP_RIGHT]).Normalized();
 	math::float3 yDirection = (parentCorners[2] - parentCorners[CORNER_TOP_LEFT]).Normalized();
 
-	corners[CORNER_TOP_RIGHT] = parentCorners[CORNER_TOP_RIGHT] + (xDirection * ((float)(x - rectParent[X_UI_RECT]) / WORLDTORECT)) + (yDirection * ((float)(y - rectParent[Y_UI_RECT]) / WORLDTORECT));
-	corners[CORNER_TOP_LEFT] = corners[CORNER_TOP_RIGHT] + (xDirection * (characterSize.x * sizeNorm / WORLDTORECT));
-	corners[CORNER_BOTTOM_LEFT] = corners[CORNER_TOP_LEFT] + (yDirection * (characterSize.y * sizeNorm / WORLDTORECT));
-	corners[CORNER_BOTTOM_RIGHT] = corners[CORNER_BOTTOM_LEFT] - (xDirection * (characterSize.x * sizeNorm / WORLDTORECT));
+	math::float3 pos = parentCorners[CORNER_TOP_RIGHT];
+	pos = pos + (xDirection * ((float)(x - rectParent[X_UI_RECT]) / WORLDTORECT)) + (yDirection * ((float)(y - rectParent[Y_UI_RECT]) / WORLDTORECT));
+	corners[CORNER_TOP_RIGHT] = { pos, 1.0f };
+	pos = corners[CORNER_TOP_RIGHT].xyz();
+	pos = pos + (xDirection * (characterSize.x * sizeNorm / WORLDTORECT));
+	corners[CORNER_TOP_LEFT] = { pos, 1.0f };
+	pos = corners[CORNER_TOP_LEFT].xyz();
+	pos = pos + (yDirection * (characterSize.y * sizeNorm / WORLDTORECT));
+	corners[CORNER_BOTTOM_LEFT] = { pos, 1.0f };
+	pos = corners[CORNER_BOTTOM_LEFT].xyz();
+	pos = pos - (xDirection * (characterSize.x * sizeNorm / WORLDTORECT));
+	corners[CORNER_BOTTOM_RIGHT] = { pos, 1.0f };
 
 	math::float3 zDirection = xDirection.Cross(yDirection);
-
 	float z = ZSEPARATOR + parent->cmp_rectTransform->GetZ();
 	for (uint i = 0; i < 4; ++i) //Change All Corners (TopLeft / TopRight / BottomLeft / BottomRight)
-		corners[i] -= zDirection * z;
-
-
+		corners[i] -= { zDirection * z , 0.0f };
 }
 
-void ComponentLabel::ScreenDraw(math::float3 corners[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm)
+void ComponentLabel::ScreenDraw(math::float4 corners[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm)
 {
 	uint* screen = App->ui->GetScreen();
 	uint w_width = screen[ModuleUI::Screen::WIDTH];
 	uint w_height = screen[ModuleUI::Screen::HEIGHT];
 
-	corners[ComponentRectTransform::Rect::RBOTTOMLEFT] = { math::Frustum::ScreenToViewportSpace({ (float)x, (float)y }, w_width, w_height), 0.0f };
-	corners[ComponentRectTransform::Rect::RBOTTOMRIGHT] = { math::Frustum::ScreenToViewportSpace({ (float)x + (float)characterSize.x * sizeNorm, (float)y }, w_width, w_height), 0.0f };
-	corners[ComponentRectTransform::Rect::RTOPLEFT] = { math::Frustum::ScreenToViewportSpace({ (float)x, (float)y + (float)characterSize.y * sizeNorm }, w_width, w_height), 0.0f };
-	corners[ComponentRectTransform::Rect::RTOPRIGHT] = { math::Frustum::ScreenToViewportSpace({ (float)x + (float)characterSize.x * sizeNorm, (float)y + (float)characterSize.y * sizeNorm }, w_width, w_height), 0.0f };
+	corners[ComponentRectTransform::Rect::RBOTTOMLEFT] = { math::Frustum::ScreenToViewportSpace({ (float)x, (float)y }, w_width, w_height), 0.0f, 1.0f };
+	corners[ComponentRectTransform::Rect::RBOTTOMRIGHT] = { math::Frustum::ScreenToViewportSpace({ (float)x + (float)characterSize.x * sizeNorm, (float)y }, w_width, w_height), 0.0f, 1.0f };
+	corners[ComponentRectTransform::Rect::RTOPLEFT] = { math::Frustum::ScreenToViewportSpace({ (float)x, (float)y + (float)characterSize.y * sizeNorm }, w_width, w_height), 0.0f, 1.0f };
+	corners[ComponentRectTransform::Rect::RTOPRIGHT] = { math::Frustum::ScreenToViewportSpace({ (float)x + (float)characterSize.x * sizeNorm, (float)y + (float)characterSize.y * sizeNorm }, w_width, w_height), 0.0f, 1.0f };
 }
 
 uint ComponentLabel::GetInternalSerializationBytes()
@@ -368,7 +368,7 @@ math::float4 ComponentLabel::GetColor() const
 	return color;
 }
 
-GLbyte* ComponentLabel::GetBuffer()
+char* ComponentLabel::GetBuffer()
 {
 	return buffer;
 }

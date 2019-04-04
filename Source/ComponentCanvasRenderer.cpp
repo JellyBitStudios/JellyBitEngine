@@ -147,7 +147,7 @@ math::float2 ComponentCanvasRenderer::ToUIRend::GetMaskValues()
 		return { -1.0f, -1.0f };
 }
 
-signed char* ComponentCanvasRenderer::ToUIRend::GetBufferWord()
+char* ComponentCanvasRenderer::ToUIRend::GetBufferWord()
 {
 	isRendered_flag = true;
 	return ((ComponentLabel*)cmp)->GetBuffer();

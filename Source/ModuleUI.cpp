@@ -348,7 +348,7 @@ void ModuleUI::DrawUIImage(ComponentRectTransform * rect, math::float4& color, u
 
 }
 
-void ModuleUI::DrawUILabel(GLbyte* bufferWord, uint sizeBuffer, uint wordSize, std::vector<uint>* texturesWord, math::float4& color)
+void ModuleUI::DrawUILabel(char* bufferWord, uint sizeBuffer, uint wordSize, std::vector<uint>* texturesWord, math::float4& color)
 {
 	use(uiLabel_shader);
 	setBool(uiLabel_shader, "isLabel", true);
@@ -356,7 +356,7 @@ void ModuleUI::DrawUILabel(GLbyte* bufferWord, uint sizeBuffer, uint wordSize, s
 	setUnsignedInt(uiLabel_shader, "image", 0);
 	setFloat(uiLabel_shader, "spriteColor", color.x, color.y, color.z, color.w);
 
-	//-------- Shader Storage Buffer Object -------------
+	//-------- Shader Storage Buffer Object Update -------------
 	void* buff_ptr = glMapNamedBufferRange(ssboLabel, 0, sizeBuffer, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
 	std::memcpy(buff_ptr, bufferWord, sizeBuffer);
 	glFlushMappedNamedBufferRange(ssboLabel, 0, sizeBuffer);
@@ -366,7 +366,7 @@ void ModuleUI::DrawUILabel(GLbyte* bufferWord, uint sizeBuffer, uint wordSize, s
 	for (uint i = 0; i < wordSize; i++)
 	{
 		use(uiLabel_shader);
-		setFloat(uiLabel_shader, "letter_index", (float)i);
+		setFloat(uiLabel_shader, "letter_index", 4.0f * (float)i);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texturesWord->at(i));
