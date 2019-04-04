@@ -29,9 +29,6 @@ ComponentButton::ComponentButton(GameObject* parent, ComponentTypes componentTyp
 		if (parent->cmp_rectTransform == nullptr)
 			parent->AddComponent(ComponentTypes::RectTransformComponent);
 
-		if (parent->cmp_image == nullptr)
-			parent->AddComponent(ImageComponent);
-
 		//if (parent->cmp_rectTransform)
 		//{
 		//	if (parent->cmp_rectTransform->GetFrom() != ComponentRectTransform::RectFrom::RECT)
