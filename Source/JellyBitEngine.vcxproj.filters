@@ -2115,6 +2115,9 @@
     <ClInclude Include="ComponentCanvas.h">
       <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
     </ClInclude>
+    <ClInclude Include="ModuleTrails.h">
+      <Filter>Sources\Modules</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ModuleInput.cpp">
@@ -2677,6 +2680,9 @@
     </ClCompile>
     <ClCompile Include="ComponentCanvas.cpp">
       <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleTrails.cpp">
+      <Filter>Sources\Modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

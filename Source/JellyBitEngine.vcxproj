@@ -389,6 +389,7 @@
     <ClInclude Include="ModuleAudio.h" />
     <ClInclude Include="ModuleInternalResHandler.h" />
     <ClInclude Include="ModuleLayers.h" />
+    <ClInclude Include="ModuleTrails.h" />
     <ClInclude Include="ModuleUI.h" />
     <ClInclude Include="PhysicsConstants.h" />
     <ClInclude Include="ResourceAnimator.h" />
@@ -816,6 +817,7 @@
     <ClCompile Include="ModuleAudio.cpp" />
     <ClCompile Include="ModuleInternalResHandler.cpp" />
     <ClCompile Include="ModuleLayers.cpp" />
+    <ClCompile Include="ModuleTrails.cpp" />
     <ClCompile Include="ModuleUI.cpp" />
     <ClCompile Include="ResourceAnimator.cpp" />
     <ClCompile Include="ResourceFont.cpp" />
