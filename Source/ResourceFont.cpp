@@ -165,12 +165,12 @@ uint ResourceFont::SaveFile(ResourceData& data, ResourceFontData& fontData)
 		cursor += bytes;
 	}
 
-	//for (uint i = 0; i < listSize; ++i)
-	//{
-		//bytes = (fontData.charactersMap[i+32].size.x *fontData.charactersMap[i+32].size.y);
-		memcpy(cursor, &(*fontData.fontBuffer.data()), sizeBuffer);
-		cursor += sizeBuffer;
-	//}
+	for (uint i = 0; i < listSize; ++i)
+	{
+		bytes = (fontData.charactersMap[i+32].size.x *fontData.charactersMap[i+32].size.y);
+		memcpy(cursor, fontData.fontBuffer[i], bytes);
+		cursor += bytes;
+	}
 	// --------------------------------------------------
 
 	// Save the file
