@@ -31,24 +31,54 @@ ComponentTrail::~ComponentTrail()
 void ComponentTrail::Update() 
 {
 
-	if (timer.Read() > 500 && create)
+	if (create)
 	{
-		TrailNode* node = new TrailNode();
+		math::float3 originHigh = parent->boundingBox.FaceCenterPoint(5);
+		math::float3 originLow = parent->boundingBox.FaceCenterPoint(4);
 
-		node->originHigh = parent->boundingBox.FaceCenterPoint(5);
-		node->originLow = parent->boundingBox.FaceCenterPoint(4);
-
-		node->rotaion = parent->transform->GetRotation();
-
-		if (!test.empty())
+		if (test.size() > 1)
 		{
-			//math::Plane plane = math::Plane(test.back()->destHigh, node->originHigh, node->originLow);
-			//node->direction = plane.normal;
+			TrailNode* last = test.back();
+
+			if (last && originHigh.Distance(last->originHigh) > 0.05f)
+			{
+				TrailNode* node = new TrailNode(originHigh, originLow);
+
+				test.push_back(node);
+			}
+
+			else
+			{
+				last->originHigh = originHigh;
+				last->originLow = originLow;
+
+				last->createTime = SDL_GetTicks();
+			}
+		}
+		else
+		{
+			TrailNode* node = new TrailNode(originHigh, originLow);
+
+			test.push_back(node);
 		}
 
-		test.push_back(node);
-
 		timer.Start();
+	}
+
+	Uint32 time = SDL_GetTicks();
+	std::list< TrailNode*> toRemove;
+	for (std::list< TrailNode*>::iterator curr = test.begin(); curr != test.end(); ++curr)
+	{
+		if (time - (*curr)->createTime > 1000)
+		{
+			toRemove.push_back(*curr);
+		}
+		else break;
+	}
+	for (std::list< TrailNode*>::iterator it = toRemove.begin(); it != toRemove.end(); ++it)
+	{
+		test.remove(*it);
+		delete *it;
 	}
 
 	if (App->input->GetKey(SDL_SCANCODE_1) == KEY_DOWN)

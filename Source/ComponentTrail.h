@@ -17,8 +17,16 @@ struct TrailNode
 {
 	math::float3 originHigh = math::float3::zero;
 	math::float3 originLow = math::float3::zero;
+	
+	Uint32 createTime = 0u;
 
-	math::Quat rotaion = math::Quat::identity;
+	TrailNode(math::float3 high, math::float3 low)
+	{
+		originHigh = high;
+		originLow = low;
+
+		createTime = SDL_GetTicks();
+	}
 };
 
 class ComponentTrail : public Component
