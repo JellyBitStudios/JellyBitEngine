@@ -51,7 +51,7 @@ public:
 
 public:
 
-	std::list<TrailNode*> test;
+	std::list<TrailNode*> trailVertex;
 	Timer timer;
 
 	bool create = true;
@@ -59,6 +59,10 @@ public:
 	uint materialRes = 0;
 
 private:
+
+	float minDistance = 0.05f;
+
+	int lifeTime = 1000u;
 
 
 };

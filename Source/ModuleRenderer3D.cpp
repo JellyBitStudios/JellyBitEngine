@@ -254,41 +254,9 @@ update_status ModuleRenderer3D::PostUpdate()
 				math::float4x4 globalMatrix = gameObjects[i]->transform->GetGlobalMatrix();
 				App->debugDrawer->DebugDrawSphere(1.0f, Yellow, globalMatrix);
 			}
-			else if (gameObjects[i]->cmp_trail != nullptr && !gameObjects[i]->cmp_trail->test.empty())
+			else if (gameObjects[i]->cmp_trail != nullptr && !gameObjects[i]->cmp_trail->trailVertex.empty())
 			{
 
-				///// Shader
-				//ResourceMaterial* resourceMaterial = (ResourceMaterial*)App->res->GetResource(gameObjects[i]->cmp_trail->materialRes);
-				//uint shaderUuid = resourceMaterial->GetShaderUuid();
-				//ResourceShaderProgram* resourceShaderProgram = (ResourceShaderProgram*)App->res->GetResource(shaderUuid);
-				//GLuint shaderProgram = resourceShaderProgram->shaderProgram;
-
-				//glUseProgram(shaderProgram);
-
-				//math::float4x4 matrix = math::float4x4()
-
-				//math::float4x4 model_matrix = transform.GetMatrix();// Matrix
-				//model_matrix = model_matrix.Transposed();
-				//math::float4x4 view_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLViewMatrix();
-				//math::float4x4 proj_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLProjectionMatrix();
-				//math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
-				//math::float4x4 normal_matrix = model_matrix;
-				//normal_matrix.Inverse();
-				//normal_matrix.Transpose();
-
-
-				//uint location = glGetUniformLocation(shaderProgram, "model_matrix");
-				//glUniformMatrix4fv(location, 1, GL_FALSE, model_matrix.ptr());
-				//location = glGetUniformLocation(shaderProgram, "mvp_matrix");
-				//glUniformMatrix4fv(location, 1, GL_FALSE, mvp_matrix.ptr());
-				//location = glGetUniformLocation(shaderProgram, "normal_matrix");
-				//glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
-				//location = glGetUniformLocation(shaderProgram, "view_matrix");
-				//glUniformMatrix3fv(location, 1, GL_FALSE, view_matrix.ptr());
-				//location = glGetUniformLocation(shaderProgram, "proj_matrix");
-				//glUniformMatrix3fv(location, 1, GL_FALSE, proj_matrix.ptr());
-
-				///
 
 				glColor3f(1.0f, 1.0f, 1.0f);
 
@@ -298,42 +266,19 @@ update_status ModuleRenderer3D::PostUpdate()
 
 				glBegin(GL_TRIANGLES);
 
-				std::list<TrailNode*>::iterator begin = gameObjects[i]->cmp_trail->test.begin();
-				TrailNode* end = gameObjects[i]->cmp_trail->test.back();
+				std::list<TrailNode*>::iterator begin = gameObjects[i]->cmp_trail->trailVertex.begin();
+				TrailNode* end = gameObjects[i]->cmp_trail->trailVertex.back();
 
 				if ((*begin)->originHigh.x > end->originHigh.x)
 				{
 
-					for (std::list<TrailNode*>::iterator curr = gameObjects[i]->cmp_trail->test.begin(); curr != gameObjects[i]->cmp_trail->test.end(); ++curr)
+					for (std::list<TrailNode*>::iterator curr = gameObjects[i]->cmp_trail->trailVertex.begin(); curr != gameObjects[i]->cmp_trail->trailVertex.end(); ++curr)
 					{
 						std::list<TrailNode*>::iterator next = curr;
 						++next;
-						if (next != gameObjects[i]->cmp_trail->test.end())
+						if (next != gameObjects[i]->cmp_trail->trailVertex.end())
 						{
-							//math::float4x4 trans = math::float4x4::FromTRS(math::float3::zero, math::Quat::identity, math::float3::one);
 
-							//math::Plane plane = math::Plane((*curr)->originHigh, (*next)->originLow, (*next)->originHigh);
-
-
-							//float rotation = math::float3x3::RotateFromTo(plane.normal, -currentCamera->frustum.front).ToEulerXYZ().x;
-
-							//if (rotation > 0.0001f || rotation < 0.0001f)
-							//{
-							//	CONSOLE_LOG(LogTypes::Normal, "Rotation = %f", rotation);
-
-							//	math::float3 xdelplano = ((*curr)->originHigh - (*next)->originHigh).Normalized();
-							//	trans = math::float4x4::RotateAxisAngle(xdelplano, rotation);
-
-
-
-							//	math::float4x4 cOH = math::float4x4::FromTRS((*next)->originHigh, math::Quat::identity, math::float3::zero);
-							//	cOH = trans.Mul(cOH);
-							//	(*next)->originHigh = cOH.TranslatePart();
-
-							//	math::float4x4 cOL = math::float4x4::FromTRS((*next)->originLow, math::Quat::identity, math::float3::zero);
-							//	cOL = trans.Mul(cOL);
-							//	(*next)->originLow = cOL.TranslatePart();
-							//}
 
 							glVertex3fv((const GLfloat*)(*curr)->originHigh.ptr());
 							glVertex3fv((const GLfloat*)(*curr)->originLow.ptr());
@@ -350,36 +295,12 @@ update_status ModuleRenderer3D::PostUpdate()
 
 				else
 				{
-					for (std::list<TrailNode*>::reverse_iterator curr = gameObjects[i]->cmp_trail->test.rbegin(); curr != gameObjects[i]->cmp_trail->test.rend(); ++curr)
+					for (std::list<TrailNode*>::reverse_iterator curr = gameObjects[i]->cmp_trail->trailVertex.rbegin(); curr != gameObjects[i]->cmp_trail->trailVertex.rend(); ++curr)
 					{
 						std::list<TrailNode*>::reverse_iterator next = curr;
 						++next;
-						if (next != gameObjects[i]->cmp_trail->test.rend())
+						if (next != gameObjects[i]->cmp_trail->trailVertex.rend())
 						{
-							//math::float4x4 trans = math::float4x4::FromTRS(math::float3::zero, math::Quat::identity, math::float3::one);
-
-							//math::Plane plane = math::Plane((*curr)->originHigh, (*next)->originLow, (*next)->originHigh);
-
-
-							//float rotation = math::float3x3::RotateFromTo(plane.normal, -currentCamera->frustum.front).ToEulerXYZ().x;
-
-							//if (rotation > 0.0001f || rotation < 0.0001f)
-							//{
-							//	CONSOLE_LOG(LogTypes::Normal, "Rotation = %f", rotation);
-
-							//	math::float3 xdelplano = ((*curr)->originHigh - (*next)->originHigh).Normalized();
-							//	trans = math::float4x4::RotateAxisAngle(xdelplano, rotation);
-
-
-
-							//	math::float4x4 cOH = math::float4x4::FromTRS((*next)->originHigh, math::Quat::identity, math::float3::zero);
-							//	cOH = trans.Mul(cOH);
-							//	(*next)->originHigh = cOH.TranslatePart();
-
-							//	math::float4x4 cOL = math::float4x4::FromTRS((*next)->originLow, math::Quat::identity, math::float3::zero);
-							//	cOL = trans.Mul(cOL);
-							//	(*next)->originLow = cOL.TranslatePart();
-							//}
 
 							glVertex3fv((const GLfloat*)(*curr)->originHigh.ptr());
 							glVertex3fv((const GLfloat*)(*curr)->originLow.ptr());
