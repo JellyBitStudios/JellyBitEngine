@@ -39,21 +39,11 @@ public:
 
 	bool InvalidateResource(Resource* resource);
 
-	//UI
-	GameObject* CreateCanvas(const char* name, GameObject* parent);
-	void SetCanvas(GameObject* canvas);
-	void DeleteCanvasPointer();
-	bool ExistCanvas() const;
-	GameObject* GetCanvas()const;
-
 private:
 
 	std::vector<GameObject*> gameobjects;
 	std::vector<GameObject*> staticGos;
 	std::vector<GameObject*> dynamicGos;
-
-	//Canvas
-	GameObject* canvas = nullptr;
 
 public:
 	// This is for saving and loading scenes from ModuleEvents ;( (friendship?)

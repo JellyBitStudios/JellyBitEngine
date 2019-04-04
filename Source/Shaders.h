@@ -56,9 +56,10 @@
 
 #define fShaderTemplate															\
 "#version 330 core\n"															\
-"layout (location = 0) out vec4 gPosition;\n"									\
-"layout (location = 1) out vec4 gNormal;\n"										\
-"layout (location = 2) out vec4 gAlbedoSpec;\n"									\
+"layout(location = 0) out vec4 gPosition;\n"									\
+"layout(location = 1) out vec4 gNormal;\n"										\
+"layout(location = 2) out vec4 gAlbedoSpec;\n"									\
+"layout(location = 3) out uvec4 gInfo;\n"										\
 "\n"																			\
 "in VS_OUT\n"																	\
 "{\n"																			\
@@ -70,6 +71,8 @@
 "\n"																			\
 "uniform sampler2D diffuse;\n"													\
 "\n"																			\
+"uniform uint layer;\n"															\
+"\n"																			\
 "void main()\n"																	\
 "{\n"																			\
 "	gPosition.rgb = fs_in.gPosition;\n"											\
@@ -78,6 +81,10 @@
 "	gPosition.a = 1;\n"															\
 "	gNormal.a = 1;\n"															\
 "	gAlbedoSpec.a = 1;\n"														\
+"	gInfo.r = layer;\n"															\
+"	gInfo.g = 0u;\n"															\
+"	gInfo.b = 0u;\n"															\
+"	gInfo.a = 0u;\n"															\
 "}"
 
 #pragma endregion
@@ -104,6 +111,8 @@
 "uniform sampler2D gPosition;\n" \
 "uniform sampler2D gNormal;\n" \
 "uniform sampler2D gAlbedoSpec;\n" \
+"uniform usampler2D gInfo;\n" \
+"uniform sampler2D gDepth;\n" \
 "\n" \
 "struct Light\n" \
 "{\n" \
@@ -131,6 +140,7 @@
 "	vec4 AlbedoTexture = texture(gAlbedoSpec, TexCoords);\n" \
 "	vec3 Albedo = AlbedoTexture.rgb;\n" \
 "	float AlbedoA = AlbedoTexture.a;\n" \
+"	uvec4 InfoTexture = texture(gInfo, TexCoords);\n" \
 "	vec3 lighting = Albedo * 0.3; // hard-coded ambient component\n" \
 "	for (int i = 0; i < NR_LIGHTS; ++i)\n" \
 "	{\n" \
@@ -292,11 +302,14 @@
 "layout(location = 1) in vec2 texture_coords; // <vec2 position, vec2 texCoords>\n" \
 "out vec2 TexCoords;\n" \
 "uniform int isScreen;\n" \
+"uniform int useMask;\n" \
+"uniform vec2 coordsMask;\n" \
 "uniform mat4 mvp_matrix;\n" \
 "uniform vec3 topRight;\n" \
 "uniform vec3 topLeft;\n" \
 "uniform vec3 bottomLeft;\n" \
 "uniform vec3 bottomRight;\n" \
+"uniform int isLabel;\n" \
 "void main()\n" \
 "{\n" \
 "	vec3 position = topRight;\n" \
@@ -304,30 +317,78 @@
 "	{\n" \
 "		position = topRight;\n" \
 "		if (isScreen == 0)\n" \
-"			TexCoords = vec2(0.0, 1.0);\n" \
+"		{\n" \
+"			if (isLabel == 0)\n" \
+"				TexCoords = vec2(0.0, 1.0);\n" \
+"			else\n"\
+"				TexCoords = vec2(0.0, 0.0);\n" \
+"		}"\
+"		else\n"\
+"			if (useMask == 1)\n" \
+"				TexCoords = vec2(coordsMask.x,1.0);\n" \
 "	}"\
 "	else if (vertex.x > 0.0 && vertex.y < 0.0)\n" \
 "	{\n" \
 "		position = bottomRight;\n" \
 "		if (isScreen == 0)\n" \
-"			TexCoords = vec2(0.0,0.0);\n" \
+"		{\n" \
+"			if (isLabel == 0)\n" \
+"			{\n" \
+"				if (useMask == 0)\n" \
+"					TexCoords = vec2(0.0,0.0);\n" \
+"				else\n"\
+"					TexCoords = vec2(0.0,coordsMask.y);\n" \
+"			}"\
+"			else\n"\
+"				TexCoords = vec2(0.0,1.0);\n" \
+"		}"\
+"		else\n"\
+"			if (useMask == 1)\n" \
+"				TexCoords = vec2(coordsMask.x,coordsMask.y);\n" \
 "	}"\
 "	else if (vertex.x < 0.0 && vertex.y > 0.0)\n" \
 "	{\n" \
 "		position = topLeft;\n" \
 "		if (isScreen == 0)\n" \
-"			TexCoords = vec2(1.0,1.0);\n" \
+"		{\n" \
+"			if (isLabel == 0)\n" \
+"			{\n" \
+"				if (useMask == 0)\n" \
+"					TexCoords = vec2(1.0,1.0);\n" \
+"				else\n"\
+"					TexCoords = vec2(coordsMask.x,1.0);\n" \
+"			}"\
+"			else\n"\
+"				TexCoords = vec2(1.0,0.0);\n" \
+"		}"\
+"		else\n"\
+"			if (useMask == 1)\n" \
+"				TexCoords = vec2(0.0,1.0);\n" \
 "	}"\
 "	else if (vertex.x < 0.0 && vertex.y < 0.0)\n" \
 "	{\n" \
 "		position = bottomLeft;\n" \
 "		if (isScreen == 0)\n" \
-"			TexCoords = vec2(1.0,0.0);\n" \
+"		{\n" \
+"			if (isLabel == 0)\n" \
+"			{\n" \
+"				if (useMask == 0)\n" \
+"					TexCoords = vec2(1.0,0.0);\n" \
+"				else\n"\
+"					TexCoords = vec2(coordsMask.x,coordsMask.y);\n" \
+"			}"\
+"			else\n"\
+"				TexCoords = vec2(1.0,1.0);\n" \
+"		}"\
+"		else\n"\
+"			if (useMask == 1)\n" \
+"				TexCoords = vec2(0.0,coordsMask.y);\n" \
 "	}"\
 "	if(isScreen == 1)\n"\
 "	{\n" \
 "		gl_Position = vec4(position, 1.0);\n" \
-"		TexCoords = texture_coords;\n" \
+"		if (useMask == 0)\n" \
+"			TexCoords = texture_coords;\n" \
 "	}"\
 "	else\n"\
 "		gl_Position = mvp_matrix * vec4(position, 1.0);\n" \
@@ -337,17 +398,25 @@
 "#version 330 core\n" \
 "in vec2 TexCoords;\n" \
 "out vec4 FragColor;\n" \
-"uniform int use_color;\n"\
+"uniform int using_texture;\n"\
 "uniform sampler2D image;\n" \
 "uniform vec4 spriteColor;\n" \
+"uniform int isLabel;\n" \
 "void main()\n" \
 "{\n" \
-"	if(use_color == 1)\n"\
-"		FragColor = spriteColor;\n" \
+" if(isLabel == 0)\n"\
+" {\n"\
+"	  if(using_texture == 1)\n"\
+"		 FragColor = texture(image, TexCoords) * spriteColor;\n" \
+"	  else\n"\
+"	  	FragColor = spriteColor;\n" \
+" }\n"\
 "	else\n"\
-"		FragColor = texture(image, TexCoords);\n" \
-"}"
-
+"	{\n" \
+"	  vec4 sampled = vec4(1.0, 1.0, 1.0, texture(image, TexCoords).r);\n" \
+"		FragColor = spriteColor * sampled; \n" \
+"	}\n"\
+"}\n"
 #pragma endregion
 
 #pragma region CartoonShader
@@ -356,7 +425,7 @@
 "#version 330 core\n"																				\
 "\n"																								\
 "layout(triangles_adjacency) in;\n"																	\
-"layout(triangle_strip, max_vertices = 255) out;\n"													\
+"layout(triangle_strip, max_vertices = 15) out;\n"													\
 "\n"																								\
 "in VS_OUT\n"																						\
 "{\n"																								\
@@ -382,7 +451,7 @@
 "bool isFrontFacing(vec3 a, vec3 b, vec3 c) // is a triangle front facing?\n"						\
 "{\n"																								\
 "	// Compute the triangle's z coordinate of the normal vector (cross product)\n"					\
-"	return ((a.x * b.y - b.x * a.y) + (b.x * c.y - c.x * b.y) + (c.x * a.y - a.x * c.y)) > 0;\n"	\
+"	return ((a.x * b.y - b.x * a.y) + (b.x * c.y - c.x * b.y) + (c.x * a.y - a.x * c.y)) > 0.0;\n"	\
 "}\n"																								\
 "\n"																								\
 "void emitEdgeQuad(vec3 e0, vec3 e1)\n"																\
@@ -418,7 +487,7 @@
 "	vec3 p4 = gl_in[4].gl_Position.xyz / gl_in[4].gl_Position.w;\n"									\
 "	vec3 p5 = gl_in[5].gl_Position.xyz / gl_in[5].gl_Position.w;\n"									\
 "\n"																								\
-"	if (isFrontFacing(p0, p2, p4))\n"																\
+"	if (gl_in[0].gl_Position.w > 0.0 && gl_in[1].gl_Position.w > 0.0 && gl_in[2].gl_Position.w > 0.0 && gl_in[3].gl_Position.w > 0.0 && gl_in[4].gl_Position.w > 0.0 && gl_in[5].gl_Position.w > 0.0 && isFrontFacing(p0, p2, p4))\n" \
 "	{\n"																							\
 "		if (!isFrontFacing(p0, p1, p2))\n"															\
 "			emitEdgeQuad(p0, p2);\n"																\
@@ -461,6 +530,7 @@
 "layout(location = 0) out vec4 gPosition;\n"											\
 "layout(location = 1) out vec4 gNormal;\n"												\
 "layout(location = 2) out vec4 gAlbedoSpec;\n"											\
+"layout(location = 3) out uvec4 gInfo;\n"												\
 "\n"																					\
 "in GS_OUT\n"																			\
 "{\n"																					\
@@ -482,6 +552,8 @@
 "\n"																					\
 "//uniform vec3 lineColor; // the silhouette edge color\n"								\
 "//uniform int levels;\n"																\
+"\n"																					\
+"uniform uint layer;\n"																	\
 "\n"																					\
 "void main()\n"																			\
 "{\n"																					\
@@ -509,14 +581,19 @@
 "\n"																					\
 "	gPosition.rgb = fs_in.fPosition;\n"													\
 "	gNormal.rgb = normalize(fs_in.fNormal);\n"											\
+"	gInfo.r = layer;\n"																	\
+"	gInfo.g = 0u;\n"																	\
+"	gInfo.b = 0u;\n"																	\
+"	gInfo.a = 0u;\n"																	\
 "}"
 
-#define CartoonFloorFragment																\
+#define CartoonFloorFragment															\
 "#version 330 core\n"																	\
 "\n"																					\
 "layout(location = 0) out vec4 gPosition;\n"											\
 "layout(location = 1) out vec4 gNormal;\n"												\
 "layout(location = 2) out vec4 gAlbedoSpec;\n"											\
+"layout(location = 3) out uvec4 gInfo;\n"												\
 "\n"																					\
 "in GS_OUT\n"																			\
 "{\n"																					\
@@ -535,10 +612,12 @@
 "\n"																					\
 "uniform vec3 viewPos;\n"																\
 "uniform Material material;\n"															\
-"uniform vec2 repeat = vec2(2, 2);\n"															\
+"uniform vec2 repeat = vec2(2, 2);\n"													\
 "\n"																					\
 "//uniform vec3 lineColor; // the silhouette edge color\n"								\
 "//uniform int levels;\n"																\
+"\n"																					\
+"uniform uint layer;\n"																	\
 "\n"																					\
 "void main()\n"																			\
 "{\n"																					\
@@ -566,6 +645,10 @@
 "\n"																					\
 "	gPosition.rgb = fs_in.fPosition;\n"													\
 "	gNormal.rgb = normalize(fs_in.fNormal);\n"											\
+"	gInfo.r = layer;\n"																	\
+"	gInfo.g = 0u;\n"														  			\
+"	gInfo.b = 0u;\n"																	\
+"	gInfo.a = 0u;\n"																	\
 "}"
 
 #pragma endregion

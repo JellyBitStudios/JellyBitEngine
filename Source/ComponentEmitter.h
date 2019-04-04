@@ -63,6 +63,12 @@ struct ParticleAnimation
 	float textureRowsNorm = 1.0f;
 	float textureColumnsNorm = 1.0f;
 	float animationSpeed = 0.1f;
+	bool randAnim = false;
+
+	uint GetPartAnimationSerializationBytes()
+	{ return sizeof(bool) * 2 + sizeof(float) * 3 + sizeof(int) * 2; }
+	void OnInternalSave(char *& cursor);
+	void OnInternalLoad(char *& cursor);
 };
 
 struct StartValues
@@ -83,7 +89,6 @@ struct StartValues
 	math::float3 particleDirection = math::float3::unitY;
 
 	bool subEmitterActive = false;
-
 	StartValues()
 	{
 		ColorTime colorTime;
@@ -99,7 +104,7 @@ struct StartValues
 class ComponentEmitter : public Component
 {
 public:
-	ComponentEmitter(GameObject* gameObject);
+	ComponentEmitter(GameObject* gameObject, bool include = true);
 	ComponentEmitter(const ComponentEmitter & componentEmitter, GameObject* parent, bool include = true);
 	~ComponentEmitter();
 
@@ -139,7 +144,7 @@ public:
 #endif
 	int GetEmition() const;
 
-	uint GetInternalSerializationBytes();
+	uint GetInternalSerializationBytes() override;
 	virtual void OnInternalSave(char*& cursor);
 	virtual void OnInternalLoad(char*& cursor);
 public:

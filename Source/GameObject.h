@@ -93,11 +93,11 @@ public:
 	class ComponentCollider*		cmp_collider = nullptr;
 	class ComponentBone*			cmp_bone = nullptr;
 	class ComponentRectTransform*	cmp_rectTransform = nullptr;
+	class ComponentCanvas*			cmp_canvas = nullptr;
 	class ComponentCanvasRenderer*	cmp_canvasRenderer = nullptr;
 	class ComponentImage*			cmp_image = nullptr;
 	class ComponentButton*			cmp_button = nullptr;
 	class ComponentLabel*			cmp_label = nullptr;
-	class ComponentAnimation*		cmp_animation = nullptr;
 	class ComponentAnimator*		cmp_animator = nullptr;
 	class ComponentLight*			cmp_light = nullptr;
 	class ComponentProjector*		cmp_projector = nullptr;
@@ -133,7 +133,6 @@ private:
 
 	// Physics
 	uint layer = 0; // in the range [0...31]
-
 };
 
 #endif

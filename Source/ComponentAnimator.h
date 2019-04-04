@@ -18,9 +18,18 @@ public:
 	bool SetResourceAvatar(uint resource);
 	bool SetResourceAnimation(uint resource);
 
+	
+
 	virtual void Update();
 
+	/* ----- SCRIPTING CALLS ----- */
+	/*Returns -1 if anything goes wrong*/
+	int GetCurrentAnimationFrame()const;
+	const char* GetCurrentAnimationName();
 	bool PlayAnimation(const char* anim_name);
+	bool CleanAnimations();
+	bool AnimationFinished()const;
+	/* ----- SCRIPTING CALLS ----- */
 
 	void OnInternalSave(char*& cursor);
 	void OnInternalLoad(char*& cursor);

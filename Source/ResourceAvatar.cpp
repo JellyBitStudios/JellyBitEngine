@@ -411,7 +411,7 @@ bool ResourceAvatar::SetHipsUuid(uint hipsUuid)
 	GameObject* skeleton = App->GOs->GetGameObjectByUID(hipsUuid);
 	if (skeleton == nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
+		//CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
 		return false;
 	}
 
@@ -430,7 +430,7 @@ bool ResourceAvatar::SetHipsUuid(uint hipsUuid)
 	GameObject* root = App->GOs->GetGameObjectByUID(avatarData.rootUuid);
 	if (root == nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "The root game object does not exist...");
+		//CONSOLE_LOG(LogTypes::Error, "The root game object does not exist...");
 		return false;
 	}
 	AddBones(root);
@@ -458,7 +458,7 @@ bool ResourceAvatar::SetRootUuid(uint rootUuid)
 	GameObject* root = App->GOs->GetGameObjectByUID(rootUuid);
 	if (root == nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "The root game object does not exist...");
+		//CONSOLE_LOG(LogTypes::Error, "The root game object does not exist...");
 		return false;
 	}
 
@@ -524,7 +524,7 @@ void ResourceAvatar::CreateSkeleton(GameObject* gameObject)
 		const char* boneName = boneResource->boneData.name.data();
 		bones[boneName] = children[i]->GetUUID();
 
-		CONSOLE_LOG(LogTypes::Normal, "The bone %s has been loaded correctly", boneName);
+		//CONSOLE_LOG(LogTypes::Normal, "The bone %s has been loaded correctly", boneName);
 	}
 }
 
@@ -557,7 +557,7 @@ void ResourceAvatar::CreateSkeletonAndAddBones()
 	GameObject* skeleton = App->GOs->GetGameObjectByUID(avatarData.hipsUuid);
 	if (skeleton == nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
+		//CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
 		return;
 	}
 	CreateSkeleton(skeleton);
@@ -566,7 +566,7 @@ void ResourceAvatar::CreateSkeletonAndAddBones()
 	GameObject* root = App->GOs->GetGameObjectByUID(avatarData.rootUuid);
 	if (root == nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "The root game object does not exist...");
+		//CONSOLE_LOG(LogTypes::Error, "The root game object does not exist...");
 		return;
 	}
 	AddBones(root);
@@ -580,29 +580,23 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 	ResourceAnimation* animationResource = (ResourceAnimation*)App->res->GetResource(animationUuid);
 	if (animationResource == nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "The animation that needs to be stepped does not exist...");
+		//CONSOLE_LOG(LogTypes::Error, "The animation that needs to be stepped does not exist...");
 		return;
 	}
 
 	// Step all bones
-	for (uint i = 0u; i < animationResource->animationData.numKeys; ++i)
+	for (uint i = 0; i < animationResource->animationData.numKeys; ++i)
 	{
 		const char* boneName = animationResource->animationData.boneKeys[i].bone_name.data();
 		std::unordered_map<std::string, uint>::const_iterator it = bones.find(boneName);
 		if (it == bones.end())
-		{
-			CONSOLE_LOG(LogTypes::Error, "A bone does not exist...");
 			continue;
-		}
 
 		uint boneGameObjectUuid = it->second;
 
 		GameObject* boneGameObject = App->GOs->GetGameObjectByUID(boneGameObjectUuid);
 		if (boneGameObject == nullptr)
-		{
-			CONSOLE_LOG(LogTypes::Error, "A bone does not exist...");
 			continue;
-		}
 
 		// ----------
 
@@ -620,38 +614,15 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 		float* nextPos = nullptr;
 		float timePos = 0.0f;
 
-		if (blend < 1.0f || blend > 1.0f) {
-			if (animationResource->animationData.boneKeys[i].positions.count > i)
-			{
-				for (uint j = 0; j < animationResource->animationData.boneKeys[i].positions.count; ++j)
-				{
-					if (time == animationResource->animationData.boneKeys[i].positions.time[j])
-					{
-						// Save next and prev pos
-						nextPos = prevPos = &animationResource->animationData.boneKeys[i].positions.value[j * 3];
+		if (animationResource->animationData.boneKeys[i].positions.count == 1)
+		{
+			// Save next and prev pos
+			nextPos = prevPos = &animationResource->animationData.boneKeys[i].positions.value[0];
 
-						// Does not need interpolation
-
-						break;
-					}
-					else if (animationResource->animationData.boneKeys[i].positions.time[j] > time)
-					{
-						// Save next and prev time and pos
-						nextTime = animationResource->animationData.boneKeys[i].positions.time[j];
-						nextPos = &animationResource->animationData.boneKeys[i].positions.value[j * 3];
-
-						prevTime = animationResource->animationData.boneKeys[i].positions.time[j - 1];
-						prevPos = &animationResource->animationData.boneKeys[i].positions.value[(j * 3) - 3];
-
-						// Needs interpolation
-						timePos = (time - prevTime) / (nextTime - prevTime);
-
-						break;
-					}
-				}
-			}
+			// Does not need interpolation
 		}
-		else {
+		else
+		{
 			for (uint j = 0; j < animationResource->animationData.boneKeys[i].positions.count; ++j)
 			{
 				if (time == animationResource->animationData.boneKeys[i].positions.time[j])
@@ -669,9 +640,17 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 					nextTime = animationResource->animationData.boneKeys[i].positions.time[j];
 					nextPos = &animationResource->animationData.boneKeys[i].positions.value[j * 3];
 
-					prevTime = animationResource->animationData.boneKeys[i].positions.time[j - 1];
-					prevPos = &animationResource->animationData.boneKeys[i].positions.value[(j * 3) - 3];
-
+					if (j == 0)
+					{
+						prevTime = animationResource->animationData.boneKeys[i].positions.time[animationResource->animationData.boneKeys[i].positions.count - 1];
+						prevPos = &animationResource->animationData.boneKeys[i].positions.value[(animationResource->animationData.boneKeys[i].positions.count - 1) * 3];
+					}
+					else
+					{
+						prevTime = animationResource->animationData.boneKeys[i].positions.time[j - 1];
+						prevPos = &animationResource->animationData.boneKeys[i].positions.value[(j * 3) - 3];
+					}
+					
 					// Needs interpolation
 					timePos = (time - prevTime) / (nextTime - prevTime);
 
@@ -685,7 +664,14 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 		float* nextScale = nullptr;
 		float timeScale = 0.0f;
 
-		if (animationResource->animationData.boneKeys[i].scalings.count > i)
+		if (animationResource->animationData.boneKeys[i].scalings.count == 1)
+		{
+			// Save next and prev scale
+			nextScale = prevScale = &animationResource->animationData.boneKeys[i].scalings.value[0];
+
+			// Does not need interpolation
+		}
+		else
 		{
 			for (uint j = 0; j < animationResource->animationData.boneKeys[i].scalings.count; ++j)
 			{
@@ -704,8 +690,16 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 					nextTime = animationResource->animationData.boneKeys[i].scalings.time[j];
 					nextScale = &animationResource->animationData.boneKeys[i].scalings.value[j * 3];
 
-					prevTime = animationResource->animationData.boneKeys[i].scalings.time[j - 1];
-					prevScale = &animationResource->animationData.boneKeys[i].scalings.value[(j * 3) - 3];
+					if (j == 0)
+					{
+						prevTime = animationResource->animationData.boneKeys[i].scalings.time[animationResource->animationData.boneKeys[i].scalings.count - 1];
+						prevScale = &animationResource->animationData.boneKeys[i].scalings.value[(animationResource->animationData.boneKeys[i].scalings.count - 1) * 3];
+					}
+					else
+					{
+						prevTime = animationResource->animationData.boneKeys[i].scalings.time[j - 1];
+						prevScale = &animationResource->animationData.boneKeys[i].scalings.value[(j * 3) - 3];
+					}
 
 					// Needs interpolation
 					timeScale = (time - prevTime) / (nextTime - prevTime);
@@ -720,40 +714,15 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 		float* nextRot = nullptr;
 		float timeRot = 0.0f;
 
-		
-		if (blend < 1.0f || blend > 1.0f) 
+		if (animationResource->animationData.boneKeys[i].rotations.count == 1)
 		{
-			if (animationResource->animationData.boneKeys[i].rotations.count > i)
-			{
-				for (uint j = 0; j < animationResource->animationData.boneKeys[i].rotations.count; ++j)
-				{
-					if (time == animationResource->animationData.boneKeys[i].rotations.time[j])
-					{
-						// Save next and prev scale
-						nextRot = prevRot = &animationResource->animationData.boneKeys[i].rotations.value[j * 4];
+			// Save next and prev scale
+			nextRot = prevRot = &animationResource->animationData.boneKeys[i].rotations.value[0];
 
-						// Does not need interpolation
-
-						break;
-					}
-					else if (animationResource->animationData.boneKeys[i].rotations.time[j] > time)
-					{
-						// Save next and prev time and scale
-						nextTime = animationResource->animationData.boneKeys[i].rotations.time[j];
-						nextRot = &animationResource->animationData.boneKeys[i].rotations.value[j * 4];
-
-						prevTime = animationResource->animationData.boneKeys[i].rotations.time[j - 1];
-						prevRot = &animationResource->animationData.boneKeys[i].rotations.value[(j * 4) - 4];
-
-						// Needs interpolation
-						timeRot = (time - prevTime) / (nextTime - prevTime);
-
-						break;
-					}
-				}
-			}
+			// Does not need interpolation
 		}
-		else {
+		else
+		{
 			for (uint j = 0; j < animationResource->animationData.boneKeys[i].rotations.count; ++j)
 			{
 				if (time == animationResource->animationData.boneKeys[i].rotations.time[j])
@@ -771,8 +740,16 @@ void ResourceAvatar::StepBones(uint animationUuid, float time, float blend)
 					nextTime = animationResource->animationData.boneKeys[i].rotations.time[j];
 					nextRot = &animationResource->animationData.boneKeys[i].rotations.value[j * 4];
 
-					prevTime = animationResource->animationData.boneKeys[i].rotations.time[j - 1];
-					prevRot = &animationResource->animationData.boneKeys[i].rotations.value[(j * 4) - 4];
+					if (j == 0)
+					{
+						prevTime = animationResource->animationData.boneKeys[i].rotations.time[animationResource->animationData.boneKeys[i].rotations.count - 1];
+						prevRot = &animationResource->animationData.boneKeys[i].rotations.value[(animationResource->animationData.boneKeys[i].rotations.count - 1) * 4];
+					}
+					else
+					{
+						prevTime = animationResource->animationData.boneKeys[i].rotations.time[j - 1];
+						prevRot = &animationResource->animationData.boneKeys[i].rotations.value[(j * 4) - 4];
+					}
 
 					// Needs interpolation
 					timeRot = (time - prevTime) / (nextTime - prevTime);
@@ -855,7 +832,7 @@ void ResourceAvatar::ClearBones()
 	GameObject* root = App->GOs->GetGameObjectByUID(avatarData.hipsUuid);
 	if (root == nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
+		//CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
 		return;
 	}
 

@@ -16,7 +16,6 @@
 #include "ComponentMesh.h"
 #include "ComponentImage.h"
 #include "ComponentRectTransform.h"
-#include "ComponentAnimation.h"
 #include "ResourceShaderProgram.h"
 #include "ResourceAnimation.h"
 #include "ComponentTrail.h"
@@ -93,44 +92,47 @@ void ModuleGOs::OnSystemEvent(System_Event event)
 		switch (event.compEvent.component->GetType())
 		{
 		case ComponentTypes::TransformComponent:
-			go->transform = 0;
+			go->transform = nullptr;
 			break;
 		case ComponentTypes::MeshComponent:
-			go->cmp_mesh = 0;
+			go->cmp_mesh = nullptr;
 			break;
 		case ComponentTypes::MaterialComponent:
-			go->cmp_material = 0;
+			go->cmp_material = nullptr;
 			break;
 		case ComponentTypes::CameraComponent:
-			go->cmp_camera = 0;
+			go->cmp_camera = nullptr;
 			break;
 		case ComponentTypes::NavAgentComponent:
-			go->cmp_navAgent = 0;
+			go->cmp_navAgent = nullptr;
 			break;
 		case ComponentTypes::EmitterComponent:
-			go->cmp_emitter = 0;
+			go->cmp_emitter = nullptr;
 			break;
 		case ComponentTypes::BoneComponent:
-			go->cmp_bone = 0;
+			go->cmp_bone = nullptr;
 			break;
 		case ComponentTypes::LightComponent:
-			go->cmp_light = 0;
+			go->cmp_light = nullptr;
 			break;
 		case ComponentTypes::ProjectorComponent:
-			go->cmp_projector = 0;
+			go->cmp_projector = nullptr;
 			break;
 		case ComponentTypes::AnimatorComponent:
-			go->cmp_animator = 0;
+			go->cmp_animator = nullptr;
 			break;
 		case ComponentTypes::RigidStaticComponent:
 		case ComponentTypes::RigidDynamicComponent:
-			go->cmp_rigidActor = 0;
+			go->cmp_rigidActor = nullptr;
 			break;
 		case ComponentTypes::BoxColliderComponent:
 		case ComponentTypes::SphereColliderComponent:
 		case ComponentTypes::CapsuleColliderComponent:
 		case ComponentTypes::PlaneColliderComponent:
-			go->cmp_collider = 0;
+			go->cmp_collider = nullptr;
+			break;
+		case ComponentTypes::CanvasComponent:
+			go->cmp_canvas = nullptr;
 			break;
 		case ComponentTypes::RectTransformComponent:
 			go->cmp_rectTransform = nullptr; // Uh
@@ -147,10 +149,10 @@ void ModuleGOs::OnSystemEvent(System_Event event)
 		case ComponentTypes::CanvasRendererComponent:
 			go->cmp_canvasRenderer = nullptr;
 		case ComponentTypes::AudioListenerComponent:
-			go->cmp_audioListener = 0;
+			go->cmp_audioListener = nullptr;
 			break;
 		case ComponentTypes::AudioSourceComponent:
-			go->cmp_audioSource = 0;
+			go->cmp_audioSource = nullptr;
 			break;
 		}
 		break;
@@ -171,27 +173,6 @@ void ModuleGOs::OnSystemEvent(System_Event event)
 	}
 }
 
-GameObject* ModuleGOs::CreateCanvas(const char * name, GameObject * parent)
-{
-	assert(canvas == nullptr);
-	GameObject* newGameObject = canvas = new GameObject(name, parent, true);
-	newGameObject->AddComponent(ComponentTypes::RectTransformComponent);
-	newGameObject->SetLayer(UILAYER);
-	gameobjects.push_back(newGameObject);
-	dynamicGos.push_back(newGameObject);
-	return newGameObject;
-}
-
-void ModuleGOs::SetCanvas(GameObject * canvas)
-{
-	this->canvas = canvas;
-}
-
-void ModuleGOs::DeleteCanvasPointer()
-{
-	canvas = nullptr;
-}
-
 GameObject* ModuleGOs::CreateGameObject(const char* goName, GameObject* parent, bool disableTransform)
 {
 	GameObject* newGameObject = new GameObject(goName, parent, disableTransform);
@@ -204,7 +185,6 @@ GameObject* ModuleGOs::CreateGameObject(const char* goName, GameObject* parent, 
 GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 {
 	GameObject* newGameObject = new GameObject(*copy);
-	bool returnCanvas = false;
 
 	if (!newRoot)
 	{
@@ -213,49 +193,6 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 	}
 	else
 	{
-		if (newGameObject->GetLayer() == UILAYER)
-		{
-			if (std::strcmp(newGameObject->GetName(), "Canvas") == 0)
-			{
-				if (ExistCanvas())
-				{
-					std::vector<GameObject*> childs;
-					newGameObject->GetChildrenVector(childs, true);
-					for (int i = 0; i < childs.size(); ++i)
-					{
-						gameobjects.push_back(childs[i]);
-						App->GOs->RecalculateVector(childs[i], false);
-					}
-					childs.clear();
-
-					newGameObject->GetChildrenVector(childs, false);
-					for (GameObject* child : childs)
-					{
-						if (child->GetParent()->GetParent() == nullptr)
-						{
-							canvas->AddChild(child);
-							child->SetParent(canvas);
-							newGameObject->EraseChild(child);
-						}
-					}
-					this->DeleteGameObject(newGameObject);
-					App->ui->LinkAllRectsTransform();
-					returnCanvas = true;
-				}
-				else
-					canvas = newGameObject;
-			}
-			else
-			{
-				if (newGameObject->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-				{
-					canvas->AddChild(newGameObject);
-					newGameObject->SetParent(canvas);
-					return newGameObject;
-				}
-			}
-		}
-
 		newGameObject->SetParent(newRoot);
 		newRoot->AddChild(newGameObject);
 	}
@@ -268,19 +205,6 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 	}
 
 
-	if (copy->GetParent() == nullptr)
-	{
-		// TODO_G : Start resource animator here?
-		std::vector<GameObject*> gos;
-		this->GetGameobjects(gos);
-		for (uint i = 0u; i < gos.size(); i++)
-		{
-			ComponentAnimation* anim_co = (ComponentAnimation*)gos[i]->GetComponent(ComponentTypes::AnimationComponent);
-			if (anim_co) {
-				ResourceAnimation* anim = (ResourceAnimation*)App->res->GetResource(anim_co->res);
-			}	
-		}
-	}
 	System_Event newEvent;
 	newEvent.type = System_Event_Type::RecreateQuadtree;
 	App->PushSystemEvent(newEvent);
@@ -289,12 +213,7 @@ GameObject* ModuleGOs::Instanciate(GameObject* copy, GameObject* newRoot)
 	if (newGameObject && newGameObject->transform)
 		newGameObject->transform->UpdateGlobal();
 
-	App->ui->LinkAllRectsTransform();
-
-	if (returnCanvas)
-		return canvas;
-	else
-		return newGameObject;
+	return newGameObject;
 }
 
 void ModuleGOs::DeleteGameObject(GameObject* toDelete)
@@ -533,14 +452,4 @@ bool ModuleGOs::InvalidateResource(Resource* resource)
 	}
 
 	return true;
-}
-
-bool ModuleGOs::ExistCanvas() const
-{
-	return (canvas != nullptr);
-}
-
-GameObject* ModuleGOs::GetCanvas() const
-{
-	return canvas;
 }

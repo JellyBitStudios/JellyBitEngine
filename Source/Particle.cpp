@@ -58,10 +58,11 @@ void Particle::SetActive(math::float3 pos, StartValues data, ParticleAnimation p
 	for (std::list<ColorTime>::iterator iter = data.color.begin(); iter != data.color.end(); ++iter)
 		color.push_back(*iter);
 
+	currentColor = (*color.begin()).color;
+
 	multicolor = data.timeColor;
 
 	animationTime = 0.0f;
-	currentFrame = 0u;
 
 	isParticleAnimated = partAnim.isParticleAnimated;
 	textureRows = partAnim.textureRows;
@@ -69,8 +70,16 @@ void Particle::SetActive(math::float3 pos, StartValues data, ParticleAnimation p
 	textureRowsNorm = partAnim.textureRowsNorm;
 	textureColumnsNorm = partAnim.textureColumnsNorm;
 	animationSpeed = partAnim.animationSpeed;
+
+	if (partAnim.randAnim)
+		currentFrame = rand() % (textureColumns * textureRows);
+	else
+		currentFrame = 0u;
+
+	contFrame = 0u;
 	currMinUVCoord.x = (currentFrame % textureColumns) * textureColumnsNorm;
 	currMinUVCoord.y = ((textureRows - 1) - (currentFrame / textureColumns)) * textureRowsNorm;
+
 
 	active = true;
 	subEmitterActive = data.subEmitterActive;
@@ -84,13 +93,13 @@ bool Particle::Update(float dt)
 	if (owner->simulatedGame == SimulatedGame_PAUSE || App->IsPause())
 		dt = 0;
 	life += dt;
-	if (life < lifeTime || owner->dieOnAnimation)
+	if (life < lifeTime /*|| owner->dieOnAnimation*/)
 	{
 		acceleration3 += acceleration3 * dt;
 		math::float3 movement = direction * (speed * dt);
 
-		if(acceleration3.Equals(math::float3::zero))
-			_movement +=  movement;
+		if (acceleration3.Equals(math::float3::zero))
+			_movement += movement;
 		else
 			_movement += (movement + acceleration3 * dt);
 
@@ -127,26 +136,30 @@ bool Particle::Update(float dt)
 		angle += angularVelocity * dt;
 		transform.rotation = transform.rotation.Mul(math::Quat::RotateZ(angle));
 
-		if (isParticleAnimated && textureRows > 1 && textureColumns > 1)
+		if (isParticleAnimated && (textureRows > 1 || textureColumns > 1))
 		{
 			animationTime += dt;
 			if (animationTime > animationSpeed)
 			{
-				if ((textureColumns * textureRows) >= currentFrame + 1)
+				if ((textureColumns * textureRows) > contFrame + 1)
 				{
-					currentFrame++;
+					if ((textureColumns * textureRows) > currentFrame + 1)
+					{
+						currentFrame++;
+						contFrame++;
+					}
+					else
+						currentFrame = 0;
 
 					currMinUVCoord.x = (currentFrame % textureColumns) * textureColumnsNorm;
 					currMinUVCoord.y = ((textureRows - 1) - (currentFrame / textureColumns)) * textureRowsNorm;
+					animationTime = 0.0f;
 				}
-				else if (owner->dieOnAnimation)
-				{
-					EndParticle();
-				}
+				else if (!owner->dieOnAnimation)
+					contFrame = 0u;
+				
 				else
-					currentFrame = 0;
-
-				animationTime = 0.0f;
+					EndParticle();
 			}
 		}
 	}
@@ -310,13 +323,16 @@ float Particle::CreateRandomNum(math::float2 edges)//.x = minPoint & .y = maxPoi
 
 void Particle::ChangeAnim(ParticleAnimation partAnim)
 {
-	currentFrame = 0u;
 	isParticleAnimated = partAnim.isParticleAnimated;
 	textureRows = partAnim.textureRows;
 	textureColumns = partAnim.textureColumns;
 	textureRowsNorm = partAnim.textureRowsNorm;
 	textureColumnsNorm = partAnim.textureColumnsNorm;
 	animationSpeed = partAnim.animationSpeed;
+	if (!partAnim.randAnim)
+		currentFrame = 0u;
+	else
+		currentFrame = rand() % (textureColumns * textureRows - 1);
 }
 
 //Particle transform

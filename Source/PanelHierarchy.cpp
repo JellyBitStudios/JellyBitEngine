@@ -11,14 +11,12 @@
 #include "ModuleInternalResHandler.h"
 #include "ModuleResourceManager.h"
 #include "ModuleUI.h"
+#include "ComponentRectTransform.h"
 
 #include "SDL\include\SDL_scancode.h"
 #include "ModuleGOs.h"
 #include "ImGui\imgui.h"
 #include "imgui\imgui_internal.h"
-
-#include "ComponentTransform.h"
-#include "ComponentRectTransform.h"
 
 #include "ResourcePrefab.h"
 
@@ -57,15 +55,6 @@ bool PanelHierarchy::Draw()
 				ImGui::CloseCurrentPopup();
 				SELECT(newGO);
 			}
-			if(!App->GOs->ExistCanvas())
-			{
-				if (ImGui::Selectable("Create Screen Canvas"))
-				{
-					GameObject* newGO = App->GOs->CreateCanvas("Canvas", root);
-					ImGui::CloseCurrentPopup();
-					SELECT(newGO);
-				}
-			}
 			if (ImGui::Selectable("Create Cube"))
 			{
 				GameObject* go = App->GOs->CreateGameObject("Cube", root);
@@ -80,11 +69,12 @@ bool PanelHierarchy::Draw()
 				go->cmp_mesh->SetResource(App->resHandler->plane);
 				SELECT(go);
 			}
-			if (ImGui::Selectable("Create World Canvas"))
+			if (ImGui::Selectable("Create Canvas"))
 			{
-				GameObject* go = App->GOs->CreateGameObject("WoldCanvas", root);
-				ComponentRectTransform* new_rect = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::WORLD);
-				go->AddComponent(go->cmp_rectTransform = new_rect);
+				GameObject* go = App->GOs->CreateGameObject("Canvas", root);
+				go->AddComponent(ComponentTypes::CanvasComponent);
+				go->AddComponent(ComponentTypes::RectTransformComponent);
+				go->SetLayer(UILAYER);
 				SELECT(go);
 			}
 
@@ -159,9 +149,6 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 				if (App->scene->selectedObject == child
 					&& !App->gui->WantTextInput() && App->input->GetKey(SDL_SCANCODE_DELETE) == KEY_DOWN)
 				{
-					if (std::strcmp(child->GetName(), "Canvas") == 0)
-						App->GOs->DeleteCanvasPointer();
-
 					App->scene->selectedObject = CurrentSelection::SelectedType::null;
 					App->GOs->DeleteGameObject(child);
 				}
@@ -213,78 +200,46 @@ void PanelHierarchy::AtGameObjectPopUp(GameObject* child) const
 {
 	if (ImGui::BeginPopupContextItem())
 	{
-		if (child->GetLayer() == UILAYER)
+		if (child->GetLayer() != UILAYER)
 		{
 			if (ImGui::Selectable("Create Empty"))
 			{
-				GameObject* go = nullptr;
-				if (child->cmp_rectTransform->GetFrom() != ComponentRectTransform::RectFrom::RECT)
-				{
-					go = App->GOs->CreateGameObject("ChildWorldCanvas", child, true);
-					go->AddComponent(go->cmp_rectTransform = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::RECT_WORLD));
-				}
-				else
-				{
-					go = App->GOs->CreateGameObject("ChildScreenCanvas", child, true);
-					go->AddComponent(ComponentTypes::RectTransformComponent);
-				}
-				go->SetLayer(UILAYER);
+				App->GOs->CreateGameObject("GameObject", child);
 				ImGui::CloseCurrentPopup();
 			}
-			if (ImGui::Selectable("Delete"))
+			if (ImGui::Selectable("Create Cube"))
 			{
-				if (child->EqualsToChildrenOrThis(App->scene->selectedObject.Get()))
-					App->scene->selectedObject = CurrentSelection::SelectedType::null;
-				if (child->GetParent()->GetParent() == nullptr)
-					App->GOs->DeleteCanvasPointer();
-				App->GOs->DeleteGameObject(child);
+				GameObject* go = App->GOs->CreateGameObject("Cube", child);
+				go->AddComponent(ComponentTypes::MeshComponent);
+				go->cmp_mesh->SetResource(App->resHandler->cube);
 				ImGui::CloseCurrentPopup();
+			}
+			if (ImGui::Selectable("Create Canvas"))
+			{
+				GameObject* go = App->GOs->CreateGameObject("Canvas", child);
+				go->AddComponent(ComponentTypes::CanvasComponent);
+				go->AddComponent(ComponentTypes::RectTransformComponent);
+				go->SetLayer(UILAYER);
+				SELECT(go);
 			}
 		}
 		else
 		{
-			if (child->cmp_rectTransform == nullptr)
+			if (ImGui::Selectable("Create Empty"))
 			{
-				if (ImGui::Selectable("Create Empty"))
-				{
-					App->GOs->CreateGameObject("GameObject", child);
-					ImGui::CloseCurrentPopup();
-				}
-				if (ImGui::Selectable("Create Cube"))
-				{
-					GameObject* go = App->GOs->CreateGameObject("Cube", child);
-					go->AddComponent(ComponentTypes::MeshComponent);
-					go->cmp_mesh->SetResource(App->resHandler->cube);
-					ImGui::CloseCurrentPopup();
-				}
-				if (ImGui::Selectable("Create World Canvas"))
-				{
-					GameObject* go = App->GOs->CreateGameObject("WorldCanvas", child);
-					ComponentRectTransform* new_rect = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::WORLD);
-					go->AddComponent(go->cmp_rectTransform = new_rect);
-					SELECT(go);
-				}
-			}
-			else
-			{
-				if (ImGui::Selectable("Create Empty"))
-				{
-					GameObject* go = App->GOs->CreateGameObject("ChildWorldCanvas", child, true);
-					ComponentRectTransform* new_rect = new ComponentRectTransform(go, ComponentTypes::RectTransformComponent, ComponentRectTransform::RectFrom::RECT_WORLD);
-					go->AddComponent(go->cmp_rectTransform = new_rect);
-					go->SetLayer(UILAYER);
-					SELECT(go);
-				}
-			}
-			if (ImGui::Selectable("Delete"))
-			{
-				if (child->EqualsToChildrenOrThis(App->scene->selectedObject.Get()))
-					App->scene->selectedObject = CurrentSelection::SelectedType::null;
-				App->GOs->DeleteGameObject(child);
+				GameObject* go = App->GOs->CreateGameObject("Child Canvas", child, true);
+				go->SetLayer(UILAYER);
+				go->AddComponent(ComponentTypes::RectTransformComponent);
 				ImGui::CloseCurrentPopup();
 			}
 		}
-
+		if (ImGui::Selectable("Delete"))
+		{
+			if (child->EqualsToChildrenOrThis(App->scene->selectedObject.Get()))
+				App->scene->selectedObject = CurrentSelection::SelectedType::null;
+			App->GOs->DeleteGameObject(child);
+			ImGui::CloseCurrentPopup();
+		}
 		if (ImGui::Selectable("Duplicate at same parent"))
 		{
 			App->GOs->Instanciate(child, child->GetParent());
@@ -319,50 +274,25 @@ void PanelHierarchy::SetGameObjectDragAndDropTarget(GameObject* target) const
 
 			if (!payload_n->IsChild(target, true))
 			{
-				//Sorry for this code :(, this is UI checks for no crash the engine. pukecode
-				bool rectWorldToWortldCanvas = false;
-				if (payload_n->cmp_rectTransform && target->cmp_rectTransform)
-					if (payload_n->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT_WORLD
-						&& target->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::WORLD)
-						rectWorldToWortldCanvas = true;
-				if (payload_n->GetLayer() == target->GetLayer() || rectWorldToWortldCanvas)
+				//Checks for UI.
+				if (((!payload_n->cmp_canvas && payload_n->GetLayer() == UILAYER) && target->GetLayer() != UILAYER) //child of canvas can't be moved outside of any canvas.
+					|| (payload_n->cmp_canvas && target->GetLayer() == UILAYER) //Can't move canvas into canvas.
+					|| (payload_n->GetLayer() != UILAYER && target->GetLayer() == UILAYER)) //any gameobject can't be inside of canvas or canvas childs.
 				{
-					if (!rectWorldToWortldCanvas)
-					{
-						if (App->GOs->GetCanvas() == payload_n)
-						{
-							ImGui::EndDragDropTarget();
-							return;
-						}
-						if (payload_n->cmp_rectTransform && target->cmp_rectTransform)
-						{
-							if ((payload_n->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::WORLD
-								&& target->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::WORLD)
-								|| (payload_n->cmp_rectTransform->GetFrom() != target->cmp_rectTransform->GetFrom()))
-							{
-								ImGui::EndDragDropTarget();
-								return;
-							}
-						}
-					}
-
-					math::float4x4 globalMatrix;
-					if (payload_n->GetLayer() != UILAYER)
-						globalMatrix = payload_n->transform->GetGlobalMatrix();
-					payload_n->GetParent()->EraseChild(payload_n);
-
-					target->AddChild(payload_n);
-					payload_n->SetParent(target);
-
-					if (payload_n->GetLayer() != UILAYER)
-						payload_n->transform->SetMatrixFromGlobal(globalMatrix);
-					else if (payload_n->cmp_rectTransform)
-					{
-						ComponentRectTransform* rect = (ComponentRectTransform*)payload_n->GetComponent(ComponentTypes::RectTransformComponent);
-						rect->CheckParentRect();
-						rect->ChangeChildsRect();
-					}
+					CONSOLE_LOG(LogTypes::Error, "ERROR: Invalid Target. UI limitation, if not the engine crash.");
+					ImGui::EndDragDropTarget();
+					return;
 				}
+				
+				math::float4x4 globalMatrix;
+				if(payload_n->transform) globalMatrix = payload_n->transform->GetGlobalMatrix();
+
+				payload_n->GetParent()->EraseChild(payload_n);
+				target->AddChild(payload_n);
+				payload_n->SetParent(target);
+
+				if (payload_n->transform) payload_n->transform->SetMatrixFromGlobal(globalMatrix);
+				if (payload_n->GetLayer() == UILAYER) if (payload_n->cmp_rectTransform) payload_n->cmp_rectTransform->ParentChanged();
 			}
 			else
 				CONSOLE_LOG(LogTypes::Error, "ERROR: Invalid Target. Don't be so badass ;)");

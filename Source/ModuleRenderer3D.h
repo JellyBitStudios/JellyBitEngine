@@ -72,7 +72,6 @@ public:
 	void FrustumCulling() const;
 
 	void DrawMesh(ComponentMesh* toDraw) const;
-	void DrawProjectors(ComponentProjector* toDraw) const;
 
 	void RecursiveDrawQuadtree(QuadtreeNode* node) const;
 
@@ -92,6 +91,8 @@ private:
 	uint maxTextureUnits = 0;
 
 public:
+
+	std::vector<ComponentMesh*> rendererLast;
 
 	SDL_GLContext context;
 	math::float3x3 NormalMatrix;

@@ -12,7 +12,8 @@
 
 ComponentCapsuleCollider::ComponentCapsuleCollider(GameObject* parent, bool include) : ComponentCollider(parent, ComponentTypes::CapsuleColliderComponent, include)
 {
-	EncloseGeometry();
+	if (include)
+		EncloseGeometry();
 
 	colliderType = ColliderTypes::CapsuleCollider;
 
@@ -122,19 +123,18 @@ void ComponentCapsuleCollider::OnInternalLoad(char*& cursor)
 
 	size_t bytes = sizeof(float);
 	memcpy(&radius, cursor, bytes);
+	SetRadius(radius);
 	cursor += bytes;
 
 	bytes = sizeof(float);
 	memcpy(&halfHeight, cursor, bytes);
+	SetHalfHeight(halfHeight);
 	cursor += bytes;
 
 	bytes = sizeof(CapsuleDirection);
 	memcpy(&direction, cursor, bytes);
+	SetDirection(direction);
 	cursor += bytes;
-
-	// -----
-
-	EncloseGeometry();
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -179,8 +179,7 @@ void ComponentCapsuleCollider::EncloseGeometry()
 		}
 	}
 
-	//if (gShape != nullptr)
-		RecalculateShape();
+	RecalculateShape();
 }
 
 void ComponentCapsuleCollider::RecalculateShape()

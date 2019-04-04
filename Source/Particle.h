@@ -91,7 +91,8 @@ private:
 	float animationSpeed = 0.1f;
 
 	float animationTime = 0.0f;
-	uint currentFrame = 0;
+	uint currentFrame = 0u;
+	uint contFrame = 0u;
 	math::float2 currMinUVCoord = math::float2::zero;
 };
 

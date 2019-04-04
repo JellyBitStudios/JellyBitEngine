@@ -14,7 +14,8 @@
 
 ComponentPlaneCollider::ComponentPlaneCollider(GameObject* parent, bool include) : ComponentCollider(parent, ComponentTypes::PlaneColliderComponent, include)
 {
-	EncloseGeometry();
+	if (include)
+		EncloseGeometry();
 
 	colliderType = ColliderTypes::PlaneCollider;
 
@@ -114,23 +115,20 @@ void ComponentPlaneCollider::OnInternalLoad(char*& cursor)
 
 	size_t bytes = sizeof(math::float3);
 	memcpy(&normal, cursor, bytes);
+	SetNormal(normal);
 	cursor += bytes;
 
 	bytes = sizeof(float);
 	memcpy(&distance, cursor, bytes);
+	SetDistance(distance);
 	cursor += bytes;
-
-	// -----
-
-	EncloseGeometry();
 }
 
 // ----------------------------------------------------------------------------------------------------
 
 void ComponentPlaneCollider::EncloseGeometry()
 {
-	//if (gShape != nullptr)
-		RecalculateShape();
+	RecalculateShape();
 }
 
 void ComponentPlaneCollider::RecalculateShape()
@@ -158,7 +156,6 @@ void ComponentPlaneCollider::RecalculateShape()
 void ComponentPlaneCollider::SetNormal(const math::float3& normal)
 {
 	assert(normal.IsFinite());
-	this->normal = normal;
 
 	if (normal.IsZero())
 	{
@@ -166,9 +163,13 @@ void ComponentPlaneCollider::SetNormal(const math::float3& normal)
 		return;
 	}
 
-	physx::PxTransform relativePose = physx::PxTransformFromPlaneEquation(physx::PxPlane(normal.x, normal.y, normal.z, distance));
+	this->normal = normal;
+
 	if (gShape != nullptr)
+	{
+		physx::PxTransform relativePose = physx::PxTransformFromPlaneEquation(physx::PxPlane(normal.x, normal.y, normal.z, distance));
 		gShape->setLocalPose(relativePose);
+	}
 }
 
 void ComponentPlaneCollider::SetDistance(float distance)
@@ -181,9 +182,11 @@ void ComponentPlaneCollider::SetDistance(float distance)
 		return;
 	}
 
-	physx::PxTransform relativePose = physx::PxTransformFromPlaneEquation(physx::PxPlane(normal.x, normal.y, normal.z, distance));
 	if (gShape != nullptr)
+	{
+		physx::PxTransform relativePose = physx::PxTransformFromPlaneEquation(physx::PxPlane(normal.x, normal.y, normal.z, distance));
 		gShape->setLocalPose(relativePose);
+	}
 }
 
 // ----------------------------------------------------------------------------------------------------

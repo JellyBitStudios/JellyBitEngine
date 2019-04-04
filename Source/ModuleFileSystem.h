@@ -23,6 +23,7 @@
 #define DIR_LIBRARY_SCENES "Library/Scenes"
 #define DIR_LIBRARY_SCRIPTS "Library/Scripts"
 #define DIR_LIBRARY_AUDIO "Library/Audio"
+#define DIR_LIBRARY_FONT "Library/Font"
 
 #define DIR_ASSETS "Assets"
 #define DIR_ASSETS_MESHES "Assets/Meshes"
@@ -37,6 +38,7 @@
 #define DIR_ASSETS_SCENES "Assets/Scenes"
 #define DIR_ASSETS_SCRIPTS "Assets/Scripts"
 #define DIR_ASSETS_AUDIO "Assets/Audio"
+#define DIR_ASSETS_FONT "Assets/Font"
 
 #define IS_SCENE(extension) strcmp(extension, EXTENSION_SCENE) == 0
 #define IS_META(extension) strcmp(extension, EXTENSION_META) == 0
@@ -49,6 +51,8 @@ enum FileTypes
 
 	MeshFile,
 	TextureFile,
+
+	FontFile,
 
 	BoneFile,
 	AvatarFile,
@@ -338,6 +342,8 @@ public:
 
 	//GenerateBuild  methods
 	void RecursiveBuild(const Directory& dir, char* toPath, bool meta = false, bool inZIP = false);
+
+	std::string PathToWindowsNotation(std::string path);
 
 public:
 	Directory rootDir;

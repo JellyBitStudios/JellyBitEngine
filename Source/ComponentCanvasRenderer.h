@@ -8,6 +8,9 @@
 #include <vector>
 
 #include "MathGeoLib/include/Math/float4.h"
+#include "MathGeoLib/include/Math/float2.h"
+
+#include "ComponentLabel.h"
 
 class ComponentCanvasRenderer : public Component
 {
@@ -16,16 +19,15 @@ public:
 	enum RenderTypes
 	{
 		RENDER_NULL,
-		COLOR_VECTOR,
-		TEXTURE,
-		FONT
+		IMAGE,
+		LABEL
 	};
 
 	struct ToUIRend
 	{
 	public:
 		ToUIRend() {}
-		
+
 		void Set(RenderTypes t, Component* c)
 		{
 			type = t;
@@ -39,18 +41,20 @@ public:
 		}
 		math::float4 GetColor();
 		uint GetTexture();
+		const char * GetText();
+		math::float2 GetMaskValues();
+		std::vector<ComponentLabel::LabelLetter>* GetWord();
 
 		bool isRendered() {
 			return isRendered_flag;
 		}
-
 	private:
 		RenderTypes type = RenderTypes::RENDER_NULL;
 		Component* cmp = nullptr;
 		bool isRendered_flag = true;
 	};
 
-	ComponentCanvasRenderer(GameObject* parent, ComponentTypes componentType = ComponentTypes::CanvasRendererComponent);
+	ComponentCanvasRenderer(GameObject* parent, ComponentTypes componentType = ComponentTypes::CanvasRendererComponent, bool includeComponents = true);
 	ComponentCanvasRenderer(const ComponentCanvasRenderer& componentRectTransform, GameObject* parent, bool includeComponents = true);
 	~ComponentCanvasRenderer();
 
@@ -66,8 +70,6 @@ private:
 	void OnInternalSave(char*& cursor);
 	void OnInternalLoad(char*& cursor);
 	void OnUniqueEditor();
-
-	void LinkToUIModule();
 
 	std::vector<ToUIRend* > rend_queue;
 

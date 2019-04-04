@@ -152,11 +152,6 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 			App->materialImporter->SetIsAnisotropySupported(true);
 			App->materialImporter->SetLargestSupportedAnisotropy(largestSupportedAnisotropy);
 		}
-
-		// Shader Importer: binary formats
-		GLint formats = 0;
-		glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS, &formats);
-		App->shaderImporter->SetBinaryFormats(formats);
 	}
 
 #ifndef GAMEMODE
@@ -190,38 +185,48 @@ update_status ModuleRenderer3D::PostUpdate()
 #ifndef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::Orchid);
 #endif
-
 	App->fbo->BindGBuffer();
 
 	if (currentCamera != nullptr)
 	{
 		for (uint i = 0; i < cameraComponents.size(); ++i)
 		{
-			if (cameraComponents[i]->IsActive())
+			if (cameraComponents[i]->IsTreeActive())
 				cameraComponents[i]->UpdateTransform();
 		}
-		/*
+
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
-			if (projectorComponents[i]->IsActive())
+			if (projectorComponents[i]->IsTreeActive())
 				projectorComponents[i]->UpdateTransform();
 		}
-		*/
 
 		if (currentCamera->HasFrustumCulling())
 			FrustumCulling();
 
-		/*
-		for (uint i = 0; i < projectorComponents.size(); ++i)
-		{
-			if (projectorComponents[i]->GetParent()->IsActive() && projectorComponents[i]->IsActive())
-				DrawProjectors(projectorComponents[i]);
-		}
-		*/
+		// Draw static meshes
 		for (uint i = 0; i < meshComponents.size(); ++i)
 		{
-			if (meshComponents[i]->GetParent()->IsActive() && meshComponents[i]->IsActive() 
-				&& meshComponents[i]->GetParent()->seenLastFrame)
+			if (meshComponents[i]->GetParent()->IsStatic()
+				&& meshComponents[i]->GetParent()->seenLastFrame
+				&& meshComponents[i]->IsTreeActive())
+				DrawMesh(meshComponents[i]);
+		}
+
+		// Draw decals
+		for (uint i = 0; i < projectorComponents.size(); ++i)
+		{
+			if (projectorComponents[i]->GetParent()->IsActive() 
+				&& projectorComponents[i]->IsTreeActive())
+				projectorComponents[i]->Draw();
+		}
+
+		// Draw dynamic meshes
+		for (uint i = 0; i < meshComponents.size(); ++i)
+		{
+			if (!meshComponents[i]->GetParent()->IsStatic()
+				&& meshComponents[i]->GetParent()->seenLastFrame
+				&& meshComponents[i]->IsTreeActive())
 				DrawMesh(meshComponents[i]);
 		}
 	}
@@ -239,11 +244,16 @@ update_status ModuleRenderer3D::PostUpdate()
 	if (!blend)
 		glDisable(GL_BLEND);
 
-
 #ifndef GAMEMODE
 
 	if (debugDraw)
 	{
+		App->lights->DebugDrawLights();
+
+		App->navigation->Draw();
+
+		App->debugDrawer->StartDebugDraw();
+
 		// Bones debug draw
 		std::vector<GameObject*> gameObjects;
 		App->GOs->GetGameobjects(gameObjects);
@@ -321,12 +331,6 @@ update_status ModuleRenderer3D::PostUpdate()
 			}
 		}
 
-		App->lights->DebugDrawLights();
-
-		App->navigation->Draw();
-
-		App->debugDrawer->StartDebugDraw();
-
 		App->scene->Draw();
 
 		if (drawCurrentGO)
@@ -352,7 +356,10 @@ update_status ModuleRenderer3D::PostUpdate()
 				App->debugDrawer->DebugDraw(cameraComponents[i]->frustum, frustumsColor);
 
 			for (uint i = 0; i < projectorComponents.size(); ++i)
+			{
 				App->debugDrawer->DebugDraw(projectorComponents[i]->GetFrustum(), frustumsColor);
+				App->debugDrawer->DebugDraw(projectorComponents[i]->GetFrustum().MinimalEnclosingAABB());
+			}
 		}
 
 		if (drawColliders)
@@ -369,18 +376,18 @@ update_status ModuleRenderer3D::PostUpdate()
 		App->debugDrawer->EndDebugDraw();
 	}
 
-	App->ui->DrawWorldCanvas();
 
 	if (App->ui->GetUIMode())
+	{
+		App->ui->DrawWorldCanvas();
 		App->ui->DrawCanvas();
+	}
 		
 	// 3. Editor
 	App->gui->Draw();
 #else
 	App->ui->DrawWorldCanvas();
-	//UIOnEditor
-	if (App->ui->GetUIMode())
-		App->ui->DrawCanvas();
+	App->ui->DrawCanvas();
 #endif // GAME
 
 	// 4. Swap buffers
@@ -782,17 +789,22 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	normal_matrix.Inverse();
 	normal_matrix.Transpose();
 
-	uint location = glGetUniformLocation(shader, "model_matrix");
+	int location = glGetUniformLocation(shader, "model_matrix");
 	glUniformMatrix4fv(location, 1, GL_FALSE, model_matrix.ptr());
 	location = glGetUniformLocation(shader, "mvp_matrix");
 	glUniformMatrix4fv(location, 1, GL_FALSE, mvp_matrix.ptr());
 	location = glGetUniformLocation(shader, "normal_matrix");
 	glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
 
+	location = glGetUniformLocation(shader, "layer");
+	uint layerGroup = BIT_SHIFT(toDraw->GetParent()->GetLayer());
+	if (location != -1)
+		glUniform1i(location, layerGroup);
+
 	// Animations
 	char boneName[DEFAULT_BUF_SIZE];
 	ResourceAvatar* avatarResource = (ResourceAvatar*)App->res->GetResource(toDraw->avatarResource);
-	bool animate = avatarResource != nullptr && avatarResource->GetIsAnimated();
+	bool animate = avatarResource != nullptr /*&& avatarResource->GetIsAnimated()*/;
 
 	location = glGetUniformLocation(shader, "animate");
 	glUniform1i(location, animate);
@@ -818,17 +830,13 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 				continue;
 
 			math::float4x4 boneGlobalMatrix = boneComponent->GetParent()->transform->GetGlobalMatrix();
-
 			math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetGlobalMatrix().Inverted();
-			//math::float4x4 meshMatrix = toDraw->GetParent()->transform->GetGlobalMatrix().Inverted();
-
 			math::float4x4 boneTransform = meshMatrix * boneGlobalMatrix * boneResource->boneData.offsetMatrix;
 
 			sprintf_s(boneName, "bones[%u]", i);
 			location = glGetUniformLocation(shader, boneName);
 			glUniformMatrix4fv(location, 1, GL_TRUE, boneTransform.ptr());
 		}
-		
 	}
 
 	// 3. Unknown mesh uniforms
@@ -855,7 +863,6 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-
 	if (animate)
 	{
 		std::vector<uint> bonesUuids = avatarResource->GetBonesUuids();
@@ -866,150 +873,6 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 			location = glGetUniformLocation(shader, boneName);
 			glUniformMatrix4fv(location, 1, GL_TRUE, boneTransform.ptr());
 		}
-	}
-
-	glUseProgram(0);
-}
-
-void ModuleRenderer3D::DrawProjectors(ComponentProjector* toDraw) const
-{
-	if (toDraw->GetMaterialRes() == 0)
-		return;
-
-	uint textureUnit = 0;
-
-	ResourceMaterial* resourceMaterial = (ResourceMaterial*)App->res->GetResource(toDraw->GetMaterialRes());
-	uint shaderUuid = resourceMaterial->GetShaderUuid();
-	const ResourceShaderProgram* resourceShaderProgram = (ResourceShaderProgram*)App->res->GetResource(shaderUuid);
-	GLuint shaderProgram = resourceShaderProgram->shaderProgram;
-
-	glUseProgram(shaderProgram);
-
-	// 1. Generic uniforms
-	LoadGenericUniforms(shaderProgram);
-
-	// 2. Known projector uniforms
-	math::float4x4 bias_matrix = math::float4x4(
-		0.5f, 0.0f, 0.0f, 0.5f,
-		0.0f, 0.5f, 0.0f, 0.5f,
-		0.0f, 0.0f, 0.5f, 0.5f,
-		0.0f, 0.0f, 0.0f, 1.0f
-	);
-
-	math::float4x4 projector_view_matrix = toDraw->GetOpenGLViewMatrix().Transposed();
-	math::float4x4 projector_proj_matrix = toDraw->GetOpenGLProjectionMatrix().Transposed();
-	math::float4x4 projector_matrix = bias_matrix * projector_proj_matrix * projector_view_matrix;																					   
-
-	uint location = glGetUniformLocation(shaderProgram, "projector_matrix");
-	glUniformMatrix4fv(location, 1, GL_TRUE, projector_matrix.ptr());
-
-	// 3. Unknown projector uniforms
-	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
-	std::vector<const char*> ignore;
-	ignore.push_back("material.albedo");
-	ignore.push_back("material.specular");
-	LoadSpecificUniforms(textureUnit, uniforms, ignore);
-
-	// Frustum culling
-	/// Static objects
-	std::vector<GameObject*> seenGameObjects;
-	App->scene->quadtree.CollectIntersections(seenGameObjects, toDraw->GetFrustum());
-
-	/// Dynamic objects
-	std::vector<GameObject*> dynamicGameObjects;
-	App->GOs->GetDynamicGameobjects(dynamicGameObjects);
-
-	for (uint i = 0; i < dynamicGameObjects.size(); ++i)
-	{
-		if (dynamicGameObjects[i]->boundingBox.IsFinite() && toDraw->GetFrustum().Intersects(dynamicGameObjects[i]->boundingBox))
-			seenGameObjects.push_back(dynamicGameObjects[i]);
-	}
-
-	// Meshes
-	for (uint i = 0; i < seenGameObjects.size(); ++i)
-	{
-		const ComponentMesh* componentMesh = seenGameObjects[i]->cmp_mesh;
-		if (componentMesh == nullptr)
-			continue;
-
-		Layer* layer = App->layers->GetLayer(componentMesh->GetParent()->GetLayer());
-
-		if (!(toDraw->GetFilterMask() & layer->GetFilterGroup())
-			&& componentMesh->IsActive() && componentMesh->GetParent()->seenLastFrame)
-		{
-			uint meshTextureUnit = textureUnit;
-
-			const ComponentMaterial* materialRenderer = componentMesh->GetParent()->cmp_material;
-			resourceMaterial = (ResourceMaterial*)App->res->GetResource(materialRenderer->res);
-
-			// 2. Known mesh uniforms
-			math::float4x4 model_matrix = componentMesh->GetParent()->transform->GetGlobalMatrix();
-			model_matrix = model_matrix.Transposed();
-			math::float4x4 view_matrix = currentCamera->GetOpenGLViewMatrix();
-			math::float4x4 proj_matrix = currentCamera->GetOpenGLProjectionMatrix();
-			math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
-			math::float4x4 normal_matrix = model_matrix;
-			normal_matrix.Inverse();
-			normal_matrix.Transpose();
-
-			uint location = glGetUniformLocation(shaderProgram, "model_matrix");
-			glUniformMatrix4fv(location, 1, GL_FALSE, model_matrix.ptr());
-			location = glGetUniformLocation(shaderProgram, "mvp_matrix");
-			glUniformMatrix4fv(location, 1, GL_FALSE, mvp_matrix.ptr());
-			location = glGetUniformLocation(shaderProgram, "normal_matrix");
-			glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
-
-			// 3. Unknown mesh uniforms
-			std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
-			uint albedoId = 0;
-			uint specularId = 0;
-			for (uint i = 0; i < uniforms.size(); ++i)
-			{
-				Uniform uniform = uniforms[i];
-				if (strcmp(uniform.common.name, "material.albedo") == 0)
-					albedoId = uniform.sampler2DU.value.id;
-				else if (strcmp(uniform.common.name, "material.specular") == 0)
-					specularId = uniform.sampler2DU.value.id;
-			}
-
-			location = glGetUniformLocation(shaderProgram, "material.albedo");
-			if (meshTextureUnit < maxTextureUnits && albedoId > 0)
-			{
-				glActiveTexture(GL_TEXTURE0 + meshTextureUnit);
-				glBindTexture(GL_TEXTURE_2D, albedoId);
-				glUniform1i(location, meshTextureUnit);
-				++meshTextureUnit;
-			}
-			location = glGetUniformLocation(shaderProgram, "material.specular");
-			if (meshTextureUnit < maxTextureUnits && specularId > 0)
-			{
-				glActiveTexture(GL_TEXTURE0 + meshTextureUnit);
-				glBindTexture(GL_TEXTURE_2D, specularId);
-				glUniform1i(location, meshTextureUnit);
-				++meshTextureUnit;
-			}
-
-			// Mesh
-			const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(componentMesh->res);
-
-			glBindVertexArray(mesh->GetVAO());
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIBO());
-			glDrawElements(GL_TRIANGLES, mesh->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			glBindVertexArray(0);
-
-			for (uint i = textureUnit; i < meshTextureUnit; ++i)
-			{
-				glActiveTexture(GL_TEXTURE0 + i);
-				glBindTexture(GL_TEXTURE_2D, 0);
-			}
-		}
-	}
-
-	for (uint i = 0; i < maxTextureUnits; ++i)
-	{
-		glActiveTexture(GL_TEXTURE0 + i);
-		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	glUseProgram(0);
@@ -1084,8 +947,11 @@ void ModuleRenderer3D::LoadSpecificUniforms(uint& textureUnit, const std::vector
 
 void ModuleRenderer3D::LoadGenericUniforms(uint shaderProgram) const
 {
-	uint location = glGetUniformLocation(shaderProgram, "viewPos");
-	glUniform3fv(location, 1, currentCamera->frustum.pos.ptr());
+	int location = glGetUniformLocation(shaderProgram, "viewPos");
+	if (location != -1)
+		glUniform3fv(location, 1, currentCamera->frustum.pos.ptr());
+
+	/*
 	switch (App->GetEngineState())
 	{
 		// Game
@@ -1100,4 +966,5 @@ void ModuleRenderer3D::LoadGenericUniforms(uint shaderProgram) const
 		glUniform1f(location, App->timeManager->GetRealTime());
 		break;
 	}
+	*/
 }

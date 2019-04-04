@@ -9,6 +9,7 @@
 #include "ResourceMesh.h"
 #include "PanelInspector.h"
 #include "ModuleGui.h"
+#include "ModuleUI.h"
 #include "Resource.h"
 
 #include <assert.h>
@@ -17,7 +18,7 @@ class Resource;
 
 struct CurrentSelection
 {
-	enum class SelectedType { null, gameObject, scene, resource, meshImportSettings };
+	enum class SelectedType { null, gameObject, scene, resource, meshImportSettings, fontImportSettings };
 
 private:
 	void* cur = nullptr;
@@ -82,7 +83,8 @@ public:
 
 #ifndef GAMEMODE
 		// New game object selected. Update the camera reference
-		if(newSelection->GetLayer() != UILAYER)
+
+		if(newSelection->transform)
 			App->camera->SetReference(newSelection->transform->GetPosition());
 #endif
 
@@ -132,6 +134,17 @@ public:
 	}
 	//-------------------------------------------------------
 
+	//Font Import Settings ----------------------------------
+	CurrentSelection& operator=(FontImportSettings& newSelection)
+	{
+		FontImportSettings* selection = App->gui->panelInspector->SetFontImportSettings(newSelection);
+
+		cur = (void*)selection;
+		type = SelectedType::fontImportSettings;
+
+		return *this;
+	}
+	//-------------------------------------------------------
 	// Add operators in case of new kinds of selection :)
 };
 

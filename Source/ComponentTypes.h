@@ -10,22 +10,28 @@ enum ComponentTypes
 	MaterialComponent,
 	CameraComponent,
 	NavAgentComponent,
-	EmitterComponent,
-	ScriptComponent,
+	ScriptComponent = 7,
 	BoneComponent,
 	AnimationComponent,
 	AnimatorComponent,
-	RectTransformComponent,
+	LightComponent = 16,
+	ProjectorComponent,
+
+	// Effects
+	EmitterComponent = 6,
+	TrailComponent = 33,
+
+	//UI
+	CanvasComponent = 32,
+	RectTransformComponent = 11,
 	CanvasRendererComponent,
 	ImageComponent,
 	ButtonComponent,
 	LabelComponent,
-	LightComponent,
-	ProjectorComponent,
 
 	// Physics
 	/// Rigid Actors
-	RigidStaticComponent,
+	RigidStaticComponent = 18,
 	RigidDynamicComponent,
 
 	/// Colliders
@@ -43,9 +49,9 @@ enum ComponentTypes
 	D6JointComponent,
 	//Audio
 	AudioListenerComponent,
-	AudioSourceComponent,
+	AudioSourceComponent //31
 
-	TrailComponent
+	// 	TrailComponent = 33
 };
 
 #endif

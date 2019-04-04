@@ -13,6 +13,7 @@
 #include "ResourceAnimation.h"
 #include "AnimationImporter.h"
 #include "ResourceAvatar.h"
+
 #ifndef GAMEMODE
 #include "imgui\imgui.h"
 #endif
@@ -159,6 +160,29 @@ bool ComponentAnimator::SetResourceAnimation(uint resource)
 	return true;
 }
 
+bool ComponentAnimator::CleanAnimations() {
+
+	res_animations.clear();
+	ResourceAnimator* animator = (ResourceAnimator*)App->res->GetResource(res);
+
+	animator->ClearAnimations();
+
+	return true;
+}
+
+bool ComponentAnimator::AnimationFinished()const
+{
+	ResourceAnimator* animator_res = (ResourceAnimator*)App->res->GetResource(res);
+	if (!animator_res)
+		return false;
+
+	ResourceAnimation* animation_res = (ResourceAnimation*)animator_res->GetCurrentAnimation();
+	if (!animation_res)
+		return false;
+
+	return (animation_res->animationData.numKeys == GetCurrentAnimationFrame());
+}
+
 void ComponentAnimator::Update()
 {
 	if (res != 0) {
@@ -179,6 +203,77 @@ bool ComponentAnimator::PlayAnimation(const char* anim_name)
 		return anim_res->SetCurrentAnimation(anim_name);
 	else
 		return false;
+}
+
+const char * ComponentAnimator::GetCurrentAnimationName()
+{
+	ResourceAnimator* anim_res = (ResourceAnimator*)App->res->GetResource(res);
+	if (!anim_res)
+		return nullptr;
+	else
+		return anim_res->GetCurrentAnimation()->name.data();
+}
+
+int ComponentAnimator::GetCurrentAnimationFrame()const
+{
+	ResourceAnimator* animator_res = (ResourceAnimator*)App->res->GetResource(res);
+	if (!animator_res)
+		return -1;
+
+	ResourceAnimation* animation_res = (ResourceAnimation*)animator_res->GetCurrentAnimation();
+	if (!animation_res)
+		return -1;
+
+	float current_animation_time = animator_res->GetCurrentAnimationTime();
+
+	for (uint i = 0u; i < animation_res->animationData.numKeys; i++)
+	{
+		if (animation_res->animationData.boneKeys[i].positions.count > i)
+		{
+			for (uint j = 0; j < animation_res->animationData.boneKeys[i].positions.count; ++j)
+			{
+				if (current_animation_time < animation_res->animationData.boneKeys[i].positions.time[j])
+					return i - 1;
+				else if (current_animation_time == animation_res->animationData.boneKeys[i].positions.time[j])
+					return i;
+			}
+		}
+
+		if (animation_res->animationData.boneKeys[i].scalings.count > i)
+		{
+			for (uint j = 0; j < animation_res->animationData.boneKeys[i].scalings.count; ++j)
+			{
+				if (current_animation_time < animation_res->animationData.boneKeys[i].scalings.time[j])
+					return i - 1;
+				else if (current_animation_time == animation_res->animationData.boneKeys[i].scalings.time[j])
+					return i;
+			}
+		}
+
+		if (animation_res->animationData.boneKeys[i].scalings.count > i)
+		{
+			for (uint j = 0; j < animation_res->animationData.boneKeys[i].scalings.count; ++j)
+			{
+				if (current_animation_time < animation_res->animationData.boneKeys[i].scalings.time[j])
+					return i - 1;
+				else if (current_animation_time == animation_res->animationData.boneKeys[i].scalings.time[j])
+					return i;
+			}
+		}
+
+		if (animation_res->animationData.boneKeys[i].rotations.count > i)
+		{
+			for (uint j = 0; j < animation_res->animationData.boneKeys[i].rotations.count; ++j)
+			{
+				if (current_animation_time < animation_res->animationData.boneKeys[i].rotations.time[j])
+					return i - 1;
+				else if (current_animation_time == animation_res->animationData.boneKeys[i].rotations.time[j])
+					return i;
+			}
+		}
+	}
+
+	return -1;
 }
 
 void ComponentAnimator::OnEditor()
@@ -206,30 +301,37 @@ void ComponentAnimator::OnUniqueEditor()
 			ImGui::Text("Avatar UUID: %i", resource->animator_data.avatar_uuid);
 			ImGui::Text("Meshes affected: %i", resource->animator_data.meshes_uuids.size());
 			ImGui::Text("Animations size: %i", resource->animator_data.animations_uuids.size());
+
+			if (ImGui::Button("PLAY"))
+				resource->PlayAnimation();
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("PAUSE"))
+				resource->PauseAnimation();
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("STOP"))
+				resource->StopAnimation();
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("FORWARD"))
+				resource->StepForward();
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("BACKWARDS"))
+				resource->StepBackwards();
+
+			if (ImGui::Button("CLEAN ANIMATIONS")) {
+				
+			}
+				
 		}
 
-		if (ImGui::Button("PLAY"))
-			resource->PlayAnimation();
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("PAUSE"))
-			resource->PauseAnimation();
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("STOP"))
-			resource->StopAnimation();
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("FORWARD"))
-			resource->StepForward();
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("BACKWARDS"))
-			resource->StepBackwards();
+		
 
 		ImGui::PushID("animator");
 		ImGui::Button(fileName.data(), ImVec2(150.0f, 0.0f));

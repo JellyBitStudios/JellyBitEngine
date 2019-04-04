@@ -248,11 +248,11 @@ update_status ModulePhysics::FixedUpdate()
 		return UPDATE_CONTINUE;
 #endif
 
-	//Call the FixedUpdate in all the active scripts
+	// Call FixedUpdate in all the active scripts
 	App->scripting->FixedUpdate();
 
 	//Debug();
-	DestroyChest();
+	//DestroyChest();
 
 	return UPDATE_CONTINUE;
 }
@@ -459,7 +459,6 @@ void ModulePhysics::DrawColliders() const
 {
 	Color collidersColor = Green;
 
-	std::vector<ComponentCollider*> colliderComponents = GetColliderComponents();
 	for (uint i = 0; i < colliderComponents.size(); ++i)
 	{
 		if (colliderComponents[i]->GetParent()->cmp_rigidActor == nullptr)
@@ -469,7 +468,11 @@ void ModulePhysics::DrawColliders() const
 		if (gShape == nullptr)
 			continue;
 
-		physx::PxTransform actorGlobalPose = gShape->getActor()->getGlobalPose();
+		physx::PxRigidActor* gActor = gShape->getActor();
+		if (gActor == nullptr)
+			continue;
+
+		physx::PxTransform actorGlobalPose = gActor->getGlobalPose();
 		physx::PxTransform shapeLocalPose = gShape->getLocalPose();
 		physx::PxTransform globalPose = actorGlobalPose * shapeLocalPose;
 
@@ -513,10 +516,11 @@ void ModulePhysics::DrawRigidActors() const
 {
 	Color rigidActorsColor = Red;
 
-	std::vector<ComponentRigidActor*> rigidActorComponents = App->physics->GetRigidActorComponents();
 	for (uint i = 0; i < rigidActorComponents.size(); ++i)
 	{
 		physx::PxRigidActor* gActor = rigidActorComponents[i]->GetActor();
+		if (gActor == nullptr)
+			continue;
 
 		physx::PxShape* gShape = nullptr;
 		gActor->getShapes(&gShape, 1);
@@ -650,12 +654,12 @@ void ModulePhysics::DestroyChest()
 		}
 	}
 }
+//_*****Debug*****
+
 float ModulePhysics::GetFixedDT()
 {
 	return PhysicsConstants::FIXED_DT;
 }
-
-//_*****Debug*****
 
 // ----------------------------------------------------------------------------------------------------
 

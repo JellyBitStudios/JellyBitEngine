@@ -5,6 +5,9 @@
 #include "ModuleInternalResHandler.h"
 #include "ScriptingModule.h"
 
+#include "ModuleGui.h"
+#include "PanelInspector.h"
+
 #include "SceneImporter.h"
 #include "MaterialImporter.h"
 #include "ShaderImporter.h"
@@ -23,6 +26,7 @@
 #include "ResourcePrefab.h"
 #include "ResourceMaterial.h"
 #include "ResourceScene.h"
+#include "ResourceFont.h"
 #include "ResourceAnimator.h"
 #include "ResourceAudioBank.h"
 
@@ -206,6 +210,11 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			for (uint i = 0; i < resourcesUuids.size(); ++i)
 				GetResource(resourcesUuids[i])->SetFile(event.fileEvent.newFileLocation);
 		}
+
+		std::string extension;
+		App->fs->GetExtension(event.fileEvent.file, extension);
+		if (extension == ".cs")
+			App->scripting->IncludeCSFiles();
 	}
 	break;
 
@@ -226,7 +235,7 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			// 2. Delete entries
 			for (uint i = 0; i < resourcesUuids.size(); ++i)
 				App->fs->deleteFile(GetResource(resourcesUuids[i])->GetExportedFile());
-			
+
 			// 3. Delete resource(s)
 			DeleteResources(resourcesUuids);
 		}
@@ -255,7 +264,7 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			DeleteResources(resourcesUuids);
 		}
 
-		// 4. Import file	
+		// 4. Import file
 		System_Event newEvent;
 		newEvent.fileEvent.type = System_Event_Type::ImportFile;
 		newEvent.fileEvent.build = false;
@@ -348,8 +357,6 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 	break;
 
 	// Prefabs events
-	case System_Event_Type::ScriptingDomainReloaded:
-	case System_Event_Type::Stop:
 	case System_Event_Type::LoadScene:
 	{
 		for (auto res = resources.begin(); res != resources.end(); ++res)
@@ -357,7 +364,32 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			if (res->second->GetType() == ResourceTypes::PrefabResource)
 			{
 				ResourcePrefab* prefab = (ResourcePrefab*)res->second;
-				prefab->UpdateRoot();
+				prefab->Save();
+			}
+		}
+		break;
+	}
+	case System_Event_Type::ScriptingDomainReloaded:
+	case System_Event_Type::Stop:
+	{
+		for (auto res = resources.begin(); res != resources.end(); ++res)
+		{
+			if (res->second->GetType() == ResourceTypes::PrefabResource)
+			{
+				ResourcePrefab* prefab = (ResourcePrefab*)res->second;
+				prefab->OnSystemEvent(event);
+			}
+		}
+		break;
+	}
+	case System_Event_Type::Play:
+	{
+		for (auto res = resources.begin(); res != resources.end(); ++res)
+		{
+			if (res->second->GetType() == ResourceTypes::PrefabResource)
+			{
+				ResourcePrefab* prefab = (ResourcePrefab*)res->second;
+				prefab->Save();
 			}
 		}
 		break;
@@ -382,6 +414,15 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			ResourceAvatar* avatar = (ResourceAvatar*)avatars[i];
 			avatar->ClearSkeletonAndBones();
 			avatar->CreateSkeletonAndAddBones();
+		}
+
+		for (auto res = resources.begin(); res != resources.end(); ++res)
+		{
+			if (res->second->GetType() == ResourceTypes::PrefabResource)
+			{
+				ResourcePrefab* prefab = (ResourcePrefab*)res->second;
+				prefab->Load();
+			}
 		}
 	}
 	break;
@@ -776,6 +817,9 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 		}
 	}
 	break;
+	case ResourceTypes::FontResource:
+		ResourceFont::ImportFile(file);
+	break;
 
 	case ResourceTypes::AvatarResource:
 	{
@@ -895,7 +939,7 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 		newEvent.type = System_Event_Type::Build;
 		App->PushSystemEvent(newEvent);
 	}
-		
+
 	return resource;
 }
 
@@ -1032,7 +1076,7 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		uint uuid = 0;
 		if (App->fs->Exists(metaFile))
 		{
-			int64_t lastModTime = 0;		
+			int64_t lastModTime = 0;
 			ResourceShaderObject::ReadMeta(metaFile, lastModTime, uuid, data.name);
 		}
 
@@ -1166,7 +1210,13 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		resources[resource->GetUuid()] = resource;
 	}
 	break;
+	case ResourceTypes::FontResource:
+	{
+		resource = ResourceFont::LoadFile(file);
+		resources[resource->GetUuid()] = resource;
 
+		break;
+	}
 	case ResourceTypes::AnimationResource:
 	{
 		std::string fileName;
@@ -1181,12 +1231,12 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		ResourceAnimation::LoadFile(file, animationData);
 
 		resource = CreateResource(ResourceTypes::AnimationResource, data, &animationData, uuid);
-		// TODO_G 
+		// TODO_G
 		//App->animation->SetAnimationGos((ResourceAnimation*)resource);
 	}
 	break;
 
-	case ResourceTypes::AudioBankResource:	
+	case ResourceTypes::AudioBankResource:
 		resource = ResourceAudioBank::ImportFile(file);
 		break;
 	}
@@ -1340,6 +1390,9 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 			break;
 		case ResourceTypes::SceneResource:
 			resource = new ResourceScene(uuid, data, *(SceneData*)specificData);
+			break;
+		case ResourceTypes::FontResource:
+			resource = new ResourceFont(uuid, data, *(ResourceFontData*)specificData);
 			break;
 		case ResourceTypes::AudioBankResource:
 			resource = new ResourceAudioBank(uuid, data, *(ResourceAudioBankData*)specificData);
@@ -1496,8 +1549,9 @@ void ModuleResourceManager::RecursiveDeleteUnusedMetas(const char* dir, std::str
 		else
 		{
 			std::string extension;
+			std::string completeFile = *it;
 			App->fs->GetExtension(*it, extension);
-			if (IS_META(extension.data()))
+			if (IS_META(extension.data()) && completeFile.find(".ttf.meta") == std::string::npos)
 			{
 				// Search for the file associated to the meta
 				std::string file;
@@ -1516,6 +1570,11 @@ void ModuleResourceManager::RecursiveDeleteUnusedMetas(const char* dir, std::str
 }
 
 // ----------------------------------------------------------------------------------------------------
+
+void ModuleResourceManager::AddResource(Resource * resource)
+{
+	resources[resource->GetUuid()] = resource;
+}
 
 Resource* ModuleResourceManager::GetResource(uint uuid) const
 {
@@ -1602,11 +1661,14 @@ ResourceTypes ModuleResourceManager::GetResourceTypeByExtension(const char* exte
 	case ASCIIscn: case ASCIISCN:
 		return ResourceTypes::SceneResource;
 		break;
+	case ASCIIttf: case ASCIITTF:
+		return ResourceTypes::FontResource;
+		break;
 	case ASCIIbnk: case ASCIIBNK:
 		return ResourceTypes::AudioBankResource;
 		break;
 	}
-	
+
 	return ResourceTypes::NoResourceType;
 }
 
@@ -1638,6 +1700,8 @@ ResourceTypes ModuleResourceManager::GetLibraryResourceTypeByExtension(const cha
 		return ResourceTypes::PrefabResource;
 	else if (strcmp(extension, EXTENSION_SCENE) == 0)
 		return ResourceTypes::SceneResource;
+	else if (strcmp(extension, ".fnt") == 0)
+		return ResourceTypes::FontResource;
 	else if (strcmp(extension, EXTENSION_AUDIOBANK) == 0)
 		return ResourceTypes::AudioBankResource;
 

@@ -19,9 +19,9 @@
 #define ASCIIPNG 1196314670
 #define ASCIIjpg 1735420462
 #define ASCIIJPG 1196444206
-#define ASCIIvsh 1752397358 
-#define ASCIIVSH 1213421102 
-#define ASCIIfsh 1752393262 
+#define ASCIIvsh 1752397358
+#define ASCIIVSH 1213421102
+#define ASCIIfsh 1752393262
 #define ASCIIFSH 1213417006
 #define ASCIIgsh 1752393518
 #define ASCIIGSH 1213417262
@@ -39,8 +39,11 @@
 #define ASCIIPFB 1111904302
 #define ASCIIscn 1852011310
 #define ASCIISCN 1313035054
+#define ASCIIttf 1718907950
+#define ASCIITTF 1179931694
 #define ASCIIbnk 1802396206
 #define ASCIIBNK 1263419950
+
 
 class Resource;
 struct ResourceData;
@@ -79,6 +82,7 @@ public:
 
 	// ----------------------------------------------------------------------------------------------------
 
+	void AddResource(Resource* resource);
 	Resource* GetResource(uint uuid) const;
 	bool GetResourcesUuidsByFile(const char* file, std::vector<uint>& resourcesUuids) const;
 	bool GetResourceUuidByExportedFile(const char* file, uint& resourceUuid) const;

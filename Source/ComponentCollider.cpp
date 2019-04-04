@@ -15,9 +15,6 @@ ComponentCollider::ComponentCollider(GameObject* parent, ComponentTypes componen
 	gMaterial = App->physics->GetDefaultMaterial();
 	assert(gMaterial != nullptr);
 
-	if (parent->cmp_rigidActor == nullptr)
-		CONSOLE_LOG(LogTypes::Warning, "Component Collider: You need to create a Component Rigid Actor in order to use the collider");
-
 	if (include)
 		App->physics->AddColliderComponent(this);
 }
@@ -135,18 +132,22 @@ void ComponentCollider::OnInternalLoad(char*& cursor)
 {
 	size_t bytes = sizeof(bool);
 	memcpy(&isTrigger, cursor, bytes);
+	SetIsTrigger(isTrigger);
 	cursor += bytes;
 
 	bytes = sizeof(bool);
 	memcpy(&participateInContactTests, cursor, bytes);
+	SetParticipateInContactTests(participateInContactTests);
 	cursor += bytes;
 
 	bytes = sizeof(bool);
 	memcpy(&participateInSceneQueries, cursor, bytes);
+	SetParticipateInSceneQueries(participateInSceneQueries);
 	cursor += bytes;
 
 	bytes = sizeof(math::float3);
 	memcpy(&center, cursor, bytes);
+	SetCenter(center);
 	cursor += bytes;
 
 	bytes = sizeof(ColliderTypes);
@@ -154,16 +155,14 @@ void ComponentCollider::OnInternalLoad(char*& cursor)
 	cursor += bytes;
 
 	bytes = sizeof(uint);
-	uint group = 0;
-	memcpy(&group, cursor, bytes);
+	memcpy(&filterGroup, cursor, bytes);
 	cursor += bytes;
 
 	bytes = sizeof(uint);
-	uint mask = 0;
-	memcpy(&mask, cursor, bytes);
+	memcpy(&filterMask, cursor, bytes);
 	cursor += bytes;
 
-	SetFiltering(group, mask);
+	SetFiltering(filterGroup, filterMask);
 }
 
 // ----------------------------------------------------------------------------------------------------

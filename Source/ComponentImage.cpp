@@ -8,60 +8,109 @@
 
 #include "GameObject.h"
 
+#include "ComponentRectTransform.h"
+
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
 
-ComponentImage::ComponentImage(GameObject * parent, ComponentTypes componentType) : Component(parent, ComponentTypes::ImageComponent)
+ComponentImage::ComponentImage(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::ImageComponent)
 {
-	if (parent->cmp_canvasRenderer == nullptr)
-		parent->AddComponent(ComponentTypes::CanvasRendererComponent);
+	if (includeComponents)
+	{
+		if (parent->cmp_rectTransform == nullptr)
+			parent->AddComponent(ComponentTypes::RectTransformComponent);
 
-	App->ui->componentsUI.push_back(this);
+		if (parent->cmp_canvasRenderer == nullptr)
+			parent->AddComponent(ComponentTypes::CanvasRendererComponent);
+	}
 }
 
-ComponentImage::ComponentImage(const ComponentImage & componentRectTransform, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::ImageComponent)
+ComponentImage::ComponentImage(const ComponentImage & componentImage, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::ImageComponent)
 {
-	use_color_vec = componentRectTransform.use_color_vec;
-	if (use_color_vec)
-		memcpy(color, componentRectTransform.color, sizeof(float) * 4);
-	else
+	res_image = componentImage.res_image;
+	mask = componentImage.mask;
+	memcpy(color, componentImage.color, sizeof(float) * 4);
+	memcpy(mask_values, componentImage.mask_values, sizeof(float) * 2);
+	memcpy(rect_initValues, componentImage.rect_initValues, sizeof(float) * 2);
+	
+	if (includeComponents)
 	{
-		res_image = componentRectTransform.res_image;
-		if(includeComponents)
+		if(res_image > 0)
 			App->res->SetAsUsed(res_image);
 	}
-	if (includeComponents)
-		App->ui->componentsUI.push_back(this);
 }
 
 ComponentImage::~ComponentImage()
 {
-	App->ui->componentsUI.remove(this);
+	if (res_image > 0)
+		App->res->SetAsUnused(res_image);
+
+	parent->cmp_image = nullptr;
 }
 
-void ComponentImage::Update()
-{
-}
-
-const float * ComponentImage::GetColor() const
+float * ComponentImage::GetColor()
 {
 	return color;
 }
 
+void ComponentImage::SetColor(float r, float g, float b, float a)
+{
+	color[Color::R] = r;
+	color[Color::G] = g;
+	color[Color::B] = b;
+	color[Color::A] = a;
+}
+
+void ComponentImage::ResetColor()
+{
+	color[Color::R] = 1.0f;
+	color[Color::G] = 1.0f;
+	color[Color::B] = 1.0f;
+	color[Color::A] = 1.0f;
+}
+
 void ComponentImage::SetResImageUuid(uint res_image_uuid)
 {
-	if (this->res_image > 0)
-		App->res->SetAsUnused(this->res_image);
+	if (res_image > 0)
+		App->res->SetAsUnused(res_image);
+
+	res_image = res_image_uuid;
 
 	if (res_image > 0)
 		App->res->SetAsUsed(res_image);
-
-	this->res_image = res_image;
 }
 
 uint ComponentImage::GetResImageUuid() const
 {
 	return res_image;
+}
+
+std::string ComponentImage::GetResImageName() const
+{
+	if (res_image != 0u)
+	{
+		ResourceTexture* texture = (ResourceTexture*)App->res->GetResource(res_image);
+		if (texture)
+			return texture->GetName();
+		else
+			return "";
+	}
+	
+	return "";
+}
+
+void ComponentImage::SetResImageName(const std::string& name)
+{
+	std::vector<Resource*> textures = App->res->GetResourcesByType(ResourceTypes::TextureResource);
+	for (int i = 0; i < textures.size(); ++i)
+	{
+		ResourceTexture* texture = (ResourceTexture*)textures[i];
+		if (name == texture->GetName())
+		{
+			res_image = texture->GetUuid();
+			break;
+		}
+	}
 }
 
 uint ComponentImage::GetResImage()const
@@ -73,102 +122,103 @@ uint ComponentImage::GetResImage()const
 		return 0;
 }
 
-bool ComponentImage::isColorUsed() const
+void ComponentImage::SetMask()
 {
-	return use_color_vec;
+	if (mask)
+	{
+		mask_values[0] = 1;
+		mask_values[1] = 0;
+		uint* rect = parent->cmp_rectTransform->GetRect();
+		rect_initValues[0] = rect[ComponentRectTransform::Rect::XDIST];
+		rect_initValues[1] = rect[ComponentRectTransform::Rect::YDIST];
+	}
 }
 
-void ComponentImage::UseColor(bool boolean)
+void ComponentImage::RectChanged()
 {
-	use_color_vec = boolean;
+	if (mask)
+	{
+		uint* rect = parent->cmp_rectTransform->GetRect();
+		mask_values[1] = ((rect_initValues[1] - (float)rect[ComponentRectTransform::Rect::YDIST]) / rect_initValues[1]);
+		mask_values[0] = 1.0f - ((rect_initValues[0] - (float)rect[ComponentRectTransform::Rect::XDIST]) / rect_initValues[0]);
+	}
+}
+
+bool ComponentImage::useMask() const
+{
+	return mask;
+}
+
+float * ComponentImage::GetMask()
+{
+	return mask_values;
 }
 
 uint ComponentImage::GetInternalSerializationBytes()
 {
-	if(use_color_vec)
-		return sizeof(bool) + sizeof(float) * 4;
-	else
-		return sizeof(bool) + sizeof(uint);
+	return sizeof(float) * 8 + sizeof(bool) + sizeof(uint);
 }
 
 void ComponentImage::OnInternalSave(char *& cursor)
 {
-	size_t bytes = sizeof(bool);
-	memcpy(cursor, &use_color_vec, bytes);
+	size_t bytes = sizeof(float) * 4;
+	memcpy(cursor, &color, bytes);
 	cursor += bytes;
 
-	if (use_color_vec)
-	{
-		bytes = sizeof(float) * 4;
-		memcpy(cursor, &color, bytes);
-		cursor += bytes;
-	}
-	else
-	{
-		bytes = sizeof(uint);
-		memcpy(cursor, &res_image, bytes);
-		cursor += bytes;
-	}
+	bytes = sizeof(uint);
+	memcpy(cursor, &res_image, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(float) * 2;
+	memcpy(cursor, &mask_values, bytes);
+	cursor += bytes;
+
+	memcpy(cursor, &rect_initValues, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(bool);
+	memcpy(cursor, &mask, bytes);
+	cursor += bytes;
 }
 
 void ComponentImage::OnInternalLoad(char *& cursor)
 {
-	size_t bytes = sizeof(bool);
-	memcpy(&use_color_vec, cursor, bytes);
+	size_t bytes = sizeof(float) * 4;
+	memcpy(&color, cursor, bytes);
 	cursor += bytes;
-	if (use_color_vec)
-	{
-		bytes = sizeof(float) * 4;
-		memcpy(&color, cursor, bytes);
-		cursor += bytes;
-	}
-	else
-	{
-		bytes = sizeof(uint);
-		memcpy(&res_image, cursor, bytes);
-		cursor += bytes;
 
+	bytes = sizeof(uint);
+	memcpy(&res_image, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(float) * 2;
+	memcpy(&mask_values, cursor, bytes);
+	cursor += bytes;
+
+	memcpy(&rect_initValues, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(bool);
+	memcpy(&mask, cursor, bytes);
+	cursor += bytes;
+
+	if(res_image > 0)
 		App->res->SetAsUsed(res_image);
-	}
 }
 
 void ComponentImage::OnUniqueEditor()
 {
 #ifndef GAMEMODE
-	ImGui::Text("Image");
-	ImGui::Spacing();
-
-	ImGui::Checkbox("Use color vector", &use_color_vec);
-	if (use_color_vec)
+	if (ImGui::CollapsingHeader("Image", ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		float min = 0.0f;
-		float max_color = MAX_COLOR;
-		float max_alpha = MAX_ALPHA;
-
-		float color_r = color[COLOR_R] * 255.f;
-		float color_g = color[COLOR_G] * 255.f;
-		float color_b = color[COLOR_B] * 255.f;
-
-		ImGui::PushItemWidth(50.0f);
 		ImGui::Text("Color RGB with alpha");
-		if (ImGui::DragScalar("##ColorR", ImGuiDataType_Float, (void*)&color_r, 1.0f, &min, &max_color, "%1.f", 1.0f))
-			color[COLOR_R] = color_r / 255.f;
-		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-		if(ImGui::DragScalar("##ColorG", ImGuiDataType_Float, (void*)&color_g, 1.0f, &min, &max_color, "%1.f", 1.0f))
-			color[COLOR_G] = color_g / 255.f;
-		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-		if(ImGui::DragScalar("##ColorB", ImGuiDataType_Float, (void*)&color_b, 1.0f, &min, &max_color, "%1.f", 1.0f))
-			color[COLOR_B] = color_b / 255.f;
-		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);		
-		if (ImGui::DragScalar("##ColorA", ImGuiDataType_Float, (void*)&color[COLOR_A], 0.1f, &min, &max_alpha, "%0.1f", 1.0f))
-		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-	}
-	else
-	{
+		ImGui::PushItemWidth(200.0f);
+		ImGui::ColorEdit4("##Color_RGBA", color, ImGuiColorEditFlags_::ImGuiColorEditFlags_AlphaBar);
+
 		ResourceTexture* texture = nullptr;
 		if (res_image != 0)
 			texture = (ResourceTexture*)App->res->GetResource(res_image);
-		ImGui::Button(texture == nullptr ? "Empty texture" : texture->GetName(), ImVec2(150.0f, 0.0f));
+		ImGui::Button(texture == nullptr ? "Empty texture" : texture->GetName(), ImVec2(100.0f, 0.0f));
 
 		if (ImGui::IsItemHovered())
 		{
@@ -176,7 +226,6 @@ void ComponentImage::OnUniqueEditor()
 			ImGui::Text("%u", res_image);
 			ImGui::EndTooltip();
 		}
-
 		if (ImGui::BeginDragDropTarget())
 		{
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE_INSPECTOR_SELECTOR"))
@@ -187,12 +236,37 @@ void ComponentImage::OnUniqueEditor()
 			}
 			ImGui::EndDragDropTarget();
 		}
+		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
+		if (ImGui::Checkbox("M", &mask))
+			SetMask();
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Mask\nActivate if the size is final.");
+			ImGui::EndTooltip();
+		}
+		ImGui::SameLine(); ImGui::PushItemWidth(10.0f);
+		if (ImGui::Button("RC"))
+			ResetColor();
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Reset color");
+			ImGui::EndTooltip();
+		}
+		ImGui::SameLine(); ImGui::PushItemWidth(10.0f);
+		if (ImGui::Button("CT"))
+		{
+			if (res_image > 0)
+				App->res->SetAsUnused(res_image);
+			res_image = 0;
+		}
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Clear Texture");
+			ImGui::EndTooltip();
+		}
 	}
 #endif
-}
-
-void ComponentImage::LinkToUIModule()
-{
-	App->ui->componentsUI.push_back(this);
-
 }

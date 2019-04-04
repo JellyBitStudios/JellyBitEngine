@@ -89,6 +89,8 @@ update_status ModuleNavigation::Update()
 					new_rotation = new_rotation.RotateY(angle);
 					trm->SetRotation(new_rotation);
 				}
+				else
+					((dtCrowdAgent*)ag)->walking = false;
 			//}
 		}
 	}
@@ -135,8 +137,14 @@ void ModuleNavigation::OnSystemEvent(System_Event e)
 		dtFreeNavMeshQuery(m_navQuery);
 		m_crowd = 0;
 		m_navQuery = 0;
-	}
 		break;
+	}
+	case System_Event_Type::LoadFinished:
+	{
+		if (App->IsPlay())
+			InitDetour();
+		break;
+	}
 	}
 }
 
@@ -321,20 +329,25 @@ void ModuleNavigation::SetDestination(const float* p, int indx) const
 	const float* a = m_crowd->getQueryExtents();
 	m_navQuery->findNearestPoly(p, m_crowd->getQueryExtents(), m_crowd->getFilter(ag->params.queryFilterType), &polyRefTarget, targetPos);
 	if (ag && ag->active)
+	{
 		m_crowd->requestMoveTarget(indx, polyRefTarget, targetPos);
+		((dtCrowdAgent*)ag)->walking = true;
+	}
 }
 
 bool ModuleNavigation::IsWalking(int index) const
 {
 	if (!m_navMesh || !m_crowd) return false;
 	const dtCrowdAgent* ag = m_crowd->getAgent(index);
-	return ag->state == DT_CROWDAGENT_STATE_WALKING;
+	return ag->walking;
 }
 
 void ModuleNavigation::RequestMoveVelocity(int index, const float* vel)
 {
 	if (!m_navMesh || !m_crowd) return;
 	m_crowd->requestMoveVelocity(index, vel);
+	const dtCrowdAgent* ag = m_crowd->getAgent(index);
+	((dtCrowdAgent*)ag)->walking = true;
 }
 
 void ModuleNavigation::ResetMoveTarget(int index)

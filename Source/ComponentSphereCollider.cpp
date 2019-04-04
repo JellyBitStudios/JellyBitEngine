@@ -14,7 +14,8 @@
 
 ComponentSphereCollider::ComponentSphereCollider(GameObject* parent, bool include) : ComponentCollider(parent, ComponentTypes::SphereColliderComponent, include)
 {
-	EncloseGeometry();
+	if (include)
+		EncloseGeometry();
 
 	colliderType = ColliderTypes::SphereCollider;
 
@@ -97,11 +98,8 @@ void ComponentSphereCollider::OnInternalLoad(char*& cursor)
 
 	size_t bytes = sizeof(float);
 	memcpy(&radius, cursor, bytes);
+	SetRadius(radius);
 	cursor += bytes;
-
-	// -----
-
-	EncloseGeometry();
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -124,8 +122,7 @@ void ComponentSphereCollider::EncloseGeometry()
 		radius = halfSize.Length();
 	}
 
-	//if (gShape != nullptr)
-		RecalculateShape();
+	RecalculateShape();
 }
 
 void ComponentSphereCollider::RecalculateShape()

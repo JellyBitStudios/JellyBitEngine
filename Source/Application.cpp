@@ -49,6 +49,7 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	animImporter = new AnimationImporter();
 	sceneImporter = new SceneImporter();
 	shaderImporter = new ShaderImporter();
+	//fontImporter = new FontImporter();
 	navigation = new ModuleNavigation();
 	particle = new ModuleParticle();
 	scripting = new ScriptingModule();
@@ -454,7 +455,6 @@ void Application::Play()
 		// Enter play mode
 		if (renderer3D->SetCurrentCamera())
 		{
-			engineState = engine_states::ENGINE_PLAY;
 			System_Event event;
 			event.type = System_Event_Type::Play;
 			PushSystemEvent(event);

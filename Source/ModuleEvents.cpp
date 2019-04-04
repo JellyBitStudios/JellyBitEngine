@@ -3,10 +3,29 @@
 
 #include "ComponentTypes.h"
 #include "Component.h"
+
 #include "ComponentTransform.h"
 #include "ComponentMesh.h"
 #include "ComponentMaterial.h"
 #include "ComponentCamera.h"
+#include "ComponentNavAgent.h"
+#include "ComponentEmitter.h"
+#include "ComponentScript.h"
+#include "ComponentBone.h"
+#include "ComponentAnimation.h"
+#include "ComponentAnimator.h"
+#include "ComponentLight.h"
+#include "ComponentProjector.h"
+
+// UI
+#include "ComponentCanvas.h"
+#include "ComponentCanvasRenderer.h"
+#include "ComponentRectTransform.h"
+#include "ComponentImage.h"
+#include "ComponentButton.h"
+#include "ComponentLabel.h"
+
+// Physics
 #include "ComponentCollider.h"
 #include "ComponentBoxCollider.h"
 #include "ComponentCapsuleCollider.h"
@@ -15,18 +34,12 @@
 #include "ComponentRigidActor.h"
 #include "ComponentRigidStatic.h"
 #include "ComponentRigidDynamic.h"
-#include "ComponentNavAgent.h"
-#include "ComponentEmitter.h"
-#include "ComponentBone.h"
-#include "ComponentAnimation.h"
-#include "ComponentLight.h"
-#include "ComponentScript.h"
-#include "ComponentCanvasRenderer.h"
-#include "ComponentImage.h"
-#include "ComponentRectTransform.h"
-#include "ComponentButton.h"
-#include "ComponentLabel.h"
+
+// Audio
 #include "ComponentAudioListener.h"
+#include "ComponentAudioSource.h"
+
+// Trail
 #include "ComponentTrail.h"
 
 #include "ResourceScene.h"
@@ -69,15 +82,23 @@ void ModuleEvents::OnSystemEvent(System_Event event)
 			App->PushSystemEvent(event);
 		}
 #endif
+		// Mesh updated: recalculate bounding boxes
+		System_Event updateBB;
+		updateBB.goEvent.gameObject = App->scene->root;
+		updateBB.type = System_Event_Type::RecalculateBBoxes;
+		App->PushSystemEvent(updateBB);
+
+		// Bounding box changed: recreate quadtree
+		System_Event newEvent;
+		newEvent.type = System_Event_Type::RecreateQuadtree;
+		App->PushSystemEvent(newEvent);
+
 		break;
 	}
 	case System_Event_Type::Play:
 		assert(App->GOs->sceneStateBuffer == 0);
 		App->GOs->SerializeFromNode(App->scene->root, App->GOs->sceneStateBuffer, App->GOs->sceneStateSize);
-
-#ifdef GAMEMODE
 		App->SetEngineState(engine_states::ENGINE_PLAY);
-#endif
 
 		break;
 	case System_Event_Type::SaveScene:
@@ -151,10 +172,6 @@ void ModuleEvents::OnSystemEvent(System_Event event)
 					App->GOs->ClearScene();
 					App->GOs->LoadScene(sceneBuffer, sceneSize, true);
 					delete[] sceneBuffer;
-
-					System_Event newEvent;
-					newEvent.type = System_Event_Type::RecreateQuadtree;
-					App->PushSystemEvent(newEvent);
 				}
 				else
 					CONSOLE_LOG(LogTypes::Error, "Unable to find the Scene...");

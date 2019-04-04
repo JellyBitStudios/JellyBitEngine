@@ -60,12 +60,14 @@ ModuleFileSystem::ModuleFileSystem(bool start_enabled) : Module(start_enabled)
 	CreateDir(DIR_ASSETS_SCENES);
 	CreateDir(DIR_ASSETS_SCRIPTS);
 	CreateDir(DIR_ASSETS_AUDIO);
+	CreateDir(DIR_ASSETS_FONT);
 #endif
 
 	if (CreateDir(DIR_LIBRARY))
 	{
 		AddPath("./Library/", "Library");
 
+		CreateDir(DIR_LIBRARY_FONT);
 		CreateDir(DIR_LIBRARY_MESHES);
 		CreateDir(DIR_LIBRARY_ANIMATIONS);
 		CreateDir(DIR_LIBRARY_ANIMATORS);
@@ -244,7 +246,11 @@ void ModuleFileSystem::OnSystemEvent(System_Event event)
 					strcpy(destinationDir, DIR_ASSETS_TEXTURES);
 					break;
 				}
-
+				case ResourceTypes::FontResource:
+				{
+					strcpy(destinationDir, DIR_ASSETS_FONT);
+					break;
+				}
 				// TODO ADD NEW RESOURCES
 			}
 
@@ -586,6 +592,11 @@ uint ModuleFileSystem::SaveInGame(char* buffer, uint size, FileTypes fileType, s
 			outputFile.insert(0, DIR_ASSETS_SCENES);
 			outputFile.insert(strlen(DIR_ASSETS_SCENES), "/");
 			outputFile.append(EXTENSION_SCENE);
+			break;
+		case FileTypes::FontFile:
+			outputFile.insert(0, DIR_LIBRARY_FONT);
+			outputFile.insert(strlen(DIR_LIBRARY_FONT), "/");
+			outputFile.append(EXTENSION_FONT);
 			break;
 		}
 	}
@@ -1352,4 +1363,19 @@ void ModuleFileSystem::RecursiveBuild(const Directory& dir, char * toPath, bool 
 			meta = false;
 		}
 	}
+}
+
+std::string ModuleFileSystem::PathToWindowsNotation(std::string path)
+{
+	std::string ret = path;
+
+	uint pos = ret.find("/");
+	while (pos != std::string::npos)
+	{
+		ret.replace(pos, 1, "\\");
+
+		pos = ret.find("/");
+	}
+
+	return ret;
 }
