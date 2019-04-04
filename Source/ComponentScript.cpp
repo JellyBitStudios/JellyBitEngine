@@ -646,7 +646,7 @@ void ComponentScript::OnCollisionExit(Collision& collision)
 			void* params[1];
 			params[0] = collisionOBJ;
 
-			mono_runtime_invoke(scriptRes->OnCollisionExitMethod, GetMonoComponent(), NULL, &exc);
+			mono_runtime_invoke(scriptRes->OnCollisionExitMethod, GetMonoComponent(), params, &exc);
 			if (exc)
 			{
 				System_Event event;

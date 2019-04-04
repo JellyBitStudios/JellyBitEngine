@@ -210,6 +210,11 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			for (uint i = 0; i < resourcesUuids.size(); ++i)
 				GetResource(resourcesUuids[i])->SetFile(event.fileEvent.newFileLocation);
 		}
+
+		std::string extension;
+		App->fs->GetExtension(event.fileEvent.file, extension);
+		if (extension == ".cs")
+			App->scripting->IncludeCSFiles();
 	}
 	break;
 
