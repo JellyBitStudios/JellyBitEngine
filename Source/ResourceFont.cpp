@@ -136,8 +136,12 @@ Resource* ResourceFont::ImportFile(const char * file)
 
 uint ResourceFont::SaveFile(ResourceData& data, ResourceFontData& fontData)
 {
-
-	uint size =	sizeof(uint) * 2 + sizeof(uint) +
+	uint sizeBuffer = 0;
+	for (uint i = 0; i < fontData.charactersMap.size(); ++i)
+	{
+		sizeBuffer += (fontData.charactersMap[i+32].size.x *fontData.charactersMap[i+32].size.y);
+	}
+	uint size = sizeof(uint) * 3 + sizeBuffer +
 		sizeof(Character) * fontData.charactersMap.size();
 
 	char* buffer = new char[size];
@@ -161,15 +165,12 @@ uint ResourceFont::SaveFile(ResourceData& data, ResourceFontData& fontData)
 		cursor += bytes;
 	}
 
-	for (uint i = 1; i < fontData.fontBuffer.size(); ++i)
-	{
-		uint width = fontData.charactersMap[i + 32].size.x;
-		uint height = fontData.charactersMap[i + 32].size.y;
-
-		bytes = sizeof(uint8_t) * width * height;
-		memcpy(cursor, &fontData.fontBuffer[i], bytes);
-		cursor += bytes;
-	}
+	//for (uint i = 0; i < listSize; ++i)
+	//{
+		//bytes = (fontData.charactersMap[i+32].size.x *fontData.charactersMap[i+32].size.y);
+		memcpy(cursor, &(*fontData.fontBuffer.data()), sizeBuffer);
+		cursor += sizeBuffer;
+	//}
 	// --------------------------------------------------
 
 	// Save the file
@@ -177,10 +178,10 @@ uint ResourceFont::SaveFile(ResourceData& data, ResourceFontData& fontData)
 
 	if (ret > 0)
 	{ 
-		CONSOLE_LOG(LogTypes::Normal, "Resource Material: Successfully saved Material '%s'", data.exportedFile.data());
+		CONSOLE_LOG(LogTypes::Normal, "Resource Font: Successfully saved Font '%s'", data.exportedFile.data());
 	}
 	else
-		CONSOLE_LOG(LogTypes::Error, "Resource Material: Could not save Material '%s'", data.exportedFile.data());
+		CONSOLE_LOG(LogTypes::Error, "Resource Font: Could not save Font '%s'", data.exportedFile.data());
 
 	RELEASE_ARRAY(buffer);
 
@@ -228,13 +229,16 @@ ResourceFont* ResourceFont::LoadFile(const char * file)
 			cursor += bytes;
 		}
 
-		for (uint i = 1; i < charactersSize; ++i)
+		fontData.fontBuffer.resize(charactersSize);
+		for (uint i = 0; i < charactersSize; ++i)
 		{
 			uint width = fontData.charactersMap[i + 32].size.x;
 			uint height = fontData.charactersMap[i + 32].size.y;
 
 			bytes = sizeof(uint8_t) * width * height;
-			memcpy(fontData.fontBuffer[i], cursor, bytes);
+			uint8_t* buffer = new uint8_t[width * height];
+			memcpy(buffer, cursor, bytes);
+			fontData.fontBuffer[i] = buffer;
 			ResourceFont::LoadTextureCharacter(width, height, fontData.fontBuffer[i]);
 
 			cursor += bytes;
@@ -500,16 +504,8 @@ ResourceFont* ResourceFont::ImportFontBySize(const char * file, uint size, uint 
 				maxHeight = face->glyph->bitmap.rows;
 
 
-			uint8_t* characterBuffer = new uint8_t[face->glyph->bitmap.width * face->glyph->bitmap.rows];
-			uint bytes = sizeof(uint8_t) * face->glyph->bitmap.width * face->glyph->bitmap.rows;
-			memcpy(characterBuffer, (uint8_t*)face->glyph->bitmap.buffer, bytes);			
 
-			fontData.fontBuffer.push_back(characterBuffer);
-
-
-
-
-			/*int textureWidth = 2;
+			int textureWidth = 2;
 			while (textureWidth < face->glyph->bitmap.width)
 			{
 				textureWidth = textureWidth <<= 1;
@@ -520,6 +516,16 @@ ResourceFont* ResourceFont::ImportFontBySize(const char * file, uint size, uint 
 			{
 				textureHeight = textureHeight <<= 1;
 			}
+
+			uint8_t* characterBuffer = new uint8_t[face->glyph->bitmap.width * face->glyph->bitmap.rows];
+			uint bytes = sizeof(uint8_t) * face->glyph->bitmap.width * face->glyph->bitmap.rows;
+			memcpy(characterBuffer, (uint8_t*)face->glyph->bitmap.buffer, bytes);			
+
+			fontData.fontBuffer.push_back(characterBuffer);
+
+			/*uchar* buff = face->glyph->bitmap.buffer;
+
+			CONSOLE_LOG(LogTypes::Normal, "BW: %i, BH : %i, TW : %i, TH : %i", face->glyph->bitmap.width, face->glyph->bitmap.rows, textureWidth, textureHeight);
 			GLubyte* TextureBuffer = new GLubyte[textureWidth * textureHeight]; ///
 			for (int j = 0; j < face->glyph->bitmap.rows; ++j)
 			{
