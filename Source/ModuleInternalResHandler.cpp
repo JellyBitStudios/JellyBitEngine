@@ -146,8 +146,8 @@ void ModuleInternalResHandler::CreateCube()
 		6, 1, 0,
 		0, 5, 6,
 		// Bottom
-		7, 2, 3,
-		3, 4, 7
+		7, 3, 2,
+		7, 4, 3
 	};
 
 	// Vertices
