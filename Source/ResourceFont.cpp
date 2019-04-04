@@ -139,7 +139,7 @@ uint ResourceFont::SaveFile(ResourceData& data, ResourceFontData& fontData)
 	uint sizeBuffer = 0;
 	for (uint i = 0; i < fontData.charactersMap.size(); ++i)
 	{
-		sizeBuffer += (fontData.charactersMap[i+32].size.x *fontData.charactersMap[i+32].size.y);
+		sizeBuffer += (fontData.charactersMap[i+32].size.x * fontData.charactersMap[i+32].size.y);
 	}
 	uint size = sizeof(uint) * 3 + sizeBuffer +
 		sizeof(Character) * fontData.charactersMap.size();
@@ -167,7 +167,7 @@ uint ResourceFont::SaveFile(ResourceData& data, ResourceFontData& fontData)
 
 	for (uint i = 0; i < listSize; ++i)
 	{
-		bytes = (fontData.charactersMap[i+32].size.x *fontData.charactersMap[i+32].size.y);
+		bytes = (fontData.charactersMap[i+32].size.x * fontData.charactersMap[i+32].size.y);
 		memcpy(cursor, fontData.fontBuffer[i], bytes);
 		cursor += bytes;
 	}
@@ -502,39 +502,14 @@ ResourceFont* ResourceFont::ImportFontBySize(const char * file, uint size, uint 
 			charactersBitmap.insert(std::pair<char, Character>(c, character));
 			if (face->glyph->bitmap.rows > maxHeight)
 				maxHeight = face->glyph->bitmap.rows;
-
-
-
-			int textureWidth = 2;
-			while (textureWidth < face->glyph->bitmap.width)
-			{
-				textureWidth = textureWidth <<= 1;
-			}
-
-			int textureHeight = 2;
-			while (textureHeight < face->glyph->bitmap.rows)
-			{
-				textureHeight = textureHeight <<= 1;
-			}
-
-			uint8_t* characterBuffer = new uint8_t[face->glyph->bitmap.width * face->glyph->bitmap.rows];
-			uint bytes = sizeof(uint8_t) * face->glyph->bitmap.width * face->glyph->bitmap.rows;
+			
+			//Save buffer for next loads
+			uint bufferSize = face->glyph->bitmap.width * face->glyph->bitmap.rows;
+			uint8_t* characterBuffer = new uint8_t[bufferSize];
+			uint bytes = sizeof(uint8_t) * bufferSize;
 			memcpy(characterBuffer, (uint8_t*)face->glyph->bitmap.buffer, bytes);			
 
 			fontData.fontBuffer.push_back(characterBuffer);
-
-			/*uchar* buff = face->glyph->bitmap.buffer;
-
-			CONSOLE_LOG(LogTypes::Normal, "BW: %i, BH : %i, TW : %i, TH : %i", face->glyph->bitmap.width, face->glyph->bitmap.rows, textureWidth, textureHeight);
-			GLubyte* TextureBuffer = new GLubyte[textureWidth * textureHeight]; ///
-			for (int j = 0; j < face->glyph->bitmap.rows; ++j)
-			{
-				for (int i = 0; i < face->glyph->bitmap.width; ++i)
-				{
-					TextureBuffer[j*textureWidth + i] = (j >= face->glyph->bitmap.rows || i >= face->glyph->bitmap.width ? 0 : face->glyph->bitmap.buffer[j*face->glyph->bitmap.width + i]);
-				}
-			}
-			*/
 		}
 		glBindTexture(GL_TEXTURE_2D, 0);
 		FT_Done_Face(face);
