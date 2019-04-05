@@ -148,26 +148,29 @@ public class NetmanController : JellyScript
 
                 if (agent.isWalking())
                 {
-
+                    // Going to waypoint...
                 }
                 else
                 {
-                    if (transform.position == waypoint.transform.position)
-                    {
-                        // Play animation
+                    // Play animation
 
-                        attackState = AttackStates.hit;
-                    }
-                    else
-                    {
-                        TerminateAttack();
-                        currentState = NetmanStates.wander;
-                    }
+                    attackState = AttackStates.hit;
                 }              
 
                 break;
 
             case AttackStates.hit:
+
+                Debug.Log("HIT HIT HIT");
+
+                float threshold = 1.0f; // waypoint radius
+                Vector3 diff = waypoint.transform.position - transform.position;
+                if (diff.magnitude > threshold)
+                {
+                    TerminateAttack();
+                    currentState = NetmanStates.wander;
+                    break;
+                }
 
                 // FaceMovement
                 float targetDegrees = (float)Math.Atan2(target.transform.forward.x, target.transform.forward.z);

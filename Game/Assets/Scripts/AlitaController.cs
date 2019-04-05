@@ -148,7 +148,7 @@ public class AlitaController : JellyScript
     {
         m_state = AlitaStates.Idle;
         m_animator.PlayAnimation("idle_alita_anim");
-        Debug.Log("Stop");
+        //Debug.Log("Stop");
     }
 
     void UseWalking()
@@ -158,14 +158,14 @@ public class AlitaController : JellyScript
         EventsManager.Call.PushEvent(newEvent);
         m_state = AlitaStates.Walking;
         m_animator.PlayAnimation("anim_run_alita_fist");
-        Debug.Log("Walking");
+        //Debug.Log("Walking");
     }
 
     void UseWalkingToEnemy()
     {
         m_state = AlitaStates.WalkingToEnemy;
         m_animator.PlayAnimation("anim_run_alita_fist");
-        Debug.Log("Walking to enemy");
+        //Debug.Log("Walking to enemy");
     }
 
     void UseAttacking(CurrentAttack current)
@@ -186,6 +186,6 @@ public class AlitaController : JellyScript
             m_animator.PlayAnimation("anim_basic_attack_alita_fist");
             current = CurrentAttack.FirstAttack;
         }
-        Debug.Log("Fightning");
+        //Debug.Log("Fightning");
     }
 }

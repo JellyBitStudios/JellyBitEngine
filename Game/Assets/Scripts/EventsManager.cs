@@ -89,10 +89,7 @@ public sealed class EventsManager : JellyScript
 
     public void PushEvent(Event newEvent)
     {
-        Debug.Log("event pushed");
+        //Debug.Log("event pushed");
         eventsQueue.Enqueue(newEvent);
     }
 }
-
-
-

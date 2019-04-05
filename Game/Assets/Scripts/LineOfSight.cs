@@ -60,7 +60,6 @@ public class LineOfSight : JellyScript
 
         if (Physics.Raycast(ray, out hitInfo, sphereCollider.radius, layerMask, SceneQueryFlags.Static | SceneQueryFlags.Dynamic))
         {
-            Debug.Log("RAY");
             if (hitInfo.gameObject == null)
                 return false;
 
