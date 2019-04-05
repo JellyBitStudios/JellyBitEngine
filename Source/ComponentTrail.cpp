@@ -3,9 +3,11 @@
 #include "Application.h"
 #include "ModuleInput.h"
 #include "ModuleResourceManager.h"
+#include "ModuleInternalResHandler.h"
 
 #include "GameObject.h"
 #include "ComponentTransform.h"
+#include "ModuleTrails.h"
 
 #include "glew/include/GL/glew.h"
 
@@ -15,7 +17,10 @@
 
 ComponentTrail::ComponentTrail(GameObject * parent) : Component(parent, ComponentTypes::TrailComponent)
 {
+	App->trails->trails.push_back(this);
 	timer.Start();
+
+	App->res->SetAsUsed(App->resHandler->plane);
 }
 
 ComponentTrail::ComponentTrail(const ComponentTrail & componentTransform, GameObject * parent) : Component(parent, ComponentTypes::TrailComponent)
@@ -33,6 +38,8 @@ ComponentTrail::~ComponentTrail()
 	}
 
 	trailVertex.clear();
+
+	App->trails->trails.remove(this);
 }
 
 void ComponentTrail::Update() 
@@ -111,13 +118,48 @@ void ComponentTrail::Update()
 
 void ComponentTrail::OnUniqueEditor()
 {
-	if (ImGui::CollapsingHeader("Trail", ImGuiTreeNodeFlags_FramePadding))
+#ifndef GAMEMODE
+
+	if (ImGui::CollapsingHeader("Trail", ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_DefaultOpen))
 	{
 		ImGui::DragInt("Life Time", &lifeTime, 10.0f, 0, 10000);
 
 		ImGui::DragFloat("Min Distance", &minDistance, 0.01f, 0.0f, 10.0f);
 
+		if (ImGui::CollapsingHeader("Texture", ImGuiTreeNodeFlags_FramePadding))
+		{
+			const Resource* resource = App->res->GetResource(materialRes);
+			std::string materialName = "No  Material";
+			if (resource)
+			materialName = resource->GetName();
+			ImGui::PushID("material");
+			ImGui::Button(materialName.data(), ImVec2(150.0f, 0.0f));
+			ImGui::PopID();
+
+			if (ImGui::IsItemHovered())
+			{
+				ImGui::BeginTooltip();
+				ImGui::Text("%u", materialRes);
+				ImGui::EndTooltip();
+			}
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MATERIAL_INSPECTOR_SELECTOR"))
+				{
+					uint payload_n = *(uint*)payload->Data;
+					SetMaterialRes(payload_n);
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+			if (ImGui::SmallButton("Use default material"))
+				SetMaterialRes(App->resHandler->defaultMaterial);
+			ImGui::Separator();
+		}
 	}
+
+#endif
 }
 
 

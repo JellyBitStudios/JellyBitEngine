@@ -2,6 +2,14 @@
 
 #include "ModuleTimeManager.h"
 #include "ModuleInput.h"
+#include "ModuleResourceManager.h"
+#include "ModuleRenderer3D.h"
+#include "ModuleInternalResHandler.h"
+
+#include "ResourceMaterial.h"
+#include "ResourceShaderObject.h"
+#include "ResourceShaderProgram.h"
+#include "ResourceMesh.h"
 
 #include "Brofiler/Brofiler.h"
 #include <algorithm>
@@ -36,7 +44,7 @@ void ModuleTrails::Draw()
 
 	for (std::list<ComponentTrail*>::iterator trail = trails.begin(); trail != trails.end(); ++trail)
 	{
-		if ((*trail)->trailVertex.empty())
+		if (!(*trail)->trailVertex.empty())
 		{
 			glColor3f(1.0f, 1.0f, 1.0f);
 
@@ -49,23 +57,71 @@ void ModuleTrails::Draw()
 			std::list<TrailNode*>::iterator begin = (*trail)->trailVertex.begin();
 			TrailNode* end = (*trail)->trailVertex.back();
 
-			if ((*begin)->originHigh.x > end->originHigh.x)
+			if (true)
 			{
-
+				float i = 0.0f;
 				for (std::list<TrailNode*>::iterator curr = (*trail)->trailVertex.begin(); curr != (*trail)->trailVertex.end(); ++curr)
 				{
+					if ((*trail)->materialRes == 0) break;
+					i++;
 					std::list<TrailNode*>::iterator next = curr;
 					++next;
 					if (next != (*trail)->trailVertex.end())
 					{
-						glVertex3fv((const GLfloat*)(*curr)->originHigh.ptr());
-						glVertex3fv((const GLfloat*)(*curr)->originLow.ptr());
-						glVertex3fv((const GLfloat*)(*next)->originHigh.ptr());
+						ResourceMaterial* resourceMaterial = (ResourceMaterial*)App->res->GetResource((*trail)->materialRes);
+						uint shaderUuid = resourceMaterial->GetShaderUuid();
+						ResourceShaderProgram* resourceShaderProgram = (ResourceShaderProgram*)App->res->GetResource(shaderUuid);
+						GLuint shaderProgram = resourceShaderProgram->shaderProgram;
 
+						glUseProgram(shaderProgram);
 
-						glVertex3fv((const GLfloat*)(*curr)->originLow.ptr());
-						glVertex3fv((const GLfloat*)(*next)->originLow.ptr());
-						glVertex3fv((const GLfloat*)(*next)->originHigh.ptr());
+						math::float4x4 model_matrix = math::float4x4::identity.Transposed();
+
+						math::float4x4 view_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLViewMatrix();
+						math::float4x4 proj_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLProjectionMatrix();
+						math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
+						math::float4x4 normal_matrix = model_matrix;
+						normal_matrix.Inverse();
+						normal_matrix.Transpose();
+
+						uint location = glGetUniformLocation(shaderProgram, "model_matrix");
+						glUniformMatrix4fv(location, 1, GL_FALSE, model_matrix.ptr());
+						location = glGetUniformLocation(shaderProgram, "mvp_matrix");
+						glUniformMatrix4fv(location, 1, GL_FALSE, mvp_matrix.ptr());
+						location = glGetUniformLocation(shaderProgram, "normal_matrix");
+						glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
+
+						float currUV = i / ((*trail)->trailVertex.size() + 1);
+						float nextUV = i + 1 / ((*trail)->trailVertex.size() + 1);
+ 
+						location = glGetUniformLocation(shaderProgram, "currUV");				// UV
+						glUniform1f(location, currUV);
+						location = glGetUniformLocation(shaderProgram, "nextUV");				// Min pos
+						glUniform1f(location, nextUV);
+						location = glGetUniformLocation(shaderProgram, "realColor");			// Color
+						glUniform4f(location, /*realColor.x*/ 1.0f, /*realColor.y*/ 1.0f, /*realColor.z*/ 1.0f, /*realColor.w*/ 1.0f);
+
+						location = glGetUniformLocation(shaderProgram, "vertex1");				// Current High
+						glUniform3f(location, (*curr)->originHigh.x, (*curr)->originHigh.y, (*curr)->originHigh.z);
+						location = glGetUniformLocation(shaderProgram, "vertex2");				// Current Low
+						glUniform3f(location, (*curr)->originLow.x, (*curr)->originLow.y, (*curr)->originLow.z);
+						location = glGetUniformLocation(shaderProgram, "vertex3");				// Next High
+						glUniform3f(location, (*next)->originHigh.x, (*next)->originHigh.y, (*next)->originHigh.z);
+						location = glGetUniformLocation(shaderProgram, "vertex4");				// Next Low
+						glUniform3f(location, (*next)->originLow.x, (*next)->originLow.y, (*next)->originLow.z);
+
+						ResourceMesh* plane = (ResourceMesh*)App->res->GetResource(App->resHandler->plane);
+						glBindVertexArray(plane->GetVAO());
+
+						glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, plane->GetIBO());
+						glDrawElements(GL_TRIANGLES, plane->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
+
+						glActiveTexture(GL_TEXTURE0);
+						glBindTexture(GL_TEXTURE_2D, 0);
+
+						glBindBuffer(GL_ARRAY_BUFFER, 0);
+						glBindVertexArray(0);
+						glUseProgram(0);
 
 					}
 				}

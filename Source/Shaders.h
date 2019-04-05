@@ -305,23 +305,42 @@
 "uniform mat4 model_matrix;\n" \
 "uniform mat4 mvp_matrix;\n" \
 "uniform mat3 normal_matrix;\n" \
-"uniform int columUVNorm;\n" \
-"uniform int minPos\n" \
-"uniform vec4 realColor\n" \
+"uniform float currUV;\n" \
+"uniform float nextUV;\n" \
+"uniform vec4 realColor;\n" \
+"uniform vec3 vertex1;\n" \
+"uniform vec3 vertex2;\n" \
+"uniform vec3 vertex3;\n" \
+"uniform vec3 vertex4;\n" \
 "out vec3 fPosition;\n" \
 "out vec3 fNormal;\n" \
 "out vec4 fColor;\n" \
 "out vec2 fTexCoord;\n" \
 "void main()\n" \
 "{\n" \
-"	fPosition = vec3(model_matrix * vec4(position, 1.0));\n" \
-"	fNormal = vec3(0, 1, 0);\n" \
+"	fNormal = normalize(normal_matrix * normal);\n" \
 "	fColor = realColor;\n" \
-"	vec2 realCoord(minPos, texCoord.y)\n" \
-"		if (texCoord.x == 1)\n" \
-"			realCoord.x += columUVNorm;\n" \
-"	fTexCoord = realCoord;\n" \
-"	gl_Position = mvp_matrix * vec4(position, 1.0);\n" \
+"	vec2 realCoord = texCoord;\n" \
+"	vec3 realPos = vec3(0);\n" \
+"	if (texCoord.x == 0)\n" \
+"	{\n" \
+"		realCoord.x = currUV;\n" \
+"		if (texCoord.y == 1)\n" \
+"			realPos = vertex1;\n" \
+"		else\n" \
+"			realPos = vertex2;\n" \
+"	}\n" \
+"	else\n" \
+"	{\n" \
+"		realCoord.x = nextUV;\n" \
+"		if (texCoord.y == 1)\n" \
+"			realPos = vertex3;\n" \
+"		else\n" \
+"			realPos = vertex4;\n" \
+"	}\n" \
+"	fPosition = vec3(model_matrix * vec4(realPos, 1.0));\n" \
+"	fTexCoord = texCoord;\n" \
+"	gl_Position = mvp_matrix * vec4(realPos, 1.0);\n" \
 "}\n"
 
 #define fShaderTrail \

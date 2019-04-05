@@ -62,7 +62,7 @@ private:
 
 	float minDistance = 0.05f;
 
-	int lifeTime = 1000u;
+	int lifeTime = 200;
 
 
 };

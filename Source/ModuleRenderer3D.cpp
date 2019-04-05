@@ -8,6 +8,7 @@
 #include "ModuleTimeManager.h"
 #include "ModulePhysics.h"
 #include "ModuleParticles.h"
+#include "ModuleTrails.h"
 #include "ModuleGui.h"
 #include "ModuleGOs.h"
 #include "ModuleParticles.h"
@@ -30,8 +31,6 @@
 #include "ComponentMaterial.h"
 #include "ComponentCamera.h"
 #include "ComponentProjector.h"
-
-#include "ComponentTrail.h"
 
 #include "ResourceMesh.h"
 #include "ResourceTexture.h"
@@ -236,6 +235,8 @@ update_status ModuleRenderer3D::PostUpdate()
 	App->fbo->MergeDepthBuffer(App->window->GetWindowWidth(), App->window->GetWindowHeight());
 
 	App->scene->Draw();
+
+	App->trails->Draw();
 
 	bool blend = GetCapabilityState(GL_BLEND);
 	glEnable(GL_BLEND);
