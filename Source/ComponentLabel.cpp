@@ -369,15 +369,21 @@ void ComponentLabel::OnUniqueEditor()
 void ComponentLabel::SetVerticalAligment(const VerticalLabelAlign nextAlignement)
 {
 	VerticalLabelAlign comeFrom = vAlign;
-	vAlign = nextAlignement;
-	VerticalAlignment(parent->cmp_rectTransform->GetRect()[H_UI_RECT], comeFrom);
+	if (vAlign != nextAlignement)
+	{
+		vAlign = nextAlignement;
+		VerticalAlignment(parent->cmp_rectTransform->GetRect()[H_UI_RECT], comeFrom);
+	}
 }
 
 void ComponentLabel::SetHorizontalAligment(const HorizontalLabelAlign nextAlignement)
 {
 	HorizontalLabelAlign comeFrom = hAlign;
-	hAlign = nextAlignement;
-	HorizontalAlignment(parent->cmp_rectTransform->GetRect()[H_UI_RECT], comeFrom);
+	if (hAlign != nextAlignement)
+	{
+		hAlign = nextAlignement;
+		HorizontalAlignment(parent->cmp_rectTransform->GetRect()[W_UI_RECT], comeFrom);
+	}
 }
 
 void ComponentLabel::DragDropFont()
