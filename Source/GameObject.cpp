@@ -273,11 +273,6 @@ uint GameObject::GetUUID() const
 void GameObject::ForceUUID(uint uuid)
 {
 	this->uuid = uuid;
-
-	for (GameObject* child : children)
-	{
-		child->SetParent(this);
-	}
 }
 
 void GameObject::SetParent(GameObject* parent)
@@ -440,6 +435,16 @@ void GameObject::OnSystemEvent(System_Event event)
 		break;
 	}
 	case System_Event_Type::LoadFinished:
+	{
+		for (auto component = components.begin(); component != components.end(); ++component)
+		{
+			(*component)->OnSystemEvent(event);
+		}
+		break;
+	}
+	case System_Event_Type::ScreenChanged:
+	case System_Event_Type::RectTransformUpdated:
+	case System_Event_Type::CanvasChanged:
 	{
 		for (auto component = components.begin(); component != components.end(); ++component)
 		{

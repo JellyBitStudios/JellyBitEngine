@@ -239,7 +239,7 @@ ResourceFont* ResourceFont::LoadFile(const char * file)
 			uint8_t* buffer = new uint8_t[width * height];
 			memcpy(buffer, cursor, bytes);
 			fontData.fontBuffer[i] = buffer;
-			fontData.charactersMap[i + 32].textureID = ResourceFont::LoadTextureCharacter(width, height, fontData.fontBuffer[i]);
+			ResourceFont::LoadTextureCharacter(width, height, fontData.fontBuffer[i]);
 
 			cursor += bytes;
 		}

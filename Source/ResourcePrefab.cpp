@@ -254,7 +254,11 @@ void ResourcePrefab::Save()
 	{
 		GameObject* root = prefabData.root;
 
-		App->GOs->SerializeFromNode(root, saveBuffer, saveBytes);
+		saveBytes = root->GetSerializationBytes();
+		saveBuffer = new char[saveBytes];
+
+		char* cursor = saveBuffer;
+		root->OnSave(cursor);
 	}
 }
 
@@ -264,10 +268,15 @@ void ResourcePrefab::Load()
 	{
 		GameObject* root = prefabData.root;
 		root->DestroyTemplate();
-		root = prefabData.root = nullptr;
-		
+
+		root = prefabData.root = new GameObject("root", nullptr);
+
 		char* cursor = saveBuffer;
-		root = prefabData.root = App->GOs->DeSerializeToNode(cursor, saveBytes);
+		root->OnLoad(cursor, false);
+
+		System_Event event;
+		event.type = System_Event_Type::LoadFinished;
+		root->OnSystemEvent(event);
 
 		delete[] saveBuffer;
 		saveBuffer = nullptr;
@@ -285,7 +294,6 @@ void ResourcePrefab::OnSystemEvent(System_Event event)
 			if (prefabData.root)
 			{
 				prefabData.root->OnSystemEvent(event);
-				int a = 2;
 			}
 			break;
 		}

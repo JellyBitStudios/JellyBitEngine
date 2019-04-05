@@ -288,7 +288,7 @@ void ModuleGOs::RecalculateVector(GameObject* go, bool sendEvent)
 bool ModuleGOs::SerializeFromNode(GameObject* node, char*& outStateBuffer, size_t& sizeBuffer, bool navmesh)
 {
 	std::vector<GameObject*> go;
-	node->GetChildrenVector(go, true);
+	node->GetChildrenVector(go);
 	sizeBuffer = sizeof(uint);
 	for (int i = 0; i < go.size(); ++i)
 		sizeBuffer += go[i]->GetSerializationBytes();
@@ -350,6 +350,8 @@ GameObject* ModuleGOs::DeSerializeToNode(char*& buffer, size_t sizeBuffer, bool 
 
 bool ModuleGOs::LoadScene(char*& buffer, size_t sizeBuffer, bool navmesh)
 {
+	App->physics;
+
 	char* cursor = buffer;
 	size_t bytes = sizeof(uint);
 	uint totalGO;
