@@ -89,6 +89,7 @@ void ComponentRectTransform::OnSystemEvent(System_Event event)
 	{
 		(parent->cmp_canvas) ? CanvasChanged() : ParentChanged();
 		needed_recalculate = true;
+
 		break;
 	}
 	}

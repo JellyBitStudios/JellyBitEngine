@@ -1,7 +1,6 @@
 #include "ComponentImage.h"
 
 #include "Application.h"
-#include "ModuleUI.h"
 #include "ModuleResourceManager.h"
 
 #include "ResourceTexture.h"
@@ -22,6 +21,10 @@ ComponentImage::ComponentImage(GameObject * parent, ComponentTypes componentType
 
 		if (parent->cmp_canvasRenderer == nullptr)
 			parent->AddComponent(ComponentTypes::CanvasRendererComponent);
+
+		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::ImageComponent, this);
+		if(index != -1)
+			FillBuffer();
 	}
 }
 
@@ -37,6 +40,10 @@ ComponentImage::ComponentImage(const ComponentImage & componentImage, GameObject
 	{
 		if(res_image > 0)
 			App->res->SetAsUsed(res_image);
+
+		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::ImageComponent, this);
+		if (index != -1)
+			FillBuffer();
 	}
 }
 
@@ -45,7 +52,27 @@ ComponentImage::~ComponentImage()
 	if (res_image > 0)
 		App->res->SetAsUnused(res_image);
 
+	if (index != -1)
+		App->ui->UnRegisterBufferIndex(offset, ComponentTypes::ImageComponent);
+
 	parent->cmp_image = nullptr;
+}
+
+void ComponentImage::Update()
+{
+	if (needed_recalculate)
+	{
+		if (mask)
+		{
+			uint* rect = parent->cmp_rectTransform->GetRect();
+			mask_values[1] = ((rect_initValues[1] - (float)rect[ComponentRectTransform::Rect::YDIST]) / rect_initValues[1]);
+			mask_values[0] = 1.0f - ((rect_initValues[0] - (float)rect[ComponentRectTransform::Rect::XDIST]) / rect_initValues[0]);
+		}
+		if (index != -1)
+			FillBuffer();
+
+		needed_recalculate = false;
+	}
 }
 
 float * ComponentImage::GetColor()
@@ -78,6 +105,19 @@ void ComponentImage::SetResImageUuid(uint res_image_uuid)
 
 	if (res_image > 0)
 		App->res->SetAsUsed(res_image);
+}
+
+int ComponentImage::GetBufferIndex() const
+{
+	return index;
+}
+
+void ComponentImage::SetBufferRangeAndFIll(uint offs, int index)
+{
+	offset = offs;
+	this->index = index;
+
+	FillBuffer();
 }
 
 uint ComponentImage::GetResImageUuid() const
@@ -121,14 +161,11 @@ void ComponentImage::OnSystemEvent(System_Event event)
 {
 	switch (event.type)
 	{
+	case System_Event_Type::ScreenChanged:
+	case System_Event_Type::CanvasChanged:
 	case System_Event_Type::RectTransformUpdated:
 	{
-		if (mask)
-		{
-			uint* rect = parent->cmp_rectTransform->GetRect();
-			mask_values[1] = ((rect_initValues[1] - (float)rect[ComponentRectTransform::Rect::YDIST]) / rect_initValues[1]);
-			mask_values[0] = 1.0f - ((rect_initValues[0] - (float)rect[ComponentRectTransform::Rect::XDIST]) / rect_initValues[0]);
-		}
+		needed_recalculate = true;
 		break;
 	}
 	}
@@ -280,4 +317,21 @@ void ComponentImage::OnUniqueEditor()
 		}
 	}
 #endif
+}
+
+void ComponentImage::FillBuffer()
+{
+	math::float3* rCorners = parent->cmp_rectTransform->GetCorners();
+	float one = 1.0f;
+	char* cursor = buffer;
+	size_t bytes = sizeof(float) * 3;
+	memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RTOPLEFT], bytes);
+	cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
+	memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RTOPRIGHT], bytes);
+	cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
+	memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RBOTTOMLEFT], bytes);
+	cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
+	memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RBOTTOMRIGHT], bytes);
+	cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
+	App->ui->FillBufferRange(offset, UI_BYTES_IMAGE, buffer);
 }

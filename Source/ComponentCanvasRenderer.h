@@ -41,12 +41,9 @@ public:
 		}
 		math::float4 GetColor();
 		uint GetTexture();
-		const char * GetText();
 		math::float2 GetMaskValues();
-		char* GetBufferWord();
-		uint GetBufferSize()const;
-		uint GetWordSize()const;
-		std::vector<uint>* texturesWord();
+		std::vector<uint>* GetTexturesWord();
+		int GetIndex()const;
 
 		bool isRendered() {
 			return isRendered_flag;

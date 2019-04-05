@@ -11,6 +11,7 @@
 #include "ComponentCanvasRenderer.h"
 #include "ComponentCamera.h"
 #include "ComponentButton.h"
+#include "ComponentImage.h"
 
 #define CANVAS_TYPE_STR "Screen\0World Screen (Work In Progress)\0World"
 
@@ -130,6 +131,7 @@ void ComponentCanvas::Update()
 	{
 		if ((*go)->cmp_rectTransform) (*go)->cmp_rectTransform->Update();
 		if ((*go)->cmp_label) (*go)->cmp_label->Update();
+		if ((*go)->cmp_image) (*go)->cmp_image->Update();
 		if (App->GetEngineState() == engine_states::ENGINE_PLAY && (*go)->cmp_button) (*go)->cmp_button->Update();
 		if ((*go)->cmp_canvasRenderer) (*go)->cmp_canvasRenderer->Update();
 	}

@@ -1,6 +1,8 @@
 #ifndef __COMPONENT_LABEL_H__
 #define __COMPONENT_LABEL_H__
 
+#include "ModuleUI.h"
+
 #include "Component.h"
 #include <string>
 #include <map>
@@ -56,6 +58,9 @@ public:
 	uint GetWordSize()const;
 	std::vector<uint>* GetWordTextureIDs();
 
+	int GetBufferIndex()const;
+	void SetBufferRangeAndFIll(uint offs, int index);
+
 private:
 	uint GetInternalSerializationBytes();
 	void OnInternalSave(char*& cursor);
@@ -74,11 +79,14 @@ private:
 
 	std::vector<LabelLetter> labelWord;
 	std::vector<uint> textureWord;
-	char* buffer = nullptr;
 	uint last_word_size = 0;
-	uint buffer_size = 0;
 
 	bool needed_recalculate = false;
+
+	char buffer[UI_BYTES_LABEL];
+	uint buffer_size = 0;
+	uint offset = 0;
+	int index = -1;
 };
 
 #endif

@@ -1,7 +1,6 @@
 #include "ComponentLabel.h"
 #include "ComponentRectTransform.h"
 
-#include "ModuleUI.h"
 #include "ModuleResourceManager.h"
 
 #include "ResourceFont.h"
@@ -30,6 +29,8 @@ ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType
 		if (fontUuid)
 			size = ((ResourceFont*)fonts[0])->fontData.fontSize;
 
+		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::LabelComponent, this);
+
 		needed_recalculate = true;
 	}
 }
@@ -45,12 +46,19 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 	textureWord = componentLabel.textureWord;
 
 	if (includeComponents)
+	{
+		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::LabelComponent, this);
 		if (!labelWord.empty())
-			FIllBuffer();
+			if (index != -1)
+				FIllBuffer();
+	}
 }
 
 ComponentLabel::~ComponentLabel()
 {
+	if (index != -1)
+		App->ui->UnRegisterBufferIndex(offset, ComponentTypes::LabelComponent);
+
 	parent->cmp_label = nullptr;
 }
 
@@ -58,17 +66,12 @@ void ComponentLabel::OnSystemEvent(System_Event event)
 {
 	switch (event.type)
 	{
+	case System_Event_Type::ScreenChanged:
+		//change size by z & y
 	case System_Event_Type::CanvasChanged:
 	case System_Event_Type::RectTransformUpdated:
-	{
 		needed_recalculate = true;
 		break;
-	}
-	case System_Event_Type::ScreenChanged:
-	{
-		//change size by z & y
-		break;
-	}
 	}
 }
 
@@ -121,8 +124,16 @@ void ComponentLabel::Update()
 
 					if (y + character.size.y * sizeNorm < rectParent[Y_UI_RECT] + rectParent[H_UI_RECT])
 					{
-						labelWord.push_back(l);
-						textureWord.push_back(l.textureID);
+						if (labelWord.size() <= UI_MAX_LABEL_LETTERS)
+						{
+							labelWord.push_back(l);
+							textureWord.push_back(l.textureID);
+						}
+						else
+						{
+							CONSOLE_LOG(LogTypes::Warning, "Label can't draw more than %i letters.", UI_MAX_LABEL_LETTERS);
+							break;
+						}
 					}
 					else
 						break;
@@ -136,7 +147,10 @@ void ComponentLabel::Update()
 				}
 			}
 			if (!labelWord.empty())
-				FIllBuffer();
+			{
+				if (index != -1)
+					FIllBuffer();
+			}
 			else
 				last_word_size = 0;
 		}
@@ -333,13 +347,7 @@ void ComponentLabel::DragDropFont()
 
 void ComponentLabel::FIllBuffer()
 {
-	if (labelWord.size() != last_word_size)
-	{
-		if (buffer)
-			RELEASE_ARRAY(buffer);
-		buffer_size = labelWord.size() * sizeof(float) * 16;
-		buffer = new char[buffer_size];
-	}
+	buffer_size = labelWord.size() * sizeof(float) * 16;
 	char* cursor = buffer;
 	size_t bytes = sizeof(float) * 4;
 	for (uint i = 0; i < labelWord.size(); i++)
@@ -354,6 +362,8 @@ void ComponentLabel::FIllBuffer()
 		cursor += bytes;
 	}
 	last_word_size = labelWord.size();
+
+	App->ui->FillBufferRange(offset, buffer_size, buffer);
 }
 
 void ComponentLabel::SetFinalText(const char * newText)
@@ -395,4 +405,17 @@ uint ComponentLabel::GetWordSize() const
 std::vector<uint>* ComponentLabel::GetWordTextureIDs()
 {
 	return &textureWord;
+}
+
+int ComponentLabel::GetBufferIndex() const
+{
+	return index;
+}
+
+void ComponentLabel::SetBufferRangeAndFIll(uint offs, int index)
+{
+	offset = offs;
+	this->index = index;
+	if(!labelWord.empty())
+		FIllBuffer();
 }

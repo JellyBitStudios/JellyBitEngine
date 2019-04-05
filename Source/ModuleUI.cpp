@@ -44,6 +44,18 @@ ModuleUI::~ModuleUI()
 {
 }
 
+void ModuleUI::DrawUI()
+{
+#ifndef GAMEMODE
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::Orchid);
+#endif
+	if (!uiMode)
+		return;
+	UpdateRenderStates();
+	DrawWorldCanvas();
+	DrawScreenCanvas();
+}
+
 bool ModuleUI::Init(JSON_Object * jObject)
 {
 
@@ -54,7 +66,10 @@ bool ModuleUI::Start()
 {
 	//Shader
 	ui_shader = App->resHandler->UIShaderProgram;
-	uiLabel_shader = App->resHandler->UILabelShaderProgram;
+	use(ui_shader);
+	setUnsignedInt(ui_shader, "image", 0);
+	use(0);
+
 	initRenderData();
 
 	ui_size_draw[Screen::X] = 0;
@@ -119,6 +134,16 @@ void ModuleUI::OnSystemEvent(System_Event event)
 		canvas_screen.clear();
 		canvas_worldScreen.clear();
 		canvas_world.clear();
+		countImages = 0;
+		countLabels = 0;
+		offsetImage = 0;
+		offsetLabel = UI_BUFFER_SIZE - UI_BYTES_LABEL;
+		free_image_offsets.clear();
+		free_label_offsets.clear();
+		std::queue<ComponentImage*> emptyI;
+		std::swap(queueImageToBuffer, emptyI);
+		std::queue<ComponentLabel*> emptyL;
+		std::swap(queueLabelToBuffer, emptyL);
 		break;
 	}
 	case System_Event_Type::ComponentDestroyed:
@@ -179,31 +204,18 @@ void ModuleUI::initRenderData()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
-	//-------- Uniform Buffer Object -------------
-	GLuint bind_UI_index = 1;
-	// Create shaderstorage buffer object
-	glGenBuffers(1, &uboUI);
-	glBindBufferBase(GL_UNIFORM_BUFFER, bind_UI_index, uboUI);
-	glBufferData(GL_UNIFORM_BUFFER, sizeof(uiShader_data), nullptr, GL_DYNAMIC_DRAW);
-
+	//--- One Buffer UI - Shader Storage Buffer Object ----
+	glGenBuffers(1, &ssboUI);
+	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, UI_BIND_INDEX, ssboUI, 0, UI_BUFFER_SIZE);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, UI_BUFFER_SIZE, nullptr, GL_DYNAMIC_DRAW);
 	// Bind UBO to shader Interface Block
-	GLuint bloc = glGetUniformBlockIndex(ui_shader, "UIBlock");
-	glUniformBlockBinding(ui_shader, bloc, bind_UI_index);
-	//-------------
-		//-------- Shader Storage Buffer Object -------------
-	GLuint bind_UILabel_index = 2;
-	// Create shaderstorage buffer object
-	glGenBuffers(1, &ssboLabel);
-	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bind_UILabel_index, ssboLabel, 0, maxBufferLabelStorage);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, maxBufferLabelStorage, nullptr, GL_DYNAMIC_DRAW);
-	// Bind UBO to shader Interface Block
-	GLuint sloc = glGetProgramResourceIndex(uiLabel_shader, GL_SHADER_STORAGE_BLOCK, "UIWord");
-	glShaderStorageBlockBinding(uiLabel_shader, sloc, bind_UILabel_index);
-	glBufferStorage(GL_SHADER_STORAGE_BUFFER, maxBufferLabelStorage,nullptr, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+	GLuint uloc = glGetProgramResourceIndex(ui_shader, GL_SHADER_STORAGE_BLOCK, "UICorners");
+	glShaderStorageBlockBinding(ui_shader, uloc, UI_BIND_INDEX);
+	glBufferStorage(GL_SHADER_STORAGE_BUFFER, UI_BUFFER_SIZE, nullptr, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 	//-------------
 }
 
-void ModuleUI::DrawCanvas()
+void ModuleUI::DrawScreenCanvas()
 {
 	if (depthTest) glDisable(GL_DEPTH_TEST);
 	if (cullFace)  glDisable(GL_CULL_FACE);
@@ -213,19 +225,14 @@ void ModuleUI::DrawCanvas()
 	{
 		use(ui_shader);
 		setBool(ui_shader, "isScreen", 1);
-		use(uiLabel_shader);
-		setBool(uiLabel_shader, "isScreen", 1);
 
 		for (GameObject* canvas : canvas_screen)
 		{
-
 			std::vector<GameObject*> renderers;
 			canvas->GetChildrenAndThisVectorFromLeaf(renderers);
-			std::reverse(renderers.begin(), renderers.end());
-
-			for (GameObject* render : renderers)
+			for (std::vector<GameObject*>::iterator render = renderers.begin(); render != renderers.end(); ++render)
 			{
-				ComponentCanvasRenderer* renderer = render->cmp_canvasRenderer;
+				ComponentCanvasRenderer* renderer = (*render)->cmp_canvasRenderer;
 				if (renderer)
 				{
 					ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
@@ -234,10 +241,10 @@ void ModuleUI::DrawCanvas()
 						switch (rend->GetType())
 						{
 						case ComponentCanvasRenderer::RenderTypes::IMAGE:
-							DrawUIImage(render->cmp_rectTransform, rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
+							DrawUIImage(rend->GetIndex(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 							break;
 						case ComponentCanvasRenderer::RenderTypes::LABEL:
-							DrawUILabel(rend->GetBufferWord(), rend->GetBufferSize(), rend->GetWordSize(), rend->texturesWord(), rend->GetColor());
+							DrawUILabel(rend->GetIndex(), rend->GetTexturesWord(), rend->GetColor());
 							break;
 						}
 
@@ -257,7 +264,6 @@ void ModuleUI::DrawCanvas()
 
 void ModuleUI::DrawWorldCanvas()
 {
-	UpdateRenderStates();
 	if (!blend) glEnable(GL_BLEND);
 	if (lighting) glDisable(GL_LIGHTING);
 
@@ -269,18 +275,14 @@ void ModuleUI::DrawWorldCanvas()
 		use(ui_shader);
 		setBool(ui_shader, "isScreen", 0);
 		setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
-		use(uiLabel_shader);
-		setBool(uiLabel_shader, "isScreen", 0);
-		setFloat4x4(uiLabel_shader, "mvp_matrix", mvp.ptr());
 
 		for (GameObject* canvas : canvas_world)
 		{
 			std::vector<GameObject*> renderers;
 			canvas->GetChildrenAndThisVectorFromLeaf(renderers);
-
-			for (GameObject* render : renderers)
+			for (std::vector<GameObject*>::iterator render = renderers.begin(); render != renderers.end(); ++render)
 			{
-				ComponentCanvasRenderer* renderer = render->cmp_canvasRenderer;
+				ComponentCanvasRenderer* renderer = (*render)->cmp_canvasRenderer;
 				if (renderer)
 				{
 					ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
@@ -289,10 +291,10 @@ void ModuleUI::DrawWorldCanvas()
 						switch (rend->GetType())
 						{
 						case ComponentCanvasRenderer::RenderTypes::IMAGE:
-							DrawUIImage(render->cmp_rectTransform, rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
+							DrawUIImage(rend->GetIndex(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 							break;
 						case ComponentCanvasRenderer::RenderTypes::LABEL:
-							DrawUILabel(rend->GetBufferWord(), rend->GetBufferSize(), rend->GetWordSize(),rend->texturesWord(), rend->GetColor());
+							DrawUILabel(rend->GetIndex(), rend->GetTexturesWord(), rend->GetColor());
 							break;
 						}
 
@@ -307,105 +309,56 @@ void ModuleUI::DrawWorldCanvas()
 	if (lighting) glEnable(GL_LIGHTING);
 }
 
-void ModuleUI::DrawUIImage(ComponentRectTransform * rect, math::float4& color, uint id_texture, math::float2& mask, float rotation)
+void ModuleUI::DrawUIImage(int index, math::float4& color, uint texture, math::float2& mask)
 {
-	use(ui_shader);
-
-	SetRectToShader(rect);
-
+	if (index == -1)
+		return;
 	int useMask = (mask.x < 0) ? false : true;
-	memcpy(&uiShader_data.useMask, &useMask, sizeof(uiShader_data.useMask));
-	if(useMask)
-		memcpy(&uiShader_data.coordsMask, mask.ptr(), sizeof(uiShader_data.coordsMask));
+	setInt(ui_shader,"useMask", useMask);
+	if (useMask)
+		setFloat(ui_shader, "coordsMask", mask.x, mask.y);
 
-
-	use(ui_shader);
-	glUniform1i(glGetUniformLocation(ui_shader, "isLabel"), 0);
+	setInt(ui_shader, "isLabel", false);
 	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
-	if (id_texture > 0)
+	if (texture > 0)
 	{
 		setBool(ui_shader, "using_texture", true);
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, id_texture);
-		setUnsignedInt(ui_shader, "image", 0);
+		glBindTexture(GL_TEXTURE_2D, texture);
 	}
 	else
 		setBool(ui_shader, "using_texture", false);
 
-	//-------- Uniform Buffer Object -------------
-	// Update buffer
-	glBindBuffer(GL_UNIFORM_BUFFER, uboUI);
-	void* buff_ptr = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
-	std::memcpy(buff_ptr, &uiShader_data, sizeof(uiShader_data));
-	glUnmapBuffer(GL_UNIFORM_BUFFER);
-	// -------------
+	setFloat(ui_shader, "indexCorner", float(index));
 
 	glBindVertexArray(reference_vertex);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glBindVertexArray(0);
-
 }
 
-void ModuleUI::DrawUILabel(char* bufferWord, uint sizeBuffer, uint wordSize, std::vector<uint>* texturesWord, math::float4& color)
+void ModuleUI::DrawUILabel(int index, std::vector<uint>* GetTexturesWord, math::float4& color)
 {
-	use(uiLabel_shader);
-	setBool(uiLabel_shader, "isLabel", true);
-	setBool(uiLabel_shader, "using_texture", true);
-	setUnsignedInt(uiLabel_shader, "image", 0);
-	setFloat(uiLabel_shader, "spriteColor", color.x, color.y, color.z, color.w);
-
-	//-------- Shader Storage Buffer Object Update -------------
-	void* buff_ptr = glMapNamedBufferRange(ssboLabel, 0, sizeBuffer, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
-	std::memcpy(buff_ptr, bufferWord, sizeBuffer);
-	glFlushMappedNamedBufferRange(ssboLabel, 0, sizeBuffer);
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-	//-----
-
+	if (index == -1)
+		return;
+	setBool(ui_shader, "isLabel", true);
+	setBool(ui_shader, "using_texture", true);
+	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
+	
+	uint wordSize = GetTexturesWord->size();
 	for (uint i = 0; i < wordSize; i++)
 	{
-		use(uiLabel_shader);
-		setFloat(uiLabel_shader, "letter_index", 4.0f * (float)i);
+		setFloat(ui_shader, "indexCorner", float(index + (4.0f * (float)i)));
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texturesWord->at(i));
+		glBindTexture(GL_TEXTURE_2D, GetTexturesWord->at(i));
 
 		glBindVertexArray(reference_vertex);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glBindVertexArray(0);
-	}
-}
-
-void ModuleUI::SetRectToShader(ComponentRectTransform * rect, int rFrom, math::float3* cornersLetter)
-{
-	math::float3* rect_world = nullptr;
-	ComponentRectTransform::RectFrom from;
-	(rect) ? from = rect->GetFrom() : from = (ComponentRectTransform::RectFrom)rFrom;
-
-	switch (from)
-	{
-	case ComponentRectTransform::RectFrom::RECT:
-		(rect) ? rect_world = rect->GetCorners() : rect_world = cornersLetter;
-
-		memcpy(&uiShader_data.topLeft, &rect_world[ComponentRectTransform::Rect::RTOPLEFT], sizeof(uiShader_data.topLeft));
-		memcpy(&uiShader_data.topRight, &rect_world[ComponentRectTransform::Rect::RTOPRIGHT], sizeof(uiShader_data.topRight));
-		memcpy(&uiShader_data.bottomLeft, &rect_world[ComponentRectTransform::Rect::RBOTTOMLEFT], sizeof(uiShader_data.bottomLeft));
-		memcpy(&uiShader_data.bottomRight, &rect_world[ComponentRectTransform::Rect::RBOTTOMRIGHT], sizeof(uiShader_data.bottomRight));
-
-		break;
-	case ComponentRectTransform::RectFrom::WORLD:
-	case ComponentRectTransform::RectFrom::RECT_WORLD:
-		(rect) ? rect_world = rect->GetCorners() : rect_world = cornersLetter;
-
-		memcpy(&uiShader_data.topLeft, &rect_world[ComponentRectTransform::Rect::RTOPLEFT], sizeof(uiShader_data.topLeft));
-		memcpy(&uiShader_data.topRight, &rect_world[ComponentRectTransform::Rect::RTOPRIGHT], sizeof(uiShader_data.topRight));
-		memcpy(&uiShader_data.bottomLeft, &rect_world[ComponentRectTransform::Rect::RBOTTOMLEFT], sizeof(uiShader_data.bottomLeft));
-		memcpy(&uiShader_data.bottomRight, &rect_world[ComponentRectTransform::Rect::RBOTTOMRIGHT], sizeof(uiShader_data.bottomRight));
-
-		break;
 	}
 }
 
@@ -443,6 +396,125 @@ GameObject * ModuleUI::FindCanvas(GameObject * from)
 		temp = temp->GetParent();
 	}
 	return (ret) ? ret : nullptr;
+}
+
+void ModuleUI::FillBufferRange(uint offset, uint size, char* buffer)
+{
+	//-------- Shader Storage Buffer Object Update -------------
+	void* buff_ptr = glMapNamedBufferRange(ssboUI, offset, size, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
+	std::memcpy(buff_ptr, buffer, size);
+	glFlushMappedNamedBufferRange(ssboUI, offset, size);
+	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	//-----
+}
+
+void ModuleUI::RegisterBufferIndex(uint *offset, int* index, ComponentTypes cType, Component * cmp)
+{
+	if (cType == ComponentTypes::ImageComponent)
+	{
+		if (countImages <= UI_MAX_COMPONENTS_IMAGE)
+		{
+			if (!free_image_offsets.empty())
+			{
+				*offset = free_image_offsets.at(free_image_offsets.size() - 1);
+				free_image_offsets.pop_back();
+			}
+			else
+			{
+				*offset = offsetImage;
+				offsetImage += UI_BYTES_IMAGE;
+			}
+			*index = *offset / (sizeof(float) * 4);
+			countImages++;
+		}
+		else
+		{
+			*index = -1;
+			queueImageToBuffer.push((ComponentImage*)cmp);
+			CONSOLE_LOG(LogTypes::Warning, "Component Image range buffer is full, adding to queue. Total %i images.", queueImageToBuffer.size());
+		}
+	}
+	else if (cType == ComponentTypes::LabelComponent)
+	{
+		if (countLabels <= UI_MAX_COMPONENTS_LABEL)
+		{
+			if (!free_label_offsets.empty())
+			{
+				*offset = free_label_offsets.at(free_label_offsets.size() - 1);
+				free_label_offsets.pop_back();
+			}
+			else
+			{
+				*offset = offsetLabel;
+				offsetLabel -= UI_BYTES_LABEL;
+			}
+			*index = *offset / (sizeof(float) * 4);
+			countLabels++;
+		}
+		else
+		{
+			*index = -1;
+			queueLabelToBuffer.push((ComponentLabel*)cmp);
+			CONSOLE_LOG(LogTypes::Warning, "Component Label range buffer is full, adding to queue. Total %i labels.", queueLabelToBuffer.size());
+		}
+	}
+}
+
+void ModuleUI::UnRegisterBufferIndex(uint offset, ComponentTypes cType)
+{
+	bool sameOffset = false;
+	if (cType == ComponentTypes::ImageComponent)
+	{
+		countImages--;
+		if (sameOffset = (offset == offsetImage - UI_BYTES_IMAGE))
+			offsetImage = offset;
+		else
+			free_image_offsets.push_back(offset);
+		if (!queueImageToBuffer.empty())
+		{
+			ComponentImage* img = queueImageToBuffer.front();
+			queueImageToBuffer.pop();
+			uint offsetSend;
+			if (!free_image_offsets.empty())
+			{
+				offsetSend = free_image_offsets.at(free_image_offsets.size() - 1);
+				free_image_offsets.pop_back();
+			}
+			else
+			{
+				offsetSend = offsetImage;
+				offsetImage += UI_BYTES_IMAGE;
+			}
+			img->SetBufferRangeAndFIll(offsetSend, offsetSend / sizeof(float) * 4);
+			countImages++;
+		}
+	}
+	else if (cType == ComponentTypes::LabelComponent)
+	{
+		countLabels--;
+		if (sameOffset = (offset == offsetLabel + UI_BYTES_LABEL))
+			offsetLabel = offset;
+		else
+			free_label_offsets.push_back(offset);
+		if (!queueLabelToBuffer.empty())
+		{
+			ComponentLabel* lb = queueLabelToBuffer.front();
+			queueLabelToBuffer.pop();
+			uint offsetSend;
+			if (!free_label_offsets.empty())
+			{
+				offsetSend = free_label_offsets.at(free_label_offsets.size() - 1);
+				free_label_offsets.pop_back();
+			}
+			else
+			{
+				offsetSend = offsetLabel;
+				offsetLabel -= UI_BYTES_LABEL;
+			}
+			lb->SetBufferRangeAndFIll(offsetSend, offsetSend / sizeof(float) * 4);
+			countLabels++;
+		}
+	}
 }
 
 bool ModuleUI::GetUIMode() const
