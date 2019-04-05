@@ -4,17 +4,17 @@ using JellyBitEngine;
 public class Waypoint : JellyScript
 {
     #region PUBLIC_VARIABLES
-    public LayerMask layerMask = new LayerMask(); /// "Enemy"
+    public LayerMask layerMask = new LayerMask();
 
     public bool IsBlocked
     {
-        get { return blockCount > 0u; }
+        get { return blockCount > 0; }
     }
     public bool isOccupied = false;
     #endregion
 
     #region PRIVATE_VARIABLES
-    private uint blockCount = 0u;
+    private int blockCount = 0;
     #endregion
 
     public override void OnTriggerEnter(Collider collider)
@@ -22,10 +22,10 @@ public class Waypoint : JellyScript
         if (collider == null)
             return;
 
-        if (layerMask.HasActive(collider.gameObject.GetLayerID()))
+        if (collider.gameObject.GetLayer() == "Terrain")
         {
-            Debug.Log("Block after ++: " + blockCount);
             ++blockCount;
+            Debug.Log("Block after ++: " + blockCount);
         }
     }
 
@@ -34,10 +34,10 @@ public class Waypoint : JellyScript
         if (collider == null)
             return;
 
-        if (layerMask.HasActive(collider.gameObject.GetLayerID()))
+        if (collider.gameObject.GetLayer() == "Terrain")
         {
-            Debug.Log("Block after --: " + blockCount);
             --blockCount;
+            Debug.Log("Block after --: " + blockCount);
         }
     }
 }
