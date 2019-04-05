@@ -5,7 +5,7 @@ enum System_Event_Type
 { 
 	NoEvent,
 
-	FileDropped, NewFile, FileMoved, ImportFile, ReImportFile, ForceReImport, FileRemoved, FileOverwritten, SwapRootDirectories,
+	FileDropped, NewFile, FileMoved, ImportFile, ReImportFile, ForceReImport, FileRemoved, FileOverwritten,
 	DeleteUnusedFiles, GenerateLibraryFiles, ImportLibraryFile, Build, // FileEvent
 
 	CalculateBBoxes, // GameObjectEvent
@@ -30,13 +30,7 @@ enum System_Event_Type
 
 	//Scripting events
 	ScriptingDomainReloaded,
-	LoadFinished,
-
-	//UI events
-	CanvasChanged,
-	RectTransformUpdated,
-	WRectTransformUpdated,
-	ScreenChanged
+	LoadFinished
 };
 
 class GameObject;

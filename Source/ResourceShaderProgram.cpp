@@ -672,8 +672,8 @@ bool ResourceShaderProgram::IsProgramLinked(uint shaderProgram)
 	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
 	if (success == GL_FALSE)
 	{
-		GLint logSize = 512;
-		//glGetShaderiv(shaderProgram, GL_INFO_LOG_LENGTH, &logSize);
+		GLint logSize = 0;
+		glGetShaderiv(shaderProgram, GL_INFO_LOG_LENGTH, &logSize);
 
 		GLchar* infoLog = new GLchar[logSize];
 		glGetProgramInfoLog(shaderProgram, logSize, NULL, infoLog);

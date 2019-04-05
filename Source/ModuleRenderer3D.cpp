@@ -310,12 +310,17 @@ update_status ModuleRenderer3D::PostUpdate()
 	}
 
 
-	App->ui->DrawUI();
+	if (App->ui->GetUIMode())
+	{
+		App->ui->DrawWorldCanvas();
+		App->ui->DrawCanvas();
+	}
 		
 	// 3. Editor
 	App->gui->Draw();
 #else
-	App->ui->DrawUI();
+	App->ui->DrawWorldCanvas();
+	App->ui->DrawCanvas();
 #endif // GAME
 
 	// 4. Swap buffers

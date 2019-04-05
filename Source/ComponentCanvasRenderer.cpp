@@ -38,10 +38,6 @@ ComponentCanvasRenderer::~ComponentCanvasRenderer()
 	parent->cmp_canvasRenderer = nullptr;
 }
 
-void ComponentCanvasRenderer::OnSystemEvent(System_Event event)
-{
-}
-
 void ComponentCanvasRenderer::Update()
 {
 	ComponentImage* cmp_image = (ComponentImage*)parent->GetComponent(ComponentTypes::ImageComponent);
@@ -130,6 +126,12 @@ uint ComponentCanvasRenderer::ToUIRend::GetTexture()
 	return ((ComponentImage*)cmp)->GetResImage();
 }
 
+const char* ComponentCanvasRenderer::ToUIRend::GetText()
+{
+	isRendered_flag = true;
+	return ((ComponentLabel*)cmp)->GetFinalText();
+}
+
 math::float2 ComponentCanvasRenderer::ToUIRend::GetMaskValues()
 {
 	if (((ComponentImage*)cmp)->useMask())
@@ -141,16 +143,8 @@ math::float2 ComponentCanvasRenderer::ToUIRend::GetMaskValues()
 		return { -1.0f, -1.0f };
 }
 
-std::vector<uint>* ComponentCanvasRenderer::ToUIRend::GetTexturesWord()
+std::vector<ComponentLabel::LabelLetter>* ComponentCanvasRenderer::ToUIRend::GetWord()
 {
 	isRendered_flag = true;
-	return ((ComponentLabel*)cmp)->GetWordTextureIDs();
-}
-
-int ComponentCanvasRenderer::ToUIRend::GetIndex() const
-{
-	if (type == RenderTypes::IMAGE)
-		return ((ComponentImage*)cmp)->GetBufferIndex();
-	else
-		return ((ComponentLabel*)cmp)->GetBufferIndex();
+	return ((ComponentLabel*)cmp)->GetLetterQueue();
 }

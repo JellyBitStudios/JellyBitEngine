@@ -1,8 +1,6 @@
 #ifndef __COMPONENT_LABEL_H__
 #define __COMPONENT_LABEL_H__
 
-#include "ModuleUI.h"
-
 #include "Component.h"
 #include <string>
 #include <map>
@@ -29,7 +27,9 @@ class ComponentLabel : public Component
 public:
 	struct LabelLetter
 	{
-		math::float4 corners[4] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } };
+		uint rect[4] = { 0, 0, 0, 0 };
+		math::float3 corners[4] = { math::float3::zero, math::float3::zero, math::float3::zero, math::float3::zero };
+		char letter = NULL;
 		uint textureID = 0;
 	};
 
@@ -38,28 +38,21 @@ public:
 	ComponentLabel(const ComponentLabel& componentLabel, GameObject* parent, bool includeComponents = true);
 	~ComponentLabel();
 
-	//NOTE: If you override this method, make sure to call the base class method. 
-	//(Component::OnSystemEvent(event); at start)
-	void OnSystemEvent(System_Event event);
-
 	void Update();
 
-	void WorldDraw(math::float3 * parentCorners, math::float4 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm);
+	void WorldDraw(math::float3 * parentCorners, math::float3 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm);
 
-	void ScreenDraw(math::float4 corners[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm);
+	void ScreenDraw(uint rect[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm);
 
 	void SetFinalText(const char* newText);
 	const char* GetFinalText() const;
 
+	std::vector<LabelLetter>* GetLetterQueue();
+
 	void SetColor(math::float4 newColor);
 	math::float4 GetColor() const;
-	char* GetBuffer();
-	uint GetBufferSize()const;
-	uint GetWordSize()const;
-	std::vector<uint>* GetWordTextureIDs();
 
-	int GetBufferIndex()const;
-	void SetBufferRangeAndFIll(uint offs, int index);
+	void RectChanged();
 
 private:
 	uint GetInternalSerializationBytes();
@@ -67,7 +60,7 @@ private:
 	void OnInternalLoad(char*& cursor);
 	void OnUniqueEditor();
 	void DragDropFont();
-	void FIllBuffer();
+
 private:
 	uint fontUuid = 0u;
 
@@ -78,15 +71,8 @@ private:
 	math::float4 color = math::float4::one;
 
 	std::vector<LabelLetter> labelWord;
-	std::vector<uint> textureWord;
-	uint last_word_size = 0;
 
-	bool needed_recalculate = false;
-
-	char buffer[UI_BYTES_LABEL];
-	uint buffer_size = 0;
-	uint offset = 0;
-	int index = -1;
+	bool needed_recaclculate = false;
 };
 
 #endif

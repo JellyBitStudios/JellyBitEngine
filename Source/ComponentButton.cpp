@@ -1,5 +1,4 @@
 #include "ComponentButton.h"
-
 #include "ComponentRectTransform.h"
 #include "ComponentScript.h"
 
@@ -7,7 +6,6 @@
 #include "ModuleInput.h"
 #include "ScriptingModule.h"
 #include "ModuleGOs.h"
-#include "ModulePhysics.h"
 
 #include "GameObject.h"
 #include "Application.h"
@@ -29,23 +27,8 @@ ComponentButton::ComponentButton(GameObject* parent, ComponentTypes componentTyp
 		if (parent->cmp_rectTransform == nullptr)
 			parent->AddComponent(ComponentTypes::RectTransformComponent);
 
-		//if (parent->cmp_rectTransform)
-		//{
-		//	if (parent->cmp_rectTransform->GetFrom() != ComponentRectTransform::RectFrom::RECT)
-		//	{
-		//		math::float3* corners = parent->cmp_rectTransform->GetCorners();
-		//		physx::PxRigidActor* gActor = physx::PxCreatePlane(App->physics->GetgPhysics(), 
-		//			physx::PxPlane(physx::PxVec3(corners[ComponentRectTransform::Rect::RTOPLEFT].x, corners[ComponentRectTransform::Rect::RTOPLEFT].y, corners[ComponentRectTransform::Rect::RTOPLEFT].z), 
-		//				physx::PxVec3(corners[ComponentRectTransform::Rect::RTOPRIGHT].x, corners[ComponentRectTransform::Rect::RTOPRIGHT].y, corners[ComponentRectTransform::Rect::RTOPRIGHT].z),
-		//				physx::PxVec3(corners[ComponentRectTransform::Rect::RBOTTOMLEFT].x, corners[ComponentRectTransform::Rect::RBOTTOMLEFT].y, corners[ComponentRectTransform::Rect::RBOTTOMLEFT].z)), 
-		//			*App->physics->GetDefaultMaterial());
-		//		assert(gActor != nullptr);
-		//		App->physics->AddActor(*gActor);
-		//		gActor->setActorFlag(physx::PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
-		//
-		//		isWorld = true;
-		//	}
-		//}
+		if (parent->cmp_image == nullptr)
+			parent->AddComponent(ImageComponent);
 	}
 }
 
@@ -56,36 +39,11 @@ ComponentButton::ComponentButton(const ComponentButton & componentButton, GameOb
 	input = componentButton.input;
 	scriptInstance = componentButton.scriptInstance;
 	methodToCall = componentButton.methodToCall;
-
-	//if (includeComponents)
-	//{
-	//	if (parent->cmp_rectTransform)
-	//	{
-	//		if (parent->cmp_rectTransform->GetFrom() != ComponentRectTransform::RectFrom::RECT)
-	//		{
-	//			math::float3* corners = parent->cmp_rectTransform->GetCorners();
-	//			gActor = physx::PxCreatePlane(App->physics->GetgPhysics(),
-	//				physx::PxPlane(physx::PxVec3(corners[ComponentRectTransform::Rect::RTOPLEFT].x, corners[ComponentRectTransform::Rect::RTOPLEFT].y, corners[ComponentRectTransform::Rect::RTOPLEFT].z),
-	//					physx::PxVec3(corners[ComponentRectTransform::Rect::RTOPRIGHT].x, corners[ComponentRectTransform::Rect::RTOPRIGHT].y, corners[ComponentRectTransform::Rect::RTOPRIGHT].z),
-	//					physx::PxVec3(corners[ComponentRectTransform::Rect::RBOTTOMLEFT].x, corners[ComponentRectTransform::Rect::RBOTTOMLEFT].y, corners[ComponentRectTransform::Rect::RBOTTOMLEFT].z)),
-	//				*App->physics->GetDefaultMaterial());
-	//			assert(gActor != nullptr);
-	//			App->physics->AddActor(*gActor);
-	//			gActor->setActorFlag(physx::PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
-	//
-	//			isWorld = true;
-	//		}
-	//	}
-	//}
 }
 
 ComponentButton::~ComponentButton()
 {
 	parent->cmp_button = nullptr;
-	//if (isWorld)
-	//{
-	//	App->physics->RemoveActor(*gActor);
-	//}
 }
 
 void ComponentButton::OnSystemEvent(System_Event event)

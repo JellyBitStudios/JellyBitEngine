@@ -11,7 +11,6 @@
 #include "ComponentCanvasRenderer.h"
 #include "ComponentCamera.h"
 #include "ComponentButton.h"
-#include "ComponentImage.h"
 
 #define CANVAS_TYPE_STR "Screen\0World Screen (Work In Progress)\0World"
 
@@ -48,24 +47,6 @@ ComponentCanvas::~ComponentCanvas()
 		RELEASE(fakeGo);
 
 	parent->cmp_canvas = nullptr;
-}
-
-void ComponentCanvas::OnSystemEvent(System_Event event)
-{
-	switch (event.type)
-	{
-	case System_Event_Type::WRectTransformUpdated:
-		event.type = System_Event_Type::RectTransformUpdated;
-	case System_Event_Type::ScreenChanged:
-	{
-		std::vector<GameObject*> rectChilds;
-		parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
-
-		for (std::vector<GameObject*>::const_reverse_iterator go = rectChilds.crbegin(); go != rectChilds.crend(); go++)
-			(*go)->OnSystemEvent(event);
-		break;
-	}
-	}
 }
 
 void ComponentCanvas::Update()
@@ -106,19 +87,8 @@ void ComponentCanvas::Update()
 			break;
 		}
 
-
-
-		if (!first_iterate)
-		{
-			System_Event canvasChanged;
-			canvasChanged.type = System_Event_Type::CanvasChanged;
-
-			std::vector<GameObject*> rectChilds;
-			parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
-
-			for (std::vector<GameObject*>::const_reverse_iterator go = rectChilds.crbegin(); go != rectChilds.crend(); go++)
-				(*go)->OnSystemEvent(canvasChanged);
-		}
+		if (parent->cmp_rectTransform && !first_iterate)
+			parent->cmp_rectTransform->CanvasChanged();
 
 		needed_change = false;
 		first_iterate = false;
@@ -126,14 +96,14 @@ void ComponentCanvas::Update()
 
 	std::vector<GameObject*> childs;
 	parent->GetChildrenAndThisVectorFromLeaf(childs);
+	std::reverse(childs.begin(), childs.end());
 
-	for (std::vector<GameObject*>::const_reverse_iterator go = childs.crbegin(); go != childs.crend(); go++)
+	for (GameObject* go : childs)
 	{
-		if ((*go)->cmp_rectTransform) (*go)->cmp_rectTransform->Update();
-		if ((*go)->cmp_label) (*go)->cmp_label->Update();
-		if ((*go)->cmp_image) (*go)->cmp_image->Update();
-		if (App->GetEngineState() == engine_states::ENGINE_PLAY && (*go)->cmp_button) (*go)->cmp_button->Update();
-		if ((*go)->cmp_canvasRenderer) (*go)->cmp_canvasRenderer->Update();
+		if (go->cmp_rectTransform) go->cmp_rectTransform->Update();
+		if (go->cmp_label) go->cmp_label->Update();
+		if (go->cmp_canvasRenderer) go->cmp_canvasRenderer->Update();
+		if (App->GetEngineState() == engine_states::ENGINE_PLAY && go->cmp_button) go->cmp_button->Update();
 	}
 }
 
@@ -221,4 +191,22 @@ math::float4x4 ComponentCanvas::GetGlobal() const
 	}
 
 	return ret;
+}
+
+void ComponentCanvas::ScreenChanged()
+{
+	std::vector<GameObject*> rectChilds;
+	parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
+	std::reverse(rectChilds.begin(), rectChilds.end());
+
+	for (GameObject* rect : rectChilds)
+		rect->cmp_rectTransform->ScreenChanged();
+}
+
+void ComponentCanvas::TransformUpdated()
+{
+	if (type != CanvasType::SCREEN)
+		if (parent->cmp_rectTransform)
+			parent->cmp_rectTransform->TransformUpdated();
+
 }

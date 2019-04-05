@@ -91,7 +91,14 @@ update_status ModuleFileSystem::PreUpdate()
 {
 #ifndef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	static float updateAssetsCounter = 0.0f;
+	updateAssetsCounter += App->timeManager->GetRealDt();
+	if (updateAssetsCounter >= 1.0f / updateAssetsRate)
+	{
+		updateAssetsCounter = 0.0f;
 
+		UpdateAssetsDir();
+	}
 #endif
 	return update_status::UPDATE_CONTINUE;
 }
@@ -124,9 +131,6 @@ bool ModuleFileSystem::Start()
 	System_Event event;
 	event.type = System_Event_Type::DeleteUnusedFiles;
 	App->PushSystemEvent(event);
-
-	assetsUpdater = new std::thread(UpdateAssetsDir);
-	//assetsUpdater->detach();
 #endif
 
 	return true;
@@ -134,9 +138,6 @@ bool ModuleFileSystem::Start()
 
 bool ModuleFileSystem::CleanUp()
 {
-	end = true;
-	assetsUpdater->join();
-	delete assetsUpdater;
 	CONSOLE_LOG(LogTypes::Normal, "Freeing File System subsystem");
 	PHYSFS_deinit();
 
@@ -270,13 +271,6 @@ void ModuleFileSystem::OnSystemEvent(System_Event event)
 			MoveFileInto(originExFile, destinationFile);
 			EndTempException();
 #endif
-			break;
-		}
-
-		case System_Event_Type::SwapRootDirectories:
-		{	
-			App->fs->SendEvents(newRootDir);
-			rootDir = newRootDir;
 			break;
 		}
 	}
@@ -783,28 +777,14 @@ std::string ModuleFileSystem::getAppPath()
 	return "";
 }
 
-void UpdateAssetsDir()
+void ModuleFileSystem::UpdateAssetsDir()
 {
-	static float time = 0.0f;
+	Directory newAssetsDir = RecursiveGetFilesFromDir("Assets");
 
-	while (true && !App->fs->end)
+	if (newAssetsDir != rootDir)
 	{
-		time += App->timeManager->GetRealDt();
-
-		if (time >= App->fs->GetAssetsRate())
-		{
-			time = 0.0f;
-			Directory newAssetsDir = App->fs->RecursiveGetFilesFromDir("Assets");
-
-			if (newAssetsDir != App->fs->rootDir && newAssetsDir != App->fs->newRootDir)
-			{
-				App->fs->newRootDir = newAssetsDir;
-
-				System_Event event;
-				event.type = System_Event_Type::SwapRootDirectories;
-				App->PushSystemEvent(event);
-			}
-		}
+		SendEvents(newAssetsDir);
+		rootDir = newAssetsDir;
 	}
 }
 

@@ -41,9 +41,9 @@ public:
 		}
 		math::float4 GetColor();
 		uint GetTexture();
+		const char * GetText();
 		math::float2 GetMaskValues();
-		std::vector<uint>* GetTexturesWord();
-		int GetIndex()const;
+		std::vector<ComponentLabel::LabelLetter>* GetWord();
 
 		bool isRendered() {
 			return isRendered_flag;
@@ -57,10 +57,6 @@ public:
 	ComponentCanvasRenderer(GameObject* parent, ComponentTypes componentType = ComponentTypes::CanvasRendererComponent, bool includeComponents = true);
 	ComponentCanvasRenderer(const ComponentCanvasRenderer& componentRectTransform, GameObject* parent, bool includeComponents = true);
 	~ComponentCanvasRenderer();
-
-	//NOTE: If you override this method, make sure to call the base class method. 
-	//(Component::OnSystemEvent(event); at start)
-	void OnSystemEvent(System_Event event);
 
 	void Update();
 	void OnEditor();

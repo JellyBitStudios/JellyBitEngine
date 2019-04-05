@@ -513,6 +513,12 @@
     <ClInclude Include="parson\parson.h">
       <Filter>Sources\3rd Party\Parson</Filter>
     </ClInclude>
+    <ClInclude Include="mmgr\mmgr.h">
+      <Filter>Sources\3rd Party\mmgr</Filter>
+    </ClInclude>
+    <ClInclude Include="mmgr\nommgr.h">
+      <Filter>Sources\3rd Party\mmgr</Filter>
+    </ClInclude>
     <ClInclude Include="glew\include\GL\eglew.h">
       <Filter>Sources\3rd Party\glew</Filter>
     </ClInclude>
@@ -2263,6 +2269,9 @@
     </ClCompile>
     <ClCompile Include="parson\parson.c">
       <Filter>Sources\3rd Party\Parson</Filter>
+    </ClCompile>
+    <ClCompile Include="mmgr\mmgr.cpp">
+      <Filter>Sources\3rd Party\mmgr</Filter>
     </ClCompile>
     <ClCompile Include="Globals.cpp">
       <Filter>Sources</Filter>
