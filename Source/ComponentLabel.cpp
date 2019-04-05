@@ -110,7 +110,35 @@ void ComponentLabel::Update()
 					x_moving = rectParent[X_UI_RECT];
 				}
 			}
+
+			//Get quats for each row. Need it for align
+			if (!labelWord.empty())
+			{
+				std::vector<math::float4> rectsByRows;
+				rectsByRows.resize(contRows + 1);
+				uint nextLabelPos = 0u;
+				math::float4 rowRect;											//.x .y = position & .z width & .w height
+				rowRect.x = labelWord.front().rect[X_UI_RECT];
+				rowRect.y = labelWord.front().rect[Y_UI_RECT];
+				for (uint i = nextLabelPos + 1; i < labelWord.size(); ++i)
+				{
+					if (labelWord[i].rect[X_UI_RECT] < labelWord[i - 1].rect[X_UI_RECT])
+					{
+						nextLabelPos = i;
+						rowRect.z = labelWord[i].rect[H_UI_RECT];
+						rowRect.w = labelWord[i - 1].rect[W_UI_RECT] + labelWord[i - 1].rect[X_UI_RECT];
+						rectsByRows.push_back(rowRect);
+						rowRect.x = labelWord[nextLabelPos].rect[X_UI_RECT];
+						rowRect.y = labelWord[nextLabelPos].rect[Y_UI_RECT];
+					}
+				}
+				rowRect.z = labelWord.back().rect[H_UI_RECT];
+				rowRect.w = labelWord.back().rect[W_UI_RECT] + labelWord.back().rect[X_UI_RECT];
+				rectsByRows.push_back(rowRect);
+			}
 		}
+
+
 		needed_recaclculate = false;
 	}
 }
