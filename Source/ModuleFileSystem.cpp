@@ -134,6 +134,7 @@ bool ModuleFileSystem::Start()
 
 bool ModuleFileSystem::CleanUp()
 {
+	end = true;
 	assetsUpdater->join();
 	delete assetsUpdater;
 	CONSOLE_LOG(LogTypes::Normal, "Freeing File System subsystem");
