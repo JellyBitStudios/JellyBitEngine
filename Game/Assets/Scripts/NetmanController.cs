@@ -113,13 +113,9 @@ public class NetmanController : JellyScript
         {
             case WanderStates.findRandomPosition:
 
-                Debug.Log("Wander: findRandomPosition");
-
                 break;
 
             case WanderStates.goToPosition:
-
-                Debug.Log("Wander: goToPosition");
 
                 break;
         }
@@ -150,8 +146,6 @@ public class NetmanController : JellyScript
         {
             case AttackStates.goToWaypoint:
 
-                Debug.Log("Attack: goToWaypoint");
-
                 if (agent.isWalking())
                 {
 
@@ -174,8 +168,6 @@ public class NetmanController : JellyScript
                 break;
 
             case AttackStates.hit:
-
-                Debug.Log("Attack: hit");
 
                 // FaceMovement
                 float targetDegrees = (float)Math.Atan2(target.transform.forward.x, target.transform.forward.z);

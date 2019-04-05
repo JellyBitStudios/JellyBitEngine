@@ -77,10 +77,18 @@ public class LineOfSight : JellyScript
         if (collider == null)
             return;
 
-        Debug.Log("Eyes trigger");
+        // Target?
+        if (collider.gameObject.GetLayerID() == target.GetLayerID())
+            UpdateSight();
+    }
+
+    public override void OnTriggerExit(Collider collider)
+    {
+        if (collider == null)
+            return;
 
         // Target?
-        if (collider.gameObject == target)
-            UpdateSight();
+        if (collider.gameObject.GetLayerID() == target.GetLayerID())
+            isTargetSeen = false;
     }
 }

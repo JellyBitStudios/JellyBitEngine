@@ -22,8 +22,6 @@ public class Waypoint : JellyScript
         if (collider == null)
             return;
 
-        Debug.Log("Block wants ++");
-
         if (layerMask.HasActive(collider.gameObject.GetLayerID()))
         {
             Debug.Log("Block after ++: " + blockCount);
@@ -35,8 +33,6 @@ public class Waypoint : JellyScript
     {
         if (collider == null)
             return;
-
-        Debug.Log("Block wants --");
 
         if (layerMask.HasActive(collider.gameObject.GetLayerID()))
         {

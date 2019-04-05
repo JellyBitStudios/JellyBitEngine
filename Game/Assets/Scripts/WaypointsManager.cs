@@ -5,10 +5,10 @@ using JellyBitEngine;
 public class WaypointsManager : JellyScript
 {
     #region PUBLIC_VARIABLES
-    public Waypoint waypoint1 = null;
-    public Waypoint waypoint2 = null;
-    public Waypoint waypoint3 = null;
-    public Waypoint waypoint4 = null;
+    public GameObject goWaypoint1 = null;
+    public GameObject goWaypoint2 = null;
+    public GameObject goWaypoint3 = null;
+    public GameObject goWaypoint4 = null;
     #endregion
 
     #region PRIVATE_VARIABLES
@@ -17,14 +17,14 @@ public class WaypointsManager : JellyScript
 
     public override void Start()
     {
-        if (waypoint1 != null)
-            waypoints.Add(waypoint1);
-        if (waypoint2 != null)
-            waypoints.Add(waypoint2);
-        if (waypoint3 != null)
-            waypoints.Add(waypoint3);
-        if (waypoint4 != null)
-            waypoints.Add(waypoint4);
+        if (goWaypoint1 != null)
+            waypoints.Add(goWaypoint1.GetComponent<Waypoint>());
+        if (goWaypoint2 != null)
+            waypoints.Add(goWaypoint2.GetComponent<Waypoint>());
+        if (goWaypoint3 != null)
+            waypoints.Add(goWaypoint3.GetComponent<Waypoint>());
+        if (goWaypoint4 != null)
+            waypoints.Add(goWaypoint4.GetComponent<Waypoint>());
     }
 
     public Waypoint GetClosestWaypoint(Vector3 position)
@@ -41,6 +41,8 @@ public class WaypointsManager : JellyScript
                 float waypointDistance = (float)(waypoint.transform.position - position).magnitude;
                 if (waypointDistance < closestDistance)
                 {
+                    Debug.Log("Closest point updated");
+
                     closestWaypoint = waypoint;
                     closestDistance = waypointDistance;
                 }
