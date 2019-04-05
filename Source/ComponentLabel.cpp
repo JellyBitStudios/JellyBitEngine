@@ -42,6 +42,8 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 		labelWord = componentLabel.labelWord;
 		finalText = componentLabel.finalText;
 		fontUuid = componentLabel.fontUuid;
+		vAlign = componentLabel.vAlign;
+		hAlign = componentLabel.hAlign;
 	}
 }
 
@@ -114,30 +116,47 @@ void ComponentLabel::Update()
 			//Get quats for each row. Need it for align
 			if (!labelWord.empty())
 			{
-				std::vector<math::float4> rectsByRows;
-				rectsByRows.resize(contRows + 1);
-				uint nextLabelPos = 0u;
-				math::float4 rowRect;											//.x .y = position & .z width & .w height
-				rowRect.x = labelWord.front().rect[X_UI_RECT];
-				rowRect.y = labelWord.front().rect[Y_UI_RECT];
-				for (uint i = nextLabelPos + 1; i < labelWord.size(); ++i)
+				if (hAlign != H_Left)
 				{
-					if (labelWord[i].rect[X_UI_RECT] < labelWord[i - 1].rect[X_UI_RECT])
+					//Horizontal Alignment
+					uint firstLabelRow = 0u;
+					uint rowWidth;											//.x .y = position & .z width & .w height
+					for (uint i = firstLabelRow; i < labelWord.size()-1; ++i)
 					{
-						nextLabelPos = i;
-						rowRect.z = labelWord[i].rect[H_UI_RECT];
-						rowRect.w = labelWord[i - 1].rect[W_UI_RECT] + labelWord[i - 1].rect[X_UI_RECT];
-						rectsByRows.push_back(rowRect);
-						rowRect.x = labelWord[nextLabelPos].rect[X_UI_RECT];
-						rowRect.y = labelWord[nextLabelPos].rect[Y_UI_RECT];
+						if (labelWord[i].rect[X_UI_RECT] > labelWord[i + 1].rect[X_UI_RECT])
+						{
+							rowWidth = labelWord[i].rect[W_UI_RECT] + labelWord[i].rect[X_UI_RECT] - labelWord[firstLabelRow].rect[X_UI_RECT];
+
+							uint diference = (rectParent[W_UI_RECT] - rowWidth);
+							for (uint j = firstLabelRow; j < i; ++j)
+							{
+								if (hAlign == H_Middle)
+									labelWord[j].rect[X_UI_RECT] += (diference / 2);
+								else
+									labelWord[j].rect[X_UI_RECT] += diference;
+							}
+							firstLabelRow = i+1;
+						}
+					}
+					rowWidth = labelWord.back().rect[W_UI_RECT] + labelWord.back().rect[X_UI_RECT] - labelWord[firstLabelRow].rect[X_UI_RECT];
+					
+				}
+				if (vAlign != V_Top)
+				{
+					//.x .y = position & .z width & .w height
+					uint heightRect = labelWord.back().rect[H_UI_RECT] + labelWord.back().rect[Y_UI_RECT] - labelWord.front().rect[Y_UI_RECT];
+
+					uint diference = rectParent[H_UI_RECT] - heightRect - (labelWord.back().rect[H_UI_RECT] / 2);
+					for (uint i = 0; i < labelWord.size(); ++i)
+					{
+						if (vAlign == V_Middle)
+							labelWord[i].rect[Y_UI_RECT] += (diference / 2);
+						else
+							labelWord[i].rect[Y_UI_RECT] += diference;
 					}
 				}
-				rowRect.z = labelWord.back().rect[H_UI_RECT];
-				rowRect.w = labelWord.back().rect[W_UI_RECT] + labelWord.back().rect[X_UI_RECT];
-				rectsByRows.push_back(rowRect);
 			}
 		}
-
 
 		needed_recaclculate = false;
 	}
@@ -170,7 +189,7 @@ void ComponentLabel::ScreenDraw(uint rect[4], const uint x, const uint y, math::
 
 uint ComponentLabel::GetInternalSerializationBytes()
 {
-	return sizeof(color) + sizeof(int) + sizeof(uint) * 2 + sizeof(char) * finalText.length();
+	return sizeof(color) + sizeof(int) + sizeof(uint) * 2 + sizeof(char) * finalText.length() + sizeof(vAlign) + sizeof(hAlign);
 }
 
 void ComponentLabel::OnInternalSave(char *& cursor)
@@ -193,6 +212,14 @@ void ComponentLabel::OnInternalSave(char *& cursor)
 
 	bytes = nameLenght;
 	memcpy(cursor, finalText.c_str(), bytes);
+	cursor += bytes;
+
+	bytes = sizeof(vAlign);
+	memcpy(cursor, &vAlign, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(hAlign);
+	memcpy(cursor, &hAlign, bytes);
 	cursor += bytes;
 }
 
@@ -220,6 +247,14 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 	memcpy((void*)finalText.c_str(), cursor, bytes);
 	finalText.resize(nameLenght);
 	cursor += bytes;
+
+	bytes = sizeof(vAlign);
+	memcpy(&vAlign, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(hAlign);
+	memcpy(&hAlign, cursor, bytes);
+	cursor += bytes;
 }
 
 void ComponentLabel::OnUniqueEditor()
@@ -239,7 +274,29 @@ void ComponentLabel::OnUniqueEditor()
 		if (ImGui::DragInt("Load new size", &size, 1.0f, 0, 72))
 			needed_recaclculate = true;
 
-		//-----------------------------------------
+		ImGui::Separator();
+		ImGui::Text("Horizontal Alignment");
+		if (ImGui::RadioButton("Left", hAlign == H_Left))
+			hAlign = H_Left;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("Center", hAlign == H_Middle))
+			hAlign = H_Middle;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("Border", hAlign == H_Right))
+			hAlign = H_Right;
+
+		ImGui::Spacing();
+		ImGui::Text("Vertical Alignment");
+		if (ImGui::RadioButton("Top", vAlign == V_Top))
+			vAlign = V_Top;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("Middle", vAlign == V_Middle))
+			vAlign = V_Middle;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("Bottom", vAlign == V_Bottom))
+			vAlign = V_Bottom;
+			
+			//-----------------------------------------
 
 		DragDropFont();
 	}
@@ -254,33 +311,33 @@ void ComponentLabel::DragDropFont()
 	ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 	ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
 
-		ImGui::Text("Font: "); ImGui::SameLine();
+	ImGui::Text("Font: "); ImGui::SameLine();
 
-		cursorPos = ImGui::GetCursorScreenPos();
-		ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+	cursorPos = ImGui::GetCursorScreenPos();
+	ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
 
-		cursorPos = { cursorPos.x, cursorPos.y - 5 };
+	cursorPos = { cursorPos.x, cursorPos.y - 5 };
 
-		ImGui::ButtonEx("##Font", { (float)buttonWidth, 20 }, ImGuiButtonFlags_::ImGuiButtonFlags_Disabled);
+	ImGui::ButtonEx("##Font", { (float)buttonWidth, 20 }, ImGuiButtonFlags_::ImGuiButtonFlags_Disabled);
 
-		//Case 1: Dragging Real GameObjects
-		if (ImGui::BeginDragDropTarget())
+	//Case 1: Dragging Real GameObjects
+	if (ImGui::BeginDragDropTarget())
+	{
+		const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FONT_RESOURCE", ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
+		if (payload)
 		{
-			const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("FONT_RESOURCE", ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
-			if (payload)
-			{
-				uint uuid = *(uint*)payload->Data;
+			uint uuid = *(uint*)payload->Data;
 
-				if (ImGui::IsMouseReleased(0))
-				{
-					fontUuid = uuid;
-					needed_recaclculate = true;
-					size = ((ResourceFont*)App->res->GetResource(uuid))->fontData.fontSize;
-				}
+			if (ImGui::IsMouseReleased(0))
+			{
+				fontUuid = uuid;
+				needed_recaclculate = true;
+				size = ((ResourceFont*)App->res->GetResource(uuid))->fontData.fontSize;
 			}
-			ImGui::EndDragDropTarget();
 		}
-	
+		ImGui::EndDragDropTarget();
+	}
+
 
 	//Text in quat
 	std::string name;
@@ -288,7 +345,7 @@ void ComponentLabel::DragDropFont()
 	if (fontUuid > 0)
 	{
 		font = (ResourceFont*)App->res->GetResource(fontUuid);
-		if(font)
+		if (font)
 			name = font->GetName();
 	}
 	std::string originalText = "Waiting font...";
@@ -296,7 +353,7 @@ void ComponentLabel::DragDropFont()
 		originalText = name;
 	else if (!labelWord.empty())
 		labelWord.clear();
-	
+
 	std::string clampedText;
 
 	ImVec2 textSize = ImGui::CalcTextSize(originalText.data());

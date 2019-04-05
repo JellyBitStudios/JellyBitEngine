@@ -21,7 +21,18 @@ struct Character;
 #define CORNER_BOTTOM_LEFT 2
 #define CORNER_BOTTOM_RIGHT 3
 
-
+enum VerticalLabelAlign
+{
+	V_Top,
+	V_Middle,
+	V_Bottom
+};
+enum HoritzontalLabelAlign
+{
+	H_Left,
+	H_Middle,
+	H_Right
+};
 class ComponentLabel : public Component
 {
 public:
@@ -73,6 +84,9 @@ private:
 	std::vector<LabelLetter> labelWord;
 
 	bool needed_recaclculate = false;
+
+	VerticalLabelAlign vAlign = V_Top;
+	HoritzontalLabelAlign hAlign = H_Left;
 };
 
 #endif

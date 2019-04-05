@@ -992,7 +992,6 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	memcpy(&startOnPlay, cursor, bytes);
 	cursor += bytes;
 
-	//TODO PROGRAMMER: Coment this two lines then save scene and Discomment it
 	memcpy(&localSpace, cursor, bytes);
 	cursor += bytes;
 
