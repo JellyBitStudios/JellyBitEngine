@@ -85,46 +85,46 @@ void ModuleTrails::Draw()
 						glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
 
 
-						float currUV = (float(i) / size);
-						float nextUV = (float(i + 1) / size);
+						float currUV = (float(i + 1) / size);
+						float nextUV = (float(i) / size);
+						math::float3 originHigh = (*curr)->originHigh;
+						math::float3 originLow = (*curr)->originLow;
+						math::float3 destinationHigh = (*next)->originHigh;
+						math::float3 destinationLow = (*next)->originLow;
 
-						if ((*curr)->originHigh.x > (*next)->originHigh.x)
+						// Rearange vertex
+						if ((*curr)->originHigh.x <= (*next)->originHigh.x)
 						{
-							location = glGetUniformLocation(shaderProgram, "currUV");				// UV
-							glUniform1f(location, currUV);
-							location = glGetUniformLocation(shaderProgram, "nextUV");				// Min pos
-							glUniform1f(location, nextUV);
-							location = glGetUniformLocation(shaderProgram, "realColor");			// Color
-							glUniform4f(location, /*realColor.x*/ 1.0f, /*realColor.y*/ 1.0f, /*realColor.z*/ 1.0f, /*realColor.w*/ 1.0f);
+							float tmp = currUV;
+							currUV = nextUV;
+							nextUV = tmp;
 
-							location = glGetUniformLocation(shaderProgram, "vertex1");				// Current High
-							glUniform3f(location, (*curr)->originHigh.x, (*curr)->originHigh.y, (*curr)->originHigh.z);
-							location = glGetUniformLocation(shaderProgram, "vertex2");				// Current Low
-							glUniform3f(location, (*curr)->originLow.x, (*curr)->originLow.y, (*curr)->originLow.z);
-							location = glGetUniformLocation(shaderProgram, "vertex3");				// Next High
-							glUniform3f(location, (*next)->originHigh.x, (*next)->originHigh.y, (*next)->originHigh.z);
-							location = glGetUniformLocation(shaderProgram, "vertex4");				// Next Low
-							glUniform3f(location, (*next)->originLow.x, (*next)->originLow.y, (*next)->originLow.z);
+							math::float3 tmph = originHigh;
+							math::float3 tmpl = originLow;
+
+							originHigh = destinationHigh;
+							originLow = destinationLow;
+
+							destinationHigh = tmph;
+							destinationLow = tmpl;
 						}
 
-						else
-						{
-							location = glGetUniformLocation(shaderProgram, "currUV");				// UV
-							glUniform1f(location, nextUV);
-							location = glGetUniformLocation(shaderProgram, "nextUV");				// Min pos
-							glUniform1f(location, currUV);
-							location = glGetUniformLocation(shaderProgram, "realColor");			// Color
-							glUniform4f(location, /*realColor.x*/ 1.0f, /*realColor.y*/ 1.0f, /*realColor.z*/ 1.0f, /*realColor.w*/ 1.0f);
+						location = glGetUniformLocation(shaderProgram, "currUV");				// UV
+						glUniform1f(location, nextUV);
+						location = glGetUniformLocation(shaderProgram, "nextUV");				// Min pos
+						glUniform1f(location, currUV);
+						location = glGetUniformLocation(shaderProgram, "realColor");			// Color
+						glUniform4f(location, /*realColor.x*/ 1.0f, /*realColor.y*/ 1.0f, /*realColor.z*/ 1.0f, /*realColor.w*/ 1.0f);
 
-							location = glGetUniformLocation(shaderProgram, "vertex1");				// Current High
-							glUniform3f(location, (*next)->originHigh.x, (*next)->originHigh.y, (*next)->originHigh.z);
-							location = glGetUniformLocation(shaderProgram, "vertex2");				// Current Low
-							glUniform3f(location, (*next)->originLow.x, (*next)->originLow.y, (*next)->originLow.z);
-							location = glGetUniformLocation(shaderProgram, "vertex3");				// Next High
-							glUniform3f(location, (*curr)->originHigh.x, (*curr)->originHigh.y, (*curr)->originHigh.z);
-							location = glGetUniformLocation(shaderProgram, "vertex4");				// Next Low
-							glUniform3f(location, (*curr)->originLow.x, (*curr)->originLow.y, (*curr)->originLow.z);
-						}
+						location = glGetUniformLocation(shaderProgram, "vertex1");				// Current High
+						glUniform3f(location, originHigh.x, originHigh.y, originHigh.z);
+						location = glGetUniformLocation(shaderProgram, "vertex2");				// Current Low
+						glUniform3f(location, originLow.x, originLow.y, originLow.z);
+						location = glGetUniformLocation(shaderProgram, "vertex3");				// Next High
+						glUniform3f(location, destinationHigh.x, destinationHigh.y, destinationHigh.z);
+						location = glGetUniformLocation(shaderProgram, "vertex4");				// Next Low
+						glUniform3f(location, destinationLow.x, destinationLow.y, destinationLow.z);
+
 
 						// Unknown uniforms
 						uint textureUnit = 0;
