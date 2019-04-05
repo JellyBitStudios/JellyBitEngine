@@ -30,7 +30,13 @@ enum System_Event_Type
 
 	//Scripting events
 	ScriptingDomainReloaded,
-	LoadFinished
+	LoadFinished,
+
+	//UI events
+	CanvasChanged,
+	RectTransformUpdated,
+	WRectTransformUpdated,
+	ScreenChanged
 };
 
 class GameObject;
