@@ -46,20 +46,13 @@ void ModuleTrails::Draw()
 	{
 		if (!(*trail)->trailVertex.empty())
 		{
-			glColor3f(1.0f, 1.0f, 1.0f);
-
-			glPushMatrix();
-			math::float4x4 trans = math::float4x4::identity;
-			glMultMatrixf(trans.Transposed().ptr());
-
-			glBegin(GL_TRIANGLES);
-
 			std::list<TrailNode*>::iterator begin = (*trail)->trailVertex.begin();
 			TrailNode* end = (*trail)->trailVertex.back();
 
 			if (true)
 			{
 				float i = 0.0f;
+				float size = (*trail)->trailVertex.size() + 1;
 				for (std::list<TrailNode*>::iterator curr = (*trail)->trailVertex.begin(); curr != (*trail)->trailVertex.end(); ++curr)
 				{
 					if ((*trail)->materialRes == 0) break;
@@ -75,8 +68,8 @@ void ModuleTrails::Draw()
 
 						glUseProgram(shaderProgram);
 
-						math::float4x4 model_matrix = math::float4x4::identity.Transposed();
-
+						math::float4x4 model_matrix = math::float4x4::identity;// particle matrix
+						model_matrix = model_matrix.Transposed();
 						math::float4x4 view_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLViewMatrix();
 						math::float4x4 proj_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLProjectionMatrix();
 						math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
@@ -91,9 +84,10 @@ void ModuleTrails::Draw()
 						location = glGetUniformLocation(shaderProgram, "normal_matrix");
 						glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
 
-						float currUV = i / ((*trail)->trailVertex.size() + 1);
-						float nextUV = i + 1 / ((*trail)->trailVertex.size() + 1);
- 
+
+						float currUV = (float(i) / size);
+						float nextUV = (float(i + 1) / size);
+
 						location = glGetUniformLocation(shaderProgram, "currUV");				// UV
 						glUniform1f(location, currUV);
 						location = glGetUniformLocation(shaderProgram, "nextUV");				// Min pos
@@ -110,6 +104,26 @@ void ModuleTrails::Draw()
 						location = glGetUniformLocation(shaderProgram, "vertex4");				// Next Low
 						glUniform3f(location, (*next)->originLow.x, (*next)->originLow.y, (*next)->originLow.z);
 
+						// Unknown uniforms
+						uint textureUnit = 0;
+						std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
+						for (uint i = 0; i < uniforms.size(); ++i)
+						{
+							Uniform uniform = uniforms[i];
+
+							if (strcmp(uniform.common.name, "material.albedo") == 0 || strcmp(uniform.common.name, "material.specular") == 0)
+							{
+
+								if (textureUnit < App->renderer3D->GetMaxTextureUnits())
+								{
+									glActiveTexture(GL_TEXTURE0 + textureUnit);
+									glBindTexture(GL_TEXTURE_2D, uniform.sampler2DU.value.id);
+									glUniform1i(uniform.common.location, textureUnit);
+									++textureUnit;
+								}
+							}
+						}
+
 						ResourceMesh* plane = (ResourceMesh*)App->res->GetResource(App->resHandler->plane);
 						glBindVertexArray(plane->GetVAO());
 
@@ -122,7 +136,6 @@ void ModuleTrails::Draw()
 						glBindBuffer(GL_ARRAY_BUFFER, 0);
 						glBindVertexArray(0);
 						glUseProgram(0);
-
 					}
 				}
 			}

@@ -297,6 +297,9 @@ void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, c
 				prog->isValid = false;
 
 			trailShaderProgram = prog->GetUuid();
+
+			int a = ((ResourceShaderProgram*)App->res->GetResource(trailShaderProgram))->shaderProgram;
+			int b = a;
 		}
 		else
 		{

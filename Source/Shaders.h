@@ -298,10 +298,12 @@
 
 #define vShaderTrail \
 "#version 330 core\n" \
+"\n" \
 "layout(location = 0) in vec3 position;\n" \
 "layout(location = 1) in vec3 normal;\n" \
 "layout(location = 2) in vec4 color;\n" \
 "layout(location = 3) in vec2 texCoord;\n" \
+"\n" \
 "uniform mat4 model_matrix;\n" \
 "uniform mat4 mvp_matrix;\n" \
 "uniform mat3 normal_matrix;\n" \
@@ -312,34 +314,40 @@
 "uniform vec3 vertex2;\n" \
 "uniform vec3 vertex3;\n" \
 "uniform vec3 vertex4;\n" \
+"\n" \
 "out vec3 fPosition;\n" \
 "out vec3 fNormal;\n" \
 "out vec4 fColor;\n" \
 "out vec2 fTexCoord;\n" \
+"\n" \
 "void main()\n" \
 "{\n" \
-"	fNormal = normalize(normal_matrix * normal);\n" \
-"	fColor = realColor;\n" \
+"	fNormal = vec3(0, 1, 0);\n" \
+"	fColor = color;\n" \
 "	vec2 realCoord = texCoord;\n" \
 "	vec3 realPos = vec3(0);\n" \
 "	if (texCoord.x == 0)\n" \
 "	{\n" \
 "		realCoord.x = currUV;\n" \
+"		\n" \
 "		if (texCoord.y == 1)\n" \
 "			realPos = vertex1;\n" \
 "		else\n" \
 "			realPos = vertex2;\n" \
 "	}\n" \
+"	\n" \
 "	else\n" \
 "	{\n" \
 "		realCoord.x = nextUV;\n" \
+"		\n" \
 "		if (texCoord.y == 1)\n" \
 "			realPos = vertex3;\n" \
 "		else\n" \
 "			realPos = vertex4;\n" \
 "	}\n" \
+"	\n" \
 "	fPosition = vec3(model_matrix * vec4(realPos, 1.0));\n" \
-"	fTexCoord = texCoord;\n" \
+"	fTexCoord = realCoord;\n" \
 "	gl_Position = mvp_matrix * vec4(realPos, 1.0);\n" \
 "}\n"
 
@@ -380,7 +388,7 @@
 "	if (albedo.a < 0.1)\n" \
 "		discard;\n" \
 "\n" \
-"	FragColor = albedo * fColor;\n;" \
+"	FragColor = albedo;\n;" \
 "}\n"
 #pragma endregion
 
