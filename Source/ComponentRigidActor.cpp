@@ -64,10 +64,14 @@ void ComponentRigidActor::OnInternalSave(char*& cursor)
 	memcpy(cursor, &rigidActorType, bytes);
 	cursor += bytes;
 
-	physx::PxTransform gTransform = gActor->getGlobalPose();
-	math::Quat rotation(gTransform.q.x, gTransform.q.y, gTransform.q.z, gTransform.q.w);
-	math::float3 position(gTransform.p.x, gTransform.p.y, gTransform.p.z);
-	math::float4x4 globalMatrix(rotation, position);
+	math::float4x4 globalMatrix = math::float4x4::identity;
+	if (gActor != nullptr)
+	{
+		physx::PxTransform gTransform = gActor->getGlobalPose();
+		math::Quat rotation(gTransform.q.x, gTransform.q.y, gTransform.q.z, gTransform.q.w);
+		math::float3 position(gTransform.p.x, gTransform.p.y, gTransform.p.z);
+		globalMatrix = math::float4x4(rotation, position);
+	}
 
 	bytes = sizeof(math::float4x4);
 	memcpy(cursor, &globalMatrix, bytes);

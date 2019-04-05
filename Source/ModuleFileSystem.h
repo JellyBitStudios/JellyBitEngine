@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <thread>
 
 #define DIR_LIBRARY "Library"
 #define DIR_LIBRARY_MESHES "Library/Meshes"
@@ -277,6 +278,8 @@ struct Directory
 	}
 };
 
+void UpdateAssetsDir();
+
 class ModuleFileSystem : public Module
 {
 public:
@@ -324,7 +327,6 @@ public:
 	uint Load(std::string file, char** buffer) const;
 
 	std::string getAppPath();
-	void UpdateAssetsDir();
 	bool MoveFileInto(const std::string& file, const std::string& newLocation);
 	bool CopyDirectoryAndContentsInto(const std::string& origin, const std::string& destination, bool keepRoot = true);
 	Directory RecursiveGetFilesFromDir(char* dir) const;
@@ -345,14 +347,18 @@ public:
 
 	std::string PathToWindowsNotation(std::string path);
 
+	inline float GetAssetsRate() { return updateAssetsRate; }
+
 public:
 	Directory rootDir;
+	Directory newRootDir;
 
 	bool build = false;
-
+	bool end = false;
 private:
 	float updateAssetsRate = 1.0f;	
 	std::string tempException;
+	std::thread* assetsUpdater = nullptr;
 
 };
 
