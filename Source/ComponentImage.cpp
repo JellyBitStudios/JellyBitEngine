@@ -105,8 +105,12 @@ void ComponentImage::SetResImageName(const std::string& name)
 	for (int i = 0; i < textures.size(); ++i)
 	{
 		ResourceTexture* texture = (ResourceTexture*)textures[i];
-		if (name == texture->GetName())
+		if (strcmp(name.c_str(), texture->GetName())==0)
 		{
+			if (res_image != 0u)
+				App->res->SetAsUnused(res_image);
+
+			App->res->SetAsUsed(texture->GetUuid());
 			res_image = texture->GetUuid();
 			break;
 		}
