@@ -273,6 +273,11 @@ uint GameObject::GetUUID() const
 void GameObject::ForceUUID(uint uuid)
 {
 	this->uuid = uuid;
+
+	for (GameObject* child : children)
+	{
+		child->SetParent(this);
+	}
 }
 
 void GameObject::SetParent(GameObject* parent)

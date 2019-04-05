@@ -686,4 +686,119 @@
 
 #pragma endregion
 
+#pragma region DecalShader
+
+#define DecalVertex \
+"#version 330 core\n" \
+"layout(location = 0) in vec3 position;\n" \
+"layout(location = 1) in vec3 normal;\n" \
+"layout(location = 2) in vec4 color;\n" \
+"layout(location = 3) in vec2 texCoord;\n" \
+"layout(location = 4) in vec3 tangents;\n" \
+"layout(location = 5) in vec3 bitangents;\n" \
+"layout(location = 6) in vec4 weights;\n" \
+"layout(location = 7) in ivec4 ids;\n" \
+"\n" \
+"out VS_OUT\n" \
+"{\n" \
+"	vec3 gPosition;\n" \
+"	vec3 gNormal;\n" \
+"	vec4 gColor;\n" \
+"	vec2 gTexCoord;\n" \
+"} vs_out;\n" \
+"\n" \
+"uniform mat4 model_matrix;\n" \
+"uniform mat4 mvp_matrix;\n" \
+"uniform mat3 normal_matrix;\n" \
+"\n" \
+"void main()\n" \
+"{\n" \
+"	vec4 pos = vec4(position, 1.0);\n" \
+"	vec4 norm = vec4(normal, 0.0);\n" \
+"\n" \
+"	vs_out.gPosition = vec3(model_matrix * pos);\n" \
+"	vs_out.gNormal = normalize(normal_matrix * norm.xyz);\n" \
+"	vs_out.gColor = color;\n" \
+"	vs_out.gTexCoord = texCoord;\n" \
+"\n" \
+"	gl_Position = mvp_matrix * pos;\n" \
+"}"
+
+#define DecalFragment \
+"#version 330 core\n" \
+"layout(location = 0) out vec4 gPosition;\n" \
+"layout(location = 1) out vec4 gNormal;\n" \
+"layout(location = 2) out vec4 gAlbedoSpec;\n" \
+"layout(location = 3) out uvec4 gInfo;\n" \
+"\n" \
+"in VS_OUT\n" \
+"{\n" \
+"	vec3 gPosition;\n" \
+"	vec3 gNormal;\n" \
+"	vec4 gColor;\n" \
+"	vec2 gTexCoord;\n" \
+"} fs_in;\n" \
+"\n" \
+"uniform sampler2D gBufferPosition;\n" \
+"uniform sampler2D gBufferNormal;\n" \
+"uniform usampler2D gBufferInfo;\n" \
+"\n" \
+"uniform sampler2D projectorTex;\n" \
+"\n" \
+"uniform mat4 model_matrix;\n" \
+"uniform mat4 projectorMatrix;\n" \
+"uniform vec2 screenSize;\n" \
+"uniform uint filterMask;\n" \
+"\n" \
+"void main()\n" \
+"{\n" \
+"	// fragment's screen pos\n" \
+"	vec2 screenPos = gl_FragCoord.xy;\n" \
+"	screenPos.x /= screenSize.x;\n" \
+"	screenPos.y /= screenSize.y;\n" \
+"\n" \
+"	// gBuffer fragment's info\n" \
+"	uvec4 info = texture(gBufferInfo, screenPos);\n" \
+"	//uint layer = 1u << info.r;\n" \
+"	//if ((filterMask & info.r) == 1u)\n" \
+"	//discard;\n" \
+"\n" \
+"	// gBuffer fragment's world pos\n" \
+"	vec4 worldPos = texture(gBufferPosition, screenPos);\n" \
+"	if (worldPos.z == 0.0)\n" \
+"		discard;\n" \
+"	// gBuffer fragment's object pos\n" \
+"	vec4 objectPos = inverse(model_matrix) * worldPos;\n" \
+"\n" \
+"	// Bounds check\n" \
+"	float objX = 0.5 - abs(objectPos.x);\n" \
+"	float objY = 0.5 - abs(objectPos.y);\n" \
+"	float objZ = 0.5 - abs(objectPos.z);\n" \
+"	if (objX < 0.0 || objY < 0.0 || objZ < 0.0)\n" \
+"		discard;\n" \
+"\n" \
+"	// Calculate tex coord\n" \
+"	//vec2 texCoord = objectPos.xy + 0.5;\n" \
+"	//vec4 color = texture(projectorTex, texCoord);\n" \
+"	vec4 texCoord = projectorMatrix * worldPos;\n" \
+"	vec4 color = textureProj(projectorTex, texCoord);\n" \
+"	if (color.a < 0.1)\n" \
+"		discard;\n" \
+"\n" \
+"	//////////\n" \
+"\n" \
+"	gPosition.rgb = worldPos.rgb;\n" \
+"	gNormal.rgb = texture(gBufferNormal, screenPos).xyz;\n" \
+"	gAlbedoSpec = color;\n" \
+"	//gPosition.a = 1;\n" \
+"	//gNormal.a = 1;\n" \
+"\n" \
+"	// ***Cartoon***\n" \
+"	int levels = 2;\n" \
+"	gPosition.a = 2;\n" \
+"	gNormal.a = levels;\n" \
+"}"
+
+#pragma endregion
+
 #endif
