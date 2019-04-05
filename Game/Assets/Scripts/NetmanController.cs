@@ -69,12 +69,12 @@ public class NetmanController : JellyScript
                 /// Is target seen?
                 if (lineOfSight.IsTargetSeen)
                 {
-                    Debug.Log("Target has been seen");
-
                     /// Is there any free waypoint?
                     waypoint = waypointsManager.GetClosestWaypoint(transform.position);
                     if (waypoint == null)
                         break;
+
+                    Debug.Log("Closest point found");
 
                     waypoint.isOccupied = true;
                     agent.SetDestination(waypoint.transform.position);
@@ -146,25 +146,20 @@ public class NetmanController : JellyScript
         {
             case AttackStates.goToWaypoint:
 
-                if (agent.isWalking())
+                if (!agent.isWalking())
                 {
-                    // Going to waypoint...
-                }
-                else
-                {
-                    // Play animation
-
+                    // TODO: play animation
+                    Debug.Log("HIT HIT HIT");
                     attackState = AttackStates.hit;
-                }              
+                }
 
                 break;
 
             case AttackStates.hit:
 
-                Debug.Log("HIT HIT HIT");
-
-                float threshold = 1.0f; // waypoint radius
+                float threshold = 0.25f; // TODO: it should be the waypoint radius
                 Vector3 diff = waypoint.transform.position - transform.position;
+                diff = new Vector3(diff.x, 0.0f, diff.z);
                 if (diff.magnitude > threshold)
                 {
                     TerminateAttack();

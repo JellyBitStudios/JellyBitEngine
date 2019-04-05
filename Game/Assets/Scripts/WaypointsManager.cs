@@ -29,8 +29,6 @@ public class WaypointsManager : JellyScript
 
     public Waypoint GetClosestWaypoint(Vector3 position)
     {
-        Debug.Log("Closest point requested");
-
         Waypoint closestWaypoint = null;
         float closestDistance = float.MaxValue;
 
@@ -41,8 +39,6 @@ public class WaypointsManager : JellyScript
                 float waypointDistance = (float)(waypoint.transform.position - position).magnitude;
                 if (waypointDistance < closestDistance)
                 {
-                    Debug.Log("Closest point updated");
-
                     closestWaypoint = waypoint;
                     closestDistance = waypointDistance;
                 }
