@@ -17,8 +17,6 @@
 
 #include <assert.h>
 
-#include <thread>
-
 #pragma comment(lib, "physfs/libx86/physfs.lib")
 
 #ifdef _DEBUG
@@ -93,15 +91,7 @@ update_status ModuleFileSystem::PreUpdate()
 {
 #ifndef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
-	static float updateAssetsCounter = 0.0f;
-	updateAssetsCounter += App->timeManager->GetRealDt();
-	if (updateAssetsCounter >= 1.0f / updateAssetsRate)
-	{
-		updateAssetsCounter = 0.0f;
 
-		std::thread updateAssets(UpdateAssetsDir);
-		updateAssets.detach();
-	}
 #endif
 	return update_status::UPDATE_CONTINUE;
 }
@@ -134,6 +124,9 @@ bool ModuleFileSystem::Start()
 	System_Event event;
 	event.type = System_Event_Type::DeleteUnusedFiles;
 	App->PushSystemEvent(event);
+
+	assetsUpdater = new std::thread(UpdateAssetsDir);
+	//assetsUpdater->detach();
 #endif
 
 	return true;
@@ -141,6 +134,8 @@ bool ModuleFileSystem::Start()
 
 bool ModuleFileSystem::CleanUp()
 {
+	assetsUpdater->join();
+	delete assetsUpdater;
 	CONSOLE_LOG(LogTypes::Normal, "Freeing File System subsystem");
 	PHYSFS_deinit();
 
@@ -789,15 +784,26 @@ std::string ModuleFileSystem::getAppPath()
 
 void UpdateAssetsDir()
 {
-	Directory newAssetsDir = App->fs->RecursiveGetFilesFromDir("Assets");
+	static float time = 0.0f;
 
-	if (newAssetsDir != App->fs->rootDir)
+	while (true && !App->fs->end)
 	{
-		App->fs->newRootDir = newAssetsDir;
+		time += App->timeManager->GetRealDt();
 
-		System_Event event;
-		event.type = System_Event_Type::SwapRootDirectories;
-		App->PushSystemEvent(event);
+		if (time >= App->fs->GetAssetsRate())
+		{
+			time = 0.0f;
+			Directory newAssetsDir = App->fs->RecursiveGetFilesFromDir("Assets");
+
+			if (newAssetsDir != App->fs->rootDir && newAssetsDir != App->fs->newRootDir)
+			{
+				App->fs->newRootDir = newAssetsDir;
+
+				System_Event event;
+				event.type = System_Event_Type::SwapRootDirectories;
+				App->PushSystemEvent(event);
+			}
+		}
 	}
 }
 

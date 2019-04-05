@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <thread>
 
 #define DIR_LIBRARY "Library"
 #define DIR_LIBRARY_MESHES "Library/Meshes"
@@ -346,15 +347,18 @@ public:
 
 	std::string PathToWindowsNotation(std::string path);
 
+	inline float GetAssetsRate() { return updateAssetsRate; }
+
 public:
 	Directory rootDir;
 	Directory newRootDir;
 
 	bool build = false;
-
+	bool end = false;
 private:
-	float updateAssetsRate = 0.2f;	
+	float updateAssetsRate = 1.0f;	
 	std::string tempException;
+	std::thread* assetsUpdater = nullptr;
 
 };
 
