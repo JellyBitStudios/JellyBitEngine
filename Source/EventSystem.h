@@ -5,7 +5,7 @@ enum System_Event_Type
 { 
 	NoEvent,
 
-	FileDropped, NewFile, FileMoved, ImportFile, ReImportFile, ForceReImport, FileRemoved, FileOverwritten,
+	FileDropped, NewFile, FileMoved, ImportFile, ReImportFile, ForceReImport, FileRemoved, FileOverwritten, SwapRootDirectories,
 	DeleteUnusedFiles, GenerateLibraryFiles, ImportLibraryFile, Build, // FileEvent
 
 	CalculateBBoxes, // GameObjectEvent

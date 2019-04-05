@@ -17,6 +17,8 @@
 
 #include <assert.h>
 
+#include <thread>
+
 #pragma comment(lib, "physfs/libx86/physfs.lib")
 
 #ifdef _DEBUG
@@ -97,7 +99,8 @@ update_status ModuleFileSystem::PreUpdate()
 	{
 		updateAssetsCounter = 0.0f;
 
-		UpdateAssetsDir();
+		std::thread updateAssets(UpdateAssetsDir);
+		updateAssets.detach();
 	}
 #endif
 	return update_status::UPDATE_CONTINUE;
@@ -271,6 +274,13 @@ void ModuleFileSystem::OnSystemEvent(System_Event event)
 			MoveFileInto(originExFile, destinationFile);
 			EndTempException();
 #endif
+			break;
+		}
+
+		case System_Event_Type::SwapRootDirectories:
+		{	
+			App->fs->SendEvents(newRootDir);
+			rootDir = newRootDir;
 			break;
 		}
 	}
@@ -777,14 +787,17 @@ std::string ModuleFileSystem::getAppPath()
 	return "";
 }
 
-void ModuleFileSystem::UpdateAssetsDir()
+void UpdateAssetsDir()
 {
-	Directory newAssetsDir = RecursiveGetFilesFromDir("Assets");
+	Directory newAssetsDir = App->fs->RecursiveGetFilesFromDir("Assets");
 
-	if (newAssetsDir != rootDir)
+	if (newAssetsDir != App->fs->rootDir)
 	{
-		SendEvents(newAssetsDir);
-		rootDir = newAssetsDir;
+		App->fs->newRootDir = newAssetsDir;
+
+		System_Event event;
+		event.type = System_Event_Type::SwapRootDirectories;
+		App->PushSystemEvent(event);
 	}
 }
 

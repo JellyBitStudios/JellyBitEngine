@@ -277,6 +277,8 @@ struct Directory
 	}
 };
 
+void UpdateAssetsDir();
+
 class ModuleFileSystem : public Module
 {
 public:
@@ -324,7 +326,6 @@ public:
 	uint Load(std::string file, char** buffer) const;
 
 	std::string getAppPath();
-	void UpdateAssetsDir();
 	bool MoveFileInto(const std::string& file, const std::string& newLocation);
 	bool CopyDirectoryAndContentsInto(const std::string& origin, const std::string& destination, bool keepRoot = true);
 	Directory RecursiveGetFilesFromDir(char* dir) const;
@@ -347,11 +348,12 @@ public:
 
 public:
 	Directory rootDir;
+	Directory newRootDir;
 
 	bool build = false;
 
 private:
-	float updateAssetsRate = 1.0f;	
+	float updateAssetsRate = 0.2f;	
 	std::string tempException;
 
 };
