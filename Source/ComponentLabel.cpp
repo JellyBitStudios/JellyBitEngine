@@ -117,48 +117,106 @@ void ComponentLabel::Update()
 			if (!labelWord.empty())
 			{
 				if (hAlign != H_Left)
-				{
-					//Horizontal Alignment
-					uint firstLabelRow = 0u;
-					uint rowWidth;											//.x .y = position & .z width & .w height
-					for (uint i = firstLabelRow; i < labelWord.size()-1; ++i)
-					{
-						if (labelWord[i].rect[X_UI_RECT] > labelWord[i + 1].rect[X_UI_RECT])
-						{
-							rowWidth = labelWord[i].rect[W_UI_RECT] + labelWord[i].rect[X_UI_RECT] - labelWord[firstLabelRow].rect[X_UI_RECT];
-
-							uint diference = (rectParent[W_UI_RECT] - rowWidth);
-							for (uint j = firstLabelRow; j < i; ++j)
-							{
-								if (hAlign == H_Middle)
-									labelWord[j].rect[X_UI_RECT] += (diference / 2);
-								else
-									labelWord[j].rect[X_UI_RECT] += diference;
-							}
-							firstLabelRow = i+1;
-						}
-					}
-					rowWidth = labelWord.back().rect[W_UI_RECT] + labelWord.back().rect[X_UI_RECT] - labelWord[firstLabelRow].rect[X_UI_RECT];
-					
-				}
+					HorizontalAlignment(rectParent[W_UI_RECT], H_Left);
+				
 				if (vAlign != V_Top)
-				{
-					//.x .y = position & .z width & .w height
-					uint heightRect = labelWord.back().rect[H_UI_RECT] + labelWord.back().rect[Y_UI_RECT] - labelWord.front().rect[Y_UI_RECT];
-
-					uint diference = rectParent[H_UI_RECT] - heightRect - (labelWord.back().rect[H_UI_RECT] / 2);
-					for (uint i = 0; i < labelWord.size(); ++i)
-					{
-						if (vAlign == V_Middle)
-							labelWord[i].rect[Y_UI_RECT] += (diference / 2);
-						else
-							labelWord[i].rect[Y_UI_RECT] += diference;
-					}
-				}
+					VerticalAlignment(rectParent[H_UI_RECT], V_Top);
 			}
 		}
-
 		needed_recaclculate = false;
+	}
+}
+
+void ComponentLabel::VerticalAlignment(const uint parentHeight, const VerticalLabelAlign alignFrom)
+{
+	uint posMaxHeight = 0u;
+	for (uint i = 0; i < labelWord.size() - 1; ++i)
+	{
+		if (labelWord[i].rect[H_UI_RECT] > labelWord[posMaxHeight].rect[H_UI_RECT])
+			posMaxHeight = i;
+	}
+	uint heightRect = labelWord.back().rect[H_UI_RECT] + labelWord.back().rect[Y_UI_RECT] - labelWord.front().rect[Y_UI_RECT] + (labelWord[posMaxHeight].rect[H_UI_RECT] / 2);
+	uint diference = parentHeight - heightRect;
+
+	for (uint i = 0; i < labelWord.size(); ++i)
+	{
+		switch (alignFrom)
+		{
+		case V_Top:
+			if (vAlign == V_Middle)
+				labelWord[i].rect[Y_UI_RECT] += (diference / 2);
+			else
+				labelWord[i].rect[Y_UI_RECT] += diference;
+			break;
+		case V_Middle:
+			if (vAlign == V_Top)
+				labelWord[i].rect[Y_UI_RECT] -= (diference / 2);
+			else
+				labelWord[i].rect[Y_UI_RECT] += (diference / 2);
+			break;
+		case V_Bottom:
+			if (vAlign == V_Middle)
+				labelWord[i].rect[Y_UI_RECT] -= (diference / 2);
+			else
+				labelWord[i].rect[Y_UI_RECT] -= diference;
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+void ComponentLabel::HorizontalAlignment(const uint parentWidth, const HorizontalLabelAlign alignFrom)
+{
+	//Horizontal Alignment
+	uint firstLabelRow = 0u;
+	uint rowWidth;
+	uint posMaxWidth = 0u;
+	for (uint i = 0; i < labelWord.size() - 1; ++i)
+	{
+		if (labelWord[i].rect[W_UI_RECT] > labelWord[posMaxWidth].rect[W_UI_RECT])
+			posMaxWidth = i;
+		if (labelWord[i].rect[X_UI_RECT] > labelWord[i + 1].rect[X_UI_RECT])
+		{
+			rowWidth = labelWord[i].rect[W_UI_RECT] + labelWord[i].rect[X_UI_RECT] - labelWord[firstLabelRow].rect[X_UI_RECT] + (labelWord[posMaxWidth].rect[H_UI_RECT] / 2);
+			uint diference = (parentWidth - rowWidth);
+
+			RowAlignment(firstLabelRow, i, diference, alignFrom);
+			firstLabelRow = i + 1;
+		}
+	}
+	rowWidth = labelWord.back().rect[W_UI_RECT] + labelWord.back().rect[X_UI_RECT] - labelWord[firstLabelRow].rect[X_UI_RECT] + (labelWord[posMaxWidth].rect[W_UI_RECT] / 2);
+	//LastRow
+	RowAlignment(firstLabelRow, labelWord.size() - 1, (parentWidth - rowWidth), alignFrom);
+}
+
+void ComponentLabel::RowAlignment(const uint firstLabelRow, const uint lastLabelRow, const uint diference, const HorizontalLabelAlign alignFrom)
+{
+	for (uint j = firstLabelRow; j <= lastLabelRow; ++j)
+	{
+		switch (alignFrom)
+		{
+		case H_Left:
+			if (hAlign == H_Middle)
+				labelWord[j].rect[X_UI_RECT] += (diference / 2);
+			else
+				labelWord[j].rect[X_UI_RECT] += diference;
+			break;
+		case H_Middle:
+			if (hAlign == H_Left)
+				labelWord[j].rect[X_UI_RECT] -= (diference / 2);
+			else
+				labelWord[j].rect[X_UI_RECT] += (diference / 2);
+			break;
+		case H_Right:
+			if (hAlign == H_Middle)
+				labelWord[j].rect[X_UI_RECT] -= (diference / 2);
+			else
+				labelWord[j].rect[X_UI_RECT] -= diference;
+			break;
+		default:
+			break;
+		}
 	}
 }
 
@@ -277,30 +335,49 @@ void ComponentLabel::OnUniqueEditor()
 		ImGui::Separator();
 		ImGui::Text("Horizontal Alignment");
 		if (ImGui::RadioButton("Left", hAlign == H_Left))
-			hAlign = H_Left;
+			SetHorizontalAligment(H_Left);
+
 		ImGui::SameLine();
 		if (ImGui::RadioButton("Center", hAlign == H_Middle))
-			hAlign = H_Middle;
+			SetHorizontalAligment(H_Middle);
+
 		ImGui::SameLine();
 		if (ImGui::RadioButton("Border", hAlign == H_Right))
-			hAlign = H_Right;
+			SetHorizontalAligment(H_Right);
+
 
 		ImGui::Spacing();
 		ImGui::Text("Vertical Alignment");
 		if (ImGui::RadioButton("Top", vAlign == V_Top))
-			vAlign = V_Top;
+			SetVerticalAligment(V_Top);
+		
 		ImGui::SameLine();
 		if (ImGui::RadioButton("Middle", vAlign == V_Middle))
-			vAlign = V_Middle;
+			SetVerticalAligment(V_Middle);
+
 		ImGui::SameLine();
 		if (ImGui::RadioButton("Bottom", vAlign == V_Bottom))
-			vAlign = V_Bottom;
-			
+			SetVerticalAligment(V_Bottom);
+
 			//-----------------------------------------
 
 		DragDropFont();
 	}
 #endif
+}
+
+void ComponentLabel::SetVerticalAligment(const VerticalLabelAlign nextAlignement)
+{
+	VerticalLabelAlign comeFrom = vAlign;
+	vAlign = nextAlignement;
+	VerticalAlignment(parent->cmp_rectTransform->GetRect()[H_UI_RECT], comeFrom);
+}
+
+void ComponentLabel::SetHorizontalAligment(const HorizontalLabelAlign nextAlignement)
+{
+	HorizontalLabelAlign comeFrom = hAlign;
+	hAlign = nextAlignement;
+	HorizontalAlignment(parent->cmp_rectTransform->GetRect()[H_UI_RECT], comeFrom);
 }
 
 void ComponentLabel::DragDropFont()
