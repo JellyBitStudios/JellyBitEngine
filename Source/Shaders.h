@@ -297,8 +297,8 @@
 #pragma region ShaderUI
 //UI
 #define uivShader 																		\
-"#version 430 core\n" 																	\
-"#extension GL_ARB_shader_storage_buffer_object : require\n" 							\
+"#version 330 core\n" 																	\
+"//#extension GL_ARB_shader_storage_buffer_object : require\n" 							\
 "layout(location = 0) in vec2 vertex; // <vec2 position, vec2 texCoords>\n" 			\
 "layout(location = 1) in vec2 texture_coords; // <vec2 position, vec2 texCoords>\n" 	\
 "out vec2 TexCoords;"																	\
@@ -306,24 +306,19 @@
 "uniform int isLabel;" 																	\
 "uniform int useMask;" 																	\
 "uniform vec2 coordsMask;" 																\
-"uniform float indexCorner;" 															\
 "uniform mat4 mvp_matrix;" 																\
 "\n"																					\
-"layout (std430, binding = 1) buffer UICorners {\n"										\
-"	vec4 corners[];"																	\
-"	//0 vec4 topLeft;\n"																\
-"	//1 vec4 topRight;\n"																\
-"	//2 vec4 bottomLeft;\n"																\
-"	//3 vec4 bottomRight;\n"															\
-"	//indexCorner + indexarray;\n"														\
-"};\n"																					\
+"uniform vec4 topLeft;\n"																\
+"uniform vec4 topRight;\n"																\
+"uniform vec4 bottomLeft;\n"															\
+"uniform vec4 bottomRight;\n"															\
 "\n"																					\
-"void VertexImage(int indexI)\n" 														\
+"void VertexImage()\n" 														\
 "{\n"																					\
-"	vec4 position = corners[indexI + 1];" 												\
+"	vec4 position = topRight;" 												\
 "	if (vertex.x > 0.0 && vertex.y > 0.0)\n"	 										\
 "	{\n" 																				\
-"		position = corners[indexI + 1];" 												\
+"		position = topRight;" 												\
 "		if (isScreen == 0)\n" 															\
 "			TexCoords = vec2(0.0, 1.0);" 												\
 "		else\n"																			\
@@ -332,7 +327,7 @@
 "	}\n"																				\
 "	else if (vertex.x > 0.0 && vertex.y < 0.0)\n" 										\
 "	{\n" 																				\
-"		position = corners[indexI + 3];" 												\
+"		position = bottomRight;" 												\
 "		if (isScreen == 0)\n" 															\
 "		{\n" 																			\
 "			if (useMask == 0)\n" 														\
@@ -346,7 +341,7 @@
 "	}\n"																				\
 "	else if (vertex.x < 0.0 && vertex.y > 0.0)\n" 										\
 "	{\n" 																				\
-"		position = corners[indexI];" 													\
+"		position = topLeft;" 													\
 "		if (isScreen == 0)\n" 															\
 "		{\n" 																			\
 "			if (useMask == 0)\n" 														\
@@ -360,7 +355,7 @@
 "	}\n"																				\
 "	else if (vertex.x < 0.0 && vertex.y < 0.0)\n" 										\
 "	{\n" 																				\
-"		position = corners[indexI + 2];" 												\
+"		position = bottomLeft;" 												\
 "		if (isScreen == 0)\n" 															\
 "		{\n" 																			\
 "			if (useMask == 0)\n" 														\
@@ -382,30 +377,30 @@
 "		gl_Position = mvp_matrix *  position;" 											\
 "}\n"																					\
 "\n"																					\
-"void VertexLabel(int indexL)\n" 														\
+"void VertexLabel()\n" 																	\
 "{\n"																					\
-"	vec4 position = corners[indexL + 1];" 												\
+"	vec4 position = topRight;" 															\
 "	if (vertex.x > 0.0 && vertex.y > 0.0)\n" 											\
 "	{\n" 																				\
-"		position = corners[indexL + 1];" 												\
+"		position = topRight;" 															\
 "		if (isScreen == 0)\n" 															\
 "			TexCoords = vec2(0.0, 0.0);" 												\
 "	}\n"																				\
 "	else if (vertex.x > 0.0 && vertex.y < 0.0)\n" 										\
 "	{\n" 																				\
-"		position = corners[indexL + 3];" 												\
+"		position = bottomRight;" 														\
 "		if (isScreen == 0)\n" 															\
 "			TexCoords = vec2(0.0,1.0);" 												\
 "	}\n"																				\
 "	else if (vertex.x < 0.0 && vertex.y > 0.0\n)" 										\
 "	{\n" 																				\
-"		position = corners[indexL];" 													\
+"		position = topLeft;" 															\
 "		if (isScreen == 0)\n" 															\
 "			TexCoords = vec2(1.0,0.0);" 												\
 "	}\n"																				\
 "	else if (vertex.x < 0.0 && vertex.y < 0.0)\n" 										\
 "	{\n" 																				\
-"		position = corners[indexL + 2];" 												\
+"		position = bottomLeft;" 														\
 "		if (isScreen == 0)" 															\
 "			TexCoords = vec2(1.0,1.0);" 												\
 "	}\n"																				\
@@ -420,15 +415,14 @@
 "\n"																					\
 "void main()\n" 																		\
 "{\n" 																					\
-"	highp int index = int(indexCorner);" 												\
 "	if(isLabel == 1)\n" 																\
-"		VertexLabel(index);" 															\
+"		VertexLabel();" 															\
 "	else\n" 																			\
-"		VertexImage(index);" 															\
+"		VertexImage();" 															\
 "}\n"																						
 
 #define uifShader 																		\
-"#version 430 core\n" 																	\
+"#version 330 core\n" 																	\
 "in vec2 TexCoords;\n" 																	\
 "out vec4 FragColor;\n" 																\
 "uniform int using_texture;\n"															\

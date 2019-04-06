@@ -43,6 +43,7 @@ public:
 		uint GetTexture();
 		math::float2 GetMaskValues();
 		std::vector<uint>* GetTexturesWord();
+		std::vector<ComponentLabel::LabelLetter>* GetWord();
 		int GetIndex()const;
 
 		bool isRendered() {

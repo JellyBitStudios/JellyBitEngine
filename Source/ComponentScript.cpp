@@ -1792,7 +1792,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::DOUBLE:
 		{
 			bytes = sizeof(double);
-			bool var;
+			double var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1802,7 +1802,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::INT8:
 		{
 			bytes = sizeof(signed char);
-			bool var;
+			int8_t var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1812,7 +1812,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::UINT8:
 		{
 			bytes = sizeof(unsigned char);
-			bool var;
+			uint8_t var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1822,7 +1822,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::INT16:
 		{
 			bytes = sizeof(short);
-			bool var;
+			int16_t var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1832,7 +1832,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::UINT16:
 		{
 			bytes = sizeof(unsigned short);
-			bool var;
+			uint16_t var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1852,7 +1852,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::UINT:
 		{
 			bytes = sizeof(uint);
-			bool var;
+			uint32_t var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1862,7 +1862,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::INT64:
 		{
 			bytes = sizeof(long long);
-			bool var;
+			int64_t var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1872,7 +1872,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::UINT64:
 		{
 			bytes = sizeof(unsigned long long);
-			bool var;
+			uint64_t var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1882,7 +1882,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::CHAR:
 		{
 			bytes = sizeof(char);
-			bool var;
+			char var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
