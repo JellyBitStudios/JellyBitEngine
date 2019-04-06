@@ -3515,6 +3515,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetColor", (const void*)&LabelGetColor);
 	mono_add_internal_call("JellyBitEngine.UI.Label::SetResource", (const void*)&LabelSetResource);
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetResource", (const void*)&LabelGetResource);
+	mono_add_internal_call("JellyBitEngine.UI.Label::ResetTexture", (const void*)&ResetTexture);
 
 	//PlayerPrefs
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);
@@ -3603,4 +3604,12 @@ void ScriptingModule::UpdateScriptingReferences()
 	scriptsAssembly = mono_assembly_load_from(scriptsImage, "ScriptingAssembly", &status);
 
 	delete[] buffer;
+}
+
+
+void ResetTexture(MonoObject* compImage)
+{
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(compImage);
+	if (image)
+		image->ResetTexture();
 }
