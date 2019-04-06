@@ -387,15 +387,15 @@ void GameObject::RecalculateBoundingBox()
 	{
 		if (transform)
 		{
-			math::OBB obb = originalBoundingBox.ToOBB();
+			rotationBB = originalBoundingBox.ToOBB();
 
 			// Transform the obb using the GameObject transform
 			math::float4x4 transformMatrix = transform->GetGlobalMatrix();
-			obb.Transform(transformMatrix);
-
+			rotationBB.Transform(transformMatrix);
+			
 			// Calculate the minimal enclosing AABB from the transformed OBB
-			if (obb.IsFinite())
-				boundingBox = obb.MinimalEnclosingAABB();
+			if (rotationBB.IsFinite())
+				boundingBox = rotationBB.MinimalEnclosingAABB();
 		}
 	}
 }

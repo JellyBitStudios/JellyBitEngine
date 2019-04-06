@@ -7,6 +7,7 @@
 #include "EventSystem.h"
 
 #include "MathGeoLib\include\Geometry\AABB.h"
+#include "MathGeoLib\include\Geometry\OBB.h"
 
 #include <mono/metadata/object.h>
 
@@ -112,6 +113,7 @@ public:
 
 	math::AABB originalBoundingBox;
 	math::AABB boundingBox;
+	math::OBB rotationBB;
 
 	bool seenLastFrame = false;
 
