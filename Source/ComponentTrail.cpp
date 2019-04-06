@@ -142,11 +142,10 @@ void ComponentTrail::OnUniqueEditor()
 		ImGui::SameLine();
 		ImGui::ShowHelpMarker("Time in milliseconds that a trail plane will last in the world.");
 
-
-		ImGui::PushItemWidth(100.0f);
 		ImGui::DragFloat("Min Distance", &minDistance, 0.01f, 0.0f, 10.0f);
 		ImGui::SameLine();
 		ImGui::ShowHelpMarker("Minimum distance before a new plane is created in the trail.If the minimum distance is not exceeded, the last plane will be placed in the new position.");
+		ImGui::PopItemWidth();
 
 		ImGui::Checkbox("Create trail", &create);
 		ImGui::SameLine();
