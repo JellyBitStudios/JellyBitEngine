@@ -158,8 +158,9 @@ void ComponentLabel::Update()
 
 				FillCorners();
 
-				if (index != -1)
-					FIllBuffer();
+				if(App->ui->GetisNvidia())
+					if (index != -1)
+						FIllBuffer();
 			}
 		}
 
@@ -567,7 +568,7 @@ math::float4 ComponentLabel::GetColor() const
 
 char* ComponentLabel::GetBuffer()
 {
-	return nullptr;
+	return buffer;
 }
 
 uint ComponentLabel::GetBufferSize() const
@@ -585,7 +586,7 @@ std::vector<uint>* ComponentLabel::GetWordTextureIDs()
 	return &textureWord;
 }
 
-std::vector<ComponentLabel::LabelLetter>* ComponentLabel::GetWord()
+std::vector<LabelLetter>* ComponentLabel::GetWord()
 {
 	return &labelWord;
 }

@@ -1,6 +1,7 @@
 #include "ModuleInternalResHandler.h"
 
 #include "Application.h"
+#include "ModuleRenderer3D.h"
 #include "ModuleResourceManager.h"
 #include "MaterialImporter.h"
 
@@ -487,12 +488,17 @@ uint ModuleInternalResHandler::CreateFloorCartoonShaderProgram() const
 
 void ModuleInternalResHandler::CreateUIShaderProgram()
 {
+	std::string vendor = (char*)glGetString(GL_VENDOR);
+
 	ResourceData vertexData;
 	ResourceShaderObjectData vertexShaderData;
 	vertexData.name = "UI vertex object";
 	vertexData.internal = true;
 	vertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
-	vertexShaderData.SetSource(uivShader, strlen(uivShader));
+	if (vendor == "NVIDIA Corporation")
+		vertexShaderData.SetSource(uivShaderNVIDIA, strlen(uivShaderNVIDIA));
+	else
+		vertexShaderData.SetSource(uivShader, strlen(uivShader));
 	ResourceShaderObject* vObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &vertexShaderData);
 	if (!vObj->Compile())
 		vObj->isValid = false;

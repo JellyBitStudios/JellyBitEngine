@@ -12,6 +12,7 @@
 #include "ComponentCamera.h"
 #include "ComponentButton.h"
 #include "ComponentImage.h"
+#include "ComponentLabel.h"
 
 #define CANVAS_TYPE_STR "Screen\0World Screen (Work In Progress)\0World"
 
@@ -142,6 +143,8 @@ void ComponentCanvas::OnEditor()
 #ifndef GAMEMODE
 	if (ImGui::CollapsingHeader("Canvas", ImGuiTreeNodeFlags_DefaultOpen))
 	{
+		ImGui::TextColored(BLUE, "%s", glGetString(GL_VENDOR));
+
 		int current_type = int(type);
 		if (ImGui::Combo("Using", &current_type, CANVAS_TYPE_STR))
 		{

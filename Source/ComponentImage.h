@@ -53,6 +53,9 @@ private:
 	void OnUniqueEditor();
 
 private:
+	void FillBuffer();
+
+private:
 	uint res_image = 0;
 	float color[4] = { 1.0f,1.0f,1.0f,1.0f };
 	bool mask = false;
@@ -62,6 +65,7 @@ private:
 	int index = -1;
 	uint offset = 0;
 
+	char buffer[UI_BYTES_IMAGE];
 	bool needed_recalculate = false;
 };
 
