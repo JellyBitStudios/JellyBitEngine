@@ -9,7 +9,7 @@
 #include "ComponentTransform.h"
 #include "ModuleTrails.h"
 
-#include "glew/include/GL/glew.h"
+#include "Brofiler/Brofiler.h"
 
 #include "imgui\imgui.h"
 
@@ -44,6 +44,9 @@ ComponentTrail::~ComponentTrail()
 
 void ComponentTrail::Update() 
 {
+#ifndef GAMEMODE
+	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+#endif // !GAMEMODE
 
 	if (create)
 	{

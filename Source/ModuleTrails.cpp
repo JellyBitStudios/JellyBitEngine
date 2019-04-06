@@ -48,145 +48,125 @@ void ModuleTrails::Draw()
 	{
 		if (!(*trail)->trailVertex.empty())
 		{
+			if ((*trail)->materialRes == 0) continue;
+
 			std::list<TrailNode*>::iterator begin = (*trail)->trailVertex.begin();
 			TrailNode* end = (*trail)->trailVertex.back();
 
-			if (true)
+
+			float i = 0.0f;
+			float size = (*trail)->trailVertex.size() + 1;
+			CONSOLE_LOG(LogTypes::Normal, "%i", (*trail)->trailVertex.size());
+
+			for (std::list<TrailNode*>::iterator curr = (*trail)->trailVertex.begin(); curr != (*trail)->trailVertex.end(); ++curr)
 			{
-				float i = 0.0f;
-				float size = (*trail)->trailVertex.size() + 1;
-				for (std::list<TrailNode*>::iterator curr = (*trail)->trailVertex.begin(); curr != (*trail)->trailVertex.end(); ++curr)
+				i++;
+				std::list<TrailNode*>::iterator next = curr;
+				++next;
+				if (next != (*trail)->trailVertex.end())
 				{
-					if ((*trail)->materialRes == 0) break;
-					i++;
-					std::list<TrailNode*>::iterator next = curr;
-					++next;
-					if (next != (*trail)->trailVertex.end())
+					ResourceMaterial* resourceMaterial = (ResourceMaterial*)App->res->GetResource((*trail)->materialRes);
+					uint shaderUuid = resourceMaterial->GetShaderUuid();
+					ResourceShaderProgram* resourceShaderProgram = (ResourceShaderProgram*)App->res->GetResource(shaderUuid);
+					GLuint shaderProgram = resourceShaderProgram->shaderProgram;
+
+					glUseProgram(shaderProgram);
+
+					math::float4x4 model_matrix = math::float4x4::identity;// particle matrix
+					model_matrix = model_matrix.Transposed();
+					math::float4x4 view_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLViewMatrix();
+					math::float4x4 proj_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLProjectionMatrix();
+					math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
+					math::float4x4 normal_matrix = model_matrix;
+					normal_matrix.Inverse();
+					normal_matrix.Transpose();
+
+					uint location = glGetUniformLocation(shaderProgram, "model_matrix");
+					glUniformMatrix4fv(location, 1, GL_FALSE, model_matrix.ptr());
+					location = glGetUniformLocation(shaderProgram, "mvp_matrix");
+					glUniformMatrix4fv(location, 1, GL_FALSE, mvp_matrix.ptr());
+					location = glGetUniformLocation(shaderProgram, "normal_matrix");
+					glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
+
+
+					float currUV = (float(i + 1) / size);
+					float nextUV = (float(i) / size);
+					math::float3 originHigh = (*curr)->originHigh;
+					math::float3 originLow = (*curr)->originLow;
+					math::float3 destinationHigh = (*next)->originHigh;
+					math::float3 destinationLow = (*next)->originLow;
+
+					// Rearange vertex
+					if ((*curr)->originHigh.x <= (*next)->originHigh.x)
 					{
-						ResourceMaterial* resourceMaterial = (ResourceMaterial*)App->res->GetResource((*trail)->materialRes);
-						uint shaderUuid = resourceMaterial->GetShaderUuid();
-						ResourceShaderProgram* resourceShaderProgram = (ResourceShaderProgram*)App->res->GetResource(shaderUuid);
-						GLuint shaderProgram = resourceShaderProgram->shaderProgram;
+						float tmp = currUV;
+						currUV = nextUV;
+						nextUV = tmp;
 
-						glUseProgram(shaderProgram);
+						math::float3 tmph = originHigh;
+						math::float3 tmpl = originLow;
 
-						math::float4x4 model_matrix = math::float4x4::identity;// particle matrix
-						model_matrix = model_matrix.Transposed();
-						math::float4x4 view_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLViewMatrix();
-						math::float4x4 proj_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLProjectionMatrix();
-						math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
-						math::float4x4 normal_matrix = model_matrix;
-						normal_matrix.Inverse();
-						normal_matrix.Transpose();
+						originHigh = destinationHigh;
+						originLow = destinationLow;
 
-						uint location = glGetUniformLocation(shaderProgram, "model_matrix");
-						glUniformMatrix4fv(location, 1, GL_FALSE, model_matrix.ptr());
-						location = glGetUniformLocation(shaderProgram, "mvp_matrix");
-						glUniformMatrix4fv(location, 1, GL_FALSE, mvp_matrix.ptr());
-						location = glGetUniformLocation(shaderProgram, "normal_matrix");
-						glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
+						destinationHigh = tmph;
+						destinationLow = tmpl;
+					}
+
+					location = glGetUniformLocation(shaderProgram, "currUV");				// UV
+					glUniform1f(location, nextUV);
+					location = glGetUniformLocation(shaderProgram, "nextUV");				// Min pos
+					glUniform1f(location, currUV);
+					location = glGetUniformLocation(shaderProgram, "realColor");			// Color
+					glUniform4f(location, /*realColor.x*/ 1.0f, /*realColor.y*/ 1.0f, /*realColor.z*/ 1.0f, /*realColor.w*/ 1.0f);
+
+					location = glGetUniformLocation(shaderProgram, "vertex1");				// Current High
+					glUniform3f(location, originHigh.x, originHigh.y, originHigh.z);
+					location = glGetUniformLocation(shaderProgram, "vertex2");				// Current Low
+					glUniform3f(location, originLow.x, originLow.y, originLow.z);
+					location = glGetUniformLocation(shaderProgram, "vertex3");				// Next High
+					glUniform3f(location, destinationHigh.x, destinationHigh.y, destinationHigh.z);
+					location = glGetUniformLocation(shaderProgram, "vertex4");				// Next Low
+					glUniform3f(location, destinationLow.x, destinationLow.y, destinationLow.z);
 
 
-						float currUV = (float(i + 1) / size);
-						float nextUV = (float(i) / size);
-						math::float3 originHigh = (*curr)->originHigh;
-						math::float3 originLow = (*curr)->originLow;
-						math::float3 destinationHigh = (*next)->originHigh;
-						math::float3 destinationLow = (*next)->originLow;
+					// Unknown uniforms
+					uint textureUnit = 0;
+					std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
+					for (uint i = 0; i < uniforms.size(); ++i)
+					{
+						Uniform uniform = uniforms[i];
 
-						// Rearange vertex
-						if ((*curr)->originHigh.x <= (*next)->originHigh.x)
+						if (strcmp(uniform.common.name, "material.albedo") == 0 || strcmp(uniform.common.name, "material.specular") == 0)
 						{
-							float tmp = currUV;
-							currUV = nextUV;
-							nextUV = tmp;
 
-							math::float3 tmph = originHigh;
-							math::float3 tmpl = originLow;
-
-							originHigh = destinationHigh;
-							originLow = destinationLow;
-
-							destinationHigh = tmph;
-							destinationLow = tmpl;
-						}
-
-						location = glGetUniformLocation(shaderProgram, "currUV");				// UV
-						glUniform1f(location, nextUV);
-						location = glGetUniformLocation(shaderProgram, "nextUV");				// Min pos
-						glUniform1f(location, currUV);
-						location = glGetUniformLocation(shaderProgram, "realColor");			// Color
-						glUniform4f(location, /*realColor.x*/ 1.0f, /*realColor.y*/ 1.0f, /*realColor.z*/ 1.0f, /*realColor.w*/ 1.0f);
-
-						location = glGetUniformLocation(shaderProgram, "vertex1");				// Current High
-						glUniform3f(location, originHigh.x, originHigh.y, originHigh.z);
-						location = glGetUniformLocation(shaderProgram, "vertex2");				// Current Low
-						glUniform3f(location, originLow.x, originLow.y, originLow.z);
-						location = glGetUniformLocation(shaderProgram, "vertex3");				// Next High
-						glUniform3f(location, destinationHigh.x, destinationHigh.y, destinationHigh.z);
-						location = glGetUniformLocation(shaderProgram, "vertex4");				// Next Low
-						glUniform3f(location, destinationLow.x, destinationLow.y, destinationLow.z);
-
-
-						// Unknown uniforms
-						uint textureUnit = 0;
-						std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
-						for (uint i = 0; i < uniforms.size(); ++i)
-						{
-							Uniform uniform = uniforms[i];
-
-							if (strcmp(uniform.common.name, "material.albedo") == 0 || strcmp(uniform.common.name, "material.specular") == 0)
+							if (textureUnit < App->renderer3D->GetMaxTextureUnits())
 							{
-
-								if (textureUnit < App->renderer3D->GetMaxTextureUnits())
-								{
-									glActiveTexture(GL_TEXTURE0 + textureUnit);
-									glBindTexture(GL_TEXTURE_2D, uniform.sampler2DU.value.id);
-									glUniform1i(uniform.common.location, textureUnit);
-									++textureUnit;
-								}
+								glActiveTexture(GL_TEXTURE0 + textureUnit);
+								glBindTexture(GL_TEXTURE_2D, uniform.sampler2DU.value.id);
+								glUniform1i(uniform.common.location, textureUnit);
+								++textureUnit;
 							}
 						}
-
-						ResourceMesh* plane = (ResourceMesh*)App->res->GetResource(App->resHandler->plane);
-						glBindVertexArray(plane->GetVAO());
-
-						glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, plane->GetIBO());
-						glDrawElements(GL_TRIANGLES, plane->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
-
-						glActiveTexture(GL_TEXTURE0);
-						glBindTexture(GL_TEXTURE_2D, 0);
-
-						glBindBuffer(GL_ARRAY_BUFFER, 0);
-						glBindVertexArray(0);
-						glUseProgram(0);
 					}
-				}
-			}
 
-			else
-			{
-				for (std::list<TrailNode*>::reverse_iterator curr = (*trail)->trailVertex.rbegin(); curr != (*trail)->trailVertex.rend(); ++curr)
-				{
-					std::list<TrailNode*>::reverse_iterator next = curr;
-					++next;
-					if (next != (*trail)->trailVertex.rend())
-					{
-						glVertex3fv((const GLfloat*)(*curr)->originHigh.ptr());
-						glVertex3fv((const GLfloat*)(*curr)->originLow.ptr());
-						glVertex3fv((const GLfloat*)(*next)->originHigh.ptr());
+					ResourceMesh* plane = (ResourceMesh*)App->res->GetResource(App->resHandler->plane);
+					glBindVertexArray(plane->GetVAO());
 
+					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, plane->GetIBO());
+					glDrawElements(GL_TRIANGLES, plane->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
 
-						glVertex3fv((const GLfloat*)(*curr)->originLow.ptr());
-						glVertex3fv((const GLfloat*)(*next)->originLow.ptr());
-						glVertex3fv((const GLfloat*)(*next)->originHigh.ptr());
-					}
+					glActiveTexture(GL_TEXTURE0);
+					glBindTexture(GL_TEXTURE_2D, 0);
+
+					glBindBuffer(GL_ARRAY_BUFFER, 0);
+					glBindVertexArray(0);
+					glUseProgram(0);
 				}
 			}
 
 			glEnd();
 			glPopMatrix();
-
 		}
 	}
 }
