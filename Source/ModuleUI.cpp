@@ -128,12 +128,7 @@ void ModuleUI::OnSystemEvent(System_Event event)
 	switch (event.type)
 	{
 	case System_Event_Type::LoadScene:
-	case System_Event_Type::Stop:
 	{
-		canvas.clear();
-		canvas_screen.clear();
-		canvas_worldScreen.clear();
-		canvas_world.clear();
 		countImages = 0;
 		countLabels = 0;
 		offsetImage = 0;
@@ -144,6 +139,13 @@ void ModuleUI::OnSystemEvent(System_Event event)
 		std::swap(queueImageToBuffer, emptyI);
 		std::queue<ComponentLabel*> emptyL;
 		std::swap(queueLabelToBuffer, emptyL);
+	}
+	case System_Event_Type::Stop:
+	{
+		canvas.clear();
+		canvas_screen.clear();
+		canvas_worldScreen.clear();
+		canvas_world.clear();
 		break;
 	}
 	case System_Event_Type::ComponentDestroyed:
@@ -465,6 +467,8 @@ void ModuleUI::UnRegisterBufferIndex(uint offset, ComponentTypes cType)
 	bool sameOffset = false;
 	if (cType == ComponentTypes::ImageComponent)
 	{
+		if(countImages  != 0)
+		{
 		countImages--;
 		if (sameOffset = (offset == offsetImage - UI_BYTES_IMAGE))
 			offsetImage = offset;
@@ -488,31 +492,35 @@ void ModuleUI::UnRegisterBufferIndex(uint offset, ComponentTypes cType)
 			img->SetBufferRangeAndFIll(offsetSend, offsetSend / sizeof(float) * 4);
 			countImages++;
 		}
+		}
 	}
 	else if (cType == ComponentTypes::LabelComponent)
 	{
-		countLabels--;
-		if (sameOffset = (offset == offsetLabel + UI_BYTES_LABEL))
-			offsetLabel = offset;
-		else
-			free_label_offsets.push_back(offset);
-		if (!queueLabelToBuffer.empty())
+		if (countLabels != 0)
 		{
-			ComponentLabel* lb = queueLabelToBuffer.front();
-			queueLabelToBuffer.pop();
-			uint offsetSend;
-			if (!free_label_offsets.empty())
-			{
-				offsetSend = free_label_offsets.at(free_label_offsets.size() - 1);
-				free_label_offsets.pop_back();
-			}
+			countLabels--;
+			if (sameOffset = (offset == offsetLabel + UI_BYTES_LABEL))
+				offsetLabel = offset;
 			else
+				free_label_offsets.push_back(offset);
+			if (!queueLabelToBuffer.empty())
 			{
-				offsetSend = offsetLabel;
-				offsetLabel -= UI_BYTES_LABEL;
+				ComponentLabel* lb = queueLabelToBuffer.front();
+				queueLabelToBuffer.pop();
+				uint offsetSend;
+				if (!free_label_offsets.empty())
+				{
+					offsetSend = free_label_offsets.at(free_label_offsets.size() - 1);
+					free_label_offsets.pop_back();
+				}
+				else
+				{
+					offsetSend = offsetLabel;
+					offsetLabel -= UI_BYTES_LABEL;
+				}
+				lb->SetBufferRangeAndFIll(offsetSend, offsetSend / sizeof(float) * 4);
+				countLabels++;
 			}
-			lb->SetBufferRangeAndFIll(offsetSend, offsetSend / sizeof(float) * 4);
-			countLabels++;
 		}
 	}
 }
