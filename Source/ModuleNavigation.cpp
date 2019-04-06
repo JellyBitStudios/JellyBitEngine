@@ -78,8 +78,8 @@ update_status ModuleNavigation::Update()
 				// vel equals to current velocity, nvel equals to desired velocity
 				// using nvel instead of vel would end up with a non smoothy rotation.
 				//if current agent vel is zero, we dont want to rotate it. //speedVel, nvel, vel, vel?
-				float lenght = math::float3(ag->vel[0], ag->vel[1], ag->vel[2]).Length();
-				if (lenght >= ag->params.stopAtLength)
+				float zero[3] = { 0,0,0 };
+				if (!dtVequal(ag->vel, zero))
 				{
 					math::float3 direction;
 					memcpy(&direction, ag->vel, sizeof(float) * 3);
@@ -92,7 +92,7 @@ update_status ModuleNavigation::Update()
 				else
 				{
 					((dtCrowdAgent*)ag)->walking = false;
-					m_crowd->resetMoveTarget(index);
+					ResetMoveTarget(index);
 				}
 			//}
 		}
