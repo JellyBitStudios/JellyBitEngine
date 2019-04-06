@@ -173,3 +173,46 @@ void ComponentTrail::SetMaterialRes(uint materialUuid)
 
 	materialRes = materialUuid;
 }
+
+uint ComponentTrail::GetInternalSerializationBytes()
+{
+	return sizeof(materialRes) + sizeof(minDistance) + sizeof(lifeTime) + sizeof(create);
+}
+
+void ComponentTrail::OnInternalSave(char *& cursor)
+{
+	size_t bytes = sizeof(materialRes);
+	memcpy(cursor, &materialRes, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(minDistance);
+	memcpy(cursor, &minDistance, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(lifeTime);
+	memcpy(cursor, &lifeTime, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(create);
+	memcpy(cursor, &create, bytes);
+	cursor += bytes;
+}
+
+void ComponentTrail::OnInternalLoad(char *& cursor)
+{
+	size_t bytes = sizeof(materialRes);
+	memcpy(&materialRes, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(minDistance);
+	memcpy(&minDistance, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(lifeTime);
+	memcpy(&lifeTime, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(create);
+	memcpy(&create, cursor, bytes);
+	cursor += bytes;
+}

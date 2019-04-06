@@ -45,9 +45,9 @@ public:
 
 
 	//Serialization
-	uint GetInternalSerializationBytes() { return 0; }
-	virtual void OnInternalSave(char*& cursor) {}
-	virtual void OnInternalLoad(char*& cursor) {}
+	uint GetInternalSerializationBytes();
+	virtual void OnInternalSave(char*& cursor);
+	virtual void OnInternalLoad(char*& cursor);
 
 public:
 
