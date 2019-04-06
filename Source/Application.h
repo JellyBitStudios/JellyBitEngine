@@ -96,6 +96,7 @@ public:
 	class FontImporter*					fontImporter;
 	mutable class AnimationImporter*	animImporter;
 	class ModuleParticle*				particle;
+	class ModuleTrails*					trails;
 
 #ifndef GAMEMODE
 	class ModuleCameraEditor*			camera;

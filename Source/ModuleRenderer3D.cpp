@@ -8,6 +8,7 @@
 #include "ModuleTimeManager.h"
 #include "ModulePhysics.h"
 #include "ModuleParticles.h"
+#include "ModuleTrails.h"
 #include "ModuleGui.h"
 #include "ModuleGOs.h"
 #include "ModuleParticles.h"
@@ -235,10 +236,12 @@ update_status ModuleRenderer3D::PostUpdate()
 
 	App->scene->Draw();
 
+
 	bool blend = GetCapabilityState(GL_BLEND);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	App->particle->Draw();
+	App->trails->Draw();
 	if (!blend)
 		glDisable(GL_BLEND);
 
@@ -422,13 +425,13 @@ uint ModuleRenderer3D::GetMaxTextureUnits() const
 	return maxTextureUnits;
 }
 
-bool ModuleRenderer3D::SetVSync(bool vsync) 
+bool ModuleRenderer3D::SetVSync(bool vsync)
 {
 	bool ret = true;
 
 	this->vsync = vsync;
 
-	if (this->vsync) 
+	if (this->vsync)
 	{
 
 		if (SDL_GL_SetSwapInterval(1) == -1)
@@ -438,8 +441,8 @@ bool ModuleRenderer3D::SetVSync(bool vsync)
 		}
 	}
 	else {
-	
-		if (SDL_GL_SetSwapInterval(0) == -1) 
+
+		if (SDL_GL_SetSwapInterval(0) == -1)
 		{
 			ret = false;
 			CONSOLE_LOG(LogTypes::Warning, "Unable to set immediate updates! SDL Error: %s\n", SDL_GetError());
