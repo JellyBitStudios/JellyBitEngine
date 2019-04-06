@@ -39,6 +39,9 @@
 #include "ComponentAudioListener.h"
 #include "ComponentAudioSource.h"
 
+// Trail
+#include "ComponentTrail.h"
+
 #include "ResourceScene.h"
 #include "ResourceScript.h"
 
