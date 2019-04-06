@@ -403,10 +403,10 @@ GameObject * ModuleUI::FindCanvas(GameObject * from)
 void ModuleUI::FillBufferRange(uint offset, uint size, char* buffer)
 {
 	//-------- Shader Storage Buffer Object Update -------------
-	void* buff_ptr = glMapNamedBufferRange(ssboUI, offset, size, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
+	/*void* buff_ptr = glMapNamedBufferRange(ssboUI, offset, size, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
 	std::memcpy(buff_ptr, buffer, size);
 	glFlushMappedNamedBufferRange(ssboUI, offset, size);
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);*/
 	//-----
 }
 

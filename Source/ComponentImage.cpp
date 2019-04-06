@@ -283,8 +283,18 @@ void ComponentImage::OnUniqueEditor()
 			ImGui::EndDragDropTarget();
 		}
 		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-		if (ImGui::Checkbox("M", &mask))
-			SetMask();
+		bool tempMask = mask;
+		if (ImGui::Checkbox("M", &tempMask))
+		{
+			if (tempMask)
+			{
+				mask = true;
+				SetMask();
+			}
+			else
+				mask = false;
+		}
+
 		if (ImGui::IsItemHovered())
 		{
 			ImGui::BeginTooltip();
