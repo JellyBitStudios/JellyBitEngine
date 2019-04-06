@@ -129,7 +129,7 @@ void ComponentTrail::OnUniqueEditor()
 
 		ImGui::DragFloat("Min Distance", &minDistance, 0.01f, 0.0f, 10.0f);
 
-		if (ImGui::CollapsingHeader("Texture", ImGuiTreeNodeFlags_FramePadding))
+		if (ImGui::CollapsingHeader("Texture", ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			const Resource* resource = App->res->GetResource(materialRes);
 			std::string materialName = "No  Material";
@@ -159,6 +159,9 @@ void ComponentTrail::OnUniqueEditor()
 			if (ImGui::SmallButton("Use default material"))
 				SetMaterialRes(App->resHandler->defaultMaterial);
 			ImGui::Separator();
+
+			if (ImGui::ColorEdit4("Trail color", color.ptr(), ImGuiColorEditFlags_None));
+
 		}
 	}
 
