@@ -2682,7 +2682,7 @@ void ImageSetMask(MonoObject* monoImage)
 {
 	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
 	if (image)
-		image->SetMask();
+		image->ResetTexture();
 }
 
 MonoString* LabelGetText(MonoObject* monoLabel)
