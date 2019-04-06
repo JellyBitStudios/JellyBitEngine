@@ -9,10 +9,11 @@ public class Decal : JellyScript
     public DecalType decalType = DecalType.blood;
 
     public GameObject reference = null;
-    public float seconds = 10.0f;
-
     public GameObject Alita = null;
-    public float distance = 1.0f;
+
+    public float seconds = 10.0f;
+    public int minDistance = 0;
+    public int maxDistance = 3;
     #endregion
 
     #region PRIVATE_VARIABLES
@@ -47,8 +48,12 @@ public class Decal : JellyScript
         {
             case DecalType.blood:
 
+                Random random = new Random();
+                int randomNumber = random.Next(minDistance, maxDistance);
+                Debug.Log("Random number to orient the blood decal: " + randomNumber);
+
                 Vector3 direction = (reference.transform.position - Alita.transform.position).normalized();
-                newPosition = reference.transform.position + direction * distance;
+                newPosition = reference.transform.position + direction * randomNumber;
 
                 break;
 
