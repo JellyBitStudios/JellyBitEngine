@@ -24,7 +24,9 @@ ModuleTrails::ModuleTrails(bool start_enabled) : Module(start_enabled)
 {}
 
 ModuleTrails::~ModuleTrails()
-{}
+{
+	trails.clear();
+}
 
 update_status ModuleTrails::Update()
 {
