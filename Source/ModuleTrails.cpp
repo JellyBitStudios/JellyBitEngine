@@ -99,7 +99,7 @@ void ModuleTrails::Draw()
 					math::float3 destinationHigh = (*next)->originHigh;
 					math::float3 destinationLow = (*next)->originLow;
 
-					RearrangeVertex(trail, curr, next, currUV, nextUV, originHigh, originLow, destinationHigh, destinationLow);
+					//RearrangeVertex(trail, curr, next, currUV, nextUV, originHigh, originLow, destinationHigh, destinationLow);
 
 
 					location = glGetUniformLocation(shaderProgram, "currUV");				// cUV
