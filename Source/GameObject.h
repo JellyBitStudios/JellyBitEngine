@@ -30,6 +30,7 @@ public:
 	uint GetUUID() const;
 	void ForceUUID(uint uuid);
 	void SetParent(GameObject* parent);
+	bool ChangeParent(GameObject* newPraent);
 	GameObject* GetParent() const;
 	uint GetParentUUID() const;
 	void ToggleIsActive();
