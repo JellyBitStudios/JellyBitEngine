@@ -230,7 +230,7 @@ void ModuleUI::DrawScreenCanvas()
 		{
 			std::vector<GameObject*> renderers;
 			canvas->GetChildrenAndThisVectorFromLeaf(renderers);
-			for (std::vector<GameObject*>::iterator render = renderers.begin(); render != renderers.end(); ++render)
+			for (std::vector<GameObject*>::reverse_iterator render = renderers.rbegin(); render != renderers.rend(); ++render)
 			{
 				ComponentCanvasRenderer* renderer = (*render)->cmp_canvasRenderer;
 				if (renderer)
@@ -280,7 +280,7 @@ void ModuleUI::DrawWorldCanvas()
 		{
 			std::vector<GameObject*> renderers;
 			canvas->GetChildrenAndThisVectorFromLeaf(renderers);
-			for (std::vector<GameObject*>::iterator render = renderers.begin(); render != renderers.end(); ++render)
+			for (std::vector<GameObject*>::reverse_iterator render = renderers.rbegin(); render != renderers.rend(); ++render)
 			{
 				ComponentCanvasRenderer* renderer = (*render)->cmp_canvasRenderer;
 				if (renderer)
