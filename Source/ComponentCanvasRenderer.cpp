@@ -147,6 +147,11 @@ std::vector<uint>* ComponentCanvasRenderer::ToUIRend::GetTexturesWord()
 	return ((ComponentLabel*)cmp)->GetWordTextureIDs();
 }
 
+std::vector<ComponentLabel::LabelLetter>* ComponentCanvasRenderer::ToUIRend::GetWord()
+{
+	return ((ComponentLabel*)cmp)->GetWord();
+}
+
 int ComponentCanvasRenderer::ToUIRend::GetIndex() const
 {
 	if (type == RenderTypes::IMAGE)

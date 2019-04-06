@@ -206,6 +206,7 @@ void ModuleUI::initRenderData()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
+	/*
 	//--- One Buffer UI - Shader Storage Buffer Object ----
 	glGenBuffers(1, &ssboUI);
 	glBindBufferRange(GL_SHADER_STORAGE_BUFFER, UI_BIND_INDEX, ssboUI, 0, UI_BUFFER_SIZE);
@@ -215,6 +216,7 @@ void ModuleUI::initRenderData()
 	glShaderStorageBlockBinding(ui_shader, uloc, UI_BIND_INDEX);
 	glBufferStorage(GL_SHADER_STORAGE_BUFFER, UI_BUFFER_SIZE, nullptr, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 	//-------------
+	*/
 }
 
 void ModuleUI::DrawScreenCanvas()
@@ -243,10 +245,10 @@ void ModuleUI::DrawScreenCanvas()
 						switch (rend->GetType())
 						{
 						case ComponentCanvasRenderer::RenderTypes::IMAGE:
-							DrawUIImage(rend->GetIndex(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
+							DrawUIImage(renderer->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 							break;
 						case ComponentCanvasRenderer::RenderTypes::LABEL:
-							DrawUILabel(rend->GetIndex(), rend->GetTexturesWord(), rend->GetColor());
+							DrawUILabel(rend->GetWord(), rend->GetTexturesWord(), rend->GetColor());
 							break;
 						}
 
@@ -293,10 +295,10 @@ void ModuleUI::DrawWorldCanvas()
 						switch (rend->GetType())
 						{
 						case ComponentCanvasRenderer::RenderTypes::IMAGE:
-							DrawUIImage(rend->GetIndex(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
+							DrawUIImage(renderer->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 							break;
 						case ComponentCanvasRenderer::RenderTypes::LABEL:
-							DrawUILabel(rend->GetIndex(), rend->GetTexturesWord(), rend->GetColor());
+							DrawUILabel(rend->GetWord(), rend->GetTexturesWord(), rend->GetColor());
 							break;
 						}
 
@@ -311,10 +313,13 @@ void ModuleUI::DrawWorldCanvas()
 	if (lighting) glEnable(GL_LIGHTING);
 }
 
-void ModuleUI::DrawUIImage(int index, math::float4& color, uint texture, math::float2& mask)
+void ModuleUI::DrawUIImage(math::float3 corners[4], math::float4& color, uint texture, math::float2& mask)
 {
-	if (index == -1)
-		return;
+	setFloat(ui_shader, "topLeft", { corners[ComponentRectTransform::Rect::RTOPLEFT], 1.0f });
+	setFloat(ui_shader, "topRight", { corners[ComponentRectTransform::Rect::RTOPRIGHT], 1.0f });
+	setFloat(ui_shader, "bottomLeft", { corners[ComponentRectTransform::Rect::RBOTTOMLEFT], 1.0f });
+	setFloat(ui_shader, "bottomRight", { corners[ComponentRectTransform::Rect::RBOTTOMRIGHT], 1.0f });
+
 	int useMask = (mask.x < 0) ? false : true;
 	setInt(ui_shader, "useMask", useMask);
 	if (useMask)
@@ -331,8 +336,6 @@ void ModuleUI::DrawUIImage(int index, math::float4& color, uint texture, math::f
 	else
 		setBool(ui_shader, "using_texture", false);
 
-	setFloat(ui_shader, "indexCorner", float(index));
-
 	glBindVertexArray(reference_vertex);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -340,10 +343,8 @@ void ModuleUI::DrawUIImage(int index, math::float4& color, uint texture, math::f
 	glBindVertexArray(0);
 }
 
-void ModuleUI::DrawUILabel(int index, std::vector<uint>* GetTexturesWord, math::float4& color)
+void ModuleUI::DrawUILabel(std::vector<ComponentLabel::LabelLetter>* word, std::vector<uint>* GetTexturesWord, math::float4& color)
 {
-	if (index == -1)
-		return;
 	setBool(ui_shader, "isLabel", true);
 	setBool(ui_shader, "using_texture", true);
 	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
@@ -351,7 +352,10 @@ void ModuleUI::DrawUILabel(int index, std::vector<uint>* GetTexturesWord, math::
 	uint wordSize = GetTexturesWord->size();
 	for (uint i = 0; i < wordSize; i++)
 	{
-		setFloat(ui_shader, "indexCorner", float(index + (4.0f * (float)i)));
+		setFloat(ui_shader, "topLeft", word->at(i).corners[ComponentRectTransform::Rect::RTOPLEFT]);
+		setFloat(ui_shader, "topRight", word->at(i).corners[ComponentRectTransform::Rect::RTOPRIGHT]);
+		setFloat(ui_shader, "bottomLeft", word->at(i).corners[ComponentRectTransform::Rect::RBOTTOMLEFT]);
+		setFloat(ui_shader, "bottomRight", word->at(i).corners[ComponentRectTransform::Rect::RBOTTOMRIGHT]);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, GetTexturesWord->at(i));
@@ -675,6 +679,11 @@ void ModuleUI::setFloat(unsigned int ID, const char * name, float value, float v
 void ModuleUI::setFloat(unsigned int ID, const char * name, math::float3 value)
 {
 	glUniform3f(glGetUniformLocation(ID, name), value.x, value.y, value.z);
+}
+
+void ModuleUI::setFloat(unsigned int ID, const char * name, math::float4 value)
+{
+	glUniform4f(glGetUniformLocation(ID, name), value.x, value.y, value.z, value.w);
 }
 
 void ModuleUI::setUnsignedInt(unsigned int ID, const char * name, unsigned int value)
