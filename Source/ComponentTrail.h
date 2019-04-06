@@ -54,21 +54,18 @@ public:
 	virtual void OnInternalLoad(char*& cursor);
 
 public:
-
 	std::list<TrailNode*> trailVertex;
 	Timer timer;
 
-	bool create = true;
-
 	uint materialRes = 0;
 
+	math::float4 color = math::float4::one;
+
 private:
+	bool create = true;
 
 	float minDistance = 0.05f;
-
 	int lifeTime = 200;
-
-
 };
 
 #endif //! __COMPONENT_TRAIL_H__
