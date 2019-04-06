@@ -289,10 +289,10 @@ void GameObject::SetParent(GameObject* parent)
 		parent_uuid = parent->GetUUID();
 }
 
-GameObject * GameObject::SwapParents(GameObject * newPraent)
-{
-	return nullptr;
-}
+//GameObject * GameObject::SwapParents(GameObject * newPraent)
+//{
+//	return nullptr;
+//}
 
 GameObject* GameObject::GetParent() const
 {
