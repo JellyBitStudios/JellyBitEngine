@@ -1424,6 +1424,27 @@ MonoArray* RotateAxisAngle(MonoArray* axis, float deg)
 	return ret;
 }
 
+MonoArray* QuatLookAt(MonoArray* localForward, MonoArray* targetDirection, MonoArray* localUp, MonoArray* worldUp)
+{
+	if (!localForward || !targetDirection || !localUp || !worldUp)
+		return nullptr;
+
+	math::float3 localForwardCpp(mono_array_get(localForward, float, 0), mono_array_get(localForward, float, 1), mono_array_get(localForward, float, 2));
+	math::float3 targetDirectionCpp(mono_array_get(targetDirection, float, 0), mono_array_get(targetDirection, float, 1), mono_array_get(targetDirection, float, 2));
+	math::float3 localUpCpp(mono_array_get(localUp, float, 0), mono_array_get(localUp, float, 1), mono_array_get(localUp, float, 2));
+	math::float3 worldUpCpp(mono_array_get(worldUp, float, 0), mono_array_get(worldUp, float, 1), mono_array_get(worldUp, float, 2));
+
+	math::Quat result = math::Quat::LookAt(localForwardCpp, targetDirectionCpp, localUpCpp, worldUpCpp);
+	
+	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_single_class(), 4);
+	mono_array_set(ret, float, 0, result.x);
+	mono_array_set(ret, float, 1, result.y);
+	mono_array_set(ret, float, 2, result.z);
+	mono_array_set(ret, float, 3, result.w);
+
+	return ret;
+}
+
 MonoString* GetGOName(MonoObject* monoObject)
 {
 	if (!monoObject)
@@ -2317,6 +2338,26 @@ MonoArray* GameObjectGetChilds(MonoObject* monoObject)
 	return nullptr;
 }
 
+MonoObject* GameObjectGetParent(MonoObject* monoObject)
+{
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	if (!gameObject)
+		return nullptr;
+
+	return App->scripting->MonoObjectFrom(gameObject->GetParent());
+}
+
+void GameObjectSetParent(MonoObject* monoObject, MonoObject* newParent)
+{
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	GameObject* newParentCPP = App->scripting->GameObjectFrom(newParent);
+
+	if (!gameObject || !newParentCPP)
+		return;
+
+	gameObject->ChangeParent(newParentCPP);
+}
+
 bool PlayAnimation(MonoObject* animatorComp, MonoString* animUUID)
 {
 	if (!animUUID)
@@ -2569,6 +2610,34 @@ void LabelSetColor(MonoObject* monoLabel, MonoArray* newColorCSharp)
 
 		label->SetColor(newColor);
 	}
+}
+
+MonoString* LabelGetResource(MonoObject* monoLabel)
+{
+	ComponentLabel* label = (ComponentLabel*)App->scripting->ComponentFrom(monoLabel);
+	if (label)
+	{
+		ResourceFont* font = label->GetFontResource();
+		if (font)	
+			return mono_string_new(App->scripting->domain, font->GetData().name.data());		
+		else
+			return nullptr;
+	}
+	return nullptr;
+}
+
+void LabelSetResource(MonoObject* monoLabel, MonoString* newFont)
+{
+	if (!newFont)
+		return;
+
+	ComponentLabel* label = (ComponentLabel*)App->scripting->ComponentFrom(monoLabel);
+
+	char* fontCPP = mono_string_to_utf8(newFont);
+
+	label->SetFontResource(fontCPP);
+
+	mono_free(fontCPP);
 }
 
 void PlayerPrefsSave()
@@ -3225,6 +3294,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Quaternion::quatVec3", (const void*)&QuatVec3);
 	mono_add_internal_call("JellyBitEngine.Quaternion::toEuler", (const void*)&ToEuler);
 	mono_add_internal_call("JellyBitEngine.Quaternion::RotateAxisAngle", (const void*)&RotateAxisAngle);
+	mono_add_internal_call("JellyBitEngine.Quaternion::_LookAt", (const void*)&QuatLookAt);
 
 	//GameObject
 	mono_add_internal_call("JellyBitEngine.GameObject::_Instantiate", (const void*)&InstantiateGameObject);
@@ -3236,6 +3306,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.GameObject::GetLayerID", (const void*)&GameObjectGetLayerID);
 	mono_add_internal_call("JellyBitEngine.GameObject::GetLayer", (const void*)&GameObjectGetLayerName);
 	mono_add_internal_call("JellyBitEngine.GameObject::GetChilds", (const void*)&GameObjectGetChilds);
+	mono_add_internal_call("JellyBitEngine.GameObject::GetParent", (const void*)&GameObjectGetParent);
+	mono_add_internal_call("JellyBitEngine.GameObject::SetParent", (const void*)&GameObjectSetParent);
 
 	mono_add_internal_call("JellyBitEngine.Time::getDeltaTime", (const void*)&GetDeltaTime);
 	mono_add_internal_call("JellyBitEngine.Time::getRealDeltaTime", (const void*)&GetRealDeltaTime);
@@ -3296,6 +3368,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetText", (const void*)&LabelGetText);
 	mono_add_internal_call("JellyBitEngine.UI.Label::SetColor", (const void*)&LabelSetColor);
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetColor", (const void*)&LabelGetColor);
+	mono_add_internal_call("JellyBitEngine.UI.Label::SetResource", (const void*)&LabelSetResource);
+	mono_add_internal_call("JellyBitEngine.UI.Label::GetResource", (const void*)&LabelGetResource);
 
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::GetNumber", (const void*)&PlayerPrefsGetNumber);

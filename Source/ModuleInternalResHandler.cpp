@@ -31,6 +31,7 @@ bool ModuleInternalResHandler::Start()
 	CreateDeferredShaderProgram();
 	CreateBillboardShaderProgram();
 	CreateUIShaderProgram();
+	decalShaderProgram = CreateDecalShaderProgram();
 	cartoonShaderProgram = CreateCartoonShaderProgram();
 	cartoonFloorProgram = CreateFloorCartoonShaderProgram();
 
@@ -391,6 +392,42 @@ void ModuleInternalResHandler::CreateBillboardShaderProgram()
 	if (!pShader->Link())
 		pShader->isValid = false;
 	billboardShaderProgram = pShader->GetUuid();
+}
+
+uint ModuleInternalResHandler::CreateDecalShaderProgram() const
+{
+	ResourceData vertexData;
+	ResourceShaderObjectData vertexShaderData;
+	vertexData.name = "Decal Vertex";
+	vertexData.internal = true;
+	vertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
+	vertexShaderData.SetSource(DecalVertex, strlen(DecalVertex));
+	ResourceShaderObject* vObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &vertexShaderData);
+	if (!vObj->Compile())
+		vObj->isValid = false;
+
+	ResourceData fragmentData;
+	ResourceShaderObjectData fragmentShaderData;
+	fragmentData.name = "Decal Fragment";
+	fragmentData.internal = true;
+	fragmentShaderData.shaderObjectType = ShaderObjectTypes::FragmentType;
+	fragmentShaderData.SetSource(DecalFragment, strlen(DecalFragment));
+	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, fragmentData, &fragmentShaderData);
+	if (!fObj->Compile())
+		fObj->isValid = false;
+
+	ResourceData shaderData;
+	ResourceShaderProgramData programShaderData;
+	shaderData.name = "Decal Shader";
+	shaderData.internal = true;
+	programShaderData.shaderObjectsUuids.push_back(vObj->GetUuid());
+	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
+	programShaderData.shaderProgramType = ShaderProgramTypes::Standard;
+	ResourceShaderProgram* prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DECAL_SHADER_PROGRAM_UUID);
+	if (!prog->Link())
+		prog->isValid = false;
+
+	return prog->GetUuid();
 }
 
 uint ModuleInternalResHandler::CreateCartoonShaderProgram() const

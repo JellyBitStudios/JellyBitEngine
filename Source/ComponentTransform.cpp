@@ -123,7 +123,11 @@ void ComponentTransform::OnUniqueEditor()
 
 			// Transform updated: if the game object has a canvas, Update the rectTransforms
 			if (parent->cmp_canvas != nullptr)
-				parent->cmp_canvas->TransformUpdated();
+			{
+				System_Event WTransformUpdated;
+				WTransformUpdated.type = System_Event_Type::WRectTransformUpdated;
+				parent->cmp_canvas->OnSystemEvent(WTransformUpdated);
+			}
 
 #ifndef GAMEMODE
 			// Transform updated: if the game object is selected, update the camera reference
@@ -194,7 +198,11 @@ void ComponentTransform::SetMatrixFromGlobal(math::float4x4& globalMatrix)
 
 		// Transform updated: if the game object has a canvas, Update the rectTransforms
 		if (parent->cmp_canvas != nullptr)
-			parent->cmp_canvas->TransformUpdated();
+		{
+			System_Event WTransformUpdated;
+			WTransformUpdated.type = System_Event_Type::WRectTransformUpdated;
+			parent->cmp_canvas->OnSystemEvent(WTransformUpdated);
+		}
 
 #ifndef GAMEMODE
 		// Transform updated: if the game object is selected, update the camera reference

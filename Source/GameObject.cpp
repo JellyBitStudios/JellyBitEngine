@@ -278,6 +278,11 @@ uint GameObject::GetUUID() const
 void GameObject::ForceUUID(uint uuid)
 {
 	this->uuid = uuid;
+
+	for (GameObject* child : children)
+	{
+		child->SetParent(this);
+	}
 }
 
 void GameObject::SetParent(GameObject* parent)
@@ -287,6 +292,23 @@ void GameObject::SetParent(GameObject* parent)
 		parent_uuid = 0;
 	else
 		parent_uuid = parent->GetUUID();
+}
+
+bool GameObject::ChangeParent(GameObject* newParent)
+{
+	if (!transform || !newParent->transform)
+		return false;
+
+	math::float4x4 globalMatrix;
+	globalMatrix = transform->GetGlobalMatrix();
+
+	GetParent()->EraseChild(this);
+	newParent->AddChild(this);
+	SetParent(newParent);
+
+	transform->SetMatrixFromGlobal(globalMatrix);
+
+	return true;
 }
 
 GameObject* GameObject::GetParent() const
@@ -440,6 +462,16 @@ void GameObject::OnSystemEvent(System_Event event)
 		break;
 	}
 	case System_Event_Type::LoadFinished:
+	{
+		for (auto component = components.begin(); component != components.end(); ++component)
+		{
+			(*component)->OnSystemEvent(event);
+		}
+		break;
+	}
+	case System_Event_Type::ScreenChanged:
+	case System_Event_Type::RectTransformUpdated:
+	case System_Event_Type::CanvasChanged:
 	{
 		for (auto component = components.begin(); component != components.end(); ++component)
 		{
