@@ -174,6 +174,29 @@ void ComponentTrail::SetMaterialRes(uint materialUuid)
 	materialRes = materialUuid;
 }
 
+inline void ComponentTrail::Start()
+{
+	create = true;
+}
+
+inline void ComponentTrail::Stop()
+{
+	create = false;
+}
+
+inline void ComponentTrail::HardStop()
+{
+	create = false;
+
+	for (std::list< TrailNode*>::iterator curr = trailVertex.begin(); curr != trailVertex.end(); ++curr)
+	{
+		delete *curr;
+		*curr = nullptr;
+	}
+
+	trailVertex.clear();
+}
+
 uint ComponentTrail::GetInternalSerializationBytes()
 {
 	return sizeof(materialRes) + sizeof(minDistance) + sizeof(lifeTime) + sizeof(create);

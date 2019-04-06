@@ -43,6 +43,10 @@ public:
 
 	void SetMaterialRes(uint materialUuid);
 
+	void Start();
+	void Stop();
+	void HardStop();
+
 
 	//Serialization
 	uint GetInternalSerializationBytes();
