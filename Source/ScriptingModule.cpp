@@ -3606,7 +3606,7 @@ void ScriptingModule::UpdateScriptingReferences()
 	delete[] buffer;
 }
 
-
+// JONATHAN DONT KILL ME <3 (Guillem)
 void ResetTexture(MonoObject* compImage)
 {
 	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(compImage);
