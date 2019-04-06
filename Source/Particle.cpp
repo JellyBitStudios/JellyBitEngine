@@ -93,7 +93,7 @@ bool Particle::Update(float dt)
 	if (owner->simulatedGame == SimulatedGame_PAUSE || App->IsPause())
 		dt = 0;
 	life += dt;
-	if (life < lifeTime || owner->dieOnAnimation)
+	if (life < lifeTime /*|| owner->dieOnAnimation*/)
 	{
 		acceleration3 += acceleration3 * dt;
 		math::float3 movement = direction * (speed * dt);
@@ -155,6 +155,9 @@ bool Particle::Update(float dt)
 					currMinUVCoord.y = ((textureRows - 1) - (currentFrame / textureColumns)) * textureRowsNorm;
 					animationTime = 0.0f;
 				}
+				else if (!owner->dieOnAnimation)
+					contFrame = 0u;
+				
 				else
 					EndParticle();
 			}

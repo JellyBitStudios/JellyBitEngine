@@ -16,6 +16,7 @@
 #define DEFAULT_SHADER_PROGRAM_PARTICLE_UUID 2628722347
 #define DEFAULT_SHADER_PROGRAM_UI_UUID 1246832795 
 #define CUBEMAP_SHADER_PROGRAM_UUID 1676961097
+#define DECAL_SHADER_PROGRAM_UUID 1708332988
 #define DEFAULT_MATERIAL_UUID 2168314292
 #define REPLACE_ME_TEXTURE_UUID 3462814329
 #define CHECKERS_TEXTURE_UUID 1162820329
@@ -42,6 +43,7 @@ public:
 	void CreateDefaultShaderProgram(const char* vShader, const char* fShader, ShaderProgramTypes type);
 	void CreateDeferredShaderProgram();
 	void CreateBillboardShaderProgram();
+	uint CreateDecalShaderProgram() const;
 	uint CreateCartoonShaderProgram() const;
 	uint CreateFloorCartoonShaderProgram() const;
 
@@ -69,6 +71,7 @@ public:
 	uint UIVertexShaderObject;
 	uint UIFragmentShaderObject;
 	uint UIShaderProgram;
+	uint decalShaderProgram;
 	uint cartoonShaderProgram;
 	uint cartoonFloorProgram;
 

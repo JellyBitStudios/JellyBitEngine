@@ -610,7 +610,7 @@ void ComponentEmitter::ParticleTexture()
 			if (dieOnAnimation)
 			{
 				checkLife = false;
-				startValues.life.x = particleAnim.animationSpeed * particleAnim.textureColumns * particleAnim.textureRows;
+				startValues.life.x = particleAnim.animationSpeed * (particleAnim.textureColumns * particleAnim.textureRows - 1);
 			}
 			if (ImGui::Button("Instant Animation", ImVec2(150.0f, 25.0f)))
 			{
@@ -992,7 +992,6 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	memcpy(&startOnPlay, cursor, bytes);
 	cursor += bytes;
 
-	//TODO PROGRAMMER: Coment this two lines then save scene and Discomment it
 	memcpy(&localSpace, cursor, bytes);
 	cursor += bytes;
 
@@ -1277,7 +1276,7 @@ void ParticleAnimation::OnInternalSave(char *& cursor)
 	cursor += bytes;
 
 	bytes = sizeof(float);
-	memcpy(cursor, &textureRows, bytes);
+	memcpy(cursor, &textureRowsNorm, bytes);
 	cursor += bytes;
 
 	memcpy(cursor, &textureColumnsNorm, bytes);
@@ -1304,7 +1303,7 @@ void ParticleAnimation::OnInternalLoad(char *& cursor)
 	cursor += bytes;
 
 	bytes = sizeof(float);
-	memcpy(&textureRows, cursor, bytes);
+	memcpy(&textureRowsNorm, cursor, bytes);
 	cursor += bytes;
 
 	memcpy(&textureColumnsNorm, cursor, bytes);
