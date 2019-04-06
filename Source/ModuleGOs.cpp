@@ -36,11 +36,6 @@ update_status ModuleGOs::Update() // TODO_G : for VS2 its ok but this have to be
 		if (ComponentAnimator* anim_co = (ComponentAnimator*)(*it)->GetComponent(ComponentTypes::AnimatorComponent)) {
 			anim_co->Update(); // hehehehhehehe
 		}
-
-		ComponentTrail* trail = (ComponentTrail*)(*it)->GetComponent(ComponentTypes::TrailComponent);
-		if (trail) {
-			trail->Update(); // hehehehhehehe
-		}
 	}
 	return update_status::UPDATE_CONTINUE;
 }
