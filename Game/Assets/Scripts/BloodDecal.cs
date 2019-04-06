@@ -4,8 +4,12 @@ using JellyBitEngine;
 
 public class BloodDecal : JellyScript
 {
-    public GameObject reference = null;
+    #region PUBLIC_VARIABLES
+    public GameObject Alita = null;
     public float distance = 1.0f;
+
+    public GameObject reference = null;
+    #endregion
 
     #region PRIVATE_VARIABLES
     private Projector projector = null;
@@ -19,21 +23,26 @@ public class BloodDecal : JellyScript
     public override void Update()
     {
         if (Input.GetKeyDown(KeyCode.KEY_A))
-        {    
-            OrientDecal(reference.transform.position);
+        {
+            OrientDecal(Alita.transform.position, reference.transform.position, distance);
             ShowDecal();
         }
         else if (Input.GetKeyDown(KeyCode.KEY_S))
             HideDecal();
     }
 
-    private void OrientDecal(Vector3 direction)
+    private void OrientDecal(Vector3 Alita, Vector3 position, float distance)
     {
-        transform.rotation *= LookAt(direction);
+        Debug.Log("Decal reference position: " + position);
+        Vector3 direction = (position - Alita).normalized();
+        Vector3 newPosition = position + direction * distance;
+        Debug.Log("Decal reference new position: " + newPosition);
+
+        transform.rotation = LookAt(newPosition);
     }
 
     private void ShowDecal()
-    {       
+    {
         projector.SetActive(true);
     }
 
@@ -44,27 +53,7 @@ public class BloodDecal : JellyScript
 
     private Quaternion LookAt(Vector3 position)
     {
-        Debug.Log("Reference position: " + position);
-        Debug.Log("Position: " + transform.position);
-
-        Vector3 Z = (position - transform.position);
-
-        //Vector3 X = Cross(Vector3.up, Z).normalized();
-
-        float angleZ = (float)(Math.Atan2(Z.y, Z.x) - Math.Atan2(transform.forward.y, transform.forward.x));
-        Quaternion rotationZ = Quaternion.Rotate(transform.right, angleZ);
-
-        //float angleX = (float)Math.Atan2(transform.right.magnitude, X.magnitude);
-        //Quaternion rotationX = Quaternion.Rotate(transform.up, angleX);
-
-        return /*rotationX **/ rotationZ;
-    }
-
-    public static Vector3 Cross(Vector3 lhs, Vector3 rhs)
-    {
-        return new Vector3(
-            lhs.y * rhs.z - lhs.z * rhs.y,
-            lhs.z * rhs.x - lhs.x * rhs.z,
-            lhs.x * rhs.y - lhs.y * rhs.x);
+        Vector3 direction = (position - transform.position).normalized();
+        return Quaternion.LookAt(Vector3.forward, direction, Vector3.up, transform.up);
     }
 }
