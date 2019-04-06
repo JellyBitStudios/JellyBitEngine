@@ -48,8 +48,8 @@ void ComponentTrail::Update()
 	if (create)
 	{
 		// Get the new trail vertex
-		math::float3 originHigh = parent->boundingBox.FaceCenterPoint(5);
-		math::float3 originLow = parent->boundingBox.FaceCenterPoint(4);
+		math::float3 originHigh = parent->rotationBB.FaceCenterPoint(5);
+		math::float3 originLow = parent->rotationBB.FaceCenterPoint(4);
 
 		// Check we already have a trail
 		if (trailVertex.size() > 1)
