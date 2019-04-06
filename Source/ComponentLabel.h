@@ -87,6 +87,7 @@ private:
 	void SetHorizontalAligment(const HorizontalLabelAlign nextAlignement);
 	void DragDropFont();
 	void FIllBuffer();
+	void FillCorners();
 private:
 	uint fontUuid = 0u;
 

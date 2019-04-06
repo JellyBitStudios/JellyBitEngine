@@ -154,13 +154,8 @@ void ComponentLabel::Update()
 
 				if (vAlign != V_Top)
 					VerticalAlignment(rectParent[H_UI_RECT], V_Top);
-				for (uint i = 0; i < labelWord.size(); i++)
-				{
-					if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-						ScreenDraw(labelWord[i].corners, labelWord[i].rect);
-					else
-						WorldDraw(parentCorners, labelWord[i].corners, rectParent, labelWord[i].rect);
-				}
+
+				FillCorners();
 
 				if (index != -1)
 					FIllBuffer();
@@ -532,6 +527,18 @@ void ComponentLabel::FIllBuffer()
 	last_word_size = labelWord.size();
 
 	App->ui->FillBufferRange(offset, buffer_size, buffer);
+}
+
+void ComponentLabel::FillCorners()
+{
+	for (uint i = 0; i < labelWord.size(); i++)
+	{
+		if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
+			ScreenDraw(labelWord[i].corners, labelWord[i].rect);
+		else
+			WorldDraw(parent->cmp_rectTransform->GetCorners(), labelWord[i].corners, parent->cmp_rectTransform->GetRect(), labelWord[i].rect);
+	}
+
 }
 
 void ComponentLabel::SetFinalText(const char * newText)
