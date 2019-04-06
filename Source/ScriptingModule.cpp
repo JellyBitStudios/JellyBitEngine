@@ -16,6 +16,7 @@
 #include "ComponentRigidDynamic.h"
 #include "ComponentMaterial.h"
 #include "ComponentSphereCollider.h"
+#include "ComponentTrail.h"
 
 #include "GameObject.h"
  
@@ -611,6 +612,11 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 		case ComponentTypes::MaterialComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Material"));
+			break;
+		}
+		case ComponentTypes::TrailComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Trail"));
 			break;
 		}
 	}
@@ -2019,7 +2025,19 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
 
 		return App->scripting->MonoComponentFrom(comp);	
 	}
+	else if (className == "Trail")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
 
+		Component* comp = gameObject->GetComponent(ComponentTypes::TrailComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
 	else
 	{
 		//Check if this monoObject is destroyed
@@ -2419,6 +2437,119 @@ void ParticleEmitterStop(MonoObject* particleComp)
 	{
 		emitter->ClearEmitter();
 	}
+}
+
+void TrailStart(MonoObject* monoTrail)
+{
+	ComponentTrail* trail = (ComponentTrail*)App->scripting->ComponentFrom(monoTrail);
+	if (trail)
+	{
+		trail->Start();
+	}
+}
+
+void TrailStop(MonoObject* monoTrail)
+{
+	ComponentTrail* trail = (ComponentTrail*)App->scripting->ComponentFrom(monoTrail);
+	if (trail)
+	{
+		trail->Stop();
+	}
+}
+
+void TrailHardStop(MonoObject* monoTrail)
+{
+	ComponentTrail* trail = (ComponentTrail*)App->scripting->ComponentFrom(monoTrail);
+	if (trail)
+	{
+		trail->HardStop();
+	}
+}
+
+void TrailSetVector(MonoObject* monoTrail, int newVec)
+{
+	ComponentTrail* trail = (ComponentTrail*)App->scripting->ComponentFrom(monoTrail);
+	if (trail)
+	{
+		trail->SetVector((TrailVector)newVec);
+	}
+}
+
+int TrailGetVector(MonoObject* monoTrail)
+{
+	ComponentTrail* trail = (ComponentTrail*)App->scripting->ComponentFrom(monoTrail);
+	if (trail)
+	{
+		return trail->GetVector();
+	}
+	return 0;
+}
+
+void TrailSetLifeTime(MonoObject* monoTrail, int newLifeTime)
+{
+	ComponentTrail* trail = (ComponentTrail*)App->scripting->ComponentFrom(monoTrail);
+	if (trail)
+	{
+		trail->SetLifeTime(newLifeTime);
+	}
+}
+
+int TrailGetLifeTime(MonoObject* monoTrail)
+{
+	ComponentTrail* trail = (ComponentTrail*)App->scripting->ComponentFrom(monoTrail);
+	if (trail)
+	{
+		return trail->GetLifeTime();
+	}
+	return 0;
+}
+
+void TrailSetMinDistance(MonoObject* monoTrail, int newMinDistance)
+{
+	ComponentTrail* trail = (ComponentTrail*)App->scripting->ComponentFrom(monoTrail);
+	if (trail)
+	{
+		trail->SetMinDistance(newMinDistance);
+	}
+}
+
+int TrailGetMinDistance(MonoObject* monoTrail)
+{
+	ComponentTrail* trail = (ComponentTrail*)App->scripting->ComponentFrom(monoTrail);
+	if (trail)
+	{
+		return trail->GetMinDistance();
+	}
+	return 0;
+}
+
+void TrailSetColor(MonoObject* monoTrail, MonoArray* newColor)
+{
+	ComponentTrail* trail = (ComponentTrail*)App->scripting->ComponentFrom(monoTrail);
+	if (trail)
+	{
+		math::float4 newColorCPP(mono_array_get(newColor, float, 0), mono_array_get(newColor, float, 1), mono_array_get(newColor, float, 2), mono_array_get(newColor, float, 3));
+		trail->SetColor(newColorCPP);
+	}
+}
+
+MonoArray* TrailGetColor(MonoObject* monoTrail)
+{
+	ComponentTrail* trail = (ComponentTrail*)App->scripting->ComponentFrom(monoTrail);
+	if (trail)
+	{
+		math::float4 color = trail->GetColor();
+
+		MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_single_class(), 4);
+		mono_array_set(ret, float, 0, color.x);
+		mono_array_set(ret, float, 1, color.y);
+		mono_array_set(ret, float, 2, color.z);
+		mono_array_set(ret, float, 3, color.w);
+
+		return ret;
+	}
+
+	return nullptr;
 }
 
 bool UIHovered()
@@ -3342,6 +3473,19 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Play", (const void*)&ParticleEmitterPlay);
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Stop", (const void*)&ParticleEmitterStop);
 
+	//Trail
+	mono_add_internal_call("JellyBitEngine.Trail::Start", (const void*)&TrailStart);
+	mono_add_internal_call("JellyBitEngine.Trail::Stop", (const void*)&TrailStop);
+	mono_add_internal_call("JellyBitEngine.Trail::HardStop", (const void*)&TrailHardStop);
+	mono_add_internal_call("JellyBitEngine.Trail::SetVector", (const void*)&TrailSetVector);
+	mono_add_internal_call("JellyBitEngine.Trail::GetVector", (const void*)&TrailGetVector);
+	mono_add_internal_call("JellyBitEngine.Trail::SetLifeTime", (const void*)&TrailSetLifeTime);
+	mono_add_internal_call("JellyBitEngine.Trail::GetLifeTime", (const void*)&TrailGetLifeTime);
+	mono_add_internal_call("JellyBitEngine.Trail::SetMinDistance", (const void*)&TrailSetMinDistance);
+	mono_add_internal_call("JellyBitEngine.Trail::GetMinDistance", (const void*)&TrailGetMinDistance);
+	mono_add_internal_call("JellyBitEngine.Trail::SetColor", (const void*)&TrailSetColor);
+	mono_add_internal_call("JellyBitEngine.Trail::GetColor", (const void*)&TrailGetColor);
+
 	//Physics
 	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddForce", (const void*)&RigidbodyAddForce);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddTorque", (const void*)&RigidbodyAddTorque);
@@ -3371,6 +3515,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Label::SetResource", (const void*)&LabelSetResource);
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetResource", (const void*)&LabelGetResource);
 
+	//PlayerPrefs
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::GetNumber", (const void*)&PlayerPrefsGetNumber);
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::SetNumber", (const void*)&PlayerPrefsSetNumber);
@@ -3381,7 +3526,11 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::HasKey", (const void*)&PlayerPrefsHasKey);
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::DeleteKey", (const void*)&PlayerPrefsDeleteKey);
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::DeleteAll", (const void*)&PlayerPrefsDeleteAll);
+
+	//SceneManager
 	mono_add_internal_call("JellyBitEngine.SceneManager.SceneManager::LoadScene", (const void*)&SMLoadScene);
+
+	//NavMeshAgent
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetRadius", (const void*)&NavAgentGetRadius);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetRadius", (const void*)&NavAgentSetRadius);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetHeight", (const void*)&NavAgentGetHeight);
@@ -3397,6 +3546,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::ResetMoveTarget", (const void*)&NavAgentResetMoveTarget);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetParams", (const void*)&NavAgentGetParams);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetParams", (const void*)&NavAgentSetParams);
+
+	//Audio
 	mono_add_internal_call("JellyBitEngine.AudioSource::GetAudio", (const void*)&AudioSourceGetAudio);
 	mono_add_internal_call("JellyBitEngine.AudioSource::SetAudio", (const void*)&AudioSourceSetAudio);
 	mono_add_internal_call("JellyBitEngine.AudioSource::GetMuted", (const void*)&AudioSourceGetMuted);
@@ -3429,6 +3580,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.AudioSource::PauseAudio", (const void*)&AudioSourcePauseAudio);
 	mono_add_internal_call("JellyBitEngine.AudioSource::ResumeAudio", (const void*)&AudioSourceResumeAudio);
 	mono_add_internal_call("JellyBitEngine.AudioSource::StopAudio", (const void*)&AudioSourceStopAudio);
+
 	//Material
 	mono_add_internal_call("JellyBitEngine.Material::SetResource", (const void*)&MaterialSetResource);
 

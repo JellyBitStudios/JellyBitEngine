@@ -54,10 +54,16 @@ public:
 	void HardStop();
 
 	void SetVector(TrailVector vec);
-	void SetLifeTime(int lifeTime);
-	void SetMinDistance(int minDistance);
-	void SetColor(math::float4 color);
+	inline TrailVector GetVector() { return vector; }
 
+	void SetLifeTime(int lifeTime);
+	inline int GetLifeTime() { return lifeTime; }
+
+	void SetMinDistance(int minDistance);
+	inline int GetMinDistance() { return minDistance; }
+
+	void SetColor(math::float4 color);
+	inline math::float4 GetColor() { return color; }
 
 	//Serialization
 	uint GetInternalSerializationBytes();
