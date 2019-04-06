@@ -66,8 +66,8 @@ void ComponentImage::Update()
 			mask_values[1] = ((rect_initValues[1] - (float)rect[ComponentRectTransform::Rect::YDIST]) / rect_initValues[1]);
 			mask_values[0] = 1.0f - ((rect_initValues[0] - (float)rect[ComponentRectTransform::Rect::XDIST]) / rect_initValues[0]);
 		}
-		if (index != -1)
-			FillBuffer();
+		//if (index != -1)
+			//FillBuffer();
 
 		needed_recalculate = false;
 	}
@@ -115,7 +115,7 @@ void ComponentImage::SetBufferRangeAndFIll(uint offs, int index)
 	offset = offs;
 	this->index = index;
 
-	FillBuffer();
+	//FillBuffer();
 }
 
 uint ComponentImage::GetResImageUuid() const
@@ -283,8 +283,18 @@ void ComponentImage::OnUniqueEditor()
 			ImGui::EndDragDropTarget();
 		}
 		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-		if (ImGui::Checkbox("M", &mask))
-			SetMask();
+		bool tempMask = mask;
+		if (ImGui::Checkbox("M", &tempMask))
+		{
+			if (tempMask)
+			{
+				mask = true;
+				SetMask();
+			}
+			else
+				mask = false;
+		}
+
 		if (ImGui::IsItemHovered())
 		{
 			ImGui::BeginTooltip();
@@ -316,7 +326,7 @@ void ComponentImage::OnUniqueEditor()
 	}
 #endif
 }
-
+/*
 void ComponentImage::FillBuffer()
 {
 	math::float3* rCorners = parent->cmp_rectTransform->GetCorners();
@@ -333,3 +343,4 @@ void ComponentImage::FillBuffer()
 	cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
 	App->ui->FillBufferRange(offset, UI_BYTES_IMAGE, buffer);
 }
+*/
