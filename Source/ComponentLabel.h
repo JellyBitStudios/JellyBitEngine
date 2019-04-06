@@ -23,7 +23,18 @@ struct Character;
 #define CORNER_BOTTOM_LEFT 2
 #define CORNER_BOTTOM_RIGHT 3
 
-
+enum VerticalLabelAlign
+{
+	V_Top,
+	V_Middle,
+	V_Bottom
+};
+enum HorizontalLabelAlign
+{
+	H_Left,
+	H_Middle,
+	H_Right
+};
 class ComponentLabel : public Component
 {
 public:
@@ -38,13 +49,17 @@ public:
 	ComponentLabel(const ComponentLabel& componentLabel, GameObject* parent, bool includeComponents = true);
 	~ComponentLabel();
 
-	//NOTE: If you override this method, make sure to call the base class method. 
+	//NOTE: If you override this method, make sure to call the base class method.
 	//(Component::OnSystemEvent(event); at start)
 	void OnSystemEvent(System_Event event);
 
 	void Update();
 
-	void WorldDraw(math::float3 * parentCorners, math::float4 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm);
+	void VerticalAlignment(const uint parentHeight, const VerticalLabelAlign alignFrom);
+	void HorizontalAlignment(const uint parentWidth, const HorizontalLabelAlign alignFrom);
+	void RowAlignment(const uint firstLabelRow, const uint lastLabelRow, const uint diference, const HorizontalLabelAlign alignFrom);
+
+	void WorldDraw(math::float3 * parentCorners, math::float3 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm);
 
 	void ScreenDraw(math::float4 corners[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm);
 
@@ -66,6 +81,8 @@ private:
 	void OnInternalSave(char*& cursor);
 	void OnInternalLoad(char*& cursor);
 	void OnUniqueEditor();
+	void SetVerticalAligment(const VerticalLabelAlign nextAlignement);
+	void SetHorizontalAligment(const HorizontalLabelAlign nextAlignement);
 	void DragDropFont();
 	void FIllBuffer();
 private:
@@ -83,10 +100,15 @@ private:
 
 	bool needed_recalculate = false;
 
+	//Buffer
 	char buffer[UI_BYTES_LABEL];
 	uint buffer_size = 0;
 	uint offset = 0;
 	int index = -1;
+
+	//Align
+	VerticalLabelAlign vAlign = V_Top;
+	HorizontalLabelAlign hAlign = H_Left;
 };
 
 #endif

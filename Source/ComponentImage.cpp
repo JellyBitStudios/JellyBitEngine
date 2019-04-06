@@ -23,8 +23,7 @@ ComponentImage::ComponentImage(GameObject * parent, ComponentTypes componentType
 			parent->AddComponent(ComponentTypes::CanvasRendererComponent);
 
 		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::ImageComponent, this);
-		if(index != -1)
-			FillBuffer();
+		needed_recalculate = true;
 	}
 }
 
@@ -42,8 +41,7 @@ ComponentImage::ComponentImage(const ComponentImage & componentImage, GameObject
 			App->res->SetAsUsed(res_image);
 
 		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::ImageComponent, this);
-		if (index != -1)
-			FillBuffer();
+		needed_recalculate = true;
 	}
 }
 

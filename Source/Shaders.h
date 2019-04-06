@@ -478,7 +478,7 @@
 "\n"																								\
 "flat out int fIsEdge; // which output primitives are silhouette edges\n"							\
 "\n"																								\
-"//uniform float edgeWidth; // width of silhouette edge in clip\n"									\
+"uniform float edgeWidth; // width of silhouette edge in clip\n"									\
 "//uniform float pctExtend; // percentage to extend quad\n"											\
 "\n"																								\
 "bool isFrontFacing(vec3 a, vec3 b, vec3 c) // is a triangle front facing?\n"						\
@@ -489,7 +489,6 @@
 "\n"																								\
 "void emitEdgeQuad(vec3 e0, vec3 e1)\n"																\
 "{\n"																								\
-"	float edgeWidth = 0.002;\n"																		\
 "	float pctExtend = 0.0;\n"																		\
 "\n"																								\
 "	vec2 ext = pctExtend * (e1.xy - e0.xy);\n"														\
