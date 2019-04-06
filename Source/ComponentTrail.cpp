@@ -179,6 +179,8 @@ void ComponentTrail::OnUniqueEditor()
 				}
 				ImGui::EndDragDropTarget();
 			}
+			ImGui::SameLine();
+			ImGui::ShowHelpMarker("A material with trail shader has to be added for the trail to work");
 
 			ImGui::ColorEdit4("Trail color", color.ptr(), ImGuiColorEditFlags_None);
 
