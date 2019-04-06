@@ -2,13 +2,16 @@
 using System;
 using JellyBitEngine;
 
-public class BloodDecal : JellyScript
+public class Decal : JellyScript
 {
     #region PUBLIC_VARIABLES
-    public GameObject Alita = null;
-    public float distance = 1.0f;
+    public enum DecalType { blood, brokenFloor };
+    public DecalType decalType = DecalType.blood;
 
     public GameObject reference = null;
+
+    public GameObject Alita = null;
+    public float distance = 1.0f;
     #endregion
 
     #region PRIVATE_VARIABLES
@@ -24,19 +27,32 @@ public class BloodDecal : JellyScript
     {
         if (Input.GetKeyDown(KeyCode.KEY_A))
         {
-            OrientDecal(Alita.transform.position, reference.transform.position, distance);
+            OrientDecal();
             ShowDecal();
         }
         else if (Input.GetKeyDown(KeyCode.KEY_S))
             HideDecal();
     }
 
-    private void OrientDecal(Vector3 Alita, Vector3 position, float distance)
+    private void OrientDecal()
     {
-        Debug.Log("Decal reference position: " + position);
-        Vector3 direction = (position - Alita).normalized();
-        Vector3 newPosition = position + direction * distance;
-        Debug.Log("Decal reference new position: " + newPosition);
+        Vector3 newPosition = transform.position;
+
+        switch (decalType)
+        {
+            case DecalType.blood:
+
+                Vector3 direction = (reference.transform.position - Alita.transform.position).normalized();
+                newPosition = reference.transform.position + direction * distance;
+
+                break;
+
+            case DecalType.brokenFloor:
+
+                newPosition = reference.transform.position;
+
+                break;
+        }
 
         transform.rotation = LookAt(newPosition);
     }
