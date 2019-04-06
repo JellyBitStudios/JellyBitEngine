@@ -289,10 +289,22 @@ void GameObject::SetParent(GameObject* parent)
 		parent_uuid = parent->GetUUID();
 }
 
-//GameObject * GameObject::SwapParents(GameObject * newPraent)
-//{
-//	return nullptr;
-//}
+bool GameObject::ChangeParent(GameObject* newParent)
+{
+	if (!transform || !newParent->transform)
+		return false;
+
+	math::float4x4 globalMatrix;
+	globalMatrix = transform->GetGlobalMatrix();
+
+	GetParent()->EraseChild(this);
+	newParent->AddChild(this);
+	SetParent(newParent);
+
+	transform->SetMatrixFromGlobal(globalMatrix);
+
+	return true;
+}
 
 GameObject* GameObject::GetParent() const
 {
