@@ -106,16 +106,6 @@ void ComponentTrail::Update()
 		trailVertex.remove(*it);
 		delete *it;
 	}
-
-
-	if (App->input->GetKey(SDL_SCANCODE_1) == KEY_DOWN)
-	{
-		trailVertex.clear();
-	}
-	if (App->input->GetKey(SDL_SCANCODE_2) == KEY_DOWN)
-	{
-		create = !create;
-	}
 }
 
 
