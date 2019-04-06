@@ -594,3 +594,28 @@ void ComponentLabel::SetBufferRangeAndFIll(uint offs, int index)
 	if(!labelWord.empty())
 		FIllBuffer();
 }
+
+void ComponentLabel::SetFontResource(uint uuid)
+{
+	fontUuid = uuid;
+	needed_recalculate = true;
+	size = ((ResourceFont*)App->res->GetResource(uuid))->fontData.fontSize;
+}
+
+void ComponentLabel::SetFontResource(std::string fontName)
+{
+	std::vector<Resource*> fonts = App->res->GetResourcesByType(ResourceTypes::FontResource);
+	for (Resource* resource : fonts)
+	{
+		if (resource->GetData().name == fontName)
+		{
+			SetFontResource(resource->GetUuid());
+			break;
+		}
+	}
+}
+
+ResourceFont* ComponentLabel::GetFontResource()
+{
+	return fontUuid != 0 ? (ResourceFont*)App->res->GetResource(fontUuid) : nullptr;
+}

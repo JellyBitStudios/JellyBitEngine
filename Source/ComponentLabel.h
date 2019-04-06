@@ -12,6 +12,7 @@
 #include "MathGeoLib/include/Math/float3.h"
 
 struct Character;
+class ResourceFont;
 
 #define X_UI_RECT 0
 #define Y_UI_RECT 1
@@ -77,6 +78,10 @@ public:
 
 	int GetBufferIndex()const;
 	void SetBufferRangeAndFIll(uint offs, int index);
+
+	void SetFontResource(uint uuid);
+	void SetFontResource(std::string fontName);
+	ResourceFont* GetFontResource();
 
 private:
 	uint GetInternalSerializationBytes();

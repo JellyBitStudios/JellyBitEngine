@@ -2338,6 +2338,26 @@ MonoArray* GameObjectGetChilds(MonoObject* monoObject)
 	return nullptr;
 }
 
+MonoObject* GameObjectGetParent(MonoObject* monoObject)
+{
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	if (!gameObject)
+		return nullptr;
+
+	return App->scripting->MonoObjectFrom(gameObject->GetParent());
+}
+
+void GameObjectSetParent(MonoObject* monoObject, MonoObject* newParent)
+{
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	GameObject* newParentCPP = App->scripting->GameObjectFrom(newParent);
+
+	if (!gameObject || !newParentCPP)
+		return;
+
+	gameObject->ChangeParent(newParentCPP);
+}
+
 bool PlayAnimation(MonoObject* animatorComp, MonoString* animUUID)
 {
 	if (!animUUID)
@@ -2590,6 +2610,34 @@ void LabelSetColor(MonoObject* monoLabel, MonoArray* newColorCSharp)
 
 		label->SetColor(newColor);
 	}
+}
+
+MonoString* LabelGetResource(MonoObject* monoLabel)
+{
+	ComponentLabel* label = (ComponentLabel*)App->scripting->ComponentFrom(monoLabel);
+	if (label)
+	{
+		ResourceFont* font = label->GetFontResource();
+		if (font)	
+			return mono_string_new(App->scripting->domain, font->GetData().name.data());		
+		else
+			return nullptr;
+	}
+	return nullptr;
+}
+
+void LabelSetResource(MonoObject* monoLabel, MonoString* newFont)
+{
+	if (!newFont)
+		return;
+
+	ComponentLabel* label = (ComponentLabel*)App->scripting->ComponentFrom(monoLabel);
+
+	char* fontCPP = mono_string_to_utf8(newFont);
+
+	label->SetFontResource(fontCPP);
+
+	mono_free(fontCPP);
 }
 
 void PlayerPrefsSave()
@@ -3258,6 +3306,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.GameObject::GetLayerID", (const void*)&GameObjectGetLayerID);
 	mono_add_internal_call("JellyBitEngine.GameObject::GetLayer", (const void*)&GameObjectGetLayerName);
 	mono_add_internal_call("JellyBitEngine.GameObject::GetChilds", (const void*)&GameObjectGetChilds);
+	mono_add_internal_call("JellyBitEngine.GameObject::GetParent", (const void*)&GameObjectGetParent);
+	mono_add_internal_call("JellyBitEngine.GameObject::SetParent", (const void*)&GameObjectSetParent);
 
 	mono_add_internal_call("JellyBitEngine.Time::getDeltaTime", (const void*)&GetDeltaTime);
 	mono_add_internal_call("JellyBitEngine.Time::getRealDeltaTime", (const void*)&GetRealDeltaTime);
@@ -3318,6 +3368,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetText", (const void*)&LabelGetText);
 	mono_add_internal_call("JellyBitEngine.UI.Label::SetColor", (const void*)&LabelSetColor);
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetColor", (const void*)&LabelGetColor);
+	mono_add_internal_call("JellyBitEngine.UI.Label::SetResource", (const void*)&LabelSetResource);
+	mono_add_internal_call("JellyBitEngine.UI.Label::GetResource", (const void*)&LabelGetResource);
 
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::GetNumber", (const void*)&PlayerPrefsGetNumber);
