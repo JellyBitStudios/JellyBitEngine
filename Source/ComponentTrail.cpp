@@ -148,6 +148,10 @@ void ComponentTrail::OnUniqueEditor()
 		ImGui::Checkbox("Create trail", &create);
 		ImGui::SameLine();
 		ImGui::ShowHelpMarker("This acts as a Start on play.\nIf this option is active, trails will be created, if not active they will not be created.\nYou can modify this value from a script in runtime");
+		
+		ImGui::Checkbox("Orient trail", &orient);
+		ImGui::SameLine();
+		ImGui::ShowHelpMarker("Decide if the trail should be force oriented.");
 
 		if (ImGui::CollapsingHeader("Trail Material", ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_DefaultOpen))
 		{
@@ -257,7 +261,7 @@ void ComponentTrail::SetColor(math::float4 color)
 
 uint ComponentTrail::GetInternalSerializationBytes()
 {
-	return sizeof(materialRes) + sizeof(minDistance) + sizeof(lifeTime) + sizeof(create) + sizeof(color) + sizeof(vector) + sizeof(hight) + sizeof(low);
+	return sizeof(materialRes) + sizeof(minDistance) + sizeof(lifeTime) + sizeof(create) + sizeof(color) + sizeof(vector) + sizeof(hight) + sizeof(low) + sizeof(orient);
 }
 
 void ComponentTrail::OnInternalSave(char *& cursor)
@@ -293,6 +297,10 @@ void ComponentTrail::OnInternalSave(char *& cursor)
 	bytes = sizeof(low);
 	memcpy(cursor, &low, bytes);
 	cursor += bytes;
+
+	bytes = sizeof(orient);
+	memcpy(cursor, &orient, bytes);
+	cursor += bytes;
 }
 
 void ComponentTrail::OnInternalLoad(char *& cursor)
@@ -327,5 +335,9 @@ void ComponentTrail::OnInternalLoad(char *& cursor)
 
 	bytes = sizeof(low);
 	memcpy(&low, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(orient);
+	memcpy(&orient, cursor, bytes);
 	cursor += bytes;
 }

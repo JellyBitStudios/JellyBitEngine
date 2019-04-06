@@ -79,9 +79,12 @@ public:
 	math::float4 color = math::float4::one;
 
 	TrailVector vector = TrailVector::X;
+	
+	bool orient = true;
 
 private:
 	bool create = true;
+
 
 	float minDistance = 0.05f;
 	int lifeTime = 200;
