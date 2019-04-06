@@ -190,6 +190,13 @@ void ComponentImage::SetMask()
 	}
 }
 
+void ComponentImage::ResetTexture()
+{
+	if (res_image > 0)
+		App->res->SetAsUnused(res_image);
+	res_image = 0;
+}
+
 bool ComponentImage::useMask() const
 {
 	return mask;
