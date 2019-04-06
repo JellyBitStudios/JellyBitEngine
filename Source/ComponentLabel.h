@@ -12,6 +12,7 @@
 #include "MathGeoLib/include/Math/float3.h"
 
 struct Character;
+class ResourceFont;
 
 #define X_UI_RECT 0
 #define Y_UI_RECT 1
