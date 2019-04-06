@@ -75,6 +75,9 @@ public:
 	void FillBufferRange(uint offset, uint size, char* buffer);
 	void RegisterBufferIndex(uint *offset, int* index, ComponentTypes cType, Component* cmp);
 	void UnRegisterBufferIndex(uint offset, ComponentTypes cType);
+
+	void ReAssignButtonOnClicks();
+
 private:
 
 	bool Init(JSON_Object* jObject);

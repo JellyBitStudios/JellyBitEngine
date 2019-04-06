@@ -442,6 +442,10 @@ void ComponentButton::OnUniqueEditor()
 									//Set this method and instance to be called
 									methodToCall = method;
 									scriptInstance = compInstance;
+
+									methodToCallName = name;
+									scriptInstanceUUID = script->UUID;
+
 									somethingClicked = true;
 									break;
 								}

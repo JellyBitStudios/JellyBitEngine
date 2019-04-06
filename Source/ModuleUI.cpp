@@ -517,6 +517,11 @@ void ModuleUI::UnRegisterBufferIndex(uint offset, ComponentTypes cType)
 	}
 }
 
+void ModuleUI::ReAssignButtonOnClicks()
+{
+
+}
+
 bool ModuleUI::GetUIMode() const
 {
 	return uiMode;

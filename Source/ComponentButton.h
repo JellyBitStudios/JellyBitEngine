@@ -58,6 +58,9 @@ private:
 	MonoMethod* methodToCall = nullptr;
 	MonoObject* scriptInstance = nullptr;
 
+	uint scriptInstanceUUID = 0;
+	std::string methodToCallName;
+
 	GameObject* draggedGO = nullptr;
 
 	//Physix plane for button when canvas is world
