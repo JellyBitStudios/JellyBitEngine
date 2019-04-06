@@ -45,6 +45,7 @@ public:
 	std::string GetResImageName() const;
 	void SetResImageName(const std::string& name);
 	void SetMask();
+	void ResetTexture();
 
 private:
 	uint GetInternalSerializationBytes();
