@@ -61,9 +61,9 @@ public:
 	void HorizontalAlignment(const uint parentWidth, const HorizontalLabelAlign alignFrom);
 	void RowAlignment(const uint firstLabelRow, const uint lastLabelRow, const uint diference, const HorizontalLabelAlign alignFrom);
 
-	void WorldDraw(math::float3 * parentCorners, math::float4 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm);
+	void WorldDraw(math::float3 * parentCorners, math::float4 corners[4], uint * rectParent, uint rect[4]);
 
-	void ScreenDraw(math::float4 corners[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm);
+	void ScreenDraw(math::float4 corners[4], uint rect[4]);
 
 	void SetFinalText(const char* newText);
 	const char* GetFinalText() const;
@@ -87,6 +87,7 @@ private:
 	void SetHorizontalAligment(const HorizontalLabelAlign nextAlignement);
 	void DragDropFont();
 	void FIllBuffer();
+	void FillCorners();
 private:
 	uint fontUuid = 0u;
 
@@ -101,6 +102,8 @@ private:
 	uint last_word_size = 0;
 
 	bool needed_recalculate = false;
+	bool aligment = false;
+	bool hAligment = false;
 
 	//Buffer
 	char buffer[UI_BYTES_LABEL];
