@@ -2,6 +2,7 @@
 #include "ComponentScript.h"
 #include "ResourceScript.h"
 #include "ResourcePrefab.h"
+#include "ResourceFont.h"
 
 #include "ComponentTransform.h"
 #include "ComponentNavAgent.h"
