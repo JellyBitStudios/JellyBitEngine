@@ -29,6 +29,12 @@ struct TrailNode
 	}
 };
 
+enum TrailVector
+{
+	X,
+	Y,
+	Z
+};
 class ComponentTrail : public Component
 {
 public:
@@ -61,11 +67,16 @@ public:
 
 	math::float4 color = math::float4::one;
 
+	TrailVector vector = TrailVector::X;
+
 private:
 	bool create = true;
 
 	float minDistance = 0.05f;
 	int lifeTime = 200;
+
+	int hight = 5;
+	int low = 4;
 };
 
 #endif //! __COMPONENT_TRAIL_H__

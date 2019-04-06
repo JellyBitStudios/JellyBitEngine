@@ -51,8 +51,8 @@ void ComponentTrail::Update()
 	if (create)
 	{
 		// Get the new trail vertex
-		math::float3 originHigh = parent->rotationBB.FaceCenterPoint(5);
-		math::float3 originLow = parent->rotationBB.FaceCenterPoint(4);
+		math::float3 originHigh = parent->rotationBB.FaceCenterPoint(hight);
+		math::float3 originLow = parent->rotationBB.FaceCenterPoint(low);
 
 		// Check we already have a trail
 		if (trailVertex.size() > 1)
@@ -125,9 +125,35 @@ void ComponentTrail::OnUniqueEditor()
 
 	if (ImGui::CollapsingHeader("Trail", ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_DefaultOpen))
 	{
+		ImGui::Text("Vector of creation");
+		ImGui::SameLine();
+		ImGui::ShowHelpMarker("Select the direction in which the trail will be created, this direction must be the direction of movement of the gameobject.\nYou shoud not use the Y vector.");
+
+		/*Index of the OBB face to generate the point at. The valid range is [0, 5].
+		This index corresponds to the planes in the order (-X, +X, -Y, +Y, -Z, +Z).*/
+		if (ImGui::RadioButton("X", vector == TrailVector::X))
+		{
+			low = 4; hight = 5;
+			vector = TrailVector::X;
+		} ImGui::SameLine();
+		if (ImGui::RadioButton("Y", vector == TrailVector::Y))
+		{
+			low = 2; hight = 3;
+			vector = TrailVector::Y;
+		} ImGui::SameLine();
+		if (ImGui::RadioButton("Z", vector == TrailVector::Z))
+		{
+			low = 0; hight = 1;
+			vector = TrailVector::Z;
+		}
+
 		ImGui::DragInt("Life Time", &lifeTime, 10.0f, 0, 10000);
+		ImGui::SameLine();
+		ImGui::ShowHelpMarker("Time in milliseconds that a trail plane will last in the world.");
 
 		ImGui::DragFloat("Min Distance", &minDistance, 0.01f, 0.0f, 10.0f);
+		ImGui::SameLine();
+		ImGui::ShowHelpMarker("Minimum distance before a new plane is created in the trail.If the minimum distance is not exceeded, the last plane will be placed in the new position.");
 
 		if (ImGui::CollapsingHeader("Trail Material", ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_DefaultOpen))
 		{
