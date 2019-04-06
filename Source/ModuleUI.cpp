@@ -128,12 +128,7 @@ void ModuleUI::OnSystemEvent(System_Event event)
 	switch (event.type)
 	{
 	case System_Event_Type::LoadScene:
-	case System_Event_Type::Stop:
 	{
-		canvas.clear();
-		canvas_screen.clear();
-		canvas_worldScreen.clear();
-		canvas_world.clear();
 		countImages = 0;
 		countLabels = 0;
 		offsetImage = 0;
@@ -144,6 +139,13 @@ void ModuleUI::OnSystemEvent(System_Event event)
 		std::swap(queueImageToBuffer, emptyI);
 		std::queue<ComponentLabel*> emptyL;
 		std::swap(queueLabelToBuffer, emptyL);
+	}
+	case System_Event_Type::Stop:
+	{
+		canvas.clear();
+		canvas_screen.clear();
+		canvas_worldScreen.clear();
+		canvas_world.clear();
 		break;
 	}
 	case System_Event_Type::ComponentDestroyed:
@@ -314,7 +316,7 @@ void ModuleUI::DrawUIImage(int index, math::float4& color, uint texture, math::f
 	if (index == -1)
 		return;
 	int useMask = (mask.x < 0) ? false : true;
-	setInt(ui_shader,"useMask", useMask);
+	setInt(ui_shader, "useMask", useMask);
 	if (useMask)
 		setFloat(ui_shader, "coordsMask", mask.x, mask.y);
 
@@ -345,7 +347,7 @@ void ModuleUI::DrawUILabel(int index, std::vector<uint>* GetTexturesWord, math::
 	setBool(ui_shader, "isLabel", true);
 	setBool(ui_shader, "using_texture", true);
 	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
-	
+
 	uint wordSize = GetTexturesWord->size();
 	for (uint i = 0; i < wordSize; i++)
 	{
@@ -465,54 +467,60 @@ void ModuleUI::UnRegisterBufferIndex(uint offset, ComponentTypes cType)
 	bool sameOffset = false;
 	if (cType == ComponentTypes::ImageComponent)
 	{
-		countImages--;
-		if (sameOffset = (offset == offsetImage - UI_BYTES_IMAGE))
-			offsetImage = offset;
-		else
-			free_image_offsets.push_back(offset);
-		if (!queueImageToBuffer.empty())
+		if (countImages != 0)
 		{
-			ComponentImage* img = queueImageToBuffer.front();
-			queueImageToBuffer.pop();
-			uint offsetSend;
-			if (!free_image_offsets.empty())
-			{
-				offsetSend = free_image_offsets.at(free_image_offsets.size() - 1);
-				free_image_offsets.pop_back();
-			}
+			countImages--;
+			if (sameOffset = (offset == offsetImage - UI_BYTES_IMAGE))
+				offsetImage = offset;
 			else
+				free_image_offsets.push_back(offset);
+			if (!queueImageToBuffer.empty())
 			{
-				offsetSend = offsetImage;
-				offsetImage += UI_BYTES_IMAGE;
+				ComponentImage* img = queueImageToBuffer.front();
+				queueImageToBuffer.pop();
+				uint offsetSend;
+				if (!free_image_offsets.empty())
+				{
+					offsetSend = free_image_offsets.at(free_image_offsets.size() - 1);
+					free_image_offsets.pop_back();
+				}
+				else
+				{
+					offsetSend = offsetImage;
+					offsetImage += UI_BYTES_IMAGE;
+				}
+				img->SetBufferRangeAndFIll(offsetSend, offsetSend / sizeof(float) * 4);
+				countImages++;
 			}
-			img->SetBufferRangeAndFIll(offsetSend, offsetSend / sizeof(float) * 4);
-			countImages++;
 		}
 	}
 	else if (cType == ComponentTypes::LabelComponent)
 	{
-		countLabels--;
-		if (sameOffset = (offset == offsetLabel + UI_BYTES_LABEL))
-			offsetLabel = offset;
-		else
-			free_label_offsets.push_back(offset);
-		if (!queueLabelToBuffer.empty())
+		if (countLabels != 0)
 		{
-			ComponentLabel* lb = queueLabelToBuffer.front();
-			queueLabelToBuffer.pop();
-			uint offsetSend;
-			if (!free_label_offsets.empty())
-			{
-				offsetSend = free_label_offsets.at(free_label_offsets.size() - 1);
-				free_label_offsets.pop_back();
-			}
+			countLabels--;
+			if (sameOffset = (offset == offsetLabel + UI_BYTES_LABEL))
+				offsetLabel = offset;
 			else
+				free_label_offsets.push_back(offset);
+			if (!queueLabelToBuffer.empty())
 			{
-				offsetSend = offsetLabel;
-				offsetLabel -= UI_BYTES_LABEL;
+				ComponentLabel* lb = queueLabelToBuffer.front();
+				queueLabelToBuffer.pop();
+				uint offsetSend;
+				if (!free_label_offsets.empty())
+				{
+					offsetSend = free_label_offsets.at(free_label_offsets.size() - 1);
+					free_label_offsets.pop_back();
+				}
+				else
+				{
+					offsetSend = offsetLabel;
+					offsetLabel -= UI_BYTES_LABEL;
+				}
+				lb->SetBufferRangeAndFIll(offsetSend, offsetSend / sizeof(float) * 4);
+				countLabels++;
 			}
-			lb->SetBufferRangeAndFIll(offsetSend, offsetSend / sizeof(float) * 4);
-			countLabels++;
 		}
 	}
 }
@@ -553,20 +561,20 @@ void ModuleUI::OnWindowResize(uint width, uint height)
 #endif // GAMEMODE
 }
 
- uint* ModuleUI::GetRectUI()
+uint* ModuleUI::GetRectUI()
 {
 #ifdef GAMEMODE
-	 return ui_size_draw;
+	return ui_size_draw;
 #else
 	return uiWorkSpace;
 #endif // GAMEMODE
 
 }
 
- uint * ModuleUI::GetScreen()
- {
-	 return ui_size_draw;
- }
+uint * ModuleUI::GetScreen()
+{
+	return ui_size_draw;
+}
 
 bool ModuleUI::MouseInScreen()
 {
