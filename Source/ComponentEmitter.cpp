@@ -286,6 +286,26 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType)
 		startValues.particleDirection = (circleCreation.GetPoint(angle, centerDist)).Normalized();
 		break;
 	}
+	case ShapeType_MESH:
+	{
+		ResourceMesh* res = (ResourceMesh*)App->res->GetResource(meshRes);
+		if (res)
+		{
+			Vertex* meshVertex = nullptr;
+			res->GetVerticesReference(meshVertex);
+			if (meshVertex)
+			{
+				spawn.x = meshVertex[meshVertexCont].position[0];
+				spawn.y = meshVertex[meshVertexCont].position[1];
+				spawn.z = meshVertex[meshVertexCont].position[2];
+				meshVertexCont++;
+				if (meshVertexCont > res->GetVerticesCount())
+					meshVertexCont = 0u;
+			}
+		}
+		startValues.particleDirection = (math::float3::unitY * parent->transform->GetRotation().ToFloat3x3().Transposed()).Normalized();
+		break;
+	}
 	default:
 		break;
 	}
@@ -395,6 +415,9 @@ void ComponentEmitter::ParticleShape()
 				normalShapeType = ShapeType_SPHERE;
 			else if (ImGui::MenuItem("Cone"))
 				normalShapeType = ShapeType_CONE;
+			else if (ImGui::MenuItem("Mesh"))
+				normalShapeType = ShapeType_MESH;
+
 			ImGui::End();
 		}
 
@@ -433,6 +456,21 @@ void ComponentEmitter::ParticleShape()
 			ImGui::DragFloat("Sphere Size", &circleCreation.r, 0.25f, 0.25f, 20.0f, "%.2f");
 			ImGui::DragFloat("Height Cone", &coneHeight, 0.0f, 0.25f, 20.0f, "%.2f");
 
+			break;
+		case ShapeType_MESH:
+			ImGui::PushID("mesh");
+			ImGui::Button(std::to_string(meshRes).data(), ImVec2(150.0f, 0.0f));
+			ImGui::PopID();
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MESH_INSPECTOR_SELECTOR"))
+				{
+					uint payload_n = *(uint*)payload->Data;
+					SetMeshParticleRes(payload_n);
+					meshVertexCont = 0u;
+				}
+			}
 			break;
 		default:
 			break;
@@ -518,6 +556,11 @@ void ComponentEmitter::ParticleBurst()
 				burstType = ShapeType_CONE;
 				burstTypeName = "Cone Burst";
 			}
+			else if (ImGui::MenuItem("Mesh"))
+			{
+				burstType = ShapeType_MESH;
+				burstTypeName = "Mesh Burst";
+			}
 			ImGui::End();
 		}
 		ImGui::PushItemWidth(100.0f);
@@ -529,6 +572,24 @@ void ComponentEmitter::ParticleBurst()
 			minPart = maxPart;
 		ImGui::DragFloat("Repeat Time", &repeatTime, 0.5f, 0.0f, 0.0f, "%.1f");
 
+		if (burstType == ShapeType_MESH)
+		{
+			ImGui::PushID("mesh");
+			ImGui::Button(std::to_string(meshRes).data(), ImVec2(150.0f, 0.0f));
+			ImGui::PopID();
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MESH_INSPECTOR_SELECTOR"))
+				{
+					uint payload_n = *(uint*)payload->Data;
+					SetMeshParticleRes(payload_n);
+					meshVertexCont = 0u;
+				}
+			}
+		}
+		else if (meshRes > 0)
+			SetMeshParticleRes(0);
 		ImGui::Separator();
 	}
 #endif
@@ -771,6 +832,19 @@ void ComponentEmitter::SetMaterialRes(uint materialUuid)
 		App->res->SetAsUsed(materialUuid);
 
 	materialRes = materialUuid;
+}
+
+void ComponentEmitter::SetMeshParticleRes(uint res_uuid)
+{
+	if (meshRes > 0)
+		App->res->SetAsUnused(meshRes);
+
+	if (res_uuid > 0)
+		App->res->SetAsUsed(res_uuid);
+
+	Resource* resource = App->res->GetResource(res_uuid);
+
+	meshRes = resource ? res_uuid : 0;
 }
 
 uint ComponentEmitter::GetMaterialRes() const
@@ -1035,10 +1109,12 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	uint newMaterial = 0;
 	memcpy(&newMaterial, cursor, bytes);
 
-	if (App->res->GetResource(newMaterial) != nullptr)
+	App->res->GetResource(newMaterial) ? SetMaterialRes(newMaterial) : SetMaterialRes(App->resHandler->defaultMaterial);
+	
+	/*if (App->res->GetResource(newMaterial) != nullptr)
 		SetMaterialRes(newMaterial);
 	else
-		SetMaterialRes(App->resHandler->defaultMaterial);
+		SetMaterialRes(App->resHandler->defaultMaterial);*/
 
 	cursor += bytes;
 

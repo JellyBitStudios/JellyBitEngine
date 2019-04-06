@@ -25,7 +25,8 @@ enum ShapeType {
 	ShapeType_SPHERE,
 	ShapeType_SPHERE_CENTER,
 	ShapeType_SPHERE_BORDER,
-	ShapeType_CONE
+	ShapeType_CONE,
+	ShapeType_MESH
 };
 
 enum SimulatedGame
@@ -137,6 +138,7 @@ public:
 	math::float3 GetPos();
 
 	void SetMaterialRes(uint materialUuid);
+	void SetMeshParticleRes(uint res_uuid);
 	uint GetMaterialRes() const;
 
 #ifndef GAMEMODE
@@ -180,7 +182,11 @@ public:
 	bool isSubEmitter = false;
 
 	// Material
-	uint materialRes = 0;
+	uint materialRes = 0u;
+
+	uint meshRes = 0u;
+	uint meshVertexCont = 0u;
+
 	bool startOnPlay = false;
 
 	float colorAverage = 0.0f;
