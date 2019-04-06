@@ -53,6 +53,11 @@ public:
 	void Stop();
 	void HardStop();
 
+	void SetVector(TrailVector vec);
+	void SetLifeTime(int lifeTime);
+	void SetMinDistance(int minDistance);
+	void SetColor(math::float4 color);
+
 
 	//Serialization
 	uint GetInternalSerializationBytes();

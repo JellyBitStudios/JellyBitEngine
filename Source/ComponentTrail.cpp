@@ -155,6 +155,10 @@ void ComponentTrail::OnUniqueEditor()
 		ImGui::SameLine();
 		ImGui::ShowHelpMarker("Minimum distance before a new plane is created in the trail.If the minimum distance is not exceeded, the last plane will be placed in the new position.");
 
+		ImGui::Checkbox("Create trail", &create);
+		ImGui::SameLine();
+		ImGui::ShowHelpMarker("This acts as a Start on play.\nIf this option is active, trails will be created, if not active they will not be created.\nYou can modify this value from a script in runtime");
+
 		if (ImGui::CollapsingHeader("Trail Material", ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			const Resource* resource = App->res->GetResource(materialRes);
@@ -202,21 +206,21 @@ void ComponentTrail::SetMaterialRes(uint materialUuid)
 	materialRes = materialUuid;
 }
 
-inline void ComponentTrail::Start()
+void ComponentTrail::Start()
 {
 	create = true;
 }
 
-inline void ComponentTrail::Stop()
+void ComponentTrail::Stop()
 {
 	create = false;
 }
 
-inline void ComponentTrail::HardStop()
+void ComponentTrail::HardStop()
 {
 	create = false;
 
-	for (std::list< TrailNode*>::iterator curr = trailVertex.begin(); curr != trailVertex.end(); ++curr)
+	for (std::list<TrailNode*>::iterator curr = trailVertex.begin(); curr != trailVertex.end(); ++curr)
 	{
 		delete *curr;
 		*curr = nullptr;
@@ -224,6 +228,42 @@ inline void ComponentTrail::HardStop()
 
 	trailVertex.clear();
 }
+
+void ComponentTrail::SetVector(TrailVector vec)
+{
+	switch (vec)
+	{
+	case X:
+		low = 4; hight = 5;
+		break;
+	case Y:
+		low = 2; hight = 3;
+		break;
+	case Z:
+		low = 0; hight = 1;
+		break;
+	default:
+		break;
+	}
+
+	vector = vec;
+}
+
+void ComponentTrail::SetLifeTime(int lifeTime)
+{
+	this->lifeTime = lifeTime;
+}
+
+void ComponentTrail::SetMinDistance(int minDistance)
+{
+	this->minDistance = minDistance;
+}
+
+void ComponentTrail::SetColor(math::float4 color)
+{
+	this->color = color;
+}
+
 
 uint ComponentTrail::GetInternalSerializationBytes()
 {
