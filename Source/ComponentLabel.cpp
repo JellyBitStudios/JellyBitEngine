@@ -120,9 +120,9 @@ void ComponentLabel::Update()
 
 					if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
 						ScreenDraw(l.corners, x, y, character.size, sizeNorm);
-
 					else
 						WorldDraw(parentCorners, l.corners, rectParent, x, y, character.size, sizeNorm);
+
 
 					if (y + character.size.y * sizeNorm < rectParent[Y_UI_RECT] + rectParent[H_UI_RECT])
 					{
@@ -259,7 +259,7 @@ void ComponentLabel::RowAlignment(const uint firstLabelRow, const uint lastLabel
 	}
 }
 
-void ComponentLabel::WorldDraw(math::float3 * parentCorners, math::float3 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm)
+void ComponentLabel::WorldDraw(math::float3 * parentCorners, math::float4 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm)
 {
 	math::float3 xDirection = (parentCorners[CORNER_TOP_LEFT] - parentCorners[CORNER_TOP_RIGHT]).Normalized();
 	math::float3 yDirection = (parentCorners[2] - parentCorners[CORNER_TOP_LEFT]).Normalized();
@@ -466,7 +466,7 @@ void ComponentLabel::DragDropFont()
 			if (ImGui::IsMouseReleased(0))
 			{
 				fontUuid = uuid;
-				needed_recaclculate = true;
+				needed_recalculate = true;
 				size = ((ResourceFont*)App->res->GetResource(uuid))->fontData.fontSize;
 			}
 		}

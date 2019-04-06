@@ -41,7 +41,9 @@ public:
 	struct LabelLetter
 	{
 		math::float4 corners[4] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } };
+		uint rect[4];
 		uint textureID = 0;
+		math::float2 size;
 	};
 
 public:
@@ -59,7 +61,7 @@ public:
 	void HorizontalAlignment(const uint parentWidth, const HorizontalLabelAlign alignFrom);
 	void RowAlignment(const uint firstLabelRow, const uint lastLabelRow, const uint diference, const HorizontalLabelAlign alignFrom);
 
-	void WorldDraw(math::float3 * parentCorners, math::float3 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm);
+	void WorldDraw(math::float3 * parentCorners, math::float4 corners[4], uint * rectParent, const uint x, const uint y, math::float2 characterSize, float sizeNorm);
 
 	void ScreenDraw(math::float4 corners[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm);
 
