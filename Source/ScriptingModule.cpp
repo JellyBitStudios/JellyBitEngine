@@ -2592,6 +2592,34 @@ void LabelSetColor(MonoObject* monoLabel, MonoArray* newColorCSharp)
 	}
 }
 
+MonoString* LabelGetResource(MonoObject* monoLabel)
+{
+	ComponentLabel* label = (ComponentLabel*)App->scripting->ComponentFrom(monoLabel);
+	if (label)
+	{
+		ResourceFont* font = label->GetFontResource();
+		if (font)	
+			return mono_string_new(App->scripting->domain, font->GetData().name.data());		
+		else
+			return nullptr;
+	}
+	return nullptr;
+}
+
+void LabelSetResource(MonoObject* monoLabel, MonoString* newFont)
+{
+	if (!newFont)
+		return;
+
+	ComponentLabel* label = (ComponentLabel*)App->scripting->ComponentFrom(monoLabel);
+
+	char* fontCPP = mono_string_to_utf8(newFont);
+
+	label->SetFontResource(fontCPP);
+
+	mono_free(fontCPP);
+}
+
 void PlayerPrefsSave()
 {
 	uint size = json_serialization_size(App->scripting->playerPrefs);
@@ -3318,6 +3346,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetText", (const void*)&LabelGetText);
 	mono_add_internal_call("JellyBitEngine.UI.Label::SetColor", (const void*)&LabelSetColor);
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetColor", (const void*)&LabelGetColor);
+	mono_add_internal_call("JellyBitEngine.UI.Label::SetResource", (const void*)&LabelSetResource);
+	mono_add_internal_call("JellyBitEngine.UI.Label::GetResource", (const void*)&LabelGetResource);
 
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::GetNumber", (const void*)&PlayerPrefsGetNumber);

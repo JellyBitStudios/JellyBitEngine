@@ -78,6 +78,10 @@ public:
 	int GetBufferIndex()const;
 	void SetBufferRangeAndFIll(uint offs, int index);
 
+	void SetFontResource(uint uuid);
+	void SetFontResource(std::string fontName);
+	ResourceFont* GetFontResource();
+
 private:
 	uint GetInternalSerializationBytes();
 	void OnInternalSave(char*& cursor);
