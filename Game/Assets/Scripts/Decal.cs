@@ -9,6 +9,7 @@ public class Decal : JellyScript
     public DecalType decalType = DecalType.blood;
 
     public GameObject reference = null;
+    public float seconds = 10.0f;
 
     public GameObject Alita = null;
     public float distance = 1.0f;
@@ -16,6 +17,7 @@ public class Decal : JellyScript
 
     #region PRIVATE_VARIABLES
     private Projector projector = null;
+    private float timer = 0.0f;
     #endregion
 
     public override void Awake()
@@ -23,15 +25,18 @@ public class Decal : JellyScript
         projector = gameObject.GetComponent<Projector>();
     }
 
+    public override void Start()
+    {
+        OrientDecal();
+        ShowDecal(true);
+    }
+
     public override void Update()
     {
-        if (Input.GetKeyDown(KeyCode.KEY_A))
-        {
-            OrientDecal();
-            ShowDecal();
-        }
-        else if (Input.GetKeyDown(KeyCode.KEY_S))
-            HideDecal();
+        timer += Time.deltaTime;
+
+        if (timer >= seconds)
+            Destroy(gameObject);
     }
 
     private void OrientDecal()
@@ -57,14 +62,9 @@ public class Decal : JellyScript
         transform.rotation = LookAt(newPosition);
     }
 
-    private void ShowDecal()
+    private void ShowDecal(bool show)
     {
-        projector.SetActive(true);
-    }
-
-    private void HideDecal()
-    {
-        projector.SetActive(false);
+        projector.SetActive(show);
     }
 
     private Quaternion LookAt(Vector3 position)
