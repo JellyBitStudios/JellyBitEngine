@@ -91,8 +91,8 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	AddModule(window);
 	AddModule(input);
 	AddModule(scene);
-	AddModule(scripting);
 	AddModule(navigation);
+	AddModule(scripting);
 	AddModule(fbo);
 
 	// Renderer last!

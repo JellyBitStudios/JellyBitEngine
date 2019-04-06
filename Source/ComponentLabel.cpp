@@ -1,7 +1,6 @@
 #include "ComponentLabel.h"
 #include "ComponentRectTransform.h"
 
-#include "ModuleUI.h"
 #include "ModuleResourceManager.h"
 
 #include "ResourceFont.h"
@@ -30,33 +29,60 @@ ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType
 		if (fontUuid)
 			size = ((ResourceFont*)fonts[0])->fontData.fontSize;
 
-		needed_recaclculate = true;
+		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::LabelComponent, this);
+
+		needed_recalculate = true;
 	}
 }
 
 ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::LabelComponent)
 {
+	color = componentLabel.color;
+	labelWord = componentLabel.labelWord;
+	finalText = componentLabel.finalText;
+	fontUuid = componentLabel.fontUuid;
+	size = componentLabel.size;
+	labelWord = componentLabel.labelWord;
+	textureWord = componentLabel.textureWord;
+	vAlign = componentLabel.vAlign;
+	hAlign = componentLabel.hAlign;
+
 	if (includeComponents)
 	{
-		color = componentLabel.color;
-		labelWord = componentLabel.labelWord;
-		finalText = componentLabel.finalText;
-		fontUuid = componentLabel.fontUuid;
-		vAlign = componentLabel.vAlign;
-		hAlign = componentLabel.hAlign;
+		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::LabelComponent, this);
+		if (!labelWord.empty())
+			if (index != -1)
+				FIllBuffer();
 	}
 }
 
 ComponentLabel::~ComponentLabel()
 {
+	if (index != -1)
+		App->ui->UnRegisterBufferIndex(offset, ComponentTypes::LabelComponent);
+
 	parent->cmp_label = nullptr;
+}
+
+void ComponentLabel::OnSystemEvent(System_Event event)
+{
+	switch (event.type)
+	{
+	case System_Event_Type::ScreenChanged:
+		//change size by z & y
+	case System_Event_Type::CanvasChanged:
+	case System_Event_Type::RectTransformUpdated:
+		needed_recalculate = true;
+		break;
+	}
 }
 
 void ComponentLabel::Update()
 {
-	if (needed_recaclculate)
+	if (needed_recalculate)
 	{
 		labelWord.clear();
+		textureWord.clear();
 
 		ResourceFont* fontRes = fontUuid != 0 ? (ResourceFont*)App->res->GetResource(fontUuid) : nullptr;
 
@@ -74,7 +100,6 @@ void ComponentLabel::Update()
 				if ((int)(*c) >= 32 && (int)(*c) < 128)//ASCII TABLE
 				{
 					LabelLetter l;
-					memcpy(&l.letter, c._Ptr, sizeof(char));
 
 					Character character;
 					character = fontRes->fontData.charactersMap.find(*c)->second;
@@ -94,13 +119,24 @@ void ComponentLabel::Update()
 					}
 
 					if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-						ScreenDraw(l.rect, x, y, character.size, sizeNorm);
+						ScreenDraw(l.corners, x, y, character.size, sizeNorm);
 
 					else
 						WorldDraw(parentCorners, l.corners, rectParent, x, y, character.size, sizeNorm);
 
 					if (y + character.size.y * sizeNorm < rectParent[Y_UI_RECT] + rectParent[H_UI_RECT])
-						labelWord.push_back(l);
+					{
+						if (labelWord.size() <= UI_MAX_LABEL_LETTERS)
+						{
+							labelWord.push_back(l);
+							textureWord.push_back(l.textureID);
+						}
+						else
+						{
+							CONSOLE_LOG(LogTypes::Warning, "Label can't draw more than %i letters.", UI_MAX_LABEL_LETTERS);
+							break;
+						}
+					}
 					else
 						break;
 
@@ -112,18 +148,21 @@ void ComponentLabel::Update()
 					x_moving = rectParent[X_UI_RECT];
 				}
 			}
-
 			//Get quats for each row. Need it for align
 			if (!labelWord.empty())
 			{
 				if (hAlign != H_Left)
 					HorizontalAlignment(rectParent[W_UI_RECT], H_Left);
-				
+
 				if (vAlign != V_Top)
 					VerticalAlignment(rectParent[H_UI_RECT], V_Top);
+
+				if (index != -1)
+					FIllBuffer();
 			}
 		}
-		needed_recaclculate = false;
+
+		needed_recalculate = false;
 	}
 }
 
@@ -225,24 +264,35 @@ void ComponentLabel::WorldDraw(math::float3 * parentCorners, math::float3 corner
 	math::float3 xDirection = (parentCorners[CORNER_TOP_LEFT] - parentCorners[CORNER_TOP_RIGHT]).Normalized();
 	math::float3 yDirection = (parentCorners[2] - parentCorners[CORNER_TOP_LEFT]).Normalized();
 
-	corners[CORNER_TOP_RIGHT] = parentCorners[CORNER_TOP_RIGHT] + (xDirection * ((float)(x - rectParent[X_UI_RECT]) / WORLDTORECT)) + (yDirection * ((float)(y - rectParent[Y_UI_RECT]) / WORLDTORECT));
-	corners[CORNER_TOP_LEFT] = corners[CORNER_TOP_RIGHT] + (xDirection * (characterSize.x * sizeNorm / WORLDTORECT));
-	corners[CORNER_BOTTOM_LEFT] = corners[CORNER_TOP_LEFT] + (yDirection * (characterSize.y * sizeNorm / WORLDTORECT));
-	corners[CORNER_BOTTOM_RIGHT] = corners[CORNER_BOTTOM_LEFT] - (xDirection * (characterSize.x * sizeNorm / WORLDTORECT));
+	math::float3 pos = parentCorners[CORNER_TOP_RIGHT];
+	pos = pos + (xDirection * ((float)(x - rectParent[X_UI_RECT]) / WORLDTORECT)) + (yDirection * ((float)(y - rectParent[Y_UI_RECT]) / WORLDTORECT));
+	corners[CORNER_TOP_RIGHT] = { pos, 1.0f };
+	pos = corners[CORNER_TOP_RIGHT].xyz();
+	pos = pos + (xDirection * (characterSize.x * sizeNorm / WORLDTORECT));
+	corners[CORNER_TOP_LEFT] = { pos, 1.0f };
+	pos = corners[CORNER_TOP_LEFT].xyz();
+	pos = pos + (yDirection * (characterSize.y * sizeNorm / WORLDTORECT));
+	corners[CORNER_BOTTOM_LEFT] = { pos, 1.0f };
+	pos = corners[CORNER_BOTTOM_LEFT].xyz();
+	pos = pos - (xDirection * (characterSize.x * sizeNorm / WORLDTORECT));
+	corners[CORNER_BOTTOM_RIGHT] = { pos, 1.0f };
 
 	math::float3 zDirection = xDirection.Cross(yDirection);
-
 	float z = ZSEPARATOR + parent->cmp_rectTransform->GetZ();
 	for (uint i = 0; i < 4; ++i) //Change All Corners (TopLeft / TopRight / BottomLeft / BottomRight)
-		corners[i] -= zDirection * z;
+		corners[i] -= { zDirection * z , 0.0f };
 }
 
-void ComponentLabel::ScreenDraw(uint rect[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm)
+void ComponentLabel::ScreenDraw(math::float4 corners[4], const uint x, const uint y, math::float2 characterSize, float sizeNorm)
 {
-	rect[X_UI_RECT] = x;
-	rect[Y_UI_RECT] = y;
-	rect[W_UI_RECT] = characterSize.x * sizeNorm;
-	rect[H_UI_RECT] = characterSize.y * sizeNorm;
+	uint* screen = App->ui->GetScreen();
+	uint w_width = screen[ModuleUI::Screen::WIDTH];
+	uint w_height = screen[ModuleUI::Screen::HEIGHT];
+
+	corners[ComponentRectTransform::Rect::RBOTTOMLEFT] = { math::Frustum::ScreenToViewportSpace({ (float)x, (float)y }, w_width, w_height), 0.0f, 1.0f };
+	corners[ComponentRectTransform::Rect::RBOTTOMRIGHT] = { math::Frustum::ScreenToViewportSpace({ (float)x + (float)characterSize.x * sizeNorm, (float)y }, w_width, w_height), 0.0f, 1.0f };
+	corners[ComponentRectTransform::Rect::RTOPLEFT] = { math::Frustum::ScreenToViewportSpace({ (float)x, (float)y + (float)characterSize.y * sizeNorm }, w_width, w_height), 0.0f, 1.0f };
+	corners[ComponentRectTransform::Rect::RTOPRIGHT] = { math::Frustum::ScreenToViewportSpace({ (float)x + (float)characterSize.x * sizeNorm, (float)y + (float)characterSize.y * sizeNorm }, w_width, w_height), 0.0f, 1.0f };
 }
 
 uint ComponentLabel::GetInternalSerializationBytes()
@@ -313,6 +363,8 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 	bytes = sizeof(hAlign);
 	memcpy(&hAlign, cursor, bytes);
 	cursor += bytes;
+
+	needed_recalculate = true;
 }
 
 void ComponentLabel::OnUniqueEditor()
@@ -323,14 +375,14 @@ void ComponentLabel::OnUniqueEditor()
 		float sizeX = ImGui::GetWindowWidth();
 		if (ImGui::InputTextMultiline("##source", &finalText, ImVec2(sizeX, ImGui::GetTextLineHeight() * 7), ImGuiInputTextFlags_AllowTabInput))
 		{
-			needed_recaclculate = true;
+			needed_recalculate = true;
 		}
 
 		ImGui::PushItemWidth(200.0f);
 		ImGui::ColorEdit4("Color", &color.x, ImGuiColorEditFlags_AlphaBar);
 
 		if (ImGui::DragInt("Load new size", &size, 1.0f, 0, 72))
-			needed_recaclculate = true;
+			needed_recalculate = true;
 
 		ImGui::Separator();
 		ImGui::Text("Horizontal Alignment");
@@ -350,7 +402,7 @@ void ComponentLabel::OnUniqueEditor()
 		ImGui::Text("Vertical Alignment");
 		if (ImGui::RadioButton("Top", vAlign == V_Top))
 			SetVerticalAligment(V_Top);
-		
+
 		ImGui::SameLine();
 		if (ImGui::RadioButton("Middle", vAlign == V_Middle))
 			SetVerticalAligment(V_Middle);
@@ -456,20 +508,36 @@ void ComponentLabel::DragDropFont()
 #endif
 }
 
+void ComponentLabel::FIllBuffer()
+{
+	buffer_size = labelWord.size() * sizeof(float) * 16;
+	char* cursor = buffer;
+	size_t bytes = sizeof(float) * 4;
+	for (uint i = 0; i < labelWord.size(); i++)
+	{
+		memcpy(cursor, &labelWord[i].corners[ComponentRectTransform::Rect::RTOPLEFT], bytes);
+		cursor += bytes;
+		memcpy(cursor, &labelWord[i].corners[ComponentRectTransform::Rect::RTOPRIGHT], bytes);
+		cursor += bytes;
+		memcpy(cursor, &labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMLEFT], bytes);
+		cursor += bytes;
+		memcpy(cursor, &labelWord[i].corners[ComponentRectTransform::Rect::RBOTTOMRIGHT], bytes);
+		cursor += bytes;
+	}
+	last_word_size = labelWord.size();
+
+	App->ui->FillBufferRange(offset, buffer_size, buffer);
+}
+
 void ComponentLabel::SetFinalText(const char * newText)
 {
 	finalText = newText;
-	needed_recaclculate = true;
+	needed_recalculate = true;
 }
 
 const char * ComponentLabel::GetFinalText() const
 {
 	return finalText.data();
-}
-
-std::vector<ComponentLabel::LabelLetter>* ComponentLabel::GetLetterQueue()
-{
-	return &labelWord;
 }
 
 void ComponentLabel::SetColor(math::float4 newColor)
@@ -482,7 +550,35 @@ math::float4 ComponentLabel::GetColor() const
 	return color;
 }
 
-void ComponentLabel::RectChanged()
+char* ComponentLabel::GetBuffer()
 {
-	needed_recaclculate = true;
+	return buffer;
+}
+
+uint ComponentLabel::GetBufferSize() const
+{
+	return buffer_size;
+}
+
+uint ComponentLabel::GetWordSize() const
+{
+	return labelWord.size();
+}
+
+std::vector<uint>* ComponentLabel::GetWordTextureIDs()
+{
+	return &textureWord;
+}
+
+int ComponentLabel::GetBufferIndex() const
+{
+	return index;
+}
+
+void ComponentLabel::SetBufferRangeAndFIll(uint offs, int index)
+{
+	offset = offs;
+	this->index = index;
+	if(!labelWord.empty())
+		FIllBuffer();
 }
