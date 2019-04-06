@@ -118,7 +118,7 @@ void ModuleTrails::Draw()
 					location = glGetUniformLocation(shaderProgram, "nextUV");				// Min pos
 					glUniform1f(location, currUV);
 					location = glGetUniformLocation(shaderProgram, "realColor");			// Color
-					glUniform4f(location, /*realColor.x*/ 1.0f, /*realColor.y*/ 1.0f, /*realColor.z*/ 1.0f, /*realColor.w*/ 1.0f);
+					glUniform4f(location, (*trail)->color.x, (*trail)->color.y, (*trail)->color.z, (*trail)->color.w);
 
 					location = glGetUniformLocation(shaderProgram, "vertex1");				// Current High
 					glUniform3f(location, originHigh.x, originHigh.y, originHigh.z);
