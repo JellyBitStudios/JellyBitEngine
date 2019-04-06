@@ -2338,6 +2338,26 @@ MonoArray* GameObjectGetChilds(MonoObject* monoObject)
 	return nullptr;
 }
 
+MonoObject* GameObjectGetParent(MonoObject* monoObject)
+{
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	if (!gameObject)
+		return nullptr;
+
+	return App->scripting->MonoObjectFrom(gameObject->GetParent());
+}
+
+void GameObjectSetParent(MonoObject* monoObject, MonoObject* newParent)
+{
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	GameObject* newParentCPP = App->scripting->GameObjectFrom(newParent);
+
+	if (!gameObject || !newParentCPP)
+		return;
+
+	gameObject->ChangeParent(newParentCPP);
+}
+
 bool PlayAnimation(MonoObject* animatorComp, MonoString* animUUID)
 {
 	if (!animUUID)
@@ -3286,6 +3306,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.GameObject::GetLayerID", (const void*)&GameObjectGetLayerID);
 	mono_add_internal_call("JellyBitEngine.GameObject::GetLayer", (const void*)&GameObjectGetLayerName);
 	mono_add_internal_call("JellyBitEngine.GameObject::GetChilds", (const void*)&GameObjectGetChilds);
+	mono_add_internal_call("JellyBitEngine.GameObject::GetParent", (const void*)&GameObjectGetParent);
+	mono_add_internal_call("JellyBitEngine.GameObject::SetParent", (const void*)&GameObjectSetParent);
 
 	mono_add_internal_call("JellyBitEngine.Time::getDeltaTime", (const void*)&GetDeltaTime);
 	mono_add_internal_call("JellyBitEngine.Time::getRealDeltaTime", (const void*)&GetRealDeltaTime);
