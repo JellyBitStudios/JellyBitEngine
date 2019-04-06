@@ -227,7 +227,7 @@ inline void ComponentTrail::HardStop()
 
 uint ComponentTrail::GetInternalSerializationBytes()
 {
-	return sizeof(materialRes) + sizeof(minDistance) + sizeof(lifeTime) + sizeof(create);
+	return sizeof(materialRes) + sizeof(minDistance) + sizeof(lifeTime) + sizeof(create) + sizeof(color) + sizeof(vector) + sizeof(hight) + sizeof(low);
 }
 
 void ComponentTrail::OnInternalSave(char *& cursor)
@@ -247,6 +247,22 @@ void ComponentTrail::OnInternalSave(char *& cursor)
 	bytes = sizeof(create);
 	memcpy(cursor, &create, bytes);
 	cursor += bytes;
+
+	bytes = sizeof(color);
+	memcpy(cursor, &color, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(vector);
+	memcpy(cursor, &vector, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(hight);
+	memcpy(cursor, &hight, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(low);
+	memcpy(cursor, &low, bytes);
+	cursor += bytes;
 }
 
 void ComponentTrail::OnInternalLoad(char *& cursor)
@@ -265,5 +281,21 @@ void ComponentTrail::OnInternalLoad(char *& cursor)
 
 	bytes = sizeof(create);
 	memcpy(&create, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(color);
+	memcpy(&color, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(vector);
+	memcpy(&vector, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(hight);
+	memcpy(&hight, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(low);
+	memcpy(&low, cursor, bytes);
 	cursor += bytes;
 }

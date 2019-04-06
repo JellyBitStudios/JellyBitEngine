@@ -60,7 +60,6 @@ void ModuleTrails::Draw()
 
 			float i = 0.0f;
 			float size = (*trail)->trailVertex.size() + 1;
-			CONSOLE_LOG(LogTypes::Normal, "%i", (*trail)->trailVertex.size());
 
 			for (std::list<TrailNode*>::iterator curr = (*trail)->trailVertex.begin(); curr != (*trail)->trailVertex.end(); ++curr)
 			{
