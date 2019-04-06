@@ -51,6 +51,11 @@ bool PanelAssets::Draw()
 
 		ImGui::SameLine();
 
+		if(ImGui::Button("Read Assets changes"))
+			App->fs->UpdateAssetsDir();
+
+		ImGui::SameLine();
+
 		if (ImGui::Button("Build"))
 		{
 			//1. Delete Library
