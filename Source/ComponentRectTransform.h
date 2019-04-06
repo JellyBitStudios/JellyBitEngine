@@ -69,6 +69,10 @@ public:
 	ComponentRectTransform(const ComponentRectTransform& componentRectTransform, GameObject* parent, bool includeComponents = true);
 	~ComponentRectTransform();
 
+	//NOTE: If you override this method, make sure to call the base class method. 
+	//(Component::OnSystemEvent(event); at start)
+	void OnSystemEvent(System_Event event);
+
 	void Update();
 
 	void OnEditor();
@@ -88,22 +92,19 @@ public:
 	math::float3* GetCorners();
 	void InitRect(); // Done, TODO J call methods of calculate anchors and percentage
 
-	void RecalculateAndChilds();
-
 	RectFrom GetFrom() const;
 
 	bool IsInRect(uint* rect);
 	
-	void ScreenChanged();
-
-	void TransformUpdated();
-	void ParentChanged(bool canvas_changed = false);
+	void ParentChanged();
 	void CanvasChanged();
-	void WorkSpaceChanged(uint diff, bool to);
+	void WorkSpaceChanged(int diff);
 
 	float GetZ() const;
 
 private:
+	//From Sreen
+	void CalculateScreenCorners();
 	//From World
 	void CalculateRectFromWorld();
 	//From World Rect

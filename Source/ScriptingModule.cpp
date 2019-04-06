@@ -1424,6 +1424,27 @@ MonoArray* RotateAxisAngle(MonoArray* axis, float deg)
 	return ret;
 }
 
+MonoArray* QuatLookAt(MonoArray* localForward, MonoArray* targetDirection, MonoArray* localUp, MonoArray* worldUp)
+{
+	if (!localForward || !targetDirection || !localUp || !worldUp)
+		return nullptr;
+
+	math::float3 localForwardCpp(mono_array_get(localForward, float, 0), mono_array_get(localForward, float, 1), mono_array_get(localForward, float, 2));
+	math::float3 targetDirectionCpp(mono_array_get(targetDirection, float, 0), mono_array_get(targetDirection, float, 1), mono_array_get(targetDirection, float, 2));
+	math::float3 localUpCpp(mono_array_get(localUp, float, 0), mono_array_get(localUp, float, 1), mono_array_get(localUp, float, 2));
+	math::float3 worldUpCpp(mono_array_get(worldUp, float, 0), mono_array_get(worldUp, float, 1), mono_array_get(worldUp, float, 2));
+
+	math::Quat result = math::Quat::LookAt(localForwardCpp, targetDirectionCpp, localUpCpp, worldUpCpp);
+	
+	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_single_class(), 4);
+	mono_array_set(ret, float, 0, result.x);
+	mono_array_set(ret, float, 1, result.y);
+	mono_array_set(ret, float, 2, result.z);
+	mono_array_set(ret, float, 3, result.w);
+
+	return ret;
+}
+
 MonoString* GetGOName(MonoObject* monoObject)
 {
 	if (!monoObject)
@@ -3225,6 +3246,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Quaternion::quatVec3", (const void*)&QuatVec3);
 	mono_add_internal_call("JellyBitEngine.Quaternion::toEuler", (const void*)&ToEuler);
 	mono_add_internal_call("JellyBitEngine.Quaternion::RotateAxisAngle", (const void*)&RotateAxisAngle);
+	mono_add_internal_call("JellyBitEngine.Quaternion::_LookAt", (const void*)&QuatLookAt);
 
 	//GameObject
 	mono_add_internal_call("JellyBitEngine.GameObject::_Instantiate", (const void*)&InstantiateGameObject);
