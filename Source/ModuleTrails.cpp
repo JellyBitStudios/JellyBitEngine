@@ -28,13 +28,17 @@ ModuleTrails::~ModuleTrails()
 	trails.clear();
 }
 
-update_status ModuleTrails::Update()
+update_status ModuleTrails::PostUpdate()
 {
 #ifndef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 #endif // !GAMEMODE
 
-	
+	for (std::list<ComponentTrail*>::iterator trail = trails.begin(); trail != trails.end(); ++trail)
+	{
+		(*trail)->Update();
+	}
+
 	return UPDATE_CONTINUE;
 }
 

@@ -12,7 +12,7 @@ public:
 	ModuleTrails(bool start_enabled = true);
 	~ModuleTrails();
 
-	update_status Update();
+	update_status PostUpdate();
 
 	void Draw();
 	void RearrangeVertex(std::list<ComponentTrail *>::iterator &trail, std::list<TrailNode *>::iterator &curr, std::list<TrailNode *>::iterator &next, float &currUV, float &nextUV, math::float3 &originHigh, math::float3 &originLow, math::float3 &destinationHigh, math::float3 &destinationLow);
