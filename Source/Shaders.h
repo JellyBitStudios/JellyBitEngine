@@ -323,7 +323,6 @@
 "void main()\n" \
 "{\n" \
 "	fNormal = vec3(0, 1, 0);\n" \
-"	fColor = color;\n" \
 "	vec2 realCoord = texCoord;\n" \
 "	vec3 realPos = vec3(0);\n" \
 "	if (texCoord.x == 0)\n" \
@@ -346,6 +345,7 @@
 "			realPos = vertex4;\n" \
 "	}\n" \
 "	\n" \
+"	fColor = realColor;\n" \
 "	fPosition = vec3(model_matrix * vec4(realPos, 1.0));\n" \
 "	fTexCoord = realCoord;\n" \
 "	gl_Position = mvp_matrix * vec4(realPos, 1.0);\n" \
@@ -388,7 +388,7 @@
 "	if (albedo.a < 0.1)\n" \
 "		discard;\n" \
 "\n" \
-"	FragColor = albedo;\n;" \
+"	FragColor = albedo * fColor;\n;" \
 "}\n"
 #pragma endregion
 
