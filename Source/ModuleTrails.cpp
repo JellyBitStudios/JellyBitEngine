@@ -89,34 +89,21 @@ void ModuleTrails::Draw()
 					glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
 
 
-					float currUV = (float(i + 1) / size);
-					float nextUV = (float(i) / size);
+					float currUV = (float(i) / size);
+					float nextUV = (float(i + 1) / size);
 					math::float3 originHigh = (*curr)->originHigh;
 					math::float3 originLow = (*curr)->originLow;
 					math::float3 destinationHigh = (*next)->originHigh;
 					math::float3 destinationLow = (*next)->originLow;
 
-					// Rearange vertex
-					if ((*curr)->originHigh.x <= (*next)->originHigh.x)
-					{
-						float tmp = currUV;
-						currUV = nextUV;
-						nextUV = tmp;
+					RearrangeVertex(trail, curr, next, currUV, nextUV, originHigh, originLow, destinationHigh, destinationLow);
 
-						math::float3 tmph = originHigh;
-						math::float3 tmpl = originLow;
 
-						originHigh = destinationHigh;
-						originLow = destinationLow;
-
-						destinationHigh = tmph;
-						destinationLow = tmpl;
-					}
-
-					location = glGetUniformLocation(shaderProgram, "currUV");				// UV
-					glUniform1f(location, nextUV);
-					location = glGetUniformLocation(shaderProgram, "nextUV");				// Min pos
+					location = glGetUniformLocation(shaderProgram, "currUV");				// cUV
 					glUniform1f(location, currUV);
+					location = glGetUniformLocation(shaderProgram, "nextUV");				// cUV
+					glUniform1f(location, nextUV);
+
 					location = glGetUniformLocation(shaderProgram, "realColor");			// Color
 					glUniform4f(location, (*trail)->color.x, (*trail)->color.y, (*trail)->color.z, (*trail)->color.w);
 
@@ -168,6 +155,53 @@ void ModuleTrails::Draw()
 			glEnd();
 			glPopMatrix();
 		}
+	}
+}
+
+void ModuleTrails::RearrangeVertex(std::list<ComponentTrail *>::iterator &trail, std::list<TrailNode *>::iterator &curr, std::list<TrailNode *>::iterator &next, float &currUV, float &nextUV, math::float3 &originHigh, math::float3 &originLow, math::float3 &destinationHigh, math::float3 &destinationLow)
+{
+	// Rearrange vertex
+	float origin = 0;
+	float dest = 0;
+
+	GetOriginAndDest(trail, origin, curr, dest, next);
+
+	if (origin < dest)
+	{
+		float tmp = currUV;
+		currUV = nextUV;
+		nextUV = tmp;
+
+		math::float3 tmph = originHigh;
+		math::float3 tmpl = originLow;
+
+		originHigh = destinationHigh;
+		originLow = destinationLow;
+
+		destinationHigh = tmph;
+		destinationLow = tmpl;
+	}
+}
+
+void ModuleTrails::GetOriginAndDest(std::list<ComponentTrail *>::iterator &trail, float &origin, std::list<TrailNode *>::iterator &curr, float &dest, std::list<TrailNode *>::iterator &next)
+{
+	switch ((*trail)->vector)
+	{
+	case X:
+		origin = (*curr)->originHigh.x;
+		dest = (*next)->originHigh.x;
+		break;
+	case Y:
+		// This is not right
+		origin = (*curr)->originHigh.x;
+		dest = (*next)->originHigh.x;
+		break;
+	case Z:
+		dest = (*curr)->originHigh.z;
+		origin = (*next)->originHigh.z;
+		break;
+	default:
+		break;
 	}
 }
 

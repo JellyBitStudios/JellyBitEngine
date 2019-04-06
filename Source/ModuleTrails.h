@@ -15,6 +15,8 @@ public:
 	update_status Update();
 
 	void Draw();
+	void RearrangeVertex(std::list<ComponentTrail *>::iterator &trail, std::list<TrailNode *>::iterator &curr, std::list<TrailNode *>::iterator &next, float &currUV, float &nextUV, math::float3 &originHigh, math::float3 &originLow, math::float3 &destinationHigh, math::float3 &destinationLow);
+	void GetOriginAndDest(std::list<ComponentTrail *>::iterator &trail, float &origin, std::list<TrailNode *>::iterator &curr, float &dest, std::list<TrailNode *>::iterator &next);
 	void DebugDraw() const;
 
 	void OnSystemEvent(System_Event event);
