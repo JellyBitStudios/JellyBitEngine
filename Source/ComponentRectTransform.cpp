@@ -291,9 +291,9 @@ void ComponentRectTransform::RecalculateRectByPercentage()
 		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
 
 	rectTransform[Rect::X] = (uint)(anchor_percenatges[RectPercentage::X0] * (float)rectParent[Rect::XDIST]) + rectParent[Rect::X];
-	rectTransform[Rect::XDIST] = rectParent[Rect::XDIST] - (((rectTransform[Rect::X] - rectParent[Rect::X]) + (uint)(anchor_percenatges[RectPercentage::X1] * (float)rectParent[Rect::XDIST])));
+	rectTransform[Rect::XDIST] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - (uint)(anchor_percenatges[RectPercentage::X1] * (float)rectParent[Rect::XDIST]) - rectTransform[Rect::X];
 	rectTransform[Rect::Y] = (uint)(anchor_percenatges[RectPercentage::Y0] * (float)rectParent[Rect::YDIST]) + rectParent[Rect::Y];
-	rectTransform[Rect::YDIST] = rectParent[Rect::YDIST] - ((rectTransform[Rect::Y] - rectParent[Rect::Y]) + (uint)(anchor_percenatges[RectPercentage::Y1] * (float)rectParent[Rect::YDIST]));
+	rectTransform[Rect::YDIST] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - (uint)(anchor_percenatges[RectPercentage::Y1] * (float)rectParent[Rect::YDIST]) - rectTransform[Rect::Y];
 
 	CalculateAnchors();
 }
