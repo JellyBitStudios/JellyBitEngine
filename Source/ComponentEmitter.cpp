@@ -306,7 +306,7 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 		}
 		else if(shapeMesh.meshVertex)
 		{
-			uint pos = rand() % shapeMesh.meshVertexCont;
+			uint pos = rand() % shapeMesh.maxVertex;
 			spawn.x = shapeMesh.meshVertex[pos].position[0];
 			spawn.y = shapeMesh.meshVertex[pos].position[1];
 			spawn.z = shapeMesh.meshVertex[pos].position[2];
@@ -478,6 +478,7 @@ void ComponentEmitter::ParticleShape()
 					uint payload_n = *(uint*)payload->Data;
 					SetMeshParticleRes(payload_n);
 				}
+				ImGui::EndDragDropTarget();
 			}
 			break;
 		default:
@@ -592,6 +593,7 @@ void ComponentEmitter::ParticleBurst()
 					uint payload_n = *(uint*)payload->Data;
 					SetBurstMeshParticleRes(payload_n);
 				}
+				ImGui::EndDragDropTarget();
 			}
 		}
 		ImGui::Separator();
@@ -856,7 +858,7 @@ void ComponentEmitter::SetMeshParticleRes(uint res_uuid)
 		shapeMesh.meshRes = res_uuid;
 		shapeMesh.meshVertexCont = 0u;
 		mesh->GetIndicesReference(shapeMesh.indices);
-		shapeMesh.indicesSize = mesh->GetIndicesCount();
+		shapeMesh.indicesSize = mesh->GetIndicesCount()/3;
 	}
 	else
 		shapeMesh.meshRes = 0u;
@@ -880,7 +882,7 @@ void ComponentEmitter::SetBurstMeshParticleRes(uint res_uuid)
 		burstMesh.meshRes = res_uuid;
 		burstMesh.meshVertexCont = 0u;
 		mesh->GetIndicesReference(burstMesh.indices);
-		burstMesh.indicesSize = mesh->GetIndicesCount();
+		burstMesh.indicesSize = mesh->GetIndicesCount()/3;
 	}
 	else
 		burstMesh.meshRes = 0u;
