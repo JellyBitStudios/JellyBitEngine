@@ -97,16 +97,13 @@ void ComponentRectTransform::OnSystemEvent(System_Event event)
 
 void ComponentRectTransform::Update()
 {
-	if (rFrom == RectFrom::WORLD)
-	{
-		CalculateRectFromWorld();
-		needed_recalculate = false;
-	}
-
 	if (needed_recalculate)
 	{
 		switch (rFrom)
 		{
+			case ComponentRectTransform::WORLD:
+				CalculateRectFromWorld();
+			break;
 			case ComponentRectTransform::RECT:
 				(rectTransform_modified) ? CalculateAnchors(true) :
 					((usePivot) ? RecaculateAnchors() : RecalculateRectByPercentage());
