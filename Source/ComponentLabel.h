@@ -1,8 +1,6 @@
 #ifndef __COMPONENT_LABEL_H__
 #define __COMPONENT_LABEL_H__
 
-#include "ModuleUI.h"
-
 #include "Component.h"
 #include <string>
 #include <map>
@@ -10,6 +8,7 @@
 
 #include "MathGeoLib/include/Math/float4.h"
 #include "MathGeoLib/include/Math/float3.h"
+#include "MathGeoLib/include/Math/float2.h"
 
 struct Character;
 class ResourceFont;
@@ -75,6 +74,7 @@ public:
 	uint GetBufferSize()const;
 	uint GetWordSize()const;
 	std::vector<uint>* GetWordTextureIDs();
+	std::vector<LabelLetter>* GetWord();
 
 	int GetBufferIndex()const;
 	void SetBufferRangeAndFIll(uint offs, int index);
@@ -111,7 +111,7 @@ private:
 	bool hAligment = false;
 
 	//Buffer
-	char buffer[UI_BYTES_LABEL];
+	//char buffer[UI_BYTES_LABEL];
 	uint buffer_size = 0;
 	uint offset = 0;
 	int index = -1;

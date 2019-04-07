@@ -29,6 +29,7 @@ ComponentButton::ComponentButton(GameObject* parent, ComponentTypes componentTyp
 		if (parent->cmp_rectTransform == nullptr)
 			parent->AddComponent(ComponentTypes::RectTransformComponent);
 
+		App->ui->buttons_ui.push_back(this);
 		//if (parent->cmp_rectTransform)
 		//{
 		//	if (parent->cmp_rectTransform->GetFrom() != ComponentRectTransform::RectFrom::RECT)
@@ -57,6 +58,9 @@ ComponentButton::ComponentButton(const ComponentButton & componentButton, GameOb
 	scriptInstance = componentButton.scriptInstance;
 	methodToCall = componentButton.methodToCall;
 
+	if(includeComponents)
+		App->ui->buttons_ui.push_back(this);
+
 	//if (includeComponents)
 	//{
 	//	if (parent->cmp_rectTransform)
@@ -82,6 +86,8 @@ ComponentButton::ComponentButton(const ComponentButton & componentButton, GameOb
 ComponentButton::~ComponentButton()
 {
 	parent->cmp_button = nullptr;
+	App->ui->buttons_ui.remove(this);
+
 	//if (isWorld)
 	//{
 	//	App->physics->RemoveActor(*gActor);

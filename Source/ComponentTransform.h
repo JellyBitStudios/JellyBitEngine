@@ -28,7 +28,7 @@ public:
 	void SavePrevTransform(const math::float4x4 & prevTransformMat);
 
 	math::float4x4& GetMatrix() const;
-	void SetMatrixFromGlobal(math::float4x4& globalMatrix);
+	void SetMatrixFromGlobal(math::float4x4& globalMatrix, bool fromUI = false);
 
 	math::float4x4 GetGlobalMatrix() const;
 

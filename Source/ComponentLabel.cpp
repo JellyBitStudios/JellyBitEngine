@@ -7,6 +7,7 @@
 
 #include "GameObject.h"
 #include "Application.h"
+#include "ModuleUI.h"
 
 #include "glew/include/GL/glew.h"
 #include "MathGeoLib/include/Geometry/Frustum.h"
@@ -510,6 +511,7 @@ void ComponentLabel::DragDropFont()
 
 void ComponentLabel::FIllBuffer()
 {
+	/*
 	buffer_size = labelWord.size() * sizeof(float) * 16;
 	char* cursor = buffer;
 	size_t bytes = sizeof(float) * 4;
@@ -527,6 +529,7 @@ void ComponentLabel::FIllBuffer()
 	last_word_size = labelWord.size();
 
 	App->ui->FillBufferRange(offset, buffer_size, buffer);
+	*/
 }
 
 void ComponentLabel::FillCorners()
@@ -564,7 +567,7 @@ math::float4 ComponentLabel::GetColor() const
 
 char* ComponentLabel::GetBuffer()
 {
-	return buffer;
+	return nullptr;
 }
 
 uint ComponentLabel::GetBufferSize() const
@@ -580,6 +583,11 @@ uint ComponentLabel::GetWordSize() const
 std::vector<uint>* ComponentLabel::GetWordTextureIDs()
 {
 	return &textureWord;
+}
+
+std::vector<ComponentLabel::LabelLetter>* ComponentLabel::GetWord()
+{
+	return &labelWord;
 }
 
 int ComponentLabel::GetBufferIndex() const

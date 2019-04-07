@@ -15,7 +15,6 @@
 
 #define PIVOT_POINTS_STR "Top Left\0Top Right\0Bottom Left\0Bottom Right\0Center\0Top\0Left\0Right\0Bottom"
 
-
 ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::RectTransformComponent)
 {
 	if (includeComponents)
@@ -97,9 +96,16 @@ void ComponentRectTransform::OnSystemEvent(System_Event event)
 
 void ComponentRectTransform::Update()
 {
-	if (rFrom == RectFrom::WORLD)
+	if (rFrom == ComponentRectTransform::WORLD)
 	{
 		CalculateRectFromWorld();
+		std::vector<GameObject*> rectChilds;
+		parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
+		System_Event rect_world;
+		rect_world.type = System_Event_Type::RectTransformUpdated;
+		for (std::vector<GameObject*>::const_reverse_iterator go = rectChilds.crbegin(); go != rectChilds.crend(); go++)
+			if((*go) != parent)
+				(*go)->OnSystemEvent(rect_world);
 		needed_recalculate = false;
 	}
 
@@ -295,9 +301,9 @@ void ComponentRectTransform::RecalculateRectByPercentage()
 		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
 
 	rectTransform[Rect::X] = (uint)(anchor_percenatges[RectPercentage::X0] * (float)rectParent[Rect::XDIST]) + rectParent[Rect::X];
-	rectTransform[Rect::XDIST] = rectParent[Rect::XDIST] - (((rectTransform[Rect::X] - rectParent[Rect::X]) + (uint)(anchor_percenatges[RectPercentage::X1] * (float)rectParent[Rect::XDIST])));
+	rectTransform[Rect::XDIST] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - (uint)(anchor_percenatges[RectPercentage::X1] * (float)rectParent[Rect::XDIST]) - rectTransform[Rect::X];
 	rectTransform[Rect::Y] = (uint)(anchor_percenatges[RectPercentage::Y0] * (float)rectParent[Rect::YDIST]) + rectParent[Rect::Y];
-	rectTransform[Rect::YDIST] = rectParent[Rect::YDIST] - ((rectTransform[Rect::Y] - rectParent[Rect::Y]) + (uint)(anchor_percenatges[RectPercentage::Y1] * (float)rectParent[Rect::YDIST]));
+	rectTransform[Rect::YDIST] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - (uint)(anchor_percenatges[RectPercentage::Y1] * (float)rectParent[Rect::YDIST]) - rectTransform[Rect::Y];
 
 	CalculateAnchors();
 }
@@ -315,8 +321,10 @@ void ComponentRectTransform::CalculateScreenCorners()
 
 void ComponentRectTransform::CalculateRectFromWorld()
 {
+	math::float4x4 globalmatrix = math::float4x4::identity;
 	if (billboard)
 	{
+		globalmatrix = parent->transform->GetGlobalMatrix();
 		math::float3 zAxis = App->renderer3D->GetCurrentCamera()->frustum.front;
 		math::float3 yAxis = App->renderer3D->GetCurrentCamera()->frustum.up;
 		math::float3 xAxis = yAxis.Cross(zAxis).Normalized();
@@ -324,8 +332,7 @@ void ComponentRectTransform::CalculateRectFromWorld()
 		math::float3 pos = math::float3::zero;
 		math::Quat rot = math::Quat::identity;
 		math::float3 scale = math::float3::zero;
-		math::float4x4 global = parent->transform->GetGlobalMatrix();
-		global.Decompose(pos, rot, scale);
+		globalmatrix.Decompose(pos, rot, scale);
 
 		if (!scale.IsFinite())
 		{
@@ -333,10 +340,10 @@ void ComponentRectTransform::CalculateRectFromWorld()
 			CONSOLE_LOG(LogTypes::Warning, "If canvas use billboard, you can't set size of transform to 0. Reset scale..")
 		}
 
-		parent->transform->SetMatrixFromGlobal(global.FromTRS(pos, math::Quat::identity * math::float3x3(xAxis, yAxis, zAxis).ToQuat(), scale));
+		globalmatrix = math::float4x4::FromTRS(pos, math::Quat::identity * math::float3x3(xAxis, yAxis, zAxis).ToQuat(), scale);
+		parent->transform->SetMatrixFromGlobal(globalmatrix, true);
 	}
-
-	math::float4x4 globalmatrix = parent->transform->GetGlobalMatrix();
+	globalmatrix = parent->transform->GetGlobalMatrix();
 	corners[Rect::RTOPLEFT] = math::float4(globalmatrix * math::float4(-0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
 	corners[Rect::RTOPRIGHT] = math::float4(globalmatrix * math::float4(0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
 	corners[Rect::RBOTTOMLEFT] = math::float4(globalmatrix * math::float4(-0.5f, -0.5f, 0.0f, 1.0f)).Float3Part();
