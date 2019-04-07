@@ -40,6 +40,8 @@ ComponentTrail::~ComponentTrail()
 	trailVertex.clear();
 
 	App->trails->trails.remove(this);
+
+	parent->cmp_trail = nullptr;
 }
 
 void ComponentTrail::Update() 
