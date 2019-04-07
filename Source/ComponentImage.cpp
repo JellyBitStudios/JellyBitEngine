@@ -23,7 +23,6 @@ ComponentImage::ComponentImage(GameObject * parent, ComponentTypes componentType
 			parent->AddComponent(ComponentTypes::CanvasRendererComponent);
 
 		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::ImageComponent, this);
-		needed_recalculate = true;
 	}
 }
 
@@ -41,7 +40,6 @@ ComponentImage::ComponentImage(const ComponentImage & componentImage, GameObject
 			App->res->SetAsUsed(res_image);
 
 		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::ImageComponent, this);
-		needed_recalculate = true;
 	}
 }
 
@@ -54,23 +52,6 @@ ComponentImage::~ComponentImage()
 		App->ui->UnRegisterBufferIndex(offset, ComponentTypes::ImageComponent);
 
 	parent->cmp_image = nullptr;
-}
-
-void ComponentImage::Update()
-{
-	if (needed_recalculate)
-	{
-		if (mask)
-		{
-			uint* rect = parent->cmp_rectTransform->GetRect();
-			mask_values[1] = ((rect_initValues[1] - (float)rect[ComponentRectTransform::Rect::YDIST]) / rect_initValues[1]);
-			mask_values[0] = 1.0f - ((rect_initValues[0] - (float)rect[ComponentRectTransform::Rect::XDIST]) / rect_initValues[0]);
-		}
-		//if (index != -1)
-			//FillBuffer();
-
-		needed_recalculate = false;
-	}
 }
 
 float * ComponentImage::GetColor()
@@ -160,10 +141,20 @@ void ComponentImage::OnSystemEvent(System_Event event)
 	switch (event.type)
 	{
 	case System_Event_Type::ScreenChanged:
+	{
+		mask_values[0] = 1;
+		mask_values[1] = 0;
+		uint* rect = parent->cmp_rectTransform->GetRect();
+		rect_initValues[0] = rect[ComponentRectTransform::Rect::XDIST];
+		rect_initValues[1] = rect[ComponentRectTransform::Rect::YDIST];
+		break;
+	}
 	case System_Event_Type::CanvasChanged:
 	case System_Event_Type::RectTransformUpdated:
 	{
-		needed_recalculate = true;
+		uint* rect = parent->cmp_rectTransform->GetRect();
+		mask_values[1] = ((rect_initValues[1] - (float)rect[ComponentRectTransform::Rect::YDIST]) / rect_initValues[1]);
+		mask_values[0] = 1.0f - ((rect_initValues[0] - (float)rect[ComponentRectTransform::Rect::XDIST]) / rect_initValues[0]);
 		break;
 	}
 	}
