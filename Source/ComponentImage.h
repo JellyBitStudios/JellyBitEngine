@@ -21,8 +21,6 @@ public:
 	ComponentImage(const ComponentImage& componentImage, GameObject* parent, bool includeComponents = true);
 	~ComponentImage();
 
-	void Update();
-
 	//NOTE: If you override this method, make sure to call the base class method. 
 	//(Component::OnSystemEvent(event); at start)
 	void OnSystemEvent(System_Event event);
@@ -62,8 +60,6 @@ private:
 
 	int index = -1;
 	uint offset = 0;
-
-	bool needed_recalculate = false;
 };
 
 #endif

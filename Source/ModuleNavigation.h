@@ -31,10 +31,10 @@ public:
 	void FindPath(float* start, float* end, float* path, int pathCount, int maxPath) const;
 	int  AddAgent(const float* p, float radius, float height, float maxAcc, float maxSpeed,
 				  float collQueryRange, float pathOptimRange, unsigned char updateFlags,
-				  unsigned char obstacleAvoidanceType) const;
+				  unsigned char obstacleAvoidanceType, float stopAtLength) const;
 	bool UpdateAgentParams(int indx, float radius, float height, float maxAcc, float maxSpeed,
 						   float collQueryRange, float pathOptimRange, unsigned char updateFlags,
-						   unsigned char obstacleAvoidanceType) const;
+						   unsigned char obstacleAvoidanceType, float stopAtLength) const;
 	void RemoveAgent(int indx) const;
 	void SetDestination(const float* p, int indx) const;
 	bool IsWalking(int index) const;
