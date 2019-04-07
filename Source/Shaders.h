@@ -856,6 +856,7 @@
 "\n" \
 "	// gBuffer fragment's world pos\n" \
 "	vec4 worldPos = texture(gBufferPosition, screenPos);\n" \
+"	worldPos.w = 1;\n" \
 "	if (worldPos.z == 0.0)\n" \
 "		discard;\n" \
 "	// gBuffer fragment's object pos\n" \
