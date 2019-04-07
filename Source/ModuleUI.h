@@ -41,6 +41,7 @@ class TextureImportSettings;
 class ResourceTexture;
 class ComponentImage;
 class ComponentLabel;
+class ComponentButton;
 
 enum ComponentTypes;
 
@@ -101,7 +102,7 @@ public:
 	std::list<GameObject*> canvas_screen;
 	std::list<GameObject*> canvas_worldScreen;
 	std::list<GameObject*> canvas_world;
-
+	std::list<ComponentButton*> buttons_ui;
 	FT_Library library;
 
 private:
