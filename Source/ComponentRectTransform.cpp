@@ -96,13 +96,23 @@ void ComponentRectTransform::OnSystemEvent(System_Event event)
 
 void ComponentRectTransform::Update()
 {
+	if (rFrom == ComponentRectTransform::WORLD)
+	{
+		CalculateRectFromWorld();
+		std::vector<GameObject*> rectChilds;
+		parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
+		System_Event rect_world;
+		rect_world.type = System_Event_Type::RectTransformUpdated;
+		for (std::vector<GameObject*>::const_reverse_iterator go = rectChilds.crbegin(); go != rectChilds.crend(); go++)
+			if((*go) != parent)
+				(*go)->OnSystemEvent(rect_world);
+		needed_recalculate = false;
+	}
+
 	if (needed_recalculate)
 	{
 		switch (rFrom)
 		{
-			case ComponentRectTransform::WORLD:
-				CalculateRectFromWorld();
-			break;
 			case ComponentRectTransform::RECT:
 				(rectTransform_modified) ? CalculateAnchors(true) :
 					((usePivot) ? RecaculateAnchors() : RecalculateRectByPercentage());
