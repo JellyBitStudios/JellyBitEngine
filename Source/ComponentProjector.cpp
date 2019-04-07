@@ -51,9 +51,9 @@ ComponentProjector::ComponentProjector(const ComponentProjector& componentProjec
 		SetMaterialRes(App->resHandler->defaultMaterial);
 
 	if (App->res->GetResource(componentProjector.meshRes) != nullptr)
-		SetMaterialRes(componentProjector.meshRes);
+		SetMeshRes(componentProjector.meshRes);
 	else
-		SetMaterialRes(App->resHandler->cube);
+		SetMeshRes(App->resHandler->cube);
 
 	// Init frustum
 	frustum.type = componentProjector.frustum.type;

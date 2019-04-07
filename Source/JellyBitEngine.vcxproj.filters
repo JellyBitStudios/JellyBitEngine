@@ -2109,8 +2109,14 @@
     <ClInclude Include="ResourceScene.h">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClInclude>
+    <ClInclude Include="ComponentTrail.h">
+      <Filter>Sources\Modules\GO&amp;Components\Components</Filter>
+    </ClInclude>
     <ClInclude Include="ComponentCanvas.h">
       <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleTrails.h">
+      <Filter>Sources\Modules</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2666,11 +2672,17 @@
     <ClCompile Include="ResourceScene.cpp">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClCompile>
+    <ClCompile Include="ComponentTrail.cpp">
+      <Filter>Sources\Modules\GO&amp;Components\Components</Filter>
+    </ClCompile>
     <ClCompile Include="ResourceFont.cpp">
       <Filter>Sources\Modules\Resources\Types</Filter>
     </ClCompile>
     <ClCompile Include="ComponentCanvas.cpp">
       <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleTrails.cpp">
+      <Filter>Sources\Modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

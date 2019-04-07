@@ -14,6 +14,7 @@
 #define CARTOON_SHADER_PROGRAM_UUID 2628543447
 #define CARTOON_FLOOR_SHADER_PROGRAM_UUID 3828343447
 #define DEFAULT_SHADER_PROGRAM_PARTICLE_UUID 2628722347
+#define DEFAULT_SHADER_PROGRAM_TRAIL_UUID 2628722348
 #define DEFAULT_SHADER_PROGRAM_UI_UUID 1246832795 
 #define CUBEMAP_SHADER_PROGRAM_UUID 1676961097
 #define DECAL_SHADER_PROGRAM_UUID 1708332988
@@ -40,7 +41,7 @@ public:
 	void CreateLightIcon();
 
 	// Shader resources
-	void CreateDefaultShaderProgram(const char* vShader, const char* fShader, ShaderProgramTypes type);
+	void CreateDefaultShaderProgram(const char* vShader, const char* fShader, ShaderProgramTypes type, std::string name);
 	void CreateDeferredShaderProgram();
 	void CreateBillboardShaderProgram();
 	uint CreateDecalShaderProgram() const;
@@ -68,6 +69,7 @@ public:
 	uint deferredShaderProgram; // Used at FBO
 	uint billboardShaderProgram;
 	uint particleShaderProgram;
+	uint trailShaderProgram;
 	uint UIVertexShaderObject;
 	uint UIFragmentShaderObject;
 	uint UIShaderProgram;
