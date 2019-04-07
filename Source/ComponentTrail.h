@@ -59,8 +59,8 @@ public:
 	void SetLifeTime(int lifeTime);
 	inline int GetLifeTime() { return lifeTime; }
 
-	void SetMinDistance(int minDistance);
-	inline int GetMinDistance() { return minDistance; }
+	void SetMinDistance(float minDistance);
+	inline float GetMinDistance() { return minDistance; }
 
 	void SetColor(math::float4 color);
 	inline math::float4 GetColor() { return color; }

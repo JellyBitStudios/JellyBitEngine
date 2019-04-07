@@ -2505,7 +2505,7 @@ int TrailGetLifeTime(MonoObject* monoTrail)
 	return 0;
 }
 
-void TrailSetMinDistance(MonoObject* monoTrail, int newMinDistance)
+void TrailSetMinDistance(MonoObject* monoTrail, float newMinDistance)
 {
 	ComponentTrail* trail = (ComponentTrail*)App->scripting->ComponentFrom(monoTrail);
 	if (trail)
@@ -2514,7 +2514,7 @@ void TrailSetMinDistance(MonoObject* monoTrail, int newMinDistance)
 	}
 }
 
-int TrailGetMinDistance(MonoObject* monoTrail)
+float TrailGetMinDistance(MonoObject* monoTrail)
 {
 	ComponentTrail* trail = (ComponentTrail*)App->scripting->ComponentFrom(monoTrail);
 	if (trail)

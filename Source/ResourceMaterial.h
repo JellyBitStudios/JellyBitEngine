@@ -64,6 +64,8 @@ private:
 	bool LoadInMemory();
 	bool UnloadFromMemory();
 
+	void UpdateUniformsLocations();
+
 public:
 
 	ResourceMaterialData materialData;
