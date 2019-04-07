@@ -94,7 +94,7 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	AddModule(window);
 	AddModule(input);
 	AddModule(scene);
-	AddModule(navigation);
+	AddModule(navigation); // Navigation Update MUST happens before c# scripts update!!
 	AddModule(scripting);
 	AddModule(fbo);
 
