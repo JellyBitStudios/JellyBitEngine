@@ -1079,6 +1079,12 @@ void ScriptingModule::TemporalLoad()
 			}
 		}
 	}
+
+	//Temporal load for OnClick method in Buttons
+	for (ComponentButton* button : App->ui->buttons_ui)
+	{
+		button->LoadOnClickReference();
+	}
 }
 
 void ScriptingModule::UpdateMethods()
