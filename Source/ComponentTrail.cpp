@@ -254,7 +254,7 @@ void ComponentTrail::SetLifeTime(int lifeTime)
 	this->lifeTime = lifeTime;
 }
 
-void ComponentTrail::SetMinDistance(int minDistance)
+void ComponentTrail::SetMinDistance(float minDistance)
 {
 	this->minDistance = minDistance;
 }
