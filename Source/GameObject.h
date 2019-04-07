@@ -7,6 +7,7 @@
 #include "EventSystem.h"
 
 #include "MathGeoLib\include\Geometry\AABB.h"
+#include "MathGeoLib\include\Geometry\OBB.h"
 
 #include <mono/metadata/object.h>
 
@@ -30,6 +31,7 @@ public:
 	uint GetUUID() const;
 	void ForceUUID(uint uuid);
 	void SetParent(GameObject* parent);
+	bool ChangeParent(GameObject* newPraent);
 	GameObject* GetParent() const;
 	uint GetParentUUID() const;
 	void ToggleIsActive();
@@ -103,6 +105,7 @@ public:
 	class ComponentProjector*		cmp_projector = nullptr;
 	class ComponentAudioListener*	cmp_audioListener = nullptr;
 	class ComponentAudioSource*		cmp_audioSource = nullptr;
+	class ComponentTrail*			cmp_trail = nullptr;
 
 	ResourcePrefab* prefab = nullptr;
 
@@ -111,6 +114,7 @@ public:
 
 	math::AABB originalBoundingBox;
 	math::AABB boundingBox;
+	math::OBB rotationBB;
 
 	bool seenLastFrame = false;
 

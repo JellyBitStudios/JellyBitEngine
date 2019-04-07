@@ -10,13 +10,16 @@ enum ComponentTypes
 	MaterialComponent,
 	CameraComponent,
 	NavAgentComponent,
-	EmitterComponent,
-	ScriptComponent,
+	ScriptComponent = 7,
 	BoneComponent,
 	AnimationComponent,
 	AnimatorComponent,
 	LightComponent = 16,
 	ProjectorComponent,
+
+	// Effects
+	EmitterComponent = 6,
+	TrailComponent = 33,
 
 	//UI
 	CanvasComponent = 32,
@@ -48,7 +51,7 @@ enum ComponentTypes
 	AudioListenerComponent,
 	AudioSourceComponent //31
 
-	//32 Canvas, defined before.
+	// 	TrailComponent = 33
 };
 
 #endif

@@ -18,6 +18,7 @@
 #include "ComponentRectTransform.h"
 #include "ResourceShaderProgram.h"
 #include "ResourceAnimation.h"
+#include "ComponentTrail.h"
 
 #include <assert.h>
 

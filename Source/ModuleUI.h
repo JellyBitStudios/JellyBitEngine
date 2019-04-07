@@ -12,6 +12,8 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#include "ComponentLabel.h"
+
 #define UI_MAX_COMPONENTS_IMAGE 16348
 #define UI_MAX_COMPONENTS_LABEL 320
 #define UI_MAX_LABEL_LETTERS 256
@@ -89,8 +91,8 @@ private:
 	void initRenderData();
 	void DrawScreenCanvas();
 	void DrawWorldCanvas();
-	void DrawUIImage(int index, math::float4& color, uint texture, math::float2& mask);
-	void DrawUILabel(int index, std::vector<uint>* GetTexturesWord, math::float4& color);
+	void DrawUIImage(math::float3 corners[4], math::float4& color, uint texture, math::float2& mask);
+	void DrawUILabel(std::vector<ComponentLabel::LabelLetter>* workd, std::vector<uint>* GetTexturesWord, math::float4& color);
 
 	void UpdateRenderStates();
 
@@ -151,6 +153,7 @@ private:
 	static void setFloat(unsigned int ID, const char* name, float value, float value2, float value3);
 	static void setFloat(unsigned int ID, const char* name, float value, float value2, float value3, float value4);
 	static void setFloat(unsigned int ID, const char* name, math::float3 value);
+	static void setFloat(unsigned int ID, const char* name, math::float4 value);
 
 	static void setUnsignedInt(unsigned int ID, const char* name, unsigned int value);
 	static void setUnsignedInt(unsigned int ID, const char* name, unsigned int value, unsigned int value2);

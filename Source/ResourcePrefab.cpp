@@ -272,6 +272,8 @@ void ResourcePrefab::Load()
 		delete[] saveBuffer;
 		saveBuffer = nullptr;
 		saveBytes = 0u;
+
+		root->prefab = this;
 	}
 }
 

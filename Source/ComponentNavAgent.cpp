@@ -73,6 +73,11 @@ void ComponentNavAgent::OnUniqueEditor()
 		if (ImGui::DragFloat("##MSpeed", &maxSpeed, 0.1f))
 			UpdateParams();
 
+		ImGui::Text("Stop At Length");
+		ImGui::SameLine();
+		if (ImGui::DragFloat("##sAtL", &stopAtLength, 0.1f))
+			UpdateParams();
+
 		if (ImGui::CheckboxFlags("Anticipate Turns", &params, 1))
 			UpdateParams();
 		if (ImGui::CheckboxFlags("Optimize Visibility", &params, 8))
@@ -109,7 +114,7 @@ void ComponentNavAgent::AddAgent()
 	float pathOptimizationRange = radius * 30.0f;
 	index = App->navigation->AddAgent(pos.ptr(), radius, height, maxAcceleration, maxSpeed,
 									  collisionQueryRange, pathOptimizationRange, params,
-									  avoidanceQuality);
+									  avoidanceQuality, stopAtLength);
 }
 
 void ComponentNavAgent::RemoveAgent()
@@ -124,7 +129,7 @@ bool ComponentNavAgent::UpdateParams() const
 	float pathOptimizationRange = radius * 30.0f;
 	return App->navigation->UpdateAgentParams(index, radius, height, maxAcceleration, maxSpeed,
 		   collisionQueryRange, pathOptimizationRange, params,
-		   avoidanceQuality);;
+		   avoidanceQuality, stopAtLength);;
 }
 
 void ComponentNavAgent::SetDestination(const float* pos) const

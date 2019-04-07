@@ -1792,7 +1792,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::DOUBLE:
 		{
 			bytes = sizeof(double);
-			bool var;
+			double var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1802,7 +1802,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::INT8:
 		{
 			bytes = sizeof(signed char);
-			bool var;
+			int8_t var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1812,7 +1812,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::UINT8:
 		{
 			bytes = sizeof(unsigned char);
-			bool var;
+			uint8_t var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1822,7 +1822,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::INT16:
 		{
 			bytes = sizeof(short);
-			bool var;
+			int16_t var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1832,7 +1832,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::UINT16:
 		{
 			bytes = sizeof(unsigned short);
-			bool var;
+			uint16_t var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1852,7 +1852,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::UINT:
 		{
 			bytes = sizeof(uint);
-			bool var;
+			uint32_t var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1862,7 +1862,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::INT64:
 		{
 			bytes = sizeof(long long);
-			bool var;
+			int64_t var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1872,7 +1872,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::UINT64:
 		{
 			bytes = sizeof(unsigned long long);
-			bool var;
+			uint64_t var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -1882,7 +1882,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 		case VarType::CHAR:
 		{
 			bytes = sizeof(char);
-			bool var;
+			char var;
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
@@ -3069,7 +3069,8 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
 				{
 					MonoType* type = mono_field_get_type(field);
-					if (mono_class_is_enum(mono_type_get_class(type)))
+					MonoClass* classCSharp = mono_type_get_class(type);
+					if (classCSharp && mono_class_is_enum(classCSharp))
 					{	
 						std::string typeName = mono_type_full_name(type);
 						std::string fieldName = mono_field_get_name(field);

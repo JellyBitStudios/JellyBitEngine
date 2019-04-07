@@ -24,8 +24,10 @@ bool ModuleInternalResHandler::Start()
 	CreateLightIcon();
 
 	// Shader resources
-	CreateDefaultShaderProgram(vShaderTemplate, fShaderTemplate, ShaderProgramTypes::Standard);
-	CreateDefaultShaderProgram(Particle_vShaderTemplate, Particle_fShaderTemplate, ShaderProgramTypes::Particles);
+	CreateDefaultShaderProgram(vShaderTemplate, fShaderTemplate, ShaderProgramTypes::Standard, "Default");
+	CreateDefaultShaderProgram(Particle_vShaderTemplate, Particle_fShaderTemplate, ShaderProgramTypes::Effects, "Default");
+	CreateDefaultShaderProgram(vShaderTrail, fShaderTrail, ShaderProgramTypes::Effects, "Trail");
+
 	CreateDeferredShaderProgram();
 	CreateBillboardShaderProgram();
 	CreateUIShaderProgram();
@@ -147,8 +149,8 @@ void ModuleInternalResHandler::CreateCube()
 		6, 1, 0,
 		0, 5, 6,
 		// Bottom
-		7, 2, 3,
-		3, 4, 7
+		7, 3, 2,
+		7, 4, 3
 	};
 
 	// Vertices
@@ -242,11 +244,11 @@ void ModuleInternalResHandler::CreateLightIcon()
 	App->res->SetAsUsed(lightIcon); // used in lights;
 }
 
-void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, const char* fShader, ShaderProgramTypes type)
+void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, const char* fShader, ShaderProgramTypes type, std::string name)
 {
 	ResourceData vertexData;
 	ResourceShaderObjectData vertexShaderData;
-	vertexData.name = "Default vertex object";
+	vertexData.name = name + " vertex object";
 	vertexData.internal = true;
 	vertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
 	vertexShaderData.SetSource(vShader, strlen(vShader));
@@ -256,7 +258,7 @@ void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, c
 
 	ResourceData fragmentData;
 	ResourceShaderObjectData fragmentShaderData;
-	fragmentData.name = "Default fragment object";
+	fragmentData.name = name + " fragment object";
 	fragmentData.internal = true;
 	fragmentShaderData.shaderObjectType = ShaderObjectTypes::FragmentType;
 	fragmentShaderData.SetSource(fShader, strlen(fShader));
@@ -266,23 +268,60 @@ void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, c
 
 	ResourceData shaderData;
 	ResourceShaderProgramData programShaderData;
-	shaderData.name = "Default shader program";
+	shaderData.name = name + " shader program";
 	shaderData.internal = true;
 	programShaderData.shaderObjectsUuids.push_back(vObj->GetUuid());
 	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
 	programShaderData.shaderProgramType = type;
 	ResourceShaderProgram* prog = nullptr;
-	if (type == ShaderProgramTypes::Standard)
-		prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DEFAULT_SHADER_PROGRAM_UUID);
-	else if (type == ShaderProgramTypes::Particles)
-		prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DEFAULT_SHADER_PROGRAM_PARTICLE_UUID);
 
-	if (!prog->Link())
-		prog->isValid = false;
-	if (type == ShaderProgramTypes::Standard)
+	switch (type)
+	{
+	case Standard:
+		prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DEFAULT_SHADER_PROGRAM_UUID);
+		
+		if (!prog->Link())
+			prog->isValid = false;
+
 		defaultShaderProgram = prog->GetUuid();
-	else if (type == ShaderProgramTypes::Particles)
-		particleShaderProgram = prog->GetUuid();
+		break;
+	case Projector:
+		break;
+	case Effects:
+	
+
+		if (name.compare("Trail") == 0)
+		{
+			prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DEFAULT_SHADER_PROGRAM_TRAIL_UUID);
+
+			if (!prog->Link())
+				prog->isValid = false;
+
+			trailShaderProgram = prog->GetUuid();
+
+			int a = ((ResourceShaderProgram*)App->res->GetResource(trailShaderProgram))->shaderProgram;
+			int b = a;
+		}
+		else
+		{
+			prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DEFAULT_SHADER_PROGRAM_PARTICLE_UUID);
+
+			if (!prog->Link())
+				prog->isValid = false;
+
+			particleShaderProgram = prog->GetUuid();
+		}
+
+		break;
+	case UI:
+		break;
+	case Source:
+		break;
+	case Custom:
+		break;
+	default:
+		break;
+	}
 }
 
 void ModuleInternalResHandler::CreateDeferredShaderProgram()
