@@ -156,6 +156,7 @@ void ModuleUI::OnSystemEvent(System_Event event)
 		canvas_screen.clear();
 		canvas_worldScreen.clear();
 		canvas_world.clear();
+		buttons_ui.clear();
 		break;
 	}
 	case System_Event_Type::ComponentDestroyed:

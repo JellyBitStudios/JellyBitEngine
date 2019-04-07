@@ -321,9 +321,10 @@ void ComponentRectTransform::CalculateScreenCorners()
 
 void ComponentRectTransform::CalculateRectFromWorld()
 {
-	math::float4x4 globalmatrix = parent->transform->GetGlobalMatrix();
+	math::float4x4 globalmatrix = math::float4x4::identity;
 	if (billboard)
 	{
+		globalmatrix = parent->transform->GetGlobalMatrix();
 		math::float3 zAxis = App->renderer3D->GetCurrentCamera()->frustum.front;
 		math::float3 yAxis = App->renderer3D->GetCurrentCamera()->frustum.up;
 		math::float3 xAxis = yAxis.Cross(zAxis).Normalized();
@@ -340,8 +341,9 @@ void ComponentRectTransform::CalculateRectFromWorld()
 		}
 
 		globalmatrix = math::float4x4::FromTRS(pos, math::Quat::identity * math::float3x3(xAxis, yAxis, zAxis).ToQuat(), scale);
+		parent->transform->SetMatrixFromGlobal(globalmatrix, true);
 	}
-
+	globalmatrix = parent->transform->GetGlobalMatrix();
 	corners[Rect::RTOPLEFT] = math::float4(globalmatrix * math::float4(-0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
 	corners[Rect::RTOPRIGHT] = math::float4(globalmatrix * math::float4(0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
 	corners[Rect::RBOTTOMLEFT] = math::float4(globalmatrix * math::float4(-0.5f, -0.5f, 0.0f, 1.0f)).Float3Part();
