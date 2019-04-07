@@ -437,6 +437,7 @@ void ResourceMaterial::SetResourceShader(uint shaderUuid)
 
 	ResourceShaderProgram* shader = (ResourceShaderProgram*)App->res->GetResource(shaderUuid);
 	shader->GetUniforms(materialData.uniforms);
+
 	// Set as used (uniforms)
 	SetUniformsAsUsed();
 }
@@ -479,8 +480,13 @@ void ResourceMaterial::InitResources()
 	{
 		// Set as used (shader)
 		if (App->res->SetAsUsed(materialData.shaderUuid) > 0)
+		{
+			// Update locations
+			UpdateUniformsLocations();
+
 			// Set as used (uniforms)
 			SetUniformsAsUsed();
+		}
 		else
 			materialData.uniforms.clear();
 	}
@@ -547,4 +553,20 @@ bool ResourceMaterial::LoadInMemory()
 bool ResourceMaterial::UnloadFromMemory()
 {
 	return true;
+}
+
+void ResourceMaterial::UpdateUniformsLocations()
+{
+	std::vector<Uniform> uni;
+	ResourceShaderProgram* shader = (ResourceShaderProgram*)App->res->GetResource(materialData.shaderUuid);
+	shader->GetUniforms(uni);
+
+	for (uint i = 0; i < uni.size(); ++i)
+	{
+		for (uint j = 0; j < materialData.uniforms.size(); ++j)
+		{
+			if (strcmp(uni[i].common.name, materialData.uniforms[j].common.name) == 0)
+				materialData.uniforms[j].common.location = uni[i].common.location;
+		}
+	}
 }
