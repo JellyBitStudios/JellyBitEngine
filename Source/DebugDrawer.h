@@ -3,10 +3,12 @@
 
 #include "Color.h"
 
+#include "Globals.h"
 #include "MathGeoLib\include\Geometry\AABB.h"
 #include "MathGeoLib\include\Geometry\Frustum.h"
 #include "MathGeoLib\include\Math\float4x4.h"
 
+struct Vertex;
 class DebugDrawer
 {
 public:
@@ -30,6 +32,8 @@ public:
 	void DebugDrawCapsule(float radius, float halfHeight, const Color& color = White, const math::float4x4& globalTransform = math::float4x4::identity) const;
 	void DebugDrawLine(const math::float3& origin, const math::float3& destination, const Color& color = White, const math::float4x4& globalTransform = math::float4x4::identity) const;
 	void DebugDrawCone(float radius, float height, const Color& color = White, const math::float4x4& globalTransform = math::float4x4::identity) const;
+
+	void DebugDrawMesh(Vertex* vertexs, const uint vertexSize, uint* indices, const uint indicesSize, const math::float4x4& globalTransform) const;
 
 private:
 

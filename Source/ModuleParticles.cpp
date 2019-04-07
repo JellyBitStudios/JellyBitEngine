@@ -8,6 +8,7 @@
 #include "Application.h"
 #include "DebugDrawer.h"
 #include "ComponentTransform.h"
+#include "ModuleRenderer3D.h"
 
 ModuleParticle::ModuleParticle(bool start_enabled) : Module(start_enabled)
 {}
@@ -92,6 +93,21 @@ void ModuleParticle::DebugDraw() const
 				break;
 			case ShapeType_CONE:
 				App->debugDrawer->DebugDrawCone((*emitter)->circleCreation.r, (*emitter)->coneHeight, White, globalMat);
+				break;
+			case ShapeType_MESH:
+				App->debugDrawer->DebugDrawMesh((*emitter)->shapeMesh.meshVertex, (*emitter)->shapeMesh.maxVertex, (*emitter)->shapeMesh.indices, (*emitter)->shapeMesh.indicesSize, globalMat);
+				break;
+			default:
+				break;
+			}
+		}
+		if ((*emitter)->burst)
+		{
+			math::float4x4 globalMat = (*emitter)->GetParent()->transform->GetGlobalMatrix();;
+			switch ((*emitter)->burstType)
+			{
+			case ShapeType_MESH:
+				App->debugDrawer->DebugDrawMesh((*emitter)->burstMesh.meshVertex, (*emitter)->burstMesh.maxVertex, (*emitter)->burstMesh.indices, (*emitter)->burstMesh.indicesSize, globalMat);
 				break;
 			default:
 				break;

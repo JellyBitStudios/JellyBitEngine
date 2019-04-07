@@ -238,7 +238,9 @@ update_status ModuleRenderer3D::PostUpdate()
 	bool blend = GetCapabilityState(GL_BLEND);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDepthMask(GL_FALSE);
 	App->particle->Draw();
+	glDepthMask(GL_TRUE);
 	if (!blend)
 		glDisable(GL_BLEND);
 

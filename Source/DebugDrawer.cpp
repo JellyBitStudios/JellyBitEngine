@@ -2,6 +2,7 @@
 
 #include "Application.h"
 #include "ModuleRenderer3D.h"
+#include "ResourceMesh.h"
 
 #include "glew\include\GL\glew.h"
 
@@ -276,4 +277,24 @@ void DebugDrawer::DebugDrawCone(float radius, float height, const Color & color,
 	glEnd();
 
 	glPopMatrix();
+}
+
+void DebugDrawer::DebugDrawMesh(Vertex * vertexs, const uint vertexSize, uint * indices, const uint indicesSize, const math::float4x4 & globalTransform) const
+{
+	if (vertexs != nullptr)
+	{
+		glPushMatrix();
+		glMultMatrixf(globalTransform.Transposed().ptr());
+
+		glBegin(GL_TRIANGLES);
+		for (uint i = 0; i < indicesSize/3; i++)
+		{
+			glVertex3f(vertexs[indices[i * 3]].position[0], vertexs[indices[i * 3]].position[1], vertexs[indices[i * 3]].position[2]);
+			glVertex3f(vertexs[indices[i * 3 + 1]].position[0], vertexs[indices[i * 3 + 1]].position[1], vertexs[indices[i * 3 + 1]].position[2]);
+			glVertex3f(vertexs[indices[i * 3 + 2]].position[0], vertexs[indices[i * 3 + 2]].position[1], vertexs[indices[i * 3 + 2]].position[2]);
+		}
+		glEnd();
+
+		glPopMatrix();
+	}
 }
