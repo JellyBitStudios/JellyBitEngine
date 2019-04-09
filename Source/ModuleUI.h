@@ -41,6 +41,7 @@ class TextureImportSettings;
 class ResourceTexture;
 class ComponentImage;
 class ComponentLabel;
+class ComponentButton;
 
 enum ComponentTypes;
 
@@ -77,6 +78,9 @@ public:
 	void FillBufferRange(uint offset, uint size, char* buffer);
 	void RegisterBufferIndex(uint *offset, int* index, ComponentTypes cType, Component* cmp);
 	void UnRegisterBufferIndex(uint offset, ComponentTypes cType);
+
+	void ReAssignButtonOnClicks();
+
 private:
 
 	bool Init(JSON_Object* jObject);
@@ -101,7 +105,7 @@ public:
 	std::list<GameObject*> canvas_screen;
 	std::list<GameObject*> canvas_worldScreen;
 	std::list<GameObject*> canvas_world;
-
+	std::vector<ComponentButton*> buttons_ui;
 	FT_Library library;
 
 private:

@@ -1250,7 +1250,9 @@ bool ModulePhysics::Overlap(physx::PxGeometry& geometry, physx::PxTransform& tra
 	{
 		ComponentCollider* collider = FindColliderComponentByShape(hitsBuffer.touches[i].shape);
 		ComponentRigidActor* actor = FindRigidActorComponentByActor(hitsBuffer.touches[i].actor);
-		GameObject* gameObject = actor->GetParent();
+		GameObject* gameObject = nullptr;
+		if (actor != nullptr)
+			gameObject = actor->GetParent();
 
 		OverlapHit touchInfo(gameObject, collider, actor, hitsBuffer.touches[i].faceIndex);
 		touchesInfo.push_back(touchInfo);

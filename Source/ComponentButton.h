@@ -29,6 +29,8 @@ public:
 
 	void SetNewKey(uint key);
 
+	void LoadOnClickReference();
+
 private:
 	uint GetInternalSerializationBytes();
 	uint BytesToOnClick();
@@ -57,6 +59,10 @@ private:
 
 	MonoMethod* methodToCall = nullptr;
 	MonoObject* scriptInstance = nullptr;
+
+	uint onClickScriptUUID = 0;
+	uint onClickGameObjectUUID = 0;
+	std::string methodToCallName;
 
 	GameObject* draggedGO = nullptr;
 
