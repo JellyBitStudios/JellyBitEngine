@@ -21,6 +21,8 @@ public:
 	ComponentImage(const ComponentImage& componentImage, GameObject* parent, bool includeComponents = true);
 	~ComponentImage();
 
+	void Update();
+
 	//NOTE: If you override this method, make sure to call the base class method.
 	//(Component::OnSystemEvent(event); at start)
 	void OnSystemEvent(System_Event event);
@@ -61,10 +63,12 @@ private:
 	float mask_values[2] = { 1.0f, 0.0f };
 	float rect_initValues[2] = { 0.0f,0.0f };
 
+	//Buffer
 	int index = -1;
 	uint offset = 0;
+	char buffer[UI_BYTES_RECT];
+	
 
-	char buffer[UI_BYTES_IMAGE];
 	bool needed_recalculate = false;
 };
 

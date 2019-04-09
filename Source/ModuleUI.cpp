@@ -467,7 +467,7 @@ void ModuleUI::RegisterBufferIndex(uint *offset, int* index, ComponentTypes cTyp
 			else
 			{
 				*offset = offsetImage;
-				offsetImage += UI_BYTES_IMAGE;
+				offsetImage += UI_BYTES_RECT;
 			}
 			*index = *offset / (sizeof(float) * 4);
 			countImages++;
@@ -516,7 +516,7 @@ void ModuleUI::UnRegisterBufferIndex(uint offset, ComponentTypes cType)
 		if (countImages != 0)
 		{
 			countImages--;
-			if (sameOffset = (offset == offsetImage - UI_BYTES_IMAGE))
+			if (sameOffset = (offset == offsetImage - UI_BYTES_RECT))
 				offsetImage = offset;
 			else
 				free_image_offsets.push_back(offset);
@@ -533,7 +533,7 @@ void ModuleUI::UnRegisterBufferIndex(uint offset, ComponentTypes cType)
 				else
 				{
 					offsetSend = offsetImage;
-					offsetImage += UI_BYTES_IMAGE;
+					offsetImage += UI_BYTES_RECT;
 				}
 				img->SetBufferRangeAndFIll(offsetSend, offsetSend / sizeof(float) * 4);
 				countImages++;

@@ -70,7 +70,7 @@ void ComponentLabel::OnSystemEvent(System_Event event)
 	switch (event.type)
 	{
 	case System_Event_Type::ScreenChanged:
-		//change size by z & y
+		//change size by x & y
 	case System_Event_Type::CanvasChanged:
 	case System_Event_Type::RectTransformUpdated:
 		needed_recalculate = true;
@@ -512,7 +512,6 @@ void ComponentLabel::DragDropFont()
 
 void ComponentLabel::FIllBuffer()
 {
-	/*
 	buffer_size = labelWord.size() * sizeof(float) * 16;
 	char* cursor = buffer;
 	size_t bytes = sizeof(float) * 4;
@@ -530,7 +529,6 @@ void ComponentLabel::FIllBuffer()
 	last_word_size = labelWord.size();
 
 	App->ui->FillBufferRange(offset, buffer_size, buffer);
-	*/
 }
 
 void ComponentLabel::FillCorners()

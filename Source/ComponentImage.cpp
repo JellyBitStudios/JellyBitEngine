@@ -24,6 +24,7 @@ ComponentImage::ComponentImage(GameObject * parent, ComponentTypes componentType
 			parent->AddComponent(ComponentTypes::CanvasRendererComponent);
 
 		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::ImageComponent, this);
+		needed_recalculate = true;
 	}
 }
 
@@ -41,6 +42,7 @@ ComponentImage::ComponentImage(const ComponentImage & componentImage, GameObject
 			App->res->SetAsUsed(res_image);
 
 		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::ImageComponent, this);
+		needed_recalculate = true;
 	}
 }
 
@@ -172,9 +174,7 @@ void ComponentImage::OnSystemEvent(System_Event event)
 	case System_Event_Type::CanvasChanged:
 	case System_Event_Type::RectTransformUpdated:
 	{
-		uint* rect = parent->cmp_rectTransform->GetRect();
-		mask_values[1] = ((rect_initValues[1] - (float)rect[ComponentRectTransform::Rect::YDIST]) / rect_initValues[1]);
-		mask_values[0] = 1.0f - ((rect_initValues[0] - (float)rect[ComponentRectTransform::Rect::XDIST]) / rect_initValues[0]);
+		needed_recalculate = true;
 		break;
 	}
 	}
@@ -359,5 +359,5 @@ void ComponentImage::FillBuffer()
 	cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
 	memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RBOTTOMRIGHT], bytes);
 	cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
-	App->ui->FillBufferRange(offset, UI_BYTES_IMAGE, buffer);
+	App->ui->FillBufferRange(offset, UI_BYTES_RECT, buffer);
 }
