@@ -42,6 +42,7 @@
 #include "ModuleInput.h"
 #include "ModuleScene.h"
 #include "ModuleUI.h"
+#include "DebugDrawer.h"
 
 #include "MathGeoLib/include/MathGeoLib.h"
 #include "Brofiler/Brofiler.h"
@@ -1015,6 +1016,15 @@ void ScriptingModule::FixedUpdate()
 	}
 }
 
+void ScriptingModule::OnDrawGizmos()
+{
+	if(App->GetEngineState() == engine_states::ENGINE_PLAY)
+		for (int i = 0; i < scripts.size(); ++i)
+		{
+			scripts[i]->OnDrawGizmos();
+		}
+}
+
 void ScriptingModule::TemporalSave()
 {
 	//Temporal save for scripts
@@ -1191,6 +1201,22 @@ void ClearConsole()
 #ifndef GAMEMODE
 	App->gui->ClearConsole();
 #endif
+}
+
+void DebugDrawSphere(float radius, MonoArray* color, MonoArray* position, MonoArray* rotation, MonoArray* scale)
+{
+	if (!App->debugDrawer->IsDrawing())
+		return;
+
+	math::float3 pos = position != nullptr ? math::float3(mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2)) : math::float3::zero;
+	math::Quat rot = rotation != nullptr ? math::Quat(mono_array_get(rotation, float, 0), mono_array_get(rotation, float, 1), mono_array_get(rotation, float, 2), mono_array_get(rotation, float, 3)) : math::Quat::identity;
+	math::float3 sca = scale != nullptr ? math::float3(mono_array_get(scale, float, 0), mono_array_get(scale, float, 1), mono_array_get(scale, float, 2)) : math::float3::one;
+
+	math::float4x4 global = math::float4x4::FromTRS(pos, rot, sca);
+	
+	math::float4 col = color != nullptr ? math::float4(mono_array_get(color, float, 0), mono_array_get(color, float, 1), mono_array_get(color, float, 2), mono_array_get(color, float, 3)) : math::float4(0,1,0,1);
+
+	App->debugDrawer->DebugDrawSphere(radius, Color(col.ptr()), global);
 }
 
 int32_t GetKeyStateCS(int32_t key)
@@ -3418,10 +3444,15 @@ void ScriptingModule::CreateDomain()
 	delete[] buffer;
 
 	//SetUp Internal Calls
+
+	//Debug
 	mono_add_internal_call("JellyBitEngine.Debug::Log", (const void*)&DebugLogTranslator);
 	mono_add_internal_call("JellyBitEngine.Debug::LogWarning", (const void*)&DebugLogWarningTranslator);
 	mono_add_internal_call("JellyBitEngine.Debug::LogError", (const void*)&DebugLogErrorTranslator);
 	mono_add_internal_call("JellyBitEngine.Debug::ClearConsole", (const void*)&ClearConsole);
+	mono_add_internal_call("JellyBitEngine.Debug::_DrawSphere", (const void*)&DebugDrawSphere);
+
+	//Variated
 	mono_add_internal_call("JellyBitEngine.Input::GetKeyState", (const void*)&GetKeyStateCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetMouseButtonState", (const void*)&GetMouseStateCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetMousePos", (const void*)&GetMousePosCS);

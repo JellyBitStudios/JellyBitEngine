@@ -35,7 +35,12 @@ public:
 
 	void DebugDrawMesh(Vertex * vertexs, uint * indices, const uint indicesSize, const math::float4x4 & globalTransform) const;
 
+	inline bool IsDrawing() { return isDrawing; }
+
+
 private:
+
+	bool isDrawing = false;
 
 	bool cullFace = true;
 	bool lighting = true;

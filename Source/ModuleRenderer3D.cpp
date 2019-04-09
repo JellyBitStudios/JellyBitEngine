@@ -14,6 +14,7 @@
 #include "ModuleParticles.h"
 #include "ModuleUI.h"
 #include "ModuleFBOManager.h"
+#include "ScriptingModule.h"
 #include "Lights.h"
 #include "DebugDrawer.h"
 #include "ShaderImporter.h"
@@ -310,6 +311,8 @@ update_status ModuleRenderer3D::PostUpdate()
 			RecursiveDrawQuadtree(App->scene->quadtree.root);
 
 		App->particle->DebugDraw();
+
+		App->scripting->OnDrawGizmos();
 
 		App->debugDrawer->EndDebugDraw();
 	}

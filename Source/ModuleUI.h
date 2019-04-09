@@ -12,15 +12,15 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#include "ComponentLabel.h"
-
 #define UI_MAX_COMPONENTS_IMAGE 16348
 #define UI_MAX_COMPONENTS_LABEL 320
 #define UI_MAX_LABEL_LETTERS 256
-#define UI_BYTES_IMAGE sizeof(float) * 16
-#define UI_BYTES_LABEL UI_BYTES_IMAGE * UI_MAX_LABEL_LETTERS
-#define UI_BUFFER_SIZE UI_BYTES_IMAGE * UI_MAX_COMPONENTS_IMAGE + UI_BYTES_LABEL * UI_MAX_COMPONENTS_LABEL
+#define UI_BYTES_RECT sizeof(float) * 16
+#define UI_BYTES_LABEL UI_BYTES_RECT * UI_MAX_LABEL_LETTERS
+#define UI_BUFFER_SIZE UI_BYTES_RECT * UI_MAX_COMPONENTS_IMAGE + UI_BYTES_LABEL * UI_MAX_COMPONENTS_LABEL
 #define UI_BIND_INDEX 1
+
+struct LabelLetter;
 
 //Possible Solution
 //https://stackoverflow.com/questions/47026863/opengl-geometry-shader-with-orthographic-projection
@@ -65,6 +65,7 @@ public:
 
 	bool GetUIMode() const;
 	void SetUIMode(bool stat);
+	bool GetisNvidia() const;
 
 	void OnWindowResize(uint width, uint height);
 
@@ -95,8 +96,8 @@ private:
 	void initRenderData();
 	void DrawScreenCanvas();
 	void DrawWorldCanvas();
-	void DrawUIImage(math::float3 corners[4], math::float4& color, uint texture, math::float2& mask);
-	void DrawUILabel(std::vector<ComponentLabel::LabelLetter>* workd, std::vector<uint>* GetTexturesWord, math::float4& color);
+	void DrawUIImage(int index, math::float3 corners[4], math::float4& color, uint texture, math::float2& mask);
+	void DrawUILabel(int index, std::vector<LabelLetter>* workd, std::vector<uint>* GetTexturesWord, math::float4& color);
 
 	void UpdateRenderStates();
 
@@ -117,6 +118,7 @@ private:
 	uint ui_shader = 0;
 
 	bool uiMode = true;
+	bool isNVIDIA = false;
 	
 	bool anyItemIsHovered = false;
 
