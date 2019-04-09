@@ -265,7 +265,7 @@ void ModuleNavigation::SetInputGeom(NMInputGeom& inputGeom)
 	memcpy(m_geom, &inputGeom, sizeof(NMInputGeom));
 }
 
-bool ModuleNavigation::FindPath(float* start, float* end, float* finalPath, int pathCount) const
+bool ModuleNavigation::FindPath(float* start, float* end, math::float3* finalPath, int pathCount) const
 {
 	finalPath = 0;
 	pathCount = -1;
@@ -318,7 +318,7 @@ bool ModuleNavigation::FindPath(float* start, float* end, float* finalPath, int 
 	if (!dtStatusSucceed(status))
 		return false;
 
-	finalPath = new float[straightPathCount * 3];
+	finalPath = new math::float3[straightPathCount];
 	memcpy(finalPath, straightPath, sizeof(float) * straightPathCount * 3);
 	pathCount = straightPathCount;
 
