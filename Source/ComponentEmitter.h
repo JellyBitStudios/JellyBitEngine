@@ -42,7 +42,7 @@ enum SimulatedGame
 
 struct MeshShape
 {
-	uint meshRes = 0u;
+	uint uuid = 0u;
 	uint meshVertexCont = 0u;
 	Vertex* meshVertex;
 	std::vector<math::float3> uniqueVertex;
@@ -132,6 +132,7 @@ public:
 	void ParticleAABB();
 	void ParticleSubEmitter();
 	void ParticleBurst();
+	void SetBurstText();
 	void ParticleColor();
 	void ParticleValues();
 	void ParticleShape();
@@ -186,7 +187,6 @@ public:
 	bool dieOnAnimation = false;
 
 	GameObject* subEmitter = nullptr;
-	uint subEmitterUUID = 0u;
 	ShapeType normalShapeType = ShapeType_BOX;
 
 	std::list<math::float3> newPositions;
@@ -238,7 +238,6 @@ private:
 	float repeatTime = 1.0f;
 
 	math::float3 posDifAABB = math::float3::zero;
-	float gravity = 0.0f;
 
 	std::string burstTypeName = "Box Burst";
 
