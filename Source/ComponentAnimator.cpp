@@ -183,6 +183,19 @@ bool ComponentAnimator::AnimationFinished()const
 	return (animation_res->animationData.numKeys == GetCurrentAnimationFrame());
 }
 
+bool ComponentAnimator::UpdateAnimationSpeed(float new_speed)
+{
+	ResourceAnimator* animator_res = (ResourceAnimator*)App->res->GetResource(res);
+	if (!animator_res)
+		return false;
+
+	ResourceAnimation* animation_res = (ResourceAnimation*)animator_res->GetCurrentAnimation();
+	if (!animation_res)
+		return false;
+	//animation_res->
+	return false;
+}
+
 void ComponentAnimator::Update()
 {
 	if (res != 0) {
