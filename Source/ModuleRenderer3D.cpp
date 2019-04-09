@@ -204,12 +204,11 @@ update_status ModuleRenderer3D::PostUpdate()
 			FrustumCulling();
 
 		// Draw static meshes
-		for (uint i = 0; i < meshComponents.size(); ++i)
+		for (uint i = 0; i < staticMeshComponents.size(); ++i)
 		{
-			if (meshComponents[i]->GetParent()->IsStatic()
-				&& meshComponents[i]->GetParent()->seenLastFrame
-				&& meshComponents[i]->IsTreeActive())
-				DrawMesh(meshComponents[i]);
+			if (staticMeshComponents[i]->GetParent()->seenLastFrame
+				&& staticMeshComponents[i]->IsTreeActive())
+				DrawMesh(staticMeshComponents[i]);
 		}
 
 		// Draw decals
@@ -221,12 +220,11 @@ update_status ModuleRenderer3D::PostUpdate()
 		}
 
 		// Draw dynamic meshes
-		for (uint i = 0; i < meshComponents.size(); ++i)
+		for (uint i = 0; i < dynamicMeshComponents.size(); ++i)
 		{
-			if (!meshComponents[i]->GetParent()->IsStatic()
-				&& meshComponents[i]->GetParent()->seenLastFrame
-				&& meshComponents[i]->IsTreeActive())
-				DrawMesh(meshComponents[i]);
+			if (dynamicMeshComponents[i]->GetParent()->seenLastFrame
+				&& dynamicMeshComponents[i]->IsTreeActive())
+				DrawMesh(dynamicMeshComponents[i]);
 		}
 	}
 
@@ -280,8 +278,11 @@ update_status ModuleRenderer3D::PostUpdate()
 		{
 			Color boundingBoxesColor = Yellow;
 
-			for (uint i = 0; i < meshComponents.size(); ++i)
-				App->debugDrawer->DebugDraw(meshComponents[i]->GetParent()->boundingBox, boundingBoxesColor);
+			for (uint i = 0; i < staticMeshComponents.size(); ++i)
+				App->debugDrawer->DebugDraw(staticMeshComponents[i]->GetParent()->boundingBox, boundingBoxesColor);
+
+			for (uint i = 0; i < dynamicMeshComponents.size(); ++i)
+				App->debugDrawer->DebugDraw(dynamicMeshComponents[i]->GetParent()->boundingBox, boundingBoxesColor);
 		}
 
 		if (drawFrustums) // boundingBoxesColor = Grey
@@ -505,13 +506,26 @@ bool ModuleRenderer3D::IsWireframeMode() const
 bool ModuleRenderer3D::AddMeshComponent(ComponentMesh* toAdd)
 {
 	bool ret = true;
-
-	std::vector<ComponentMesh*>::const_iterator it = std::find(meshComponents.begin(), meshComponents.end(), toAdd);
-	ret = it == meshComponents.end();
+	std::vector<ComponentMesh*>::const_iterator it;
+	bool isStatic = toAdd->GetParent()->IsStatic();
+	if (isStatic)
+	{
+		it = std::find(staticMeshComponents.begin(), staticMeshComponents.end(), toAdd);
+		ret = it == staticMeshComponents.end();
+	}
+	else
+	{
+		it = std::find(dynamicMeshComponents.begin(), dynamicMeshComponents.end(), toAdd);
+		ret = it == dynamicMeshComponents.end();
+	}
 
 	if (ret)
-		meshComponents.push_back(toAdd);
-
+	{
+		if (isStatic)
+			staticMeshComponents.push_back(toAdd);
+		else
+			dynamicMeshComponents.push_back(toAdd);
+	}
 	return ret;
 }
 
@@ -519,13 +533,27 @@ bool ModuleRenderer3D::EraseMeshComponent(ComponentMesh* toErase)
 {
 	bool ret = false;
 
-	std::vector<ComponentMesh*>::const_iterator it = std::find(meshComponents.begin(), meshComponents.end(), toErase);
-	ret = it != meshComponents.end();
+	std::vector<ComponentMesh*>::const_iterator it;
+
+	it = std::find(staticMeshComponents.begin(), staticMeshComponents.end(), toErase);
+	ret = it != staticMeshComponents.end();
 
 	if (ret)
-		meshComponents.erase(it);
+		staticMeshComponents.erase(it);
+
+	it = std::find(dynamicMeshComponents.begin(), dynamicMeshComponents.end(), toErase);
+	ret = it != dynamicMeshComponents.end();
+
+	if (ret)
+		dynamicMeshComponents.erase(it);
 
 	return ret;
+}
+
+void ModuleRenderer3D::SwapComponents(ComponentMesh* toSwap)
+{
+	EraseMeshComponent(toSwap);
+	AddMeshComponent(toSwap);
 }
 
 bool ModuleRenderer3D::AddProjectorComponent(ComponentProjector* toAdd)
@@ -660,8 +688,11 @@ ComponentCamera* ModuleRenderer3D::GetCurrentCamera() const
 
 void ModuleRenderer3D::SetMeshComponentsSeenLastFrame(bool seenLastFrame)
 {
-	for (uint i = 0; i < meshComponents.size(); ++i)
-		meshComponents[i]->GetParent()->seenLastFrame = seenLastFrame;
+	for (uint i = 0; i < staticMeshComponents.size(); ++i)
+		staticMeshComponents[i]->GetParent()->seenLastFrame = seenLastFrame;
+
+	for (uint i = 0; i < dynamicMeshComponents.size(); ++i)
+		dynamicMeshComponents[i]->GetParent()->seenLastFrame = seenLastFrame;
 }
 
 void ModuleRenderer3D::FrustumCulling() const

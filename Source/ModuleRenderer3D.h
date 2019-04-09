@@ -55,6 +55,7 @@ public:
 
 	bool AddMeshComponent(ComponentMesh* toAdd);
 	bool EraseMeshComponent(ComponentMesh* toErase);
+	void SwapComponents(ComponentMesh* toSwap);
 
 	bool AddProjectorComponent(ComponentProjector* toAdd);
 	bool EraseProjectorComponent(ComponentProjector* toErase);
@@ -80,7 +81,8 @@ public:
 
 private:
 
-	std::vector<ComponentMesh*> meshComponents;
+	std::vector<ComponentMesh*> staticMeshComponents;
+	std::vector<ComponentMesh*> dynamicMeshComponents;
 
 	std::vector<ComponentProjector*> projectorComponents;
 

@@ -278,6 +278,9 @@ void ModuleGOs::RecalculateVector(GameObject* go, bool sendEvent)
 	else
 		dynamicGos.push_back(go);
 
+	if (go->cmp_mesh)
+		App->renderer3D->SwapComponents(go->cmp_mesh);
+
 	if (sendEvent)
 	{
 		System_Event newEvent;
