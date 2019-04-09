@@ -2454,10 +2454,11 @@ MonoString* AnimatorGetCurrName(MonoObject* monoAnim)
 	return nullptr;
 }
 
-bool UpdateAnimationSpeed(MonoObject* animatorComp, float newSpeed)
+void UpdateAnimationSpeed(MonoObject* animatorComp, float newSpeed)
 {
 	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(animatorComp);
-	return animator->UpdateAnimationSpeed(newSpeed);
+	if(animator)
+		animator->UpdateAnimationSpeed(newSpeed);
 }
 
 void ParticleEmitterPlay(MonoObject* particleComp)
