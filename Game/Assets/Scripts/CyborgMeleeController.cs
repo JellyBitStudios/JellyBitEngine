@@ -1,15 +1,19 @@
-﻿using System;
+﻿using System.Collections;
+using System;
 using JellyBitEngine;
 
-public class NetmanCharacter : Character
+public class CyborgMeleeCharacter : Character
 {
 
 }
 
-public class NetmanController : JellyScript
+public class CyborgMeleeController : JellyScript
 {
     #region PUBLIC_VARIABLES
     //public NetmanCharacter stats = new NetmanCharacter();
+    /// <Temporal>
+    public LayerMask raycastMask = new LayerMask();
+    /// </Temporal>
 
     public enum NetmanStates { wander, attack };
     public NetmanStates currentState = NetmanStates.wander;
@@ -32,7 +36,7 @@ public class NetmanController : JellyScript
     bool isAttackActive = false;
 
     /////
-    private NavMeshAgent agent = null;
+    private Agent agent = null;
 
     private Waypoint waypoint = null;
 
@@ -45,7 +49,7 @@ public class NetmanController : JellyScript
     {
         lineOfSight = goLineOfSight.GetComponent<LineOfSight>();
         waypointsManager = goWaypointsManager.GetComponent<WaypointsManager>();
-        agent = gameObject.GetComponent<NavMeshAgent>();
+        //agent = gameObject.GetComponent<Agent>();
     }
 
     // Called every frame
@@ -66,6 +70,7 @@ public class NetmanController : JellyScript
 
                 UpdateWander();
 
+                /*
                 /// Is target seen?
                 if (lineOfSight.IsTargetSeen)
                 {
@@ -82,15 +87,18 @@ public class NetmanController : JellyScript
                     TerminateWander();
                     currentState = NetmanStates.attack;
                 }
+                */
 
                 break;
 
             case NetmanStates.attack:
 
+                /*
                 if (!isAttackActive)
                     ActivateAttack();
 
                 UpdateAttack();
+                */
 
                 break;
         }
@@ -113,6 +121,20 @@ public class NetmanController : JellyScript
         {
             case WanderStates.findRandomPosition:
 
+                if (Input.GetMouseButtonDown(MouseKeyCode.MOUSE_LEFT))
+                {
+                    Ray ray = Physics.ScreenToRay(Input.GetMousePosition(), Camera.main);
+                    RaycastHit hitInfo;
+                    if (Physics.Raycast(ray, out hitInfo, float.MaxValue, raycastMask, SceneQueryFlags.Static))
+                    {
+                        if (hitInfo != null)
+                        {
+                            //agent.SetDestination(hitInfo.point);
+                            wanderState = WanderStates.goToPosition;
+                        }
+                    }
+                }
+
                 break;
 
             case WanderStates.goToPosition:
@@ -130,7 +152,7 @@ public class NetmanController : JellyScript
     }
 
     // -------------------- Attack --------------------
-
+    /*
     // Activate
     private void ActivateAttack()
     {
@@ -190,4 +212,5 @@ public class NetmanController : JellyScript
         attackState = AttackStates.goToWaypoint;
         isAttackActive = false;
     }
+    */
 }

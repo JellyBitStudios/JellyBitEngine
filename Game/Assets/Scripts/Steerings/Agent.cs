@@ -1,0 +1,151 @@
+﻿using System.Collections;
+using System;
+using JellyBitEngine;
+
+public class AgentConfiguration
+{
+    public float maxVelocity = 1.0f;
+    public float maxAngularVelocity = 1.0f;
+    public float maxAcceleration = 1.0f;
+    public float maxAngularAcceleration = 1.0f;
+
+    // Separation
+    public LayerMask separationMask = new LayerMask();
+    public float separationRadius = 1.0f;
+    public float separationThreshold = 1.0f;
+
+    // Align
+    public float alignMinAngle = 0.01f;
+    public float alignSlowAngle = 0.1f;
+    public float alignTimeToTarget = 0.1f;
+}
+
+public class Agent : JellyScript
+{
+    #region PUBLIC_VARIABLES
+    public AgentConfiguration agentConfiguration = new AgentConfiguration();
+
+    //public GameObject target = null;
+    public Vector3 destination = new Vector3(0.0f, 0.0f, 0.0f);
+
+    // Steerings
+    //public SteeringSeek seek = new SteeringSeek();
+    //public SteeringFlee flee = new SteeringFlee();
+    //public SteeringSeparation separation = new SteeringSeparation();
+    //public SteeringAlign align = new SteeringAlign();
+    #endregion
+
+    #region PRIVATE_VARIABLES
+    private Vector3 velocity = new Vector3(0.0f, 0.0f, 0.0f);
+    private float angularVelocity = 0.0f;
+
+    private Vector3[] velocities;
+    private float[] angularVelocities;
+    #endregion
+
+    // ----------------------------------------------------------------------------------------------------
+
+    public override void Start()
+    {
+        //velocities = new Vector3[SteeringConfiguration.maxPriorities];
+        //angularVelocities = new float[SteeringConfiguration.maxPriorities];
+
+        ResetPriorities();
+    }
+
+    public override void FixedUpdate()
+    {
+        Vector3 newVelocity = new Vector3(0.0f, 0.0f, 0.0f);
+        float newAngularVelocity = 0.0f;
+
+        // 1. Collision avoidance
+        // TODO
+
+        // 2. Separation
+        //velocities[separation.Priority] += separation.GetSeparation(this);
+
+        // 3. Move
+        /// Velocity
+        //velocities[seek.Priority] += seek.GetSeek(this);
+        //velocities[flee.Priority] += flee.GetFlee(this);
+
+        /// Angular velocity
+        //angularVelocities[align.Priority] += align.GetAlign(this);
+
+        // --------------------------------------------------
+
+        // Angular velocities
+        foreach (float angVel in angularVelocities)
+        {
+            if (!Approximately(angVel, 0.0f))
+            {
+                newAngularVelocity = angVel;
+                break;
+            }
+        }
+
+        // Velocities
+        foreach (Vector3 vel in velocities)
+        {
+            if (!Approximately((float)vel.magnitude, 0.0f))
+            {
+                newVelocity = vel;
+                break;
+            }
+        }
+
+        ResetPriorities();
+
+        velocity += newVelocity;
+        angularVelocity += newAngularVelocity;
+
+        // Cap angular velocity
+        Mathf.Clamp(angularVelocity, -agentConfiguration.maxAngularVelocity, agentConfiguration.maxAngularVelocity);
+
+        // Cap velocity
+        if (velocity.magnitude > agentConfiguration.maxVelocity)
+        {
+            velocity.Normalize();
+            velocity *= agentConfiguration.maxVelocity;
+        }
+
+        // Rotate
+        transform.rotation *= Quaternion.Rotate(Vector3.up, angularVelocity * Time.deltaTime);
+
+        // Move
+        transform.position += velocity * Time.deltaTime;
+    }
+
+    public void SetDestination(Vector3 destination)
+    {
+        this.destination = destination;
+        // TODO: calculate new path
+    }
+
+    private void ResetPriorities()
+    {
+        //for (uint i = 0u; i < SteeringConfiguration.maxPriorities; ++i)
+        //{
+            //velocities[i] = new Vector3(0.0f, 0.0f, 0.0f);
+            //angularVelocities[i] = 0.0f;
+        //}
+    }
+
+    // ----------------------------------------------------------------------------------------------------
+
+    // A tiny floating point value (RO)
+    public static readonly float Epsilon = float.MinValue;
+
+    // Compares two floating point values if they are similar
+    public static bool Approximately(float a, float b)
+    {
+        // If a or b is zero, compare that the other is less or equal to epsilon.
+        // If neither a or b are 0, then find an epsilon that is good for
+        // comparing numbers at the maximum magnitude of a and b.
+        // Floating points have about 7 significant digits, so
+        // 1.000001f can be represented while 1.0000001f is rounded to zero,
+        // thus we could use an epsilon of 0.000001f for comparing values close to 1.
+        // We multiply this epsilon by the biggest magnitude of a and b.
+        return Math.Abs(b - a) < Math.Max(0.000001f * Math.Max(Math.Abs(a), Math.Abs(b)), Epsilon * 8);
+    }
+}
