@@ -7,6 +7,7 @@
 
 #include "ComponentImage.h"
 #include "ComponentRectTransform.h"
+#include "ComponentLabel.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -147,7 +148,7 @@ std::vector<uint>* ComponentCanvasRenderer::ToUIRend::GetTexturesWord()
 	return ((ComponentLabel*)cmp)->GetWordTextureIDs();
 }
 
-std::vector<ComponentLabel::LabelLetter>* ComponentCanvasRenderer::ToUIRend::GetWord()
+std::vector<LabelLetter>* ComponentCanvasRenderer::ToUIRend::GetWord()
 {
 	return ((ComponentLabel*)cmp)->GetWord();
 }

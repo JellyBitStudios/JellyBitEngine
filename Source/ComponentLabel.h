@@ -2,6 +2,8 @@
 #define __COMPONENT_LABEL_H__
 
 #include "Component.h"
+#include "ModuleUI.h"
+
 #include <string>
 #include <map>
 #include <vector>
@@ -35,17 +37,15 @@ enum HorizontalLabelAlign
 	H_Middle,
 	H_Right
 };
+struct LabelLetter
+{
+	math::float4 corners[4] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } };
+	uint rect[4];
+	uint textureID = 0;
+	math::float2 size;
+};
 class ComponentLabel : public Component
 {
-public:
-	struct LabelLetter
-	{
-		math::float4 corners[4] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } };
-		uint rect[4];
-		uint textureID = 0;
-		math::float2 size;
-	};
-
 public:
 	ComponentLabel(GameObject* parent, ComponentTypes componentType = ComponentTypes::LabelComponent, bool includeComponents = true);
 	ComponentLabel(const ComponentLabel& componentLabel, GameObject* parent, bool includeComponents = true);
@@ -111,7 +111,7 @@ private:
 	bool hAligment = false;
 
 	//Buffer
-	//char buffer[UI_BYTES_LABEL];
+	char buffer[UI_BYTES_LABEL];
 	uint buffer_size = 0;
 	uint offset = 0;
 	int index = -1;
