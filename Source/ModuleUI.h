@@ -57,7 +57,6 @@ public:
 
 	bool GetUIMode() const;
 	void SetUIMode(bool stat);
-	bool GetisNvidia() const;
 
 	void OnWindowResize(uint width, uint height);
 

@@ -1,4 +1,8 @@
 #include "GLCache.h"
+
+#include "Application.h"
+#include "ModuleInternalResHandler.h"
+
 #include "ComponentImage.h"
 #include "ComponentLabel.h"
 
@@ -6,8 +10,14 @@
 
 GLCache::GLCache()
 {
+	//Get Info Hardware - Fer-ho al module renderer amb flags? vendor i extensions
+	std::string vendor = (char*)glGetString(GL_VENDOR);
+	if (vendor == "NVIDIA Corporation")
+		isNVIDIA = true;
+
 	if (isNVIDIA)
 	{
+		ui_shader = App->resHandler->UIShaderProgram;
 		//--- One Buffer UI - Shader Storage Buffer Object ----
 		glGenBuffers(1, &ssboUI);
 		glBindBufferRange(GL_SHADER_STORAGE_BUFFER, UI_BIND_INDEX, ssboUI, 0, UI_BUFFER_SIZE);
@@ -155,4 +165,26 @@ void GLCache::UnRegisterBufferIndex(uint offset, ComponentTypes cType)
 			}
 		}
 	}
+}
+
+bool GLCache::isNvidia() const
+{
+	return isNVIDIA;
+}
+
+void GLCache::ResetUIBufferValues()
+{
+	if (!isNVIDIA)
+		return;
+
+	countImages = 0;
+	countLabels = 0;
+	offsetImage = 0;
+	offsetLabel = UI_BUFFER_SIZE - UI_BYTES_LABEL;
+	free_image_offsets.clear();
+	free_label_offsets.clear();
+	std::queue<ComponentImage*> emptyI;
+	std::swap(queueImageToBuffer, emptyI);
+	std::queue<ComponentLabel*> emptyL;
+	std::swap(queueLabelToBuffer, emptyL);
 }

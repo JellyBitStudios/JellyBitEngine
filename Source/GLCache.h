@@ -27,11 +27,16 @@ public:
 	void RegisterBufferIndex(uint *offset, int* index, ComponentTypes cType, Component* cmp);
 	void UnRegisterBufferIndex(uint offset, ComponentTypes cType);
 
+	bool isNvidia()const;
+
+	void ResetUIBufferValues();
+
 private:
 	//
 	bool isNVIDIA = false;
 
 
+	uint ui_shader;
 	//UI in one buffer - Shader Storage Buffer Object
 	uint countImages = 0;
 	uint countLabels = 0;

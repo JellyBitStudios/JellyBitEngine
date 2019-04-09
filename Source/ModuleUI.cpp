@@ -64,10 +64,6 @@ bool ModuleUI::Init(JSON_Object * jObject)
 
 bool ModuleUI::Start()
 {
-	//Get Info Hardware
-	std::string vendor = (char*)glGetString(GL_VENDOR);
-	if (vendor == "NVIDIA Corporation")
-		isNVIDIA = true;
 	//Shader
 	ui_shader = App->resHandler->UIShaderProgram;
 	use(ui_shader);
@@ -143,19 +139,7 @@ void ModuleUI::OnSystemEvent(System_Event event)
 	}
 	case System_Event_Type::LoadScene:
 	{
-		if (isNVIDIA)
-		{
-			countImages = 0;
-			countLabels = 0;
-			offsetImage = 0;
-			offsetLabel = UI_BUFFER_SIZE - UI_BYTES_LABEL;
-			free_image_offsets.clear();
-			free_label_offsets.clear();
-			std::queue<ComponentImage*> emptyI;
-			std::swap(queueImageToBuffer, emptyI);
-			std::queue<ComponentLabel*> emptyL;
-			std::swap(queueLabelToBuffer, emptyL);
-		}
+		App->glCache->ResetUIBufferValues();
 	}
 	case System_Event_Type::Stop:
 	{
@@ -321,7 +305,7 @@ void ModuleUI::DrawWorldCanvas()
 
 void ModuleUI::DrawUIImage(int index, math::float3 corners[4], math::float4& color, uint texture, math::float2& mask)
 {
-	if (App->glCache->isNVIDIA)
+	if (App->glCache->isNvidia())
 	{
 		setFloat(ui_shader, "indexCorner", float(index));
 	}
@@ -366,7 +350,7 @@ void ModuleUI::DrawUILabel(int index, std::vector<LabelLetter>* word, std::vecto
 	uint wordSize = GetTexturesWord->size();
 	for (uint i = 0; i < wordSize; i++)
 	{
-		if (App->glCache->isNVIDIA)
+		if (App->glCache->isNvidia())
 		{
 			setFloat(ui_shader, "indexCorner", float(index + (4.0f * (float)i)));
 		}
