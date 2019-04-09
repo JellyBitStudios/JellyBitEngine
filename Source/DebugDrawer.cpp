@@ -279,7 +279,7 @@ void DebugDrawer::DebugDrawCone(float radius, float height, const Color & color,
 	glPopMatrix();
 }
 
-void DebugDrawer::DebugDrawMesh(Vertex * vertexs, const uint vertexSize, uint * indices, const uint indicesSize, const math::float4x4 & globalTransform) const
+void DebugDrawer::DebugDrawMesh(Vertex * vertexs, uint * indices, const uint indicesSize, const math::float4x4 & globalTransform) const
 {
 	if (vertexs != nullptr)
 	{
@@ -287,7 +287,7 @@ void DebugDrawer::DebugDrawMesh(Vertex * vertexs, const uint vertexSize, uint * 
 		glMultMatrixf(globalTransform.Transposed().ptr());
 
 		glBegin(GL_TRIANGLES);
-		for (uint i = 0; i < indicesSize/3; i++)
+		for (uint i = 0; i < indicesSize; i++)
 		{
 			glVertex3f(vertexs[indices[i * 3]].position[0], vertexs[indices[i * 3]].position[1], vertexs[indices[i * 3]].position[2]);
 			glVertex3f(vertexs[indices[i * 3 + 1]].position[0], vertexs[indices[i * 3 + 1]].position[1], vertexs[indices[i * 3 + 1]].position[2]);

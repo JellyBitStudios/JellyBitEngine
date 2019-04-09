@@ -95,7 +95,7 @@ void ModuleParticle::DebugDraw() const
 				App->debugDrawer->DebugDrawCone((*emitter)->circleCreation.r, (*emitter)->coneHeight, White, globalMat);
 				break;
 			case ShapeType_MESH:
-				App->debugDrawer->DebugDrawMesh((*emitter)->shapeMesh.meshVertex, (*emitter)->shapeMesh.maxVertex, (*emitter)->shapeMesh.indices, (*emitter)->shapeMesh.indicesSize, globalMat);
+				App->debugDrawer->DebugDrawMesh((*emitter)->shapeMesh.meshVertex, (*emitter)->shapeMesh.indices, (*emitter)->shapeMesh.indicesSize, globalMat);
 				break;
 			default:
 				break;
@@ -107,7 +107,7 @@ void ModuleParticle::DebugDraw() const
 			switch ((*emitter)->burstType)
 			{
 			case ShapeType_MESH:
-				App->debugDrawer->DebugDrawMesh((*emitter)->burstMesh.meshVertex, (*emitter)->burstMesh.maxVertex, (*emitter)->burstMesh.indices, (*emitter)->burstMesh.indicesSize, globalMat);
+				App->debugDrawer->DebugDrawMesh((*emitter)->burstMesh.meshVertex, (*emitter)->burstMesh.indices, (*emitter)->burstMesh.indicesSize, globalMat);
 				break;
 			default:
 				break;

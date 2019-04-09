@@ -19,6 +19,7 @@
 
 class ComponentMaterial;
 class Particle;
+class ResourceMesh;
 
 struct Vertex;
 
@@ -43,8 +44,8 @@ struct MeshShape
 {
 	uint meshRes = 0u;
 	uint meshVertexCont = 0u;
-	uint maxVertex = 0u;
-	Vertex* meshVertex = nullptr;
+	Vertex* meshVertex;
+	std::vector<math::float3> uniqueVertex;
 	uint* indices = nullptr;
 	uint indicesSize = 0;
 };
@@ -152,6 +153,7 @@ public:
 	void SetMaterialRes(uint materialUuid);
 	void SetMeshParticleRes(uint res_uuid);
 	void SetBurstMeshParticleRes(uint res_uuid);
+	void SetMeshInfo(ResourceMesh* resource, MeshShape& shape);
 	uint GetMaterialRes() const;
 
 #ifndef GAMEMODE

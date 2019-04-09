@@ -294,22 +294,22 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 	{
 		if (isBurst)
 		{
-			if (burstMesh.meshVertex)
+			if (!burstMesh.uniqueVertex.empty())
 			{
-				spawn.x = burstMesh.meshVertex[burstMesh.meshVertexCont].position[0];
-				spawn.y = burstMesh.meshVertex[burstMesh.meshVertexCont].position[1];
-				spawn.z = burstMesh.meshVertex[burstMesh.meshVertexCont].position[2];
+				spawn.x = burstMesh.uniqueVertex[burstMesh.meshVertexCont].x;
+				spawn.y = burstMesh.uniqueVertex[burstMesh.meshVertexCont].y;
+				spawn.z = burstMesh.uniqueVertex[burstMesh.meshVertexCont].z;
 				burstMesh.meshVertexCont++;
-				if (burstMesh.meshVertexCont >= burstMesh.maxVertex)
+				if (burstMesh.meshVertexCont >= burstMesh.uniqueVertex.size())
 					burstMesh.meshVertexCont = 0u;
 			}
 		}
-		else if(shapeMesh.meshVertex)
+		else if(!shapeMesh.uniqueVertex.empty())
 		{
-			uint pos = rand() % shapeMesh.maxVertex;
-			spawn.x = shapeMesh.meshVertex[pos].position[0];
-			spawn.y = shapeMesh.meshVertex[pos].position[1];
-			spawn.z = shapeMesh.meshVertex[pos].position[2];
+			uint pos = rand() % shapeMesh.uniqueVertex.size();
+			spawn.x = shapeMesh.uniqueVertex[pos].x;
+			spawn.y = shapeMesh.uniqueVertex[pos].y;
+			spawn.z = shapeMesh.uniqueVertex[pos].z;
 		}
 		startValues.particleDirection = (math::float3::unitY * parent->transform->GetRotation().ToFloat3x3().Transposed()).Normalized();
 		spawn = spawn * parent->transform->GetRotation().ToFloat3x3().Transposed();
@@ -851,15 +851,8 @@ void ComponentEmitter::SetMeshParticleRes(uint res_uuid)
 	Resource* resource = App->res->GetResource(res_uuid);
 
 	if (resource)
-	{
-		ResourceMesh* mesh = (ResourceMesh*)resource;
-		shapeMesh.maxVertex = mesh->GetVerticesCount()/3;
-		mesh->GetVerticesReference(shapeMesh.meshVertex);
-		shapeMesh.meshRes = res_uuid;
-		shapeMesh.meshVertexCont = 0u;
-		mesh->GetIndicesReference(shapeMesh.indices);
-		shapeMesh.indicesSize = mesh->GetIndicesCount()/3;
-	}
+		SetMeshInfo((ResourceMesh*)resource, shapeMesh);
+	
 	else
 		shapeMesh.meshRes = 0u;
 }
@@ -875,17 +868,21 @@ void ComponentEmitter::SetBurstMeshParticleRes(uint res_uuid)
 	Resource* resource = App->res->GetResource(res_uuid);
 
 	if (resource)
-	{
-		ResourceMesh* mesh = (ResourceMesh*)resource;
-		burstMesh.maxVertex = mesh->GetVerticesCount()/3;
-		mesh->GetVerticesReference(burstMesh.meshVertex);
-		burstMesh.meshRes = res_uuid;
-		burstMesh.meshVertexCont = 0u;
-		mesh->GetIndicesReference(burstMesh.indices);
-		burstMesh.indicesSize = mesh->GetIndicesCount()/3;
-	}
+		SetMeshInfo((ResourceMesh*)resource, burstMesh);
+	
 	else
 		burstMesh.meshRes = 0u;
+}
+void ComponentEmitter::SetMeshInfo(ResourceMesh* resource, MeshShape &shape)
+{
+	resource->GetVerticesReference(shape.meshVertex);
+	shape.uniqueVertex.clear();
+	resource->GetUniqueVertexPositions(shape.uniqueVertex);
+
+	shape.meshRes = resource->GetUuid();
+	shape.meshVertexCont = 0u;
+	resource->GetIndicesReference(shape.indices);
+	shape.indicesSize = resource->GetIndicesCount() / 3;
 }
 uint ComponentEmitter::GetMaterialRes() const
 {

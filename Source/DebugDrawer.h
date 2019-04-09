@@ -33,7 +33,7 @@ public:
 	void DebugDrawLine(const math::float3& origin, const math::float3& destination, const Color& color = White, const math::float4x4& globalTransform = math::float4x4::identity) const;
 	void DebugDrawCone(float radius, float height, const Color& color = White, const math::float4x4& globalTransform = math::float4x4::identity) const;
 
-	void DebugDrawMesh(Vertex* vertexs, const uint vertexSize, uint* indices, const uint indicesSize, const math::float4x4& globalTransform) const;
+	void DebugDrawMesh(Vertex * vertexs, uint * indices, const uint indicesSize, const math::float4x4 & globalTransform) const;
 
 private:
 
