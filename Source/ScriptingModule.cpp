@@ -2454,6 +2454,12 @@ MonoString* AnimatorGetCurrName(MonoObject* monoAnim)
 	return nullptr;
 }
 
+bool UpdateAnimationSpeed(MonoObject* animatorComp, float newSpeed)
+{
+	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(animatorComp);
+	return animator->UpdateAnimationSpeed(newSpeed);
+}
+
 void ParticleEmitterPlay(MonoObject* particleComp)
 {
 	ComponentEmitter* emitter = (ComponentEmitter*)App->scripting->ComponentFrom(particleComp);
@@ -3506,6 +3512,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Animator::GetCurrentAnimation", (const void*)&AnimatorGetCurrName);
 	mono_add_internal_call("JellyBitEngine.Animator::GetCurrentFrame", (const void*)&AnimatorGetCurrFrame);
 	mono_add_internal_call("JellyBitEngine.Animator::AnimationFinished", (const void*)&AnimatorAnimationFinished);
+	mono_add_internal_call("JellyBitEngine.Animator::UpdateAnimationSpeed", (const void*)&UpdateAnimationSpeed);
 	
 	//Particle Emitter
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Play", (const void*)&ParticleEmitterPlay);
