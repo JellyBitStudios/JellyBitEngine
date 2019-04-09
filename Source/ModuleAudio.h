@@ -6,6 +6,7 @@
 #include <list>
 
 struct ComponentAudioSource;
+struct ComponentAudioListener;
 
 class ModuleAudio : public Module
 {
@@ -37,6 +38,7 @@ private:
 
 public:
 	std::list<ComponentAudioSource*> audio_sources;
+	std::list<ComponentAudioListener*> audio_listeners;
 };
 
 #endif // !__MODULE_AUDIO_H__
