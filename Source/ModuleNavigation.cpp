@@ -318,7 +318,8 @@ bool ModuleNavigation::FindPath(float* start, float* end, float* finalPath, int 
 	if (!dtStatusSucceed(status))
 		return false;
 
-	finalPath = new float[straightPathCount];
+	finalPath = new float[straightPathCount * 3];
+	memcpy(finalPath, straightPath, sizeof(float) * straightPathCount * 3);
 	pathCount = straightPathCount;
 
 	return true;
