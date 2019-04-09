@@ -14,6 +14,10 @@
 #define UI_BYTES_LABEL UI_BYTES_RECT * UI_MAX_LABEL_LETTERS
 #define UI_BUFFER_SIZE UI_BYTES_RECT * UI_MAX_COMPONENTS_IMAGE + UI_BYTES_LABEL * UI_MAX_COMPONENTS_LABEL //6mb
 #define UI_BIND_INDEX 1
+
+#define UBO_PROJVIEW_INDEX 0
+#define MATRIXSIZE sizeof(float) * 16
+#define VIEWPROJ_SIZE MATRIXSIZE * 2 // SIZE OF BOTH MATRICES 
 #pragma endregion
 
 class GLCache
@@ -23,6 +27,7 @@ public:
 	GLCache();
 	~GLCache();
 
+	void Init();
 	void FillBufferRange(uint offset, uint size, char* buffer);
 	void RegisterBufferIndex(uint *offset, int* index, ComponentTypes cType, Component* cmp);
 	void UnRegisterBufferIndex(uint offset, ComponentTypes cType);
@@ -35,6 +40,7 @@ private:
 	//
 	bool isNVIDIA = false;
 
+	uint ubo_viewProj;
 
 	uint ui_shader;
 	//UI in one buffer - Shader Storage Buffer Object

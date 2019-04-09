@@ -10,6 +10,7 @@
 #include "ModuleInput.h"
 #include "ModuleScene.h"
 
+#include "GLCache.h"
 #include "GameObject.h"
 
 #include "ComponentCamera.h"

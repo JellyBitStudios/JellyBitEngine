@@ -10,10 +10,26 @@
 
 GLCache::GLCache()
 {
+}
+
+GLCache::~GLCache()
+{
+}
+
+void GLCache::Init()
+{
 	//Get Info Hardware - Fer-ho al module renderer amb flags? vendor i extensions
-	std::string vendor = (char*)glGetString(GL_VENDOR);
-	if (vendor == "NVIDIA Corporation")
-		isNVIDIA = true;
+	//std::string vendor = (char*)glGetString(GL_VENDOR);
+	//if (vendor == "NVIDIA Corporation")
+	isNVIDIA = true;
+	//GLint params;
+	//glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &params);
+	//glGetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &params);
+	//glGetIntegerv(GL_SHADER_STORAGE_BUFFER_SIZE, &params);
+
+	//glGenBuffers(1, &ubo_viewProj);
+	//glBindBufferBase(GL_UNIFORM_BUFFER, UBO_PROJVIEW_INDEX, ubo_viewProj);
+	//glBufferData(GL_UNIFORM_BUFFER, VIEWPROJ_SIZE, 0, GL_DYNAMIC_DRAW);
 
 	if (isNVIDIA)
 	{
@@ -28,10 +44,6 @@ GLCache::GLCache()
 		glBufferStorage(GL_SHADER_STORAGE_BUFFER, UI_BUFFER_SIZE, nullptr, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		//-------------
 	}
-}
-
-GLCache::~GLCache()
-{
 }
 
 void GLCache::FillBufferRange(uint offset, uint size, char * buffer)
