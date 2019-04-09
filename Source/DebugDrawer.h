@@ -31,7 +31,11 @@ public:
 	void DebugDrawLine(const math::float3& origin, const math::float3& destination, const Color& color = White, const math::float4x4& globalTransform = math::float4x4::identity) const;
 	void DebugDrawCone(float radius, float height, const Color& color = White, const math::float4x4& globalTransform = math::float4x4::identity) const;
 
+	inline bool IsDrawing() { return isDrawing; }
+
 private:
+
+	bool isDrawing = false;
 
 	bool cullFace = true;
 	bool lighting = true;

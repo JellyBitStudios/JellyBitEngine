@@ -22,6 +22,8 @@ void DebugDrawer::StartDebugDraw()
 	App->renderer3D->SetCapabilityState(GL_LIGHTING, false);
 	App->renderer3D->SetCapabilityState(GL_TEXTURE_2D, false);
 	App->renderer3D->SetWireframeMode(true);
+
+	isDrawing = true;
 }
 
 void DebugDrawer::EndDebugDraw()
@@ -30,6 +32,8 @@ void DebugDrawer::EndDebugDraw()
 	App->renderer3D->SetCapabilityState(GL_LIGHTING, lighting);
 	App->renderer3D->SetCapabilityState(GL_TEXTURE_2D, texture2D);
 	App->renderer3D->SetWireframeMode(wireframeMode);
+
+	isDrawing = false;
 }
 
 void DebugDrawer::DebugDraw(const math::AABB& aabb, const Color& color, const math::float4x4& globalTransform) const
