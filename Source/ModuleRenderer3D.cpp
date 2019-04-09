@@ -14,6 +14,7 @@
 #include "ModuleParticles.h"
 #include "ModuleUI.h"
 #include "ModuleFBOManager.h"
+#include "ScriptingModule.h"
 #include "Lights.h"
 #include "DebugDrawer.h"
 #include "ShaderImporter.h"
@@ -60,7 +61,7 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 	bool ret = true;
 
 	CONSOLE_LOG(LogTypes::Normal,"Creating 3D Renderer context");
-	
+
 	// Create context
 	context = SDL_GL_CreateContext(App->window->window);
 
@@ -69,7 +70,7 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 		CONSOLE_LOG(LogTypes::Error, "OpenGL context could not be created! SDL_Error: %s\n", SDL_GetError());
 		ret = false;
 	}
-	
+
 	if (ret)
 	{
 		LoadStatus(jObject);
@@ -215,7 +216,7 @@ update_status ModuleRenderer3D::PostUpdate()
 		// Draw decals
 		for (uint i = 0; i < projectorComponents.size(); ++i)
 		{
-			if (projectorComponents[i]->GetParent()->IsActive() 
+			if (projectorComponents[i]->GetParent()->IsActive()
 				&& projectorComponents[i]->IsTreeActive())
 				projectorComponents[i]->Draw();
 		}
@@ -240,7 +241,9 @@ update_status ModuleRenderer3D::PostUpdate()
 	bool blend = GetCapabilityState(GL_BLEND);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDepthMask(GL_FALSE);
 	App->particle->Draw();
+	glDepthMask(GL_TRUE);
 	App->trails->Draw();
 	if (!blend)
 		glDisable(GL_BLEND);
@@ -309,12 +312,14 @@ update_status ModuleRenderer3D::PostUpdate()
 
 		App->particle->DebugDraw();
 
+		App->scripting->OnDrawGizmos();
+
 		App->debugDrawer->EndDebugDraw();
 	}
 
 
 	App->ui->DrawUI();
-		
+
 	// 3. Editor
 	App->gui->Draw();
 #else
@@ -452,7 +457,7 @@ bool ModuleRenderer3D::SetVSync(bool vsync)
 	return ret;
 }
 
-bool ModuleRenderer3D::GetVSync() const 
+bool ModuleRenderer3D::GetVSync() const
 {
 	return vsync;
 }
@@ -481,7 +486,7 @@ bool ModuleRenderer3D::GetCapabilityState(GLenum capability) const
 	return ret;
 }
 
-void ModuleRenderer3D::SetWireframeMode(bool enable) const 
+void ModuleRenderer3D::SetWireframeMode(bool enable) const
 {
 	if (enable)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -489,7 +494,7 @@ void ModuleRenderer3D::SetWireframeMode(bool enable) const
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
-bool ModuleRenderer3D::IsWireframeMode() const 
+bool ModuleRenderer3D::IsWireframeMode() const
 {
 	bool ret = false;
 
@@ -604,7 +609,7 @@ bool ModuleRenderer3D::RecalculateMainCamera()
 				mainCamera = nullptr;
 				break;
 			}
-		}			
+		}
 	}
 
 	if (multipleMainCameras)

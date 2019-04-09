@@ -125,6 +125,10 @@ ComponentEmitter::~ComponentEmitter()
 
 
 	App->res->SetAsUnused(App->resHandler->plane);
+	if (burstMesh.meshRes > 0)
+		App->res->SetAsUnused(burstMesh.meshRes);
+	if (shapeMesh.meshRes > 0)
+		App->res->SetAsUnused(shapeMesh.meshRes);
 }
 
 void ComponentEmitter::StartEmitter()
@@ -185,7 +189,7 @@ void ComponentEmitter::Update()
 				int particlesToCreate = minPart;
 				if (minPart != maxPart)
 					particlesToCreate = (rand() % (maxPart - minPart)) + minPart;
-				CreateParticles(particlesToCreate, burstType, math::float3::zero);
+				CreateParticles(particlesToCreate, burstType, math::float3::zero, true);
 			}
 			burstTime.Start();
 		}
@@ -225,7 +229,7 @@ void ComponentEmitter::SoftClearEmitter()
 }
 
 
-void ComponentEmitter::CreateParticles(int particlesToCreate, ShapeType shapeType, const math::float3& pos)
+void ComponentEmitter::CreateParticles(int particlesToCreate, ShapeType shapeType, const math::float3& pos, bool isBurst)
 {
 	if (particlesToCreate == 0)
 		++particlesToCreate;
@@ -237,7 +241,7 @@ void ComponentEmitter::CreateParticles(int particlesToCreate, ShapeType shapeTyp
 		{
 			math::float3 spawnPos = pos;
 
-			spawnPos += RandPos(shapeType);
+			spawnPos += RandPos(shapeType, isBurst);
 
 			App->particle->allParticles[particleId].SetActive(spawnPos, startValues, particleAnim);
 
@@ -249,7 +253,7 @@ void ComponentEmitter::CreateParticles(int particlesToCreate, ShapeType shapeTyp
 	}
 }
 
-math::float3 ComponentEmitter::RandPos(ShapeType shapeType)
+math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 {
 	math::float3 spawn = math::float3::zero;
 
@@ -284,6 +288,31 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType)
 
 		circleCreation.pos = (math::float3(0, coneHeight, 0) * parent->transform->GetRotation().ToFloat3x3().Transposed());
 		startValues.particleDirection = (circleCreation.GetPoint(angle, centerDist)).Normalized();
+		break;
+	}
+	case ShapeType_MESH:
+	{
+		if (isBurst)
+		{
+			if (!burstMesh.uniqueVertex.empty())
+			{
+				spawn.x = burstMesh.uniqueVertex[burstMesh.meshVertexCont].x;
+				spawn.y = burstMesh.uniqueVertex[burstMesh.meshVertexCont].y;
+				spawn.z = burstMesh.uniqueVertex[burstMesh.meshVertexCont].z;
+				burstMesh.meshVertexCont++;
+				if (burstMesh.meshVertexCont >= burstMesh.uniqueVertex.size())
+					burstMesh.meshVertexCont = 0u;
+			}
+		}
+		else if(!shapeMesh.uniqueVertex.empty())
+		{
+			uint pos = rand() % shapeMesh.uniqueVertex.size();
+			spawn.x = shapeMesh.uniqueVertex[pos].x;
+			spawn.y = shapeMesh.uniqueVertex[pos].y;
+			spawn.z = shapeMesh.uniqueVertex[pos].z;
+		}
+		startValues.particleDirection = (math::float3::unitY * parent->transform->GetRotation().ToFloat3x3().Transposed()).Normalized();
+		spawn = spawn * parent->transform->GetRotation().ToFloat3x3().Transposed();
 		break;
 	}
 	default:
@@ -395,6 +424,9 @@ void ComponentEmitter::ParticleShape()
 				normalShapeType = ShapeType_SPHERE;
 			else if (ImGui::MenuItem("Cone"))
 				normalShapeType = ShapeType_CONE;
+			else if (ImGui::MenuItem("Mesh"))
+				normalShapeType = ShapeType_MESH;
+
 			ImGui::End();
 		}
 
@@ -434,10 +466,24 @@ void ComponentEmitter::ParticleShape()
 			ImGui::DragFloat("Height Cone", &coneHeight, 0.0f, 0.25f, 20.0f, "%.2f");
 
 			break;
+		case ShapeType_MESH:
+			ImGui::PushID("shapeMesh");
+			ImGui::Button(std::to_string(shapeMesh.meshRes).data(), ImVec2(150.0f, 0.0f));
+			ImGui::PopID();
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MESH_INSPECTOR_SELECTOR"))
+				{
+					uint payload_n = *(uint*)payload->Data;
+					SetMeshParticleRes(payload_n);
+				}
+				ImGui::EndDragDropTarget();
+			}
+			break;
 		default:
 			break;
 		}
-
 		ImGui::Checkbox("Debug Draw", &drawShape);
 	}
 #endif
@@ -518,6 +564,11 @@ void ComponentEmitter::ParticleBurst()
 				burstType = ShapeType_CONE;
 				burstTypeName = "Cone Burst";
 			}
+			else if (ImGui::MenuItem("Mesh"))
+			{
+				burstType = ShapeType_MESH;
+				burstTypeName = "Mesh Burst";
+			}
 			ImGui::End();
 		}
 		ImGui::PushItemWidth(100.0f);
@@ -529,6 +580,22 @@ void ComponentEmitter::ParticleBurst()
 			minPart = maxPart;
 		ImGui::DragFloat("Repeat Time", &repeatTime, 0.5f, 0.0f, 0.0f, "%.1f");
 
+		if (burstType == ShapeType_MESH)
+		{
+			ImGui::PushID("BurstMesh");
+			ImGui::Button(std::to_string(burstMesh.meshRes).data(), ImVec2(150.0f, 0.0f));
+			ImGui::PopID();
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MESH_INSPECTOR_SELECTOR"))
+				{
+					uint payload_n = *(uint*)payload->Data;
+					SetBurstMeshParticleRes(payload_n);
+				}
+				ImGui::EndDragDropTarget();
+			}
+		}
 		ImGui::Separator();
 	}
 #endif
@@ -773,6 +840,50 @@ void ComponentEmitter::SetMaterialRes(uint materialUuid)
 	materialRes = materialUuid;
 }
 
+void ComponentEmitter::SetMeshParticleRes(uint res_uuid)
+{
+	if (shapeMesh.meshRes > 0)
+		App->res->SetAsUnused(shapeMesh.meshRes);
+
+	if (res_uuid > 0)
+		App->res->SetAsUsed(res_uuid);
+
+	Resource* resource = App->res->GetResource(res_uuid);
+
+	if (resource)
+		SetMeshInfo((ResourceMesh*)resource, shapeMesh);
+	
+	else
+		shapeMesh.meshRes = 0u;
+}
+
+void ComponentEmitter::SetBurstMeshParticleRes(uint res_uuid)
+{
+	if (burstMesh.meshRes > 0)
+		App->res->SetAsUnused(burstMesh.meshRes);
+
+	if (res_uuid > 0)
+		App->res->SetAsUsed(res_uuid);
+
+	Resource* resource = App->res->GetResource(res_uuid);
+
+	if (resource)
+		SetMeshInfo((ResourceMesh*)resource, burstMesh);
+	
+	else
+		burstMesh.meshRes = 0u;
+}
+void ComponentEmitter::SetMeshInfo(ResourceMesh* resource, MeshShape &shape)
+{
+	resource->GetVerticesReference(shape.meshVertex);
+	shape.uniqueVertex.clear();
+	resource->GetUniqueVertexPositions(shape.uniqueVertex);
+
+	shape.meshRes = resource->GetUuid();
+	shape.meshVertexCont = 0u;
+	resource->GetIndicesReference(shape.indices);
+	shape.indicesSize = resource->GetIndicesCount() / 3;
+}
 uint ComponentEmitter::GetMaterialRes() const
 {
 	return materialRes;
@@ -1035,10 +1146,12 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	uint newMaterial = 0;
 	memcpy(&newMaterial, cursor, bytes);
 
-	if (App->res->GetResource(newMaterial) != nullptr)
+	App->res->GetResource(newMaterial) ? SetMaterialRes(newMaterial) : SetMaterialRes(App->resHandler->defaultMaterial);
+	
+	/*if (App->res->GetResource(newMaterial) != nullptr)
 		SetMaterialRes(newMaterial);
 	else
-		SetMaterialRes(App->resHandler->defaultMaterial);
+		SetMaterialRes(App->resHandler->defaultMaterial);*/
 
 	cursor += bytes;
 
