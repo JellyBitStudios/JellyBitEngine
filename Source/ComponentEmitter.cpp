@@ -45,7 +45,6 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 
 	// posDifAABB
 	posDifAABB = componentEmitter.posDifAABB;
-	gravity = componentEmitter.gravity;
 
 	// boxCreation
 	boxCreation = componentEmitter.boxCreation;
@@ -88,7 +87,6 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 
 	isSubEmitter = componentEmitter.isSubEmitter;
 	subEmitter = componentEmitter.subEmitter;
-	subEmitterUUID = componentEmitter.subEmitterUUID;
 
 	rateOverTime = componentEmitter.rateOverTime;
 
@@ -125,10 +123,10 @@ ComponentEmitter::~ComponentEmitter()
 
 
 	App->res->SetAsUnused(App->resHandler->plane);
-	if (burstMesh.meshRes > 0)
-		App->res->SetAsUnused(burstMesh.meshRes);
-	if (shapeMesh.meshRes > 0)
-		App->res->SetAsUnused(shapeMesh.meshRes);
+	if (burstMesh.uuid > 0)
+		App->res->SetAsUnused(burstMesh.uuid);
+	if (shapeMesh.uuid > 0)
+		App->res->SetAsUnused(shapeMesh.uuid);
 }
 
 void ComponentEmitter::StartEmitter()
@@ -468,7 +466,7 @@ void ComponentEmitter::ParticleShape()
 			break;
 		case ShapeType_MESH:
 			ImGui::PushID("shapeMesh");
-			ImGui::Button(std::to_string(shapeMesh.meshRes).data(), ImVec2(150.0f, 0.0f));
+			ImGui::Button(std::to_string(shapeMesh.uuid).data(), ImVec2(150.0f, 0.0f));
 			ImGui::PopID();
 
 			if (ImGui::BeginDragDropTarget())
@@ -550,26 +548,16 @@ void ComponentEmitter::ParticleBurst()
 		if (ImGui::BeginMenu(burstTypeName.data()))
 		{
 			if (ImGui::MenuItem("Box"))
-			{
 				burstType = ShapeType_BOX;
-				burstTypeName = "Box Burst";
-			}
 			else if (ImGui::MenuItem("Sphere"))
-			{
 				burstType = ShapeType_SPHERE_CENTER;
-				burstTypeName = "Sphere Burst";
-			}
 			else if (ImGui::MenuItem("Cone"))
-			{
 				burstType = ShapeType_CONE;
-				burstTypeName = "Cone Burst";
-			}
 			else if (ImGui::MenuItem("Mesh"))
-			{
 				burstType = ShapeType_MESH;
-				burstTypeName = "Mesh Burst";
-			}
+
 			ImGui::End();
+			SetBurstText();
 		}
 		ImGui::PushItemWidth(100.0f);
 		ImGui::DragInt("Min particles", &minPart, 1.0f, 0, 100);
@@ -583,7 +571,7 @@ void ComponentEmitter::ParticleBurst()
 		if (burstType == ShapeType_MESH)
 		{
 			ImGui::PushID("BurstMesh");
-			ImGui::Button(std::to_string(burstMesh.meshRes).data(), ImVec2(150.0f, 0.0f));
+			ImGui::Button(std::to_string(burstMesh.uuid).data(), ImVec2(150.0f, 0.0f));
 			ImGui::PopID();
 
 			if (ImGui::BeginDragDropTarget())
@@ -599,6 +587,29 @@ void ComponentEmitter::ParticleBurst()
 		ImGui::Separator();
 	}
 #endif
+}
+
+void ComponentEmitter::SetBurstText()
+{
+	switch (burstType)
+	{
+	case ShapeType_BOX:
+		burstTypeName = "Box Burst";
+		break;
+	case ShapeType_SPHERE:
+	case ShapeType_SPHERE_CENTER:
+	case ShapeType_SPHERE_BORDER:
+		burstTypeName = "Sphere Burst";
+		break;
+	case ShapeType_CONE:
+		burstTypeName = "Cone Burst";
+		break;
+	case ShapeType_MESH:
+		burstTypeName = "Mesh Burst";
+		break;
+	default:
+		break;
+	}
 }
 
 void ComponentEmitter::ParticleAABB()
@@ -842,8 +853,8 @@ void ComponentEmitter::SetMaterialRes(uint materialUuid)
 
 void ComponentEmitter::SetMeshParticleRes(uint res_uuid)
 {
-	if (shapeMesh.meshRes > 0)
-		App->res->SetAsUnused(shapeMesh.meshRes);
+	if (shapeMesh.uuid > 0)
+		App->res->SetAsUnused(shapeMesh.uuid);
 
 	if (res_uuid > 0)
 		App->res->SetAsUsed(res_uuid);
@@ -854,13 +865,13 @@ void ComponentEmitter::SetMeshParticleRes(uint res_uuid)
 		SetMeshInfo((ResourceMesh*)resource, shapeMesh);
 	
 	else
-		shapeMesh.meshRes = 0u;
+		shapeMesh.uuid = 0u;
 }
 
 void ComponentEmitter::SetBurstMeshParticleRes(uint res_uuid)
 {
-	if (burstMesh.meshRes > 0)
-		App->res->SetAsUnused(burstMesh.meshRes);
+	if (burstMesh.uuid > 0)
+		App->res->SetAsUnused(burstMesh.uuid);
 
 	if (res_uuid > 0)
 		App->res->SetAsUsed(res_uuid);
@@ -871,7 +882,7 @@ void ComponentEmitter::SetBurstMeshParticleRes(uint res_uuid)
 		SetMeshInfo((ResourceMesh*)resource, burstMesh);
 	
 	else
-		burstMesh.meshRes = 0u;
+		burstMesh.uuid = 0u;
 }
 void ComponentEmitter::SetMeshInfo(ResourceMesh* resource, MeshShape &shape)
 {
@@ -879,7 +890,7 @@ void ComponentEmitter::SetMeshInfo(ResourceMesh* resource, MeshShape &shape)
 	shape.uniqueVertex.clear();
 	resource->GetUniqueVertexPositions(shape.uniqueVertex);
 
-	shape.meshRes = resource->GetUuid();
+	shape.uuid = resource->GetUuid();
 	shape.meshVertexCont = 0u;
 	resource->GetIndicesReference(shape.indices);
 	shape.indicesSize = resource->GetIndicesCount() / 3;
@@ -914,14 +925,9 @@ uint ComponentEmitter::GetInternalSerializationBytes()
 		sizeOfList += (*it).GetColorListSerializationBytes();
 	}
 
-	return sizeof(bool) * 8 + sizeof(rateOverTime) + sizeof(duration) + sizeof(uint) //UUID Material
-		+ sizeof(drawAABB) + sizeof(isSubEmitter) + sizeof(repeatTime) + sizeof(uint)//UUID Subemiter
-		+ sizeof(dieOnAnimation) + sizeof(normalShapeType) + particleAnim.GetPartAnimationSerializationBytes()
-		+ sizeof(uint)/*size of particleColor list*/ + sizeof(boxCreation) + sizeof(burstType) + sizeof(float) * 2 //Circle and Sphere rad
-		+ sizeof(gravity) + sizeof(posDifAABB) + sizeof(loop) + sizeof(burst) + sizeof(startOnPlay)
-		+ sizeof(minPart) + sizeof(maxPart) + sizeof(char) * burstTypeName.size() + sizeof(uint)//Size of name;
-		+ sizeof(math::float2) * 7 + sizeof(math::float3) * 2 + sizeof(bool) * 2 + sizeOfList//Bytes of all Start Values Struct
-		+ sizeof(localSpace) + sizeof(coneHeight);		//TODO PROGRAMER -> Don't sum localSpace before load
+	return sizeof(bool) * 17 + sizeof(int) * 3 + sizeof(float) * 5 + sizeof(uint) * 5
+		+ sizeof(ShapeType) * 2	+ sizeof(math::AABB) + sizeof(math::float2) * 7 + sizeof(math::float3) * 3
+		+ particleAnim.GetPartAnimationSerializationBytes() + sizeOfList;//Bytes of all Start Values Struct
 }
 
 math::float3 ComponentEmitter::GetPos()
@@ -1012,9 +1018,6 @@ void ComponentEmitter::OnInternalSave(char *& cursor)
 	memcpy(cursor, &sphereCreation.r, bytes);
 	cursor += bytes;
 
-	memcpy(cursor, &gravity, bytes);
-	cursor += bytes;
-
 	memcpy(cursor, &coneHeight, bytes);
 	cursor += bytes;
 
@@ -1029,6 +1032,12 @@ void ComponentEmitter::OnInternalSave(char *& cursor)
 	memcpy(cursor, &materialRes, bytes);
 	cursor += bytes;
 
+	memcpy(cursor, &burstMesh.uuid, bytes);
+	cursor += bytes;
+
+	memcpy(cursor, &shapeMesh.uuid, bytes);
+	cursor += bytes;
+	
 	particleAnim.OnInternalSave(cursor);
 
 	bytes = sizeof(ShapeType);
@@ -1044,15 +1053,6 @@ void ComponentEmitter::OnInternalSave(char *& cursor)
 
 	bytes = sizeof(math::float3);
 	memcpy(cursor, &posDifAABB, bytes);
-	cursor += bytes;
-
-	bytes = sizeof(uint);
-	uint nameLenghtt = burstTypeName.size();
-	memcpy(cursor, &nameLenghtt, bytes);
-	cursor += bytes;
-
-	bytes = nameLenghtt;
-	memcpy(cursor, burstTypeName.c_str(), bytes);
 	cursor += bytes;
 }
 
@@ -1129,32 +1129,37 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	memcpy(&sphereCreation.r, cursor, bytes);
 	cursor += bytes;
 	
-	memcpy(&gravity, cursor, bytes);
-	cursor += bytes;
+	//float gravity;
+	//memcpy(&gravity, cursor, bytes);
+	//cursor += bytes;
 
 	memcpy(&coneHeight, cursor, bytes);
 	cursor += bytes;
 
 	uint uuid = 0u;
-	if (subEmitter)
-		uuid = subEmitter->GetUUID();
-
 	bytes = sizeof(uint);
 	memcpy(&uuid, cursor, bytes);
 	cursor += bytes;
 
-	uint newMaterial = 0;
-	memcpy(&newMaterial, cursor, bytes);
+	subEmitter = App->GOs->GetGameObjectByUID(uuid);
 
-	App->res->GetResource(newMaterial) ? SetMaterialRes(newMaterial) : SetMaterialRes(App->resHandler->defaultMaterial);
-	
-	/*if (App->res->GetResource(newMaterial) != nullptr)
-		SetMaterialRes(newMaterial);
-	else
-		SetMaterialRes(App->resHandler->defaultMaterial);*/
+	memcpy(&materialRes, cursor, bytes);
 
+	App->res->GetResource(materialRes) ? SetMaterialRes(materialRes) : SetMaterialRes(App->resHandler->defaultMaterial);
+	cursor += bytes;
+	//Coment this
+	memcpy(&burstMesh.uuid, cursor, bytes);
+	Resource* res = App->res->GetResource(burstMesh.uuid);
+	if (res)
+		SetMeshInfo((ResourceMesh*)res, burstMesh);
 	cursor += bytes;
 
+	memcpy(&shapeMesh.uuid, cursor, bytes);
+	res = App->res->GetResource(shapeMesh.uuid);
+	if (res)
+		SetMeshInfo((ResourceMesh*)res, shapeMesh);
+	cursor += bytes;
+	//---
 	particleAnim.OnInternalLoad(cursor);
 
 	bytes = sizeof(ShapeType);
@@ -1172,16 +1177,18 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	memcpy(&posDifAABB, cursor, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(uint);
-	uint nameLenghtt;
-	memcpy(&nameLenghtt, cursor, bytes);
-	cursor += bytes;
+	//bytes = sizeof(uint);
+	//uint namelenghtt;
+	//memcpy(&namelenghtt, cursor, bytes);
+	//cursor += bytes;
 
-	bytes = nameLenghtt;
-	burstTypeName.resize(nameLenghtt);
-	memcpy((void*)burstTypeName.c_str(), cursor, bytes);
-	burstTypeName.resize(nameLenghtt);
-	cursor += bytes;
+	//bytes = namelenghtt;
+	//bursttypename.resize(namelenghtt);
+	//memcpy((void*)bursttypename.c_str(), cursor, bytes);
+	//bursttypename.resize(namelenghtt);
+	//cursor += bytes;
+
+	SetBurstText();
 }
 //--------------------------------------------------------------------------------------------------------------------------------------
 //Start Values Save&Load
