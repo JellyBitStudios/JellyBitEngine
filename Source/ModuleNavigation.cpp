@@ -265,11 +265,8 @@ void ModuleNavigation::SetInputGeom(NMInputGeom& inputGeom)
 	memcpy(m_geom, &inputGeom, sizeof(NMInputGeom));
 }
 
-bool ModuleNavigation::FindPath(float* start, float* end, math::float3* finalPath, int pathCount) const
+bool ModuleNavigation::FindPath(float* start, float* end, std::vector<math::float3> finalPath) const
 {
-	finalPath = 0;
-	pathCount = -1;
-
 	const int MAX_POLYS = 256;
 	float startpos[3];
 	float endpos[3];
@@ -318,9 +315,8 @@ bool ModuleNavigation::FindPath(float* start, float* end, math::float3* finalPat
 	if (!dtStatusSucceed(status))
 		return false;
 
-	finalPath = new math::float3[straightPathCount];
-	memcpy(finalPath, straightPath, sizeof(float) * straightPathCount * 3);
-	pathCount = straightPathCount;
+	finalPath.resize(straightPathCount);
+	memcpy(&finalPath, straightPath, sizeof(float) * straightPathCount * 3);
 
 	return true;
 }

@@ -28,7 +28,7 @@ public:
 	void AddComponent(class ComponentNavAgent*);
 	void EraseComponent(class ComponentNavAgent*);
 	void SetInputGeom(class NMInputGeom& inputGeom);
-	bool FindPath(float* start, float* end, math::float3* finalPath, int pathCount) const;
+	bool FindPath(float* start, float* end, std::vector<math::float3> finalPath, int pathCount) const;
 	int  AddAgent(const float* p, float radius, float height, float maxAcc, float maxSpeed,
 				  float collQueryRange, float pathOptimRange, unsigned char updateFlags,
 				  unsigned char obstacleAvoidanceType, float stopAtLength) const;
