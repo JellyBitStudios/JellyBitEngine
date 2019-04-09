@@ -21,9 +21,7 @@ public:
 	ComponentImage(const ComponentImage& componentImage, GameObject* parent, bool includeComponents = true);
 	~ComponentImage();
 
-	void Update();
-
-	//NOTE: If you override this method, make sure to call the base class method. 
+	//NOTE: If you override this method, make sure to call the base class method.
 	//(Component::OnSystemEvent(event); at start)
 	void OnSystemEvent(System_Event event);
 
@@ -45,6 +43,7 @@ public:
 	std::string GetResImageName() const;
 	void SetResImageName(const std::string& name);
 	void SetMask();
+	void ResetTexture();
 
 private:
 	uint GetInternalSerializationBytes();

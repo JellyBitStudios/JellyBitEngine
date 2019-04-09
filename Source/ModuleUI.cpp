@@ -131,6 +131,16 @@ void ModuleUI::OnSystemEvent(System_Event event)
 {
 	switch (event.type)
 	{
+	case System_Event_Type::LoadFinished:
+	{
+#ifdef GAMEMODE
+		System_Event windowChanged;
+		windowChanged.type = System_Event_Type::ScreenChanged;
+		for (GameObject* goScreenCanvas : canvas_screen)
+			goScreenCanvas->OnSystemEvent(windowChanged);
+#endif // GAMEMODE
+		break;
+	}
 	case System_Event_Type::LoadScene:
 	{
 		if (isNVIDIA)
@@ -153,6 +163,7 @@ void ModuleUI::OnSystemEvent(System_Event event)
 		canvas_screen.clear();
 		canvas_worldScreen.clear();
 		canvas_world.clear();
+		buttons_ui.clear();
 		break;
 	}
 	case System_Event_Type::ComponentDestroyed:
@@ -335,12 +346,12 @@ void ModuleUI::DrawUIImage(int index, math::float3 corners[4], math::float4& col
 		setFloat(ui_shader, "bottomRight", { corners[ComponentRectTransform::Rect::RBOTTOMRIGHT], 1.0f });
 	}
 
-	int useMask = (mask.x < 0) ? false : true;
-	setInt(ui_shader, "useMask", useMask);
+	bool useMask = (mask.x < 0) ? false : true;
+	setBool(ui_shader, "useMask", useMask);
 	if (useMask)
 		setFloat(ui_shader, "coordsMask", mask.x, mask.y);
 
-	setInt(ui_shader, "isLabel", false);
+	setBool(ui_shader, "isLabel", false);
 	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
 	if (texture > 0)
 	{
@@ -360,6 +371,7 @@ void ModuleUI::DrawUIImage(int index, math::float3 corners[4], math::float4& col
 
 void ModuleUI::DrawUILabel(int index, std::vector<LabelLetter>* word, std::vector<uint>* GetTexturesWord, math::float4& color)
 {
+	use(ui_shader);
 	setBool(ui_shader, "isLabel", true);
 	setBool(ui_shader, "using_texture", true);
 	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
@@ -557,6 +569,11 @@ void ModuleUI::UnRegisterBufferIndex(uint offset, ComponentTypes cType)
 			}
 		}
 	}
+}
+
+void ModuleUI::ReAssignButtonOnClicks()
+{
+
 }
 
 bool ModuleUI::GetUIMode() const

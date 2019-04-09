@@ -56,14 +56,23 @@ void ComponentCanvas::OnSystemEvent(System_Event event)
 	switch (event.type)
 	{
 	case System_Event_Type::WRectTransformUpdated:
-		event.type = System_Event_Type::RectTransformUpdated;
-	case System_Event_Type::ScreenChanged:
 	{
+		event.type = System_Event_Type::RectTransformUpdated;
 		std::vector<GameObject*> rectChilds;
 		parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
 
 		for (std::vector<GameObject*>::const_reverse_iterator go = rectChilds.crbegin(); go != rectChilds.crend(); go++)
 			(*go)->OnSystemEvent(event);
+		break;
+	}
+	case System_Event_Type::ScreenChanged:
+	{
+		std::vector<GameObject*> rectChilds;
+		parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
+
+		for (std::vector<GameObject*>::iterator go = rectChilds.begin(); go != rectChilds.end(); go++)
+			if((*go) != parent)
+				(*go)->OnSystemEvent(event);
 		break;
 	}
 	}
@@ -132,7 +141,6 @@ void ComponentCanvas::Update()
 	{
 		if ((*go)->cmp_rectTransform) (*go)->cmp_rectTransform->Update();
 		if ((*go)->cmp_label) (*go)->cmp_label->Update();
-		if ((*go)->cmp_image) (*go)->cmp_image->Update();
 		if (App->GetEngineState() == engine_states::ENGINE_PLAY && (*go)->cmp_button) (*go)->cmp_button->Update();
 		if ((*go)->cmp_canvasRenderer) (*go)->cmp_canvasRenderer->Update();
 	}

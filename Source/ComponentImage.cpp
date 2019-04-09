@@ -24,7 +24,6 @@ ComponentImage::ComponentImage(GameObject * parent, ComponentTypes componentType
 			parent->AddComponent(ComponentTypes::CanvasRendererComponent);
 
 		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::ImageComponent, this);
-		needed_recalculate = true;
 	}
 }
 
@@ -35,14 +34,13 @@ ComponentImage::ComponentImage(const ComponentImage & componentImage, GameObject
 	memcpy(color, componentImage.color, sizeof(float) * 4);
 	memcpy(mask_values, componentImage.mask_values, sizeof(float) * 2);
 	memcpy(rect_initValues, componentImage.rect_initValues, sizeof(float) * 2);
-	
+
 	if (includeComponents)
 	{
 		if(res_image > 0)
 			App->res->SetAsUsed(res_image);
 
 		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::ImageComponent, this);
-		needed_recalculate = true;
 	}
 }
 
@@ -136,7 +134,7 @@ std::string ComponentImage::GetResImageName() const
 		else
 			return "";
 	}
-	
+
 	return "";
 }
 
@@ -163,10 +161,20 @@ void ComponentImage::OnSystemEvent(System_Event event)
 	switch (event.type)
 	{
 	case System_Event_Type::ScreenChanged:
+	{
+		mask_values[0] = 1;
+		mask_values[1] = 0;
+		uint* rect = parent->cmp_rectTransform->GetRect();
+		rect_initValues[0] = rect[ComponentRectTransform::Rect::XDIST];
+		rect_initValues[1] = rect[ComponentRectTransform::Rect::YDIST];
+		break;
+	}
 	case System_Event_Type::CanvasChanged:
 	case System_Event_Type::RectTransformUpdated:
 	{
-		needed_recalculate = true;
+		uint* rect = parent->cmp_rectTransform->GetRect();
+		mask_values[1] = ((rect_initValues[1] - (float)rect[ComponentRectTransform::Rect::YDIST]) / rect_initValues[1]);
+		mask_values[0] = 1.0f - ((rect_initValues[0] - (float)rect[ComponentRectTransform::Rect::XDIST]) / rect_initValues[0]);
 		break;
 	}
 	}
@@ -191,6 +199,13 @@ void ComponentImage::SetMask()
 		rect_initValues[0] = rect[ComponentRectTransform::Rect::XDIST];
 		rect_initValues[1] = rect[ComponentRectTransform::Rect::YDIST];
 	}
+}
+
+void ComponentImage::ResetTexture()
+{
+	if (res_image > 0)
+		App->res->SetAsUnused(res_image);
+	res_image = 0;
 }
 
 bool ComponentImage::useMask() const

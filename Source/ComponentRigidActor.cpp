@@ -201,10 +201,10 @@ RigidActorTypes ComponentRigidActor::GetRigidActorType() const
 
 void ComponentRigidActor::OnWake()
 {
-	CONSOLE_LOG(LogTypes::Normal, "OnWake", LogTypes::Normal);
+	//CONSOLE_LOG(LogTypes::Normal, "OnWake", LogTypes::Normal);
 }
 
 void ComponentRigidActor::OnSleep()
 {
-	CONSOLE_LOG(LogTypes::Normal, "OnSleep", LogTypes::Normal);
+	//CONSOLE_LOG(LogTypes::Normal, "OnSleep", LogTypes::Normal);
 }

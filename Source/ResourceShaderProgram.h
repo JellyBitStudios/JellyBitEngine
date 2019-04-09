@@ -13,7 +13,7 @@ enum ShaderProgramTypes
 {
 	Standard,
 	Projector,
-	Particles,
+	Effects,
 	UI,
 	Source,
 	Custom

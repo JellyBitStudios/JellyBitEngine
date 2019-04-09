@@ -3069,7 +3069,8 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
 				{
 					MonoType* type = mono_field_get_type(field);
-					if (mono_class_is_enum(mono_type_get_class(type)))
+					MonoClass* classCSharp = mono_type_get_class(type);
+					if (classCSharp && mono_class_is_enum(classCSharp))
 					{	
 						std::string typeName = mono_type_full_name(type);
 						std::string fieldName = mono_field_get_name(field);

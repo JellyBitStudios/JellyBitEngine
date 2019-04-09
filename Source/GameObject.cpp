@@ -36,6 +36,7 @@
 #include "ComponentProjector.h"
 #include "ComponentAudioListener.h"
 #include "ComponentAudioSource.h"
+#include "ComponentTrail.h"
 
 #include "MathGeoLib\include\Geometry\OBB.h"
 #include "Brofiler/Brofiler.h"
@@ -217,6 +218,10 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			cmp_audioSource->SetParent(this);
 			components.push_back(cmp_audioSource);
 			break;
+		case ComponentTypes::TrailComponent:
+			cmp_trail = new ComponentTrail(*gameObject.cmp_trail);
+			cmp_trail->SetParent(this);
+			components.push_back(cmp_trail);
 		}
 	}
 
@@ -404,15 +409,15 @@ void GameObject::RecalculateBoundingBox()
 	{
 		if (transform)
 		{
-			math::OBB obb = originalBoundingBox.ToOBB();
+			rotationBB = originalBoundingBox.ToOBB();
 
 			// Transform the obb using the GameObject transform
 			math::float4x4 transformMatrix = transform->GetGlobalMatrix();
-			obb.Transform(transformMatrix);
-
+			rotationBB.Transform(transformMatrix);
+			
 			// Calculate the minimal enclosing AABB from the transformed OBB
-			if (obb.IsFinite())
-				boundingBox = obb.MinimalEnclosingAABB();
+			if (rotationBB.IsFinite())
+				boundingBox = rotationBB.MinimalEnclosingAABB();
 		}
 	}
 }
@@ -690,6 +695,9 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		break;
 	case ComponentTypes::AudioSourceComponent:
 		newComponent = cmp_audioSource = new ComponentAudioSource(this);
+		break;
+	case ComponentTypes::TrailComponent:
+		newComponent = cmp_trail = new ComponentTrail(this);
 		break;
 	}
 

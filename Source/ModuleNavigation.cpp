@@ -90,7 +90,10 @@ update_status ModuleNavigation::Update()
 					trm->SetRotation(new_rotation);
 				}
 				else
+				{
 					((dtCrowdAgent*)ag)->walking = false;
+					ResetMoveTarget(index);
+				}
 			//}
 		}
 	}
@@ -274,7 +277,7 @@ void ModuleNavigation::FindPath(float* start, float* end, float* path, int pathC
 	//path = new float[pathCount * 3];
 }
 
-int ModuleNavigation::AddAgent(const float* p, float radius, float height, float maxAcc, float maxSpeed, float collQueryRange, float pathOptimRange, unsigned char updateFlags, unsigned char obstacleAvoidanceType) const
+int ModuleNavigation::AddAgent(const float* p, float radius, float height, float maxAcc, float maxSpeed, float collQueryRange, float pathOptimRange, unsigned char updateFlags, unsigned char obstacleAvoidanceType, float stopAtLength) const
 {
 	if (!m_crowd) return -1;
 
@@ -288,11 +291,12 @@ int ModuleNavigation::AddAgent(const float* p, float radius, float height, float
 	params.pathOptimizationRange = pathOptimRange;
 	params.updateFlags = updateFlags;
 	params.obstacleAvoidanceType = obstacleAvoidanceType;
+	params.stopAtLength = stopAtLength;
 
 	return m_crowd->addAgent(p, &params);
 }
 
-bool ModuleNavigation::UpdateAgentParams(int indx, float radius, float height, float maxAcc, float maxSpeed, float collQueryRange, float pathOptimRange, unsigned char updateFlags, unsigned char obstacleAvoidanceType) const
+bool ModuleNavigation::UpdateAgentParams(int indx, float radius, float height, float maxAcc, float maxSpeed, float collQueryRange, float pathOptimRange, unsigned char updateFlags, unsigned char obstacleAvoidanceType, float stopAtLength) const
 {
 	if (!m_crowd || !m_crowd->getAgent(indx))
 		return false;
@@ -307,6 +311,7 @@ bool ModuleNavigation::UpdateAgentParams(int indx, float radius, float height, f
 	params.pathOptimizationRange = pathOptimRange;
 	params.updateFlags = updateFlags;
 	params.obstacleAvoidanceType = obstacleAvoidanceType;
+	params.stopAtLength = stopAtLength;
 
 	m_crowd->updateAgentParameters(indx, &params);
 }
