@@ -8,6 +8,7 @@
 #include "NMBuildContext.h"
 
 #include <vector>
+#include "MathGeoLib/include/Math/float3.h"
 
 constexpr int max_Agents = 128;
 #define N_EPSILON 0.00050f
@@ -28,7 +29,8 @@ public:
 	void AddComponent(class ComponentNavAgent*);
 	void EraseComponent(class ComponentNavAgent*);
 	void SetInputGeom(class NMInputGeom& inputGeom);
-	bool FindPath(float* start, float* end, std::vector<math::float3> finalPath, int pathCount) const;
+	bool FindPath(float* start, float* end, std::vector<math::float3>& finalPath) const;
+
 	int  AddAgent(const float* p, float radius, float height, float maxAcc, float maxSpeed,
 				  float collQueryRange, float pathOptimRange, unsigned char updateFlags,
 				  unsigned char obstacleAvoidanceType, float stopAtLength) const;
