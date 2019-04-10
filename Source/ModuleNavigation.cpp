@@ -52,6 +52,7 @@ update_status ModuleNavigation::Update()
 #ifndef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 #endif // !GAMEMODE
+	return UPDATE_CONTINUE;
 	if (m_navMesh && m_crowd)
 	{
 		m_crowd->update(App->timeManager->GetDt(), 0);
@@ -133,10 +134,10 @@ void ModuleNavigation::OnSystemEvent(System_Event e)
 		if (!m_navMesh)
 			return;
 
-		for each (ComponentNavAgent* ag in c_agents)
-			RemoveAgent(ag->GetIndex());
+		//for each (ComponentNavAgent* ag in c_agents)
+			//RemoveAgent(ag->GetIndex());
 
-		dtFreeCrowd(m_crowd);
+		//dtFreeCrowd(m_crowd);
 		dtFreeNavMeshQuery(m_navQuery);
 		m_crowd = 0;
 		m_navQuery = 0;
@@ -144,8 +145,8 @@ void ModuleNavigation::OnSystemEvent(System_Event e)
 	}
 	case System_Event_Type::LoadFinished:
 	{
-		if (App->IsPlay())
-			InitDetour();
+		//if (App->IsPlay())
+			//InitDetour();
 		break;
 	}
 	}
@@ -167,10 +168,10 @@ void ModuleNavigation::InitDetour()
 		return;
 	}
 
-	InitCrowd();
+	//InitCrowd();
 
-	for each (ComponentNavAgent* ag in c_agents)
-		ag->AddAgent();
+	//for each (ComponentNavAgent* ag in c_agents)
+	//	ag->AddAgent();
 }
 
 void ModuleNavigation::InitCrowd()
