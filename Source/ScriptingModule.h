@@ -48,7 +48,7 @@ public:
 	void OnSystemEvent(System_Event event) override;
 
 public:
-	ComponentScript* CreateScriptComponent(std::string scriptName, bool createCS = true);
+	ComponentScript* CreateScriptComponent(std::string scriptName, ResourceScript* scriptRes);
 	bool DestroyScript(ComponentScript* script);
 	inline void AddScriptComponent(ComponentScript* script){scripts.push_back(script);}
 	void ClearScriptComponent(ComponentScript* script);
