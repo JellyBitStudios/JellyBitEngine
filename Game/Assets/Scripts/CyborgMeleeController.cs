@@ -9,6 +9,11 @@ public class CyborgMeleeCharacter : Character
 
 public class CyborgMeleeController : JellyScript
 {
+    #region INSPECTOR_VARIABLES
+    public GameObject gameObjectLineOfSight = null;
+    public GameObject gameObjectWaypointsManager = null;
+    #endregion
+
     #region PUBLIC_VARIABLES
     //public NetmanCharacter stats = new NetmanCharacter();
     /// <Temporal>
@@ -18,12 +23,7 @@ public class CyborgMeleeController : JellyScript
     public enum NetmanStates { wander, attack };
     public NetmanStates currentState = NetmanStates.wander;
 
-    /////
     public GameObject target = null;
-
-    /// Public to private
-    public GameObject goLineOfSight = null;
-    public GameObject goWaypointsManager = null;
     #endregion
 
     #region PRIVATE_VARIABLES
@@ -35,28 +35,31 @@ public class CyborgMeleeController : JellyScript
     private AttackStates attackState = AttackStates.goToWaypoint;
     bool isAttackActive = false;
 
-    /////
     private Agent agent = null;
-
-    private Waypoint waypoint = null;
-
-    /// Public to private
     private LineOfSight lineOfSight = null;
     private WaypointsManager waypointsManager = null;
+
+    private Waypoint waypoint = null;
     #endregion
+
+    // ----------------------------------------------------------------------------------------------------
 
     public override void Awake()
     {
-        lineOfSight = goLineOfSight.GetComponent<LineOfSight>();
-        waypointsManager = goWaypointsManager.GetComponent<WaypointsManager>();
-        //agent = gameObject.GetComponent<Agent>();
+        if (gameObjectLineOfSight != null)
+            lineOfSight = gameObjectLineOfSight.GetComponent<LineOfSight>();
+        if (gameObjectWaypointsManager != null)
+            waypointsManager = gameObjectWaypointsManager.GetComponent<WaypointsManager>();
+
+        agent = gameObject.GetComponent<Agent>();
     }
 
-    // Called every frame
     public override void Update()
     {
         UpdateState();
     }
+
+    // ----------------------------------------------------------------------------------------------------
 
     // Update state
     private void UpdateState()
@@ -129,7 +132,7 @@ public class CyborgMeleeController : JellyScript
                     {
                         if (hitInfo != null)
                         {
-                            //agent.SetDestination(hitInfo.point);
+                            agent.SetDestination(hitInfo.point);
                             wanderState = WanderStates.goToPosition;
                         }
                     }

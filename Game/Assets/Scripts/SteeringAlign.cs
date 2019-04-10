@@ -2,40 +2,41 @@
 using System;
 using JellyBitEngine;
 
-// https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/Export/Mathf.cs
-// https://github.com/Sandruski/Tank-Game/blob/master/Behaviour%20Trees/Assets/Steering/SteeringAlign.cs
-
 public class SteeringAlign : SteeringAbstract
 {
+    public float minAngle = 0.01f;
+    public float slowAngle = 0.1f;
+    public float timeToTarget = 0.1f;
+
     public float GetAlign(Agent agent)
     {
         if (agent == null)
             return 0.0f;
 
-        float orientation = (float)Math.Atan2(agent.transform.forward.x, agent.transform.forward.z);
-        Vector3 direction = (agent.destination - agent.transform.position).normalized();
-        float targetOrientation = (float)Math.Atan2(direction.x, direction.z);
+        float orientation = Rad2Deg * (float)Math.Atan2(agent.transform.forward.x, agent.transform.forward.z);
+        Vector3 direction = Rad2Deg * (agent.Destination - agent.transform.position).normalized();
+        float targetOrientation = (float)Math.Atan2(direction.x, direction.z); // wrap around PI
 
         float diff = DeltaAngle(orientation, targetOrientation);
         float diffAbs = Math.Abs(diff);
         // Are we there (min radius)?
-        if (diffAbs < agent.agentConfiguration.alignMinAngle)
+        if (diffAbs < minAngle)
             // No acceleration
             return 0.0f;
 
         float targetRotation = 0.0f;
         // Are we outside the slow radius?
-        if (diffAbs > agent.agentConfiguration.alignSlowAngle)
+        if (diffAbs > slowAngle)
             // Max rotation
             targetRotation = agent.agentConfiguration.maxAngularVelocity;
         else
             // Scaled rotation
-            targetRotation = diffAbs * agent.agentConfiguration.maxAngularVelocity / agent.agentConfiguration.alignSlowAngle;
+            targetRotation = diffAbs * agent.agentConfiguration.maxAngularVelocity / slowAngle;
 
         targetRotation *= NormalizedScalar(diff);
 
         float angularAcceleration = targetRotation - orientation;
-        angularAcceleration /= agent.agentConfiguration.alignTimeToTarget;
+        angularAcceleration /= timeToTarget;
 
         return Mathf.Clamp(angularAcceleration, -agent.agentConfiguration.maxAngularAcceleration, agent.agentConfiguration.maxAngularAcceleration);
     }
@@ -46,6 +47,15 @@ public class SteeringAlign : SteeringAbstract
     }
 
     // ----------------------------------------------------------------------------------------------------
+
+    // The infamous ''3.14159265358979...'' value (RO)
+    public const float PI = (float)Math.PI;
+
+    // Degrees-to-radians conversion constant (RO)
+    public const float Deg2Rad = PI * 2.0f / 360.0f;
+
+    // Radians-to-degrees conversion constant (RO)
+    public const float Rad2Deg = 1.0f / Deg2Rad;
 
     // Calculates the shortest difference between two given angles
     public static float DeltaAngle(float current, float target)

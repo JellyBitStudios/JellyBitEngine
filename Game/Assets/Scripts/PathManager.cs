@@ -4,8 +4,6 @@ using JellyBitEngine;
 
 public class PathManager : JellyScript
 {
-    private NavMeshAgent navMeshAgent = null;
-
     #region PUBLIC_VARIABLES
     public Vector3 Destination
     {
@@ -34,15 +32,10 @@ public class PathManager : JellyScript
     private Vector3[] path = null;
     #endregion
 
-    public override void Awake()
-    {
-        navMeshAgent = gameObject.GetComponent<NavMeshAgent>();
-    }
-
-    public bool GetPath(Vector3 destination)
+    public bool GetPath(Vector3 origin, Vector3 destination)
     {
         this.destination = destination;
-        hasPath = navMeshAgent.GetPath(destination, out path);
+        hasPath = Navigation.GetPath(origin, destination, out path);
         index = 0;
         return hasPath;
     }

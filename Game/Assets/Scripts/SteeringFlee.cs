@@ -9,7 +9,7 @@ public class SteeringFlee : SteeringAbstract
         if (agent == null)
             return Vector3.zero;
 
-        Vector3 direction = (agent.transform.position - agent.destination).normalized();
+        Vector3 direction = (agent.transform.position - agent.Destination).normalized();
         direction *= agent.agentConfiguration.maxAcceleration;
         return direction;
     }

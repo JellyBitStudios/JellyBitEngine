@@ -4,6 +4,10 @@ using JellyBitEngine;
 
 public class SteeringSeparation : SteeringAbstract
 {
+    public LayerMask mask = new LayerMask();
+    public float radius = 1.0f;
+    public float threshold = 1.0f;
+
     public Vector3 GetSeparation(Agent agent)
     {
         Vector3 outputAcceleration = Vector3.zero;
@@ -12,7 +16,7 @@ public class SteeringSeparation : SteeringAbstract
             return outputAcceleration;
 
         OverlapHit[] hitInfo;
-        if (Physics.OverlapSphere(agent.agentConfiguration.separationRadius, agent.transform.position, out hitInfo, agent.agentConfiguration.separationMask, SceneQueryFlags.Dynamic))
+        if (Physics.OverlapSphere(radius, agent.transform.position, out hitInfo, mask, SceneQueryFlags.Dynamic))
         {
             foreach (OverlapHit hit in hitInfo)
             {
@@ -26,9 +30,9 @@ public class SteeringSeparation : SteeringAbstract
 
                 Vector3 direction = target.transform.position - agent.transform.position;
                 float distance = (float)direction.magnitude;
-                if (distance < agent.agentConfiguration.separationThreshold)
+                if (distance < threshold)
                 {
-                    float strength = agent.agentConfiguration.maxAcceleration * (agent.agentConfiguration.separationThreshold - distance) / agent.agentConfiguration.separationThreshold;
+                    float strength = agent.agentConfiguration.maxAcceleration * (threshold - distance) / threshold;
                     direction.Normalize();
                     direction *= strength;
 

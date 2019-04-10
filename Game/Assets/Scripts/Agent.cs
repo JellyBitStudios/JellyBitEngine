@@ -2,6 +2,8 @@
 using System;
 using JellyBitEngine;
 
+// https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/Export/Mathf.cs
+
 public class AgentConfiguration
 {
     public float maxVelocity = 1.0f;
@@ -11,41 +13,55 @@ public class AgentConfiguration
 
     // Arrive
     public float arriveMinDistance = 0.1f;
-
-    // Separation
-    public LayerMask separationMask = new LayerMask();
-    public float separationRadius = 1.0f;
-    public float separationThreshold = 1.0f;
-
-    // Align
-    public float alignMinAngle = 0.01f;
-    public float alignSlowAngle = 0.1f;
-    public float alignTimeToTarget = 0.1f;
 }
 
 public class Agent : JellyScript
 {
+    #region INSPECTOR_VARIABLES
+    // AgentConfiguration
+    public float agentMaxVelocity = 1.0f;
+    public float agentMaxAngularVelocity = 1.0f;
+    public float agentMaxAcceleration = 1.0f;
+    public float agentMaxAngularAcceleration = 1.0f;
+    public float agentArriveMinDistance = 0.1f;
+
+    // SteeringSeparation
+    public LayerMask separationMask = new LayerMask();
+    public float separationRadius = 1.0f;
+    public float separationThreshold = 1.0f;
+
+    // SteeringAlign
+    public float alignMinAngle = 0.01f;
+    public float alignSlowAngle = 0.1f;
+    public float alignTimeToTarget = 0.1f;
+    #endregion
+
     #region PUBLIC_VARIABLES
     public AgentConfiguration agentConfiguration = new AgentConfiguration();
 
     public enum MovementState { Stop, GoToPosition, UpdateNextPosition };
     public MovementState movementState = MovementState.Stop;
 
+    public Vector3 velocity = Vector3.zero;
+    public float angularVelocity = 0.0f;
+
+    public Vector3 Destination
+    {
+        get { return pathManager.Destination; }
+    }
+
     // Steerings
     public SteeringSeek seek = new SteeringSeek();
     public SteeringFlee flee = new SteeringFlee();
     public SteeringSeparation separation = new SteeringSeparation();
     public SteeringAlign align = new SteeringAlign();
-
-    public Vector3 velocity = Vector3.zero;
-    public float angularVelocity = 0.0f;
     #endregion
 
     #region PRIVATE_VARIABLES
+    private PathManager pathManager = new PathManager();
+
     private Vector3[] velocities = null;
     private float[] angularVelocities = null;
-
-    private PathManager pathManager = new PathManager();
     #endregion
 
     // ----------------------------------------------------------------------------------------------------
@@ -56,6 +72,25 @@ public class Agent : JellyScript
         angularVelocities = new float[SteeringConfiguration.maxPriorities];
 
         ResetPriorities();
+
+        // --------------------------------------------------
+
+        // AgentConfiguration
+        agentConfiguration.maxVelocity = agentMaxVelocity;
+        agentConfiguration.maxAngularVelocity = agentMaxAngularVelocity;
+        agentConfiguration.maxAcceleration = agentMaxAcceleration;
+        agentConfiguration.maxAngularAcceleration = agentMaxAngularAcceleration;
+        agentConfiguration.arriveMinDistance = agentArriveMinDistance;
+
+        // SteeringSeparation
+        separation.mask = separationMask;
+        separation.radius = separationRadius;
+        separation.threshold = separationThreshold;
+
+        // SteeringAlign
+        align.minAngle = alignMinAngle;
+        align.slowAngle = alignSlowAngle;
+        align.timeToTarget = alignTimeToTarget;
     }
 
     public override void FixedUpdate()
@@ -133,10 +168,10 @@ public class Agent : JellyScript
     }
 
     // ----------------------------------------------------------------------------------------------------
-
+    
     public void SetDestination(Vector3 destination)
     {
-        if (pathManager.GetPath(destination))
+        if (pathManager.GetPath(transform.position, destination))
             movementState = MovementState.GoToPosition;
         else
             movementState = MovementState.Stop;

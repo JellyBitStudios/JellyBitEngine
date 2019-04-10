@@ -9,7 +9,7 @@ public class SteeringSeek : SteeringAbstract
         if (agent == null)
             return Vector3.zero;
 
-        Vector3 direction = (agent.destination - agent.transform.position).normalized();
+        Vector3 direction = (agent.Destination - agent.transform.position).normalized();
         direction *= agent.agentConfiguration.maxAcceleration;
         return direction;
     }
