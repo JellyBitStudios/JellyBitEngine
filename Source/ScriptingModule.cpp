@@ -1199,6 +1199,19 @@ void DebugDrawSphere(float radius, MonoArray* color, MonoArray* position, MonoAr
 	App->debugDrawer->DebugDrawSphere(radius, Color(col.ptr()), global);
 }
 
+void DebugDrawLine(MonoArray* origin, MonoArray* destination, MonoArray* color)
+{
+	if (!App->debugDrawer->IsDrawing() || !origin || !destination)
+		return;
+
+	math::float3 originCPP = math::float3(mono_array_get(origin, float, 0), mono_array_get(origin, float, 1), mono_array_get(origin, float, 2));
+	math::float3 destinationCPP = math::float3(mono_array_get(destination, float, 0), mono_array_get(destination, float, 1), mono_array_get(destination, float, 2));
+
+	math::float4 col = color != nullptr ? math::float4(mono_array_get(color, float, 0), mono_array_get(color, float, 1), mono_array_get(color, float, 2), mono_array_get(color, float, 3)) : math::float4(0, 1, 0, 1);
+
+	App->debugDrawer->DebugDrawLine(originCPP, destinationCPP, Color(col.ptr()));
+}
+
 int32_t GetKeyStateCS(int32_t key)
 {
 	return App->input->GetKey(key);
@@ -3513,6 +3526,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Debug::LogError", (const void*)&DebugLogErrorTranslator);
 	mono_add_internal_call("JellyBitEngine.Debug::ClearConsole", (const void*)&ClearConsole);
 	mono_add_internal_call("JellyBitEngine.Debug::_DrawSphere", (const void*)&DebugDrawSphere);
+	mono_add_internal_call("JellyBitEngine.Debug::_DrawLine", (const void*)&DebugDrawLine);
 
 	//Variated
 	mono_add_internal_call("JellyBitEngine.Input::GetKeyState", (const void*)&GetKeyStateCS);
