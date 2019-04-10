@@ -19,13 +19,17 @@
 
 class ComponentMaterial;
 class Particle;
+class ResourceMesh;
+
+struct Vertex;
 
 enum ShapeType {
 	ShapeType_BOX,
 	ShapeType_SPHERE,
 	ShapeType_SPHERE_CENTER,
 	ShapeType_SPHERE_BORDER,
-	ShapeType_CONE
+	ShapeType_CONE,
+	ShapeType_MESH
 };
 
 enum SimulatedGame
@@ -34,6 +38,16 @@ enum SimulatedGame
 	SimulatedGame_PLAY,
 	SimulatedGame_PAUSE,
 	SimulatedGame_STOP,
+};
+
+struct MeshShape
+{
+	uint uuid = 0u;
+	uint meshVertexCont = 0u;
+	Vertex* meshVertex;
+	std::vector<math::float3> uniqueVertex;
+	uint* indices = nullptr;
+	uint indicesSize = 0;
 };
 
 struct ColorTime
@@ -118,25 +132,29 @@ public:
 	void ParticleAABB();
 	void ParticleSubEmitter();
 	void ParticleBurst();
+	void SetBurstText();
 	void ParticleColor();
 	void ParticleValues();
 	void ParticleShape();
 	void ParticleSpace();
 	
 	void SetNewAnimation();
-	math::float3 RandPos(ShapeType shapeType);
+	void CreateParticles(int particlesToCreate, ShapeType shapeType, const math::float3 & pos, bool isBurst = false);
+	math::float3 RandPos(ShapeType shapeType, bool isBurst = false);
 	void ShowFloatValue(math::float2 & value, bool checkBox, const char * name, float v_speed, float v_min, float v_max);
 	void EqualsMinMaxValues(math::float2 & value);
 	void CheckMinMax(math::float2 & value);
 	void ClearEmitter();
 	void SoftClearEmitter();
-	void CreateParticles(int particlesToCreate, ShapeType shapeType, const math::float3& pos = math::float3::zero);
 	bool EditColor(ColorTime & colorTime, uint pos = 0u);
 	void SetAABB(const math::float3 size, const math::float3 extraPosition = math::float3::zero);
 
 	math::float3 GetPos();
 
 	void SetMaterialRes(uint materialUuid);
+	void SetMeshParticleRes(uint res_uuid);
+	void SetBurstMeshParticleRes(uint res_uuid);
+	void SetMeshInfo(ResourceMesh* resource, MeshShape& shape);
 	uint GetMaterialRes() const;
 
 #ifndef GAMEMODE
@@ -169,7 +187,6 @@ public:
 	bool dieOnAnimation = false;
 
 	GameObject* subEmitter = nullptr;
-	uint subEmitterUUID = 0u;
 	ShapeType normalShapeType = ShapeType_BOX;
 
 	std::list<math::float3> newPositions;
@@ -180,10 +197,17 @@ public:
 	bool isSubEmitter = false;
 
 	// Material
-	uint materialRes = 0;
+	uint materialRes = 0u;
+
 	bool startOnPlay = false;
 
 	float colorAverage = 0.0f;
+
+	MeshShape burstMesh;
+	MeshShape shapeMesh;
+
+	bool burst = false;
+	ShapeType burstType = ShapeType_BOX;
 private:
 	// General info
 	//---------------------------------------
@@ -209,15 +233,12 @@ private:
 	ParticleAnimation particleAnim;
 
 	//Burst options
-	bool burst = false;
 	int minPart = 0;
 	int maxPart = 10;
 	float repeatTime = 1.0f;
 
 	math::float3 posDifAABB = math::float3::zero;
-	float gravity = 0.0f;
 
-	ShapeType burstType = ShapeType_BOX;
 	std::string burstTypeName = "Box Burst";
 
 	int nextPos = 100;

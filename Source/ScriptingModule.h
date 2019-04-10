@@ -86,6 +86,7 @@ public:
 	void GameObjectKilled(GameObject* killed);
 
 	void FixedUpdate();
+	void OnDrawGizmos();
 
 	void TemporalSave();
 	void TemporalLoad();

@@ -77,6 +77,7 @@ public:
 	_MonoMethod* disableMethod = nullptr;
 	_MonoMethod* stopMethod = nullptr;
 	_MonoMethod* fixedUpdateMethod = nullptr;
+	_MonoMethod* onDrawGizmos = nullptr;
 	_MonoMethod* OnCollisionEnterMethod = nullptr;
 	_MonoMethod* OnCollisionStayMethod = nullptr;
 	_MonoMethod* OnCollisionExitMethod = nullptr;

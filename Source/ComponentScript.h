@@ -27,6 +27,7 @@ public:
 	void OnDisableMethod();
 	void OnStop();
 	void FixedUpdate();
+	void OnDrawGizmos();
 	void OnCollisionEnter(Collision& collision);
 	void OnCollisionStay(Collision& collision);
 	void OnCollisionExit(Collision& collision);

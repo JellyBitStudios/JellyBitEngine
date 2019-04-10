@@ -29,6 +29,7 @@ public:
 	bool PlayAnimation(const char* anim_name);
 	bool CleanAnimations();
 	bool AnimationFinished()const;
+	bool UpdateAnimationSpeed(float new_speed);
 	/* ----- SCRIPTING CALLS ----- */
 
 	void OnInternalSave(char*& cursor);

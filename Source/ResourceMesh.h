@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_map>
 
+#include "MathGeoLib/include/Math/float3.h"
 #define MAX_BONES_PER_VERTEX 4
 
 struct ResourceMeshImportSettings
@@ -130,6 +131,7 @@ public:
 	inline ResourceMeshData& GetSpecificData() { return meshData; }
 	void GetVerticesReference(Vertex*& vertices) const;
 	void GetTris(float* verticesPosition) const;
+	void GetUniqueVertexPositions(std::vector<math::float3> &positions);
 	void GetIndicesReference(uint*& indices) const;
 	void GetIndices(uint* indices) const;
 	uint GetVerticesCount() const;

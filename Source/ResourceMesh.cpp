@@ -537,6 +537,29 @@ void ResourceMesh::GetTris(float* verticesPosition) const
 	}
 }
 
+void ResourceMesh::GetUniqueVertexPositions(std::vector<math::float3> &positions)
+{
+	for (uint i = 0; i < meshData.verticesSize; ++i)
+	{
+		bool unique = true;
+		math::float3 pos;
+		pos.x = meshData.vertices[i].position[0];
+		pos.y = meshData.vertices[i].position[1];
+		pos.z = meshData.vertices[i].position[2];
+
+		for (uint j = 0; j < positions.size(); ++j)
+		{
+			if (pos.Equals(positions[j]))
+			{
+				unique = false;
+				break;
+			}
+		}
+		if(unique)
+			positions.push_back(pos);
+	}
+}
+
 void ResourceMesh::GetIndicesReference(uint*& indices) const
 {
 	indices = meshData.indices;

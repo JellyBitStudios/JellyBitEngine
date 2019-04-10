@@ -42,6 +42,8 @@
 #include "ModuleInput.h"
 #include "ModuleScene.h"
 #include "ModuleUI.h"
+#include "DebugDrawer.h"
+#include "ModuleNavigation.h"
 
 #include "MathGeoLib/include/MathGeoLib.h"
 #include "Brofiler/Brofiler.h"
@@ -1015,6 +1017,15 @@ void ScriptingModule::FixedUpdate()
 	}
 }
 
+void ScriptingModule::OnDrawGizmos()
+{
+	if(App->GetEngineState() == engine_states::ENGINE_PLAY)
+		for (int i = 0; i < scripts.size(); ++i)
+		{
+			scripts[i]->OnDrawGizmos();
+		}
+}
+
 void ScriptingModule::TemporalSave()
 {
 	//Temporal save for scripts
@@ -1191,6 +1202,22 @@ void ClearConsole()
 #ifndef GAMEMODE
 	App->gui->ClearConsole();
 #endif
+}
+
+void DebugDrawSphere(float radius, MonoArray* color, MonoArray* position, MonoArray* rotation, MonoArray* scale)
+{
+	if (!App->debugDrawer->IsDrawing())
+		return;
+
+	math::float3 pos = position != nullptr ? math::float3(mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2)) : math::float3::zero;
+	math::Quat rot = rotation != nullptr ? math::Quat(mono_array_get(rotation, float, 0), mono_array_get(rotation, float, 1), mono_array_get(rotation, float, 2), mono_array_get(rotation, float, 3)) : math::Quat::identity;
+	math::float3 sca = scale != nullptr ? math::float3(mono_array_get(scale, float, 0), mono_array_get(scale, float, 1), mono_array_get(scale, float, 2)) : math::float3::one;
+
+	math::float4x4 global = math::float4x4::FromTRS(pos, rot, sca);
+	
+	math::float4 col = color != nullptr ? math::float4(mono_array_get(color, float, 0), mono_array_get(color, float, 1), mono_array_get(color, float, 2), mono_array_get(color, float, 3)) : math::float4(0,1,0,1);
+
+	App->debugDrawer->DebugDrawSphere(radius, Color(col.ptr()), global);
 }
 
 int32_t GetKeyStateCS(int32_t key)
@@ -2303,6 +2330,45 @@ void NavAgentSetParams(MonoObject* compAgent, uint params)
 	}
 }
 
+bool NavAgentGetPath(MonoObject* monoAgent, MonoArray* position, MonoArray* destination, MonoArray** out_path)
+{
+	if (!position || !destination)
+		return false;
+
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(monoAgent);
+	if (agent)
+	{
+		math::float3 positionCPP(mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2));
+		math::float3 destinationCPP(mono_array_get(destination, float, 0), mono_array_get(destination, float, 1), mono_array_get(destination, float, 2));
+
+		std::vector<math::float3> finalPath;
+		if (App->navigation->FindPath(positionCPP.ptr(), destinationCPP.ptr(), finalPath))
+		{
+			MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
+			*out_path = mono_array_new(App->scripting->domain, vector3Class, finalPath.size());
+
+			MonoClassField* _xField = mono_class_get_field_from_name(vector3Class, "_x");
+			MonoClassField* _yField = mono_class_get_field_from_name(vector3Class, "_y");
+			MonoClassField* _zField = mono_class_get_field_from_name(vector3Class, "_z");
+
+			for (int i = 0; i < finalPath.size(); ++i)
+			{
+				math::float3 pos = finalPath[i];
+
+				MonoObject* posCSharp = mono_object_new(App->scripting->domain, vector3Class);
+				mono_field_set_value(posCSharp, _xField, &pos.x);
+				mono_field_set_value(posCSharp, _yField, &pos.y);
+				mono_field_set_value(posCSharp, _zField, &pos.z);
+
+				mono_array_setref(*out_path, i, posCSharp);
+			}
+
+			return true;
+		}
+	}
+	return false;
+}
+
 void SetCompActive(MonoObject* monoComponent, bool active)
 {
 	Component* component = App->scripting->ComponentFrom(monoComponent);
@@ -2426,6 +2492,13 @@ MonoString* AnimatorGetCurrName(MonoObject* monoAnim)
 		return mono_string_new(App->scripting->domain, animator->GetCurrentAnimationName());
 	}
 	return nullptr;
+}
+
+void UpdateAnimationSpeed(MonoObject* animatorComp, float newSpeed)
+{
+	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(animatorComp);
+	if(animator)
+		animator->UpdateAnimationSpeed(newSpeed);
 }
 
 void ParticleEmitterPlay(MonoObject* particleComp)
@@ -3418,10 +3491,15 @@ void ScriptingModule::CreateDomain()
 	delete[] buffer;
 
 	//SetUp Internal Calls
+
+	//Debug
 	mono_add_internal_call("JellyBitEngine.Debug::Log", (const void*)&DebugLogTranslator);
 	mono_add_internal_call("JellyBitEngine.Debug::LogWarning", (const void*)&DebugLogWarningTranslator);
 	mono_add_internal_call("JellyBitEngine.Debug::LogError", (const void*)&DebugLogErrorTranslator);
 	mono_add_internal_call("JellyBitEngine.Debug::ClearConsole", (const void*)&ClearConsole);
+	mono_add_internal_call("JellyBitEngine.Debug::_DrawSphere", (const void*)&DebugDrawSphere);
+
+	//Variated
 	mono_add_internal_call("JellyBitEngine.Input::GetKeyState", (const void*)&GetKeyStateCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetMouseButtonState", (const void*)&GetMouseStateCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetMousePos", (const void*)&GetMousePosCS);
@@ -3467,7 +3545,6 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Camera::getMainCamera", (const void*)&GetGameCamera);
 	mono_add_internal_call("JellyBitEngine.Physics::_ScreenToRay", (const void*)&ScreenToRay);
 	mono_add_internal_call("JellyBitEngine.LayerMask::GetMaskBit", (const void*)&LayerToBit);
-	mono_add_internal_call("JellyBitEngine.NavMeshAgent::_SetDestination", (const void*)&SetDestination);
 	mono_add_internal_call("JellyBitEngine.Component::SetActive", (const void*)&SetCompActive);
 
 	//Animator
@@ -3475,6 +3552,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Animator::GetCurrentAnimation", (const void*)&AnimatorGetCurrName);
 	mono_add_internal_call("JellyBitEngine.Animator::GetCurrentFrame", (const void*)&AnimatorGetCurrFrame);
 	mono_add_internal_call("JellyBitEngine.Animator::AnimationFinished", (const void*)&AnimatorAnimationFinished);
+	mono_add_internal_call("JellyBitEngine.Animator::UpdateAnimationSpeed", (const void*)&UpdateAnimationSpeed);
 	
 	//Particle Emitter
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Play", (const void*)&ParticleEmitterPlay);
@@ -3553,6 +3631,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::ResetMoveTarget", (const void*)&NavAgentResetMoveTarget);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetParams", (const void*)&NavAgentGetParams);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetParams", (const void*)&NavAgentSetParams);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::_SetDestination", (const void*)&SetDestination);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetPath", (const void*)&NavAgentGetPath);
 
 	//Audio
 	mono_add_internal_call("JellyBitEngine.AudioSource::GetAudio", (const void*)&AudioSourceGetAudio);
