@@ -366,7 +366,7 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 	}
 }
 
-ComponentScript* ScriptingModule::CreateScriptComponent(std::string scriptName, bool createCS)
+ComponentScript* ScriptingModule::CreateScriptComponent(std::string scriptName, ResourceScript* scriptRes)
 {
 	while (scriptName.find(" ") != std::string::npos)
 	{
@@ -377,7 +377,7 @@ ComponentScript* ScriptingModule::CreateScriptComponent(std::string scriptName, 
 	char* buffer;
 	int size;
 
-	if (createCS)
+	if (!scriptRes)
 	{
 		size = App->fs->Load("Internal/SampleScript/SampleScript.cs", &buffer);
 
@@ -394,38 +394,15 @@ ComponentScript* ScriptingModule::CreateScriptComponent(std::string scriptName, 
 		IncludeCSFiles();
 
 		delete[] buffer;
-	}
 
-	ResourceScript* scriptRes = nullptr;
-
-	if (App->fs->Exists("Assets/Scripts/" + scriptName + ".cs.meta"))
-	{
-		char* metaBuffer;
-		uint metaSize;
-
-		metaSize = App->fs->Load("Assets/Scripts/" + scriptName + ".cs.meta", &metaBuffer);
-
-		char* cursor = metaBuffer;
-		cursor += sizeof(int64_t) + sizeof(uint);
-
-		uint32_t UID;
-		memcpy(&UID, cursor, sizeof(uint32_t));
-
-		scriptRes = (ResourceScript*)App->res->GetResource(UID);
-
-		delete[] metaBuffer;
-	}
-	
-	if (!scriptRes)
-	{
 		//Here we have to reference a new ResourceScript with the .cs we have created, but the ResourceManager will still be sending file created events, and we would have data duplication.
 		//We disable this behavior and control the script creation only with this method, so we do not care for external files out-of-engine created.
-		
+
 		ResourceData data;
 		data.name = scriptName;
 		data.file = "Assets/Scripts/" + scriptName + ".cs";
 		data.exportedFile = "";
-	
+
 		scriptRes = (ResourceScript*)App->res->CreateResource(ResourceTypes::ScriptResource, data, &ResourceScriptData());
 
 		//Create the .meta, to make faster the search in the map storing the uid.
@@ -952,11 +929,13 @@ void ScriptingModule::RecompileScripts()
 	/*std::string fileName = data.file.substr(data.file.find_last_of("/") + 1);
 	std::string windowsFormattedPath = pathToWindowsNotation(data.file);*/
 
-	std::string path = std::string("\"" + std::string(App->fs->getAppPath())) + std::string("\\Assets\\Scripts\\*.cs") + "\"";
+	std::string path = std::string("-recurse:\"" + std::string(App->fs->getAppPath())) + std::string("Assets\\Scripts\\*.cs") + "\"";
+
 	std::string redirectOutput(" 1> \"" + /*pathToWindowsNotation*/(App->fs->getAppPath()) + "LogError.txt\"" + std::string(" 2>&1"));
 	std::string outputFile(" -out:..\\..\\Library\\Scripts\\Scripting.dll ");
 
 	std::string error;
+	std::string finalcommand = std::string(goRoot + "&" + goMonoBin + "&" + compileCommand + path + " " + outputFile + App->scripting->getReferencePath() + redirectOutput);
 	if (!exec(std::string(goRoot + "&" + goMonoBin + "&" + compileCommand + path + " " + outputFile + App->scripting->getReferencePath() + redirectOutput).data(), error))
 	{
 		char* buffer;
