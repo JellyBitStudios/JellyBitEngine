@@ -106,15 +106,17 @@ public class Agent : JellyScript
         // TODO
 
         // 2. Separation
-        velocities[separation.Priority] += separation.GetSeparation(this);
+        //velocities[separation.Priority] += separation.GetSeparation(this);
 
         // 3. Move
         /// Velocity
+        Debug.Log("BEFORE:" + velocities[seek.Priority].x);
         velocities[seek.Priority] += seek.GetSeek(this);
-        velocities[flee.Priority] += flee.GetFlee(this);
+        Debug.Log("AFTER:" + velocities[seek.Priority].x);
+        //velocities[flee.Priority] += flee.GetFlee(this);
 
         /// Angular velocity
-        angularVelocities[align.Priority] += align.GetAlign(this);
+        //angularVelocities[align.Priority] += align.GetAlign(this);
 
         // Angular velocities
         foreach (float angVel in angularVelocities)

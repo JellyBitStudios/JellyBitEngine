@@ -10,6 +10,7 @@ public class SteeringSeparation : SteeringAbstract
 
     public Vector3 GetSeparation(Agent agent)
     {
+        /*
         Vector3 outputAcceleration = Vector3.zero;
 
         if (agent == null)
@@ -44,6 +45,13 @@ public class SteeringSeparation : SteeringAbstract
                 outputAcceleration = outputAcceleration.normalized() * agent.agentConfiguration.maxAcceleration;
         }
 
-        return outputAcceleration;
+        return outputAcceleration;*/
+        return Vector3.zero;
+    }
+
+    public override void OnDrawGizmos()
+    {
+        float[] color = { 1.0f, 0.0f, 0.0f, 1.0f };
+        Debug.DrawSphere(radius, color, transform.position, Quaternion.identity, Vector3.one);
     }
 }
