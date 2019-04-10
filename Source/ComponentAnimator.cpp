@@ -189,11 +189,9 @@ bool ComponentAnimator::UpdateAnimationSpeed(float new_speed)
 	if (!animator_res)
 		return false;
 
-	ResourceAnimation* animation_res = (ResourceAnimation*)animator_res->GetCurrentAnimation();
-	if (!animation_res)
-		return false;
-	//animation_res->
-	return false;
+	animator_res->SetAnimationSpeed(new_speed);
+	
+	return true;
 }
 
 void ComponentAnimator::Update()
