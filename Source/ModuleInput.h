@@ -25,7 +25,6 @@ public:
 
 	bool Init(JSON_Object* jObject);
 	update_status PreUpdate();
-	update_status PostUpdate();
 	bool CleanUp();
 
 	void DrawCursor();

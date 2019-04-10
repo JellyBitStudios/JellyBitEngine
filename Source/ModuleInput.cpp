@@ -6,6 +6,7 @@
 #include "ModuleWindow.h"
 #include "MaterialImporter.h"
 #include "ModuleRenderer3D.h"
+#include "ModuleResourceManager.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_impl_sdl.h"
@@ -200,25 +201,61 @@ void ModuleInput::DrawCursor()
 
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
 	{
+		if (CursorTextureID == 0)
+		{
+			std::vector<Resource*> resources = App->res->GetResourcesByType(ResourceTypes::TextureResource);
+			for (Resource* res : resources)
+			{
+				if (res->GetData().name == "floor")
+				{
+					App->res->SetAsUsed(res->GetUuid());
+					CursorTextureID = ((ResourceTexture*)res)->GetId();
+					break;
+				}
+			}
+		}
+
 		if (CursorTextureID != 0)
 		{
+			uint windowWidth = App->window->GetWindowWidth();
+			uint windowHeight = App->window->GetWindowHeight();
+
+			glEnable(GL_TEXTURE_2D);
+			glBindTexture(GL_TEXTURE_2D, CursorTextureID);
+
+			glMatrixMode(GL_PROJECTION);
 			glPushMatrix();
+			glLoadIdentity();
+			glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
+			glMatrixMode(GL_MODELVIEW);
+			glPushMatrix();
+			glLoadIdentity();
+
+			float normalizedX = -(1.0f - (mouse_x * 2.0f) / windowWidth);
+			float normalizedY = 1.0f - (mouse_y * 2.0f) / windowHeight;
+
+			CONSOLE_LOG(LogTypes::Error, "%f %f", normalizedX, normalizedY);
+
+			glTranslatef(0.5 + normalizedX/2, 0.5 + normalizedY/2, 0);
 
 			glBegin(GL_QUADS);
-
-			//TexCoord 1
-			glVertex3f(-halfExtents.x, -halfExtents.y, halfExtents.z);
-			//TexCoord 2
-			glVertex3f(halfExtents.x, -halfExtents.y, halfExtents.z);
-			//TexCoord 3
-			glVertex3f(halfExtents.x, halfExtents.y, halfExtents.z);
-			//TexCoord 4
-			glVertex3f(-halfExtents.x, halfExtents.y, halfExtents.z);
+			glTexCoord2f(0, 0);
+			glVertex3f(0 - 0.02, 0 - 0.02, 0);
+			glTexCoord2f(1, 0);
+			glVertex3f(0 + 0.02, 0 - 0.02, 0);
+			glTexCoord2f(1, 1);
+			glVertex3f(0 + 0.02, 0 + 0.02, 0);
+			glTexCoord2f(0, 1);
+			glVertex3f(0 - 0.02, 0 + 0.02, 0);
 			glEnd();
 
+			glMatrixMode(GL_PROJECTION);
+			glPopMatrix();
+			glMatrixMode(GL_MODELVIEW);
 			glPopMatrix();
 
-
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glDisable(GL_TEXTURE_2D);
 		}
 	}
 }
