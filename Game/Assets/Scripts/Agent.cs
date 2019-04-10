@@ -9,6 +9,9 @@ public class AgentConfiguration
     public float maxAcceleration = 1.0f;
     public float maxAngularAcceleration = 1.0f;
 
+    // Arrive
+    public float arriveMinDistance = 0.1f;
+
     // Separation
     public LayerMask separationMask = new LayerMask();
     public float separationRadius = 1.0f;
@@ -25,54 +28,58 @@ public class Agent : JellyScript
     #region PUBLIC_VARIABLES
     public AgentConfiguration agentConfiguration = new AgentConfiguration();
 
-    //public GameObject target = null;
-    public Vector3 destination = new Vector3(0.0f, 0.0f, 0.0f);
+    public enum MovementState { Stop, GoToPosition, UpdateNextPosition };
+    public MovementState movementState = MovementState.Stop;
 
     // Steerings
-    //public SteeringSeek seek = new SteeringSeek();
-    //public SteeringFlee flee = new SteeringFlee();
-    //public SteeringSeparation separation = new SteeringSeparation();
-    //public SteeringAlign align = new SteeringAlign();
+    public SteeringSeek seek = new SteeringSeek();
+    public SteeringFlee flee = new SteeringFlee();
+    public SteeringSeparation separation = new SteeringSeparation();
+    public SteeringAlign align = new SteeringAlign();
+
+    public Vector3 velocity = Vector3.zero;
+    public float angularVelocity = 0.0f;
     #endregion
 
     #region PRIVATE_VARIABLES
-    private Vector3 velocity = new Vector3(0.0f, 0.0f, 0.0f);
-    private float angularVelocity = 0.0f;
-
     private Vector3[] velocities;
     private float[] angularVelocities;
+
+    private PathManager pathManager = new PathManager();
     #endregion
 
     // ----------------------------------------------------------------------------------------------------
 
     public override void Start()
     {
-        //velocities = new Vector3[SteeringConfiguration.maxPriorities];
-        //angularVelocities = new float[SteeringConfiguration.maxPriorities];
+        velocities = new Vector3[SteeringConfiguration.maxPriorities];
+        angularVelocities = new float[SteeringConfiguration.maxPriorities];
 
         ResetPriorities();
     }
 
     public override void FixedUpdate()
     {
-        Vector3 newVelocity = new Vector3(0.0f, 0.0f, 0.0f);
+        Move();
+
+        // --------------------------------------------------
+
+        Vector3 newVelocity = Vector3.zero;
         float newAngularVelocity = 0.0f;
 
         // 1. Collision avoidance
         // TODO
 
         // 2. Separation
-        //velocities[separation.Priority] += separation.GetSeparation(this);
+        velocities[separation.Priority] += separation.GetSeparation(this);
 
         // 3. Move
         /// Velocity
-        //velocities[seek.Priority] += seek.GetSeek(this);
-        //velocities[flee.Priority] += flee.GetFlee(this);
+        velocities[seek.Priority] += seek.GetSeek(this);
+        velocities[flee.Priority] += flee.GetFlee(this);
 
         /// Angular velocity
-        //angularVelocities[align.Priority] += align.GetAlign(this);
-
-        // --------------------------------------------------
+        angularVelocities[align.Priority] += align.GetAlign(this);
 
         // Angular velocities
         foreach (float angVel in angularVelocities)
@@ -116,19 +123,45 @@ public class Agent : JellyScript
         transform.position += velocity * Time.deltaTime;
     }
 
-    public void SetDestination(Vector3 destination)
-    {
-        this.destination = destination;
-        // TODO: calculate new path
-    }
-
     private void ResetPriorities()
     {
-        //for (uint i = 0u; i < SteeringConfiguration.maxPriorities; ++i)
-        //{
-            //velocities[i] = new Vector3(0.0f, 0.0f, 0.0f);
-            //angularVelocities[i] = 0.0f;
-        //}
+        for (uint i = 0; i < SteeringConfiguration.maxPriorities; ++i)
+        {
+            velocities[i] = Vector3.zero;
+            angularVelocities[i] = 0.0f;
+        }
+    }
+
+    // ----------------------------------------------------------------------------------------------------
+
+    public void SetDestination(Vector3 destination)
+    {
+        if (pathManager.GetPath(destination))
+            movementState = MovementState.GoToPosition;
+        else
+            movementState = MovementState.Stop;
+    }
+
+    public void Move()
+    {
+        switch (movementState)
+        {
+            case MovementState.GoToPosition:
+
+                if (pathManager.GetRemainingDistance(this) < agentConfiguration.arriveMinDistance)
+                    movementState = MovementState.UpdateNextPosition;
+
+                break;
+
+            case MovementState.UpdateNextPosition:
+
+                if (pathManager.UpdateNextPosition())
+                    movementState = MovementState.GoToPosition;
+                else
+                    movementState = MovementState.Stop;
+
+                break;
+        }
     }
 
     // ----------------------------------------------------------------------------------------------------
