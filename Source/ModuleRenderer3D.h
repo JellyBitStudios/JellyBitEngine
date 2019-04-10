@@ -90,6 +90,8 @@ private:
 	ComponentCamera* mainCamera = nullptr;
 	ComponentCamera* currentCamera = nullptr;
 
+	math::float4x4 viewProj_matrix;
+
 	uint maxTextureUnits = 0;
 
 public:

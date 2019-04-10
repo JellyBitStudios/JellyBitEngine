@@ -200,6 +200,8 @@ update_status ModuleRenderer3D::PostUpdate()
 				projectorComponents[i]->UpdateTransform();
 		}
 
+		viewProj_matrix = currentCamera->GetOpenGLViewMatrix() *
+						  currentCamera->GetOpenGLProjectionMatrix();
 		std::vector<GameObject*> statics;
 		std::vector<GameObject*> dynamics;
 		if (currentCamera->HasFrustumCulling())
@@ -765,9 +767,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	// 2. Known mesh uniforms
 	math::float4x4 model_matrix = toDraw->GetParent()->transform->GetGlobalMatrix();
 	model_matrix = model_matrix.Transposed();
-	math::float4x4 view_matrix = currentCamera->GetOpenGLViewMatrix();
-	math::float4x4 proj_matrix = currentCamera->GetOpenGLProjectionMatrix();
-	math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
+	math::float4x4 mvp_matrix = model_matrix * viewProj_matrix;
 	math::float4x4 normal_matrix = model_matrix;
 	normal_matrix.Inverse();
 	normal_matrix.Transpose();
