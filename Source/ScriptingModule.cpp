@@ -2333,7 +2333,7 @@ void NavAgentSetParams(MonoObject* compAgent, uint params)
 bool NavAgentGetPath(MonoObject* monoAgent, MonoArray* position, MonoArray* destination, MonoArray** out_path)
 {
 	if (!position || !destination)
-		return;
+		return false;
 
 	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(monoAgent);
 	if (agent)
