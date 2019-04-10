@@ -25,7 +25,10 @@ public:
 
 	bool Init(JSON_Object* jObject);
 	update_status PreUpdate();
+	update_status PostUpdate();
 	bool CleanUp();
+
+	void DrawCursor();
 
 	KEY_STATE GetKey(int id) const
 	{
@@ -73,6 +76,8 @@ private:
 	int mouse_x_motion;
 	int mouse_y_motion;
 	//int mouse_z_motion;
+
+	uint CursorTextureID = 0u;
 };
 
 #endif

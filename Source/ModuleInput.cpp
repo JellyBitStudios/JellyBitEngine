@@ -186,3 +186,39 @@ bool ModuleInput::CleanUp()
 
 	return ret;
 }
+
+void ModuleInput::DrawCursor()
+{
+#ifndef GAMEMODE
+	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
+		ImGui::SetMouseCursor(ImGuiMouseCursor_::ImGuiMouseCursor_None);
+	else
+		ImGui::SetMouseCursor(ImGuiMouseCursor_::ImGuiMouseCursor_Arrow);
+#else
+	SDL_SetCursor(SDL_DISABLE);
+#endif
+
+	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
+	{
+		if (CursorTextureID != 0)
+		{
+			glPushMatrix();
+
+			glBegin(GL_QUADS);
+
+			//TexCoord 1
+			glVertex3f(-halfExtents.x, -halfExtents.y, halfExtents.z);
+			//TexCoord 2
+			glVertex3f(halfExtents.x, -halfExtents.y, halfExtents.z);
+			//TexCoord 3
+			glVertex3f(halfExtents.x, halfExtents.y, halfExtents.z);
+			//TexCoord 4
+			glVertex3f(-halfExtents.x, halfExtents.y, halfExtents.z);
+			glEnd();
+
+			glPopMatrix();
+
+
+		}
+	}
+}
