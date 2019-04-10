@@ -200,31 +200,59 @@ update_status ModuleRenderer3D::PostUpdate()
 				projectorComponents[i]->UpdateTransform();
 		}
 
+		std::vector<GameObject*> statics;
+		std::vector<GameObject*> dynamics;
 		if (currentCamera->HasFrustumCulling())
-			FrustumCulling();
-
-		// Draw static meshes
-		for (uint i = 0; i < staticMeshComponents.size(); ++i)
 		{
-			if (staticMeshComponents[i]->GetParent()->seenLastFrame
-				&& staticMeshComponents[i]->IsTreeActive())
-				DrawMesh(staticMeshComponents[i]);
+			FrustumCulling(statics, dynamics);
+
+			for (uint i = 0; i < statics.size(); ++i)
+			{
+				ComponentMesh* toDraw = statics[i]->cmp_mesh;
+				if (toDraw->IsTreeActive())
+					DrawMesh(toDraw);
+			}
+
+			// Draw decals
+			for (uint i = 0; i < projectorComponents.size(); ++i)
+			{
+				if (projectorComponents[i]->GetParent()->IsActive()
+					&& projectorComponents[i]->IsTreeActive())
+					projectorComponents[i]->Draw();
+			}
+
+			// Draw dynamic meshes
+			for (uint i = 0; i < dynamics.size(); ++i)
+			{
+				ComponentMesh* toDraw = dynamics[i]->cmp_mesh;
+				if (toDraw->IsTreeActive())
+					DrawMesh(toDraw);
+			}
 		}
-
-		// Draw decals
-		for (uint i = 0; i < projectorComponents.size(); ++i)
+		else // Draw meshes w/out frustum culling
 		{
-			if (projectorComponents[i]->GetParent()->IsActive() 
-				&& projectorComponents[i]->IsTreeActive())
-				projectorComponents[i]->Draw();
-		}
 
-		// Draw dynamic meshes
-		for (uint i = 0; i < dynamicMeshComponents.size(); ++i)
-		{
-			if (dynamicMeshComponents[i]->GetParent()->seenLastFrame
-				&& dynamicMeshComponents[i]->IsTreeActive())
-				DrawMesh(dynamicMeshComponents[i]);
+			// Draw static meshes
+			for (uint i = 0; i < staticMeshComponents.size(); ++i)
+			{
+				if (staticMeshComponents[i]->IsTreeActive())
+					DrawMesh(staticMeshComponents[i]);
+			}
+
+			// Draw decals
+			for (uint i = 0; i < projectorComponents.size(); ++i)
+			{
+				if (projectorComponents[i]->GetParent()->IsActive()
+					&& projectorComponents[i]->IsTreeActive())
+					projectorComponents[i]->Draw();
+			}
+
+			// Draw dynamic meshes
+			for (uint i = 0; i < dynamicMeshComponents.size(); ++i)
+			{
+				if (dynamicMeshComponents[i]->IsTreeActive())
+					DrawMesh(dynamicMeshComponents[i]);
+			}
 		}
 	}
 
@@ -695,17 +723,13 @@ void ModuleRenderer3D::SetMeshComponentsSeenLastFrame(bool seenLastFrame)
 		dynamicMeshComponents[i]->GetParent()->seenLastFrame = seenLastFrame;
 }
 
-void ModuleRenderer3D::FrustumCulling() const
+void ModuleRenderer3D::FrustumCulling(std::vector<GameObject*>& statics, std::vector<GameObject*>& dynamics) const
 {
 	std::vector<GameObject*> gameObjects;
 	App->GOs->GetGameobjects(gameObjects);
 
-	for (uint i = 0; i < gameObjects.size(); ++i)
-		gameObjects[i]->seenLastFrame = false;
-
 	// Static objects
-	std::vector<GameObject*> seen;
-	App->scene->quadtree.CollectIntersections(seen, currentCamera->frustum);
+	App->scene->quadtree.CollectIntersections(statics, currentCamera->frustum);
 
 	// Dynamic objects
 	std::vector<GameObject*> dynamicGameObjects;
@@ -716,12 +740,9 @@ void ModuleRenderer3D::FrustumCulling() const
 		if (dynamicGameObjects[i]->boundingBox.IsFinite())
 		{
 			if (currentCamera->frustum.Intersects(dynamicGameObjects[i]->boundingBox))
-				seen.push_back(dynamicGameObjects[i]);
+				dynamics.push_back(dynamicGameObjects[i]);
 		}
 	}
-
-	for (uint i = 0; i < seen.size(); ++i)
-		seen[i]->seenLastFrame = true;
 }
 
 void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const

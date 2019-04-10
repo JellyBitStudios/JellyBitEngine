@@ -70,7 +70,7 @@ public:
 	ComponentCamera* GetCurrentCamera() const;
 
 	void SetMeshComponentsSeenLastFrame(bool seenLastFrame);
-	void FrustumCulling() const;
+	void FrustumCulling(std::vector<GameObject*>& statics, std::vector<GameObject*>& dynamics) const;
 
 	void DrawMesh(ComponentMesh* toDraw) const;
 
