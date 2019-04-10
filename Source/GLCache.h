@@ -36,7 +36,13 @@ public:
 
 	void ResetUIBufferValues();
 
+	void SwitchShader(uint id);
+
 private:
+	//
+	uint currentShader = -1;
+
+
 	//
 	bool isNVIDIA = false;
 

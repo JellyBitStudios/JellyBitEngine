@@ -79,6 +79,8 @@ public:
 	void LoadSpecificUniforms(uint& textureUnit, const std::vector<Uniform>& uniforms, const std::vector<const char*>& ignore = std::vector<const char*>()) const;
 	void LoadGenericUniforms(uint shaderProgram) const;
 
+	void Sort(std::vector<GameObject*> toSort) const;
+
 private:
 
 	std::vector<ComponentMesh*> staticMeshComponents;

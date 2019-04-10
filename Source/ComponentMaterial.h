@@ -26,6 +26,7 @@ public:
 public:
 
 	uint res = 0;
+	class ResourceMaterial* currentResource = 0;
 };
 
 #endif

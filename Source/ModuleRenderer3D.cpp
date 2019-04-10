@@ -20,6 +20,7 @@
 #include "MaterialImporter.h"
 #include "SceneImporter.h"
 #include "Quadtree.h"
+#include "GLCache.h"
 
 #include "ComponentBone.h"
 #include "ResourceBone.h"
@@ -208,12 +209,16 @@ update_status ModuleRenderer3D::PostUpdate()
 		{
 			FrustumCulling(statics, dynamics);
 
+			Sort(statics);
+			Sort(dynamics);
+
 			for (uint i = 0; i < statics.size(); ++i)
 			{
 				ComponentMesh* toDraw = statics[i]->cmp_mesh;
 				if (toDraw->IsTreeActive())
 					DrawMesh(toDraw);
 			}
+			App->glCache->SwitchShader(0);// TODO: COULD BE AVOIDED
 
 			// Draw decals
 			for (uint i = 0; i < projectorComponents.size(); ++i)
@@ -230,6 +235,7 @@ update_status ModuleRenderer3D::PostUpdate()
 				if (toDraw->IsTreeActive())
 					DrawMesh(toDraw);
 			}
+			App->glCache->SwitchShader(0);// TODO: COULD BE AVOIDED
 		}
 		else // Draw meshes w/out frustum culling
 		{
@@ -240,7 +246,7 @@ update_status ModuleRenderer3D::PostUpdate()
 				if (staticMeshComponents[i]->IsTreeActive())
 					DrawMesh(staticMeshComponents[i]);
 			}
-
+			App->glCache->SwitchShader(0);// TODO: COULD BE AVOIDED
 			// Draw decals
 			for (uint i = 0; i < projectorComponents.size(); ++i)
 			{
@@ -255,6 +261,7 @@ update_status ModuleRenderer3D::PostUpdate()
 				if (dynamicMeshComponents[i]->IsTreeActive())
 					DrawMesh(dynamicMeshComponents[i]);
 			}
+			App->glCache->SwitchShader(0);// TODO: COULD BE AVOIDED
 		}
 	}
 
@@ -755,12 +762,9 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	uint textureUnit = 0;
 
 	const ComponentMaterial* materialRenderer = toDraw->GetParent()->cmp_material;
-	ResourceMaterial* resourceMaterial = (ResourceMaterial*)App->res->GetResource(materialRenderer->res);
-	uint shaderUuid = resourceMaterial->GetShaderUuid();
-	const ResourceShaderProgram* resourceShaderProgram = (const ResourceShaderProgram*)App->res->GetResource(shaderUuid);
-	GLuint shader = resourceShaderProgram->shaderProgram;
-	glUseProgram(shader);
-
+	ResourceMaterial* resourceMaterial = materialRenderer->currentResource;
+	GLuint shader = resourceMaterial->materialData.shaderProgram;
+	App->glCache->SwitchShader(shader);
 	// 1. Generic uniforms
 	LoadGenericUniforms(shader);
 
@@ -829,7 +833,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	// Mesh
-	const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(toDraw->res);
+	const ResourceMesh* mesh = toDraw->currentResource;
 
 	glBindVertexArray(mesh->GetVAO());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIBO());
@@ -857,8 +861,6 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 			glUniformMatrix4fv(location, 1, GL_TRUE, boneTransform.ptr());
 		}
 	}
-
-	glUseProgram(0);
 }
 
 void ModuleRenderer3D::RecursiveDrawQuadtree(QuadtreeNode* node) const
@@ -950,4 +952,14 @@ void ModuleRenderer3D::LoadGenericUniforms(uint shaderProgram) const
 		break;
 	}
 	*/
+}
+
+bool renderSortDeferred(const GameObject* a, const GameObject* b)
+{
+	return a->cmp_material->currentResource->materialData.shaderProgram < b->cmp_material->currentResource->materialData.shaderProgram;
+}
+
+void ModuleRenderer3D::Sort(std::vector<GameObject*> toSort) const
+{
+	std::sort(toSort.begin(), toSort.end(), renderSortDeferred);
 }

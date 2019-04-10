@@ -200,3 +200,11 @@ void GLCache::ResetUIBufferValues()
 	std::queue<ComponentLabel*> emptyL;
 	std::swap(queueLabelToBuffer, emptyL);
 }
+
+void GLCache::SwitchShader(uint id)
+{
+	if (currentShader == id)
+		return;
+	glUseProgram(id);
+	currentShader = id;
+}
