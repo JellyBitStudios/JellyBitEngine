@@ -42,8 +42,8 @@ public class Agent : JellyScript
     #endregion
 
     #region PRIVATE_VARIABLES
-    private Vector3[] velocities;
-    private float[] angularVelocities;
+    private Vector3[] velocities = null;
+    private float[] angularVelocities = null;
 
     private PathManager pathManager = new PathManager();
     #endregion
