@@ -145,6 +145,7 @@ public:
 	void EqualsMinMaxValues(math::float2 & value);
 	void CheckMinMax(math::float2 & value);
 	void ClearEmitter();
+	void ConnectSubEmitter();
 	void SoftClearEmitter();
 	bool EditColor(ColorTime & colorTime, uint pos = 0u);
 	void SetAABB(const math::float3 size, const math::float3 extraPosition = math::float3::zero);
@@ -187,6 +188,7 @@ public:
 	bool dieOnAnimation = false;
 
 	GameObject* subEmitter = nullptr;
+	uint uuidSubEmitter = 0u;
 	ShapeType normalShapeType = ShapeType_BOX;
 
 	std::list<math::float3> newPositions;

@@ -139,6 +139,8 @@ void ComponentEmitter::StartEmitter()
 
 		timeToParticle = 0.0f;
 		isPlaying = true;
+		if (subEmitter)
+			((ComponentEmitter*)subEmitter)->isPlaying = true;
 	}
 }
 
@@ -217,6 +219,12 @@ void ComponentEmitter::ClearEmitter()
 
 	particles.clear();
 	isPlaying = false;
+}
+
+void ComponentEmitter::ConnectSubEmitter()
+{
+	if (uuidSubEmitter > 0)
+		subEmitter = App->GOs->GetGameObjectByUID(uuidSubEmitter);
 }
 
 void ComponentEmitter::SoftClearEmitter()
@@ -559,6 +567,19 @@ void ComponentEmitter::ParticleBurst()
 			ImGui::End();
 			SetBurstText();
 		}
+
+		if (burstType == ShapeType_SPHERE_CENTER || burstType == ShapeType_SPHERE || burstType == ShapeType_SPHERE_BORDER)
+		{
+			if (ImGui::RadioButton("Random", burstType == ShapeType_SPHERE))
+				burstType = ShapeType_SPHERE;
+			ImGui::SameLine();
+			if (ImGui::RadioButton("Center", burstType == ShapeType_SPHERE_CENTER))
+				burstType = ShapeType_SPHERE_CENTER;
+			ImGui::SameLine();
+			if (ImGui::RadioButton("Border", burstType == ShapeType_SPHERE_BORDER))
+				burstType = ShapeType_SPHERE_BORDER;
+		}
+
 		ImGui::PushItemWidth(100.0f);
 		ImGui::DragInt("Min particles", &minPart, 1.0f, 0, 100);
 		if (minPart > maxPart)
@@ -727,6 +748,7 @@ void ComponentEmitter::ParticleSubEmitter()
 				subEmitter->originalBoundingBox.SetFromCenterAndSize(subEmitter->transform->GetPosition(), math::float3::one);
 				App->scene->quadtree.Insert(subEmitter);
 			}
+
 		}
 		else
 			subEmitter->ToggleIsActive();
@@ -1136,12 +1158,9 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	memcpy(&coneHeight, cursor, bytes);
 	cursor += bytes;
 
-	uint uuid = 0u;
 	bytes = sizeof(uint);
-	memcpy(&uuid, cursor, bytes);
+	memcpy(&uuidSubEmitter, cursor, bytes);
 	cursor += bytes;
-
-	subEmitter = App->GOs->GetGameObjectByUID(uuid);
 
 	memcpy(&materialRes, cursor, bytes);
 
