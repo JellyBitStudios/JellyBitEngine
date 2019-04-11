@@ -246,17 +246,15 @@ void ModuleInput::DrawCursor()
 
 			bool sad = error == GL_INVALID_OPERATION;
 
-			float squareSize = 50.0f;
-
 			glColor4f(1.0, 1.0f, 1.0f, 1.0f);
 
 			glBegin(GL_QUADS);
 			glTexCoord2f(0.0f, 0.0f);
-			glVertex3f(0.0f, squareSize, 0.0f);
+			glVertex3f(0.0f, cursorSize, 0.0f);
 			glTexCoord2f(1.0f, 0.0f);
-			glVertex3f(squareSize, squareSize, 0.0f);
+			glVertex3f(cursorSize, cursorSize, 0.0f);
 			glTexCoord2f(1.0f, 1.0f);
-			glVertex3f(squareSize, 0.0f, 0.0f);
+			glVertex3f(cursorSize, 0.0f, 0.0f);
 			glTexCoord2f(0.0f, 1.0f);
 			glVertex3f(0.0f, 0.0f, 0.0f);
 			glEnd();
