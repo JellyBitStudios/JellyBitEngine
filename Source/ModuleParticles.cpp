@@ -185,6 +185,12 @@ void ModuleParticle::OnSystemEvent(System_Event event)
 				(*emitter)->ClearEmitter();
 			}
 			break;
+		case System_Event_Type::LoadGMScene:
+			for (std::list<ComponentEmitter*>::iterator emitter = emitters.begin(); emitter != emitters.end(); ++emitter)
+			{
+				(*emitter)->ConnectSubEmitter();
+			}
+			break;
 	}
 }
 

@@ -90,12 +90,13 @@ struct StartValues
 	// Start values
 	math::float2 life = math::float2(5.0f, 5.0f);
 	math::float2 speed = math::float2(3.0f, 3.0f);
-	math::float3 acceleration3 = math::float3(0.0f, 0.0f, 0.0f);
-	math::float2 sizeOverTime = math::float2(0.0f, 0.0f);
+	math::float3 gravity = math::float3::zero;
+	math::float2 acceleration = math::float2::zero;
+	math::float2 sizeOverTime = math::float2::zero;
 	math::float2 size = math::float2(1.0f, 1.0f);
-	math::float2 rotation = math::float2(0.0f, 0.0f);
-	math::float2 angularAcceleration = math::float2(0.0f, 0.0f);
-	math::float2 angularVelocity = math::float2(0.0f, 0.0f);
+	math::float2 rotation = math::float2::zero;
+	math::float2 angularAcceleration = math::float2::zero;
+	math::float2 angularVelocity = math::float2::zero;
 
 	std::list<ColorTime> color;
 	bool timeColor = false;
@@ -145,6 +146,7 @@ public:
 	void EqualsMinMaxValues(math::float2 & value);
 	void CheckMinMax(math::float2 & value);
 	void ClearEmitter();
+	void ConnectSubEmitter();
 	void SoftClearEmitter();
 	bool EditColor(ColorTime & colorTime, uint pos = 0u);
 	void SetAABB(const math::float3 size, const math::float3 extraPosition = math::float3::zero);
@@ -187,6 +189,7 @@ public:
 	bool dieOnAnimation = false;
 
 	GameObject* subEmitter = nullptr;
+	uint uuidSubEmitter = 0u;
 	ShapeType normalShapeType = ShapeType_BOX;
 
 	std::list<math::float3> newPositions;
