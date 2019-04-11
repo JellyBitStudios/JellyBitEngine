@@ -398,8 +398,12 @@ void ComponentEmitter::ParticleValues()
 			EqualsMinMaxValues(startValues.sizeOverTime);
 		ShowFloatValue(startValues.sizeOverTime, checkSizeOverTime, "SizeOverTime", 0.25f, -1.0f, 1.0f);
 
+		if (ImGui::Checkbox("##Acceleration", &checkAcceleration))
+			EqualsMinMaxValues(startValues.acceleration);
+		ShowFloatValue(startValues.acceleration, checkAcceleration, "Acceleration", 0.25f, -1.0f, 1.0f);
+
 		ImGui::PushItemWidth(127.0f);
-		ImGui::DragFloat3("Acceleration", &startValues.acceleration3.x, 0.1f, -5.0f, 5.0f, "%.2f");
+		ImGui::DragFloat3("Gravity", &startValues.gravity.x, 0.1f, -5.0f, 5.0f, "%.2f");
 		ImGui::PopItemWidth();
 
 		ImGui::PushItemWidth(100.0f);
@@ -947,7 +951,7 @@ uint ComponentEmitter::GetInternalSerializationBytes()
 		sizeOfList += (*it).GetColorListSerializationBytes();
 	}
 
-	return sizeof(bool) * 17 + sizeof(int) * 3 + sizeof(float) * 5 + sizeof(uint) * 5
+	return sizeof(bool) * 17 + sizeof(int) * 3 + sizeof(float) * 6 + sizeof(uint) * 5
 		+ sizeof(ShapeType) * 2	+ sizeof(math::AABB) + sizeof(math::float2) * 7 + sizeof(math::float3) * 3
 		+ particleAnim.GetPartAnimationSerializationBytes() + sizeOfList;//Bytes of all Start Values Struct
 }
@@ -1235,8 +1239,11 @@ void StartValues::OnInternalSave(char *& cursor)
 	memcpy(cursor, &angularVelocity, bytes);
 	cursor += bytes;
 
+	memcpy(cursor, &acceleration, bytes);
+	cursor += bytes;
+
 	bytes = sizeof(math::float3);
-	memcpy(cursor, &acceleration3, bytes);
+	memcpy(cursor, &gravity, bytes);
 	cursor += bytes;
 	
 	memcpy(cursor, &particleDirection, bytes);
@@ -1258,6 +1265,7 @@ void StartValues::OnInternalSave(char *& cursor)
 	{
 		(*it).OnInternalSave(cursor);
 	}
+
 }
 
 void StartValues::OnInternalLoad(char *& cursor)
@@ -1283,9 +1291,12 @@ void StartValues::OnInternalLoad(char *& cursor)
 
 	memcpy(&angularVelocity, cursor, bytes);
 	cursor += bytes;
+	//Coment this
+	memcpy(&acceleration, cursor, bytes);
+	cursor += bytes;
 
 	bytes = sizeof(math::float3);
-	memcpy(&acceleration3 , cursor, bytes);
+	memcpy(&gravity , cursor, bytes);
 	cursor += bytes;
 
 	memcpy(&particleDirection, cursor, bytes);
@@ -1316,7 +1327,8 @@ void StartValues::operator=(StartValues startValue)
 {
 	life = startValue.life;
 	speed = startValue.speed;
-	acceleration3 = startValue.acceleration3;
+	gravity = startValue.gravity;
+	acceleration = startValue.acceleration;
 	sizeOverTime = startValue.sizeOverTime;
 	size = startValue.size;
 	rotation = startValue.rotation;

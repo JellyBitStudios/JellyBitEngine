@@ -90,12 +90,13 @@ struct StartValues
 	// Start values
 	math::float2 life = math::float2(5.0f, 5.0f);
 	math::float2 speed = math::float2(3.0f, 3.0f);
-	math::float3 acceleration3 = math::float3(0.0f, 0.0f, 0.0f);
-	math::float2 sizeOverTime = math::float2(0.0f, 0.0f);
+	math::float3 gravity = math::float3::zero;
+	math::float2 acceleration = math::float2::zero;
+	math::float2 sizeOverTime = math::float2::zero;
 	math::float2 size = math::float2(1.0f, 1.0f);
-	math::float2 rotation = math::float2(0.0f, 0.0f);
-	math::float2 angularAcceleration = math::float2(0.0f, 0.0f);
-	math::float2 angularVelocity = math::float2(0.0f, 0.0f);
+	math::float2 rotation = math::float2::zero;
+	math::float2 angularAcceleration = math::float2::zero;
+	math::float2 angularVelocity = math::float2::zero;
 
 	std::list<ColorTime> color;
 	bool timeColor = false;
