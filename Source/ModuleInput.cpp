@@ -191,7 +191,7 @@ bool ModuleInput::CleanUp()
 void ModuleInput::DrawCursor()
 {
 #ifndef GAMEMODE
-	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
+	if (App->GetEngineState() == engine_states::ENGINE_PLAY && CursorTextureID != 0u)
 		ImGui::SetMouseCursor(ImGuiMouseCursor_::ImGuiMouseCursor_None);
 	else
 		ImGui::SetMouseCursor(ImGuiMouseCursor_::ImGuiMouseCursor_Arrow);
@@ -203,12 +203,14 @@ void ModuleInput::DrawCursor()
 	{
 		if (CursorTextureID == 0)
 		{
+			//Load the default cursor texture
 			std::vector<Resource*> resources = App->res->GetResourcesByType(ResourceTypes::TextureResource);
 			for (Resource* res : resources)
 			{
-				if (res->GetData().name == "floor")
+				if (res->GetData().name == "defcursor")
 				{
-					App->res->SetAsUsed(res->GetUuid());
+					CursorTextureUUID = res->GetUuid();
+					App->res->SetAsUsed(CursorTextureUUID);
 					CursorTextureID = ((ResourceTexture*)res)->GetId();
 					break;
 				}
@@ -222,6 +224,9 @@ void ModuleInput::DrawCursor()
 			
 			glDisable(GL_LIGHTING);
 
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 			glMatrixMode(GL_PROJECTION);
 			glPushMatrix();
 			glLoadIdentity();
@@ -234,6 +239,8 @@ void ModuleInput::DrawCursor()
 
 			glUseProgram(0);
 			glEnable(GL_TEXTURE_2D);
+
+			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, CursorTextureID);
 			GLenum error = glGetError();
 
@@ -263,6 +270,37 @@ void ModuleInput::DrawCursor()
 			glBindTexture(GL_TEXTURE_2D, 0);
 
 			glEnable(GL_LIGHTING);
+			glDisable(GL_BLEND);
 		}
 	}
+}
+
+std::string ModuleInput::GetCursorTexture() const
+{
+	ResourceTexture* texture = CursorTextureUUID != 0u ? (ResourceTexture*)App->res->GetResource(CursorTextureUUID) : nullptr;
+	if (texture)
+	{
+		return texture->GetData().name;
+	}
+	return "";
+}
+
+void ModuleInput::SetCursorTexture(std::string& textureName)
+{
+	std::vector<Resource*> resources = App->res->GetResourcesByType(ResourceTypes::TextureResource);
+	for (Resource* res : resources)
+	{
+		if (res->GetData().name == textureName)
+		{
+			if (CursorTextureUUID != 0)
+				App->res->SetAsUnused(CursorTextureUUID);
+
+			CursorTextureUUID = res->GetUuid();
+			App->res->SetAsUsed(CursorTextureUUID);
+			CursorTextureID = ((ResourceTexture*)res)->GetId();
+
+			break;
+		}
+	}
+
 }

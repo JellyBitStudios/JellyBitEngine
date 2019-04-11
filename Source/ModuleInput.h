@@ -65,6 +65,10 @@ public:
 		return mouse_y_motion;
 	}
 
+public:
+	std::string GetCursorTexture() const;
+	void SetCursorTexture(std::string& textureName);
+
 private:
 
 	KEY_STATE* keyboard;
@@ -77,6 +81,7 @@ private:
 	//int mouse_z_motion;
 
 	uint CursorTextureID = 0u;
+	uint CursorTextureUUID = 0u;
 };
 
 #endif
