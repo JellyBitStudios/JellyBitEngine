@@ -12,7 +12,7 @@
 #include "imgui\imgui_impl_sdl.h"
 #include "imgui\imgui_impl_opengl3.h"
 
-
+#include "glew\include\GL\glew.h"
 
 #define MAX_KEYS 300
 
@@ -219,43 +219,50 @@ void ModuleInput::DrawCursor()
 		{
 			uint windowWidth = App->window->GetWindowWidth();
 			uint windowHeight = App->window->GetWindowHeight();
+			
+			glDisable(GL_LIGHTING);
 
+			glMatrixMode(GL_PROJECTION);
+			glPushMatrix();
+			glLoadIdentity();
+			glOrtho(0.0f, windowWidth, windowHeight, 0.0f, -1.0f, 1.0f);
+			glMatrixMode(GL_MODELVIEW);
+			glPushMatrix();
+			glLoadIdentity();
+
+			glTranslatef(mouse_x, mouse_y, -0.5);
+
+			glUseProgram(0);
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, CursorTextureID);
+			GLenum error = glGetError();
 
-			glMatrixMode(GL_PROJECTION);
-			glPushMatrix();
-			glLoadIdentity();
-			glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
-			glMatrixMode(GL_MODELVIEW);
-			glPushMatrix();
-			glLoadIdentity();
+			bool sad = error == GL_INVALID_OPERATION;
 
-			float normalizedX = -(1.0f - (mouse_x * 2.0f) / windowWidth);
-			float normalizedY = 1.0f - (mouse_y * 2.0f) / windowHeight;
+			float squareSize = 50.0f;
 
-			CONSOLE_LOG(LogTypes::Error, "%f %f", normalizedX, normalizedY);
-
-			glTranslatef(0.5 + normalizedX/2, 0.5 + normalizedY/2, 0);
+			glColor4f(1.0, 1.0f, 1.0f, 1.0f);
 
 			glBegin(GL_QUADS);
-			glTexCoord2f(0, 0);
-			glVertex3f(0 - 0.02, 0 - 0.02, 0);
-			glTexCoord2f(1, 0);
-			glVertex3f(0 + 0.02, 0 - 0.02, 0);
-			glTexCoord2f(1, 1);
-			glVertex3f(0 + 0.02, 0 + 0.02, 0);
-			glTexCoord2f(0, 1);
-			glVertex3f(0 - 0.02, 0 + 0.02, 0);
+			glTexCoord2f(0.0f, 0.0f);
+			glVertex3f(0.0f, squareSize, 0.0f);
+			glTexCoord2f(1.0f, 0.0f);
+			glVertex3f(squareSize, squareSize, 0.0f);
+			glTexCoord2f(1.0f, 1.0f);
+			glVertex3f(squareSize, 0.0f, 0.0f);
+			glTexCoord2f(0.0f, 1.0f);
+			glVertex3f(0.0f, 0.0f, 0.0f);
 			glEnd();
 
-			glMatrixMode(GL_PROJECTION);
-			glPopMatrix();
+			
 			glMatrixMode(GL_MODELVIEW);
+			glPopMatrix();
+			glMatrixMode(GL_PROJECTION);
 			glPopMatrix();
 
 			glBindTexture(GL_TEXTURE_2D, 0);
-			glDisable(GL_TEXTURE_2D);
+
+			glEnable(GL_LIGHTING);
 		}
 	}
 }

@@ -318,7 +318,6 @@ update_status ModuleRenderer3D::PostUpdate()
 		App->debugDrawer->EndDebugDraw();
 	}
 
-
 	App->ui->DrawUI();
 
 	// 3. Editor
