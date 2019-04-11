@@ -14,6 +14,7 @@
 #include "ResourceShaderProgram.h"
 #include "ResourceMaterial.h"
 #include "Uniforms.h"
+#include "GLCache.h"
 
 #include "MathGeoLib/include/Math/Quat.h"
 #include "MathGeoLib/include/Math/float3.h"
@@ -215,13 +216,11 @@ void Particle::Draw()
 		ResourceShaderProgram* resourceShaderProgram = (ResourceShaderProgram*)App->res->GetResource(shaderUuid);
 		GLuint shaderProgram = resourceShaderProgram->shaderProgram;
 
-		glUseProgram(shaderProgram);
+		App->glCache->SwitchShader(shaderProgram);
 		
 		math::float4x4 model_matrix = transform.GetMatrix();// particle matrix
 		model_matrix = model_matrix.Transposed();
-		math::float4x4 view_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLViewMatrix();
-		math::float4x4 proj_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLProjectionMatrix();
-		math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
+		math::float4x4 mvp_matrix = model_matrix * App->renderer3D->viewProj_matrix;
 		math::float4x4 normal_matrix = model_matrix;
 		normal_matrix.Inverse();
 		normal_matrix.Transpose();
@@ -277,7 +276,6 @@ void Particle::Draw()
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
-		glUseProgram(0);
 	}
 }
 

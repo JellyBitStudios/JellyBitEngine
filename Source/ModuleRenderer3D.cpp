@@ -218,7 +218,6 @@ update_status ModuleRenderer3D::PostUpdate()
 				if (toDraw->IsTreeActive())
 					DrawMesh(toDraw);
 			}
-			App->glCache->SwitchShader(0);// TODO: COULD BE AVOIDED
 
 			// Draw decals
 			for (uint i = 0; i < projectorComponents.size(); ++i)
@@ -235,7 +234,6 @@ update_status ModuleRenderer3D::PostUpdate()
 				if (toDraw->IsTreeActive())
 					DrawMesh(toDraw);
 			}
-			App->glCache->SwitchShader(0);// TODO: COULD BE AVOIDED
 		}
 		else // Draw meshes w/out frustum culling
 		{
@@ -246,7 +244,6 @@ update_status ModuleRenderer3D::PostUpdate()
 				if (staticMeshComponents[i]->IsTreeActive())
 					DrawMesh(staticMeshComponents[i]);
 			}
-			App->glCache->SwitchShader(0);// TODO: COULD BE AVOIDED
 			// Draw decals
 			for (uint i = 0; i < projectorComponents.size(); ++i)
 			{
@@ -261,16 +258,12 @@ update_status ModuleRenderer3D::PostUpdate()
 				if (dynamicMeshComponents[i]->IsTreeActive())
 					DrawMesh(dynamicMeshComponents[i]);
 			}
-			App->glCache->SwitchShader(0);// TODO: COULD BE AVOIDED
 		}
 	}
 
 	App->fbo->DrawGBufferToScreen();
 
 	App->fbo->MergeDepthBuffer(App->window->GetWindowWidth(), App->window->GetWindowHeight());
-
-	App->scene->Draw();
-
 
 	bool blend = GetCapabilityState(GL_BLEND);
 	glEnable(GL_BLEND);
@@ -280,6 +273,9 @@ update_status ModuleRenderer3D::PostUpdate()
 	if (!blend)
 		glDisable(GL_BLEND);
 
+	App->glCache->SwitchShader(0);
+
+	App->scene->Draw();
 #ifndef GAMEMODE
 
 	if (debugDraw)

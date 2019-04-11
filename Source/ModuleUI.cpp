@@ -493,12 +493,12 @@ bool ModuleUI::MouseInScreen()
 // Shader methods
 void ModuleUI::use(unsigned int ID)
 {
-	glUseProgram(ID);
+	App->glCache->SwitchShader(ID);
 }
 
 void ModuleUI::Delete(unsigned int ID)
 {
-	glUseProgram(ID);
+	App->glCache->SwitchShader(ID);
 }
 
 void ModuleUI::setBool(unsigned int ID, const char* name, bool value)
