@@ -1394,6 +1394,20 @@ void DestroyObj(MonoObject* obj)
 	}
 }
 
+MonoObject* Vector3RandomInsideSphere()
+{
+	math::float3 randomPoint = math::float3::RandomSphere(App->randomMathLCG, math::float3(0, 0, 0), 1);
+
+	MonoClass* vector3class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
+	MonoObject* ret = mono_object_new(App->scripting->domain, vector3class);
+
+	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "_x"), &randomPoint.x);
+	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "_y"), &randomPoint.y);
+	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "_z"), &randomPoint.z);
+
+	return ret;
+}
+
 MonoArray* QuatMult(MonoArray* q1, MonoArray* q2)
 {
 	if (!q1 || !q2)
@@ -3560,6 +3574,9 @@ void ScriptingModule::CreateDomain()
 
 	//Object
 	mono_add_internal_call("JellyBitEngine.Object::Destroy", (const void*)&DestroyObj);
+
+	//Vector3
+	mono_add_internal_call("JellyBitEngine.Vector3::RandomPointInsideUnitSphere", (const void*)&Vector3RandomInsideSphere);
 
 	//Quaternion
 	mono_add_internal_call("JellyBitEngine.Quaternion::quatMult", (const void*)&QuatMult);
