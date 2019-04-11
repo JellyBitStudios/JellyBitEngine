@@ -7,6 +7,7 @@
 #include "MaterialImporter.h"
 #include "ModuleRenderer3D.h"
 #include "ModuleResourceManager.h"
+#include "ResourceTexture.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_impl_sdl.h"
