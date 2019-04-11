@@ -47,6 +47,8 @@ public:
 
 	void OnUniqueEditor();
 
+	void SetSpawnSize(math::float3 size);
+
 	void SetMaterialRes(uint materialUuid);
 
 	void Start();
@@ -84,6 +86,7 @@ public:
 
 private:
 	bool create = true;
+	bool customSpawn = false;
 
 
 	float minDistance = 0.05f;
@@ -91,6 +94,10 @@ private:
 
 	int hight = 5;
 	int low = 4;
+
+	math::OBB spawnBox;
+	math::OBB _spawnBox;
+	math::OBB originalSpawnBox;
 };
 
 #endif //! __COMPONENT_TRAIL_H__

@@ -21,12 +21,28 @@ ComponentTrail::ComponentTrail(GameObject * parent) : Component(parent, Componen
 	timer.Start();
 
 	App->res->SetAsUsed(App->resHandler->plane);
+
+	originalSpawnBox = parent->rotationBB;
+	if (!originalSpawnBox.IsFinite())
+	{
+		originalSpawnBox = math::AABB::FromCenterAndSize(math::float3::zero, math::float3::one);
+	}
+	spawnBox = _spawnBox = originalSpawnBox;
 }
 
 ComponentTrail::ComponentTrail(const ComponentTrail & componentTransform, GameObject * parent) : Component(parent, ComponentTypes::TrailComponent)
 {
+	App->trails->trails.push_back(this);
 	timer.Start();
 
+	App->res->SetAsUsed(App->resHandler->plane);
+
+	originalSpawnBox = parent->rotationBB;
+	if (!originalSpawnBox.IsFinite())
+	{
+		originalSpawnBox = math::AABB::FromCenterAndSize(math::float3::zero, math::float3::one);
+	}
+	spawnBox = _spawnBox = originalSpawnBox;
 }
 
 ComponentTrail::~ComponentTrail()
@@ -42,6 +58,8 @@ ComponentTrail::~ComponentTrail()
 	App->trails->trails.remove(this);
 
 	parent->cmp_trail = nullptr;
+	
+	App->res->SetAsUnused(App->resHandler->plane);
 }
 
 void ComponentTrail::Update() 
@@ -53,8 +71,23 @@ void ComponentTrail::Update()
 	if (create)
 	{
 		// Get the new trail vertex
-		math::float3 originHigh = parent->rotationBB.FaceCenterPoint(hight);
-		math::float3 originLow = parent->rotationBB.FaceCenterPoint(low);
+		math::float3 originHigh	   = math::float3::zero;
+		math::float3 originLow = math::float3::zero;
+
+		if (customSpawn)
+		{
+			math::float4x4 transformMatrix = parent->transform->GetGlobalMatrix();
+			spawnBox = originalSpawnBox;
+			spawnBox.Transform(transformMatrix);
+
+			originHigh = spawnBox.FaceCenterPoint(hight);
+			originLow = spawnBox.FaceCenterPoint(low);
+		}
+		else
+		{
+			originHigh = parent->rotationBB.FaceCenterPoint(hight);
+			originLow = parent->rotationBB.FaceCenterPoint(low);
+		}
 
 		// Check we already have a trail
 		if (trailVertex.size() > 1)
@@ -157,6 +190,24 @@ void ComponentTrail::OnUniqueEditor()
 		ImGui::SameLine();
 		ImGui::ShowHelpMarker("Decide if the trail should be force oriented.");
 
+		if (ImGui::Checkbox("Use Custom Spawn", &customSpawn))
+		{
+			if (customSpawn)
+			{
+				originalSpawnBox = _spawnBox;
+			}
+		}
+		ImGui::SameLine();
+		ImGui::ShowHelpMarker("Use this to modify the size of the trail.\nIf you do not use this option the size of the trail will be determined by the GameObject Bounding Box.");
+		if (customSpawn)
+		{
+			math::float3 size = originalSpawnBox.Size();
+			if (ImGui::DragFloat3("Spawn Size", &size.x, 1.0f, 0.0f, 0.0f, "%.0f"))
+				SetSpawnSize(size);
+
+
+		}
+
 		if (ImGui::CollapsingHeader("Trail Material", ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			const Resource* resource = App->res->GetResource(materialRes);
@@ -192,6 +243,11 @@ void ComponentTrail::OnUniqueEditor()
 	}
 
 #endif
+}
+
+void ComponentTrail::SetSpawnSize(math::float3 size)
+{
+	_spawnBox = originalSpawnBox = math::AABB::FromCenterAndSize(math::float3::zero, size).ToOBB();
 }
 
 
@@ -267,7 +323,7 @@ void ComponentTrail::SetColor(math::float4 color)
 
 uint ComponentTrail::GetInternalSerializationBytes()
 {
-	return sizeof(materialRes) + sizeof(minDistance) + sizeof(lifeTime) + sizeof(create) + sizeof(color) + sizeof(vector) + sizeof(hight) + sizeof(low) + sizeof(orient);
+	return sizeof(materialRes) + sizeof(minDistance) + sizeof(lifeTime) + sizeof(create) + sizeof(color) + sizeof(vector) + sizeof(hight) + sizeof(low) + sizeof(orient) + sizeof(customSpawn) + sizeof(originalSpawnBox);
 }
 
 void ComponentTrail::OnInternalSave(char *& cursor)
@@ -307,6 +363,14 @@ void ComponentTrail::OnInternalSave(char *& cursor)
 	bytes = sizeof(orient);
 	memcpy(cursor, &orient, bytes);
 	cursor += bytes;
+
+	bytes = sizeof(customSpawn);
+	memcpy(cursor, &customSpawn, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(originalSpawnBox);
+	memcpy(cursor, &originalSpawnBox, bytes);
+	cursor += bytes;
 }
 
 void ComponentTrail::OnInternalLoad(char *& cursor)
@@ -345,5 +409,13 @@ void ComponentTrail::OnInternalLoad(char *& cursor)
 
 	bytes = sizeof(orient);
 	memcpy(&orient, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(customSpawn);
+	memcpy(&customSpawn, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(originalSpawnBox);
+	memcpy(&originalSpawnBox, cursor, bytes);
 	cursor += bytes;
 }
