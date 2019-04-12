@@ -100,6 +100,12 @@ bool ModuleUI::Start()
 	WorldHolder->transform->SetPosition({ 8.0f, 4.5f, 0.0f });
 	WorldHolder->transform->SetScale({ 16.0f, 9.0f, 1.0f });
 
+	ComponentCanvas* c = (ComponentCanvas*)WorldHolder->AddComponent(ComponentTypes::CanvasComponent);
+	c->Update();
+	c->Change(ComponentCanvas::CanvasType::WORLD);
+	c->Update();
+	WorldHolder->AddComponent(ComponentTypes::RectTransformComponent);
+
 #endif // GAMEMODE
 
 	if (FT_Init_FreeType(&library))
@@ -438,6 +444,15 @@ GameObject * ModuleUI::FindCanvas(GameObject * from, uint& count)
 math::float4x4 ModuleUI::GetUIMatrix()
 {
 	return WorldHolder->transform->GetGlobalMatrix();
+}
+math::float3 * ModuleUI::GetWHCorners()
+{
+	return WorldHolder->cmp_rectTransform->GetCorners();
+}
+
+uint * ModuleUI::GetWHRect()
+{
+	return WorldHolder->cmp_rectTransform->GetRect();
 }
 #endif
 

@@ -536,7 +536,12 @@ void ComponentLabel::FillCorners()
 	for (uint i = 0; i < labelWord.size(); i++)
 	{
 		if (parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
-			ScreenDraw(labelWord[i].corners, labelWord[i].rect);
+		{
+			if(!App->ui->ScreenOnWorld())
+				ScreenDraw(labelWord[i].corners, labelWord[i].rect);
+			else
+				WorldDraw(parent->cmp_rectTransform->GetCorners(), labelWord[i].corners, parent->cmp_rectTransform->GetRect(), labelWord[i].rect);
+		}
 		else
 			WorldDraw(parent->cmp_rectTransform->GetCorners(), labelWord[i].corners, parent->cmp_rectTransform->GetRect(), labelWord[i].rect);
 	}

@@ -215,6 +215,27 @@ void ComponentCanvas::OnInternalLoad(char *& cursor)
 	needed_change = true;
 }
 
+void ComponentCanvas::Change(CanvasType to)
+{
+	if (to)
+	{
+		switch (type)
+		{
+		case ComponentCanvas::SCREEN:
+			App->ui->canvas_screen.remove(parent);
+			break;
+		case ComponentCanvas::WORLD_SCREEN:
+			App->ui->canvas_worldScreen.remove(parent);
+			break;
+		case ComponentCanvas::WORLD:
+			App->ui->canvas_world.remove(parent);
+			break;
+		}
+		type = to;
+		needed_change = true;
+	}
+}
+
 ComponentCanvas::CanvasType ComponentCanvas::GetType() const
 {
 	return type;

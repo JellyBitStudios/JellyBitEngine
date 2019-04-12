@@ -80,6 +80,8 @@ public:
 #ifndef GAMEMODE
 	//Engine world
 	math::float4x4 GetUIMatrix();
+	math::float3* GetWHCorners();
+	uint* GetWHRect();
 #endif
 
 	void FillBufferRange(uint offset, uint size, char* buffer);
