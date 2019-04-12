@@ -471,6 +471,20 @@ uint * ModuleUI::GetWHRect()
 {
 	return WorldHolder->cmp_rectTransform->GetRect();
 }
+math::float3 ModuleUI::GetPositionWH()
+{
+	return WorldHolder->transform->GetPosition();
+}
+void ModuleUI::SetPositionWH(math::float3 pos)
+{
+	WorldHolder->transform->SetPosition(pos);
+	System_Event WHMoved;
+	WHMoved.type = System_Event_Type::RectTransformUpdated;
+	WorldHolder->cmp_rectTransform->OnSystemEvent(WHMoved);
+	WorldHolder->cmp_rectTransform->Update();
+	for (GameObject* goScreenCanvas : canvas_screen)
+		goScreenCanvas->OnSystemEvent(WHMoved);
+}
 #endif
 
 void ModuleUI::FillBufferRange(uint offset, uint size, char* buffer)

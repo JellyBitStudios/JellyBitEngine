@@ -391,6 +391,7 @@
     <ClInclude Include="ModuleLayers.h" />
     <ClInclude Include="ModuleTrails.h" />
     <ClInclude Include="ModuleUI.h" />
+    <ClInclude Include="PanelUI.h" />
     <ClInclude Include="PhysicsConstants.h" />
     <ClInclude Include="ResourceAnimator.h" />
     <ClInclude Include="ResourceFont.h" />
@@ -819,6 +820,7 @@
     <ClCompile Include="ModuleLayers.cpp" />
     <ClCompile Include="ModuleTrails.cpp" />
     <ClCompile Include="ModuleUI.cpp" />
+    <ClCompile Include="PanelUI.cpp" />
     <ClCompile Include="ResourceAnimator.cpp" />
     <ClCompile Include="ResourceFont.cpp" />
     <ClCompile Include="ResourceAvatar.cpp" />

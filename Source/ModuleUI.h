@@ -82,6 +82,8 @@ public:
 	math::float4x4 GetUIMatrix();
 	math::float3* GetWHCorners();
 	uint* GetWHRect();
+	math::float3 GetPositionWH();
+	void SetPositionWH(math::float3 pos);
 #endif
 
 	void FillBufferRange(uint offset, uint size, char* buffer);
