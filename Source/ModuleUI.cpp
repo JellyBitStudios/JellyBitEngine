@@ -52,6 +52,10 @@ void ModuleUI::DrawUI()
 	if (!uiMode)
 		return;
 	use(ui_shader);
+	math::float4x4 view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
+	math::float4x4 projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();
+	math::float4x4 mvp = view * projection;
+	setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
 	glBindVertexArray(reference_vertex);
 	glActiveTexture(GL_TEXTURE0);
 	UpdateRenderStates();
@@ -88,7 +92,7 @@ bool ModuleUI::Start()
 
 #ifdef GAMEMODE
 	uiMode = true;
-
+	screenInWorld = false;
 #else
 
 	WorldHolder = new GameObject("UIHolder", nullptr);
@@ -254,7 +258,7 @@ void ModuleUI::DrawScreenCanvas()
 
 	if (!canvas_screen.empty())
 	{
-		setBool(ui_shader, "isScreen", 1);
+		setBool(ui_shader, "isScreen", !screenInWorld);
 
 		for (GameObject* canvas : canvas_screen)
 		{
@@ -298,12 +302,7 @@ void ModuleUI::DrawWorldCanvas()
 
 	if (!canvas_world.empty())
 	{
-		math::float4x4 view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
-		math::float4x4 projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();
-		math::float4x4 mvp = view * projection;
 		setBool(ui_shader, "isScreen", 0);
-		setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
-
 		for (GameObject* canvas : canvas_world)
 		{
 			std::vector<GameObject*> renderers;
@@ -594,6 +593,11 @@ void ModuleUI::SetUIMode(bool stat)
 bool ModuleUI::GetisNvidia() const
 {
 	return isNVIDIA;
+}
+
+bool ModuleUI::ScreenOnWorld() const
+{
+	return screenInWorld;
 }
 
 void ModuleUI::OnWindowResize(uint width, uint height)

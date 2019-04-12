@@ -67,6 +67,7 @@ public:
 	bool GetUIMode() const;
 	void SetUIMode(bool stat);
 	bool GetisNvidia() const;
+	bool ScreenOnWorld() const;
 
 	void OnWindowResize(uint width, uint height);
 
@@ -121,6 +122,7 @@ private:
 	uint ui_shader = 0;
 
 	bool uiMode = true;
+	bool screenInWorld = true;
 	bool isNVIDIA = false;
 	
 	bool anyItemIsHovered = false;

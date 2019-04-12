@@ -117,8 +117,31 @@ void ComponentRectTransform::Update()
 		{
 			case ComponentRectTransform::RECT:
 				(rectTransform_modified) ? CalculateAnchors(true) :
-					((usePivot) ? RecaculateAnchors() : RecalculateRectByPercentage());
-				CalculateScreenCorners();
+						((usePivot) ? RecaculateAnchors() : RecalculateRectByPercentage());
+					if (!App->ui->ScreenOnWorld())
+						CalculateScreenCorners();
+					else
+					{
+						if (parent->cmp_canvas)
+						{
+							math::float4x4 globalmatrix = App->ui->GetUIMatrix();
+							corners[Rect::RTOPLEFT] = math::float4(globalmatrix * math::float4(-0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
+							corners[Rect::RTOPRIGHT] = math::float4(globalmatrix * math::float4(0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
+							corners[Rect::RBOTTOMLEFT] = math::float4(globalmatrix * math::float4(-0.5f, -0.5f, 0.0f, 1.0f)).Float3Part();
+							corners[Rect::RBOTTOMRIGHT] = math::float4(globalmatrix * math::float4(0.5f, -0.5f, 0.0f, 1.0f)).Float3Part();
+
+							rectTransform[Rect::X] = 0;
+							rectTransform[Rect::Y] = 0;
+							rectTransform[Rect::XDIST] = abs(math::Distance(corners[Rect::RTOPRIGHT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
+							rectTransform[Rect::YDIST] = abs(math::Distance(corners[Rect::RBOTTOMLEFT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
+							CalculateAnchors(true);
+						}
+						else
+						{
+							CalculateCornersFromRect();
+						}
+
+					}
 				break;
 			case ComponentRectTransform::RECT_WORLD:
 				(rectTransform_modified) ? CalculateAnchors(true) :
@@ -159,22 +182,56 @@ void ComponentRectTransform::InitRect()
 	{
 	case ComponentRectTransform::RECT:
 	{
-		uint* rectParent = nullptr;
-		if (parent->cmp_canvas)
-			rectParent = App->ui->GetRectUI();
+		if (!App->ui->ScreenOnWorld())
+		{
+			uint* rectParent = nullptr;
+			if (parent->cmp_canvas)
+				rectParent = App->ui->GetRectUI();
+			else
+				rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+
+			rectTransform[Rect::X] = rectParent[Rect::X];
+			rectTransform[Rect::Y] = rectParent[Rect::Y];
+
+			if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
+				rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
+			if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
+				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
+
+			CalculateAnchors(true);
+			CalculateScreenCorners();
+		}
 		else
-			rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+		{
+			if (parent->cmp_canvas)
+			{
+				math::float4x4 globalmatrix = App->ui->GetUIMatrix();
+				corners[Rect::RTOPLEFT] = math::float4(globalmatrix * math::float4(-0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
+				corners[Rect::RTOPRIGHT] = math::float4(globalmatrix * math::float4(0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
+				corners[Rect::RBOTTOMLEFT] = math::float4(globalmatrix * math::float4(-0.5f, -0.5f, 0.0f, 1.0f)).Float3Part();
+				corners[Rect::RBOTTOMRIGHT] = math::float4(globalmatrix * math::float4(0.5f, -0.5f, 0.0f, 1.0f)).Float3Part();
 
-		rectTransform[Rect::X] = rectParent[Rect::X];
-		rectTransform[Rect::Y] = rectParent[Rect::Y];
+				rectTransform[Rect::X] = 0;
+				rectTransform[Rect::Y] = 0;
+				rectTransform[Rect::XDIST] = abs(math::Distance(corners[Rect::RTOPRIGHT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
+				rectTransform[Rect::YDIST] = abs(math::Distance(corners[Rect::RBOTTOMLEFT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
+				CalculateAnchors(true);
+			}
+			else
+			{
+				ComponentRectTransform* rTParent = parent->GetParent()->cmp_rectTransform;
+				uint* rectParent = rTParent->GetRect();
 
-		if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
-			rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
-		if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
-			rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
+				z = parent->cmp_canvas->GetZ(parent, GetType());
+				if (rectTransform[Rect::XDIST] > rectParent[Rect::XDIST])
+					rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
+				if (rectTransform[Rect::YDIST] > rectParent[Rect::YDIST])
+					rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
 
-		CalculateAnchors(true);
-		CalculateScreenCorners();
+				CalculateCornersFromRect();
+				CalculateAnchors(true);
+			}
+		}
 		break;
 	}
 	case ComponentRectTransform::WORLD:
@@ -661,7 +718,6 @@ void ComponentRectTransform::OnEditor()
 void ComponentRectTransform::OnUniqueEditor()
 {
 #ifndef GAMEMODE
-
 	if (ImGui::CollapsingHeader("Rect Transform", ImGuiTreeNodeFlags_DefaultOpen))
 	{
 
