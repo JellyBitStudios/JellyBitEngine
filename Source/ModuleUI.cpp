@@ -141,7 +141,9 @@ update_status ModuleUI::PostUpdate()
 bool ModuleUI::CleanUp()
 {
 	FT_Done_FreeType(library);
+#ifndef GAMEMODE
 	RELEASE(WorldHolder);
+#endif // !GAMEMODE
 	return true;
 }
 
@@ -156,9 +158,24 @@ void ModuleUI::OnSystemEvent(System_Event event)
 		windowChanged.type = System_Event_Type::ScreenChanged;
 		for (GameObject* goScreenCanvas : canvas_screen)
 			goScreenCanvas->OnSystemEvent(windowChanged);
+#else
+		screenInWorld = true;
+		System_Event updateCornersToScreen;
+		updateCornersToScreen.type = System_Event_Type::RectTransformUpdated;
+		for (GameObject* goScreenCanvas : canvas_screen)
+			goScreenCanvas->OnSystemEvent(updateCornersToScreen);
 #endif // GAMEMODE
-		break;
 	}
+	break;
+	case System_Event_Type::Play:
+	{
+		screenInWorld = false;
+		System_Event updateCornersToScreen;
+		updateCornersToScreen.type = System_Event_Type::RectTransformUpdated;
+		for (GameObject* goScreenCanvas : canvas_screen)
+			goScreenCanvas->OnSystemEvent(updateCornersToScreen);
+	}
+		break;
 	case System_Event_Type::LoadScene:
 	{
 		if (isNVIDIA)

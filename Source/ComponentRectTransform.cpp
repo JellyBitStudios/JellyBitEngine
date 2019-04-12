@@ -120,10 +120,7 @@ void ComponentRectTransform::Update()
 			case ComponentRectTransform::RECT:
 				(rectTransform_modified) ? CalculateAnchors(true) :
 						((usePivot) ? RecaculateAnchors() : RecalculateRectByPercentage());
-					if (!App->ui->ScreenOnWorld())
-						CalculateScreenCorners();
-					else
-						CalculateCornersFromRect();
+				(App->ui->ScreenOnWorld()) ? CalculateCornersFromRect() : CalculateScreenCorners();
 				break;
 			case ComponentRectTransform::RECT_WORLD:
 				(rectTransform_modified) ? CalculateAnchors(true) :
@@ -164,44 +161,28 @@ void ComponentRectTransform::InitRect()
 	{
 	case ComponentRectTransform::RECT:
 	{
-		if (!App->ui->ScreenOnWorld())
-		{
-			uint* rectParent = nullptr;
-			if (parent->cmp_canvas)
-				rectParent = App->ui->GetRectUI();
-			else
-				rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
-
-			rectTransform[Rect::X] = rectParent[Rect::X];
-			rectTransform[Rect::Y] = rectParent[Rect::Y];
-
-			if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
-				rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
-			if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
-				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
-
-			CalculateAnchors(true);
-			CalculateScreenCorners();
-		}
+		uint* rectParent = nullptr;
+		if (parent->cmp_canvas)
+#ifndef GAMEMODE
+			rectParent = (App->ui->ScreenOnWorld()) ? App->ui->GetWHRect() : App->ui->GetRectUI();
+#else
+			rectParent = App->ui->GetRectUI();
+#endif
 		else
-		{
-			uint* rectParent = nullptr;
-			if (parent->cmp_canvas)
-				rectParent = App->ui->GetWHRect();
-			else
-				rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+			rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
 
-			rectTransform[Rect::X] = rectParent[Rect::X];
-			rectTransform[Rect::Y] = rectParent[Rect::Y];
+		rectTransform[Rect::X] = rectParent[Rect::X];
+		rectTransform[Rect::Y] = rectParent[Rect::Y];
 
-			if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
-				rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
-			if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
-				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
+		if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
+			rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
+		if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
+			rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
 
-			CalculateCornersFromRect();
-			CalculateAnchors(true);
-		}
+		(App->ui->ScreenOnWorld()) ? CalculateCornersFromRect() : CalculateScreenCorners();
+
+		CalculateAnchors(true);
+
 		break;
 	}
 	case ComponentRectTransform::WORLD:
@@ -336,6 +317,7 @@ void ComponentRectTransform::CalculateCornersFromRect()
 {
 	math::float3* parentCorners = nullptr;
 	uint* rectParent = nullptr;
+#ifndef GAMEMODE
 	if (rFrom == RectFrom::RECT)
 	{
 		parentCorners = App->ui->GetWHCorners();
@@ -346,6 +328,10 @@ void ComponentRectTransform::CalculateCornersFromRect()
 		parentCorners = parent->GetParent()->cmp_rectTransform->GetCorners();
 		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
 	}
+#else
+	parentCorners = parent->GetParent()->cmp_rectTransform->GetCorners();
+	rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+#endif
 	math::float3 xDirection = (parentCorners[Rect::RTOPLEFT] - parentCorners[Rect::RTOPRIGHT]).Normalized();
 	math::float3 yDirection = (parentCorners[Rect::RBOTTOMLEFT] - parentCorners[Rect::RTOPLEFT]).Normalized();
 
@@ -612,6 +598,9 @@ void ComponentRectTransform::OnInternalSave(char *& cursor)
 
 	memcpy(cursor, &usePivot, bytes);
 	cursor += bytes;
+
+	if (rFrom == RectFrom::RECT)
+		CalculateScreenCorners();
 
 	bytes = sizeof(math::float3) * 4;
 	memcpy(cursor, &corners, bytes);

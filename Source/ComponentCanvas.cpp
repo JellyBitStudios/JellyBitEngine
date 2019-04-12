@@ -30,6 +30,7 @@ ComponentCanvas::ComponentCanvas(GameObject * parent, ComponentTypes componentTy
 	{
 		App->ui->canvas.push_back(parent);
 		needed_change = true;
+		Update();
 	}
 }
 
