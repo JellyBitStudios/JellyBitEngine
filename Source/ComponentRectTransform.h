@@ -8,7 +8,6 @@
 #include "MathGeoLib/include/Math/float3.h"
 
 #define WORLDTORECT 100.0f
-#define ZSEPARATOR 0.005f
 
 class ComponentTransform;
 
@@ -85,22 +84,15 @@ private:
 
 public:
 	void SetRect(uint x, uint y, uint x_dist, uint y_dist);
-	void SetRectPos(uint x, uint y);
-	void SetRectDim(uint x_dist, uint y_dist);
 
 	uint* GetRect();
 	math::float3* GetCorners();
 	void InitRect(); // Done, TODO J call methods of calculate anchors and percentage
 
 	RectFrom GetFrom() const;
-
-	bool IsInRect(uint* rect);
 	
 	void ParentChanged();
 	void CanvasChanged();
-	void WorkSpaceChanged(int diff);
-
-	float GetZ() const;
 
 private:
 	//From Sreen
@@ -112,7 +104,7 @@ private:
 
 	void CalculateAnchors(bool needed_newPercentages = false); //TODO J Add the 7 pivots left
 	void RecaculateAnchors(); //TODO J Add the 7 pivots left
-	void RecaculatePercentage();
+	void CaculatePercentage();
 	void RecalculateRectByPercentage();
 
 private:

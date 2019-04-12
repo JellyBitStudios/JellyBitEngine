@@ -3,6 +3,7 @@
 
 #include "Module.h"
 
+#include "MathGeoLib/include/Math/float4x4.h"
 #include "MathGeoLib/include/Math/float4.h"
 #include "MathGeoLib/include/Math/float2.h"
 #include <list>
@@ -73,8 +74,12 @@ public:
 	uint* GetScreen();
 
 	bool IsUIHovered();
+	static GameObject* FindCanvas(GameObject* from, uint& count);
 
-	static GameObject* FindCanvas(GameObject* from); //TODO J Check if I can make this static
+#ifndef GAMEMODE
+	//Engine world
+	math::float4x4 GetUIMatrix();
+#endif
 
 	void FillBufferRange(uint offset, uint size, char* buffer);
 	void RegisterBufferIndex(uint *offset, int* index, ComponentTypes cType, Component* cmp);
@@ -110,9 +115,7 @@ public:
 	FT_Library library;
 
 private:
-	uint uiWorkSpace[4];
 	uint ui_size_draw[4];
-	//math::float4x4 orthonormalMatrix = math::float4x4::identity;
 	uint reference_vertex;
 
 	uint ui_shader = 0;
@@ -123,6 +126,11 @@ private:
 	bool anyItemIsHovered = false;
 
 	bool depthTest, cullFace, lighting, blend;
+
+#ifndef GAMEMODE
+	//UI like Unity
+	GameObject* WorldHolder = nullptr;
+#endif
 
 	//UI in one buffer - Shader Storage Buffer Object
 	uint countImages = 0;

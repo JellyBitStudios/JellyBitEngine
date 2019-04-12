@@ -22,6 +22,8 @@
 #include "MathGeoLib\include\Math\float4x4.h"
 #include "MathGeoLib/include/Geometry/Frustum.h"
 
+#define ZSEPARATOR 0.005f
+
 ComponentCanvas::ComponentCanvas(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::CanvasComponent)
 {
 	if (includeComponents)
@@ -233,4 +235,20 @@ math::float4x4 ComponentCanvas::GetGlobal() const
 	}
 
 	return ret;
+}
+
+float ComponentCanvas::GetZ(GameObject * go, ComponentTypes type)
+{
+	uint farGO;
+	ModuleUI::FindCanvas(go, farGO);
+	switch (type)
+	{
+	case RectTransformComponent:
+		return ZSEPARATOR * farGO;
+		break;
+	case LabelComponent:
+		return ZSEPARATOR * (farGO + 1);
+		break;
+	}
+	return 0.0f;
 }

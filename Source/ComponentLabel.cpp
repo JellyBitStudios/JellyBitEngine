@@ -1,6 +1,6 @@
 #include "ComponentLabel.h"
 #include "ComponentRectTransform.h"
-
+#include "ComponentCanvas.h"
 #include "ModuleResourceManager.h"
 
 #include "ResourceFont.h"
@@ -280,7 +280,7 @@ void ComponentLabel::WorldDraw(math::float3 * parentCorners, math::float4 corner
 	corners[CORNER_BOTTOM_RIGHT] = { pos, 1.0f };
 
 	math::float3 zDirection = xDirection.Cross(yDirection);
-	float z = ZSEPARATOR + parent->cmp_rectTransform->GetZ();
+	float z = parent->cmp_canvas->GetZ(parent, GetType());
 	for (uint i = 0; i < 4; ++i) //Change All Corners (TopLeft / TopRight / BottomLeft / BottomRight)
 		corners[i] -= { zDirection * z , 0.0f };
 }

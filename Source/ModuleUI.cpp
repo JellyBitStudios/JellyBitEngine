@@ -51,9 +51,14 @@ void ModuleUI::DrawUI()
 #endif
 	if (!uiMode)
 		return;
+	use(ui_shader);
+	glBindVertexArray(reference_vertex);
+	glActiveTexture(GL_TEXTURE0);
 	UpdateRenderStates();
 	DrawWorldCanvas();
 	DrawScreenCanvas();
+	glBindVertexArray(0);
+	use(0);
 }
 
 bool ModuleUI::Init(JSON_Object * jObject)
@@ -81,14 +86,16 @@ bool ModuleUI::Start()
 	ui_size_draw[Screen::WIDTH] = App->window->GetWindowWidth();
 	ui_size_draw[Screen::HEIGHT] = App->window->GetWindowHeight();
 
-	uiWorkSpace[Screen::WIDTH] = 1280;
-	uiWorkSpace[Screen::HEIGHT] = 720;
-	uiWorkSpace[Screen::X] = (((int)ui_size_draw[Screen::WIDTH] - (int)uiWorkSpace[Screen::WIDTH]) < 0) ? 0 : (ui_size_draw[Screen::WIDTH] - uiWorkSpace[Screen::WIDTH]);
-	uiWorkSpace[Screen::Y] = 0;
-
-
 #ifdef GAMEMODE
 	uiMode = true;
+
+#else
+
+	WorldHolder = new GameObject("UIHolder", nullptr);
+	WorldHolder->AddComponent(ComponentTypes::TransformComponent);
+	WorldHolder->transform->SetPosition({ 8.0f, 4.5f, 0.0f });
+	WorldHolder->transform->SetScale({ 16.0f, 9.0f, 1.0f });
+
 #endif // GAMEMODE
 
 	if (FT_Init_FreeType(&library))
@@ -124,6 +131,7 @@ update_status ModuleUI::PostUpdate()
 bool ModuleUI::CleanUp()
 {
 	FT_Done_FreeType(library);
+	RELEASE(WorldHolder);
 	return true;
 }
 
@@ -246,7 +254,6 @@ void ModuleUI::DrawScreenCanvas()
 
 	if (!canvas_screen.empty())
 	{
-		use(ui_shader);
 		setBool(ui_shader, "isScreen", 1);
 
 		for (GameObject* canvas : canvas_screen)
@@ -276,7 +283,6 @@ void ModuleUI::DrawScreenCanvas()
 				}
 			}
 		}
-		use(0);
 	}
 
 	if (depthTest) glEnable(GL_DEPTH_TEST);
@@ -295,7 +301,6 @@ void ModuleUI::DrawWorldCanvas()
 		math::float4x4 view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
 		math::float4x4 projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();
 		math::float4x4 mvp = view * projection;
-		use(ui_shader);
 		setBool(ui_shader, "isScreen", 0);
 		setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
 
@@ -326,7 +331,6 @@ void ModuleUI::DrawWorldCanvas()
 				}
 			}
 		}
-		use(0);
 	}
 
 	if (lighting) glEnable(GL_LIGHTING);
@@ -356,22 +360,17 @@ void ModuleUI::DrawUIImage(int index, math::float3 corners[4], math::float4& col
 	if (texture > 0)
 	{
 		setBool(ui_shader, "using_texture", true);
-		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
 	}
 	else
 		setBool(ui_shader, "using_texture", false);
 
-	glBindVertexArray(reference_vertex);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glBindVertexArray(0);
+	if (texture > 0) glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void ModuleUI::DrawUILabel(int index, std::vector<LabelLetter>* word, std::vector<uint>* GetTexturesWord, math::float4& color)
 {
-	use(ui_shader);
 	setBool(ui_shader, "isLabel", true);
 	setBool(ui_shader, "using_texture", true);
 	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
@@ -390,15 +389,10 @@ void ModuleUI::DrawUILabel(int index, std::vector<LabelLetter>* word, std::vecto
 			setFloat(ui_shader, "bottomLeft", word->at(i).corners[ComponentRectTransform::Rect::RBOTTOMLEFT]);
 			setFloat(ui_shader, "bottomRight", word->at(i).corners[ComponentRectTransform::Rect::RBOTTOMRIGHT]);
 		}
-		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, GetTexturesWord->at(i));
-
-		glBindVertexArray(reference_vertex);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glBindVertexArray(0);
 	}
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void ModuleUI::UpdateRenderStates()
@@ -423,19 +417,30 @@ bool ModuleUI::IsUIHovered()
 	return anyItemIsHovered;
 }
 
-GameObject * ModuleUI::FindCanvas(GameObject * from)
+GameObject * ModuleUI::FindCanvas(GameObject * from, uint& count)
 {
 	GameObject* ret = nullptr;
 	GameObject* temp = from;
-
+	count = 0;
 	while (ret == nullptr && temp != nullptr)
 	{
 		if (temp->cmp_canvas)
 			ret = temp;
-		temp = temp->GetParent();
+		if (!ret)
+		{
+			temp = temp->GetParent();
+			++count;
+		}
 	}
 	return (ret) ? ret : nullptr;
 }
+
+#ifndef GAMEMODE
+math::float4x4 ModuleUI::GetUIMatrix()
+{
+	return WorldHolder->transform->GetGlobalMatrix();
+}
+#endif
 
 void ModuleUI::FillBufferRange(uint offset, uint size, char* buffer)
 {
@@ -604,27 +609,13 @@ void ModuleUI::OnWindowResize(uint width, uint height)
 		goScreenCanvas->OnSystemEvent(windowChanged);
 
 #else
-	int diff_x = uiWorkSpace[Screen::X];
-	uiWorkSpace[Screen::X] = (((int)ui_size_draw[Screen::WIDTH] - (int)uiWorkSpace[Screen::WIDTH]) < 0) ? 0 : (ui_size_draw[Screen::WIDTH] - uiWorkSpace[Screen::WIDTH]);
-	uiWorkSpace[Screen::Y] = 0;
-
-	diff_x = (int)uiWorkSpace[Screen::X] - (int)diff_x;
-
-	if (diff_x != 0)
-		for (GameObject* goScreenCanvas : canvas_screen)
-			if (goScreenCanvas->cmp_rectTransform)
-				goScreenCanvas->cmp_rectTransform->WorkSpaceChanged(diff_x);
+	
 #endif // GAMEMODE
 }
 
 uint* ModuleUI::GetRectUI()
 {
-#ifdef GAMEMODE
 	return ui_size_draw;
-#else
-	return uiWorkSpace;
-#endif // GAMEMODE
-
 }
 
 uint * ModuleUI::GetScreen()

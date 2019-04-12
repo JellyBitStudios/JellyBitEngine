@@ -15,13 +15,15 @@
 
 #define PIVOT_POINTS_STR "Top Left\0Top Right\0Bottom Left\0Bottom Right\0Center\0Top\0Left\0Right\0Bottom"
 
+// ---- Base methods ----
 ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::RectTransformComponent)
 {
 	if (includeComponents)
 	{
 		if (parent->GetParent())
 		{
-			GameObject* goCanvas = ModuleUI::FindCanvas(parent);
+			uint tmp;
+			GameObject* goCanvas = ModuleUI::FindCanvas(parent, tmp);
 			if (goCanvas)
 			{
 				ComponentCanvas* canvas = goCanvas->cmp_canvas;
@@ -129,12 +131,8 @@ void ComponentRectTransform::Update()
 		rectTransform_modified = false;
 	}
 }
-
-void ComponentRectTransform::OnEditor()
-{
-	OnUniqueEditor();
-}
-
+// ------------------------------------------------------------------------------
+// --------- Base Rect Methods
 void ComponentRectTransform::SetRect(uint x, uint y, uint x_dist, uint y_dist)
 {
 	if (rFrom != ComponentRectTransform::WORLD)
@@ -155,6 +153,54 @@ void ComponentRectTransform::SetRect(uint x, uint y, uint x_dist, uint y_dist)
 	}
 }
 
+void ComponentRectTransform::InitRect()
+{
+	switch (rFrom)
+	{
+	case ComponentRectTransform::RECT:
+	{
+		uint* rectParent = nullptr;
+		if (parent->cmp_canvas)
+			rectParent = App->ui->GetRectUI();
+		else
+			rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+
+		rectTransform[Rect::X] = rectParent[Rect::X];
+		rectTransform[Rect::Y] = rectParent[Rect::Y];
+
+		if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
+			rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
+		if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
+			rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
+
+		CalculateAnchors(true);
+		CalculateScreenCorners();
+		break;
+	}
+	case ComponentRectTransform::WORLD:
+	{
+		CalculateRectFromWorld();
+		break;
+	}
+	case ComponentRectTransform::RECT_WORLD:
+	{
+		ComponentRectTransform* rTParent = parent->GetParent()->cmp_rectTransform;
+		uint* rectParent = rTParent->GetRect();
+
+		z = parent->cmp_canvas->GetZ(parent, GetType());
+		if (rectTransform[Rect::XDIST] > rectParent[Rect::XDIST])
+			rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
+		if (rectTransform[Rect::YDIST] > rectParent[Rect::YDIST])
+			rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
+
+		CalculateCornersFromRect();
+		CalculateAnchors(true);
+		break;
+	}
+	}
+}
+// ------------------------------------------------------------------------------
+// ------------------- Getters ---------------------
 uint* ComponentRectTransform::GetRect()
 {
 	return rectTransform;
@@ -165,75 +211,21 @@ math::float3 * ComponentRectTransform::GetCorners()
 	return corners;
 }
 
-void ComponentRectTransform::InitRect()
-{
-	switch (rFrom)
-	{
-		case ComponentRectTransform::RECT:
-		{
-			uint* rectParent = nullptr;
-			if (parent->cmp_canvas)
-				rectParent = App->ui->GetRectUI();
-			else
-				rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
-
-			rectTransform[Rect::X] = rectParent[Rect::X];
-			rectTransform[Rect::Y] = rectParent[Rect::Y];
-
-			if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
-				rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
-			if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
-				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
-
-			CalculateAnchors(true);
-			CalculateScreenCorners();
-			break;
-		}
-		case ComponentRectTransform::WORLD:
-		{
-			CalculateRectFromWorld();
-			break;
-		}
-		case ComponentRectTransform::RECT_WORLD:
-		{
-			ComponentRectTransform* rTParent = parent->GetParent()->cmp_rectTransform;
-			uint* rectParent = rTParent->GetRect();
-
-			z = rTParent->GetZ() + ZSEPARATOR;
-			if (rectTransform[Rect::XDIST] > rectParent[Rect::XDIST])
-				rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
-			if (rectTransform[Rect::YDIST] > rectParent[Rect::YDIST])
-				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
-
-			CalculateCornersFromRect();
-			CalculateAnchors(true);
-			break;
-		}
-	}
-}
-
 ComponentRectTransform::RectFrom ComponentRectTransform::GetFrom() const
 {
 	return rFrom;
 }
-
-
-bool ComponentRectTransform::IsInRect(uint* rect)
-{
-	return rectTransform[0] >= rect[0] && rectTransform[1] >= rect[1] &&
-			rectTransform[0] + rectTransform[2] <= rect[0] + rect[2] &&
-			rectTransform[1] + rectTransform[3] <= rect[1] + rect[3];
-}
-
+// ------------------------------------------------------------------------------
+// ---------- Change base rect transform methods -------------------------
 void ComponentRectTransform::ParentChanged()
 {
-	GameObject* gCanvas = ModuleUI::FindCanvas(parent);
+	uint tmp;
+	GameObject* gCanvas = ModuleUI::FindCanvas(parent, tmp);
 	if (gCanvas->cmp_canvas->GetType() == ComponentCanvas::CanvasType::SCREEN && rFrom == RectFrom::RECT_WORLD)
 		rFrom = RectFrom::RECT;
 	else if (gCanvas->cmp_canvas->GetType() != ComponentCanvas::CanvasType::SCREEN && rFrom == RectFrom::RECT)
 		rFrom = RectFrom::RECT_WORLD;
 }
-
 void ComponentRectTransform::CanvasChanged()
 {
 	if (parent->cmp_canvas)
@@ -274,51 +266,9 @@ void ComponentRectTransform::CanvasChanged()
 		noUpdatefromCanvas = false;
 	}
 }
-
-void ComponentRectTransform::WorkSpaceChanged(int diff)
-{
-	if (rFrom == RectFrom::RECT)
-	{
-		if (parent->cmp_canvas)
-			rectTransform[Rect::X] += diff;
-		System_Event workSpace;
-		workSpace.type = System_Event_Type::RectTransformUpdated;
-
-		std::vector<GameObject*> rectChilds;
-		parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
-
-		for (std::vector<GameObject*>::const_reverse_iterator go = rectChilds.crbegin(); go != rectChilds.crend(); go++)
-			(*go)->OnSystemEvent(workSpace);
-	}
-}
-
-void ComponentRectTransform::RecalculateRectByPercentage()
-{
-	uint* rectParent = nullptr;
-	if (parent->cmp_canvas)
-		rectParent = App->ui->GetRectUI();
-	else
-		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
-
-	rectTransform[Rect::X] = (uint)(anchor_percenatges[RectPercentage::X0] * (float)rectParent[Rect::XDIST]) + rectParent[Rect::X];
-	rectTransform[Rect::XDIST] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - (uint)(anchor_percenatges[RectPercentage::X1] * (float)rectParent[Rect::XDIST]) - rectTransform[Rect::X];
-	rectTransform[Rect::Y] = (uint)(anchor_percenatges[RectPercentage::Y0] * (float)rectParent[Rect::YDIST]) + rectParent[Rect::Y];
-	rectTransform[Rect::YDIST] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - (uint)(anchor_percenatges[RectPercentage::Y1] * (float)rectParent[Rect::YDIST]) - rectTransform[Rect::Y];
-
-	CalculateAnchors();
-}
-
-void ComponentRectTransform::CalculateScreenCorners()
-{
-	uint* screen = App->ui->GetScreen();
-	uint w_width = screen[ModuleUI::Screen::WIDTH];
-	uint w_height = screen[ModuleUI::Screen::HEIGHT];
-	corners[Rect::RTOPLEFT] = { math::Frustum::ScreenToViewportSpace({ (float)rectTransform[ComponentRectTransform::Rect::X], (float)rectTransform[ComponentRectTransform::Rect::Y] }, w_width, w_height), 0.0f };
-	corners[Rect::RTOPRIGHT] = { math::Frustum::ScreenToViewportSpace({ (float)rectTransform[ComponentRectTransform::Rect::X] + (float)rectTransform[ComponentRectTransform::Rect::XDIST], (float)rectTransform[ComponentRectTransform::Rect::Y] }, w_width, w_height), 0.0f };
-	corners[Rect::RBOTTOMLEFT] = { math::Frustum::ScreenToViewportSpace({ (float)rectTransform[ComponentRectTransform::Rect::X], (float)rectTransform[ComponentRectTransform::Rect::Y] + (float)rectTransform[ComponentRectTransform::Rect::YDIST] }, w_width, w_height), 0.0f };
-	corners[Rect::RBOTTOMRIGHT] = { math::Frustum::ScreenToViewportSpace({ (float)rectTransform[ComponentRectTransform::Rect::X] + (float)rectTransform[ComponentRectTransform::Rect::XDIST], (float)rectTransform[ComponentRectTransform::Rect::Y] + (float)rectTransform[ComponentRectTransform::Rect::YDIST] }, w_width, w_height), 0.0f };
-}
-
+// ------------------------------------------------------------------------------
+// --------- Rect calcs ---------------------
+// World Position
 void ComponentRectTransform::CalculateRectFromWorld()
 {
 	math::float4x4 globalmatrix = math::float4x4::identity;
@@ -354,7 +304,7 @@ void ComponentRectTransform::CalculateRectFromWorld()
 	rectTransform[Rect::XDIST] = abs(math::Distance(corners[Rect::RTOPRIGHT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
 	rectTransform[Rect::YDIST] = abs(math::Distance(corners[Rect::RBOTTOMLEFT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
 }
-
+// World Position
 void ComponentRectTransform::CalculateCornersFromRect()
 {
 	math::float3* parentCorners = parent->GetParent()->cmp_rectTransform->GetCorners();
@@ -375,7 +325,50 @@ void ComponentRectTransform::CalculateCornersFromRect()
 	corners[Rect::RBOTTOMLEFT] -= zDirection * z;
 	corners[Rect::RBOTTOMRIGHT] -= zDirection * z;
 }
+//NDC coordinates 
+void ComponentRectTransform::CalculateScreenCorners()
+{
+	uint* screen = App->ui->GetScreen();
+	uint w_width = screen[ModuleUI::Screen::WIDTH];
+	uint w_height = screen[ModuleUI::Screen::HEIGHT];
+	corners[Rect::RTOPLEFT] = { math::Frustum::ScreenToViewportSpace({ (float)rectTransform[ComponentRectTransform::Rect::X], (float)rectTransform[ComponentRectTransform::Rect::Y] }, w_width, w_height), 0.0f };
+	corners[Rect::RTOPRIGHT] = { math::Frustum::ScreenToViewportSpace({ (float)rectTransform[ComponentRectTransform::Rect::X] + (float)rectTransform[ComponentRectTransform::Rect::XDIST], (float)rectTransform[ComponentRectTransform::Rect::Y] }, w_width, w_height), 0.0f };
+	corners[Rect::RBOTTOMLEFT] = { math::Frustum::ScreenToViewportSpace({ (float)rectTransform[ComponentRectTransform::Rect::X], (float)rectTransform[ComponentRectTransform::Rect::Y] + (float)rectTransform[ComponentRectTransform::Rect::YDIST] }, w_width, w_height), 0.0f };
+	corners[Rect::RBOTTOMRIGHT] = { math::Frustum::ScreenToViewportSpace({ (float)rectTransform[ComponentRectTransform::Rect::X] + (float)rectTransform[ComponentRectTransform::Rect::XDIST], (float)rectTransform[ComponentRectTransform::Rect::Y] + (float)rectTransform[ComponentRectTransform::Rect::YDIST] }, w_width, w_height), 0.0f };
+}
+// ------------------------------------------------------------------------------
+// ------------------------ Percentages ----------------------------------------
+void ComponentRectTransform::CaculatePercentage()
+{
+	uint* rectParent = nullptr;
+	if (parent->cmp_canvas)
+		rectParent = App->ui->GetRectUI();
+	else
+		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
 
+	anchor_percenatges[RectPercentage::X0] = (float)(rectTransform[Rect::X] - rectParent[Rect::X]) / (float)rectParent[Rect::XDIST];
+	anchor_percenatges[RectPercentage::X1] = (float)((rectParent[Rect::X] + rectParent[Rect::XDIST]) - (rectTransform[Rect::X] + rectTransform[Rect::XDIST])) / (float)rectParent[Rect::XDIST];
+	anchor_percenatges[RectPercentage::Y0] = (float)(rectTransform[Rect::Y] - rectParent[Rect::Y]) / (float)rectParent[Rect::YDIST];
+	anchor_percenatges[RectPercentage::Y1] = (float)((rectParent[Rect::Y] + rectParent[Rect::YDIST]) - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST])) / (float)rectParent[Rect::YDIST];
+}
+
+void ComponentRectTransform::RecalculateRectByPercentage()
+{
+	uint* rectParent = nullptr;
+	if (parent->cmp_canvas)
+		rectParent = App->ui->GetRectUI();
+	else
+		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+
+	rectTransform[Rect::X] = (uint)(anchor_percenatges[RectPercentage::X0] * (float)rectParent[Rect::XDIST]) + rectParent[Rect::X];
+	rectTransform[Rect::XDIST] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - (uint)(anchor_percenatges[RectPercentage::X1] * (float)rectParent[Rect::XDIST]) - rectTransform[Rect::X];
+	rectTransform[Rect::Y] = (uint)(anchor_percenatges[RectPercentage::Y0] * (float)rectParent[Rect::YDIST]) + rectParent[Rect::Y];
+	rectTransform[Rect::YDIST] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - (uint)(anchor_percenatges[RectPercentage::Y1] * (float)rectParent[Rect::YDIST]) - rectTransform[Rect::Y];
+
+	CalculateAnchors();
+}
+// ------------------------------------------------------------------------------
+// ------------------------ Ancors ----------------------------------------
 void ComponentRectTransform::CalculateAnchors(bool needed_newPercentages)
 {
 	uint* rectParent = nullptr;
@@ -466,7 +459,7 @@ void ComponentRectTransform::CalculateAnchors(bool needed_newPercentages)
 		}
 	}
 	if (needed_newPercentages)
-		RecaculatePercentage();
+		CaculatePercentage();
 }
 
 void ComponentRectTransform::RecaculateAnchors()
@@ -558,23 +551,10 @@ void ComponentRectTransform::RecaculateAnchors()
 			break;
 		}
 	}
-	RecaculatePercentage();
+	CaculatePercentage();
 }
-
-void ComponentRectTransform::RecaculatePercentage()
-{
-	uint* rectParent = nullptr;
-	if (parent->cmp_canvas)
-		rectParent = App->ui->GetRectUI();
-	else
-		rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
-
-	anchor_percenatges[RectPercentage::X0] = (float)(rectTransform[Rect::X] - rectParent[Rect::X]) / (float)rectParent[Rect::XDIST];
-	anchor_percenatges[RectPercentage::X1] = (float)((rectParent[Rect::X] + rectParent[Rect::XDIST]) - (rectTransform[Rect::X] + rectTransform[Rect::XDIST])) / (float)rectParent[Rect::XDIST];
-	anchor_percenatges[RectPercentage::Y0] = (float)(rectTransform[Rect::Y] - rectParent[Rect::Y]) / (float)rectParent[Rect::YDIST];
-	anchor_percenatges[RectPercentage::Y1] = (float)((rectParent[Rect::Y] + rectParent[Rect::YDIST]) - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST])) / (float)rectParent[Rect::YDIST];
-}
-
+// ------------------------------------------------------------------------------
+// ----------- Serialization -----------------
 uint ComponentRectTransform::GetInternalSerializationBytes()
 {
 	return sizeof(RectFrom) + sizeof(RectPrivot) + sizeof(bool) * 2 + sizeof(math::float3) * 4 + sizeof(uint) * 10 + sizeof(float) * 5 + sizeof(int);
@@ -670,6 +650,12 @@ void ComponentRectTransform::OnInternalLoad(char *& cursor)
 	cursor += bytes;
 
 	noUpdatefromCanvas = true;
+}
+// ------------------------------------------------------------------------------
+// ------ Editor --------
+void ComponentRectTransform::OnEditor()
+{
+	OnUniqueEditor();
 }
 
 void ComponentRectTransform::OnUniqueEditor()
@@ -1028,8 +1014,4 @@ void ComponentRectTransform::OnUniqueEditor()
 	}
 #endif
 }
-
-float ComponentRectTransform::GetZ() const
-{
-	return z;
-}
+// ------------------------------------------------------------------------------
