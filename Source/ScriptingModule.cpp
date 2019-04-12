@@ -1247,6 +1247,27 @@ int GetWheelMovementCS()
 	return App->input->GetMouseZ();
 }
 
+MonoString* InputGetCursorTexture()
+{
+	std::string name = App->input->GetCursorTexture();
+	if (name != "")
+		return mono_string_new(App->scripting->domain, name.data());
+
+	return nullptr;
+}
+
+void InputSetCursorTexture(MonoString* name)
+{
+	if (!name)
+		return;
+
+	char* namecpp = mono_string_to_utf8(name);
+
+	App->input->SetCursorTexture(std::string(namecpp));
+
+	mono_free(namecpp);
+}
+
 MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, MonoArray* rotation)
 {
 	if (!templateMO)
@@ -1371,6 +1392,20 @@ void DestroyObj(MonoObject* obj)
 			}
 		}
 	}
+}
+
+MonoObject* Vector3RandomInsideSphere()
+{
+	math::float3 randomPoint = math::float3::RandomSphere(App->randomMathLCG, math::float3(0, 0, 0), 1);
+
+	MonoClass* vector3class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
+	MonoObject* ret = mono_object_new(App->scripting->domain, vector3class);
+
+	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "_x"), &randomPoint.x);
+	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "_y"), &randomPoint.y);
+	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "_z"), &randomPoint.z);
+
+	return ret;
 }
 
 MonoArray* QuatMult(MonoArray* q1, MonoArray* q2)
@@ -3528,13 +3563,22 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Debug::_DrawSphere", (const void*)&DebugDrawSphere);
 	mono_add_internal_call("JellyBitEngine.Debug::_DrawLine", (const void*)&DebugDrawLine);
 
-	//Variated
+	//Input
 	mono_add_internal_call("JellyBitEngine.Input::GetKeyState", (const void*)&GetKeyStateCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetMouseButtonState", (const void*)&GetMouseStateCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetMousePos", (const void*)&GetMousePosCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetWheelMovement", (const void*)&GetWheelMovementCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetMouseDeltaPos", (const void*)&GetMouseDeltaPosCS);
+	mono_add_internal_call("JellyBitEngine.Input::GetCursorTexture", (const void*)&InputGetCursorTexture);
+	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture", (const void*)&InputSetCursorTexture);
+
+	//Object
 	mono_add_internal_call("JellyBitEngine.Object::Destroy", (const void*)&DestroyObj);
+
+	//Vector3
+	mono_add_internal_call("JellyBitEngine.Vector3::RandomPointInsideUnitSphere", (const void*)&Vector3RandomInsideSphere);
+
+	//Quaternion
 	mono_add_internal_call("JellyBitEngine.Quaternion::quatMult", (const void*)&QuatMult);
 	mono_add_internal_call("JellyBitEngine.Quaternion::quatVec3", (const void*)&QuatVec3);
 	mono_add_internal_call("JellyBitEngine.Quaternion::toEuler", (const void*)&ToEuler);

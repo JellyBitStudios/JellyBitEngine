@@ -14,6 +14,7 @@
 #include "ModuleParticles.h"
 #include "ModuleUI.h"
 #include "ModuleFBOManager.h"
+#include "ModuleInput.h"
 #include "ScriptingModule.h"
 #include "Lights.h"
 #include "DebugDrawer.h"
@@ -317,7 +318,6 @@ update_status ModuleRenderer3D::PostUpdate()
 		App->debugDrawer->EndDebugDraw();
 	}
 
-
 	App->ui->DrawUI();
 
 	// 3. Editor
@@ -325,6 +325,8 @@ update_status ModuleRenderer3D::PostUpdate()
 #else
 	App->ui->DrawUI();
 #endif // GAME
+
+	App->input->DrawCursor();
 
 	// 4. Swap buffers
 	SDL_GL_MakeCurrent(App->window->window, context);
