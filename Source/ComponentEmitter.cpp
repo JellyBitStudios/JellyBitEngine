@@ -6,6 +6,7 @@
 #include "ModuleTimeManager.h"
 #include "ModuleScene.h"
 #include "ResourceTexture.h"
+#include "ResourceMesh.h"
 #include "ModuleResourceManager.h"
 #include "ModuleInternalResHandler.h"
 
