@@ -86,6 +86,8 @@ public:
 	bool saveTransform = false;
 
 	CurrentSelection selectedObject;
+
+	std::list<GameObject*> multipleSelection;
 #endif
 
 	GameObject* child = nullptr;

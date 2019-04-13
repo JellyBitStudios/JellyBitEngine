@@ -1,6 +1,10 @@
+#ifndef __CURRENT_SELECTION_H__
+#define __CURRENT_SELECTION_H__
+
 #ifndef GAMEMODE
 
 #include "Application.h"
+#include "ModuleScene.h"
 #include "ModuleCameraEditor.h"
 #include "GameObject.h"
 #include "ComponentTransform.h"
@@ -18,7 +22,7 @@ class Resource;
 
 struct CurrentSelection
 {
-	enum class SelectedType { null, gameObject, scene, resource, meshImportSettings, fontImportSettings };
+	enum class SelectedType { null, gameObject, scene, resource, meshImportSettings, fontImportSettings, multipleGO };
 
 private:
 	void* cur = nullptr;
@@ -81,12 +85,11 @@ public:
 		cur = (void*)newSelection;
 		type = SelectedType::gameObject;
 
-#ifndef GAMEMODE
 		// New game object selected. Update the camera reference
-
 		if(newSelection->transform)
 			App->camera->SetReference(newSelection->transform->GetPosition());
-#endif
+
+		App->scene->multipleSelection.clear();
 
 		return *this;
 	}
@@ -102,6 +105,15 @@ public:
 			return (GameObject*)cur;
 		else
 			return nullptr;
+	}
+	//-----------// GAMEOBJECTS LIST //----------//
+	CurrentSelection& operator=(std::list<GameObject*>* newSelection)
+	{
+		assert(newSelection != nullptr && "Non valid setter. Set to SelectedType::null instead");
+		cur = (void*)newSelection;
+		type = SelectedType::multipleGO;
+
+		return *this;
 	}
 	//-----------// RESOURCES //----------//
 
@@ -148,4 +160,5 @@ public:
 	// Add operators in case of new kinds of selection :)
 };
 
+#endif
 #endif

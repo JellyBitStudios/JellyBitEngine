@@ -332,9 +332,22 @@ void GameObject::ToggleIsActive()
 	isActive ? OnEnable() : OnDisable();
 }
 
+void GameObject::SetIsActive(bool activeGO)
+{
+	isActive = activeGO;
+
+	isActive ? OnEnable() : OnDisable();
+}
+
 void GameObject::ToggleIsStatic()
 {
 	isStatic = !isStatic;
+	App->GOs->RecalculateVector(this);
+}
+
+void GameObject::SetIsStatic(bool staticGO)
+{
+	isStatic = staticGO;
 	App->GOs->RecalculateVector(this);
 }
 

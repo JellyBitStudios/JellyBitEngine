@@ -172,8 +172,17 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 				}
 
 				if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0) && (ImGui::GetMousePos().x - ImGui::GetItemRectMin().x) > ImGui::GetTreeNodeToLabelSpacing())
-					SELECT(child);
-
+				{
+					if (App->input->GetKey(SDL_SCANCODE_LCTRL) != KEY_REPEAT && App->input->GetKey(SDL_SCANCODE_RCTRL) != KEY_REPEAT)
+					{
+						SELECT(child);
+					}
+					else
+					{
+						App->scene->multipleSelection.push_back(child);
+						SELECT(&App->scene->multipleSelection);
+					}
+				}
 				if (treeNodeOpened)
 				{
 					IterateAllChildren(child);
@@ -208,7 +217,17 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 				}
 
 				if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0) && (ImGui::GetMousePos().x - ImGui::GetItemRectMin().x) > ImGui::GetTreeNodeToLabelSpacing())
-					SELECT(child);
+				{
+					if (App->input->GetKey(SDL_SCANCODE_LCTRL) != KEY_REPEAT && App->input->GetKey(SDL_SCANCODE_RCTRL) != KEY_REPEAT)
+					{
+						SELECT(child);
+					}
+					else
+					{
+						App->scene->multipleSelection.push_back(child);
+						SELECT(&App->scene->multipleSelection);
+					}
+				}
 			}
 		}
 	}

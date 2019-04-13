@@ -58,6 +58,9 @@ bool PanelInspector::Draw()
 			case CurrentSelection::SelectedType::gameObject:
 				ShowGameObjectInspector();
 				break;
+			case CurrentSelection::SelectedType::multipleGO:
+				ShowGameObjectListInspector();
+				break;
 			case CurrentSelection::SelectedType::resource:
 			{
 				switch (((Resource*)App->scene->selectedObject.Get())->GetType())
@@ -402,6 +405,313 @@ void PanelInspector::ShowGameObjectInspector() const
 		ImGui::PopStyleColor();
 		ImGui::EndPopup();
 	}
+}
+
+void PanelInspector::ShowGameObjectListInspector() const
+{
+	GameObject* gameObject = App->scene->multipleSelection.front();
+
+	if (gameObject == nullptr)
+	{
+		assert(gameObject != nullptr);
+		return;
+	}
+
+	bool isActive = gameObject->IsActive();
+	if (ImGui::Checkbox("##Active", &isActive))
+	{
+		for (std::list<GameObject*>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+		{
+			(*iter)->SetIsActive(isActive);
+		}
+	}
+	ImGui::Text("Grup Selection");
+
+	bool isStatic = gameObject->IsStatic();
+	if (ImGui::Checkbox("Static", &isStatic))
+	{
+		for (std::list<GameObject*>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+		{
+			(*iter)->SetIsStatic(isStatic);
+		}
+	}
+
+	// Layer
+	std::vector<const char*> layers;
+	int currentLayer = 0;
+	for (uint i = 0; i < MAX_NUM_LAYERS; ++i)
+	{
+		const char* layerName = App->layers->NumberToName(i);
+		if (strcmp(layerName, "") == 0)
+			continue;
+
+		layers.push_back(layerName);
+		if (i == gameObject->GetLayer())
+			currentLayer = layers.size() - 1;
+	}
+	layers.shrink_to_fit();
+
+	ImGui::PushItemWidth(150.0f);
+	if (ImGui::Combo("Layer", &currentLayer, &layers[0], layers.size()))
+	{
+		for (std::list<GameObject*>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+		{
+			(*iter)->SetLayer(App->layers->NameToNumber(layers[currentLayer]));
+		}
+	}
+	ImGui::PopItemWidth();
+
+	// -----
+
+	ImVec2 inspectorSize = ImGui::GetWindowSize();
+	ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+
+	ImGui::SetCursorScreenPos(ImGui::GetWindowPos());
+
+	ImGui::SetCursorScreenPos(cursorPos);
+
+
+	ImGui::Separator();
+	DragnDropSeparatorTarget(gameObject->GetComponent(TransformComponent));
+	gameObject->GetComponent(TransformComponent)->OnEditor();
+	
+
+	ImGui::Separator();
+	DragnDropSeparatorTarget(gameObject->GetComponent(gameObject->GetComponentsLength() - 1));
+
+	ImGui::Button("Add Component");
+	bool scriptSelected = false;
+	if (ImGui::BeginPopupContextItem((const char*)0, 0))
+	{
+		if (gameObject->GetLayer() == UILAYER)
+		{
+			if (!CheckIsComponent(ImageComponent))
+				if (ImGui::Selectable("Image UI")) {
+					gameObject->AddComponent(ComponentTypes::ImageComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			if (!CheckIsComponent(ButtonComponent))
+				if (ImGui::Selectable("Button UI")) {
+					gameObject->AddComponent(ComponentTypes::ButtonComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			if (!CheckIsComponent(LabelComponent))
+				if (ImGui::Selectable("Label UI")) {
+					gameObject->AddComponent(ComponentTypes::LabelComponent);
+					ImGui::CloseCurrentPopup();
+				}
+		}
+		if (ImGui::Selectable("Script")) {
+			//Open new Popup, with input text and autocompletion to select scripts by name
+			scriptSelected = true;
+			ImGui::CloseCurrentPopup();
+		}
+
+		if (gameObject->transform)
+		{
+			if (!CheckIsComponent(MeshComponent))
+				if (ImGui::Selectable("Mesh")) {
+					gameObject->AddComponent(ComponentTypes::MeshComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			if (!CheckIsComponent(CameraComponent))
+				if (ImGui::Selectable("Camera")) {
+					gameObject->AddComponent(ComponentTypes::CameraComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			if (!CheckIsComponent(EmitterComponent))
+				if (ImGui::Selectable("Particle Emitter")) {
+					gameObject->AddComponent(ComponentTypes::EmitterComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			if (!CheckIsComponent(LightComponent))
+				if (ImGui::Selectable("Light")) {
+					gameObject->AddComponent(ComponentTypes::LightComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			if (!CheckIsComponent(ProjectorComponent))
+				if (ImGui::Selectable("Projector")) {
+					gameObject->AddComponent(ComponentTypes::ProjectorComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			if (!CheckIsComponent(AnimatorComponent))
+				if (ImGui::Selectable("Animator")) {
+					gameObject->AddComponent(ComponentTypes::AnimatorComponent);
+					ImGui::CloseCurrentPopup();
+				}
+
+			if (!CheckIsComponent(NavAgentComponent))
+				if (ImGui::Selectable("Nav Agent")) {
+					gameObject->AddComponent(ComponentTypes::NavAgentComponent);
+					ImGui::CloseCurrentPopup();
+				}
+		
+
+			if (gameObject->cmp_rigidActor == nullptr) {
+				if (ImGui::Selectable("Rigid Static")) {
+					gameObject->AddComponent(ComponentTypes::RigidStaticComponent);
+					ImGui::CloseCurrentPopup();
+				}
+				else if ((gameObject->cmp_collider == nullptr || gameObject->cmp_collider->GetType() != ComponentTypes::PlaneColliderComponent)
+					&& ImGui::Selectable("Rigid Dynamic")) {
+					gameObject->AddComponent(ComponentTypes::RigidDynamicComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			}
+			if (gameObject->cmp_collider == nullptr) {
+				if (ImGui::Selectable("Box Collider")) {
+					gameObject->AddComponent(ComponentTypes::BoxColliderComponent);
+					ImGui::CloseCurrentPopup();
+				}
+				else if (ImGui::Selectable("Sphere Collider")) {
+					gameObject->AddComponent(ComponentTypes::SphereColliderComponent);
+					ImGui::CloseCurrentPopup();
+				}
+				else if (ImGui::Selectable("Capsule Collider")) {
+					gameObject->AddComponent(ComponentTypes::CapsuleColliderComponent);
+					ImGui::CloseCurrentPopup();
+				}
+				else if ((gameObject->cmp_rigidActor == nullptr || gameObject->cmp_rigidActor->GetType() == ComponentTypes::RigidStaticComponent)
+					&& ImGui::Selectable("Plane Collider")) {
+					gameObject->AddComponent(ComponentTypes::PlaneColliderComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			}
+			if (!CheckIsComponent(AudioListenerComponent))
+				if (ImGui::Selectable("Audio Listener")) {
+					gameObject->AddComponent(ComponentTypes::AudioListenerComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			
+			if (!CheckIsComponent(AudioSourceComponent))
+				if (ImGui::Selectable("Audio Source")) {
+					gameObject->AddComponent(ComponentTypes::AudioSourceComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			
+			if (!CheckIsComponent(TrailComponent))
+			{
+				if (ImGui::Selectable("Trail")) {
+					gameObject->AddComponent(ComponentTypes::TrailComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			}
+		}
+		ImGui::EndPopup();
+	}
+
+	if (scriptSelected)
+	{
+		ImGui::OpenPopup("AddingScript");
+	}
+
+	inspectorSize = ImGui::GetWindowSize();
+	ImGui::SetNextWindowPos({ ImGui::GetWindowPos().x, ImGui::GetCursorScreenPos().y });
+	ImGui::SetNextWindowSize({ inspectorSize.x, 0.0f });
+	if (ImGui::BeginPopup("AddingScript"))
+	{
+		std::vector<std::string> scriptNames = ResourceScript::getScriptNames();
+
+		float totalHeight = 0;
+
+		float windowPaddingY = ImGui::GetCurrentWindow()->WindowPadding.y - 2;
+
+		for (int i = 0; i < scriptNames.size(); ++i)
+		{
+			totalHeight += ImGui::CalcTextSize(scriptNames[i].data()).y + 4;
+		}
+
+		ImGui::SetNextWindowContentSize({ 0, totalHeight });
+
+		//TODO: Add a maximum height, fix the totalHeight calculation
+
+		totalHeight = totalHeight > 300 ? 300 : totalHeight;
+
+		ImGui::BeginChild("Names Available", { inspectorSize.x - 15, totalHeight + windowPaddingY * 2 }, true);
+
+		for (int i = 0; i < scriptNames.size(); ++i)
+		{
+			if (ImGui::Selectable(scriptNames[i].data()))
+			{
+				ResourceScript* res = nullptr;
+
+				std::vector<Resource*> scriptResources = App->res->GetResourcesByType(ResourceTypes::ScriptResource);
+				for (Resource* resource : scriptResources)
+				{
+					if (resource->GetData().name == scriptNames[i])
+					{
+						res = (ResourceScript*)resource;
+					}
+				}
+
+				CONSOLE_LOG(LogTypes::Normal, "New Script Created: %s", scriptNames[i].data());
+				ComponentScript* script = App->scripting->CreateScriptComponent(scriptNames[i], res);
+				gameObject->AddComponent(script);
+				script->SetParent(gameObject);
+				script->InstanceClass();
+
+				ImGui::CloseCurrentPopup();
+			}
+		}
+
+		ImGui::EndChild();
+
+		static std::string scriptName;
+
+		ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_FrameBg, { 0.26f, 0.59f, 0.98f, 0.5f });
+
+		ImGui::PushItemWidth(inspectorSize.x - ImGui::CalcTextSize("Script Name").x - 30);
+		if (ImGui::InputText("Script Name", &scriptName, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsNoBlank))
+		{
+			App->scripting->clearSpaces(scriptName);
+
+			//Find the ResourceScript with this name, extracting the UUID from the .meta
+
+			ResourceScript* res = nullptr;
+
+			if (App->fs->Exists("Assets/Scripts/" + scriptName + ".cs.meta"))
+			{
+				char* metaBuffer;
+				uint size = App->fs->Load("Assets/Scripts/" + scriptName + ".cs.meta", &metaBuffer);
+				if (size > 0)
+				{
+					uint32_t UUID;
+					memcpy(&UUID, metaBuffer, sizeof(uint32_t));
+
+					res = (ResourceScript*)App->res->GetResource(UUID);
+
+					delete[] metaBuffer;
+				}
+			}
+
+			CONSOLE_LOG(LogTypes::Normal, "New Script Created: %s", scriptName.data());
+			ComponentScript* script = App->scripting->CreateScriptComponent(scriptName, res);
+			gameObject->AddComponent(script);
+			script->SetParent(gameObject);
+			script->InstanceClass();
+
+			scriptName = "";
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::PopItemWidth();
+
+		ImGui::PopStyleColor();
+		ImGui::EndPopup();
+	}
+}
+
+bool PanelInspector::CheckIsComponent(ComponentTypes type) const
+{
+	bool haveIt = false;
+	for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+	{
+		if ((*iter)->GetComponent(type))
+		{
+			haveIt = true;
+			break;
+		}
+	}
+	return haveIt;
 }
 
 void PanelInspector::DragnDropSeparatorTarget(Component* target) const

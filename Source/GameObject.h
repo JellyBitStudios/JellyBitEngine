@@ -35,7 +35,9 @@ public:
 	GameObject* GetParent() const;
 	uint GetParentUUID() const;
 	void ToggleIsActive();
+	void SetIsActive(bool activeGO);
 	void ToggleIsStatic();
+	void SetIsStatic(bool staticGO);
 	void ToggleChildrenAndThisStatic(bool toStatic);
 	void ToggleChildrenAndThisWalkable(bool walkable);
 	bool IsActive() const;
