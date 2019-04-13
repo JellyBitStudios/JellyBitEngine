@@ -25,6 +25,12 @@ public class Agent : JellyScript
     public float agentMaxAngularAcceleration = 1.0f;
     public float agentArriveMinDistance = 0.1f;
 
+    // Steerings
+    public uint separationPriority = 1;
+    public uint seekPriority = 1;
+    public uint fleePriority = 1;
+    public uint alignPriority = 1;
+
     // SteeringSeparation
     public LayerMask separationMask = new LayerMask();
     public float separationRadius = 1.0f;
@@ -77,7 +83,17 @@ public class Agent : JellyScript
 
         ResetPriorities();
 
+        seek.agent = this;
+        flee.agent = this;
+        separation.agent = this;
+
         // --------------------------------------------------
+
+        // Steerings
+        seek.Priority = seekPriority;
+        flee.Priority = fleePriority;
+        separation.Priority = separationPriority;
+        align.Priority = alignPriority;
 
         // AgentConfiguration
         agentConfiguration.maxVelocity = agentMaxVelocity;
@@ -110,33 +126,32 @@ public class Agent : JellyScript
         // TODO
 
         // 2. Separation
-        //velocities[separation.Priority] += separation.GetSeparation(this);
+        velocities[separation.Priority] += separation.GetSeparation();
 
         // 3. Move
         /// Velocity
-        velocities[seek.Priority] += seek.GetSeek(this);
-        Debug.Log("Velocity " + velocities[seek.Priority]);
-        //velocities[flee.Priority] += flee.GetFlee(this);
+        velocities[seek.Priority] += seek.GetSeek();
+        //velocities[flee.Priority] += flee.GetFlee();
 
         /// Angular velocity
         //angularVelocities[align.Priority] += align.GetAlign(this);
 
         // Angular velocities
-        foreach (float angVel in angularVelocities)
+        for (uint i = 0; i < SteeringConfiguration.maxPriorities; ++i)
         {
-            if (!Approximately(angVel, 0.0f))
+            if (!Approximately(angularVelocities[i], 0.0f))
             {
-                newAngularVelocity = angVel;
+                newAngularVelocity = angularVelocities[i];
                 break;
             }
         }
 
         // Velocities
-        foreach (Vector3 vel in velocities)
+        for (uint i = 0; i < SteeringConfiguration.maxPriorities; ++i)
         {
-            if (!Approximately(vel.magnitude, 0.0f))
+            if (!Approximately(velocities[i].magnitude, 0.0f))
             {
-                newVelocity = vel;
+                newVelocity = velocities[i];
                 break;
             }
         }
@@ -204,10 +219,18 @@ public class Agent : JellyScript
         }
     }
 
+    public override void OnDrawGizmos()
+    {
+        seek.OnDrawGizmos();
+        flee.OnDrawGizmos();
+        separation.OnDrawGizmos();
+        align.OnDrawGizmos();
+    }
+
     // ----------------------------------------------------------------------------------------------------
 
-    // A tiny floating point value (RO)
-    public static readonly float Epsilon = float.MinValue;
+        // A tiny floating point value (RO)
+    public static readonly float Epsilon = float.Epsilon;
 
     // Compares two floating point values if they are similar
     public static bool Approximately(float a, float b)

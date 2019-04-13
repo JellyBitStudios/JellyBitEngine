@@ -4,11 +4,15 @@ using JellyBitEngine;
 
 public class SteeringSeparation : SteeringAbstract
 {
+    #region PUBLIC_VARIABLES
     public LayerMask mask = new LayerMask();
     public float radius = 1.0f;
     public float threshold = 1.0f;
 
-    public Vector3 GetSeparation(Agent agent)
+    public Agent agent = null;
+    #endregion
+
+    public Vector3 GetSeparation()
     {
         Vector3 outputAcceleration = Vector3.zero;
 
@@ -18,7 +22,6 @@ public class SteeringSeparation : SteeringAbstract
         OverlapHit[] hitInfo;
         if (Physics.OverlapSphere(radius, agent.transform.position, out hitInfo, mask, SceneQueryFlags.Dynamic))
         {
-            Debug.Log("Overlap");
             foreach (OverlapHit hit in hitInfo)
             {
                 if (hit == null)
@@ -30,26 +33,21 @@ public class SteeringSeparation : SteeringAbstract
                     continue;
 
                 Vector3 direction = target.transform.position - agent.transform.position;
-                float distance = (float)direction.magnitude;
+                float distance = direction.magnitude;
                 if (distance < threshold)
                 {
                     Debug.Log("Threshold");
                     float strength = agent.agentConfiguration.maxAcceleration * (threshold - distance) / threshold;
-                    if (direction.magnitude > 0.0)
-                        direction.Normalize();
+                    direction.Normalize();
                     direction *= strength;
 
                     outputAcceleration += direction;
                 }
-
-                Debug.Log("Foreach");
             }
 
             if (outputAcceleration.magnitude > agent.agentConfiguration.maxAcceleration)
             {
-                if (outputAcceleration.magnitude > 0.0)
-                    outputAcceleration.Normalize();
-                Debug.Log("Multiply");
+                outputAcceleration.Normalize();
                 outputAcceleration *= agent.agentConfiguration.maxAcceleration;
             }
         }
@@ -57,10 +55,11 @@ public class SteeringSeparation : SteeringAbstract
         return outputAcceleration;
     }
 
-    /*
     public override void OnDrawGizmos()
     {
+        Debug.Log("Gizmos position: " + agent.transform.position);
+        Debug.Log("Gizmos radius: " + radius);
         float[] color = { 1.0f, 0.0f, 0.0f, 1.0f };
-        Debug.DrawSphere(radius, color, transform.position, Quaternion.identity, Vector3.one);
-    }*/
+        Debug.DrawSphere(radius, color, agent.transform.position, Quaternion.identity, Vector3.one);
+    }
 }

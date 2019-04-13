@@ -4,7 +4,11 @@ using JellyBitEngine;
 
 public class SteeringSeek : SteeringAbstract
 {
-    public Vector3 GetSeek(Agent agent)
+    #region PUBLIC_VARIABLES
+    public Agent agent = null;
+    #endregion
+
+    public Vector3 GetSeek()
     {
         if (agent == null)
             return Vector3.zero;
