@@ -542,7 +542,7 @@ bool ResourceAnimator::Update()
 	switch (anim_state)
 	{
 	case AnimationState::PLAYING: {
-		current_anim->anim_timer += dt * current_anim->anim_speed;
+		current_anim->anim_timer += dt * current_anim->anim_speed * animation_speed_mod;
 		ResourceAvatar* tmp_avatar = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
 		if (tmp_avatar) {
 			tmp_avatar->StepBones(current_anim->animation_uuid, current_anim->anim_timer);
@@ -564,8 +564,8 @@ bool ResourceAnimator::Update()
 		break;
 
 	case AnimationState::BLENDING: {
-		last_anim->anim_timer += dt * last_anim->anim_speed;
-		current_anim->anim_timer += dt * current_anim->anim_speed;
+		last_anim->anim_timer += dt * last_anim->anim_speed * animation_speed_mod;
+		current_anim->anim_timer += dt * current_anim->anim_speed * animation_speed_mod;
 		blend_timer += dt;
 		float blend_percentage = blend_timer / BLEND_TIME;
 		
@@ -582,6 +582,11 @@ bool ResourceAnimator::Update()
 	}
 
 	return true;
+}
+
+void ResourceAnimator::SetAnimationSpeed(float new_speed)
+{
+	animation_speed_mod = new_speed;
 }
 
 void ResourceAnimator::ClearAnimations() {

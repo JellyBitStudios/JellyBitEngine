@@ -27,6 +27,8 @@ public:
 	update_status PreUpdate();
 	bool CleanUp();
 
+	void DrawCursor();
+
 	KEY_STATE GetKey(int id) const
 	{
 		return keyboard[id];
@@ -63,6 +65,10 @@ public:
 		return mouse_y_motion;
 	}
 
+public:
+	std::string GetCursorTexture() const;
+	void SetCursorTexture(std::string& textureName);
+
 private:
 
 	KEY_STATE* keyboard;
@@ -73,6 +79,10 @@ private:
 	int mouse_x_motion;
 	int mouse_y_motion;
 	//int mouse_z_motion;
+
+	uint CursorTextureID = 0u;
+	uint CursorTextureUUID = 0u;
+	float cursorSize = 50.0f;
 };
 
 #endif
