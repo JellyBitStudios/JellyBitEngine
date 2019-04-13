@@ -110,9 +110,7 @@ public class Agent : JellyScript
 
         // 3. Move
         /// Velocity
-        Debug.Log("BEFORE:" + velocities[seek.Priority].x);
         velocities[seek.Priority] += seek.GetSeek(this);
-        Debug.Log("AFTER:" + velocities[seek.Priority].x);
         //velocities[flee.Priority] += flee.GetFlee(this);
 
         /// Angular velocity

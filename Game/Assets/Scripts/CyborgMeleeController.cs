@@ -132,6 +132,7 @@ public class CyborgMeleeController : JellyScript
                     RaycastHit hitInfo;
                     if (Physics.Raycast(ray, out hitInfo, float.MaxValue, raycastMask, SceneQueryFlags.Static))
                     {
+                        Debug.Log("Hit");
                         if (hitInfo != null)
                         {
                             agent.SetDestination(hitInfo.point);
