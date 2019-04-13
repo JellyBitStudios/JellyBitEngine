@@ -115,6 +115,7 @@ public class Agent : JellyScript
         // 3. Move
         /// Velocity
         velocities[seek.Priority] += seek.GetSeek(this);
+        Debug.Log("Velocity " + velocities[seek.Priority]);
         //velocities[flee.Priority] += flee.GetFlee(this);
 
         /// Angular velocity
@@ -133,7 +134,7 @@ public class Agent : JellyScript
         // Velocities
         foreach (Vector3 vel in velocities)
         {
-            if (!Approximately((float)vel.magnitude, 0.0f))
+            if (!Approximately(vel.magnitude, 0.0f))
             {
                 newVelocity = vel;
                 break;
@@ -151,8 +152,7 @@ public class Agent : JellyScript
         // Cap velocity
         if (velocity.magnitude > agentConfiguration.maxVelocity)
         {
-            if (velocity.magnitude > 0.0)
-                velocity.Normalize();
+            velocity.Normalize();
             velocity *= agentConfiguration.maxVelocity;
         }
 
@@ -160,7 +160,6 @@ public class Agent : JellyScript
         transform.rotation *= Quaternion.Rotate(Vector3.up, angularVelocity * Time.deltaTime);
 
         // Move
-        Debug.Log("Velocity " + velocity);
         transform.position += velocity * Time.deltaTime;
     }
 
