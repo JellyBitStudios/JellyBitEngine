@@ -4,6 +4,8 @@
 
 #include "imgui/imgui.h"
 
+#include "Globals.h"
+
 ComponentLight::ComponentLight(GameObject* parent) : Component(parent, ComponentTypes::LightComponent)
 {
 	// Default color
@@ -30,36 +32,129 @@ ComponentLight::~ComponentLight()
 void ComponentLight::OnUniqueEditor()
 {
 #ifndef GAMEMODE
-	ImGui::AlignTextToFramePadding();
-	ImGui::Text("Type");
-	ImGui::SameLine();
-	ImGui::PushItemWidth(100.0f);
-	const char* lights[] = { "", "Directional", "Point", "Spot" };
-	ImGui::Combo("##Light Type", (int*)&lightType, lights, IM_ARRAYSIZE(lights));
-	ImGui::PopItemWidth();
-	ImGui::AlignTextToFramePadding();
-	ImGui::Text("Color");
-	ImGui::SameLine();
-	int misc_flags = ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_NoDragDrop | ImGuiColorEditFlags_AlphaPreview |
-		ImGuiColorEditFlags_NoOptions | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel;
-	ImGui::ColorEdit3("Color", (float*)&color, misc_flags);
-	ImGui::AlignTextToFramePadding();
-	if (lightType == LightTypes::PointLight)
+	if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		ImGui::Text("Constants");
-		ImGui::Text("Quadratic");
+		ImGui::AlignTextToFramePadding();
+		ImGui::Text("Type");
 		ImGui::SameLine();
-		ImGui::PushItemWidth(50.0f);
-		int min = 0, max = 1;
-		ImGui::DragFloat("##Light Quadratic", &linear, 0.01f, 0.0f, 1.0f);
+		ImGui::PushItemWidth(100.0f);
+		const char* lights[] = { "", "Directional", "Point", "Spot" };
+		ImGui::Combo("##Light Type", (int*)&lightType, lights, IM_ARRAYSIZE(lights));
 		ImGui::PopItemWidth();
-		ImGui::Text("Linear");
+		ImGui::AlignTextToFramePadding();
+		ImGui::Text("Color");
 		ImGui::SameLine();
-		ImGui::PushItemWidth(50.0f);
-		ImGui::DragFloat("##Light Linaer", &quadratic, 0.01f, 0.0f, 1.0f);
-		ImGui::PopItemWidth();
+		int misc_flags = ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_NoDragDrop | ImGuiColorEditFlags_AlphaPreview |
+			ImGuiColorEditFlags_NoOptions | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel;
+		ImGui::ColorEdit3("Color", (float*)&color, misc_flags);
+		ImGui::AlignTextToFramePadding();
+		if (ImGui::Checkbox("Behaviour", &behavior))
+		{
+			if (lightBB.size() == 0)
+			{
+				LightBehaviourBlock block;
+				memcpy(block.color, color, sizeof(float) * 3);
+				lightBB.push_back(block);
+			}
+			if (behavior)
+			{
+				currentLightBB = 0;
+				nextInterval = RandomFloat(lightBB[currentLightBB].interval,
+					lightBB[currentLightBB].interval -
+					lightBB[currentLightBB].elpasedInterval);
+				// set everything
+				enabled = lightBB[currentLightBB].enabled;
+				quadratic = lightBB[currentLightBB].quadratic;
+				linear = lightBB[currentLightBB].linear;
+			}
+		}
+		static bool hideBB = false;
+		ImGui::Checkbox("Show Behaviour", &hideBB);
+		if (hideBB)
+		{
+			char name[INPUT_BUF_SIZE];
+			for (int i = 0; i < lightBB.size();)
+			{
+				ImGui::Separator();
+				sprintf_s(name, INPUT_BUF_SIZE, "LightBB color ##%i", i);
+				ImGui::ColorEdit3(name, (float*)&lightBB[i].color, misc_flags);
+				sprintf_s(name, INPUT_BUF_SIZE, "LightBB enabled ##%i", i);
+				ImGui::Checkbox(name, &lightBB[i].enabled);
+				ImGui::PushItemWidth(50.0f);
+				sprintf_s(name, INPUT_BUF_SIZE, "LightBB interval ##%i", i);
+				ImGui::DragFloat(name, &lightBB[i].interval, 0.1f, 0.0f, 1000.0f);
+				sprintf_s(name, INPUT_BUF_SIZE, "LightBB elpasedInterval ##%i", i);
+				ImGui::DragFloat(name, &lightBB[i].elpasedInterval, 0.1f, 0.0f, lightBB[i].interval);
+				if (lightType == LightTypes::PointLight)
+				{
+					sprintf_s(name, INPUT_BUF_SIZE, "LightBB quadratic ##%i", i);
+					ImGui::DragFloat(name, &lightBB[i].quadratic, 0.01f, 0.0f, 1.0f);
+					sprintf_s(name, INPUT_BUF_SIZE, "LightBB linear ##%i", i);
+					ImGui::DragFloat(name, &lightBB[i].linear, 0.01f, 0.0f, 1.0f);
+					ImGui::PopItemWidth();
+				}
+				if (i != 0)
+				{
+					sprintf_s(name, INPUT_BUF_SIZE, "Delete Block ##%i", i);
+					if (ImGui::Button(name))
+						lightBB.erase(lightBB.begin() + i);
+					else
+						++i;
+				}
+				else
+					++i;
+			}
+			if (ImGui::Button("Add BB"))
+			{
+				LightBehaviourBlock block;
+				memcpy(block.color, lightBB[lightBB.size() - 1].color, sizeof(float) * 3);
+				lightBB.push_back(block);
+			}
+		}
+		else
+		{
+			if (lightType == LightTypes::PointLight)
+			{
+				ImGui::Text("Constants");
+				ImGui::Text("Quadratic");
+				ImGui::SameLine();
+				ImGui::PushItemWidth(50.0f);
+				int min = 0, max = 1;
+				ImGui::DragFloat("##Light Quadratic", &linear, 0.01f, 0.0f, 1.0f);
+				ImGui::PopItemWidth();
+				ImGui::Text("Linear");
+				ImGui::SameLine();
+				ImGui::PushItemWidth(50.0f);
+				ImGui::DragFloat("##Light Linaer", &quadratic, 0.01f, 0.0f, 1.0f);
+				ImGui::PopItemWidth();
+			}
+		}
 	}
 #endif
+}
+
+void ComponentLight::Update()
+{
+	if (behavior)
+	{
+		timer += App->GetDt();
+		if (timer >= nextInterval)
+		{
+			timer = 0.0f;
+			currentLightBB += 1;
+			if (currentLightBB >= lightBB.size())
+				currentLightBB = 0;
+
+			nextInterval = RandomFloat(lightBB[currentLightBB].interval,
+									   lightBB[currentLightBB].interval -
+									   lightBB[currentLightBB].elpasedInterval);
+			// set everything
+			enabled = lightBB[currentLightBB].enabled;
+			quadratic = lightBB[currentLightBB].quadratic;
+			linear = lightBB[currentLightBB].linear;
+			memcpy(color, lightBB[currentLightBB].color, sizeof(float) * 3);
+		}
+	}
 }
 
 uint ComponentLight::GetInternalSerializationBytes()

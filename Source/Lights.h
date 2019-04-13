@@ -10,14 +10,14 @@ public:
 	Lights();
 	~Lights();
 
-	void AddLight(const class ComponentLight* light);
-	bool EraseLight(const class ComponentLight* light);
-	void UseLights(const unsigned int shaderProgram) const;
+	void AddLight(class ComponentLight* light);
+	bool EraseLight(class ComponentLight* light);
+	void UseLights(const unsigned int shaderProgram);
 	void DebugDrawLights() const;
 
 private:
 
-	std::vector<const class ComponentLight*> lights;
+	std::vector<class ComponentLight*> lights;
 
 };
 

@@ -24,19 +24,19 @@ Lights::~Lights()
 {
 }
 
-void Lights::AddLight(const ComponentLight* light)
+void Lights::AddLight(ComponentLight* light)
 {
 	lights.push_back(light);
 }
 
-bool Lights::EraseLight(const ComponentLight* light)
+bool Lights::EraseLight(ComponentLight* light)
 {
 	bool ret = false;
 
 	if (lights.size() <= 0)
 		return false;
 
-	std::vector<const ComponentLight*>::const_iterator it = std::find(lights.begin(), lights.end(), light);
+	std::vector<ComponentLight*>::const_iterator it = std::find(lights.begin(), lights.end(), light);
 	ret = it != lights.end();
 
 	if (ret)
@@ -45,14 +45,20 @@ bool Lights::EraseLight(const ComponentLight* light)
 	return ret;
 }
 
-void Lights::UseLights(const unsigned int shaderID) const
+void Lights::UseLights(const unsigned int shaderID)
 {
 	for (int i = 0; i < 32; ++i)
 	{
 		if (i < lights.size())
 		{
+			lights[i]->Update();
 			char str[DEFAULT_BUF_SIZE];
 			sprintf(str, "lights[%i].type", i);
+			if (!lights[i]->enabled)
+			{
+				glUniform1i(glGetUniformLocation(shaderID, str), -1);
+				continue;
+			}
 			glUniform1i(glGetUniformLocation(shaderID, str), lights[i]->lightType);
 			if (lights[i]->lightType == LightTypes::DirectionalLight)
 			{
