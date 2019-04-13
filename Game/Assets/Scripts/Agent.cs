@@ -49,6 +49,10 @@ public class Agent : JellyScript
     {
         get { return pathManager.Destination; }
     }
+    public Vector3 NextPosition
+    {
+        get { return pathManager.NextPosition; }
+    }
 
     // Steerings
     public SteeringSeek seek = new SteeringSeek();

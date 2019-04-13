@@ -13,8 +13,7 @@ public class SteeringSeek : SteeringAbstract
         Debug.Log("Agent destination: " + agent.Destination);
         Vector3 direction = agent.Destination - agent.transform.position;
         Debug.Log("Direction1: " + direction);
-        if (direction.magnitude > 0.0)
-            direction.Normalize();
+        direction.Normalize();
         Debug.Log("Direction: " + direction);
         direction *= agent.agentConfiguration.maxAcceleration;
         Debug.Log("Seek Direction: " + direction);

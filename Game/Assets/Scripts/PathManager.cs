@@ -16,7 +16,7 @@ public class PathManager : JellyScript
             if (hasPath && index < path.Length - 1)
                 return path[index];
             else
-                return Vector3.zero;
+                return destination;
         }
     }
     public bool HasPath
