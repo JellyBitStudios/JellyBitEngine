@@ -23,6 +23,7 @@ ComponentAudioListener::ComponentAudioListener(const ComponentAudioListener& com
 
 ComponentAudioListener::~ComponentAudioListener()
 {
+	App->audio->audio_listeners.remove(this);
 	parent->cmp_audioListener = nullptr;
 	//RELEASE(listener);
 }
