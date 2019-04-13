@@ -311,7 +311,7 @@ bool ModuleNavigation::FindPath(float* start, float* end, std::vector<math::floa
 
 	//Find path along polys
 	status = m_navQuery->findStraightPath(startpos, endpos, path, pathcount,
-		straightPath, &straightPathFlags, straightPathRefs,
+		straightPath, 0, straightPathRefs,
 		&straightPathCount, maxStraightPath);
 	if (!dtStatusSucceed(status))
 		return false;
