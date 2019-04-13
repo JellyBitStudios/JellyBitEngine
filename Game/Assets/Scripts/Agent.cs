@@ -106,16 +106,17 @@ public class Agent : JellyScript
         // TODO
 
         // 2. Separation
-        //velocities[separation.Priority] += separation.GetSeparation(this);
+        velocities[separation.Priority] += separation.GetSeparation(this);
 
         // 3. Move
         /// Velocity
-        velocities[seek.Priority] += seek.GetSeek(this);
+        //velocities[seek.Priority] += seek.GetSeek(this);
         //velocities[flee.Priority] += flee.GetFlee(this);
 
         /// Angular velocity
         //angularVelocities[align.Priority] += align.GetAlign(this);
 
+        /*
         // Angular velocities
         foreach (float angVel in angularVelocities)
         {
@@ -147,7 +148,8 @@ public class Agent : JellyScript
         // Cap velocity
         if (velocity.magnitude > agentConfiguration.maxVelocity)
         {
-            velocity.Normalize();
+            if (velocity.magnitude > 0.0)
+                velocity.Normalize();
             velocity *= agentConfiguration.maxVelocity;
         }
 
@@ -155,7 +157,7 @@ public class Agent : JellyScript
         transform.rotation *= Quaternion.Rotate(Vector3.up, angularVelocity * Time.deltaTime);
 
         // Move
-        transform.position += velocity * Time.deltaTime;
+        transform.position += velocity * Time.deltaTime;*/
     }
 
     private void ResetPriorities()

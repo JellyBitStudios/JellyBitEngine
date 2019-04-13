@@ -13,7 +13,7 @@ public class SteeringSeek : SteeringAbstract
         if (direction.magnitude > 0.0)
             direction.Normalize();
         direction *= agent.agentConfiguration.maxAcceleration;
-        //Debug.Log("Direction: " + direction);
+
         return direction;
     }
 }
