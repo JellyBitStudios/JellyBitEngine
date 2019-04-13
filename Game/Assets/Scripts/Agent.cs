@@ -2,7 +2,7 @@
 using System;
 using JellyBitEngine;
 
-// https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/Export/Mathf.cs
+// https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/Export/Math/Vector3.cs
 
 public class AgentConfiguration
 {
@@ -106,17 +106,16 @@ public class Agent : JellyScript
         // TODO
 
         // 2. Separation
-        velocities[separation.Priority] += separation.GetSeparation(this);
+        //velocities[separation.Priority] += separation.GetSeparation(this);
 
         // 3. Move
         /// Velocity
-        //velocities[seek.Priority] += seek.GetSeek(this);
+        velocities[seek.Priority] += seek.GetSeek(this);
         //velocities[flee.Priority] += flee.GetFlee(this);
 
         /// Angular velocity
         //angularVelocities[align.Priority] += align.GetAlign(this);
 
-        /*
         // Angular velocities
         foreach (float angVel in angularVelocities)
         {
@@ -157,7 +156,8 @@ public class Agent : JellyScript
         transform.rotation *= Quaternion.Rotate(Vector3.up, angularVelocity * Time.deltaTime);
 
         // Move
-        transform.position += velocity * Time.deltaTime;*/
+        Debug.Log("Velocity " + velocity);
+        transform.position += velocity * Time.deltaTime;
     }
 
     private void ResetPriorities()

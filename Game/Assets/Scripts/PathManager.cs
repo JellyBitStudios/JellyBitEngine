@@ -35,8 +35,7 @@ public class PathManager : JellyScript
     public bool GetPath(Vector3 origin, Vector3 destination)
     {
         this.destination = destination;
-        //hasPath = Navigation.GetPath(origin, destination, out path);
-        hasPath = true;
+        hasPath = Navigation.GetPath(origin, destination, out path);
         index = 0;
         return hasPath;
     }
