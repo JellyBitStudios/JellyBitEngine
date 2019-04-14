@@ -12,6 +12,7 @@
 #include "ModuleResourceManager.h"
 #include "ModuleUI.h"
 #include "ComponentRectTransform.h"
+#include "ComponentTransform.h"
 
 #include "SDL\include\SDL_scancode.h"
 #include "ModuleGOs.h"

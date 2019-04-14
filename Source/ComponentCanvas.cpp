@@ -13,6 +13,7 @@
 #include "ComponentButton.h"
 #include "ComponentImage.h"
 #include "ComponentLabel.h"
+#include "Panel.h"
 
 #define CANVAS_TYPE_STR "Screen\0World Screen (Work In Progress)\0World"
 

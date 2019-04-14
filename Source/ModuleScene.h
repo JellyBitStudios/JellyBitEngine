@@ -10,6 +10,7 @@
 
 #include "MathGeoLib\include\Math\TransformOps.h"
 #include "MathGeoLib\include\Math\MathConstants.h"
+#include "MathGeoLib/include/Math/float4x4.h"
 
 #include "ImGuizmo\ImGuizmo.h"
 
