@@ -6,13 +6,6 @@ using JellyBitEngine;
 
 public static class MathScript
 {
-    public static float NormalizedScalar(float value)
-    {
-        return value / Math.Abs(value);
-    }
-
-    // ----------------------------------------------------------------------------------------------------
-
     // The infamous ''3.14159265358979...'' value (RO)
     public const float PI = (float)Math.PI;
 

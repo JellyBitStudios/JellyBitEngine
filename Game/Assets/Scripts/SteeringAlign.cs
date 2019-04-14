@@ -17,11 +17,12 @@ public static class SteeringAlign
             return 0.0f;
 
         float orientation = MathScript.Rad2Deg * (float)Math.Atan2(agent.transform.forward.x, agent.transform.forward.z);
-        Vector3 direction = MathScript.Rad2Deg * (agent.Destination - agent.transform.position).normalized();
-        float targetOrientation = (float)Math.Atan2(direction.x, direction.z); // wrap around PI
+        Vector3 direction = (agent.Destination - agent.transform.position).normalized();
+        float targetOrientation = MathScript.Rad2Deg * (float)Math.Atan2(direction.x, direction.z);
 
-        float diff = MathScript.DeltaAngle(orientation, targetOrientation);
+        float diff = MathScript.DeltaAngle(orientation, targetOrientation); // wrap around PI
         float diffAbs = Math.Abs(diff);
+
         // Are we there (min radius)?
         if (diffAbs < agent.alignData.minAngle)
             // No acceleration
@@ -34,11 +35,11 @@ public static class SteeringAlign
             targetRotation = agent.agentData.maxAngularVelocity;
         else
             // Scaled rotation
-            targetRotation = diffAbs * agent.agentData.maxAngularVelocity / agent.alignData.slowAngle;
+            targetRotation = agent.agentData.maxAngularVelocity * diffAbs / agent.alignData.slowAngle;
+    
+        targetRotation *= diff / diffAbs;
 
-        targetRotation *= MathScript.NormalizedScalar(diff);
-
-        float angularAcceleration = targetRotation - orientation;
+        float angularAcceleration = targetRotation /*- orientation*/;
         angularAcceleration /= agent.alignData.timeToTarget;
 
         return Mathf.Clamp(angularAcceleration, -agent.agentData.maxAngularAcceleration, agent.agentData.maxAngularAcceleration);

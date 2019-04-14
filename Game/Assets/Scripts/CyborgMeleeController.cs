@@ -126,7 +126,6 @@ public class CyborgMeleeController : JellyScript
 
                 if (Input.GetMouseButtonDown(MouseKeyCode.MOUSE_LEFT))
                 {
-                    Debug.Log("Click");
                     Ray ray = Physics.ScreenToRay(Input.GetMousePosition(), Camera.main);
                     RaycastHit hitInfo;
                     if (Physics.Raycast(ray, out hitInfo, float.MaxValue, raycastMask, SceneQueryFlags.Static))

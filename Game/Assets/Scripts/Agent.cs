@@ -25,11 +25,11 @@ public class Agent : JellyScript
 
     // SteeringSeekData
     public bool isSeekActive = true;
-    public uint seekPriority = 1;
+    public uint seekPriority = 2;
 
     // SteeringFleeData
-    public bool isFleeActive = true;
-    public uint fleePriority = 1;
+    public bool isFleeActive = false;
+    public uint fleePriority = 2;
 
     // SteeringSeparationData
     public bool isSeparationActive = true;
@@ -37,6 +37,12 @@ public class Agent : JellyScript
     public LayerMask separationMask = new LayerMask();
     public float separationRadius = 1.0f;
     public float separationThreshold = 1.0f;
+
+    // SteeringObstacleAvoidance
+    public bool isObstacleAvoidanceActive = true;
+    public uint obstacleAvoidancePriority = 0;
+    public LayerMask obstacleAvoidanceMask = new LayerMask();
+    public float obstacleAvoidanceAvoidDistance = 1.0f;
 
     // SteeringAlignData
     public bool isAlignActive = true;
@@ -54,6 +60,7 @@ public class Agent : JellyScript
     public SteeringSeekData seekData = new SteeringSeekData();
     public SteeringFleeData fleeData = new SteeringFleeData();
     public SteeringSeparationData separationData = new SteeringSeparationData();
+    public SteeringObstacleAvoidanceData obstacleAvoidanceData = new SteeringObstacleAvoidanceData();
     public SteeringAlignData alignData = new SteeringAlignData();
 
     // --------------------------------------------------
@@ -114,6 +121,17 @@ public class Agent : JellyScript
         separationData.radius = separationRadius;
         separationData.threshold = separationThreshold;
 
+        // SteeringObstacleAvoidance
+        obstacleAvoidanceData.isActive = isObstacleAvoidanceActive;
+        obstacleAvoidanceData.Priority = obstacleAvoidancePriority;
+        obstacleAvoidanceData.mask = obstacleAvoidanceMask;
+        obstacleAvoidanceData.avoidDistance = obstacleAvoidanceAvoidDistance;
+        obstacleAvoidanceData.rays = new SteeringRay[3];
+        for (uint i = 0; i < obstacleAvoidanceData.rays.Length; ++i)
+            obstacleAvoidanceData.rays[i] = new SteeringRay();
+        obstacleAvoidanceData.rays[1].direction = new Vector3(-1.0f, 0.0f, 1.0f);
+        obstacleAvoidanceData.rays[2].direction = new Vector3(1.0f, 0.0f, 1.0f);
+
         // SteeringAlignData
         alignData.isActive = isAlignActive;
         alignData.Priority = alignPriority;
@@ -131,8 +149,9 @@ public class Agent : JellyScript
         Vector3 newVelocity = Vector3.zero;
         float newAngularVelocity = 0.0f;
 
-        // 1. Collision avoidance
-        // TODO
+        // 1. Obstacle avoidance
+        if (obstacleAvoidanceData.isActive)
+            velocities[obstacleAvoidanceData.Priority] += SteeringObstacleAvoidance.GetObstacleAvoidance(this);
 
         // 2. Separation
         if (separationData.isActive)
@@ -142,10 +161,12 @@ public class Agent : JellyScript
         /// Velocity
         if (seekData.isActive)
             velocities[seekData.Priority] += SteeringSeek.GetSeek(this);
-        //velocities[flee.Priority] += flee.GetFlee();
+        if (fleeData.isActive)
+            velocities[fleeData.Priority] += SteeringFlee.GetFlee(this);
 
         /// Angular velocity
-        //angularVelocities[align.Priority] += align.GetAlign(this);
+        if (alignData.isActive)
+            angularVelocities[alignData.Priority] += SteeringAlign.GetAlign(this);
 
         // Angular velocities
         for (uint i = 0; i < SteeringData.maxPriorities; ++i)
@@ -169,8 +190,8 @@ public class Agent : JellyScript
 
         ResetPriorities();
 
-        velocity += newVelocity;
         angularVelocity += newAngularVelocity;
+        velocity += newVelocity;
 
         // Cap angular velocity
         Mathf.Clamp(angularVelocity, -agentData.maxAngularVelocity, agentData.maxAngularVelocity);
@@ -186,7 +207,6 @@ public class Agent : JellyScript
         transform.rotation *= Quaternion.Rotate(Vector3.up, angularVelocity * Time.deltaTime);
 
         // Move
-        velocity = new Vector3(velocity.x, 0.0f, velocity.z);
         transform.position += velocity * Time.deltaTime;
     }
 
@@ -233,13 +253,17 @@ public class Agent : JellyScript
 
     public override void OnDrawGizmos()
     {
-        float[] color = { 1.0f, 0.0f, 0.0f, 1.0f };
-        Debug.DrawSphere(4.0f, color, gameObject.transform.position, Quaternion.identity, Vector3.one);
+        float[] colorAngularVelocity = { 0.0f, 0.0f, 0.0f, 1.0f };
+        Debug.DrawLine(transform.position, transform.position + Quaternion.Rotate(Vector3.up, angularVelocity) * transform.forward * 2.0f, colorAngularVelocity);
 
-        //SteeringSeek.DrawGizmos(this);
-        //SteeringFlee.DrawGizmos(this);
-        //SteeringSeparation.DrawGizmos(this);
-        //SteeringAlign.DrawGizmos(this);
+        float[] colorVelocity = { 1.0f, 1.0f, 1.0f, 1.0f };
+        Debug.DrawLine(transform.position, transform.position + velocity, colorVelocity);
+
+        SteeringSeek.DrawGizmos(this);
+        SteeringFlee.DrawGizmos(this);
+        SteeringSeparation.DrawGizmos(this);
+        SteeringObstacleAvoidance.DrawGizmos(this);
+        SteeringAlign.DrawGizmos(this);
     }
 
     // ----------------------------------------------------------------------------------------------------
