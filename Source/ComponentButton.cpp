@@ -86,8 +86,9 @@ ComponentButton::ComponentButton(const ComponentButton & componentButton, GameOb
 ComponentButton::~ComponentButton()
 {
 	parent->cmp_button = nullptr;
-	App->ui->buttons_ui.remove(this);
+	App->ui->buttons_ui.erase(std::remove(App->ui->buttons_ui.begin(), App->ui->buttons_ui.end(), this), App->ui->buttons_ui.end());
 
+	//if (isWorld)
 	//if (isWorld)
 	//{
 	//	App->physics->RemoveActor(*gActor);
@@ -317,6 +318,8 @@ void ComponentButton::OnLoadOnClick(char*& tempBuffer)
 				if (go->components[i]->UUID == scriptUID)
 				{
 					scriptInstance = App->scripting->MonoComponentFrom(go->components[i]);
+					onClickGameObjectUUID = go->components[i]->GetParent()->GetUUID();
+					onClickScriptUUID = go->components[i]->UUID;
 					break;
 				}
 			}
@@ -337,6 +340,7 @@ void ComponentButton::OnLoadOnClick(char*& tempBuffer)
 						if (savedName == name)
 						{
 							methodToCall = method;
+							methodToCallName = savedName;
 							break;
 						}
 					}
@@ -448,6 +452,11 @@ void ComponentButton::OnUniqueEditor()
 									//Set this method and instance to be called
 									methodToCall = method;
 									scriptInstance = compInstance;
+
+									methodToCallName = name;
+									onClickScriptUUID = script->UUID;
+									onClickGameObjectUUID = script->GetParent()->GetUUID();
+
 									somethingClicked = true;
 									break;
 								}
@@ -522,6 +531,50 @@ void ComponentButton::SetNewKey(uint key)
 {
 	input = SDL_GetKeyName(SDL_GetKeyFromScancode((SDL_Scancode)key));
 	button_blinded = key;
+}
+
+
+void ComponentButton::LoadOnClickReference()
+{
+	if (onClickGameObjectUUID == 0 || onClickScriptUUID == 0)
+		return;
+
+	//Search for the references
+	GameObject* go = App->GOs->GetGameObjectByUID(onClickGameObjectUUID);
+	if (go)
+	{
+		for (int i = 0; i < go->components.size(); ++i)
+		{
+			if (go->components[i]->UUID == onClickScriptUUID)
+			{
+				scriptInstance = App->scripting->MonoComponentFrom(go->components[i]);
+				break;
+			}
+		}
+
+		if (scriptInstance)
+		{
+			MonoClass* monoClass = mono_object_get_class(scriptInstance);
+
+			void* iterator = 0;
+			MonoMethod* method = mono_class_get_methods(monoClass, &iterator);
+			while (method)
+			{
+				uint32_t flags = 0;
+				uint32_t another = mono_method_get_flags(method, &flags);
+				if (another & MONO_METHOD_ATTR_PUBLIC && !(another & MONO_METHOD_ATTR_STATIC))
+				{
+					std::string savedName = mono_method_get_name(method);
+					if (savedName == methodToCallName)
+					{
+						methodToCall = method;
+						break;
+					}
+				}
+				method = mono_class_get_methods(monoClass, &iterator);
+			}
+		}
+	}
 }
 
 void ComponentButton::KeyPressed()

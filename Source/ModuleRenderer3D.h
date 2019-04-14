@@ -55,6 +55,7 @@ public:
 
 	bool AddMeshComponent(ComponentMesh* toAdd);
 	bool EraseMeshComponent(ComponentMesh* toErase);
+	void SwapComponents(ComponentMesh* toSwap);
 
 	bool AddProjectorComponent(ComponentProjector* toAdd);
 	bool EraseProjectorComponent(ComponentProjector* toErase);
@@ -69,7 +70,7 @@ public:
 	ComponentCamera* GetCurrentCamera() const;
 
 	void SetMeshComponentsSeenLastFrame(bool seenLastFrame);
-	void FrustumCulling() const;
+	void FrustumCulling(std::vector<GameObject*>& statics, std::vector<GameObject*>& dynamics) const;
 
 	void DrawMesh(ComponentMesh* toDraw) const;
 
@@ -78,9 +79,12 @@ public:
 	void LoadSpecificUniforms(uint& textureUnit, const std::vector<Uniform>& uniforms, const std::vector<const char*>& ignore = std::vector<const char*>()) const;
 	void LoadGenericUniforms(uint shaderProgram) const;
 
+	void Sort(std::vector<GameObject*> toSort) const;
+
 private:
 
-	std::vector<ComponentMesh*> meshComponents;
+	std::vector<ComponentMesh*> staticMeshComponents;
+	std::vector<ComponentMesh*> dynamicMeshComponents;
 
 	std::vector<ComponentProjector*> projectorComponents;
 
@@ -98,6 +102,7 @@ public:
 	math::float3x3 NormalMatrix;
 	math::float4x4 ModelMatrix, ViewMatrix, ProjectionMatrix;
 
+	math::float4x4 viewProj_matrix;
 	bool vsync = false;
 
 	bool debugDraw = false;

@@ -13,6 +13,7 @@
 struct ResourceMaterialData
 {
 	uint shaderUuid = 0;
+	uint shaderProgram = 0;
 	std::vector<Uniform> uniforms;
 
 	//math::float4x4 matrix = math::float4x4::identity;

@@ -14,12 +14,15 @@
 #include "ModuleParticles.h"
 #include "ModuleUI.h"
 #include "ModuleFBOManager.h"
+#include "ModuleInput.h"
+#include "ScriptingModule.h"
 #include "Lights.h"
 #include "DebugDrawer.h"
 #include "ShaderImporter.h"
 #include "MaterialImporter.h"
 #include "SceneImporter.h"
 #include "Quadtree.h"
+#include "GLCache.h"
 
 #include "ComponentBone.h"
 #include "ResourceBone.h"
@@ -60,7 +63,7 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 	bool ret = true;
 
 	CONSOLE_LOG(LogTypes::Normal,"Creating 3D Renderer context");
-	
+
 	// Create context
 	context = SDL_GL_CreateContext(App->window->window);
 
@@ -69,7 +72,7 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 		CONSOLE_LOG(LogTypes::Error, "OpenGL context could not be created! SDL_Error: %s\n", SDL_GetError());
 		ret = false;
 	}
-	
+
 	if (ret)
 	{
 		LoadStatus(jObject);
@@ -200,33 +203,63 @@ update_status ModuleRenderer3D::PostUpdate()
 				projectorComponents[i]->UpdateTransform();
 		}
 
+		viewProj_matrix = currentCamera->GetOpenGLViewMatrix() *
+						  currentCamera->GetOpenGLProjectionMatrix();
+		std::vector<GameObject*> statics;
+		std::vector<GameObject*> dynamics;
 		if (currentCamera->HasFrustumCulling())
-			FrustumCulling();
-
-		// Draw static meshes
-		for (uint i = 0; i < meshComponents.size(); ++i)
 		{
-			if (meshComponents[i]->GetParent()->IsStatic()
-				&& meshComponents[i]->GetParent()->seenLastFrame
-				&& meshComponents[i]->IsTreeActive())
-				DrawMesh(meshComponents[i]);
+			FrustumCulling(statics, dynamics);
+
+			Sort(statics);
+			Sort(dynamics);
+
+			for (uint i = 0; i < statics.size(); ++i)
+			{
+				ComponentMesh* toDraw = statics[i]->cmp_mesh;
+				if (toDraw->IsTreeActive())
+					DrawMesh(toDraw);
+			}
+
+			// Draw decals
+			for (uint i = 0; i < projectorComponents.size(); ++i)
+			{
+				if (projectorComponents[i]->GetParent()->IsActive()
+					&& projectorComponents[i]->IsTreeActive())
+					projectorComponents[i]->Draw();
+			}
+
+			// Draw dynamic meshes
+			for (uint i = 0; i < dynamics.size(); ++i)
+			{
+				ComponentMesh* toDraw = dynamics[i]->cmp_mesh;
+				if (toDraw->IsTreeActive())
+					DrawMesh(toDraw);
+			}
 		}
-
-		// Draw decals
-		for (uint i = 0; i < projectorComponents.size(); ++i)
+		else // Draw meshes w/out frustum culling
 		{
-			if (projectorComponents[i]->GetParent()->IsActive() 
-				&& projectorComponents[i]->IsTreeActive())
-				projectorComponents[i]->Draw();
-		}
 
-		// Draw dynamic meshes
-		for (uint i = 0; i < meshComponents.size(); ++i)
-		{
-			if (!meshComponents[i]->GetParent()->IsStatic()
-				&& meshComponents[i]->GetParent()->seenLastFrame
-				&& meshComponents[i]->IsTreeActive())
-				DrawMesh(meshComponents[i]);
+			// Draw static meshes
+			for (uint i = 0; i < staticMeshComponents.size(); ++i)
+			{
+				if (staticMeshComponents[i]->IsTreeActive())
+					DrawMesh(staticMeshComponents[i]);
+			}
+			// Draw decals
+			for (uint i = 0; i < projectorComponents.size(); ++i)
+			{
+				if (projectorComponents[i]->GetParent()->IsActive()
+					&& projectorComponents[i]->IsTreeActive())
+					projectorComponents[i]->Draw();
+			}
+
+			// Draw dynamic meshes
+			for (uint i = 0; i < dynamicMeshComponents.size(); ++i)
+			{
+				if (dynamicMeshComponents[i]->IsTreeActive())
+					DrawMesh(dynamicMeshComponents[i]);
+			}
 		}
 	}
 
@@ -234,19 +267,21 @@ update_status ModuleRenderer3D::PostUpdate()
 
 	App->fbo->MergeDepthBuffer(App->window->GetWindowWidth(), App->window->GetWindowHeight());
 
-	App->scene->Draw();
-
-
 	bool blend = GetCapabilityState(GL_BLEND);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDepthMask(GL_FALSE);
 	App->particle->Draw();
+	glDepthMask(GL_TRUE);
 	App->trails->Draw();
 	if (!blend)
 		glDisable(GL_BLEND);
 
-#ifndef GAMEMODE
+	App->glCache->SwitchShader(0);
 
+	App->scene->Draw();
+
+#ifndef GAMEMODE
 	if (debugDraw)
 	{
 		App->lights->DebugDrawLights();
@@ -267,8 +302,6 @@ update_status ModuleRenderer3D::PostUpdate()
 			}
 		}
 
-		App->scene->Draw();
-
 		if (drawCurrentGO)
 		{
 			GameObject* curr = App->scene->selectedObject.GetCurrGameObject();
@@ -280,8 +313,11 @@ update_status ModuleRenderer3D::PostUpdate()
 		{
 			Color boundingBoxesColor = Yellow;
 
-			for (uint i = 0; i < meshComponents.size(); ++i)
-				App->debugDrawer->DebugDraw(meshComponents[i]->GetParent()->boundingBox, boundingBoxesColor);
+			for (uint i = 0; i < staticMeshComponents.size(); ++i)
+				App->debugDrawer->DebugDraw(staticMeshComponents[i]->GetParent()->boundingBox, boundingBoxesColor);
+
+			for (uint i = 0; i < dynamicMeshComponents.size(); ++i)
+				App->debugDrawer->DebugDraw(dynamicMeshComponents[i]->GetParent()->boundingBox, boundingBoxesColor);
 		}
 
 		if (drawFrustums) // boundingBoxesColor = Grey
@@ -309,14 +345,17 @@ update_status ModuleRenderer3D::PostUpdate()
 
 		App->particle->DebugDraw();
 
+		App->scripting->OnDrawGizmos();
+
 		App->debugDrawer->EndDebugDraw();
 	}
 
-
 	App->ui->DrawUI();
-		
+
 	// 3. Editor
 	App->gui->Draw();
+
+	//App->input->DrawCursor();
 #else
 	App->ui->DrawUI();
 #endif // GAME
@@ -452,7 +491,7 @@ bool ModuleRenderer3D::SetVSync(bool vsync)
 	return ret;
 }
 
-bool ModuleRenderer3D::GetVSync() const 
+bool ModuleRenderer3D::GetVSync() const
 {
 	return vsync;
 }
@@ -481,7 +520,7 @@ bool ModuleRenderer3D::GetCapabilityState(GLenum capability) const
 	return ret;
 }
 
-void ModuleRenderer3D::SetWireframeMode(bool enable) const 
+void ModuleRenderer3D::SetWireframeMode(bool enable) const
 {
 	if (enable)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -489,7 +528,7 @@ void ModuleRenderer3D::SetWireframeMode(bool enable) const
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
-bool ModuleRenderer3D::IsWireframeMode() const 
+bool ModuleRenderer3D::IsWireframeMode() const
 {
 	bool ret = false;
 
@@ -505,13 +544,26 @@ bool ModuleRenderer3D::IsWireframeMode() const
 bool ModuleRenderer3D::AddMeshComponent(ComponentMesh* toAdd)
 {
 	bool ret = true;
-
-	std::vector<ComponentMesh*>::const_iterator it = std::find(meshComponents.begin(), meshComponents.end(), toAdd);
-	ret = it == meshComponents.end();
+	std::vector<ComponentMesh*>::const_iterator it;
+	bool isStatic = toAdd->GetParent()->IsStatic();
+	if (isStatic)
+	{
+		it = std::find(staticMeshComponents.begin(), staticMeshComponents.end(), toAdd);
+		ret = it == staticMeshComponents.end();
+	}
+	else
+	{
+		it = std::find(dynamicMeshComponents.begin(), dynamicMeshComponents.end(), toAdd);
+		ret = it == dynamicMeshComponents.end();
+	}
 
 	if (ret)
-		meshComponents.push_back(toAdd);
-
+	{
+		if (isStatic)
+			staticMeshComponents.push_back(toAdd);
+		else
+			dynamicMeshComponents.push_back(toAdd);
+	}
 	return ret;
 }
 
@@ -519,13 +571,27 @@ bool ModuleRenderer3D::EraseMeshComponent(ComponentMesh* toErase)
 {
 	bool ret = false;
 
-	std::vector<ComponentMesh*>::const_iterator it = std::find(meshComponents.begin(), meshComponents.end(), toErase);
-	ret = it != meshComponents.end();
+	std::vector<ComponentMesh*>::const_iterator it;
+
+	it = std::find(staticMeshComponents.begin(), staticMeshComponents.end(), toErase);
+	ret = it != staticMeshComponents.end();
 
 	if (ret)
-		meshComponents.erase(it);
+		staticMeshComponents.erase(it);
+
+	it = std::find(dynamicMeshComponents.begin(), dynamicMeshComponents.end(), toErase);
+	ret = it != dynamicMeshComponents.end();
+
+	if (ret)
+		dynamicMeshComponents.erase(it);
 
 	return ret;
+}
+
+void ModuleRenderer3D::SwapComponents(ComponentMesh* toSwap)
+{
+	EraseMeshComponent(toSwap);
+	AddMeshComponent(toSwap);
 }
 
 bool ModuleRenderer3D::AddProjectorComponent(ComponentProjector* toAdd)
@@ -604,7 +670,7 @@ bool ModuleRenderer3D::RecalculateMainCamera()
 				mainCamera = nullptr;
 				break;
 			}
-		}			
+		}
 	}
 
 	if (multipleMainCameras)
@@ -660,21 +726,20 @@ ComponentCamera* ModuleRenderer3D::GetCurrentCamera() const
 
 void ModuleRenderer3D::SetMeshComponentsSeenLastFrame(bool seenLastFrame)
 {
-	for (uint i = 0; i < meshComponents.size(); ++i)
-		meshComponents[i]->GetParent()->seenLastFrame = seenLastFrame;
+	for (uint i = 0; i < staticMeshComponents.size(); ++i)
+		staticMeshComponents[i]->GetParent()->seenLastFrame = seenLastFrame;
+
+	for (uint i = 0; i < dynamicMeshComponents.size(); ++i)
+		dynamicMeshComponents[i]->GetParent()->seenLastFrame = seenLastFrame;
 }
 
-void ModuleRenderer3D::FrustumCulling() const
+void ModuleRenderer3D::FrustumCulling(std::vector<GameObject*>& statics, std::vector<GameObject*>& dynamics) const
 {
 	std::vector<GameObject*> gameObjects;
 	App->GOs->GetGameobjects(gameObjects);
 
-	for (uint i = 0; i < gameObjects.size(); ++i)
-		gameObjects[i]->seenLastFrame = false;
-
 	// Static objects
-	std::vector<GameObject*> seen;
-	App->scene->quadtree.CollectIntersections(seen, currentCamera->frustum);
+	App->scene->quadtree.CollectIntersections(statics, currentCamera->frustum);
 
 	// Dynamic objects
 	std::vector<GameObject*> dynamicGameObjects;
@@ -685,12 +750,9 @@ void ModuleRenderer3D::FrustumCulling() const
 		if (dynamicGameObjects[i]->boundingBox.IsFinite())
 		{
 			if (currentCamera->frustum.Intersects(dynamicGameObjects[i]->boundingBox))
-				seen.push_back(dynamicGameObjects[i]);
+				dynamics.push_back(dynamicGameObjects[i]);
 		}
 	}
-
-	for (uint i = 0; i < seen.size(); ++i)
-		seen[i]->seenLastFrame = true;
 }
 
 void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
@@ -701,21 +763,16 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	uint textureUnit = 0;
 
 	const ComponentMaterial* materialRenderer = toDraw->GetParent()->cmp_material;
-	ResourceMaterial* resourceMaterial = (ResourceMaterial*)App->res->GetResource(materialRenderer->res);
-	uint shaderUuid = resourceMaterial->GetShaderUuid();
-	const ResourceShaderProgram* resourceShaderProgram = (const ResourceShaderProgram*)App->res->GetResource(shaderUuid);
-	GLuint shader = resourceShaderProgram->shaderProgram;
-	glUseProgram(shader);
-
+	ResourceMaterial* resourceMaterial = materialRenderer->currentResource;
+	GLuint shader = resourceMaterial->materialData.shaderProgram;
+	App->glCache->SwitchShader(shader);
 	// 1. Generic uniforms
 	LoadGenericUniforms(shader);
 
 	// 2. Known mesh uniforms
 	math::float4x4 model_matrix = toDraw->GetParent()->transform->GetGlobalMatrix();
 	model_matrix = model_matrix.Transposed();
-	math::float4x4 view_matrix = currentCamera->GetOpenGLViewMatrix();
-	math::float4x4 proj_matrix = currentCamera->GetOpenGLProjectionMatrix();
-	math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
+	math::float4x4 mvp_matrix = model_matrix * viewProj_matrix;
 	math::float4x4 normal_matrix = model_matrix;
 	normal_matrix.Inverse();
 	normal_matrix.Transpose();
@@ -777,7 +834,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	// Mesh
-	const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(toDraw->res);
+	const ResourceMesh* mesh = toDraw->currentResource;
 
 	glBindVertexArray(mesh->GetVAO());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIBO());
@@ -805,8 +862,6 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 			glUniformMatrix4fv(location, 1, GL_TRUE, boneTransform.ptr());
 		}
 	}
-
-	glUseProgram(0);
 }
 
 void ModuleRenderer3D::RecursiveDrawQuadtree(QuadtreeNode* node) const
@@ -898,4 +953,14 @@ void ModuleRenderer3D::LoadGenericUniforms(uint shaderProgram) const
 		break;
 	}
 	*/
+}
+
+bool renderSortDeferred(const GameObject* a, const GameObject* b)
+{
+	return a->cmp_material->currentResource->materialData.shaderProgram < b->cmp_material->currentResource->materialData.shaderProgram;
+}
+
+void ModuleRenderer3D::Sort(std::vector<GameObject*> toSort) const
+{
+	std::sort(toSort.begin(), toSort.end(), renderSortDeferred);
 }

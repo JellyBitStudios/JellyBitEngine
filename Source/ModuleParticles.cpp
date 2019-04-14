@@ -8,6 +8,7 @@
 #include "Application.h"
 #include "DebugDrawer.h"
 #include "ComponentTransform.h"
+#include "ModuleRenderer3D.h"
 
 ModuleParticle::ModuleParticle(bool start_enabled) : Module(start_enabled)
 {}
@@ -93,6 +94,21 @@ void ModuleParticle::DebugDraw() const
 			case ShapeType_CONE:
 				App->debugDrawer->DebugDrawCone((*emitter)->circleCreation.r, (*emitter)->coneHeight, White, globalMat);
 				break;
+			case ShapeType_MESH:
+				App->debugDrawer->DebugDrawMesh((*emitter)->shapeMesh.meshVertex, (*emitter)->shapeMesh.indices, (*emitter)->shapeMesh.indicesSize, globalMat);
+				break;
+			default:
+				break;
+			}
+		}
+		if ((*emitter)->burst)
+		{
+			math::float4x4 globalMat = (*emitter)->GetParent()->transform->GetGlobalMatrix();;
+			switch ((*emitter)->burstType)
+			{
+			case ShapeType_MESH:
+				App->debugDrawer->DebugDrawMesh((*emitter)->burstMesh.meshVertex, (*emitter)->burstMesh.indices, (*emitter)->burstMesh.indicesSize, globalMat);
+				break;
 			default:
 				break;
 			}
@@ -167,6 +183,12 @@ void ModuleParticle::OnSystemEvent(System_Event event)
 			for (std::list<ComponentEmitter*>::iterator emitter = emitters.begin(); emitter != emitters.end(); ++emitter)
 			{
 				(*emitter)->ClearEmitter();
+			}
+			break;
+		case System_Event_Type::LoadGMScene:
+			for (std::list<ComponentEmitter*>::iterator emitter = emitters.begin(); emitter != emitters.end(); ++emitter)
+			{
+				(*emitter)->ConnectSubEmitter();
 			}
 			break;
 	}

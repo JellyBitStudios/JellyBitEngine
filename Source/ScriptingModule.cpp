@@ -42,6 +42,8 @@
 #include "ModuleInput.h"
 #include "ModuleScene.h"
 #include "ModuleUI.h"
+#include "DebugDrawer.h"
+#include "ModuleNavigation.h"
 
 #include "MathGeoLib/include/MathGeoLib.h"
 #include "Brofiler/Brofiler.h"
@@ -127,6 +129,7 @@ update_status ScriptingModule::Update()
 #ifndef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 #endif
+
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
 	{
 		UpdateMethods();
@@ -364,7 +367,7 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 	}
 }
 
-ComponentScript* ScriptingModule::CreateScriptComponent(std::string scriptName, bool createCS)
+ComponentScript* ScriptingModule::CreateScriptComponent(std::string scriptName, ResourceScript* scriptRes)
 {
 	while (scriptName.find(" ") != std::string::npos)
 	{
@@ -375,7 +378,7 @@ ComponentScript* ScriptingModule::CreateScriptComponent(std::string scriptName, 
 	char* buffer;
 	int size;
 
-	if (createCS)
+	if (!scriptRes)
 	{
 		size = App->fs->Load("Internal/SampleScript/SampleScript.cs", &buffer);
 
@@ -392,38 +395,15 @@ ComponentScript* ScriptingModule::CreateScriptComponent(std::string scriptName, 
 		IncludeCSFiles();
 
 		delete[] buffer;
-	}
 
-	ResourceScript* scriptRes = nullptr;
-
-	if (App->fs->Exists("Assets/Scripts/" + scriptName + ".cs.meta"))
-	{
-		char* metaBuffer;
-		uint metaSize;
-
-		metaSize = App->fs->Load("Assets/Scripts/" + scriptName + ".cs.meta", &metaBuffer);
-
-		char* cursor = metaBuffer;
-		cursor += sizeof(int64_t) + sizeof(uint);
-
-		uint32_t UID;
-		memcpy(&UID, cursor, sizeof(uint32_t));
-
-		scriptRes = (ResourceScript*)App->res->GetResource(UID);
-
-		delete[] metaBuffer;
-	}
-	
-	if (!scriptRes)
-	{
 		//Here we have to reference a new ResourceScript with the .cs we have created, but the ResourceManager will still be sending file created events, and we would have data duplication.
 		//We disable this behavior and control the script creation only with this method, so we do not care for external files out-of-engine created.
-		
+
 		ResourceData data;
 		data.name = scriptName;
 		data.file = "Assets/Scripts/" + scriptName + ".cs";
 		data.exportedFile = "";
-	
+
 		scriptRes = (ResourceScript*)App->res->CreateResource(ResourceTypes::ScriptResource, data, &ResourceScriptData());
 
 		//Create the .meta, to make faster the search in the map storing the uid.
@@ -950,11 +930,13 @@ void ScriptingModule::RecompileScripts()
 	/*std::string fileName = data.file.substr(data.file.find_last_of("/") + 1);
 	std::string windowsFormattedPath = pathToWindowsNotation(data.file);*/
 
-	std::string path = std::string("\"" + std::string(App->fs->getAppPath())) + std::string("\\Assets\\Scripts\\*.cs") + "\"";
+	std::string path = std::string("-recurse:\"" + std::string(App->fs->getAppPath())) + std::string("Assets\\Scripts\\*.cs") + "\"";
+
 	std::string redirectOutput(" 1> \"" + /*pathToWindowsNotation*/(App->fs->getAppPath()) + "LogError.txt\"" + std::string(" 2>&1"));
 	std::string outputFile(" -out:..\\..\\Library\\Scripts\\Scripting.dll ");
 
 	std::string error;
+	std::string finalcommand = std::string(goRoot + "&" + goMonoBin + "&" + compileCommand + path + " " + outputFile + App->scripting->getReferencePath() + redirectOutput);
 	if (!exec(std::string(goRoot + "&" + goMonoBin + "&" + compileCommand + path + " " + outputFile + App->scripting->getReferencePath() + redirectOutput).data(), error))
 	{
 		char* buffer;
@@ -1013,6 +995,15 @@ void ScriptingModule::FixedUpdate()
 	{
 		scripts[i]->FixedUpdate();
 	}
+}
+
+void ScriptingModule::OnDrawGizmos()
+{
+	if(App->GetEngineState() == engine_states::ENGINE_PLAY)
+		for (int i = 0; i < scripts.size(); ++i)
+		{
+			scripts[i]->OnDrawGizmos();
+		}
 }
 
 void ScriptingModule::TemporalSave()
@@ -1078,6 +1069,12 @@ void ScriptingModule::TemporalLoad()
 				}
 			}
 		}
+	}
+
+	//Temporal load for OnClick method in Buttons
+	for (ComponentButton* button : App->ui->buttons_ui)
+	{
+		button->LoadOnClickReference();
 	}
 }
 
@@ -1187,6 +1184,35 @@ void ClearConsole()
 #endif
 }
 
+void DebugDrawSphere(float radius, MonoArray* color, MonoArray* position, MonoArray* rotation, MonoArray* scale)
+{
+	if (!App->debugDrawer->IsDrawing())
+		return;
+
+	math::float3 pos = position != nullptr ? math::float3(mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2)) : math::float3::zero;
+	math::Quat rot = rotation != nullptr ? math::Quat(mono_array_get(rotation, float, 0), mono_array_get(rotation, float, 1), mono_array_get(rotation, float, 2), mono_array_get(rotation, float, 3)) : math::Quat::identity;
+	math::float3 sca = scale != nullptr ? math::float3(mono_array_get(scale, float, 0), mono_array_get(scale, float, 1), mono_array_get(scale, float, 2)) : math::float3::one;
+
+	math::float4x4 global = math::float4x4::FromTRS(pos, rot, sca);
+	
+	math::float4 col = color != nullptr ? math::float4(mono_array_get(color, float, 0), mono_array_get(color, float, 1), mono_array_get(color, float, 2), mono_array_get(color, float, 3)) : math::float4(0,1,0,1);
+
+	App->debugDrawer->DebugDrawSphere(radius, Color(col.ptr()), global);
+}
+
+void DebugDrawLine(MonoArray* origin, MonoArray* destination, MonoArray* color)
+{
+	if (!App->debugDrawer->IsDrawing() || !origin || !destination)
+		return;
+
+	math::float3 originCPP = math::float3(mono_array_get(origin, float, 0), mono_array_get(origin, float, 1), mono_array_get(origin, float, 2));
+	math::float3 destinationCPP = math::float3(mono_array_get(destination, float, 0), mono_array_get(destination, float, 1), mono_array_get(destination, float, 2));
+
+	math::float4 col = color != nullptr ? math::float4(mono_array_get(color, float, 0), mono_array_get(color, float, 1), mono_array_get(color, float, 2), mono_array_get(color, float, 3)) : math::float4(0, 1, 0, 1);
+
+	App->debugDrawer->DebugDrawLine(originCPP, destinationCPP, Color(col.ptr()));
+}
+
 int32_t GetKeyStateCS(int32_t key)
 {
 	return App->input->GetKey(key);
@@ -1220,6 +1246,27 @@ MonoArray* GetMouseDeltaPosCS()
 int GetWheelMovementCS()
 {
 	return App->input->GetMouseZ();
+}
+
+MonoString* InputGetCursorTexture()
+{
+	std::string name = App->input->GetCursorTexture();
+	if (name != "")
+		return mono_string_new(App->scripting->domain, name.data());
+
+	return nullptr;
+}
+
+void InputSetCursorTexture(MonoString* name)
+{
+	if (!name)
+		return;
+
+	char* namecpp = mono_string_to_utf8(name);
+
+	App->input->SetCursorTexture(std::string(namecpp));
+
+	mono_free(namecpp);
 }
 
 MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, MonoArray* rotation)
@@ -1346,6 +1393,20 @@ void DestroyObj(MonoObject* obj)
 			}
 		}
 	}
+}
+
+MonoObject* Vector3RandomInsideSphere()
+{
+	math::float3 randomPoint = math::float3::RandomSphere(App->randomMathLCG, math::float3(0, 0, 0), 1);
+
+	MonoClass* vector3class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
+	MonoObject* ret = mono_object_new(App->scripting->domain, vector3class);
+
+	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "_x"), &randomPoint.x);
+	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "_y"), &randomPoint.y);
+	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "_z"), &randomPoint.z);
+
+	return ret;
 }
 
 MonoArray* QuatMult(MonoArray* q1, MonoArray* q2)
@@ -2297,6 +2358,81 @@ void NavAgentSetParams(MonoObject* compAgent, uint params)
 	}
 }
 
+bool NavAgentGetPath(MonoObject* monoAgent, MonoArray* position, MonoArray* destination, MonoArray** out_path)
+{
+	if (!position || !destination)
+		return false;
+
+	ComponentNavAgent* agent = (ComponentNavAgent*)App->scripting->ComponentFrom(monoAgent);
+	if (agent)
+	{
+		math::float3 positionCPP(mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2));
+		math::float3 destinationCPP(mono_array_get(destination, float, 0), mono_array_get(destination, float, 1), mono_array_get(destination, float, 2));
+
+		std::vector<math::float3> finalPath;
+		if (App->navigation->FindPath(positionCPP.ptr(), destinationCPP.ptr(), finalPath))
+		{
+			MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
+			*out_path = mono_array_new(App->scripting->domain, vector3Class, finalPath.size());
+
+			MonoClassField* _xField = mono_class_get_field_from_name(vector3Class, "_x");
+			MonoClassField* _yField = mono_class_get_field_from_name(vector3Class, "_y");
+			MonoClassField* _zField = mono_class_get_field_from_name(vector3Class, "_z");
+
+			for (int i = 0; i < finalPath.size(); ++i)
+			{
+				math::float3 pos = finalPath[i];
+
+				MonoObject* posCSharp = mono_object_new(App->scripting->domain, vector3Class);
+				mono_field_set_value(posCSharp, _xField, &pos.x);
+				mono_field_set_value(posCSharp, _yField, &pos.y);
+				mono_field_set_value(posCSharp, _zField, &pos.z);
+
+				mono_array_setref(*out_path, i, posCSharp);
+			}
+
+			return true;
+		}
+	}
+	return false;
+}
+
+bool NavigationGetPath(MonoArray* origin, MonoArray* destination, MonoArray** out_path)
+{
+	if (!origin || !destination)
+		return false;
+
+	math::float3 originCPP(mono_array_get(origin, float, 0), mono_array_get(origin, float, 1), mono_array_get(origin, float, 2));
+	math::float3 destinationCPP(mono_array_get(destination, float, 0), mono_array_get(destination, float, 1), mono_array_get(destination, float, 2));
+
+	std::vector<math::float3> finalPath;
+	if (App->navigation->FindPath(originCPP.ptr(), destinationCPP.ptr(), finalPath))
+	{
+		MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
+		*out_path = mono_array_new(App->scripting->domain, vector3Class, finalPath.size());
+
+		MonoClassField* _xField = mono_class_get_field_from_name(vector3Class, "_x");
+		MonoClassField* _yField = mono_class_get_field_from_name(vector3Class, "_y");
+		MonoClassField* _zField = mono_class_get_field_from_name(vector3Class, "_z");
+
+		for (int i = 0; i < finalPath.size(); ++i)
+		{
+			math::float3 pos = finalPath[i];
+
+			MonoObject* posCSharp = mono_object_new(App->scripting->domain, vector3Class);
+			mono_field_set_value(posCSharp, _xField, &pos.x);
+			mono_field_set_value(posCSharp, _yField, &pos.y);
+			mono_field_set_value(posCSharp, _zField, &pos.z);
+
+			mono_array_setref(*out_path, i, posCSharp);
+		}
+
+		return true;
+	}
+	
+	return false;
+}
+
 void SetCompActive(MonoObject* monoComponent, bool active)
 {
 	Component* component = App->scripting->ComponentFrom(monoComponent);
@@ -2420,6 +2556,13 @@ MonoString* AnimatorGetCurrName(MonoObject* monoAnim)
 		return mono_string_new(App->scripting->domain, animator->GetCurrentAnimationName());
 	}
 	return nullptr;
+}
+
+void UpdateAnimationSpeed(MonoObject* animatorComp, float newSpeed)
+{
+	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(animatorComp);
+	if(animator)
+		animator->UpdateAnimationSpeed(newSpeed);
 }
 
 void ParticleEmitterPlay(MonoObject* particleComp)
@@ -3412,16 +3555,31 @@ void ScriptingModule::CreateDomain()
 	delete[] buffer;
 
 	//SetUp Internal Calls
+
+	//Debug
 	mono_add_internal_call("JellyBitEngine.Debug::Log", (const void*)&DebugLogTranslator);
 	mono_add_internal_call("JellyBitEngine.Debug::LogWarning", (const void*)&DebugLogWarningTranslator);
 	mono_add_internal_call("JellyBitEngine.Debug::LogError", (const void*)&DebugLogErrorTranslator);
 	mono_add_internal_call("JellyBitEngine.Debug::ClearConsole", (const void*)&ClearConsole);
+	mono_add_internal_call("JellyBitEngine.Debug::_DrawSphere", (const void*)&DebugDrawSphere);
+	mono_add_internal_call("JellyBitEngine.Debug::_DrawLine", (const void*)&DebugDrawLine);
+
+	//Input
 	mono_add_internal_call("JellyBitEngine.Input::GetKeyState", (const void*)&GetKeyStateCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetMouseButtonState", (const void*)&GetMouseStateCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetMousePos", (const void*)&GetMousePosCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetWheelMovement", (const void*)&GetWheelMovementCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetMouseDeltaPos", (const void*)&GetMouseDeltaPosCS);
+	mono_add_internal_call("JellyBitEngine.Input::GetCursorTexture", (const void*)&InputGetCursorTexture);
+	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture", (const void*)&InputSetCursorTexture);
+
+	//Object
 	mono_add_internal_call("JellyBitEngine.Object::Destroy", (const void*)&DestroyObj);
+
+	//Vector3
+	mono_add_internal_call("JellyBitEngine.Vector3::RandomPointInsideUnitSphere", (const void*)&Vector3RandomInsideSphere);
+
+	//Quaternion
 	mono_add_internal_call("JellyBitEngine.Quaternion::quatMult", (const void*)&QuatMult);
 	mono_add_internal_call("JellyBitEngine.Quaternion::quatVec3", (const void*)&QuatVec3);
 	mono_add_internal_call("JellyBitEngine.Quaternion::toEuler", (const void*)&ToEuler);
@@ -3461,7 +3619,6 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Camera::getMainCamera", (const void*)&GetGameCamera);
 	mono_add_internal_call("JellyBitEngine.Physics::_ScreenToRay", (const void*)&ScreenToRay);
 	mono_add_internal_call("JellyBitEngine.LayerMask::GetMaskBit", (const void*)&LayerToBit);
-	mono_add_internal_call("JellyBitEngine.NavMeshAgent::_SetDestination", (const void*)&SetDestination);
 	mono_add_internal_call("JellyBitEngine.Component::SetActive", (const void*)&SetCompActive);
 
 	//Animator
@@ -3469,6 +3626,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Animator::GetCurrentAnimation", (const void*)&AnimatorGetCurrName);
 	mono_add_internal_call("JellyBitEngine.Animator::GetCurrentFrame", (const void*)&AnimatorGetCurrFrame);
 	mono_add_internal_call("JellyBitEngine.Animator::AnimationFinished", (const void*)&AnimatorAnimationFinished);
+	mono_add_internal_call("JellyBitEngine.Animator::UpdateAnimationSpeed", (const void*)&UpdateAnimationSpeed);
 	
 	//Particle Emitter
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Play", (const void*)&ParticleEmitterPlay);
@@ -3531,7 +3689,7 @@ void ScriptingModule::CreateDomain()
 	//SceneManager
 	mono_add_internal_call("JellyBitEngine.SceneManager.SceneManager::LoadScene", (const void*)&SMLoadScene);
 
-	//NavMeshAgent
+	//NavMeshAgent && Navigation
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetRadius", (const void*)&NavAgentGetRadius);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetRadius", (const void*)&NavAgentSetRadius);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetHeight", (const void*)&NavAgentGetHeight);
@@ -3547,6 +3705,10 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::ResetMoveTarget", (const void*)&NavAgentResetMoveTarget);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetParams", (const void*)&NavAgentGetParams);
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::SetParams", (const void*)&NavAgentSetParams);
+	mono_add_internal_call("JellyBitEngine.NavMeshAgent::_SetDestination", (const void*)&SetDestination);
+	//mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetPath", (const void*)&NavAgentGetPath);
+
+	mono_add_internal_call("JellyBitEngine.Navigation::_GetPath", (const void*)&NavigationGetPath);
 
 	//Audio
 	mono_add_internal_call("JellyBitEngine.AudioSource::GetAudio", (const void*)&AudioSourceGetAudio);

@@ -14,6 +14,7 @@
 #include "ResourceShaderProgram.h"
 #include "ResourceMaterial.h"
 #include "Uniforms.h"
+#include "GLCache.h"
 
 #include "MathGeoLib/include/Math/Quat.h"
 #include "MathGeoLib/include/Math/float3.h"
@@ -41,7 +42,8 @@ void Particle::SetActive(math::float3 pos, StartValues data, ParticleAnimation p
 	life = 0.0f;
 
 	speed = CreateRandomNum(data.speed);
-	acceleration3 = data.acceleration3;
+	gravity = data.gravity;
+	acceleration = CreateRandomNum(data.acceleration);
 	direction = data.particleDirection;
 
 	angle = CreateRandomNum(data.rotation) * DEGTORAD;
@@ -92,15 +94,21 @@ bool Particle::Update(float dt)
 	if (owner->simulatedGame == SimulatedGame_PAUSE || App->IsPause())
 		dt = 0;
 	life += dt;
-	if (life < lifeTime /*|| owner->dieOnAnimation*/)
+	if (life < lifeTime)
 	{
-		acceleration3 += acceleration3 * dt;
+		gravity += gravity * dt;
+		speed += acceleration * dt;
 		math::float3 movement = direction * (speed * dt);
+		_movement += movement + gravity * dt;
 
-		if (acceleration3.Equals(math::float3::zero))
+		/*if (acceleration3.Equals(math::float3::zero))
 			_movement += movement;
 		else
 			_movement += (movement + acceleration3 * dt);
+
+		if (acceleration < 0)
+		else
+			_movement += movement;*/
 
 		transform.position = _movement + owner->GetPos();
 
@@ -215,13 +223,11 @@ void Particle::Draw()
 		ResourceShaderProgram* resourceShaderProgram = (ResourceShaderProgram*)App->res->GetResource(shaderUuid);
 		GLuint shaderProgram = resourceShaderProgram->shaderProgram;
 
-		glUseProgram(shaderProgram);
+		App->glCache->SwitchShader(shaderProgram);
 		
 		math::float4x4 model_matrix = transform.GetMatrix();// particle matrix
 		model_matrix = model_matrix.Transposed();
-		math::float4x4 view_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLViewMatrix();
-		math::float4x4 proj_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLProjectionMatrix();
-		math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
+		math::float4x4 mvp_matrix = model_matrix * App->renderer3D->viewProj_matrix;
 		math::float4x4 normal_matrix = model_matrix;
 		normal_matrix.Inverse();
 		normal_matrix.Transpose();
@@ -277,7 +283,6 @@ void Particle::Draw()
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
-		glUseProgram(0);
 	}
 }
 

@@ -10,6 +10,9 @@ struct Color
 	Color(float r, float g, float b, float a = 1.0f) : r(r), g(g), b(b), a(a)
 	{}
 
+	Color(float* color) : r(color[0]), g(color[1]), b(color[2]), a(color[3])
+	{}
+
 	void Set(float r, float g, float b, float a = 1.0f)
 	{
 		this->r = r;

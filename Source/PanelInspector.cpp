@@ -156,7 +156,7 @@ void PanelInspector::ShowGameObjectInspector() const
 
 	ImGui::SetCursorScreenPos(ImGui::GetWindowPos());
 
-	ImGui::Dummy(inspectorSize);
+	/*ImGui::Dummy(inspectorSize);
 	if (ImGui::BeginDragDropTarget())
 	{
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("SCRIPT_RESOURCE"))
@@ -169,7 +169,7 @@ void PanelInspector::ShowGameObjectInspector() const
 			script->SetParent(gameObject);
 		}
 		ImGui::EndDragDropTarget();
-	}
+	}*/
 
 	ImGui::SetCursorScreenPos(cursorPos);
 
@@ -339,26 +339,17 @@ void PanelInspector::ShowGameObjectInspector() const
 			{
 				ResourceScript* res = nullptr;
 
-				if (App->fs->Exists("Assets/Scripts/" + scriptNames[i] + ".cs.meta"))
+				std::vector<Resource*> scriptResources = App->res->GetResourcesByType(ResourceTypes::ScriptResource);
+				for (Resource* resource : scriptResources)
 				{
-					char* metaBuffer;
-					uint size = App->fs->Load("Assets/Scripts/" + scriptNames[i] + ".cs.meta", &metaBuffer);
-					if (size > 0)
+					if (resource->GetData().name == scriptNames[i])
 					{
-						char* cursor = metaBuffer;
-						cursor += sizeof(int64_t) + sizeof(uint);
-
-						uint32_t UUID;
-						memcpy(&UUID, cursor, sizeof(uint32_t));
-
-						res = (ResourceScript*)App->res->GetResource(UUID);
-
-						delete[] metaBuffer;
+						res = (ResourceScript*)resource;
 					}
 				}
 
 				CONSOLE_LOG(LogTypes::Normal, "New Script Created: %s", scriptNames[i].data());
-				ComponentScript* script = App->scripting->CreateScriptComponent(scriptNames[i], res == nullptr);
+				ComponentScript* script = App->scripting->CreateScriptComponent(scriptNames[i], res);
 				gameObject->AddComponent(script);
 				script->SetParent(gameObject);
 				script->InstanceClass();
@@ -398,7 +389,7 @@ void PanelInspector::ShowGameObjectInspector() const
 			}
 
 			CONSOLE_LOG(LogTypes::Normal, "New Script Created: %s", scriptName.data());
-			ComponentScript* script = App->scripting->CreateScriptComponent(scriptName, res == nullptr);
+			ComponentScript* script = App->scripting->CreateScriptComponent(scriptName, res);
 			gameObject->AddComponent(script);
 			script->SetParent(gameObject);
 			script->InstanceClass();

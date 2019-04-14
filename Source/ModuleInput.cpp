@@ -6,12 +6,15 @@
 #include "ModuleWindow.h"
 #include "MaterialImporter.h"
 #include "ModuleRenderer3D.h"
+#include "ModuleResourceManager.h"
+#include "ResourceTexture.h"
+#include "GLCache.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_impl_sdl.h"
 #include "imgui\imgui_impl_opengl3.h"
 
-
+#include "glew\include\GL\glew.h"
 
 #define MAX_KEYS 300
 
@@ -185,4 +188,119 @@ bool ModuleInput::CleanUp()
 	SDL_QuitSubSystem(SDL_INIT_EVENTS);
 
 	return ret;
+}
+
+void ModuleInput::DrawCursor()
+{
+#ifndef GAMEMODE
+	if (App->GetEngineState() == engine_states::ENGINE_PLAY && CursorTextureID != 0u)
+		ImGui::SetMouseCursor(ImGuiMouseCursor_::ImGuiMouseCursor_None);
+	else
+		ImGui::SetMouseCursor(ImGuiMouseCursor_::ImGuiMouseCursor_Arrow);
+#else
+	SDL_SetCursor(SDL_DISABLE);
+#endif
+
+	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
+	{
+		if (CursorTextureID == 0)
+		{
+			//Load the default cursor texture
+			std::vector<Resource*> resources = App->res->GetResourcesByType(ResourceTypes::TextureResource);
+			for (Resource* res : resources)
+			{
+				if (res->GetData().name == "defcursor")
+				{
+					CursorTextureUUID = res->GetUuid();
+					App->res->SetAsUsed(CursorTextureUUID);
+					CursorTextureID = ((ResourceTexture*)res)->GetId();
+					break;
+				}
+			}
+		}
+
+		if (CursorTextureID != 0)
+		{
+			uint windowWidth = App->window->GetWindowWidth();
+			uint windowHeight = App->window->GetWindowHeight();
+			
+			glDisable(GL_LIGHTING);
+
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+			glMatrixMode(GL_PROJECTION);
+			glPushMatrix();
+			glLoadIdentity();
+			glOrtho(0.0f, windowWidth, windowHeight, 0.0f, -1.0f, 1.0f);
+			glMatrixMode(GL_MODELVIEW);
+			glPushMatrix();
+			glLoadIdentity();
+
+			glTranslatef(mouse_x, mouse_y, -0.5);
+
+			App->glCache->SwitchShader(0);
+			glEnable(GL_TEXTURE_2D);
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, CursorTextureID);
+			GLenum error = glGetError();
+
+			bool sad = error == GL_INVALID_OPERATION;
+
+			glColor4f(1.0, 1.0f, 1.0f, 1.0f);
+
+			glBegin(GL_QUADS);
+			glTexCoord2f(0.0f, 0.0f);
+			glVertex3f(0.0f, cursorSize, 0.0f);
+			glTexCoord2f(1.0f, 0.0f);
+			glVertex3f(cursorSize, cursorSize, 0.0f);
+			glTexCoord2f(1.0f, 1.0f);
+			glVertex3f(cursorSize, 0.0f, 0.0f);
+			glTexCoord2f(0.0f, 1.0f);
+			glVertex3f(0.0f, 0.0f, 0.0f);
+			glEnd();
+
+			
+			glMatrixMode(GL_MODELVIEW);
+			glPopMatrix();
+			glMatrixMode(GL_PROJECTION);
+			glPopMatrix();
+
+			glBindTexture(GL_TEXTURE_2D, 0);
+
+			glEnable(GL_LIGHTING);
+			glDisable(GL_BLEND);
+		}
+	}
+}
+
+std::string ModuleInput::GetCursorTexture() const
+{
+	ResourceTexture* texture = CursorTextureUUID != 0u ? (ResourceTexture*)App->res->GetResource(CursorTextureUUID) : nullptr;
+	if (texture)
+	{
+		return texture->GetData().name;
+	}
+	return "";
+}
+
+void ModuleInput::SetCursorTexture(std::string& textureName)
+{
+	std::vector<Resource*> resources = App->res->GetResourcesByType(ResourceTypes::TextureResource);
+	for (Resource* res : resources)
+	{
+		if (res->GetData().name == textureName)
+		{
+			if (CursorTextureUUID != 0)
+				App->res->SetAsUnused(CursorTextureUUID);
+
+			CursorTextureUUID = res->GetUuid();
+			App->res->SetAsUsed(CursorTextureUUID);
+			CursorTextureID = ((ResourceTexture*)res)->GetId();
+
+			break;
+		}
+	}
+
 }

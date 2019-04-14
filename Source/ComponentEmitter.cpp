@@ -6,6 +6,7 @@
 #include "ModuleTimeManager.h"
 #include "ModuleScene.h"
 #include "ResourceTexture.h"
+#include "ResourceMesh.h"
 #include "ModuleResourceManager.h"
 #include "ModuleInternalResHandler.h"
 
@@ -45,7 +46,6 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 
 	// posDifAABB
 	posDifAABB = componentEmitter.posDifAABB;
-	gravity = componentEmitter.gravity;
 
 	// boxCreation
 	boxCreation = componentEmitter.boxCreation;
@@ -88,7 +88,6 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 
 	isSubEmitter = componentEmitter.isSubEmitter;
 	subEmitter = componentEmitter.subEmitter;
-	subEmitterUUID = componentEmitter.subEmitterUUID;
 
 	rateOverTime = componentEmitter.rateOverTime;
 
@@ -125,6 +124,10 @@ ComponentEmitter::~ComponentEmitter()
 
 
 	App->res->SetAsUnused(App->resHandler->plane);
+	if (burstMesh.uuid > 0)
+		App->res->SetAsUnused(burstMesh.uuid);
+	if (shapeMesh.uuid > 0)
+		App->res->SetAsUnused(shapeMesh.uuid);
 }
 
 void ComponentEmitter::StartEmitter()
@@ -137,6 +140,8 @@ void ComponentEmitter::StartEmitter()
 
 		timeToParticle = 0.0f;
 		isPlaying = true;
+		if (subEmitter)
+			((ComponentEmitter*)subEmitter)->isPlaying = true;
 	}
 }
 
@@ -185,7 +190,7 @@ void ComponentEmitter::Update()
 				int particlesToCreate = minPart;
 				if (minPart != maxPart)
 					particlesToCreate = (rand() % (maxPart - minPart)) + minPart;
-				CreateParticles(particlesToCreate, burstType, math::float3::zero);
+				CreateParticles(particlesToCreate, burstType, math::float3::zero, true);
 			}
 			burstTime.Start();
 		}
@@ -217,6 +222,12 @@ void ComponentEmitter::ClearEmitter()
 	isPlaying = false;
 }
 
+void ComponentEmitter::ConnectSubEmitter()
+{
+	if (uuidSubEmitter > 0)
+		subEmitter = App->GOs->GetGameObjectByUID(uuidSubEmitter);
+}
+
 void ComponentEmitter::SoftClearEmitter()
 {
 	App->particle->activeParticles -= particles.size();
@@ -225,7 +236,7 @@ void ComponentEmitter::SoftClearEmitter()
 }
 
 
-void ComponentEmitter::CreateParticles(int particlesToCreate, ShapeType shapeType, const math::float3& pos)
+void ComponentEmitter::CreateParticles(int particlesToCreate, ShapeType shapeType, const math::float3& pos, bool isBurst)
 {
 	if (particlesToCreate == 0)
 		++particlesToCreate;
@@ -237,7 +248,7 @@ void ComponentEmitter::CreateParticles(int particlesToCreate, ShapeType shapeTyp
 		{
 			math::float3 spawnPos = pos;
 
-			spawnPos += RandPos(shapeType);
+			spawnPos += RandPos(shapeType, isBurst);
 
 			App->particle->allParticles[particleId].SetActive(spawnPos, startValues, particleAnim);
 
@@ -249,7 +260,7 @@ void ComponentEmitter::CreateParticles(int particlesToCreate, ShapeType shapeTyp
 	}
 }
 
-math::float3 ComponentEmitter::RandPos(ShapeType shapeType)
+math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 {
 	math::float3 spawn = math::float3::zero;
 
@@ -284,6 +295,31 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType)
 
 		circleCreation.pos = (math::float3(0, coneHeight, 0) * parent->transform->GetRotation().ToFloat3x3().Transposed());
 		startValues.particleDirection = (circleCreation.GetPoint(angle, centerDist)).Normalized();
+		break;
+	}
+	case ShapeType_MESH:
+	{
+		if (isBurst)
+		{
+			if (!burstMesh.uniqueVertex.empty())
+			{
+				spawn.x = burstMesh.uniqueVertex[burstMesh.meshVertexCont].x;
+				spawn.y = burstMesh.uniqueVertex[burstMesh.meshVertexCont].y;
+				spawn.z = burstMesh.uniqueVertex[burstMesh.meshVertexCont].z;
+				burstMesh.meshVertexCont++;
+				if (burstMesh.meshVertexCont >= burstMesh.uniqueVertex.size())
+					burstMesh.meshVertexCont = 0u;
+			}
+		}
+		else if(!shapeMesh.uniqueVertex.empty())
+		{
+			uint pos = rand() % shapeMesh.uniqueVertex.size();
+			spawn.x = shapeMesh.uniqueVertex[pos].x;
+			spawn.y = shapeMesh.uniqueVertex[pos].y;
+			spawn.z = shapeMesh.uniqueVertex[pos].z;
+		}
+		startValues.particleDirection = (math::float3::unitY * parent->transform->GetRotation().ToFloat3x3().Transposed()).Normalized();
+		spawn = spawn * parent->transform->GetRotation().ToFloat3x3().Transposed();
 		break;
 	}
 	default:
@@ -363,8 +399,12 @@ void ComponentEmitter::ParticleValues()
 			EqualsMinMaxValues(startValues.sizeOverTime);
 		ShowFloatValue(startValues.sizeOverTime, checkSizeOverTime, "SizeOverTime", 0.25f, -1.0f, 1.0f);
 
+		if (ImGui::Checkbox("##Acceleration", &checkAcceleration))
+			EqualsMinMaxValues(startValues.acceleration);
+		ShowFloatValue(startValues.acceleration, checkAcceleration, "Acceleration", 0.25f, -1.0f, 1.0f);
+
 		ImGui::PushItemWidth(127.0f);
-		ImGui::DragFloat3("Acceleration", &startValues.acceleration3.x, 0.1f, -5.0f, 5.0f, "%.2f");
+		ImGui::DragFloat3("Gravity", &startValues.gravity.x, 0.1f, -5.0f, 5.0f, "%.2f");
 		ImGui::PopItemWidth();
 
 		ImGui::PushItemWidth(100.0f);
@@ -395,6 +435,9 @@ void ComponentEmitter::ParticleShape()
 				normalShapeType = ShapeType_SPHERE;
 			else if (ImGui::MenuItem("Cone"))
 				normalShapeType = ShapeType_CONE;
+			else if (ImGui::MenuItem("Mesh"))
+				normalShapeType = ShapeType_MESH;
+
 			ImGui::End();
 		}
 
@@ -434,10 +477,24 @@ void ComponentEmitter::ParticleShape()
 			ImGui::DragFloat("Height Cone", &coneHeight, 0.0f, 0.25f, 20.0f, "%.2f");
 
 			break;
+		case ShapeType_MESH:
+			ImGui::PushID("shapeMesh");
+			ImGui::Button(std::to_string(shapeMesh.uuid).data(), ImVec2(150.0f, 0.0f));
+			ImGui::PopID();
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MESH_INSPECTOR_SELECTOR"))
+				{
+					uint payload_n = *(uint*)payload->Data;
+					SetMeshParticleRes(payload_n);
+				}
+				ImGui::EndDragDropTarget();
+			}
+			break;
 		default:
 			break;
 		}
-
 		ImGui::Checkbox("Debug Draw", &drawShape);
 	}
 #endif
@@ -504,22 +561,30 @@ void ComponentEmitter::ParticleBurst()
 		if (ImGui::BeginMenu(burstTypeName.data()))
 		{
 			if (ImGui::MenuItem("Box"))
-			{
 				burstType = ShapeType_BOX;
-				burstTypeName = "Box Burst";
-			}
 			else if (ImGui::MenuItem("Sphere"))
-			{
 				burstType = ShapeType_SPHERE_CENTER;
-				burstTypeName = "Sphere Burst";
-			}
 			else if (ImGui::MenuItem("Cone"))
-			{
 				burstType = ShapeType_CONE;
-				burstTypeName = "Cone Burst";
-			}
+			else if (ImGui::MenuItem("Mesh"))
+				burstType = ShapeType_MESH;
+
 			ImGui::End();
+			SetBurstText();
 		}
+
+		if (burstType == ShapeType_SPHERE_CENTER || burstType == ShapeType_SPHERE || burstType == ShapeType_SPHERE_BORDER)
+		{
+			if (ImGui::RadioButton("Random", burstType == ShapeType_SPHERE))
+				burstType = ShapeType_SPHERE;
+			ImGui::SameLine();
+			if (ImGui::RadioButton("Center", burstType == ShapeType_SPHERE_CENTER))
+				burstType = ShapeType_SPHERE_CENTER;
+			ImGui::SameLine();
+			if (ImGui::RadioButton("Border", burstType == ShapeType_SPHERE_BORDER))
+				burstType = ShapeType_SPHERE_BORDER;
+		}
+
 		ImGui::PushItemWidth(100.0f);
 		ImGui::DragInt("Min particles", &minPart, 1.0f, 0, 100);
 		if (minPart > maxPart)
@@ -529,9 +594,48 @@ void ComponentEmitter::ParticleBurst()
 			minPart = maxPart;
 		ImGui::DragFloat("Repeat Time", &repeatTime, 0.5f, 0.0f, 0.0f, "%.1f");
 
+		if (burstType == ShapeType_MESH)
+		{
+			ImGui::PushID("BurstMesh");
+			ImGui::Button(std::to_string(burstMesh.uuid).data(), ImVec2(150.0f, 0.0f));
+			ImGui::PopID();
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MESH_INSPECTOR_SELECTOR"))
+				{
+					uint payload_n = *(uint*)payload->Data;
+					SetBurstMeshParticleRes(payload_n);
+				}
+				ImGui::EndDragDropTarget();
+			}
+		}
 		ImGui::Separator();
 	}
 #endif
+}
+
+void ComponentEmitter::SetBurstText()
+{
+	switch (burstType)
+	{
+	case ShapeType_BOX:
+		burstTypeName = "Box Burst";
+		break;
+	case ShapeType_SPHERE:
+	case ShapeType_SPHERE_CENTER:
+	case ShapeType_SPHERE_BORDER:
+		burstTypeName = "Sphere Burst";
+		break;
+	case ShapeType_CONE:
+		burstTypeName = "Cone Burst";
+		break;
+	case ShapeType_MESH:
+		burstTypeName = "Mesh Burst";
+		break;
+	default:
+		break;
+	}
 }
 
 void ComponentEmitter::ParticleAABB()
@@ -649,6 +753,7 @@ void ComponentEmitter::ParticleSubEmitter()
 				subEmitter->originalBoundingBox.SetFromCenterAndSize(subEmitter->transform->GetPosition(), math::float3::one);
 				App->scene->quadtree.Insert(subEmitter);
 			}
+
 		}
 		else
 			subEmitter->ToggleIsActive();
@@ -773,6 +878,50 @@ void ComponentEmitter::SetMaterialRes(uint materialUuid)
 	materialRes = materialUuid;
 }
 
+void ComponentEmitter::SetMeshParticleRes(uint res_uuid)
+{
+	if (shapeMesh.uuid > 0)
+		App->res->SetAsUnused(shapeMesh.uuid);
+
+	if (res_uuid > 0)
+		App->res->SetAsUsed(res_uuid);
+
+	Resource* resource = App->res->GetResource(res_uuid);
+
+	if (resource)
+		SetMeshInfo((ResourceMesh*)resource, shapeMesh);
+	
+	else
+		shapeMesh.uuid = 0u;
+}
+
+void ComponentEmitter::SetBurstMeshParticleRes(uint res_uuid)
+{
+	if (burstMesh.uuid > 0)
+		App->res->SetAsUnused(burstMesh.uuid);
+
+	if (res_uuid > 0)
+		App->res->SetAsUsed(res_uuid);
+
+	Resource* resource = App->res->GetResource(res_uuid);
+
+	if (resource)
+		SetMeshInfo((ResourceMesh*)resource, burstMesh);
+	
+	else
+		burstMesh.uuid = 0u;
+}
+void ComponentEmitter::SetMeshInfo(ResourceMesh* resource, MeshShape &shape)
+{
+	resource->GetVerticesReference(shape.meshVertex);
+	shape.uniqueVertex.clear();
+	resource->GetUniqueVertexPositions(shape.uniqueVertex);
+
+	shape.uuid = resource->GetUuid();
+	shape.meshVertexCont = 0u;
+	resource->GetIndicesReference(shape.indices);
+	shape.indicesSize = resource->GetIndicesCount() / 3;
+}
 uint ComponentEmitter::GetMaterialRes() const
 {
 	return materialRes;
@@ -803,14 +952,9 @@ uint ComponentEmitter::GetInternalSerializationBytes()
 		sizeOfList += (*it).GetColorListSerializationBytes();
 	}
 
-	return sizeof(bool) * 8 + sizeof(rateOverTime) + sizeof(duration) + sizeof(uint) //UUID Material
-		+ sizeof(drawAABB) + sizeof(isSubEmitter) + sizeof(repeatTime) + sizeof(uint)//UUID Subemiter
-		+ sizeof(dieOnAnimation) + sizeof(normalShapeType) + particleAnim.GetPartAnimationSerializationBytes()
-		+ sizeof(uint)/*size of particleColor list*/ + sizeof(boxCreation) + sizeof(burstType) + sizeof(float) * 2 //Circle and Sphere rad
-		+ sizeof(gravity) + sizeof(posDifAABB) + sizeof(loop) + sizeof(burst) + sizeof(startOnPlay)
-		+ sizeof(minPart) + sizeof(maxPart) + sizeof(char) * burstTypeName.size() + sizeof(uint)//Size of name;
-		+ sizeof(math::float2) * 7 + sizeof(math::float3) * 2 + sizeof(bool) * 2 + sizeOfList//Bytes of all Start Values Struct
-		+ sizeof(localSpace) + sizeof(coneHeight);		//TODO PROGRAMER -> Don't sum localSpace before load
+	return sizeof(bool) * 17 + sizeof(int) * 3 + sizeof(float) * 6 + sizeof(uint) * 5
+		+ sizeof(ShapeType) * 2	+ sizeof(math::AABB) + sizeof(math::float2) * 7 + sizeof(math::float3) * 3
+		+ particleAnim.GetPartAnimationSerializationBytes() + sizeOfList;//Bytes of all Start Values Struct
 }
 
 math::float3 ComponentEmitter::GetPos()
@@ -901,9 +1045,6 @@ void ComponentEmitter::OnInternalSave(char *& cursor)
 	memcpy(cursor, &sphereCreation.r, bytes);
 	cursor += bytes;
 
-	memcpy(cursor, &gravity, bytes);
-	cursor += bytes;
-
 	memcpy(cursor, &coneHeight, bytes);
 	cursor += bytes;
 
@@ -918,6 +1059,12 @@ void ComponentEmitter::OnInternalSave(char *& cursor)
 	memcpy(cursor, &materialRes, bytes);
 	cursor += bytes;
 
+	memcpy(cursor, &burstMesh.uuid, bytes);
+	cursor += bytes;
+
+	memcpy(cursor, &shapeMesh.uuid, bytes);
+	cursor += bytes;
+	
 	particleAnim.OnInternalSave(cursor);
 
 	bytes = sizeof(ShapeType);
@@ -933,15 +1080,6 @@ void ComponentEmitter::OnInternalSave(char *& cursor)
 
 	bytes = sizeof(math::float3);
 	memcpy(cursor, &posDifAABB, bytes);
-	cursor += bytes;
-
-	bytes = sizeof(uint);
-	uint nameLenghtt = burstTypeName.size();
-	memcpy(cursor, &nameLenghtt, bytes);
-	cursor += bytes;
-
-	bytes = nameLenghtt;
-	memcpy(cursor, burstTypeName.c_str(), bytes);
 	cursor += bytes;
 }
 
@@ -1018,30 +1156,34 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	memcpy(&sphereCreation.r, cursor, bytes);
 	cursor += bytes;
 	
-	memcpy(&gravity, cursor, bytes);
-	cursor += bytes;
+	//float gravity;
+	//memcpy(&gravity, cursor, bytes);
+	//cursor += bytes;
 
 	memcpy(&coneHeight, cursor, bytes);
 	cursor += bytes;
 
-	uint uuid = 0u;
-	if (subEmitter)
-		uuid = subEmitter->GetUUID();
-
 	bytes = sizeof(uint);
-	memcpy(&uuid, cursor, bytes);
+	memcpy(&uuidSubEmitter, cursor, bytes);
 	cursor += bytes;
 
-	uint newMaterial = 0;
-	memcpy(&newMaterial, cursor, bytes);
+	memcpy(&materialRes, cursor, bytes);
 
-	if (App->res->GetResource(newMaterial) != nullptr)
-		SetMaterialRes(newMaterial);
-	else
-		SetMaterialRes(App->resHandler->defaultMaterial);
-
+	App->res->GetResource(materialRes) ? SetMaterialRes(materialRes) : SetMaterialRes(App->resHandler->defaultMaterial);
+	cursor += bytes;
+	//Coment this
+	memcpy(&burstMesh.uuid, cursor, bytes);
+	Resource* res = App->res->GetResource(burstMesh.uuid);
+	if (res)
+		SetMeshInfo((ResourceMesh*)res, burstMesh);
 	cursor += bytes;
 
+	memcpy(&shapeMesh.uuid, cursor, bytes);
+	res = App->res->GetResource(shapeMesh.uuid);
+	if (res)
+		SetMeshInfo((ResourceMesh*)res, shapeMesh);
+	cursor += bytes;
+	//---
 	particleAnim.OnInternalLoad(cursor);
 
 	bytes = sizeof(ShapeType);
@@ -1059,16 +1201,18 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	memcpy(&posDifAABB, cursor, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(uint);
-	uint nameLenghtt;
-	memcpy(&nameLenghtt, cursor, bytes);
-	cursor += bytes;
+	//bytes = sizeof(uint);
+	//uint namelenghtt;
+	//memcpy(&namelenghtt, cursor, bytes);
+	//cursor += bytes;
 
-	bytes = nameLenghtt;
-	burstTypeName.resize(nameLenghtt);
-	memcpy((void*)burstTypeName.c_str(), cursor, bytes);
-	burstTypeName.resize(nameLenghtt);
-	cursor += bytes;
+	//bytes = namelenghtt;
+	//bursttypename.resize(namelenghtt);
+	//memcpy((void*)bursttypename.c_str(), cursor, bytes);
+	//bursttypename.resize(namelenghtt);
+	//cursor += bytes;
+
+	SetBurstText();
 }
 //--------------------------------------------------------------------------------------------------------------------------------------
 //Start Values Save&Load
@@ -1096,8 +1240,11 @@ void StartValues::OnInternalSave(char *& cursor)
 	memcpy(cursor, &angularVelocity, bytes);
 	cursor += bytes;
 
+	memcpy(cursor, &acceleration, bytes);
+	cursor += bytes;
+
 	bytes = sizeof(math::float3);
-	memcpy(cursor, &acceleration3, bytes);
+	memcpy(cursor, &gravity, bytes);
 	cursor += bytes;
 	
 	memcpy(cursor, &particleDirection, bytes);
@@ -1119,6 +1266,7 @@ void StartValues::OnInternalSave(char *& cursor)
 	{
 		(*it).OnInternalSave(cursor);
 	}
+
 }
 
 void StartValues::OnInternalLoad(char *& cursor)
@@ -1144,9 +1292,12 @@ void StartValues::OnInternalLoad(char *& cursor)
 
 	memcpy(&angularVelocity, cursor, bytes);
 	cursor += bytes;
+	//Coment this
+	memcpy(&acceleration, cursor, bytes);
+	cursor += bytes;
 
 	bytes = sizeof(math::float3);
-	memcpy(&acceleration3 , cursor, bytes);
+	memcpy(&gravity , cursor, bytes);
 	cursor += bytes;
 
 	memcpy(&particleDirection, cursor, bytes);
@@ -1177,7 +1328,8 @@ void StartValues::operator=(StartValues startValue)
 {
 	life = startValue.life;
 	speed = startValue.speed;
-	acceleration3 = startValue.acceleration3;
+	gravity = startValue.gravity;
+	acceleration = startValue.acceleration;
 	sizeOverTime = startValue.sizeOverTime;
 	size = startValue.size;
 	rotation = startValue.rotation;

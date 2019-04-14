@@ -56,6 +56,8 @@ GameObject::GameObject(const char* name, GameObject* parent, bool disableTransfo
 
 	originalBoundingBox.SetNegativeInfinity();
 	boundingBox.SetNegativeInfinity();
+	rotationBB = originalBoundingBox.ToOBB();
+
 
 	uuid = App->GenerateRandomNumber();
 }
@@ -66,6 +68,8 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 
 	originalBoundingBox = gameObject.originalBoundingBox;
 	boundingBox = gameObject.boundingBox;
+	rotationBB = originalBoundingBox.ToOBB();
+
 
 	isActive = gameObject.isActive;
 	isStatic = gameObject.isStatic;

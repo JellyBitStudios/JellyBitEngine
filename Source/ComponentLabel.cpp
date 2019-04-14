@@ -30,7 +30,7 @@ ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType
 		if (fontUuid)
 			size = ((ResourceFont*)fonts[0])->fontData.fontSize;
 
-		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::LabelComponent, this);
+		App->glCache->RegisterBufferIndex(&offset, &index, ComponentTypes::LabelComponent, this);
 
 		needed_recalculate = true;
 	}
@@ -50,7 +50,7 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 
 	if (includeComponents)
 	{
-		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::LabelComponent, this);
+		App->glCache->RegisterBufferIndex(&offset, &index, ComponentTypes::LabelComponent, this);
 		if (!labelWord.empty())
 			if (index != -1)
 				FIllBuffer();
@@ -60,7 +60,7 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 ComponentLabel::~ComponentLabel()
 {
 	if (index != -1)
-		App->ui->UnRegisterBufferIndex(offset, ComponentTypes::LabelComponent);
+		App->glCache->UnRegisterBufferIndex(offset, ComponentTypes::LabelComponent);
 
 	parent->cmp_label = nullptr;
 }
@@ -70,7 +70,7 @@ void ComponentLabel::OnSystemEvent(System_Event event)
 	switch (event.type)
 	{
 	case System_Event_Type::ScreenChanged:
-		//change size by z & y
+		//change size by x & y
 	case System_Event_Type::CanvasChanged:
 	case System_Event_Type::RectTransformUpdated:
 		needed_recalculate = true;
@@ -158,8 +158,9 @@ void ComponentLabel::Update()
 
 				FillCorners();
 
-				if (index != -1)
-					FIllBuffer();
+				if(App->glCache->isNvidia())
+					if (index != -1)
+						FIllBuffer();
 			}
 		}
 
@@ -511,7 +512,6 @@ void ComponentLabel::DragDropFont()
 
 void ComponentLabel::FIllBuffer()
 {
-	/*
 	buffer_size = labelWord.size() * sizeof(float) * 16;
 	char* cursor = buffer;
 	size_t bytes = sizeof(float) * 4;
@@ -528,8 +528,7 @@ void ComponentLabel::FIllBuffer()
 	}
 	last_word_size = labelWord.size();
 
-	App->ui->FillBufferRange(offset, buffer_size, buffer);
-	*/
+	App->glCache->FillBufferRange(offset, buffer_size, buffer);
 }
 
 void ComponentLabel::FillCorners()
@@ -567,7 +566,7 @@ math::float4 ComponentLabel::GetColor() const
 
 char* ComponentLabel::GetBuffer()
 {
-	return nullptr;
+	return buffer;
 }
 
 uint ComponentLabel::GetBufferSize() const
@@ -585,7 +584,7 @@ std::vector<uint>* ComponentLabel::GetWordTextureIDs()
 	return &textureWord;
 }
 
-std::vector<ComponentLabel::LabelLetter>* ComponentLabel::GetWord()
+std::vector<LabelLetter>* ComponentLabel::GetWord()
 {
 	return &labelWord;
 }
