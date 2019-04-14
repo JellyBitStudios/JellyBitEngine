@@ -251,12 +251,13 @@ void ModuleScene::OnGizmosList()
 	math::float3 globalPosition = math::float3::zero;
 	math::float3 globalSize = math::float3::zero;
 
-	for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+	for (std::list<uint>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 	{
-		if ((*iter)->transform)
+		GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+		if (go && go->transform)
 		{
-			globalPosition += (*iter)->transform->GetGlobalMatrix().TranslatePart();
-			globalSize += (*iter)->transform->GetGlobalMatrix().GetScale();
+			globalPosition += go->transform->GetGlobalMatrix().TranslatePart();
+			globalSize += go->transform->GetGlobalMatrix().GetScale();
 		}
 		else
 		{
@@ -287,20 +288,16 @@ void ModuleScene::OnGizmosList()
 
 		if (ImGuizmo::IsUsing())
 		{
-			if (!saveTransform)
-			{
-				saveTransform = true;
-				lastMat = transformMatrix;
-			}
 			transformMatrix = transformMatrix.Transposed();
 			math::float3 transformPos = transformMatrix.TranslatePart();
 			math::Quat resformQuat = transformMatrix.RotatePart().ToQuat();
 			math::float3 transformScale = transformMatrix.GetScale();
-			for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			for (std::list<uint>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 			{
-				if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), (*iter)->GetParent()) == App->scene->multipleSelection.end())
+				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+				if (go && std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), go->GetParent()->GetUUID()) == App->scene->multipleSelection.end())
 				{
-					math::float4x4 currMat = (*iter)->transform->GetGlobalMatrix();
+					math::float4x4 currMat = go->transform->GetGlobalMatrix();
 					math::float3 finalPos = currMat.TranslatePart();
 					math::Quat finalRot = currMat.RotatePart().ToQuat();
 					math::float3 finalScale = currMat.GetScale();
@@ -321,7 +318,7 @@ void ModuleScene::OnGizmosList()
 					}
 					math::float4x4 realTransform = math::float4x4::FromTRS(finalPos, finalRot, finalScale);
 
-					(*iter)->transform->SetMatrixFromGlobal(realTransform);
+					go->transform->SetMatrixFromGlobal(realTransform);
 				}
 			}
 		}

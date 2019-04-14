@@ -104,9 +104,11 @@ bool PanelHierarchy::Draw()
 
 		if (!App->gui->WantTextInput() && App->input->GetKey(SDL_SCANCODE_DELETE) == KEY_DOWN)
 		{
-			for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 			{
-				App->GOs->DeleteGameObject(*iter);
+				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+				if (go)
+					App->GOs->DeleteGameObject(go);
 			}
 		}
 	}
@@ -129,9 +131,11 @@ bool PanelHierarchy::Draw()
 	if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT && //You Found a Easter EGG!
 		App->input->GetKey(SDL_SCANCODE_D) == KEY_DOWN)
 	{
-		for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+		for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 		{
-			App->GOs->Instanciate(*iter, (*iter)->GetParent());
+			GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+			if (go)
+				App->GOs->Instanciate(go, go->GetParent());
 		}
 	}
 
@@ -157,7 +161,7 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 				treeNodeFlags = 0;
 				treeNodeFlags |= ImGuiTreeNodeFlags_OpenOnArrow;
 
-				if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), child) != App->scene->multipleSelection.end())
+				if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), child->GetUUID()) != App->scene->multipleSelection.end())
 					treeNodeFlags |= ImGuiTreeNodeFlags_Selected;
 
 				bool treeNodeOpened = false;
@@ -183,7 +187,7 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 					}
 					else
 					{
-						if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), child) == App->scene->multipleSelection.end())
+						if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), child->GetUUID()) == App->scene->multipleSelection.end())
 							App->scene->selectedObject += child;
 						else
 							App->scene->selectedObject -= child;
@@ -200,7 +204,7 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 				treeNodeFlags = 0;
 				treeNodeFlags |= ImGuiTreeNodeFlags_Leaf;
 
-				if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), child) != App->scene->multipleSelection.end())
+				if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), child->GetUUID()) != App->scene->multipleSelection.end())
 					treeNodeFlags |= ImGuiTreeNodeFlags_Selected;
 
 				if (root->openHierarchy)
@@ -223,7 +227,7 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 					}
 					else
 					{
-						if(std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(),child) == App->scene->multipleSelection.end())
+						if(std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(),child->GetUUID()) == App->scene->multipleSelection.end())
 							App->scene->selectedObject += child;
 						else
 							App->scene->selectedObject -= child;

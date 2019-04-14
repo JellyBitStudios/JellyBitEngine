@@ -104,7 +104,7 @@ void PanelInspector::ShowGameObjectInspector() const
 {
 	if (!App->scene->multipleSelection.empty())
 	{
-		GameObject* gameObject = App->scene->multipleSelection.front();
+		GameObject* gameObject = App->GOs->GetGameObjectByUID(App->scene->multipleSelection.front());
 
 		if (gameObject == nullptr)
 		{
@@ -115,9 +115,11 @@ void PanelInspector::ShowGameObjectInspector() const
 		bool isActive = gameObject->IsActive();
 		if (ImGui::Checkbox("##Active", &isActive))
 		{
-			for (std::list<GameObject*>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			for (std::list<uint>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 			{
-				(*iter)->SetIsActive(isActive);
+				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+				if (go)
+					go->SetIsActive(isActive);
 			}
 		}
 		ImGui::SameLine();
@@ -140,9 +142,11 @@ void PanelInspector::ShowGameObjectInspector() const
 		bool isStatic = gameObject->IsStatic();
 		if (ImGui::Checkbox("Static", &isStatic))
 		{
-			for (std::list<GameObject*>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			for (std::list<uint>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 			{
-				(*iter)->SetIsStatic(isStatic);
+				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+				if (go)
+					go->SetIsStatic(isStatic);
 			}
 		}
 
@@ -170,9 +174,11 @@ void PanelInspector::ShowGameObjectInspector() const
 		ImGui::PushItemWidth(150.0f);
 		if (ImGui::Combo("Layer", &currentLayer, &layers[0], layers.size()))
 		{
-			for (std::list<GameObject*>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 			{
-				(*iter)->SetLayer(App->layers->NameToNumber(layers[currentLayer]));
+				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+				if (go)
+					go->SetLayer(App->layers->NameToNumber(layers[currentLayer]));
 			}
 		}
 		ImGui::PopItemWidth();
@@ -413,13 +419,16 @@ void PanelInspector::ShowGameObjectInspector() const
 
 				CONSOLE_LOG(LogTypes::Normal, "New Script Created: %s", scriptName.data());
 				ComponentScript* script = App->scripting->CreateScriptComponent(scriptName, res);
-				for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+				for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 				{
-					(*iter)->AddComponent(script);
-					script->SetParent(gameObject);
-					script->InstanceClass();
+					GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+					if (go)
+					{
+						go->AddComponent(script);
+						script->SetParent(go);
+						script->InstanceClass();
+					}
 				}
-
 				scriptName = "";
 				ImGui::CloseCurrentPopup();
 			}
@@ -433,20 +442,24 @@ void PanelInspector::ShowGameObjectInspector() const
 bool PanelInspector::CheckIsComponent(ComponentTypes type, bool allHaveIt) const
 {
 	bool canContinue = true;
-	for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+	for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 	{
-		if (!allHaveIt)
+		GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+		if (go)
 		{
-			if ((*iter)->GetComponent(type))
+			if (!allHaveIt)
+			{
+				if (go->GetComponent(type))
+				{
+					canContinue = false;
+					break;
+				}
+			}
+			else if (go->GetComponent(type) == nullptr)
 			{
 				canContinue = false;
 				break;
 			}
-		}
-		else if ((*iter)->GetComponent(type) == nullptr)
-		{
-			canContinue = false;
-			break;
 		}
 	}
 	return canContinue;
@@ -455,9 +468,10 @@ bool PanelInspector::CheckIsComponent(ComponentTypes type, bool allHaveIt) const
 bool PanelInspector::CheckIsComponentCollider() const
 {
 	bool canContinue = true;
-	for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+	for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 	{
-		if ((*iter)->cmp_collider)
+		GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+		if (go && go->cmp_collider)
 		{
 			canContinue = false;
 			break;
@@ -467,9 +481,11 @@ bool PanelInspector::CheckIsComponentCollider() const
 }
 void PanelInspector::AddComponentInGroup(ComponentTypes type) const
 {
-	for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+	for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 	{
-		(*iter)->AddComponent(type);
+		GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+		if (go)
+			go->AddComponent(type);
 	}
 }
 

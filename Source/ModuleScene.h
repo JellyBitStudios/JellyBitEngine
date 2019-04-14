@@ -89,7 +89,7 @@ public:
 
 	CurrentSelection selectedObject;
 
-	std::list<GameObject*> multipleSelection;
+	std::list<uint> multipleSelection;
 #endif
 
 	GameObject* child = nullptr;

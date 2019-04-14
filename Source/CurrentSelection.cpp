@@ -74,7 +74,7 @@ CurrentSelection& CurrentSelection::operator=(GameObject * newSelection)
 		App->camera->SetReference(newSelection->transform->GetPosition());
 
 	App->scene->multipleSelection.clear();
-	App->scene->multipleSelection.push_back(newSelection);
+	App->scene->multipleSelection.push_back(newSelection->GetUUID());
 
 	return *this;
 }
@@ -88,7 +88,7 @@ CurrentSelection& CurrentSelection::operator+=(GameObject * newSelection)
 	if (newSelection->transform)
 		App->camera->SetReference(newSelection->transform->GetPosition());
 
-	App->scene->multipleSelection.push_back(newSelection);
+	App->scene->multipleSelection.push_back(newSelection->GetUUID());
 
 	return *this;
 }
@@ -101,7 +101,7 @@ CurrentSelection& CurrentSelection::operator-=(GameObject * newSelection)
 	if (newSelection->transform)
 		App->camera->SetReference(newSelection->transform->GetPosition());
 
-	App->scene->multipleSelection.remove(newSelection);
+	App->scene->multipleSelection.remove(newSelection->GetUUID());
 
 	return *this;
 }
