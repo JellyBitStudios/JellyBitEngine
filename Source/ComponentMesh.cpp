@@ -39,9 +39,15 @@ void ComponentMesh::SetResource(uint res_uuid)
 	if (res_uuid > 0)
 		App->res->SetAsUsed(res_uuid);
 
-	Resource* resource = App->res->GetResource(res_uuid);
-
-	res = resource ? res_uuid : 0;
+	ResourceMesh* resource = (ResourceMesh*)App->res->GetResource(res_uuid);
+	if (resource)
+	{
+		res = res_uuid;
+		currentResource = resource;
+		return;
+	}
+	res = 0;
+	currentResource = 0;
 }
 
 void ComponentMesh::OnUniqueEditor()

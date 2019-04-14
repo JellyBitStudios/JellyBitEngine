@@ -8,6 +8,7 @@
 #include "ModuleRenderer3D.h"
 #include "ModuleResourceManager.h"
 #include "ResourceTexture.h"
+#include "GLCache.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_impl_sdl.h"
@@ -238,7 +239,7 @@ void ModuleInput::DrawCursor()
 
 			glTranslatef(mouse_x, mouse_y, -0.5);
 
-			glUseProgram(0);
+			App->glCache->SwitchShader(0);
 			glEnable(GL_TEXTURE_2D);
 
 			glActiveTexture(GL_TEXTURE0);

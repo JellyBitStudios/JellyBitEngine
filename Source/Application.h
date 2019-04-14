@@ -109,6 +109,7 @@ public:
 	class ModuleScene*					scene;
 	class ModuleRenderer3D*				renderer3D;
 	class ModuleFBOManager*				fbo;
+	class GLCache*						glCache;
 	class ModuleFileSystem*				fs;
 	class ModuleGOs*					GOs;
 	class ModuleTimeManager*			timeManager;

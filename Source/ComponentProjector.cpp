@@ -8,6 +8,7 @@
 #include "ModuleLayers.h"
 #include "ModuleScene.h"
 #include "ModuleFBOManager.h"
+#include "GLCache.h"
 
 #include "ResourceMaterial.h"
 #include "ResourceMesh.h"
@@ -275,7 +276,7 @@ void ComponentProjector::Draw() const
 
 	/// Projective texture mapping shader
 	uint shaderProgram = resourceShaderProgram->shaderProgram;
-	glUseProgram(shaderProgram);
+	App->glCache->SwitchShader(shaderProgram);
 
 	// 1. Generic uniforms
 	App->renderer3D->LoadGenericUniforms(shaderProgram);
@@ -304,9 +305,7 @@ void ComponentProjector::Draw() const
 	math::float4x4 model_matrix = aabbMatrix;
 	model_matrix = model_matrix.Transposed();
 	ComponentCamera* camera = App->renderer3D->GetCurrentCamera();
-	math::float4x4 view_matrix = camera->GetOpenGLViewMatrix();
-	math::float4x4 proj_matrix = camera->GetOpenGLProjectionMatrix();
-	math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
+	math::float4x4 mvp_matrix = model_matrix * App->renderer3D->viewProj_matrix;
 	math::float4x4 normal_matrix = model_matrix;
 	normal_matrix.Inverse();
 	normal_matrix.Transpose();
@@ -404,8 +403,6 @@ void ComponentProjector::Draw() const
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
-
-	glUseProgram(0);
 
 	glFrontFace(GL_CCW); // cull mode: counterclockwise (default)
 	glDepthFunc(GL_LESS);

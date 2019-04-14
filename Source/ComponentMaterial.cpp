@@ -37,7 +37,7 @@ void ComponentMaterial::OnUniqueEditor()
 #ifndef GAMEMODE
 	if (ImGui::CollapsingHeader("Material", ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		const Resource* resource = App->res->GetResource(res);
+		const Resource* resource = currentResource;
 
 		ImGui::PushID("material");
 		ImGui::Button(resource->GetName(), ImVec2(150.0f, 0.0f));
@@ -111,6 +111,14 @@ void ComponentMaterial::SetResource(uint materialUuid)
 		App->res->SetAsUsed(materialUuid);
 
 	res = materialUuid;
+
+	ResourceMaterial* mat = (ResourceMaterial*)App->res->GetResource(res);
+	if (mat)
+	{
+		currentResource = mat;
+		return;
+	}
+	currentResource = 0;
 }
 
 void ComponentMaterial::SetResourceByName(std::string materialName)
@@ -135,4 +143,12 @@ void ComponentMaterial::SetResourceByName(std::string materialName)
 		App->res->SetAsUsed(materialUuid);
 
 	res = materialUuid;
+
+	ResourceMaterial* mat = (ResourceMaterial*)App->res->GetResource(res);
+	if (mat)
+	{
+		currentResource = mat;
+		return;
+	}
+	currentResource = 0;
 }
