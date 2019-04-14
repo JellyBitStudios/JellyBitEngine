@@ -29,6 +29,7 @@ private:
 	void ShowGameObjectInspector() const;
 	void ShowGameObjectListInspector() const;
 	bool CheckIsComponent(ComponentTypes type) const;
+	void AddComponentInGroup(ComponentTypes type) const;
 	void DragnDropSeparatorTarget(Component* target) const;
 
 	void ShowMeshResourceInspector() const;

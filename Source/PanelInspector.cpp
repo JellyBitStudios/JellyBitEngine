@@ -487,19 +487,19 @@ void PanelInspector::ShowGameObjectListInspector() const
 		{
 			if (gameObject->GetLayer() == UILAYER)
 			{
-				if (!CheckIsComponent(ImageComponent))
+				if (CheckIsComponent(ImageComponent))
 					if (ImGui::Selectable("Image UI")) {
-						gameObject->AddComponent(ComponentTypes::ImageComponent);
+						AddComponentInGroup(ComponentTypes::ImageComponent);
 						ImGui::CloseCurrentPopup();
 					}
-				if (!CheckIsComponent(ButtonComponent))
+				if (CheckIsComponent(ButtonComponent))
 					if (ImGui::Selectable("Button UI")) {
-						gameObject->AddComponent(ComponentTypes::ButtonComponent);
+						AddComponentInGroup(ComponentTypes::ButtonComponent);
 						ImGui::CloseCurrentPopup();
 					}
-				if (!CheckIsComponent(LabelComponent))
+				if (CheckIsComponent(LabelComponent))
 					if (ImGui::Selectable("Label UI")) {
-						gameObject->AddComponent(ComponentTypes::LabelComponent);
+						AddComponentInGroup(ComponentTypes::LabelComponent);
 						ImGui::CloseCurrentPopup();
 					}
 			}
@@ -511,90 +511,90 @@ void PanelInspector::ShowGameObjectListInspector() const
 
 			if (gameObject->transform)
 			{
-				if (!CheckIsComponent(MeshComponent))
+				if (CheckIsComponent(MeshComponent))
 					if (ImGui::Selectable("Mesh")) {
-						gameObject->AddComponent(ComponentTypes::MeshComponent);
+						AddComponentInGroup(ComponentTypes::MeshComponent);
 						ImGui::CloseCurrentPopup();
 					}
-				if (!CheckIsComponent(CameraComponent))
+				if (CheckIsComponent(CameraComponent))
 					if (ImGui::Selectable("Camera")) {
-						gameObject->AddComponent(ComponentTypes::CameraComponent);
+						AddComponentInGroup(ComponentTypes::CameraComponent);
 						ImGui::CloseCurrentPopup();
 					}
-				if (!CheckIsComponent(EmitterComponent))
+				if (CheckIsComponent(EmitterComponent))
 					if (ImGui::Selectable("Particle Emitter")) {
-						gameObject->AddComponent(ComponentTypes::EmitterComponent);
+						AddComponentInGroup(ComponentTypes::EmitterComponent);
 						ImGui::CloseCurrentPopup();
 					}
-				if (!CheckIsComponent(LightComponent))
+				if (CheckIsComponent(LightComponent))
 					if (ImGui::Selectable("Light")) {
-						gameObject->AddComponent(ComponentTypes::LightComponent);
+						AddComponentInGroup(ComponentTypes::LightComponent);
 						ImGui::CloseCurrentPopup();
 					}
-				if (!CheckIsComponent(ProjectorComponent))
+				if (CheckIsComponent(ProjectorComponent))
 					if (ImGui::Selectable("Projector")) {
-						gameObject->AddComponent(ComponentTypes::ProjectorComponent);
+						AddComponentInGroup(ComponentTypes::ProjectorComponent);
 						ImGui::CloseCurrentPopup();
 					}
-				if (!CheckIsComponent(AnimatorComponent))
+				if (CheckIsComponent(AnimatorComponent))
 					if (ImGui::Selectable("Animator")) {
-						gameObject->AddComponent(ComponentTypes::AnimatorComponent);
+						AddComponentInGroup(ComponentTypes::AnimatorComponent);
 						ImGui::CloseCurrentPopup();
 					}
 
-				if (!CheckIsComponent(NavAgentComponent))
+				if (CheckIsComponent(NavAgentComponent))
 					if (ImGui::Selectable("Nav Agent")) {
-						gameObject->AddComponent(ComponentTypes::NavAgentComponent);
+						AddComponentInGroup(ComponentTypes::NavAgentComponent);
 						ImGui::CloseCurrentPopup();
 					}
 
 
-				if (gameObject->cmp_rigidActor == nullptr) {
+				if (CheckIsComponent(RigidStaticComponent) && CheckIsComponent(RigidDynamicComponent)) {
 					if (ImGui::Selectable("Rigid Static")) {
-						gameObject->AddComponent(ComponentTypes::RigidStaticComponent);
+						AddComponentInGroup(ComponentTypes::RigidStaticComponent);
 						ImGui::CloseCurrentPopup();
 					}
-					else if ((gameObject->cmp_collider == nullptr || gameObject->cmp_collider->GetType() != ComponentTypes::PlaneColliderComponent)
+					else if ((CheckIsComponentCollider() || CheckIsComponent(PlaneColliderComponent))
 						&& ImGui::Selectable("Rigid Dynamic")) {
-						gameObject->AddComponent(ComponentTypes::RigidDynamicComponent);
+						AddComponentInGroup(ComponentTypes::RigidDynamicComponent);
 						ImGui::CloseCurrentPopup();
 					}
 				}
-				if (gameObject->cmp_collider == nullptr) {
+				if (CheckIsComponentCollider()) {
 					if (ImGui::Selectable("Box Collider")) {
-						gameObject->AddComponent(ComponentTypes::BoxColliderComponent);
+						AddComponentInGroup(ComponentTypes::BoxColliderComponent);
 						ImGui::CloseCurrentPopup();
 					}
 					else if (ImGui::Selectable("Sphere Collider")) {
-						gameObject->AddComponent(ComponentTypes::SphereColliderComponent);
+						AddComponentInGroup(ComponentTypes::SphereColliderComponent);
 						ImGui::CloseCurrentPopup();
 					}
 					else if (ImGui::Selectable("Capsule Collider")) {
-						gameObject->AddComponent(ComponentTypes::CapsuleColliderComponent);
+						AddComponentInGroup(ComponentTypes::CapsuleColliderComponent);
 						ImGui::CloseCurrentPopup();
 					}
-					else if ((gameObject->cmp_rigidActor == nullptr || gameObject->cmp_rigidActor->GetType() == ComponentTypes::RigidStaticComponent)
+					else if (((CheckIsComponent(RigidStaticComponent) && CheckIsComponent(RigidDynamicComponent)) || CheckIsComponent(RigidStaticComponent, true))
 						&& ImGui::Selectable("Plane Collider")) {
-						gameObject->AddComponent(ComponentTypes::PlaneColliderComponent);
+						AddComponentInGroup(ComponentTypes::PlaneColliderComponent);
 						ImGui::CloseCurrentPopup();
 					}
 				}
-				if (!CheckIsComponent(AudioListenerComponent))
+				if (CheckIsComponent(AudioListenerComponent))
 					if (ImGui::Selectable("Audio Listener")) {
-						gameObject->AddComponent(ComponentTypes::AudioListenerComponent);
+						AddComponentInGroup(ComponentTypes::AudioListenerComponent);
 						ImGui::CloseCurrentPopup();
 					}
 
-				if (!CheckIsComponent(AudioSourceComponent))
+				if (CheckIsComponent(AudioSourceComponent))
 					if (ImGui::Selectable("Audio Source")) {
-						gameObject->AddComponent(ComponentTypes::AudioSourceComponent);
+						AddComponentInGroup(ComponentTypes::AudioSourceComponent);
 						ImGui::CloseCurrentPopup();
 					}
 
-				if (!CheckIsComponent(TrailComponent))
+				if (CheckIsComponent(TrailComponent))
 				{
 					if (ImGui::Selectable("Trail")) {
-						gameObject->AddComponent(ComponentTypes::TrailComponent);
+						AddComponentInGroup(ComponentTypes::TrailComponent);
 						ImGui::CloseCurrentPopup();
 					}
 				}
@@ -702,18 +702,47 @@ void PanelInspector::ShowGameObjectListInspector() const
 		}
 	}
 }
-bool PanelInspector::CheckIsComponent(ComponentTypes type) const
+bool PanelInspector::CheckIsComponent(ComponentTypes type, bool allHaveIt) const
+{
+	bool canContinue = true;
+	for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+	{
+		if (!allHaveIt)
+		{
+			if ((*iter)->GetComponent(type))
+			{
+				canContinue = false;
+				break;
+			}
+		}
+		else if ((*iter)->GetComponent(type) == nullptr)
+		{
+			canContinue = false;
+			break;
+		}
+	}
+	return canContinue;
+}
+
+bool PanelInspector::CheckIsComponentCollider() const
 {
 	bool haveIt = false;
 	for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 	{
-		if ((*iter)->GetComponent(type))
+		if ((*iter)->cmp_collider)
 		{
 			haveIt = true;
 			break;
 		}
 	}
 	return haveIt;
+}
+void PanelInspector::AddComponentInGroup(ComponentTypes type) const
+{
+	for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+	{
+		(*iter)->AddComponent(type);
+	}
 }
 
 void PanelInspector::DragnDropSeparatorTarget(Component* target) const
