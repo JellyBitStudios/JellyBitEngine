@@ -20,7 +20,9 @@ public static class SteeringAlign
         Vector3 direction = (agent.Destination - agent.transform.position).normalized();
         float targetOrientation = MathScript.Rad2Deg * (float)Math.Atan2(direction.x, direction.z);
 
-        float diff = MathScript.DeltaAngle(orientation, targetOrientation); // wrap around PI
+        //float diff = MathScript.DeltaAngle(orientation, targetOrientation);
+        float diff = targetOrientation - orientation;
+        diff = Mathf.Clamp(diff, -180.0f, 180.0f); // wrap around PI
         float diffAbs = Math.Abs(diff);
 
         // Are we there (min radius)?
@@ -36,13 +38,13 @@ public static class SteeringAlign
         else
             // Scaled rotation
             targetRotation = agent.agentData.maxAngularVelocity * diffAbs / agent.alignData.slowAngle;
-    
+
         targetRotation *= diff / diffAbs;
 
-        float angularAcceleration = targetRotation /*- orientation*/;
-        angularAcceleration /= agent.alignData.timeToTarget;
+        float outputAcceleration = targetRotation - agent.angularVelocity;
+        outputAcceleration /= agent.alignData.timeToTarget;
 
-        return Mathf.Clamp(angularAcceleration, -agent.agentData.maxAngularAcceleration, agent.agentData.maxAngularAcceleration);
+        return Mathf.Clamp(outputAcceleration, -agent.agentData.maxAngularAcceleration, agent.agentData.maxAngularAcceleration);
     }
 
     public static void DrawGizmos(Agent agent)

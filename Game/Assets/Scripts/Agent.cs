@@ -68,7 +68,9 @@ public class Agent : JellyScript
     public enum MovementState { Stop, GoToPosition, UpdateNextPosition };
     public MovementState movementState = MovementState.Stop;
 
+    [HideInInspector]
     public Vector3 velocity = Vector3.zero;
+    [HideInInspector]
     public float angularVelocity = 0.0f;
 
     public Vector3 Destination
@@ -129,6 +131,7 @@ public class Agent : JellyScript
         obstacleAvoidanceData.rays = new SteeringRay[3];
         for (uint i = 0; i < obstacleAvoidanceData.rays.Length; ++i)
             obstacleAvoidanceData.rays[i] = new SteeringRay();
+        obstacleAvoidanceData.rays[0].length = 3.0f;
         obstacleAvoidanceData.rays[1].direction = new Vector3(-1.0f, 0.0f, 1.0f);
         obstacleAvoidanceData.rays[2].direction = new Vector3(1.0f, 0.0f, 1.0f);
 
@@ -171,7 +174,7 @@ public class Agent : JellyScript
         // Angular velocities
         for (uint i = 0; i < SteeringData.maxPriorities; ++i)
         {
-            if (!Approximately(angularVelocities[i], 0.0f))
+            if (!MathScript.Approximately(angularVelocities[i], 0.0f))
             {
                 newAngularVelocity = angularVelocities[i];
                 break;
@@ -181,7 +184,7 @@ public class Agent : JellyScript
         // Velocities
         for (uint i = 0; i < SteeringData.maxPriorities; ++i)
         {
-            if (!Approximately(velocities[i].magnitude, 0.0f))
+            if (!MathScript.Approximately(velocities[i].magnitude, 0.0f))
             {
                 newVelocity = velocities[i];
                 break;
@@ -194,8 +197,8 @@ public class Agent : JellyScript
         velocity += newVelocity;
 
         // Cap angular velocity
-        Mathf.Clamp(angularVelocity, -agentData.maxAngularVelocity, agentData.maxAngularVelocity);
-
+        angularVelocity = Mathf.Clamp(angularVelocity, -agentData.maxAngularVelocity, agentData.maxAngularVelocity);
+  
         // Cap velocity
         if (velocity.magnitude > agentData.maxVelocity)
         {
@@ -264,23 +267,5 @@ public class Agent : JellyScript
         SteeringSeparation.DrawGizmos(this);
         SteeringObstacleAvoidance.DrawGizmos(this);
         SteeringAlign.DrawGizmos(this);
-    }
-
-    // ----------------------------------------------------------------------------------------------------
-
-        // A tiny floating point value (RO)
-    public static readonly float Epsilon = float.Epsilon;
-
-    // Compares two floating point values if they are similar
-    public static bool Approximately(float a, float b)
-    {
-        // If a or b is zero, compare that the other is less or equal to epsilon.
-        // If neither a or b are 0, then find an epsilon that is good for
-        // comparing numbers at the maximum magnitude of a and b.
-        // Floating points have about 7 significant digits, so
-        // 1.000001f can be represented while 1.0000001f is rounded to zero,
-        // thus we could use an epsilon of 0.000001f for comparing values close to 1.
-        // We multiply this epsilon by the biggest magnitude of a and b.
-        return Math.Abs(b - a) < Math.Max(0.000001f * Math.Max(Math.Abs(a), Math.Abs(b)), Epsilon * 8);
     }
 }

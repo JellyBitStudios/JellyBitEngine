@@ -45,6 +45,6 @@ public static class SteeringObstacleAvoidance
         float[] color = { 0.0f, 0.0f, 1.0f, 1.0f };
 
         foreach (SteeringRay ray in agent.obstacleAvoidanceData.rays)
-            Debug.DrawLine(agent.transform.position, agent.transform.position + ray.direction * ray.length, color);
+            Debug.DrawLine(agent.transform.position, agent.transform.position + agent.transform.rotation * ray.direction * ray.length, color);
     }
 }
