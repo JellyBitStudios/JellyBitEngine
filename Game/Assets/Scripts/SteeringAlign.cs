@@ -17,12 +17,12 @@ public static class SteeringAlign
             return 0.0f;
 
         float orientation = MathScript.Rad2Deg * (float)Math.Atan2(agent.transform.forward.x, agent.transform.forward.z);
-        Vector3 direction = (agent.Destination - agent.transform.position).normalized();
+        Vector3 direction = (agent.NextPosition - agent.transform.position).normalized();
         float targetOrientation = MathScript.Rad2Deg * (float)Math.Atan2(direction.x, direction.z);
 
-        //float diff = MathScript.DeltaAngle(orientation, targetOrientation);
-        float diff = targetOrientation - orientation;
-        diff = Mathf.Clamp(diff, -180.0f, 180.0f); // wrap around PI
+        float diff = MathScript.DeltaAngle(orientation, targetOrientation);
+        //float diff = targetOrientation - orientation;
+        //diff = Mathf.Clamp(diff, -180.0f, 180.0f); // wrap around PI
         float diffAbs = Math.Abs(diff);
 
         // Are we there (min radius)?

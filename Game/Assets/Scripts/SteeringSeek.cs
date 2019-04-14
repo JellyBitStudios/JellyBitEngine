@@ -14,7 +14,7 @@ public static class SteeringSeek
         if (agent == null)
             return Vector3.zero;
 
-        Vector3 direction = (agent.Destination - agent.transform.position).normalized();
+        Vector3 direction = (agent.NextPosition - agent.transform.position).normalized();
         direction *= agent.agentData.maxAcceleration;
 
         direction = new Vector3(direction.x, 0.0f, direction.z);

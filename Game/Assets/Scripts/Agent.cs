@@ -60,6 +60,7 @@ public class Agent : JellyScript
     public SteeringSeekData seekData = new SteeringSeekData();
     public SteeringFleeData fleeData = new SteeringFleeData();
     public SteeringSeparationData separationData = new SteeringSeparationData();
+    public SteeringCollisionAvoidanceData collisionAvoidanceData = new SteeringCollisionAvoidanceData();
     public SteeringObstacleAvoidanceData obstacleAvoidanceData = new SteeringObstacleAvoidanceData();
     public SteeringAlignData alignData = new SteeringAlignData();
 
@@ -157,6 +158,8 @@ public class Agent : JellyScript
             velocities[obstacleAvoidanceData.Priority] += SteeringObstacleAvoidance.GetObstacleAvoidance(this);
 
         // 2. Separation
+        if (collisionAvoidanceData.isActive)
+            velocities[collisionAvoidanceData.Priority] += SteeringCollisionAvoidance.GetCollisionAvoidance(this);
         if (separationData.isActive)
             velocities[separationData.Priority] += SteeringSeparation.GetSeparation(this);
 
@@ -209,6 +212,9 @@ public class Agent : JellyScript
         // Rotate
         transform.rotation *= Quaternion.Rotate(Vector3.up, angularVelocity * Time.deltaTime);
 
+        if (movementState == MovementState.Stop)
+            return;
+
         // Move
         transform.position += velocity * Time.deltaTime;
     }
@@ -257,15 +263,17 @@ public class Agent : JellyScript
     public override void OnDrawGizmos()
     {
         float[] colorAngularVelocity = { 0.0f, 0.0f, 0.0f, 1.0f };
-        Debug.DrawLine(transform.position, transform.position + Quaternion.Rotate(Vector3.up, angularVelocity) * transform.forward * 2.0f, colorAngularVelocity);
+        Debug.DrawLine(transform.position, transform.position + Quaternion.Rotate(Vector3.up, angularVelocity) * transform.forward * 3.0f, colorAngularVelocity);
 
         float[] colorVelocity = { 1.0f, 1.0f, 1.0f, 1.0f };
-        Debug.DrawLine(transform.position, transform.position + velocity, colorVelocity);
+        Debug.DrawLine(transform.position, transform.position + velocity.normalized() * 3.0f, colorVelocity);
 
         SteeringSeek.DrawGizmos(this);
         SteeringFlee.DrawGizmos(this);
         SteeringSeparation.DrawGizmos(this);
         SteeringObstacleAvoidance.DrawGizmos(this);
         SteeringAlign.DrawGizmos(this);
+
+        pathManager.DrawGizmos();
     }
 }

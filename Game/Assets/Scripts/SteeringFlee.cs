@@ -14,7 +14,7 @@ public static class SteeringFlee
         if (agent == null)
             return Vector3.zero;
 
-        Vector3 direction = (agent.transform.position - agent.Destination).normalized();
+        Vector3 direction = (agent.transform.position - agent.NextPosition).normalized();
         direction *= agent.agentData.maxAcceleration;
 
         direction = new Vector3(direction.x, 0.0f, direction.z);

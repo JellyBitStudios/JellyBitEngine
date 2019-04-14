@@ -2,7 +2,7 @@
 using System;
 using JellyBitEngine;
 
-public class PathManager : JellyScript
+public class PathManager
 {
     #region PUBLIC_VARIABLES
     public Vector3 Destination
@@ -34,8 +34,8 @@ public class PathManager : JellyScript
 
     public bool GetPath(Vector3 origin, Vector3 destination)
     {
-        this.destination = destination;
         hasPath = Navigation.GetPath(origin, destination, out path);
+        this.destination = hasPath ? destination : origin;
         index = 0;
         return hasPath;
     }
@@ -55,12 +55,23 @@ public class PathManager : JellyScript
 
     public float GetRemainingDistance(Agent agent)
     {
-        if (hasPath && index < path.Length - 1)
+        if (hasPath)
         {
             Vector3 diff = path[index] - agent.transform.position;
-            return (float)diff.magnitude;
+            return diff.magnitude;
         }
 
         return 0.0f;
+    }
+
+    public void DrawGizmos()
+    {
+        if (!hasPath)
+            return;
+
+        float[] color = { 0.0f, 0.0f, 1.0f, 1.0f };
+
+        for (uint i = 0; i < path.Length - 1; ++i)
+            Debug.DrawLine(path[i], path[i + 1], color);
     }
 }
