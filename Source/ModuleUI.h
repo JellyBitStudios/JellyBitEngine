@@ -13,14 +13,6 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#define UI_MAX_COMPONENTS_IMAGE 16348
-#define UI_MAX_COMPONENTS_LABEL 320
-#define UI_MAX_LABEL_LETTERS 256
-#define UI_BYTES_RECT sizeof(float) * 16
-#define UI_BYTES_LABEL UI_BYTES_RECT * UI_MAX_LABEL_LETTERS
-#define UI_BUFFER_SIZE UI_BYTES_RECT * UI_MAX_COMPONENTS_IMAGE + UI_BYTES_LABEL * UI_MAX_COMPONENTS_LABEL
-#define UI_BIND_INDEX 1
-
 struct LabelLetter;
 
 //Possible Solution
@@ -66,8 +58,6 @@ public:
 
 	bool GetUIMode() const;
 	void SetUIMode(bool stat);
-	bool GetisNvidia() const;
-	bool ScreenOnWorld() const;
 
 	void OnWindowResize(uint width, uint height);
 
@@ -85,10 +75,6 @@ public:
 	math::float3 GetPositionWH();
 	void SetPositionWH(math::float3 pos);
 #endif
-
-	void FillBufferRange(uint offset, uint size, char* buffer);
-	void RegisterBufferIndex(uint *offset, int* index, ComponentTypes cType, Component* cmp);
-	void UnRegisterBufferIndex(uint offset, ComponentTypes cType);
 
 	void ReAssignButtonOnClicks();
 
@@ -126,9 +112,7 @@ private:
 	uint ui_shader = 0;
 
 	bool uiMode = true;
-	bool screenInWorld = true;
-	bool isNVIDIA = false;
-	
+
 	bool anyItemIsHovered = false;
 
 	bool depthTest, cullFace, lighting, blend;
@@ -138,16 +122,6 @@ private:
 	GameObject* WorldHolder = nullptr;
 #endif
 
-	//UI in one buffer - Shader Storage Buffer Object
-	uint countImages = 0;
-	uint countLabels = 0;
-	uint ssboUI = 0;
-	uint offsetImage = 0;
-	uint offsetLabel = UI_BUFFER_SIZE - UI_BYTES_LABEL;
-	std::vector<uint> free_image_offsets;
-	std::vector<uint> free_label_offsets;
-	std::queue<ComponentImage*> queueImageToBuffer;
-	std::queue<ComponentLabel*> queueLabelToBuffer;
 private:
 	bool MouseInScreen();
 

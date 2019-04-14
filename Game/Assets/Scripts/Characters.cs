@@ -3,8 +3,8 @@
     uint                    life;
     uint                    dmg;
 
-    public float            accSpeed;
-    public float            velSpeed;
+    public float accSpeed;
+    public float velSpeed;
 }
 
 public class AlitaCharacter : Character

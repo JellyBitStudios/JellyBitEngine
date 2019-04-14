@@ -384,6 +384,7 @@
     <ClInclude Include="Freetype\include\freetype\tttables.h" />
     <ClInclude Include="Freetype\include\freetype\tttags.h" />
     <ClInclude Include="Freetype\include\ft2build.h" />
+    <ClInclude Include="GLCache.h" />
     <ClInclude Include="Lights.h" />
     <ClInclude Include="ModuleFBOManager.h" />
     <ClInclude Include="ModuleAudio.h" />
@@ -813,6 +814,7 @@
     <ClCompile Include="ComponentRevoluteJoint.cpp" />
     <ClCompile Include="ComponentSphericalJoint.cpp" />
     <ClCompile Include="ComponentTrail.cpp" />
+    <ClCompile Include="GLCache.cpp" />
     <ClCompile Include="Lights.cpp" />
     <ClCompile Include="ModuleFBOManager.cpp" />
     <ClCompile Include="ModuleAudio.cpp" />

@@ -2,6 +2,7 @@
 
 #include "Globals.h"
 #include "Application.h"
+#include <time.h>
 
 void Log(const char file[], int line, LogTypes mode, const char* format, ...)
 {
@@ -71,4 +72,12 @@ bool ApproximatelyEqual(float a, float b, float epsilon)
 bool EssentiallyEqual(float a, float b, float epsilon)
 {
 	return fabs(a - b) <= ((fabs(a) > fabs(b) ? fabs(b) : fabs(a)) * epsilon);
+}
+
+// https://stackoverflow.com/questions/5289613/generate-random-float-between-two-floats
+float RandomFloat(float a, float b) {
+	float random = ((float)rand()) / (float)RAND_MAX;
+	float diff = b - a;
+	float r = random * diff;
+	return a + r;
 }

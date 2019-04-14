@@ -436,6 +436,7 @@ void ResourceMaterial::SetResourceShader(uint shaderUuid)
 	ResetUniforms();
 
 	ResourceShaderProgram* shader = (ResourceShaderProgram*)App->res->GetResource(shaderUuid);
+	materialData.shaderProgram = shader->shaderProgram;
 	shader->GetUniforms(materialData.uniforms);
 
 	// Set as used (uniforms)
@@ -481,6 +482,8 @@ void ResourceMaterial::InitResources()
 		// Set as used (shader)
 		if (App->res->SetAsUsed(materialData.shaderUuid) > 0)
 		{
+			ResourceShaderProgram* program = (ResourceShaderProgram*)App->res->GetResource(materialData.shaderUuid);
+			materialData.shaderProgram = program->shaderProgram;
 			// Update locations
 			UpdateUniformsLocations();
 

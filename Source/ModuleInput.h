@@ -82,7 +82,7 @@ private:
 
 	uint CursorTextureID = 0u;
 	uint CursorTextureUUID = 0u;
-	float cursorSize = 50.0f;
+	float cursorSize = 17.5f;
 };
 
 #endif

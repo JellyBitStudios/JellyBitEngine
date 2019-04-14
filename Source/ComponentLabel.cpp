@@ -30,7 +30,7 @@ ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType
 		if (fontUuid)
 			size = ((ResourceFont*)fonts[0])->fontData.fontSize;
 
-		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::LabelComponent, this);
+		App->glCache->RegisterBufferIndex(&offset, &index, ComponentTypes::LabelComponent, this);
 
 		needed_recalculate = true;
 	}
@@ -50,7 +50,7 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 
 	if (includeComponents)
 	{
-		App->ui->RegisterBufferIndex(&offset, &index, ComponentTypes::LabelComponent, this);
+		App->glCache->RegisterBufferIndex(&offset, &index, ComponentTypes::LabelComponent, this);
 		if (!labelWord.empty())
 			if (index != -1)
 				FIllBuffer();
@@ -60,7 +60,7 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 ComponentLabel::~ComponentLabel()
 {
 	if (index != -1)
-		App->ui->UnRegisterBufferIndex(offset, ComponentTypes::LabelComponent);
+		App->glCache->UnRegisterBufferIndex(offset, ComponentTypes::LabelComponent);
 
 	parent->cmp_label = nullptr;
 }
@@ -158,7 +158,7 @@ void ComponentLabel::Update()
 
 				FillCorners();
 
-				if(App->ui->GetisNvidia())
+				if(App->glCache->isNvidia())
 					if (index != -1)
 						FIllBuffer();
 			}
@@ -528,7 +528,7 @@ void ComponentLabel::FIllBuffer()
 	}
 	last_word_size = labelWord.size();
 
-	App->ui->FillBufferRange(offset, buffer_size, buffer);
+	App->glCache->FillBufferRange(offset, buffer_size, buffer);
 }
 
 void ComponentLabel::FillCorners()
