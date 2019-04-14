@@ -30,8 +30,7 @@ public:
 	float linear = 0.09f;
 	float quadratic = 0.032f;
 
-	bool behavior = false;
-	float interval = 0.5f;
+	bool behaviour = false;
 	bool enabled = true;
 
 	struct LightBehaviourBlock

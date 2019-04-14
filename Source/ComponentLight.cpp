@@ -48,7 +48,7 @@ void ComponentLight::OnUniqueEditor()
 			ImGuiColorEditFlags_NoOptions | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel;
 		ImGui::ColorEdit3("Color", (float*)&color, misc_flags);
 		ImGui::AlignTextToFramePadding();
-		if (ImGui::Checkbox("Behaviour", &behavior))
+		if (ImGui::Checkbox("Behaviour", &behaviour))
 		{
 			if (lightBB.size() == 0)
 			{
@@ -56,7 +56,7 @@ void ComponentLight::OnUniqueEditor()
 				memcpy(block.color, color, sizeof(float) * 3);
 				lightBB.push_back(block);
 			}
-			if (behavior)
+			if (behaviour)
 			{
 				currentLightBB = 0;
 				nextInterval = RandomFloat(lightBB[currentLightBB].interval,
@@ -135,7 +135,7 @@ void ComponentLight::OnUniqueEditor()
 
 void ComponentLight::Update()
 {
-	if (behavior)
+	if (behaviour)
 	{
 		timer += App->GetDt();
 		if (timer >= nextInterval)
@@ -158,8 +158,8 @@ void ComponentLight::Update()
 }
 
 uint ComponentLight::GetInternalSerializationBytes()
-{
-	return sizeof(int) + sizeof(float) * 5;
+{										 // behaviour
+	return sizeof(int) + sizeof(float) * 5 + sizeof(int) + (sizeof(float) * 7 + sizeof(bool)) * lightBB.size() + sizeof(bool);
 }
 
 void ComponentLight::OnInternalSave(char*& cursor)
@@ -174,6 +174,33 @@ void ComponentLight::OnInternalSave(char*& cursor)
 	memcpy(cursor, &quadratic, bytes);
 	cursor += bytes;
 	memcpy(cursor, &linear, bytes);
+	cursor += bytes;
+
+	//lights bb
+	bytes = sizeof(int);
+	int totalBlock = lightBB.size();
+	memcpy(cursor, &totalBlock, bytes);
+	cursor += bytes;
+	for each (LightBehaviourBlock block in lightBB)
+	{
+		bytes = sizeof(float);
+		memcpy(cursor, block.color, bytes * 3);
+		cursor += bytes * 3;
+		memcpy(cursor, &block.elpasedInterval, bytes);
+		cursor += bytes;
+		memcpy(cursor, &block.interval, bytes);
+		cursor += bytes;
+		memcpy(cursor, &block.linear, bytes);
+		cursor += bytes;
+		memcpy(cursor, &block.quadratic, bytes);
+		cursor += bytes;
+		bytes = sizeof(bool);
+		memcpy(cursor, &block.enabled, bytes);
+		cursor += bytes;
+	}
+
+	bytes = sizeof(bool);
+	memcpy(cursor, &behaviour, bytes);
 	cursor += bytes;
 }
 
@@ -190,4 +217,45 @@ void ComponentLight::OnInternalLoad(char*& cursor)
 	cursor += bytes;
 	memcpy(&linear, cursor, bytes);
 	cursor += bytes;
+
+	//lightbb
+	bytes = sizeof(int);
+	int totalBlock;
+	memcpy(&totalBlock, cursor, bytes);
+	cursor += bytes;
+	lightBB.resize(totalBlock);
+
+	for (int i = 0; i < totalBlock; ++i)
+	{
+		bytes = sizeof(float);
+		memcpy(lightBB[i].color, cursor, bytes * 3);
+		cursor += bytes * 3;
+		memcpy(&lightBB[i].elpasedInterval, cursor, bytes);
+		cursor += bytes;
+		memcpy(&lightBB[i].interval, cursor, bytes);
+		cursor += bytes;
+		memcpy(&lightBB[i].linear, cursor, bytes);
+		cursor += bytes;
+		memcpy(&lightBB[i].quadratic, cursor, bytes);
+		cursor += bytes;
+		bytes = sizeof(bool);
+		memcpy(&lightBB[i].enabled, cursor, bytes);
+		cursor += bytes;
+	}
+
+	bytes = sizeof(bool);
+	memcpy(&behaviour, cursor, bytes);
+	cursor += bytes;
+
+	if (behaviour)
+	{
+		currentLightBB = 0;
+		nextInterval = RandomFloat(lightBB[currentLightBB].interval,
+			lightBB[currentLightBB].interval -
+			lightBB[currentLightBB].elpasedInterval);
+		// set everything
+		enabled = lightBB[currentLightBB].enabled;
+		quadratic = lightBB[currentLightBB].quadratic;
+		linear = lightBB[currentLightBB].linear;
+	}
 }
