@@ -294,46 +294,36 @@ void ModuleScene::OnGizmosList()
 			}
 			transformMatrix = transformMatrix.Transposed();
 			math::float3 transformPos = transformMatrix.TranslatePart();
-			math::float3x3 transformRot = transformMatrix.RotatePart();
-			math::Quat resformQuat = transformRot.ToQuat();
+			math::Quat resformQuat = transformMatrix.RotatePart().ToQuat();
 			math::float3 transformScale = transformMatrix.GetScale();
 			for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 			{
-				math::float4x4 currMat = (*iter)->transform->GetGlobalMatrix();
-
-				switch (currentImGuizmoOperation)
+				if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), (*iter)->GetParent()) == App->scene->multipleSelection.end())
 				{
+					math::float4x4 currMat = (*iter)->transform->GetGlobalMatrix();
+					math::float3 finalPos = currMat.TranslatePart();
+					math::Quat finalRot = currMat.RotatePart().ToQuat();
+					math::float3 finalScale = currMat.GetScale();
+
+					switch (currentImGuizmoOperation)
+					{
 					case ImGuizmo::TRANSLATE:
-					{
-						math::float3 finalPos = currMat.TranslatePart();
 						finalPos += transformPos - globalPosition;
-						(*iter)->transform->SetPosition(finalPos);
 						break;
-					}
 					case ImGuizmo::ROTATE:
-					{
-						math::float3x3 finalRot = currMat.RotatePart();
-						math::Quat finalQuat = finalRot.ToQuat();
-						finalQuat = resformQuat * finalQuat;
-						(*iter)->transform->SetRotation(finalQuat);
+						finalRot = resformQuat * finalRot;
 						break;
-					}
 					case ImGuizmo::SCALE:
-					{
-						math::float3 finalScale = currMat.GetScale();
 						finalScale += transformScale - globalSize;
-						(*iter)->transform->SetScale(finalScale);
+						break;
+					default:
 						break;
 					}
-				default:
-					break;
+					math::float4x4 realTransform = math::float4x4::FromTRS(finalPos, finalRot, finalScale);
+
+					(*iter)->transform->SetMatrixFromGlobal(realTransform);
 				}
 			}
-		}
-		else if (saveTransform)
-		{
-			SaveLastTransform(lastMat.Transposed());
-			saveTransform = false;
 		}
 	}
 }
