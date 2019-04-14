@@ -288,17 +288,17 @@ void ModuleScene::OnGizmosList()
 			}
 			transformMatrix = transformMatrix.Transposed();
 			math::float3 transformPos = transformMatrix.TranslatePart();
-			math::float3x3 transformRot = transformMatrix.RotatePart();
+			math::Quat transformRot = transformMatrix.RotatePart().ToQuat();
 			math::float3 transformScale = transformMatrix.GetScale();
 			for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 			{
 				math::float4x4 currMat = (*iter)->transform->GetGlobalMatrix();
 				math::float3 finalPos = currMat.TranslatePart() + transformPos - globalPosition;
 
-				math::float3x3 finalRot = currMat.RotatePart();
-				finalRot = finalRot.Mul(transformRot);
-				math::float3 finalScale = currMat.GetScale();
-				finalScale = finalScale.Mul(transformScale);
+				math::Quat finalRot = currMat.RotatePart().ToQuat();
+				finalRot = finalRot * transformRot;
+
+				math::float3 finalScale = currMat.GetScale() + transformScale - math::float3::one;
 				math::float4x4 realTransform = math::float4x4::FromTRS(finalPos, finalRot, finalScale);
 
 				(*iter)->transform->SetMatrixFromGlobal(realTransform);

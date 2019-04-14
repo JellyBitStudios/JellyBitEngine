@@ -180,7 +180,11 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 					}
 					else
 					{
-						App->scene->multipleSelection.push_back(child);
+						if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), child) == App->scene->multipleSelection.end())
+							App->scene->multipleSelection.push_back(child);
+						else
+							App->scene->multipleSelection.remove(child);
+
 						SELECT(&App->scene->multipleSelection);
 					}
 				}
@@ -225,7 +229,11 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 					}
 					else
 					{
-						App->scene->multipleSelection.push_back(child);
+						if(std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(),child) == App->scene->multipleSelection.end())
+							App->scene->multipleSelection.push_back(child);
+						else
+							App->scene->multipleSelection.remove(child);
+
 						SELECT(&App->scene->multipleSelection);
 					}
 				}
