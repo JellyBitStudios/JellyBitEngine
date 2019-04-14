@@ -2,7 +2,7 @@
 #define __COMPONENT_LABEL_H__
 
 #include "Component.h"
-#include "ModuleUI.h"
+#include "GLCache.h"
 
 #include <string>
 #include <map>

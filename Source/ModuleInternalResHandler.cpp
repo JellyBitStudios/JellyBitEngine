@@ -10,6 +10,7 @@
 #include "ResourceMaterial.h"
 #include "ResourceShaderObject.h"
 #include "ResourceShaderProgram.h"
+#include "GLCache.h"
 
 #include "Shaders.h"
 
@@ -38,6 +39,10 @@ bool ModuleInternalResHandler::Start()
 
 	// Material resources
 	CreateDefaultMaterial();
+
+
+	// Need to be called after all shader compilations
+	App->glCache->Init();
 
 	return true;
 }
@@ -534,10 +539,10 @@ void ModuleInternalResHandler::CreateUIShaderProgram()
 	vertexData.name = "UI vertex object";
 	vertexData.internal = true;
 	vertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
-	if (vendor == "NVIDIA Corporation")
+	//if (vendor == "NVIDIA Corporation")
 		vertexShaderData.SetSource(uivShaderNVIDIA, strlen(uivShaderNVIDIA));
-	else
-		vertexShaderData.SetSource(uivShader, strlen(uivShader));
+	//else
+	//	vertexShaderData.SetSource(uivShader, strlen(uivShader));
 	ResourceShaderObject* vObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &vertexShaderData);
 	if (!vObj->Compile())
 		vObj->isValid = false;

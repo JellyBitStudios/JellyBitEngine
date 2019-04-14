@@ -13,6 +13,7 @@
 #include "ResourceMesh.h"
 #include "ResourceTexture.h"
 #include "ResourceShaderProgram.h"
+#include "GLCache.h"
 
 #include <algorithm>
 
@@ -95,7 +96,7 @@ void Lights::DebugDrawLights() const
 	{
 		ResourceShaderProgram* resProgram = (ResourceShaderProgram*)App->res->GetResource(App->resHandler->billboardShaderProgram);
 		uint shader = resProgram->shaderProgram;
-		glUseProgram(shader);
+		App->glCache->SwitchShader(shader);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, ((ResourceTexture*)App->res->GetResource(App->resHandler->lightIcon))->GetId());
 		glUniform1i(glGetUniformLocation(shader, "diffuse"), 0);
@@ -120,7 +121,6 @@ void Lights::DebugDrawLights() const
 		glBindVertexArray(0);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, 0);
-		glUseProgram(0);
 	}
 	glEnable(GL_DEPTH_TEST);
 }

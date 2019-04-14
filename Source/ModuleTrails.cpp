@@ -17,6 +17,7 @@
 #include "Application.h"
 #include "DebugDrawer.h"
 #include "ComponentTransform.h"
+#include "GLCache.h"
 
 #include "glew/include/GL/glew.h"
 
@@ -73,13 +74,11 @@ void ModuleTrails::Draw()
 					ResourceShaderProgram* resourceShaderProgram = (ResourceShaderProgram*)App->res->GetResource(shaderUuid);
 					GLuint shaderProgram = resourceShaderProgram->shaderProgram;
 
-					glUseProgram(shaderProgram);
+					App->glCache->SwitchShader(shaderProgram);
 
 					math::float4x4 model_matrix = math::float4x4::identity;// particle matrix
 					model_matrix = model_matrix.Transposed();
-					math::float4x4 view_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLViewMatrix();
-					math::float4x4 proj_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLProjectionMatrix();
-					math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
+					math::float4x4 mvp_matrix = model_matrix * App->renderer3D->viewProj_matrix;
 					math::float4x4 normal_matrix = model_matrix;
 					normal_matrix.Inverse();
 					normal_matrix.Transpose();
@@ -152,10 +151,10 @@ void ModuleTrails::Draw()
 
 					glBindBuffer(GL_ARRAY_BUFFER, 0);
 					glBindVertexArray(0);
-					glUseProgram(0);
 				}
 			}
 
+			// TODO: THIS IS USELESS I THINK
 			glEnd();
 			glPopMatrix();
 		}
