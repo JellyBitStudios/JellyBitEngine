@@ -101,6 +101,14 @@ bool PanelHierarchy::Draw()
 		}
 
 		IterateAllChildren(root);
+
+		if (!App->gui->WantTextInput() && App->input->GetKey(SDL_SCANCODE_DELETE) == KEY_DOWN)
+		{
+			for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			{
+				App->GOs->DeleteGameObject(*iter);
+			}
+		}
 	}
 	ImGui::End();
 	ImRect rect(ImGui::GetWindowPos(), ImGui::GetWindowSize());
@@ -121,8 +129,10 @@ bool PanelHierarchy::Draw()
 	if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT && //You Found a Easter EGG!
 		App->input->GetKey(SDL_SCANCODE_D) == KEY_DOWN)
 	{
-		GameObject* toDuplicate = App->scene->selectedObject.GetCurrGameObject();
-		if (toDuplicate) App->GOs->Instanciate(toDuplicate, toDuplicate->GetParent());
+		for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+		{
+			App->GOs->Instanciate(*iter, (*iter)->GetParent());
+		}
 	}
 
 
@@ -147,7 +157,7 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 				treeNodeFlags = 0;
 				treeNodeFlags |= ImGuiTreeNodeFlags_OpenOnArrow;
 
-				if (App->scene->selectedObject == child)
+				if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), child) != App->scene->multipleSelection.end())
 					treeNodeFlags |= ImGuiTreeNodeFlags_Selected;
 
 				bool treeNodeOpened = false;
@@ -165,13 +175,6 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 				SetGameObjectDragAndDrop(child);
 				AtGameObjectPopUp(child);
 
-				if (App->scene->selectedObject == child
-					&& !App->gui->WantTextInput() && App->input->GetKey(SDL_SCANCODE_DELETE) == KEY_DOWN)
-				{
-					App->scene->selectedObject = CurrentSelection::SelectedType::null;
-					App->GOs->DeleteGameObject(child);
-				}
-
 				if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0) && (ImGui::GetMousePos().x - ImGui::GetItemRectMin().x) > ImGui::GetTreeNodeToLabelSpacing())
 				{
 					if (App->input->GetKey(SDL_SCANCODE_LCTRL) != KEY_REPEAT && App->input->GetKey(SDL_SCANCODE_RCTRL) != KEY_REPEAT)
@@ -181,11 +184,9 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 					else
 					{
 						if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), child) == App->scene->multipleSelection.end())
-							App->scene->multipleSelection.push_back(child);
+							App->scene->selectedObject += child;
 						else
-							App->scene->multipleSelection.remove(child);
-
-						SELECT(&App->scene->multipleSelection);
+							App->scene->selectedObject -= child;
 					}
 				}
 				if (treeNodeOpened)
@@ -214,13 +215,6 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 				SetGameObjectDragAndDrop(child);
 				AtGameObjectPopUp(child);
 
-				if (App->scene->selectedObject == child
-					&& !App->gui->WantTextInput() && App->input->GetKey(SDL_SCANCODE_DELETE) == KEY_DOWN)
-				{
-					App->scene->selectedObject = CurrentSelection::SelectedType::null;
-					App->GOs->DeleteGameObject(child);
-				}
-
 				if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(0) && (ImGui::GetMousePos().x - ImGui::GetItemRectMin().x) > ImGui::GetTreeNodeToLabelSpacing())
 				{
 					if (App->input->GetKey(SDL_SCANCODE_LCTRL) != KEY_REPEAT && App->input->GetKey(SDL_SCANCODE_RCTRL) != KEY_REPEAT)
@@ -230,11 +224,9 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 					else
 					{
 						if(std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(),child) == App->scene->multipleSelection.end())
-							App->scene->multipleSelection.push_back(child);
+							App->scene->selectedObject += child;
 						else
-							App->scene->multipleSelection.remove(child);
-
-						SELECT(&App->scene->multipleSelection);
+							App->scene->selectedObject -= child;
 					}
 				}
 			}

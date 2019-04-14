@@ -12,7 +12,7 @@ struct FontImportSettings;
 
 struct CurrentSelection
 {
-	enum class SelectedType { null, gameObject, scene, resource, meshImportSettings, fontImportSettings, multipleGO };
+	enum class SelectedType { null, gameObject, scene, resource, meshImportSettings, fontImportSettings };
 
 private:
 	void* cur = nullptr;
@@ -33,11 +33,10 @@ public:
 
 	//-----------// GAMEOBJECTS //----------//
 	CurrentSelection& operator=(GameObject* newSelection);
+	CurrentSelection & operator+=(GameObject * newSelection);
+	CurrentSelection & operator-=(GameObject * newSelection);
 	bool operator==(const GameObject* rhs);
 	GameObject* GetCurrGameObject();
-
-	//-----------// GAMEOBJECTS LIST //----------//
-	CurrentSelection& operator=(std::list<GameObject*>* newSelection);
 
 	//-----------// RESOURCES //----------//
 	CurrentSelection& operator=(const Resource* newSelection);

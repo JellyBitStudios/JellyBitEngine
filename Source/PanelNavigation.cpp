@@ -31,7 +31,7 @@ bool PanelNavigation::Draw()
 {
 	ImGui::Begin(name, &enabled);
 
-	if (App->scene->selectedObject == CurrentSelection::SelectedType::gameObject)
+	if (App->scene->selectedObject.GetType() == CurrentSelection::SelectedType::gameObject)
 	{
 		GameObject* curr = (GameObject*)App->scene->selectedObject.Get();
 

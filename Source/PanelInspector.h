@@ -27,8 +27,8 @@ public:
 private:
 
 	void ShowGameObjectInspector() const;
-	void ShowGameObjectListInspector() const;
-	bool CheckIsComponent(ComponentTypes type) const;
+	bool CheckIsComponent(ComponentTypes type, bool allHaveIt = false) const;
+	bool CheckIsComponentCollider() const;
 	void AddComponentInGroup(ComponentTypes type) const;
 	void DragnDropSeparatorTarget(Component* target) const;
 

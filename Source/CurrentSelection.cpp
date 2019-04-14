@@ -79,6 +79,32 @@ CurrentSelection& CurrentSelection::operator=(GameObject * newSelection)
 	return *this;
 }
 
+CurrentSelection& CurrentSelection::operator+=(GameObject * newSelection)
+{
+	assert(newSelection != nullptr && "Non valid setter. Set to SelectedType::null instead");
+	type = SelectedType::gameObject;
+
+	// New game object selected. Update the camera reference
+	if (newSelection->transform)
+		App->camera->SetReference(newSelection->transform->GetPosition());
+
+	App->scene->multipleSelection.push_back(newSelection);
+
+	return *this;
+}
+CurrentSelection& CurrentSelection::operator-=(GameObject * newSelection)
+{
+	assert(newSelection != nullptr && "Non valid setter. Set to SelectedType::null instead");
+	type = SelectedType::gameObject;
+
+	// New game object selected. Update the camera reference
+	if (newSelection->transform)
+		App->camera->SetReference(newSelection->transform->GetPosition());
+
+	App->scene->multipleSelection.remove(newSelection);
+
+	return *this;
+}
 bool CurrentSelection::operator==(const GameObject * rhs)
 {
 	return cur == rhs;
@@ -91,16 +117,6 @@ GameObject * CurrentSelection::GetCurrGameObject()
 	else
 		return nullptr;
 }
-//-----------// GAMEOBJECTS LIST //----------//
-CurrentSelection & CurrentSelection::operator=(std::list<GameObject*>* newSelection)
-{
-	assert(newSelection != nullptr && "Non valid setter. Set to SelectedType::null instead");
-	cur = (void*)newSelection;
-	type = SelectedType::multipleGO;
-
-	return *this;
-}
-
 
 //-----------// RESOURCES //----------//
 CurrentSelection & CurrentSelection::operator=(const Resource * newSelection)

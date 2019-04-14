@@ -92,17 +92,17 @@ update_status ModuleScene::Update()
 		}
 	}
 
-	if (selectedObject == CurrentSelection::SelectedType::gameObject)
+	if (selectedObject.GetType() == CurrentSelection::SelectedType::gameObject)
 	{
-		GameObject* currentGameObject = (GameObject*)selectedObject.Get();
-		if(!currentGameObject->cmp_canvas && currentGameObject->transform)
-			OnGizmos(currentGameObject);
+		if (multipleSelection.size() == 1)
+		{
+			GameObject* currentGameObject = (GameObject*)selectedObject.Get();
+			if (!currentGameObject->cmp_canvas && currentGameObject->transform)
+				OnGizmos(currentGameObject);
+		}
+		else
+			OnGizmosList();
 	}
-
-	if (selectedObject == CurrentSelection::SelectedType::multipleGO)
-		OnGizmosList();
-	
-
 	if(App->IsEditor() && !App->gui->WantTextInput())
 		if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RCTRL) == KEY_REPEAT)
 		{
