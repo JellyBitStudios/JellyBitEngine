@@ -75,8 +75,8 @@ void DebugDrawer::DebugDrawBox(const math::float3* vertices, const Color& color,
 	assert(vertices->IsFinite() && globalTransform.IsFinite());
 
 	glColor3f(color.r, color.g, color.b);
-	glPushMatrix();
-	glMultMatrixf(globalTransform.Transposed().ptr());
+	//glPushMatrix();
+	//glMultMatrixf(globalTransform.Transposed().ptr());
 
 	glBegin(GL_QUADS);
 	glVertex3fv((const GLfloat*)&vertices[1]);

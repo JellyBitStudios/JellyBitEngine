@@ -250,7 +250,6 @@ update_status ModuleRenderer3D::PostUpdate()
 		glDisable(GL_BLEND);
 
 #ifndef GAMEMODE
-
 	if (debugDraw)
 	{
 		App->lights->DebugDrawLights();

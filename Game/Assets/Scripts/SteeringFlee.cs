@@ -2,20 +2,26 @@
 using System;
 using JellyBitEngine;
 
-public class SteeringFlee : SteeringAbstract
+public class SteeringFleeData : SteeringAbstract
 {
-    #region PUBLIC_VARIABLES
-    public Agent agent = null;
-    #endregion
 
-    public Vector3 GetFlee()
+}
+
+public static class SteeringFlee
+{
+    public static Vector3 GetFlee(Agent agent)
     {
         if (agent == null)
             return Vector3.zero;
 
         Vector3 direction = (agent.transform.position - agent.Destination).normalized();
-        direction *= agent.agentConfiguration.maxAcceleration;
+        direction *= agent.agentData.maxAcceleration;
 
         return direction;
+    }
+
+    public static void DrawGizmos(Agent agent)
+    {
+
     }
 }

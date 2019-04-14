@@ -2,9 +2,7 @@
 using System;
 using JellyBitEngine;
 
-// https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/Export/Math/Vector3.cs
-
-public class AgentConfiguration
+public class AgentData
 {
     public float maxVelocity = 1.0f;
     public float maxAngularVelocity = 1.0f;
@@ -17,33 +15,48 @@ public class AgentConfiguration
 
 public class Agent : JellyScript
 {
-    #region INSPECTOR_VARIABLES
-    // AgentConfiguration
+    #region INSPECTOR_VARIABLES    
+    // AgentData
     public float agentMaxVelocity = 1.0f;
     public float agentMaxAngularVelocity = 1.0f;
     public float agentMaxAcceleration = 1.0f;
     public float agentMaxAngularAcceleration = 1.0f;
     public float agentArriveMinDistance = 0.1f;
 
-    // Steerings
-    public uint separationPriority = 1;
+    // SteeringSeekData
+    public bool isSeekActive = true;
     public uint seekPriority = 1;
-    public uint fleePriority = 1;
-    public uint alignPriority = 1;
 
-    // SteeringSeparation
+    // SteeringFleeData
+    public bool isFleeActive = true;
+    public uint fleePriority = 1;
+
+    // SteeringSeparationData
+    public bool isSeparationActive = true;
+    public uint separationPriority = 1;
     public LayerMask separationMask = new LayerMask();
     public float separationRadius = 1.0f;
     public float separationThreshold = 1.0f;
 
-    // SteeringAlign
+    // SteeringAlignData
+    public bool isAlignActive = true;
+    public uint alignPriority = 1;
     public float alignMinAngle = 0.01f;
     public float alignSlowAngle = 0.1f;
     public float alignTimeToTarget = 0.1f;
     #endregion
 
     #region PUBLIC_VARIABLES
-    public AgentConfiguration agentConfiguration = new AgentConfiguration();
+    // AgentData
+    public AgentData agentData = new AgentData();
+
+    // SteeringsData
+    public SteeringSeekData seekData = new SteeringSeekData();
+    public SteeringFleeData fleeData = new SteeringFleeData();
+    public SteeringSeparationData separationData = new SteeringSeparationData();
+    public SteeringAlignData alignData = new SteeringAlignData();
+
+    // --------------------------------------------------
 
     public enum MovementState { Stop, GoToPosition, UpdateNextPosition };
     public MovementState movementState = MovementState.Stop;
@@ -59,12 +72,6 @@ public class Agent : JellyScript
     {
         get { return pathManager.NextPosition; }
     }
-
-    // Steerings
-    public SteeringSeek seek = new SteeringSeek();
-    public SteeringFlee flee = new SteeringFlee();
-    public SteeringSeparation separation = new SteeringSeparation();
-    public SteeringAlign align = new SteeringAlign();
     #endregion
 
     #region PRIVATE_VARIABLES
@@ -78,39 +85,41 @@ public class Agent : JellyScript
 
     public override void Start()
     {
-        velocities = new Vector3[SteeringConfiguration.maxPriorities];
-        angularVelocities = new float[SteeringConfiguration.maxPriorities];
+        velocities = new Vector3[SteeringData.maxPriorities];
+        angularVelocities = new float[SteeringData.maxPriorities];
 
         ResetPriorities();
 
-        seek.agent = this;
-        flee.agent = this;
-        separation.agent = this;
-
         // --------------------------------------------------
 
-        // Steerings
-        seek.Priority = seekPriority;
-        flee.Priority = fleePriority;
-        separation.Priority = separationPriority;
-        align.Priority = alignPriority;
+        // AgentData
+        agentData.maxVelocity = agentMaxVelocity;
+        agentData.maxAngularVelocity = agentMaxAngularVelocity;
+        agentData.maxAcceleration = agentMaxAcceleration;
+        agentData.maxAngularAcceleration = agentMaxAngularAcceleration;
+        agentData.arriveMinDistance = agentArriveMinDistance;
 
-        // AgentConfiguration
-        agentConfiguration.maxVelocity = agentMaxVelocity;
-        agentConfiguration.maxAngularVelocity = agentMaxAngularVelocity;
-        agentConfiguration.maxAcceleration = agentMaxAcceleration;
-        agentConfiguration.maxAngularAcceleration = agentMaxAngularAcceleration;
-        agentConfiguration.arriveMinDistance = agentArriveMinDistance;
+        // SteeringSeekData
+        seekData.isActive = isSeekActive;
+        seekData.Priority = seekPriority;
 
-        // SteeringSeparation
-        separation.mask = separationMask;
-        separation.radius = separationRadius;
-        separation.threshold = separationThreshold;
+        // SteeringFleeData
+        fleeData.isActive = isFleeActive;
+        fleeData.Priority = fleePriority;
 
-        // SteeringAlign
-        align.minAngle = alignMinAngle;
-        align.slowAngle = alignSlowAngle;
-        align.timeToTarget = alignTimeToTarget;
+        // SteeringSeparationData
+        separationData.isActive = isSeparationActive;
+        separationData.Priority = separationPriority;
+        separationData.mask = separationMask;
+        separationData.radius = separationRadius;
+        separationData.threshold = separationThreshold;
+
+        // SteeringAlignData
+        alignData.isActive = isAlignActive;
+        alignData.Priority = alignPriority;
+        alignData.minAngle = alignMinAngle;
+        alignData.slowAngle = alignSlowAngle;
+        alignData.timeToTarget = alignTimeToTarget;
     }
 
     public override void FixedUpdate()
@@ -126,18 +135,20 @@ public class Agent : JellyScript
         // TODO
 
         // 2. Separation
-        velocities[separation.Priority] += separation.GetSeparation();
+        if (separationData.isActive)
+            velocities[separationData.Priority] += SteeringSeparation.GetSeparation(this);
 
         // 3. Move
         /// Velocity
-        velocities[seek.Priority] += seek.GetSeek();
+        if (seekData.isActive)
+            velocities[seekData.Priority] += SteeringSeek.GetSeek(this);
         //velocities[flee.Priority] += flee.GetFlee();
 
         /// Angular velocity
         //angularVelocities[align.Priority] += align.GetAlign(this);
 
         // Angular velocities
-        for (uint i = 0; i < SteeringConfiguration.maxPriorities; ++i)
+        for (uint i = 0; i < SteeringData.maxPriorities; ++i)
         {
             if (!Approximately(angularVelocities[i], 0.0f))
             {
@@ -147,7 +158,7 @@ public class Agent : JellyScript
         }
 
         // Velocities
-        for (uint i = 0; i < SteeringConfiguration.maxPriorities; ++i)
+        for (uint i = 0; i < SteeringData.maxPriorities; ++i)
         {
             if (!Approximately(velocities[i].magnitude, 0.0f))
             {
@@ -162,25 +173,26 @@ public class Agent : JellyScript
         angularVelocity += newAngularVelocity;
 
         // Cap angular velocity
-        Mathf.Clamp(angularVelocity, -agentConfiguration.maxAngularVelocity, agentConfiguration.maxAngularVelocity);
+        Mathf.Clamp(angularVelocity, -agentData.maxAngularVelocity, agentData.maxAngularVelocity);
 
         // Cap velocity
-        if (velocity.magnitude > agentConfiguration.maxVelocity)
+        if (velocity.magnitude > agentData.maxVelocity)
         {
             velocity.Normalize();
-            velocity *= agentConfiguration.maxVelocity;
+            velocity *= agentData.maxVelocity;
         }
 
         // Rotate
         transform.rotation *= Quaternion.Rotate(Vector3.up, angularVelocity * Time.deltaTime);
 
         // Move
+        velocity = new Vector3(velocity.x, 0.0f, velocity.z);
         transform.position += velocity * Time.deltaTime;
     }
 
     private void ResetPriorities()
     {
-        for (uint i = 0; i < SteeringConfiguration.maxPriorities; ++i)
+        for (uint i = 0; i < SteeringData.maxPriorities; ++i)
         {
             velocities[i] = Vector3.zero;
             angularVelocities[i] = 0.0f;
@@ -203,7 +215,7 @@ public class Agent : JellyScript
         {
             case MovementState.GoToPosition:
 
-                if (pathManager.GetRemainingDistance(this) < agentConfiguration.arriveMinDistance)
+                if (pathManager.GetRemainingDistance(this) < agentData.arriveMinDistance)
                     movementState = MovementState.UpdateNextPosition;
 
                 break;
@@ -221,10 +233,13 @@ public class Agent : JellyScript
 
     public override void OnDrawGizmos()
     {
-        seek.OnDrawGizmos();
-        flee.OnDrawGizmos();
-        separation.OnDrawGizmos();
-        align.OnDrawGizmos();
+        float[] color = { 1.0f, 0.0f, 0.0f, 1.0f };
+        Debug.DrawSphere(4.0f, color, gameObject.transform.position, Quaternion.identity, Vector3.one);
+
+        //SteeringSeek.DrawGizmos(this);
+        //SteeringFlee.DrawGizmos(this);
+        //SteeringSeparation.DrawGizmos(this);
+        //SteeringAlign.DrawGizmos(this);
     }
 
     // ----------------------------------------------------------------------------------------------------
