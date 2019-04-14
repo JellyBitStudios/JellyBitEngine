@@ -249,10 +249,15 @@ void ModuleScene::OnGizmosList()
 {
 	bool canContinue = true;
 	math::float3 globalPosition = math::float3::zero;
+	math::float3 globalSize = math::float3::zero;
+
 	for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 	{
 		if ((*iter)->transform)
+		{
 			globalPosition += (*iter)->transform->GetGlobalMatrix().TranslatePart();
+			globalSize += (*iter)->transform->GetGlobalMatrix().GetScale();
+		}
 		else
 		{
 			canContinue = false;
@@ -262,12 +267,13 @@ void ModuleScene::OnGizmosList()
 	if (canContinue)
 	{
 		globalPosition /= App->scene->multipleSelection.size();
+		globalSize /= App->scene->multipleSelection.size();
 		ImGuiViewport* vport = ImGui::GetMainViewport();
 		ImGuizmo::SetRect(vport->Pos.x, vport->Pos.y, vport->Size.x, vport->Size.y);
 
 		math::float4x4 viewMatrix = App->renderer3D->GetCurrentCamera()->GetOpenGLViewMatrix();
 		math::float4x4 projectionMatrix = App->renderer3D->GetCurrentCamera()->GetOpenGLProjectionMatrix();
-		math::float4x4 transformMatrix = math::float4x4::FromTRS(globalPosition, math::Quat::identity, math::float3::one);
+		math::float4x4 transformMatrix = math::float4x4::FromTRS(globalPosition, math::Quat::identity, globalSize);
 		transformMatrix = transformMatrix.Transposed();
 
 		ImGuizmo::MODE mode = currentImGuizmoMode;
@@ -288,20 +294,40 @@ void ModuleScene::OnGizmosList()
 			}
 			transformMatrix = transformMatrix.Transposed();
 			math::float3 transformPos = transformMatrix.TranslatePart();
-			math::Quat transformRot = transformMatrix.RotatePart().ToQuat();
+			math::float3x3 transformRot = transformMatrix.RotatePart();
+			math::Quat resformQuat = transformRot.ToQuat();
 			math::float3 transformScale = transformMatrix.GetScale();
 			for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 			{
 				math::float4x4 currMat = (*iter)->transform->GetGlobalMatrix();
-				math::float3 finalPos = currMat.TranslatePart() + transformPos - globalPosition;
 
-				math::Quat finalRot = currMat.RotatePart().ToQuat();
-				finalRot = finalRot * transformRot;
-
-				math::float3 finalScale = currMat.GetScale() + transformScale - math::float3::one;
-				math::float4x4 realTransform = math::float4x4::FromTRS(finalPos, finalRot, finalScale);
-
-				(*iter)->transform->SetMatrixFromGlobal(realTransform);
+				switch (currentImGuizmoOperation)
+				{
+					case ImGuizmo::TRANSLATE:
+					{
+						math::float3 finalPos = currMat.TranslatePart();
+						finalPos += transformPos - globalPosition;
+						(*iter)->transform->SetPosition(finalPos);
+						break;
+					}
+					case ImGuizmo::ROTATE:
+					{
+						math::float3x3 finalRot = currMat.RotatePart();
+						math::Quat finalQuat = finalRot.ToQuat();
+						finalQuat = resformQuat * finalQuat;
+						(*iter)->transform->SetRotation(finalQuat);
+						break;
+					}
+					case ImGuizmo::SCALE:
+					{
+						math::float3 finalScale = currMat.GetScale();
+						finalScale += transformScale - globalSize;
+						(*iter)->transform->SetScale(finalScale);
+						break;
+					}
+				default:
+					break;
+				}
 			}
 		}
 		else if (saveTransform)
