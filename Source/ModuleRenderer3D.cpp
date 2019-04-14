@@ -355,7 +355,7 @@ update_status ModuleRenderer3D::PostUpdate()
 	// 3. Editor
 	App->gui->Draw();
 
-	App->input->DrawCursor();
+	//App->input->DrawCursor();
 #else
 	App->ui->DrawUI();
 #endif // GAME
