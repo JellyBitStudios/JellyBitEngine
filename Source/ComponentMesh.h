@@ -27,6 +27,7 @@ public:
 public:
 
 	uint res = 0;
+	class ResourceMesh* currentResource = 0;
 
 	// Avatar
 	uint avatarResource = 0;

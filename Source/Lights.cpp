@@ -13,6 +13,7 @@
 #include "ResourceMesh.h"
 #include "ResourceTexture.h"
 #include "ResourceShaderProgram.h"
+#include "GLCache.h"
 
 #include <algorithm>
 
@@ -24,19 +25,19 @@ Lights::~Lights()
 {
 }
 
-void Lights::AddLight(const ComponentLight* light)
+void Lights::AddLight(ComponentLight* light)
 {
 	lights.push_back(light);
 }
 
-bool Lights::EraseLight(const ComponentLight* light)
+bool Lights::EraseLight(ComponentLight* light)
 {
 	bool ret = false;
 
 	if (lights.size() <= 0)
 		return false;
 
-	std::vector<const ComponentLight*>::const_iterator it = std::find(lights.begin(), lights.end(), light);
+	std::vector<ComponentLight*>::const_iterator it = std::find(lights.begin(), lights.end(), light);
 	ret = it != lights.end();
 
 	if (ret)
@@ -45,14 +46,20 @@ bool Lights::EraseLight(const ComponentLight* light)
 	return ret;
 }
 
-void Lights::UseLights(const unsigned int shaderID) const
+void Lights::UseLights(const unsigned int shaderID)
 {
 	for (int i = 0; i < 32; ++i)
 	{
 		if (i < lights.size())
 		{
+			lights[i]->Update();
 			char str[DEFAULT_BUF_SIZE];
 			sprintf(str, "lights[%i].type", i);
+			if (!lights[i]->enabled)
+			{
+				glUniform1i(glGetUniformLocation(shaderID, str), -1);
+				continue;
+			}
 			glUniform1i(glGetUniformLocation(shaderID, str), lights[i]->lightType);
 			if (lights[i]->lightType == LightTypes::DirectionalLight)
 			{
@@ -85,15 +92,17 @@ void Lights::UseLights(const unsigned int shaderID) const
 void Lights::DebugDrawLights() const
 {
 	glDisable(GL_DEPTH_TEST);
+	ResourceShaderProgram* resProgram = (ResourceShaderProgram*)App->res->GetResource(App->resHandler->billboardShaderProgram);
+	uint shader = resProgram->shaderProgram;
+	App->glCache->SwitchShader(shader);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, ((ResourceTexture*)App->res->GetResource(App->resHandler->lightIcon))->GetId());
+	glUniform1i(glGetUniformLocation(shader, "diffuse"), 0);
+	const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(App->resHandler->plane);
+	glBindVertexArray(mesh->GetVAO());
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIBO());
 	for (int i = 0; i < lights.size(); ++i)
 	{
-		ResourceShaderProgram* resProgram = (ResourceShaderProgram*)App->res->GetResource(App->resHandler->billboardShaderProgram);
-		uint shader = resProgram->shaderProgram;
-		glUseProgram(shader);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, ((ResourceTexture*)App->res->GetResource(App->resHandler->lightIcon))->GetId());
-		glUniform1i(glGetUniformLocation(shader, "diffuse"), 0);
-
 		math::float4x4 model_matrix = lights[i]->GetParent()->transform->GetGlobalMatrix();
 		math::float3 zAxis = -App->renderer3D->GetCurrentCamera()->frustum.front;
 		math::float3 yAxis = App->renderer3D->GetCurrentCamera()->frustum.up;
@@ -105,16 +114,13 @@ void Lights::DebugDrawLights() const
 		math::float4x4 proj_matrix = camera->GetOpenGLProjectionMatrix();
 		math::float4x4 mvp_matrix = model_matrix * view_matrix * proj_matrix;
 		glUniformMatrix4fv(glGetUniformLocation(shader, "mvp_matrix"), 1, GL_FALSE, mvp_matrix.ptr());
-
-		const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(App->resHandler->plane);
-		glBindVertexArray(mesh->GetVAO());
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->GetIBO());
 		glDrawElements(GL_TRIANGLES, mesh->GetIndicesCount(), GL_UNSIGNED_INT, NULL);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glUseProgram(0);
+
 	}
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	glEnable(GL_DEPTH_TEST);
+	App->glCache->SwitchShader(0);
 }

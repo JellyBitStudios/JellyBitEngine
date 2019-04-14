@@ -2118,6 +2118,9 @@
     <ClInclude Include="ModuleTrails.h">
       <Filter>Sources\Modules</Filter>
     </ClInclude>
+    <ClInclude Include="GLCache.h">
+      <Filter>Sources\Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ModuleInput.cpp">
@@ -2686,6 +2689,8 @@
     </ClCompile>
     <ClCompile Include="CurrentSelection.cpp">
       <Filter>Sources\Containers</Filter>
+    <ClCompile Include="GLCache.cpp">
+      <Filter>Sources\Helpers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

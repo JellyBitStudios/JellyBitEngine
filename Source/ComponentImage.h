@@ -1,7 +1,7 @@
 #ifndef __COMPONENT_IMAGE_H__
 #define __COMPONENT_IMAGE_H__
 
-#include "ModuleUI.h"
+#include "GLCache.h"
 
 #include "Component.h"
 #include <string>

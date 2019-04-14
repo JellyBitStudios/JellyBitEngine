@@ -52,6 +52,7 @@ update_status ModuleNavigation::Update()
 #ifndef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 #endif // !GAMEMODE
+	return UPDATE_CONTINUE;
 	if (m_navMesh && m_crowd)
 	{
 		m_crowd->update(App->timeManager->GetDt(), 0);
@@ -133,10 +134,10 @@ void ModuleNavigation::OnSystemEvent(System_Event e)
 		if (!m_navMesh)
 			return;
 
-		for each (ComponentNavAgent* ag in c_agents)
-			RemoveAgent(ag->GetIndex());
+		//for each (ComponentNavAgent* ag in c_agents)
+			//RemoveAgent(ag->GetIndex());
 
-		dtFreeCrowd(m_crowd);
+		//dtFreeCrowd(m_crowd);
 		dtFreeNavMeshQuery(m_navQuery);
 		m_crowd = 0;
 		m_navQuery = 0;
@@ -144,8 +145,8 @@ void ModuleNavigation::OnSystemEvent(System_Event e)
 	}
 	case System_Event_Type::LoadFinished:
 	{
-		if (App->IsPlay())
-			InitDetour();
+		//if (App->IsPlay())
+			//InitDetour();
 		break;
 	}
 	}
@@ -167,10 +168,10 @@ void ModuleNavigation::InitDetour()
 		return;
 	}
 
-	InitCrowd();
+	//InitCrowd();
 
-	for each (ComponentNavAgent* ag in c_agents)
-		ag->AddAgent();
+	//for each (ComponentNavAgent* ag in c_agents)
+	//	ag->AddAgent();
 }
 
 void ModuleNavigation::InitCrowd()
@@ -294,29 +295,29 @@ bool ModuleNavigation::FindPath(float* start, float* end, std::vector<math::floa
 	extents[2] = 1.2f;
 
 	//Find start position poly
-	status = m_navQuery->findNearestPoly(startpos, extents, 0, &startRef, NULL);
+	status = m_navQuery->findNearestPoly(startpos, extents, &filter, &startRef, NULL);
 	if (!dtStatusSucceed(status))
 		return false;
 
 	//Find end position poly
-	status = m_navQuery->findNearestPoly(endpos, extents, 0, &endRef, NULL);
+	status = m_navQuery->findNearestPoly(endpos, extents, &filter, &endRef, NULL);
 	if (!dtStatusSucceed(status))
 		return false;
 
 	//Find polys between start and end positions
-	status = m_navQuery->findPath(startRef, endRef, startpos, endpos, 0, path, &pathcount, MAX_POLYS);
+	status = m_navQuery->findPath(startRef, endRef, startpos, endpos, &filter, path, &pathcount, MAX_POLYS);
 	if (!dtStatusSucceed(status))
 		return false;
 
 	//Find path along polys
 	status = m_navQuery->findStraightPath(startpos, endpos, path, pathcount,
-		straightPath, &straightPathFlags, straightPathRefs,
+		straightPath, 0, straightPathRefs,
 		&straightPathCount, maxStraightPath);
 	if (!dtStatusSucceed(status))
 		return false;
 
 	finalPath.resize(straightPathCount);
-	memcpy(&finalPath, straightPath, sizeof(float) * straightPathCount * 3);
+	memcpy(&finalPath[0], straightPath, sizeof(float) * straightPathCount * 3);
 
 	return true;
 }

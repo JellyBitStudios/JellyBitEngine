@@ -153,8 +153,6 @@ void ComponentCanvas::OnEditor()
 #ifndef GAMEMODE
 	if (ImGui::CollapsingHeader("Canvas", ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		ImGui::TextColored(BLUE, "%s", glGetString(GL_VENDOR));
-
 		int current_type = int(type);
 		if (ImGui::Combo("Using", &current_type, CANVAS_TYPE_STR))
 		{

@@ -43,7 +43,7 @@ void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 	// Component Alpha is not required for storing Normals or Positions, but we need a floating point frame buffer
 	// and RGB16F is not compatible with most computers (at least mine not)
 	// no F= buffer clamped from 0 to 1. with f components are not clamped
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
@@ -108,6 +108,31 @@ void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		CONSOLE_LOG(LogTypes::Error, "Framebuffer not complete!");
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// BIND UNIFORMS
+	ResourceShaderProgram* resProgram = (ResourceShaderProgram*)App->res->GetResource(App->resHandler->deferredShaderProgram);
+	glUseProgram(resProgram->shaderProgram);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, gPosition);
+	uint location = glGetUniformLocation(resProgram->shaderProgram, "gPosition");
+	glUniform1i(location, 0);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, gNormal);
+	location = glGetUniformLocation(resProgram->shaderProgram, "gNormal");
+	glUniform1i(location, 1);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
+	location = glGetUniformLocation(resProgram->shaderProgram, "gAlbedoSpec");
+	glUniform1i(location, 2);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, gInfo);
+	location = glGetUniformLocation(resProgram->shaderProgram, "gInfo");
+	glUniform1i(location, 3);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, gDepth);
+	location = glGetUniformLocation(resProgram->shaderProgram, "gDepth");
+	glUniform1i(location, 4);
+	glUseProgram(0);
 }
 
 void ModuleFBOManager::UnloadGBuffer()
@@ -139,29 +164,19 @@ void ModuleFBOManager::DrawGBufferToScreen() const
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	ResourceShaderProgram* resProgram = (ResourceShaderProgram*)App->res->GetResource(App->resHandler->deferredShaderProgram);
 	glUseProgram(resProgram->shaderProgram);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
-	uint location = glGetUniformLocation(resProgram->shaderProgram, "gPosition");
-	glUniform1i(location, 0);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, gNormal);
-	location = glGetUniformLocation(resProgram->shaderProgram, "gNormal");
-	glUniform1i(location, 1);
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
-	location = glGetUniformLocation(resProgram->shaderProgram, "gAlbedoSpec");
-	glUniform1i(location, 2);
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, gInfo);
-	location = glGetUniformLocation(resProgram->shaderProgram, "gInfo");
-	glUniform1i(location, 3);
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, gDepth);
-	location = glGetUniformLocation(resProgram->shaderProgram, "gDepth");
-	glUniform1i(location, 4);
-
 	App->lights->UseLights(resProgram->shaderProgram);
 
 	const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(App->resHandler->plane);
