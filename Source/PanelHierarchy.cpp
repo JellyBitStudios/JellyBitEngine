@@ -200,7 +200,7 @@ void PanelHierarchy::IterateAllChildren(GameObject* root) const
 				treeNodeFlags = 0;
 				treeNodeFlags |= ImGuiTreeNodeFlags_Leaf;
 
-				if (App->scene->selectedObject == child)
+				if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), child) != App->scene->multipleSelection.end())
 					treeNodeFlags |= ImGuiTreeNodeFlags_Selected;
 
 				if (root->openHierarchy)
