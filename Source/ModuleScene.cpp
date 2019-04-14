@@ -99,6 +99,10 @@ update_status ModuleScene::Update()
 			OnGizmos(currentGameObject);
 	}
 
+	if (selectedObject == CurrentSelection::SelectedType::multipleGO)
+		OnGizmosList();
+	
+
 	if(App->IsEditor() && !App->gui->WantTextInput())
 		if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RCTRL) == KEY_REPEAT)
 		{
@@ -241,6 +245,72 @@ void ModuleScene::OnGizmos(GameObject* gameObject)
 	}
 }
 
+void ModuleScene::OnGizmosList()
+{
+	bool canContinue = true;
+	math::float3 globalPosition = math::float3::zero;
+	for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+	{
+		if ((*iter)->transform)
+			globalPosition += (*iter)->transform->GetGlobalMatrix().TranslatePart();
+		else
+		{
+			canContinue = false;
+			break;
+		}
+	}
+	if (canContinue)
+	{
+		globalPosition /= App->scene->multipleSelection.size();
+		ImGuiViewport* vport = ImGui::GetMainViewport();
+		ImGuizmo::SetRect(vport->Pos.x, vport->Pos.y, vport->Size.x, vport->Size.y);
+
+		math::float4x4 viewMatrix = App->renderer3D->GetCurrentCamera()->GetOpenGLViewMatrix();
+		math::float4x4 projectionMatrix = App->renderer3D->GetCurrentCamera()->GetOpenGLProjectionMatrix();
+		math::float4x4 transformMatrix = math::float4x4::FromTRS(globalPosition, math::Quat::identity, math::float3::one);
+		transformMatrix = transformMatrix.Transposed();
+
+		ImGuizmo::MODE mode = currentImGuizmoMode;
+		if (currentImGuizmoOperation == ImGuizmo::OPERATION::SCALE && mode != ImGuizmo::MODE::LOCAL)
+			mode = ImGuizmo::MODE::LOCAL;
+
+		ImGuizmo::Manipulate(
+			viewMatrix.ptr(), projectionMatrix.ptr(),
+			currentImGuizmoOperation, mode, transformMatrix.ptr()
+		);
+
+		if (ImGuizmo::IsUsing())
+		{
+			if (!saveTransform)
+			{
+				saveTransform = true;
+				lastMat = transformMatrix;
+			}
+			transformMatrix = transformMatrix.Transposed();
+			math::float3 transformPos = transformMatrix.TranslatePart();
+			math::float3x3 transformRot = transformMatrix.RotatePart();
+			math::float3 transformScale = transformMatrix.GetScale();
+			for (std::list<GameObject*>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			{
+				math::float4x4 currMat = (*iter)->transform->GetGlobalMatrix();
+				math::float3 finalPos = currMat.TranslatePart() + transformPos - globalPosition;
+
+				math::float3x3 finalRot = currMat.RotatePart();
+				finalRot = finalRot.Mul(transformRot);
+				math::float3 finalScale = currMat.GetScale();
+				finalScale = finalScale.Mul(transformScale);
+				math::float4x4 realTransform = math::float4x4::FromTRS(finalPos, finalRot, finalScale);
+
+				(*iter)->transform->SetMatrixFromGlobal(realTransform);
+			}
+		}
+		else if (saveTransform)
+		{
+			SaveLastTransform(lastMat.Transposed());
+			saveTransform = false;
+		}
+	}
+}
 
 void ModuleScene::SaveLastTransform(math::float4x4 matrix)
 {

@@ -425,6 +425,7 @@ void PanelInspector::ShowGameObjectListInspector() const
 			(*iter)->SetIsActive(isActive);
 		}
 	}
+	ImGui::SameLine();
 	ImGui::Text("Grup Selection");
 
 	bool isStatic = gameObject->IsStatic();
@@ -469,7 +470,6 @@ void PanelInspector::ShowGameObjectListInspector() const
 	ImGui::SetCursorScreenPos(ImGui::GetWindowPos());
 
 	ImGui::SetCursorScreenPos(cursorPos);
-
 
 	ImGui::Separator();
 	DragnDropSeparatorTarget(gameObject->GetComponent(TransformComponent));

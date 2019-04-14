@@ -74,6 +74,7 @@ CurrentSelection& CurrentSelection::operator=(GameObject * newSelection)
 		App->camera->SetReference(newSelection->transform->GetPosition());
 
 	App->scene->multipleSelection.clear();
+	App->scene->multipleSelection.push_back(newSelection);
 
 	return *this;
 }

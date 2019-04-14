@@ -49,6 +49,7 @@ public:
 
 	// ImGuizmo
 	void OnGizmos(GameObject* gameObject);
+	void OnGizmosList();
 
 #ifndef GAMEMODE
 	void SaveLastTransform(math::float4x4 matrix);
