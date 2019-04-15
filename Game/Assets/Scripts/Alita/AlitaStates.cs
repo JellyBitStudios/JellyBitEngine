@@ -43,6 +43,11 @@ class AIdle : AState
 
     public void ProcessInput(RaycastHit hit)
     {
+        if (hit.gameObject.GetLayer() == "Terrain")
+        {
+            Alita.Call.agent.SetDestination(hit.point);
+            Alita.Call.state = Alita.Call.StateWalking;
+        }
     }
 
     public void ProcessEvent(Event latestEvent)
@@ -67,6 +72,7 @@ class AWalking : AState
 
     void AState.OnExecute()
     {
+        Debug.Log("Walking :)");
     }
 
     public void OnStop()
