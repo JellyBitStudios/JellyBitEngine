@@ -95,8 +95,8 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 
 	if (include)
 	{
-		if (parent)
-			SetAABB(parent->boundingBox.Size(), posDifAABB);
+		//if (parent)
+		//	SetAABB(parent->boundingBox.Size(), posDifAABB);
 		App->particle->emitters.push_back(this);
 
 
@@ -648,10 +648,10 @@ void ComponentEmitter::ParticleAABB()
 		if (drawAABB)
 		{
 			math::float3 size = parent->boundingBox.Size();
-			if (ImGui::DragFloat3("Dimensions", &size.x, 1.0f, 0.0f, 0.0f, "%.0f"))
-				SetAABB(size, posDifAABB);
-			if (ImGui::DragFloat3("Pos", &posDifAABB.x, 1.0f, 0.0f, 0.0f, "%.0f"))
-				SetAABB(size, posDifAABB);
+			//if (ImGui::DragFloat3("Dimensions", &size.x, 1.0f, 0.0f, 0.0f, "%.0f"))
+			//	SetAABB(size, posDifAABB);
+			//if (ImGui::DragFloat3("Pos", &posDifAABB.x, 1.0f, 0.0f, 0.0f, "%.0f"))
+			//	SetAABB(size, posDifAABB);
 		}
 	}
 #endif
