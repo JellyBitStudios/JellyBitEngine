@@ -30,7 +30,7 @@ public class PathManager
     {
         hasPath = Navigation.GetPath(origin, destination, out path);
         this.destination = hasPath ? destination : origin;
-        index = 0;
+        index = 1;
         return hasPath;
     }
 

@@ -37,7 +37,7 @@ public class CyborgMeleeController : JellyScript
 
     public override void Start()
     {
-        fsm.ChangeState(new GoTo(agent));
+        //fsm.ChangeState(new GoTo(agent));
     }
 
     public override void Update()
@@ -50,7 +50,7 @@ public class CyborgMeleeController : JellyScript
 
     private void HandleInput()
     {
-        if (Input.GetMouseButtonDown(MouseKeyCode.MOUSE_LEFT))
+        if (Input.GetMouseButton(MouseKeyCode.MOUSE_LEFT))
         {
             Ray ray = Physics.ScreenToRay(Input.GetMousePosition(), Camera.main);
             RaycastHit hitInfo;
