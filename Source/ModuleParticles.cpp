@@ -67,9 +67,10 @@ void ModuleParticle::DrawParticles()
 {
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 
+	math::Frustum camFrustum = App->renderer3D->GetCurrentCamera->frustum;
 	for (int i = 0; i < partVec.size(); ++i)
 	{
-		if (partVec[i]->owner)
+		if (partVec[i]->owner && camFrustum.Intersects(partVec[i]->owner->boundingBox))
 			partVec[i]->Draw();
 	}
 }
@@ -114,7 +115,7 @@ void ModuleParticle::DebugDraw() const
 			}
 		}
 		if ((*emitter)->drawAABB)
-			App->debugDrawer->DebugDraw((*emitter)->GetParent()->boundingBox, White);
+			App->debugDrawer->DebugDraw((*emitter)->boundingBox, White);
 	}
 }
 

@@ -22,9 +22,8 @@ ComponentEmitter::ComponentEmitter(GameObject* gameObject, bool include) : Compo
 {
 	if (include)
 	{
-		//SetAABB(math::float3::one);
-		//if (gameObject->IsStatic())
-		//	App->scene->quadtree.Insert(gameObject);
+		boundingBox = math::AABB();
+		boundingBox.SetFromCenterAndSize(gameObject->transform->GetGlobalMatrix().TranslatePart(), math::float3::one);
 		App->particle->emitters.push_back(this);
 
 		SetMaterialRes(App->resHandler->defaultMaterial);
@@ -44,8 +43,8 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 	maxPart = componentEmitter.maxPart;
 	repeatTime = componentEmitter.repeatTime;
 
-	// posDifAABB
-	posDifAABB = componentEmitter.posDifAABB;
+	// personal boundingBox
+	boundingBox = componentEmitter.boundingBox;
 
 	// boxCreation
 	boxCreation = componentEmitter.boxCreation;
@@ -95,10 +94,7 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 
 	if (include)
 	{
-		//if (parent)
-		//	SetAABB(parent->boundingBox.Size(), posDifAABB);
 		App->particle->emitters.push_back(this);
-
 
 		if (App->res->GetResource(componentEmitter.materialRes) != nullptr)
 			SetMaterialRes(componentEmitter.materialRes);
@@ -311,7 +307,7 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 					burstMesh.meshVertexCont = 0u;
 			}
 		}
-		else if(!shapeMesh.uniqueVertex.empty())
+		else if (!shapeMesh.uniqueVertex.empty())
 		{
 			uint pos = rand() % shapeMesh.uniqueVertex.size();
 			spawn.x = shapeMesh.uniqueVertex[pos].x;
@@ -333,7 +329,7 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 		math::Quat identity = math::Quat::identity;
 		math::float3 zero = math::float3::zero;
 
-		trans.Decompose(global,identity, zero);
+		trans.Decompose(global, identity, zero);
 	}
 	return spawn + global;
 }
@@ -394,7 +390,7 @@ void ComponentEmitter::ParticleValues()
 		if (ImGui::Checkbox("##Size", &checkSize))
 			EqualsMinMaxValues(startValues.size);
 		ShowFloatValue(startValues.size, checkSize, "Size", 0.1f, 0.1f, 5.0f);
-		
+
 		if (ImGui::Checkbox("##SizeOverTime", &checkSizeOverTime))
 			EqualsMinMaxValues(startValues.sizeOverTime);
 		ShowFloatValue(startValues.sizeOverTime, checkSizeOverTime, "SizeOverTime", 0.25f, -1.0f, 1.0f);
@@ -647,11 +643,12 @@ void ComponentEmitter::ParticleAABB()
 		ImGui::Checkbox("Bounding Box", &drawAABB);
 		if (drawAABB)
 		{
-			math::float3 size = parent->boundingBox.Size();
-			//if (ImGui::DragFloat3("Dimensions", &size.x, 1.0f, 0.0f, 0.0f, "%.0f"))
-			//	SetAABB(size, posDifAABB);
-			//if (ImGui::DragFloat3("Pos", &posDifAABB.x, 1.0f, 0.0f, 0.0f, "%.0f"))
-			//	SetAABB(size, posDifAABB);
+			math::float3 size = boundingBox.Size();
+			math::float3 pos = boundingBox.CenterPoint();
+			if (ImGui::DragFloat3("Dimensions", &size.x, 1.0f, 0.0f, 0.0f, "%.0f"))
+				boundingBox.SetFromCenterAndSize(pos, size);
+			if (ImGui::DragFloat3("Pos", &pos.x, 1.0f, 0.0f, 0.0f, "%.0f"))
+				boundingBox.SetFromCenterAndSize(pos, size);
 		}
 	}
 #endif
@@ -704,9 +701,9 @@ void ComponentEmitter::ParticleTexture()
 		if (particleAnim.isParticleAnimated)
 		{
 			ImGui::DragFloat("Animation Speed", &particleAnim.animationSpeed, 0.001f, 0.0f, 5.0f, "%.3f");
-			if(ImGui::DragInt("Rows", &particleAnim.textureRows, 1, 1, 10))
+			if (ImGui::DragInt("Rows", &particleAnim.textureRows, 1, 1, 10))
 				particleAnim.textureRowsNorm = 1.0f / particleAnim.textureRows;
-			if(ImGui::DragInt("Columns", &particleAnim.textureColumns, 1, 1, 10))
+			if (ImGui::DragInt("Columns", &particleAnim.textureColumns, 1, 1, 10))
 				particleAnim.textureColumnsNorm = 1.0f / particleAnim.textureColumns;
 
 			ImGui::Checkbox("Kill particle with animation", &dieOnAnimation);
@@ -723,7 +720,7 @@ void ComponentEmitter::ParticleTexture()
 		}
 		ImGui::Separator();
 	}
-	#endif
+#endif
 }
 
 void ComponentEmitter::SetNewAnimation()
@@ -747,7 +744,7 @@ void ComponentEmitter::ParticleSubEmitter()
 				subEmitter->ToggleIsActive();
 			else
 			{
-				subEmitter = App->GOs->CreateGameObject("SubEmition",parent);
+				subEmitter = App->GOs->CreateGameObject("SubEmition", parent);
 				subEmitter->AddComponent(EmitterComponent);
 				((ComponentEmitter*)subEmitter->GetComponent(EmitterComponent))->isSubEmitter = true;
 				subEmitter->originalBoundingBox.SetFromCenterAndSize(subEmitter->transform->GetPosition(), math::float3::one);
@@ -801,7 +798,7 @@ void ComponentEmitter::ShowFloatValue(math::float2& value, bool checkBox, const 
 void ComponentEmitter::EqualsMinMaxValues(math::float2 & value)
 {
 #ifndef GAMEMODE
-	if(value[1] != value[0])
+	if (value[1] != value[0])
 		value[1] = value[0];
 #endif
 }
@@ -885,7 +882,7 @@ void ComponentEmitter::SetMeshParticleRes(uint res_uuid)
 
 	if (resource)
 		SetMeshInfo((ResourceMesh*)resource, shapeMesh);
-	
+
 	else
 		shapeMesh.uuid = 0u;
 }
@@ -902,7 +899,7 @@ void ComponentEmitter::SetBurstMeshParticleRes(uint res_uuid)
 
 	if (resource)
 		SetMeshInfo((ResourceMesh*)resource, burstMesh);
-	
+
 	else
 		burstMesh.uuid = 0u;
 }
@@ -948,7 +945,7 @@ uint ComponentEmitter::GetInternalSerializationBytes()
 	}
 
 	return sizeof(bool) * 17 + sizeof(int) * 3 + sizeof(float) * 6 + sizeof(uint) * 5
-		+ sizeof(ShapeType) * 2	+ sizeof(math::AABB) + sizeof(math::float2) * 7 + sizeof(math::float3) * 3
+		+ sizeof(ShapeType) * 2 + sizeof(math::AABB) * 2 + sizeof(math::float2) * 7 + sizeof(math::float3) * 2
 		+ particleAnim.GetPartAnimationSerializationBytes() + sizeOfList;//Bytes of all Start Values Struct
 }
 
@@ -1059,7 +1056,7 @@ void ComponentEmitter::OnInternalSave(char *& cursor)
 
 	memcpy(cursor, &shapeMesh.uuid, bytes);
 	cursor += bytes;
-	
+
 	particleAnim.OnInternalSave(cursor);
 
 	bytes = sizeof(ShapeType);
@@ -1073,8 +1070,7 @@ void ComponentEmitter::OnInternalSave(char *& cursor)
 	memcpy(cursor, &boxCreation, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(math::float3);
-	memcpy(cursor, &posDifAABB, bytes);
+	memcpy(cursor, &boundingBox, bytes);
 	cursor += bytes;
 }
 
@@ -1131,26 +1127,26 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	bytes = sizeof(int);
 	memcpy(&rateOverTime, cursor, bytes);
 	cursor += bytes;
-	
+
 	memcpy(&minPart, cursor, bytes);
 	cursor += bytes;
-	
+
 	memcpy(&maxPart, cursor, bytes);
 	cursor += bytes;
-	
+
 	bytes = sizeof(float);
 	memcpy(&duration, cursor, bytes);
 	cursor += bytes;
-	
+
 	memcpy(&repeatTime, cursor, bytes);
 	cursor += bytes;
-	
+
 	memcpy(&circleCreation.r, cursor, bytes);
 	cursor += bytes;
-	
+
 	memcpy(&sphereCreation.r, cursor, bytes);
 	cursor += bytes;
-	
+
 	//float gravity;
 	//memcpy(&gravity, cursor, bytes);
 	//cursor += bytes;
@@ -1192,8 +1188,7 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	memcpy(&boxCreation, cursor, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(math::float3);
-	memcpy(&posDifAABB, cursor, bytes);
+	memcpy(&boundingBox, cursor, bytes);
 	cursor += bytes;
 
 	//bytes = sizeof(uint);
@@ -1241,7 +1236,7 @@ void StartValues::OnInternalSave(char *& cursor)
 	bytes = sizeof(math::float3);
 	memcpy(cursor, &gravity, bytes);
 	cursor += bytes;
-	
+
 	memcpy(cursor, &particleDirection, bytes);
 	cursor += bytes;
 
@@ -1292,7 +1287,7 @@ void StartValues::OnInternalLoad(char *& cursor)
 	cursor += bytes;
 
 	bytes = sizeof(math::float3);
-	memcpy(&gravity , cursor, bytes);
+	memcpy(&gravity, cursor, bytes);
 	cursor += bytes;
 
 	memcpy(&particleDirection, cursor, bytes);
@@ -1411,10 +1406,10 @@ void ParticleAnimation::OnInternalSave(char *& cursor)
 	size_t bytes = sizeof(bool);
 	memcpy(cursor, &isParticleAnimated, bytes);
 	cursor += bytes;
-	
+
 	memcpy(cursor, &randAnim, bytes);
 	cursor += bytes;
-	
+
 	bytes = sizeof(int);
 	memcpy(cursor, &textureRows, bytes);
 	cursor += bytes;
@@ -1439,9 +1434,9 @@ void ParticleAnimation::OnInternalLoad(char *& cursor)
 	memcpy(&isParticleAnimated, cursor, bytes);
 	cursor += bytes;
 
-	memcpy(&randAnim,cursor, bytes);
+	memcpy(&randAnim, cursor, bytes);
 	cursor += bytes;
-	
+
 	bytes = sizeof(int);
 	memcpy(&textureRows, cursor, bytes);
 	cursor += bytes;

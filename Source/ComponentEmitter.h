@@ -211,6 +211,8 @@ public:
 
 	bool burst = false;
 	ShapeType burstType = ShapeType_BOX;
+
+	math::AABB boundingBox;
 private:
 	// General info
 	//---------------------------------------
@@ -239,8 +241,6 @@ private:
 	int minPart = 0;
 	int maxPart = 10;
 	float repeatTime = 1.0f;
-
-	math::float3 posDifAABB = math::float3::zero;
 
 	std::string burstTypeName = "Box Burst";
 
