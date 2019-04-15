@@ -87,6 +87,10 @@ class AWalking : AState
 
     public override void ProcessInput(RaycastHit hit)
     {
+        if (hit.gameObject.GetLayer() == "Terrain")
+        {
+            Alita.Call.agent.SetDestination(hit.point);
+        }
     }
 
     public override void ProcessEvent(Event latestEvent)
