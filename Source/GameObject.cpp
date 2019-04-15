@@ -817,6 +817,19 @@ void GameObject::GetChildrenVector(std::vector<GameObject*>& go, bool thisGo)
 		children[i]->GetChildrenVector(go);
 }
 
+bool GameObject::CheckAllParentsInSelection(std::list<uint> slectionGO) const
+{
+	bool ret = true;
+	if (std::find(slectionGO.begin(), slectionGO.end(), parent->GetUUID()) == slectionGO.end())
+	{
+		if (parent->GetParent())
+			ret = parent->CheckAllParentsInSelection(slectionGO);
+	}
+	else
+		ret = false;
+	return ret;
+}
+
 uint GameObject::GetSerializationBytes() const
 {
 	// uuid + parent + layer + active + static + name + number of components

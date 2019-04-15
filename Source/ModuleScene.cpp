@@ -295,7 +295,7 @@ void ModuleScene::OnGizmosList()
 			for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 			{
 				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
-				if (go)
+				if (go && go->CheckAllParentsInSelection(App->scene->multipleSelection))
 				{
 					math::float3 finalPos;
 					math::Quat finalRot;
