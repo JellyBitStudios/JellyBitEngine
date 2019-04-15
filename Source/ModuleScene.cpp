@@ -251,7 +251,7 @@ void ModuleScene::OnGizmosList()
 	math::float3 globalPosition = math::float3::zero;
 	math::float3 globalSize = math::float3::zero;
 
-	for (std::list<uint>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+	for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 	{
 		GameObject* go = App->GOs->GetGameObjectByUID(*iter);
 		if (go && go->transform)
@@ -292,10 +292,10 @@ void ModuleScene::OnGizmosList()
 			math::float3 transformPos = transformMatrix.TranslatePart();
 			math::Quat resformQuat = transformMatrix.RotatePart().ToQuat();
 			math::float3 transformScale = transformMatrix.GetScale();
-			for (std::list<uint>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 			{
 				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
-				if (go && std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), go->GetParent()->GetUUID()) == App->scene->multipleSelection.end())
+				if (go)
 				{
 					math::float4x4 currMat = go->transform->GetGlobalMatrix();
 					math::float3 finalPos = currMat.TranslatePart();

@@ -304,9 +304,12 @@ update_status ModuleRenderer3D::PostUpdate()
 
 		if (drawCurrentGO)
 		{
-			GameObject* curr = App->scene->selectedObject.GetCurrGameObject();
-			if (curr && curr->boundingBox.IsFinite())
-				App->debugDrawer->DebugDraw(curr->boundingBox, DeepPink);
+			for (std::list<uint>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			{
+				GameObject* curr = App->GOs->GetGameObjectByUID(*iter);
+				if (curr && curr->boundingBox.IsFinite())
+					App->debugDrawer->DebugDraw(curr->boundingBox, DeepPink);
+			}
 		}
 
 		if (drawBoundingBoxes) // boundingBoxesColor = Yellow
