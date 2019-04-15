@@ -8,9 +8,6 @@ public class AgentData
     public float maxAngularVelocity = 1.0f;
     public float maxAcceleration = 1.0f;
     public float maxAngularAcceleration = 1.0f;
-
-    // Arrive
-    public float arriveMinDistance = 0.1f;
 }
 
 public class Agent : JellyScript
@@ -107,11 +104,11 @@ public class Agent : JellyScript
         agentData.maxAngularVelocity = agentMaxAngularVelocity;
         agentData.maxAcceleration = agentMaxAcceleration;
         agentData.maxAngularAcceleration = agentMaxAngularAcceleration;
-        agentData.arriveMinDistance = agentArriveMinDistance;
 
         // SteeringSeekData
         seekData.isActive = isSeekActive;
         seekData.Priority = seekPriority;
+        seekData.arriveMinDistance = agentArriveMinDistance;
 
         // SteeringFleeData
         fleeData.isActive = isFleeActive;
@@ -134,7 +131,9 @@ public class Agent : JellyScript
             obstacleAvoidanceData.rays[i] = new SteeringRay();
         obstacleAvoidanceData.rays[0].length = 3.0f;
         obstacleAvoidanceData.rays[1].direction = new Vector3(-1.0f, 0.0f, 1.0f);
+        obstacleAvoidanceData.rays[1].length = 1.5f;
         obstacleAvoidanceData.rays[2].direction = new Vector3(1.0f, 0.0f, 1.0f);
+        obstacleAvoidanceData.rays[2].length = 1.5f;
 
         // SteeringAlignData
         alignData.isActive = isAlignActive;
@@ -196,8 +195,14 @@ public class Agent : JellyScript
 
         ResetPriorities();
 
-        angularVelocity += newAngularVelocity;
-        velocity += newVelocity;
+        if (newAngularVelocity != 0.0f)
+            angularVelocity += newAngularVelocity;
+        else
+            angularVelocity = newAngularVelocity;
+        if (newVelocity.magnitude != 0.0f)
+            velocity += newVelocity;
+        else
+            velocity = Vector3.zero;
 
         // Cap angular velocity
         angularVelocity = Mathf.Clamp(angularVelocity, -agentData.maxAngularVelocity, agentData.maxAngularVelocity);
@@ -211,9 +216,6 @@ public class Agent : JellyScript
 
         // Rotate
         transform.rotation *= Quaternion.Rotate(Vector3.up, angularVelocity * Time.deltaTime);
-
-        if (movementState == MovementState.Stop)
-            return;
 
         // Move
         transform.position += velocity * Time.deltaTime;
@@ -244,7 +246,7 @@ public class Agent : JellyScript
         {
             case MovementState.GoToPosition:
 
-                if (pathManager.GetRemainingDistance(this) < agentData.arriveMinDistance)
+                if (pathManager.GetRemainingDistance(this) < seekData.arriveMinDistance)
                     movementState = MovementState.UpdateNextPosition;
 
                 break;

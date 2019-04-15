@@ -69,7 +69,7 @@ public class PathManager
         if (!hasPath)
             return;
 
-        float[] color = { 0.0f, 0.0f, 1.0f, 1.0f };
+        float[] color = { 1.0f, 0.0f, 0.0f, 1.0f };
 
         for (uint i = 0; i < path.Length - 1; ++i)
             Debug.DrawLine(path[i], path[i + 1], color);

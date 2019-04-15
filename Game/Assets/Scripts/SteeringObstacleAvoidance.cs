@@ -19,25 +19,28 @@ public static class SteeringObstacleAvoidance
 {
     public static Vector3 GetObstacleAvoidance(Agent agent)
     {
+        Vector3 outputAcceleration = Vector3.zero;
+
         if (agent == null)
-            return Vector3.zero;
+            return outputAcceleration;
 
         foreach (SteeringRay steeringRay in agent.obstacleAvoidanceData.rays)
         {
             RaycastHit hitInfo;
             Ray ray = new Ray();
             ray.position = agent.transform.position;
-            ray.direction = steeringRay.direction;
+            ray.direction = agent.transform.rotation * steeringRay.direction;
 
             if (Physics.Raycast(ray, out hitInfo, steeringRay.length, agent.obstacleAvoidanceData.mask, SceneQueryFlags.Static))
             {
-                Vector3 outputAcceleration = hitInfo.point + hitInfo.normal * agent.obstacleAvoidanceData.avoidDistance;
-                outputAcceleration = new Vector3(outputAcceleration.x, 0.0f, outputAcceleration.z);
-                return outputAcceleration;
+                Vector3 newAcceleration = hitInfo.point + hitInfo.normal * agent.obstacleAvoidanceData.avoidDistance;
+                newAcceleration = new Vector3(newAcceleration.x, 0.0f, newAcceleration.z);
+                if (newAcceleration.magnitude > outputAcceleration.magnitude)
+                    outputAcceleration = newAcceleration;
             }
         }
 
-        return Vector3.zero;
+        return outputAcceleration;
     }
 
     public static void DrawGizmos(Agent agent)
