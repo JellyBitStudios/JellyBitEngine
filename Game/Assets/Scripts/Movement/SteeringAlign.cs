@@ -4,8 +4,8 @@ using JellyBitEngine;
 
 public class SteeringAlignData : SteeringAbstract
 {
-    public float minAngle = 0.01f;
-    public float slowAngle = 0.1f;
+    public float minAngle = 5.0f;
+    public float slowAngle = 15.0f;
     public float timeToTarget = 0.1f;
 
     public SteeringLookWhereYoureGoingData lookWhereYoureGoingData = new SteeringLookWhereYoureGoingData();

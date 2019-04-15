@@ -11,7 +11,7 @@ public class SteeringRay
 public class SteeringObstacleAvoidanceData : SteeringAbstract
 {
     public LayerMask mask = new LayerMask();
-    public float avoidDistance = 1.0f; // should be greater than the radius of the character
+    public float avoidDistance = 5.0f; // should be greater than the radius of the character
     public SteeringRay[] rays = null;
 }
 

@@ -53,7 +53,7 @@ public class GoTo : IState
 
     private Agent agent = null;
 
-    public GoTo(StateType prevStateType, Agent agent)
+    public GoTo(Agent agent, StateType prevStateType = StateType.None)
     {
         this.prevStateType = prevStateType;
 
