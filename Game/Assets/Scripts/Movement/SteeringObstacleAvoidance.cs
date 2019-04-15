@@ -31,7 +31,7 @@ public static class SteeringObstacleAvoidance
             ray.position = agent.transform.position;
             ray.direction = agent.transform.rotation * steeringRay.direction;
 
-            if (Physics.Raycast(ray, out hitInfo, steeringRay.length, agent.obstacleAvoidanceData.mask, SceneQueryFlags.Static))
+            if (Physics.Raycast(ray, out hitInfo, steeringRay.length, agent.obstacleAvoidanceData.mask, SceneQueryFlags.Static | SceneQueryFlags.Dynamic))
             {
                 Vector3 newAcceleration = hitInfo.point + hitInfo.normal * agent.obstacleAvoidanceData.avoidDistance;
                 newAcceleration = new Vector3(newAcceleration.x, 0.0f, newAcceleration.z);

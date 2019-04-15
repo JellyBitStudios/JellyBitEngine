@@ -41,7 +41,7 @@ public static class SteeringAlign
 
         targetRotation *= diff / diffAbs;
 
-        float outputAcceleration = targetRotation - agent.angularVelocity;
+        float outputAcceleration = targetRotation - agent.AngularVelocity;
         outputAcceleration /= agent.alignData.timeToTarget;
 
         return Mathf.Clamp(outputAcceleration, -agent.agentData.maxAngularAcceleration, agent.agentData.maxAngularAcceleration);
