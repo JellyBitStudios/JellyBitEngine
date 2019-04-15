@@ -37,7 +37,7 @@ public class CyborgMeleeController : JellyScript
 
     public override void Start()
     {
-        //fsm.ChangeState(new GoTo(agent));
+        fsm.ChangeState(new GoTo(agent));
     }
 
     public override void Update()

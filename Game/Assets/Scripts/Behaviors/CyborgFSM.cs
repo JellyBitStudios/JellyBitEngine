@@ -58,6 +58,9 @@ public class GoTo : IState
         this.prevStateType = prevStateType;
 
         this.agent = agent;
+
+        if (agent == null)
+            Debug.Log("Start null agent");
     }
 
     public override void Enter()
@@ -68,13 +71,13 @@ public class GoTo : IState
     public override void Execute()
     {
         Debug.Log("Execute");
+
         if (agent.HasArrived)
         {
             switch (prevStateType)
             {
                 case StateType.None:
-
-
+                    Debug.Log("finish");
                     break;
             }
         }
