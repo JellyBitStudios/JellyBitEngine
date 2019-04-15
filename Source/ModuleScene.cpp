@@ -297,25 +297,16 @@ void ModuleScene::OnGizmosList()
 				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
 				if (go)
 				{
-					math::float4x4 currMat = go->transform->GetGlobalMatrix();
-					math::float3 finalPos = currMat.TranslatePart();
-					math::Quat finalRot = currMat.RotatePart().ToQuat();
-					math::float3 finalScale = currMat.GetScale();
+					math::float3 finalPos;
+					math::Quat finalRot;
+					math::float3 finalScale;
 
-					switch (currentImGuizmoOperation)
-					{
-					case ImGuizmo::TRANSLATE:
-						finalPos += transformPos - globalPosition;
-						break;
-					case ImGuizmo::ROTATE:
-						finalRot = resformQuat * finalRot;
-						break;
-					case ImGuizmo::SCALE:
-						finalScale += transformScale - globalSize;
-						break;
-					default:
-						break;
-					}
+					go->transform->GetGlobalMatrix().Decompose(finalPos, finalRot, finalScale);
+
+					finalPos += transformPos - globalPosition;
+					finalRot = resformQuat * finalRot;
+					finalScale += transformScale - globalSize;
+
 					math::float4x4 realTransform = math::float4x4::FromTRS(finalPos, finalRot, finalScale);
 
 					go->transform->SetMatrixFromGlobal(realTransform);

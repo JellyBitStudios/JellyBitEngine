@@ -104,7 +104,7 @@ void PanelInspector::ShowGameObjectInspector() const
 {
 	if (!App->scene->multipleSelection.empty())
 	{
-		GameObject* gameObject = App->GOs->GetGameObjectByUID(App->scene->multipleSelection.front());
+		GameObject* gameObject = App->GOs->GetGameObjectByUID(App->scene->multipleSelection.back());
 
 		if (gameObject == nullptr)
 		{
@@ -124,20 +124,21 @@ void PanelInspector::ShowGameObjectInspector() const
 		}
 		ImGui::SameLine();
 
-		if (App->scene->multipleSelection.size() == 1)
-		{
-			static char objName[INPUT_BUF_SIZE];
-			if (gameObject->GetName() != nullptr)
-				strcpy_s(objName, IM_ARRAYSIZE(objName), gameObject->GetName());
+		static char objName[INPUT_BUF_SIZE];
+		if (gameObject->GetName() != nullptr)
+			strcpy_s(objName, IM_ARRAYSIZE(objName), gameObject->GetName());
 
-			ImGui::PushItemWidth(100.0f);
-			ImGuiInputTextFlags inputFlag = ImGuiInputTextFlags_EnterReturnsTrue;
-			if (ImGui::InputText("##objName", objName, IM_ARRAYSIZE(objName), inputFlag))
-				gameObject->SetName(objName);
-			ImGui::PopItemWidth();
-		}
-		else
-			ImGui::Text("Grup Selection");
+		ImGui::PushItemWidth(100.0f);
+		ImGuiInputTextFlags inputFlag = ImGuiInputTextFlags_EnterReturnsTrue;
+		if (ImGui::InputText("##objName", objName, IM_ARRAYSIZE(objName), inputFlag))
+			for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			{
+				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+				if (go)
+					go->SetName(objName);
+			}
+		ImGui::PopItemWidth();
+
 
 		bool isStatic = gameObject->IsStatic();
 		if (ImGui::Checkbox("Static", &isStatic))
@@ -150,10 +151,16 @@ void PanelInspector::ShowGameObjectInspector() const
 			}
 		}
 
-		if (App->scene->multipleSelection.size() == 1)
+
+		ImGui::SameLine();
+		if (ImGui::Button("Everybody Static"))
 		{
-			ImGui::SameLine();
-			if (ImGui::Button("Everybody Static")) { gameObject->ToggleChildrenAndThisStatic(!isStatic); }
+			for (std::list<uint>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			{
+				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+				if (go)
+					go->ToggleChildrenAndThisStatic(!isStatic);
+			}
 		}
 
 		// Layer
@@ -379,9 +386,16 @@ void PanelInspector::ShowGameObjectInspector() const
 
 					CONSOLE_LOG(LogTypes::Normal, "New Script Created: %s", scriptNames[i].data());
 					ComponentScript* script = App->scripting->CreateScriptComponent(scriptNames[i], res);
-					gameObject->AddComponent(script);
-					script->SetParent(gameObject);
-					script->InstanceClass();
+					for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+					{
+						GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+						if (go)
+						{
+							go->AddComponent(script);
+							script->SetParent(go);
+							script->InstanceClass();
+						}
+					}
 
 					ImGui::CloseCurrentPopup();
 				}
@@ -439,6 +453,7 @@ void PanelInspector::ShowGameObjectInspector() const
 		}
 	}
 }
+
 bool PanelInspector::CheckIsComponent(ComponentTypes type, bool allHaveIt) const
 {
 	bool canContinue = true;
