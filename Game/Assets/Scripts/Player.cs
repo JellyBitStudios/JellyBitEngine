@@ -4,22 +4,16 @@ class Player : JellyScript
 {
     private static Player m_instance;
 
-    public bool inputEnabled
-    {
-        get { return inputEnabled; }
-    } = true;
+    public bool inputEnabled = true;
 
-    public bool gameStopped
-    {
-        get { return gameStopped; }
-    } = false;
+    public bool gameStopped = false;
 
     private Player()
     {
         m_instance = this;
     }
 
-    public static Alita Call
+    public static Player Call
     {
         get { return m_instance; }
     }
@@ -29,7 +23,7 @@ class Player : JellyScript
         EventsManager.Call.StartListening("Player", this, "EventsListener");
     }
 
-    public void Update()
+    public override void Update()
     {
         if (!gameStopped)
         {
@@ -42,7 +36,7 @@ class Player : JellyScript
         }
     }
 
-    void EventsListener(Object type)
+    void EventsListener(object type)
     {
         Event listenedEvent = (Event)type;
         switch (listenedEvent.type)
@@ -58,22 +52,23 @@ class Player : JellyScript
 
     void RequestPause()
     {
-        Event pauseEvent;
-        newEvent.type = Events_type.PauseGame;
-        EventsManager.Call.PushEvent(Event pauseEvent);
+        Event pauseEvent = new Event();
+        pauseEvent.type = Event_Type.PauseGame;
+        EventsManager.Call.PushEvent(pauseEvent);
     }
 
     void RequestResume()
     {
-        Event resumeEvent;
-        newEvent.type = Events_type.ResumeGame;
-        EventsManager.Call.PushEvent(Event resumeEvent);
+        Event resumeEvent = new Event();
+        resumeEvent.type = Event_Type.ResumeGame;
+        EventsManager.Call.PushEvent(resumeEvent);
     }
 
     void HandleMousePicking(bool process)
     {
         Ray ray = Physics.ScreenToRay(Input.GetMousePosition(), Camera.main);
         RaycastHit hit;
+        LayerMask raycastLayer = new LayerMask();
         if (Physics.Raycast(ray, out hit, float.MaxValue, raycastLayer, SceneQueryFlags.Dynamic | SceneQueryFlags.Static))
         {
             if (process)

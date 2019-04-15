@@ -1,5 +1,4 @@
 ﻿using JellyBitEngine;
-using System;
 using System.Collections.Generic;
 
 // This class is not tested, but it should work.
@@ -62,7 +61,7 @@ public sealed class EventsManager : JellyScript
         listenerInstance.name = name;
         listenerInstance.script = script;
         listenerInstance.listener = listener;
-        listenerInstance.method = listener.script.GetType().GetMethod(listener);
+        listenerInstance.method = script.GetType().GetMethod(listener);
         if (!listeners.Contains(listenerInstance))
         {
             Debug.Log("LISTENER PUSHED: from script " + script.GetType().ToString() + " with listener " + listener);

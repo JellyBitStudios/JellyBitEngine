@@ -16,30 +16,80 @@ public interface AState
 
 class AIdle : AState
 {
-    void OnStart()
+    public void OnAwake(Object controller)
     {
-        AlitaController.Call.animator.PlayAnimation("idle_alita_anim");
     }
 
-    void OnExecute()
+    void AState.OnStart()
     {
-        // moving that ass
+        Alita.Call.animator.PlayAnimation("idle_alita_anim");
     }
 
-    void OnStop()
+    void AState.OnExecute()
     {
-        // whoops
+    }
+
+    void AState.OnStop()
+    {
+    }
+
+    public void OnPause()
+    {
+    }
+
+    public void OnResume()
+    {
+    }
+
+    public void ProcessInput(RaycastHit hit)
+    {
+    }
+
+    public void ProcessEvent(Event latestEvent)
+    {
+    }
+
+    public void NewTarget(GameObject target)
+    {
     }
 }
 
 class AWalking : AState
 {
-    void OnStart()
+    public void OnAwake(Object controller)
     {
-        AlitaController.Call.animator.PlayAnimation("anim_run_alita_fist");
     }
 
-    void OnExecute()
+    void AState.OnStart()
+    {
+        Alita.Call.animator.PlayAnimation("anim_run_alita_fist");
+    }
+
+    void AState.OnExecute()
+    {
+    }
+
+    public void OnStop()
+    {
+    }
+
+    public void OnPause()
+    {
+    }
+
+    public void OnResume()
+    {
+    }
+
+    public void ProcessInput(RaycastHit hit)
+    {
+    }
+
+    public void ProcessEvent(Event latestEvent)
+    {
+    }
+
+    public void NewTarget(GameObject target)
     {
     }
 }
@@ -49,31 +99,59 @@ class AAttacking : AState
     enum Anim { first, second, third }
     Anim currentAnim;
 
-    void OnStart()
+    public void OnAwake(Object controller)
     {
-        AlitaController.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
+    }
+
+    void AState.OnStart()
+    {
+        Alita.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
         currentAnim = Anim.first;
     }
 
-    void OnExecute()
+    void AState.OnExecute()
     {
-        if (AlitaController.Call.animator.AnimationFinished())
+        if (Alita.Call.animator.AnimationFinished())
         {
             if (currentAnim == Anim.first)
             {
-                AlitaController.Call.animator.PlayAnimation("secondAttack_animation_alita");
+                Alita.Call.animator.PlayAnimation("secondAttack_animation_alita");
                 currentAnim = Anim.second;
             }
             else if (currentAnim == Anim.first)
             {
-                AlitaController.Call.animator.PlayAnimation("thirdAttack_animation_alita");
+                Alita.Call.animator.PlayAnimation("thirdAttack_animation_alita");
                 currentAnim = Anim.third;
             }
             else
             {
-                AlitaController.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
+                Alita.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
                 currentAnim = Anim.first;
             }
         }
+    }
+
+    public void OnStop()
+    {
+    }
+
+    public void OnPause()
+    {
+    }
+
+    public void OnResume()
+    {
+    }
+
+    public void ProcessInput(RaycastHit hit)
+    {
+    }
+
+    public void ProcessEvent(Event latestEvent)
+    {
+    }
+
+    public void NewTarget(GameObject target)
+    {
     }
 }
