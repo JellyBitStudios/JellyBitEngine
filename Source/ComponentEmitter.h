@@ -149,7 +149,6 @@ public:
 	void ConnectSubEmitter();
 	void SoftClearEmitter();
 	bool EditColor(ColorTime & colorTime, uint pos = 0u);
-	void SetAABB(const math::float3 size, const math::float3 extraPosition = math::float3::zero);
 
 	math::float3 GetPos();
 

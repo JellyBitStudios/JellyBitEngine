@@ -843,22 +843,6 @@ bool ComponentEmitter::EditColor(ColorTime &colorTime, uint pos)
 	return ret;
 }
 
-void ComponentEmitter::SetAABB(const math::float3 size, const math::float3 extraPosition)
-{
-	if (size.MinElement() >= 0)
-	{
-		GameObject* gameObject = GetParent();
-
-		if (gameObject)
-		{
-			math::float3 pos = gameObject->transform->GetGlobalMatrix().TranslatePart();
-
-			gameObject->originalBoundingBox.SetFromCenterAndSize(pos + extraPosition, size);
-			gameObject->boundingBox = gameObject->originalBoundingBox;
-		}
-	}
-}
-
 void ComponentEmitter::SetMaterialRes(uint materialUuid)
 {
 	if (materialRes > 0)
