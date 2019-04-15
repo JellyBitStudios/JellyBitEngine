@@ -742,7 +742,17 @@ void ModuleRenderer3D::FrustumCulling(std::vector<GameObject*>& statics, std::ve
 	App->GOs->GetGameobjects(gameObjects);
 
 	// Static objects
-	App->scene->quadtree.CollectIntersections(statics, currentCamera->frustum);
+	std::vector<GameObject*> staticsGOs;
+	App->scene->quadtree.CollectIntersections(staticsGOs, currentCamera->frustum);
+
+	for (uint i = 0; i < staticsGOs.size(); ++i)
+	{
+		if (staticsGOs[i]->boundingBox.IsFinite())
+		{
+			if (currentCamera->frustum.Intersects(staticsGOs[i]->boundingBox))
+				statics.push_back(staticsGOs[i]);
+		}
+	}
 
 	// Dynamic objects
 	std::vector<GameObject*> dynamicGameObjects;
