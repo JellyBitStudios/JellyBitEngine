@@ -4,6 +4,8 @@ class Player : JellyScript
 {
     private static Player m_instance;
 
+    LayerMask raycastLayer = new LayerMask();
+
     public bool inputEnabled = true;
 
     public bool gameStopped = false;
@@ -34,6 +36,11 @@ class Player : JellyScript
 
             // if n button pressed open inventory/options/etc 
         }
+    }
+
+    public override void OnStop()
+    {
+        EventsManager.Call.StopListening("Player");
     }
 
     void EventsListener(object type)
@@ -68,7 +75,6 @@ class Player : JellyScript
     {
         Ray ray = Physics.ScreenToRay(Input.GetMousePosition(), Camera.main);
         RaycastHit hit;
-        LayerMask raycastLayer = new LayerMask();
         if (Physics.Raycast(ray, out hit, float.MaxValue, raycastLayer, SceneQueryFlags.Dynamic | SceneQueryFlags.Static))
         {
             if (process)

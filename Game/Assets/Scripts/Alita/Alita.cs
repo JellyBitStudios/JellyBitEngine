@@ -4,9 +4,9 @@ class Alita : JellyScript
 {
     private static Alita m_instance;
 
-    private AIdle m_idleState = new AIdle();
-    private AWalking m_walkingState = new AWalking();
-    private AAttacking m_attackingState = new AAttacking();
+    public AIdle StateIdle = new AIdle();
+    public AWalking StateWalking = new AWalking();
+    public AAttacking StateAttacking = new AAttacking();
 
     private Alita()
     {
@@ -23,13 +23,15 @@ class Alita : JellyScript
         get { return state; }
         set
         {
-            state.OnStop();
+            if (state != null)
+                state.OnStop();
             state = value;
             state.OnStart();
         }
     }
 
     public AlitaCharacter character = new AlitaCharacter();
+    public Agent agent;
     public Animator animator;
 
     GameObject currentTarget
@@ -42,14 +44,15 @@ class Alita : JellyScript
         }
     }
 
-    void Awake()
+    public override void Awake()
     {
         animator = gameObject.childs[0].GetComponent<Animator>();
-        m_idleState.OnAwake(this);
-        m_walkingState.OnAwake(this);
-        m_attackingState.OnAwake(this);
+        agent = gameObject.GetComponent<Agent>();
+        StateIdle.OnAwake(this);
+        StateWalking.OnAwake(this);
+        StateAttacking.OnAwake(this);
 
-        state = m_idleState;
+        state = StateIdle;
         EventsManager.Call.StartListening("Alita", this, "EventsListener");
     }
 
@@ -57,6 +60,11 @@ class Alita : JellyScript
     {
         if (!Player.Call.gameStopped)
             state.OnExecute();
+    }
+
+    public override void OnStop()
+    {
+        EventsManager.Call.StopListening("Alita");
     }
 
     public void ProcessInput(RaycastHit hit)
