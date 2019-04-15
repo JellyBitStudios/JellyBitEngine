@@ -223,7 +223,17 @@ void PanelInspector::ShowGameObjectInspector() const
 		bool scriptSelected = false;
 		if (ImGui::BeginPopupContextItem((const char*)0, 0))
 		{
-			if (gameObject->GetLayer() == UILAYER)
+			bool uiLayer = true;
+			for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			{
+				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+				if (go && go->GetLayer() != UILAYER)
+				{
+					uiLayer = false;
+					break;
+				}
+			}
+			if (uiLayer)
 			{
 				if (CheckIsComponent(ImageComponent))
 					if (ImGui::Selectable("Image UI")) {
