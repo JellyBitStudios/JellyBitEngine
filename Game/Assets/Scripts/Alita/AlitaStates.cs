@@ -71,6 +71,8 @@ class AWalking : AState
 
     public override void OnExecute()
     {
+        if (Alita.Call.agent.HasArrived)
+            Alita.Call.SwitchState(Alita.Call.StateIdle);
     }
 
     public override void OnStop()
