@@ -11,7 +11,6 @@ public class CyborgMeleeController : JellyScript
 {
     #region INSPECTOR_VARIABLES
     public GameObject gameObjectLineOfSight = null;
-    public GameObject gameObjectWaypointsManager = null;
     #endregion
 
     #region PUBLIC_VARIABLES
@@ -37,20 +36,12 @@ public class CyborgMeleeController : JellyScript
 
     private Agent agent = null;
     private LineOfSight lineOfSight = null;
-    private WaypointsManager waypointsManager = null;
-
-    private Waypoint waypoint = null;
     #endregion
 
     // ----------------------------------------------------------------------------------------------------
 
     public override void Awake()
     {
-        if (gameObjectLineOfSight != null)
-            lineOfSight = gameObjectLineOfSight.GetComponent<LineOfSight>();
-        if (gameObjectWaypointsManager != null)
-            waypointsManager = gameObjectWaypointsManager.GetComponent<WaypointsManager>();
-
         agent = gameObject.GetComponent<Agent>();
     }
 
