@@ -13,6 +13,10 @@ public class PathManager
     {
         get { return hasPath; }
     }
+    public bool IsLastPosition
+    {
+        get { return index == path.Length - 1; }
+    }
     #endregion
 
     #region PRIVATE_VARIABLES

@@ -14,46 +14,49 @@ public class Agent : JellyScript
 {
     #region INSPECTOR_VARIABLES    
     // AgentData
-    public float agentMaxVelocity = 1.0f;
-    public float agentMaxAngularVelocity = 1.0f;
-    public float agentMaxAcceleration = 1.0f;
-    public float agentMaxAngularAcceleration = 1.0f;
+    public float tmp_agentMaxVelocity = 1.0f;
+    public float tmp_agentMaxAngularVelocity = 1.0f;
+    public float tmp_agentMaxAcceleration = 1.0f;
+    public float tmp_agentMaxAngularAcceleration = 1.0f;
 
     // SteeringSeekData
-    public bool isSeekActive = true;
-    public uint seekPriority = 2;
-    public float arriveMinDistance = 0.1f;
+    public bool tmp_isSeekActive = true;
+    public uint tmp_seekPriority = 2;
+    public float tmp_arriveMinDistance = 0.1f;
 
     // SteeringFleeData
-    public bool isFleeActive = false;
-    public uint fleePriority = 2;
+    public bool tmp_isFleeActive = false;
+    public uint tmp_fleePriority = 2;
 
     // SteeringSeparationData
-    public bool isSeparationActive = true;
-    public uint separationPriority = 1;
-    public LayerMask separationMask = new LayerMask();
-    public float separationRadius = 1.0f;
-    public float separationThreshold = 1.0f;
+    public bool tmp_isSeparationActive = true;
+    public uint tmp_separationPriority = 1;
+    public LayerMask tmp_separationMask = new LayerMask();
+    public float tmp_separationRadius = 1.0f;
+    public float tmp_separationThreshold = 1.0f;
 
     // SteeringCollisionAvoidance
-    public bool isCollisionAvoidanceActive = true;
-    public uint collisionAvoidancePriority = 1;
-    public LayerMask collisionAvoidanceMask = new LayerMask();
-    public float collisionAvoidanceRadius = 1.0f;
-    public float collisionAvoidanceConeHalfAngle = 45.0f;
+    public bool tmp_isCollisionAvoidanceActive = true;
+    public uint tmp_collisionAvoidancePriority = 0;
+    public LayerMask tmp_collisionAvoidanceMask = new LayerMask();
+    public float tmp_collisionAvoidanceRadius = 1.0f;
+    public float tmp_collisionAvoidanceConeHalfAngle = 45.0f;
 
     // SteeringObstacleAvoidance
-    public bool isObstacleAvoidanceActive = true;
-    public uint obstacleAvoidancePriority = 0;
-    public LayerMask obstacleAvoidanceMask = new LayerMask();
-    public float obstacleAvoidanceAvoidDistance = 1.0f;
+    public bool tmp_isObstacleAvoidanceActive = true;
+    public uint tmp_obstacleAvoidancePriority = 0;
+    public LayerMask tmp_obstacleAvoidanceMask = new LayerMask();
+    public float tmp_obstacleAvoidanceAvoidDistance = 1.0f;
 
     // SteeringAlignData
-    public bool isAlignActive = true;
-    public uint alignPriority = 1;
-    public float alignMinAngle = 0.01f;
-    public float alignSlowAngle = 0.1f;
-    public float alignTimeToTarget = 0.1f;
+    public bool tmp_isAlignActive = true;
+    public uint tmp_alignPriority = 0;
+    public float tmp_alignMinAngle = 0.01f;
+    public float tmp_alignSlowAngle = 0.1f;
+    public float tmp_alignTimeToTarget = 0.1f;
+    public bool tmp_alignIsLookWhereYoureGoingActive = true;
+    public bool tmp_alignIsFaceToActive = false;
+    public GameObject tmp_alignFaceToTarget = null;
     #endregion
 
     #region PUBLIC_VARIABLES
@@ -70,14 +73,6 @@ public class Agent : JellyScript
 
     // --------------------------------------------------
 
-    public enum MovementState { Stop, GoToPosition, UpdateNextPosition };
-    public MovementState movementState = MovementState.Stop;
-
-    [HideInInspector]
-    public Vector3 velocity = Vector3.zero;
-    [HideInInspector]
-    public float angularVelocity = 0.0f;
-
     public Vector3 Destination
     {
         get { return pathManager.Destination; }
@@ -86,13 +81,39 @@ public class Agent : JellyScript
     {
         get { return pathManager.GetNextPosition(this); }
     }
+    public bool HasArrived
+    {
+        get { return pathManager.IsLastPosition && movementState == MovementState.Stop; }
+    }
+
+    public bool isMovementStopped = false;
+    public bool isRotationStopped = false;
+    public Vector3 Velocity
+    {
+        get { return velocity; }
+    }
+    public float AngularVelocity
+    {
+        get { return angularVelocity; }
+    }
+    public bool HasFaced
+    {
+        get { return hasFaced; }
+    }
     #endregion
 
     #region PRIVATE_VARIABLES
     private PathManager pathManager = new PathManager();
 
+    private Vector3 velocity = Vector3.zero;
+    private float angularVelocity = 0.0f;
     private Vector3[] velocities = null;
     private float[] angularVelocities = null;
+
+    private bool hasFaced = false;
+
+    private enum MovementState { Stop, GoToPosition, UpdateNextPosition };
+    private MovementState movementState = MovementState.Stop;
     #endregion
 
     // ----------------------------------------------------------------------------------------------------
@@ -107,39 +128,39 @@ public class Agent : JellyScript
         // --------------------------------------------------
 
         // AgentData
-        agentData.maxVelocity = agentMaxVelocity;
-        agentData.maxAngularVelocity = agentMaxAngularVelocity;
-        agentData.maxAcceleration = agentMaxAcceleration;
-        agentData.maxAngularAcceleration = agentMaxAngularAcceleration;
+        agentData.maxVelocity = tmp_agentMaxVelocity;
+        agentData.maxAngularVelocity = tmp_agentMaxAngularVelocity;
+        agentData.maxAcceleration = tmp_agentMaxAcceleration;
+        agentData.maxAngularAcceleration = tmp_agentMaxAngularAcceleration;
 
         // SteeringSeekData
-        seekData.isActive = isSeekActive;
-        seekData.Priority = seekPriority;
-        seekData.arriveMinDistance = arriveMinDistance;
+        seekData.isActive = tmp_isSeekActive;
+        seekData.Priority = tmp_seekPriority;
+        seekData.arriveMinDistance = tmp_arriveMinDistance;
 
         // SteeringFleeData
-        fleeData.isActive = isFleeActive;
-        fleeData.Priority = fleePriority;
+        fleeData.isActive = tmp_isFleeActive;
+        fleeData.Priority = tmp_fleePriority;
 
         // SteeringSeparationData
-        separationData.isActive = isSeparationActive;
-        separationData.Priority = separationPriority;
-        separationData.mask = separationMask;
-        separationData.radius = separationRadius;
-        separationData.threshold = separationThreshold;
+        separationData.isActive = tmp_isSeparationActive;
+        separationData.Priority = tmp_separationPriority;
+        separationData.mask = tmp_separationMask;
+        separationData.radius = tmp_separationRadius;
+        separationData.threshold = tmp_separationThreshold;
 
         // SteeringCollisionAvoidance
-        collisionAvoidanceData.isActive = isCollisionAvoidanceActive;
-        collisionAvoidanceData.Priority = collisionAvoidancePriority;
-        collisionAvoidanceData.mask = collisionAvoidanceMask;
-        collisionAvoidanceData.radius = collisionAvoidanceRadius;
-        collisionAvoidanceData.coneHalfAngle = collisionAvoidanceConeHalfAngle;
+        collisionAvoidanceData.isActive = tmp_isCollisionAvoidanceActive;
+        collisionAvoidanceData.Priority = tmp_collisionAvoidancePriority;
+        collisionAvoidanceData.mask = tmp_collisionAvoidanceMask;
+        collisionAvoidanceData.radius = tmp_collisionAvoidanceRadius;
+        collisionAvoidanceData.coneHalfAngle = tmp_collisionAvoidanceConeHalfAngle;
 
         // SteeringObstacleAvoidance
-        obstacleAvoidanceData.isActive = isObstacleAvoidanceActive;
-        obstacleAvoidanceData.Priority = obstacleAvoidancePriority;
-        obstacleAvoidanceData.mask = obstacleAvoidanceMask;
-        obstacleAvoidanceData.avoidDistance = obstacleAvoidanceAvoidDistance;
+        obstacleAvoidanceData.isActive = tmp_isObstacleAvoidanceActive;
+        obstacleAvoidanceData.Priority = tmp_obstacleAvoidancePriority;
+        obstacleAvoidanceData.mask = tmp_obstacleAvoidanceMask;
+        obstacleAvoidanceData.avoidDistance = tmp_obstacleAvoidanceAvoidDistance;
         obstacleAvoidanceData.rays = new SteeringRay[3];
         for (uint i = 0; i < obstacleAvoidanceData.rays.Length; ++i)
             obstacleAvoidanceData.rays[i] = new SteeringRay();
@@ -150,11 +171,14 @@ public class Agent : JellyScript
         obstacleAvoidanceData.rays[2].length = 1.5f;
 
         // SteeringAlignData
-        alignData.isActive = isAlignActive;
-        alignData.Priority = alignPriority;
-        alignData.minAngle = alignMinAngle;
-        alignData.slowAngle = alignSlowAngle;
-        alignData.timeToTarget = alignTimeToTarget;
+        alignData.isActive = tmp_isAlignActive;
+        alignData.Priority = tmp_alignPriority;
+        alignData.minAngle = tmp_alignMinAngle;
+        alignData.slowAngle = tmp_alignSlowAngle;
+        alignData.timeToTarget = tmp_alignTimeToTarget;
+        alignData.lookWhereYoureGoingData.isActive = tmp_alignIsLookWhereYoureGoingActive;
+        alignData.faceData.isActive = tmp_alignIsFaceToActive;
+        alignData.faceData.target = tmp_alignFaceToTarget;
     }
 
     public override void FixedUpdate()
@@ -184,8 +208,19 @@ public class Agent : JellyScript
             velocities[fleeData.Priority] += SteeringFlee.GetFlee(this);
 
         /// Angular velocity
+        hasFaced = false;
         if (alignData.isActive)
-            angularVelocities[alignData.Priority] += SteeringAlign.GetAlign(this);
+        {
+            if (alignData.lookWhereYoureGoingData.isActive)
+                angularVelocities[alignData.Priority] += SteeringAlign.GetLookWhereYoureGoing(this);
+
+            if (alignData.faceData.isActive)
+            {
+                float face = SteeringAlign.GetFace(this);
+                hasFaced = face == 0.0f;
+                angularVelocities[alignData.Priority] += face;             
+            }
+        }
 
         // Angular velocities
         for (uint i = 0; i < SteeringData.maxPriorities; ++i)
@@ -228,52 +263,13 @@ public class Agent : JellyScript
             velocity *= agentData.maxVelocity;
         }
 
-        // Rotate
-        transform.rotation *= Quaternion.Rotate(Vector3.up, angularVelocity * Time.deltaTime);
+        if (!isRotationStopped)
+            // Rotate
+            transform.rotation *= Quaternion.Rotate(Vector3.up, angularVelocity * Time.deltaTime);
 
-        // Move
-        transform.position += velocity * Time.deltaTime;
-    }
-
-    private void ResetPriorities()
-    {
-        for (uint i = 0; i < SteeringData.maxPriorities; ++i)
-        {
-            velocities[i] = Vector3.zero;
-            angularVelocities[i] = 0.0f;
-        }
-    }
-
-    // ----------------------------------------------------------------------------------------------------
-    
-    public void SetDestination(Vector3 destination)
-    {
-        if (pathManager.GetPath(transform.position, destination))
-            movementState = MovementState.GoToPosition;
-        else
-            movementState = MovementState.Stop;
-    }
-
-    public void Move()
-    {
-        switch (movementState)
-        {
-            case MovementState.GoToPosition:
-
-                if (pathManager.GetRemainingDistance(this) < seekData.arriveMinDistance)
-                    movementState = MovementState.UpdateNextPosition;
-
-                break;
-
-            case MovementState.UpdateNextPosition:
-
-                if (pathManager.UpdateNextPosition())
-                    movementState = MovementState.GoToPosition;
-                else
-                    movementState = MovementState.Stop;
-
-                break;
-        }
+        if (!isMovementStopped)
+            // Move
+            transform.position += velocity * Time.deltaTime;
     }
 
     public override void OnDrawGizmos()
@@ -295,5 +291,68 @@ public class Agent : JellyScript
             SteeringAlign.DrawGizmos(this);
 
         pathManager.DrawGizmos();
+    }
+
+    // ----------------------------------------------------------------------------------------------------
+    
+    public bool SetDestination(Vector3 destination)
+    {
+        bool hasPath = pathManager.GetPath(transform.position, destination);
+
+        if (hasPath)
+            movementState = MovementState.GoToPosition;
+        else
+            movementState = MovementState.Stop;
+
+        return hasPath;
+    }
+
+    public bool SetFace(GameObject gameObject)
+    {
+        if (gameObject == null)
+            return false;
+
+        alignData.lookWhereYoureGoingData.isActive = false;
+        alignData.faceData.isActive = true;
+        alignData.faceData.target = gameObject;
+
+        return true;
+    }
+
+    public void Stop()
+    {
+        isMovementStopped = true;
+        isRotationStopped = true;
+    }
+
+    private void Move()
+    {
+        switch (movementState)
+        {
+            case MovementState.GoToPosition:
+
+                if (pathManager.GetRemainingDistance(this) < seekData.arriveMinDistance)
+                    movementState = MovementState.UpdateNextPosition;
+
+                break;
+
+            case MovementState.UpdateNextPosition:
+
+                if (pathManager.UpdateNextPosition())
+                    movementState = MovementState.GoToPosition;
+                else
+                    movementState = MovementState.Stop;
+
+                break;
+        }
+    }
+
+    private void ResetPriorities()
+    {
+        for (uint i = 0; i < SteeringData.maxPriorities; ++i)
+        {
+            velocities[i] = Vector3.zero;
+            angularVelocities[i] = 0.0f;
+        }
     }
 }

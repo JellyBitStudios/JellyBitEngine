@@ -44,14 +44,13 @@ public static class SteeringCollisionAvoidance
 
                 Vector3 direction = (target.transform.position - agent.transform.position).normalized();
                 float coneThreshold = (float)Math.Cos(MathScript.Deg2Rad * agent.collisionAvoidanceData.coneHalfAngle);
-                float dot = MathScript.Dot(agent.transform.forward, direction);
-                Debug.Log("Dot: " + dot);
-                if (dot > coneThreshold)
+                if (MathScript.Dot(agent.transform.forward, direction) > coneThreshold)
                 {
                     Vector3 relativePos = target.transform.position - agent.transform.position;
-                    Vector3 relativeVel = targetAgent.velocity - agent.velocity;
+                    Vector3 relativeVel = targetAgent.Velocity - agent.Velocity;
                     float relativeSpeed = relativeVel.magnitude;
                     float timeToCollision = MathScript.Dot(relativePos, relativeVel) / (relativeSpeed * relativeSpeed);
+                    timeToCollision *= -1.0f;
 
                     // Is it going to be a collision?
                     float distance = relativePos.magnitude;
@@ -60,11 +59,8 @@ public static class SteeringCollisionAvoidance
                         continue;
 
                     // Is it the shortest?
-                    Debug.Log("timeToCollision: " + timeToCollision);
-                    Debug.Log("shortestTime: " + timeToCollision);
                     if (timeToCollision > 0.0f && timeToCollision < shortestTime)
                     {
-                        Debug.Log("Collisionnn");
                         shortestTime = timeToCollision;
                         firstTarget = target;
                         firstMinSeparation = minSeparation;
@@ -91,8 +87,7 @@ public static class SteeringCollisionAvoidance
             // Avoid the target
             outputAcceleration.Normalize();
             outputAcceleration *= agent.agentData.maxAcceleration;
-
-            Debug.Log("Avoidance");
+            outputAcceleration *= -1;
 
             return outputAcceleration;
         }
