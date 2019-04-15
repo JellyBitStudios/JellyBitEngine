@@ -18,17 +18,7 @@ class Alita : JellyScript
         get { return m_instance; }
     }
 
-    public AState state
-    {
-        get { return state; }
-        set
-        {
-            if (state != null)
-                state.OnStop();
-            state = value;
-            state.OnStart();
-        }
-    }
+    private AState m_state;
 
     public AlitaCharacter character = new AlitaCharacter();
     public Agent agent;
@@ -40,7 +30,7 @@ class Alita : JellyScript
         set
         {
             currentTarget = value;
-            state.NewTarget(value);
+            m_state.NewTarget(value);
         }
     }
 
@@ -52,14 +42,14 @@ class Alita : JellyScript
         StateWalking.OnAwake(this);
         StateAttacking.OnAwake(this);
 
-        state = StateIdle;
+        m_state = StateIdle;
         EventsManager.Call.StartListening("Alita", this, "EventsListener");
     }
 
     public override void Update()
     {
         if (!Player.Call.gameStopped)
-            state.OnExecute();
+            m_state.OnExecute();
     }
 
     public override void OnStop()
@@ -67,9 +57,16 @@ class Alita : JellyScript
         EventsManager.Call.StopListening("Alita");
     }
 
+    public void SwitchState(AState newState)
+    {
+        m_state.OnStop();
+        m_state = newState;
+        m_state.OnStart();
+    }
+
     public void ProcessInput(RaycastHit hit)
     {
-        state.ProcessInput(hit);
+        m_state.ProcessInput(hit);
     }
 
     public void EventsListener(object type)
@@ -78,10 +75,10 @@ class Alita : JellyScript
         switch (listenedEvent.type)
         {
             case Event_Type.PauseGame:
-                state.OnPause();
+                m_state.OnPause();
                 break;
             case Event_Type.ResumeGame:
-                state.OnResume();
+                m_state.OnResume();
                 break;
         }
     }
