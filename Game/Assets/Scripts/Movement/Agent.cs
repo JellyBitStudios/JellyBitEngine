@@ -54,6 +54,9 @@ public class Agent : JellyScript
     public float tmp_alignMinAngle = 0.01f;
     public float tmp_alignSlowAngle = 0.1f;
     public float tmp_alignTimeToTarget = 0.1f;
+    public bool tmp_alignIsLookWhereYoureGoingActive = true;
+    public bool tmp_alignIsFaceToActive = false;
+    public GameObject tmp_alignFaceToTarget = null;
     #endregion
 
     #region PUBLIC_VARIABLES
@@ -93,6 +96,10 @@ public class Agent : JellyScript
     {
         get { return angularVelocity; }
     }
+    public bool HasFaced
+    {
+        get { return hasFaced; }
+    }
     #endregion
 
     #region PRIVATE_VARIABLES
@@ -102,6 +109,8 @@ public class Agent : JellyScript
     private float angularVelocity = 0.0f;
     private Vector3[] velocities = null;
     private float[] angularVelocities = null;
+
+    private bool hasFaced = false;
 
     private enum MovementState { Stop, GoToPosition, UpdateNextPosition };
     private MovementState movementState = MovementState.Stop;
@@ -167,6 +176,9 @@ public class Agent : JellyScript
         alignData.minAngle = tmp_alignMinAngle;
         alignData.slowAngle = tmp_alignSlowAngle;
         alignData.timeToTarget = tmp_alignTimeToTarget;
+        alignData.lookWhereYoureGoingData.isActive = tmp_alignIsLookWhereYoureGoingActive;
+        alignData.faceData.isActive = tmp_alignIsFaceToActive;
+        alignData.faceData.target = tmp_alignFaceToTarget;
     }
 
     public override void FixedUpdate()
@@ -196,8 +208,19 @@ public class Agent : JellyScript
             velocities[fleeData.Priority] += SteeringFlee.GetFlee(this);
 
         /// Angular velocity
+        hasFaced = false;
         if (alignData.isActive)
-            angularVelocities[alignData.Priority] += SteeringAlign.GetAlign(this);
+        {
+            if (alignData.lookWhereYoureGoingData.isActive)
+                angularVelocities[alignData.Priority] += SteeringAlign.GetLookWhereYoureGoing(this);
+
+            if (alignData.faceData.isActive)
+            {
+                float face = SteeringAlign.GetFace(this);
+                hasFaced = face == 0.0f;
+                angularVelocities[alignData.Priority] += face;             
+            }
+        }
 
         // Angular velocities
         for (uint i = 0; i < SteeringData.maxPriorities; ++i)
@@ -282,6 +305,18 @@ public class Agent : JellyScript
             movementState = MovementState.Stop;
 
         return hasPath;
+    }
+
+    public bool SetFace(GameObject gameObject)
+    {
+        if (gameObject == null)
+            return false;
+
+        alignData.lookWhereYoureGoingData.isActive = false;
+        alignData.faceData.isActive = true;
+        alignData.faceData.target = gameObject;
+
+        return true;
     }
 
     private void Move()
