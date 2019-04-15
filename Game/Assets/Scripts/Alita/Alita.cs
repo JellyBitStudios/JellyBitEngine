@@ -21,7 +21,7 @@ class Alita : JellyScript
     private AState m_state;
 
     public AlitaCharacter character = new AlitaCharacter();
-    public Agent agent;
+    public NavMeshAgent agent;
     public Animator animator;
 
     GameObject currentTarget
@@ -37,7 +37,7 @@ class Alita : JellyScript
     public override void Awake()
     {
         animator = gameObject.childs[0].GetComponent<Animator>();
-        agent = gameObject.GetComponent<Agent>();
+        agent = gameObject.GetComponent<NavMeshAgent>();
         StateIdle.OnAwake(this);
         StateWalking.OnAwake(this);
         StateAttacking.OnAwake(this);
