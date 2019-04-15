@@ -13,7 +13,7 @@ public class PathManager
     {
         get { return hasPath; }
     }
-    public bool HasArrived
+    public bool IsLastPosition
     {
         get { return index == path.Length - 1; }
     }

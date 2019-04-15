@@ -83,7 +83,7 @@ public class Agent : JellyScript
     }
     public bool HasArrived
     {
-        get { return pathManager.HasArrived; }
+        get { return pathManager.IsLastPosition && movementState == MovementState.Stop; }
     }
 
     public bool isMovementStopped = false;
@@ -317,6 +317,12 @@ public class Agent : JellyScript
         alignData.faceData.target = gameObject;
 
         return true;
+    }
+
+    public void Stop()
+    {
+        isMovementStopped = true;
+        isRotationStopped = true;
     }
 
     private void Move()
