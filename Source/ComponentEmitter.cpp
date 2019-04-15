@@ -22,9 +22,9 @@ ComponentEmitter::ComponentEmitter(GameObject* gameObject, bool include) : Compo
 {
 	if (include)
 	{
-		SetAABB(math::float3::one);
-		if (gameObject->IsStatic())
-			App->scene->quadtree.Insert(gameObject);
+		//SetAABB(math::float3::one);
+		//if (gameObject->IsStatic())
+		//	App->scene->quadtree.Insert(gameObject);
 		App->particle->emitters.push_back(this);
 
 		SetMaterialRes(App->resHandler->defaultMaterial);
@@ -858,11 +858,6 @@ void ComponentEmitter::SetAABB(const math::float3 size, const math::float3 extra
 
 			gameObject->originalBoundingBox.SetFromCenterAndSize(pos + extraPosition, size);
 			gameObject->boundingBox = gameObject->originalBoundingBox;
-
-			System_Event newEvent;
-			newEvent.goEvent.gameObject = gameObject;
-			newEvent.type = System_Event_Type::RecreateQuadtree;
-			App->PushSystemEvent(newEvent);
 		}
 	}
 }
