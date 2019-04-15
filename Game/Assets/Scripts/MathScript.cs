@@ -48,4 +48,7 @@ public static class MathScript
         // We multiply this epsilon by the biggest magnitude of a and b.
         return Math.Abs(b - a) < Math.Max(0.000001f * Math.Max(Math.Abs(a), Math.Abs(b)), Epsilon * 8);
     }
+
+    // Dot Product of two vectors
+    public static float Dot(Vector3 lhs, Vector3 rhs) { return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z; }
 }

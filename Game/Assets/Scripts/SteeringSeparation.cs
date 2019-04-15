@@ -13,7 +13,6 @@ public static class SteeringSeparation
 {
     public static Vector3 GetSeparation(Agent agent)
     {
-        //Debug.Log("-----Begin Separation-----");
         if (agent == null)
             return Vector3.zero;
 
@@ -32,15 +31,11 @@ public static class SteeringSeparation
                 if (target == null)
                     continue;
 
-                //Debug.Log("New target");
-
                 Vector3 direction = agent.transform.position - target.transform.position;
 
                 float distance = direction.magnitude;
                 if (distance < agent.separationData.threshold)
                 {
-                    //Debug.Log("Threshold");
-
                     float strength = agent.agentData.maxAcceleration * (agent.separationData.threshold - distance) / agent.separationData.threshold;
                     direction.Normalize();
                     direction *= strength;
@@ -59,16 +54,12 @@ public static class SteeringSeparation
             return outputAcceleration;
         }
 
-        //Debug.Log("-----End Separation-----");
         return Vector3.zero;
     }
 
     public static void DrawGizmos(Agent agent)
     {
-        float[] colorRadius = { 1.0f, 0.0f, 0.0f, 1.0f };
-        Debug.DrawSphere(agent.separationData.radius, colorRadius, agent.transform.position, Quaternion.identity, Vector3.one);
-
-        float[] colorThreshold = { 0.0f, 1.0f, 0.0f, 1.0f };
-        Debug.DrawSphere(agent.separationData.threshold, colorThreshold, agent.transform.position, Quaternion.identity, Vector3.one);
+        Debug.DrawSphere(agent.separationData.radius, Color.Red, agent.transform.position, Quaternion.identity, Vector3.one);
+        Debug.DrawSphere(agent.separationData.threshold, Color.Red, agent.transform.position, Quaternion.identity, Vector3.one);
     }
 }

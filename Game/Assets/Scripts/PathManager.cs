@@ -9,16 +9,6 @@ public class PathManager
     {
         get { return destination; }
     }
-    public Vector3 NextPosition
-    {
-        get
-        {
-            if (hasPath && index < path.Length - 1)
-                return path[index];
-            else
-                return destination;
-        }
-    }
     public bool HasPath
     {
         get { return hasPath; }
@@ -53,6 +43,14 @@ public class PathManager
         return false;
     }
 
+    public Vector3 GetNextPosition(Agent agent)
+    {
+        if (hasPath)
+            return path[index];
+
+        return agent.transform.position;
+    }
+
     public float GetRemainingDistance(Agent agent)
     {
         if (hasPath)
@@ -69,9 +67,7 @@ public class PathManager
         if (!hasPath)
             return;
 
-        float[] color = { 1.0f, 0.0f, 0.0f, 1.0f };
-
         for (uint i = 0; i < path.Length - 1; ++i)
-            Debug.DrawLine(path[i], path[i + 1], color);
+            Debug.DrawLine(path[i], path[i + 1], Color.Red);
     }
 }

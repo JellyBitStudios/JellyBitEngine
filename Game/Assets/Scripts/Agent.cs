@@ -18,11 +18,11 @@ public class Agent : JellyScript
     public float agentMaxAngularVelocity = 1.0f;
     public float agentMaxAcceleration = 1.0f;
     public float agentMaxAngularAcceleration = 1.0f;
-    public float agentArriveMinDistance = 0.1f;
 
     // SteeringSeekData
     public bool isSeekActive = true;
     public uint seekPriority = 2;
+    public float arriveMinDistance = 0.1f;
 
     // SteeringFleeData
     public bool isFleeActive = false;
@@ -34,6 +34,13 @@ public class Agent : JellyScript
     public LayerMask separationMask = new LayerMask();
     public float separationRadius = 1.0f;
     public float separationThreshold = 1.0f;
+
+    // SteeringCollisionAvoidance
+    public bool isCollisionAvoidanceActive = true;
+    public uint collisionAvoidancePriority = 1;
+    public LayerMask collisionAvoidanceMask = new LayerMask();
+    public float collisionAvoidanceRadius = 1.0f;
+    public float collisionAvoidanceConeHalfAngle = 45.0f;
 
     // SteeringObstacleAvoidance
     public bool isObstacleAvoidanceActive = true;
@@ -77,7 +84,7 @@ public class Agent : JellyScript
     }
     public Vector3 NextPosition
     {
-        get { return pathManager.NextPosition; }
+        get { return pathManager.GetNextPosition(this); }
     }
     #endregion
 
@@ -108,7 +115,7 @@ public class Agent : JellyScript
         // SteeringSeekData
         seekData.isActive = isSeekActive;
         seekData.Priority = seekPriority;
-        seekData.arriveMinDistance = agentArriveMinDistance;
+        seekData.arriveMinDistance = arriveMinDistance;
 
         // SteeringFleeData
         fleeData.isActive = isFleeActive;
@@ -120,6 +127,13 @@ public class Agent : JellyScript
         separationData.mask = separationMask;
         separationData.radius = separationRadius;
         separationData.threshold = separationThreshold;
+
+        // SteeringCollisionAvoidance
+        collisionAvoidanceData.isActive = isCollisionAvoidanceActive;
+        collisionAvoidanceData.Priority = collisionAvoidancePriority;
+        collisionAvoidanceData.mask = collisionAvoidanceMask;
+        collisionAvoidanceData.radius = collisionAvoidanceRadius;
+        collisionAvoidanceData.coneHalfAngle = collisionAvoidanceConeHalfAngle;
 
         // SteeringObstacleAvoidance
         obstacleAvoidanceData.isActive = isObstacleAvoidanceActive;
@@ -155,10 +169,10 @@ public class Agent : JellyScript
         // 1. Obstacle avoidance
         if (obstacleAvoidanceData.isActive)
             velocities[obstacleAvoidanceData.Priority] += SteeringObstacleAvoidance.GetObstacleAvoidance(this);
-
-        // 2. Separation
         if (collisionAvoidanceData.isActive)
             velocities[collisionAvoidanceData.Priority] += SteeringCollisionAvoidance.GetCollisionAvoidance(this);
+
+        // 2. Separation
         if (separationData.isActive)
             velocities[separationData.Priority] += SteeringSeparation.GetSeparation(this);
 
@@ -264,17 +278,21 @@ public class Agent : JellyScript
 
     public override void OnDrawGizmos()
     {
-        float[] colorAngularVelocity = { 0.0f, 0.0f, 0.0f, 1.0f };
-        Debug.DrawLine(transform.position, transform.position + Quaternion.Rotate(Vector3.up, angularVelocity) * transform.forward * 3.0f, colorAngularVelocity);
+        Debug.DrawLine(transform.position, transform.position + Quaternion.Rotate(Vector3.up, angularVelocity) * transform.forward * 3.0f, Color.Black);
+        Debug.DrawLine(transform.position, transform.position + velocity.normalized() * 3.0f, Color.White);
 
-        float[] colorVelocity = { 1.0f, 1.0f, 1.0f, 1.0f };
-        Debug.DrawLine(transform.position, transform.position + velocity.normalized() * 3.0f, colorVelocity);
-
-        SteeringSeek.DrawGizmos(this);
-        SteeringFlee.DrawGizmos(this);
-        SteeringSeparation.DrawGizmos(this);
-        SteeringObstacleAvoidance.DrawGizmos(this);
-        SteeringAlign.DrawGizmos(this);
+        if (seekData.isActive)
+            SteeringSeek.DrawGizmos(this);
+        if (fleeData.isActive)
+            SteeringFlee.DrawGizmos(this);
+        if (separationData.isActive)
+            SteeringSeparation.DrawGizmos(this);
+        if (collisionAvoidanceData.isActive)
+            SteeringCollisionAvoidance.DrawGizmos(this);
+        if (obstacleAvoidanceData.isActive)
+            SteeringObstacleAvoidance.DrawGizmos(this);
+        if (alignData.isActive)
+            SteeringAlign.DrawGizmos(this);
 
         pathManager.DrawGizmos();
     }
