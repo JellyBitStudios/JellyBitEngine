@@ -4,7 +4,7 @@ class Player : JellyScript
 {
     private static Player m_instance;
 
-    LayerMask raycastLayer = new LayerMask();
+    public LayerMask raycastLayer = new LayerMask();
 
     public bool inputEnabled = true;
 
@@ -20,7 +20,7 @@ class Player : JellyScript
         get { return m_instance; }
     }
 
-    public void OnAwake()
+    public override void Awake()
     {
         EventsManager.Call.StartListening("Player", this, "EventsListener");
     }
@@ -29,7 +29,8 @@ class Player : JellyScript
     {
         if (!gameStopped)
         {
-            if (Input.GetMouseButton(MouseKeyCode.MOUSE_RIGHT) && inputEnabled)
+            //Debug.Log("ADSAD");
+            if (Input.GetMouseButtonDown(MouseKeyCode.MOUSE_RIGHT))
                 HandleMousePicking(true);
             else
                 HandleMousePicking(false);
@@ -78,7 +79,10 @@ class Player : JellyScript
         if (Physics.Raycast(ray, out hit, float.MaxValue, raycastLayer, SceneQueryFlags.Dynamic | SceneQueryFlags.Static))
         {
             if (process)
+            {
                 Alita.Call.ProcessInput(hit);
+                Debug.Log("Input");
+            }
 
             // mark enemy as red etc
             string layer = hit.gameObject.GetLayer();
