@@ -4,25 +4,25 @@ using JellyBitEngine;
 
 public class AgentData
 {
-    public float maxVelocity = 1.0f;
-    public float maxAngularVelocity = 1.0f;
-    public float maxAcceleration = 1.0f;
-    public float maxAngularAcceleration = 1.0f;
+    public float maxVelocity = 5.0f;
+    public float maxAngularVelocity = 360.0f;
+    public float maxAcceleration = 10.0f;
+    public float maxAngularAcceleration = 360.0f;
 }
 
 public class Agent : JellyScript
 {
     #region INSPECTOR_VARIABLES    
     // AgentData
-    public float tmp_agentMaxVelocity = 1.0f;
-    public float tmp_agentMaxAngularVelocity = 1.0f;
-    public float tmp_agentMaxAcceleration = 1.0f;
-    public float tmp_agentMaxAngularAcceleration = 1.0f;
+    public float tmp_agentMaxVelocity = 5.0f;
+    public float tmp_agentMaxAngularVelocity = 360.0f;
+    public float tmp_agentMaxAcceleration = 10.0f;
+    public float tmp_agentMaxAngularAcceleration = 360.0f;
 
     // SteeringSeekData
     public bool tmp_isSeekActive = true;
     public uint tmp_seekPriority = 2;
-    public float tmp_arriveMinDistance = 0.1f;
+    public float tmp_arriveMinDistance = 0.6f;
 
     // SteeringFleeData
     public bool tmp_isFleeActive = false;
@@ -32,27 +32,27 @@ public class Agent : JellyScript
     public bool tmp_isSeparationActive = true;
     public uint tmp_separationPriority = 1;
     public LayerMask tmp_separationMask = new LayerMask();
-    public float tmp_separationRadius = 1.0f;
-    public float tmp_separationThreshold = 1.0f;
+    public float tmp_separationRadius = 5.0f;
+    public float tmp_separationThreshold = 3.0f;
 
     // SteeringCollisionAvoidance
     public bool tmp_isCollisionAvoidanceActive = true;
     public uint tmp_collisionAvoidancePriority = 0;
     public LayerMask tmp_collisionAvoidanceMask = new LayerMask();
-    public float tmp_collisionAvoidanceRadius = 1.0f;
+    public float tmp_collisionAvoidanceRadius = 5.0f;
     public float tmp_collisionAvoidanceConeHalfAngle = 45.0f;
 
     // SteeringObstacleAvoidance
     public bool tmp_isObstacleAvoidanceActive = true;
     public uint tmp_obstacleAvoidancePriority = 0;
     public LayerMask tmp_obstacleAvoidanceMask = new LayerMask();
-    public float tmp_obstacleAvoidanceAvoidDistance = 1.0f;
+    public float tmp_obstacleAvoidanceAvoidDistance = 5.0f;
 
     // SteeringAlignData
     public bool tmp_isAlignActive = true;
     public uint tmp_alignPriority = 0;
-    public float tmp_alignMinAngle = 0.01f;
-    public float tmp_alignSlowAngle = 0.1f;
+    public float tmp_alignMinAngle = 5.0f;
+    public float tmp_alignSlowAngle = 15.0f;
     public float tmp_alignTimeToTarget = 0.1f;
     public bool tmp_alignIsLookWhereYoureGoingActive = true;
     public bool tmp_alignIsFaceToActive = false;

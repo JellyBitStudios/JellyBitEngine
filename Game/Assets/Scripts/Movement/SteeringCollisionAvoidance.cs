@@ -5,7 +5,7 @@ using JellyBitEngine;
 public class SteeringCollisionAvoidanceData : SteeringAbstract
 {
     public LayerMask mask = new LayerMask();
-    public float radius = 1.0f;
+    public float radius = 5.0f;
     public float coneHalfAngle = 45.0f;
 }
 

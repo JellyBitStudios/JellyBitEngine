@@ -5,8 +5,8 @@ using JellyBitEngine;
 public class SteeringSeparationData : SteeringAbstract
 {
     public LayerMask mask = new LayerMask();
-    public float radius = 1.0f;
-    public float threshold = 1.0f;
+    public float radius = 5.0f;
+    public float threshold = 3.0f;
 }
 
 public static class SteeringSeparation
