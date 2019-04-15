@@ -19,6 +19,10 @@ public class CyborgMeleeController : JellyScript
     /// </Temporal>
 
     public GameObject target = null;
+
+    // Battle Circle
+    public float attackRate = 1.0f;
+    public float attackRateFluctuation = 1.0f;
     #endregion
 
     #region PRIVATE_VARIABLES
@@ -37,7 +41,7 @@ public class CyborgMeleeController : JellyScript
 
     public override void Start()
     {
-        //fsm.ChangeState(new GoTo(agent));
+        fsm.ChangeState(new GoTo(agent));
     }
 
     public override void Update()

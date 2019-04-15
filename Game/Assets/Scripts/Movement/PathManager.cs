@@ -15,7 +15,7 @@ public class PathManager
     }
     public bool IsLastPosition
     {
-        get { return index == path.Length - 1; }
+        get { return hasPath && index == path.Length - 1; }
     }
     #endregion
 

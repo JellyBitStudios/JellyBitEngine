@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System;
 using JellyBitEngine;
 
 public class LineOfSight : JellyScript
