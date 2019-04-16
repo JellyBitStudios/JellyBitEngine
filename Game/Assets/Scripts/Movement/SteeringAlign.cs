@@ -60,12 +60,12 @@ public static class SteeringAlign
         return Mathf.Clamp(outputAcceleration, -agent.agentData.maxAngularAcceleration, agent.agentData.maxAngularAcceleration);
     }
 
-    public static float GetLookWhereYoureGoing(Agent agent)
+    public static float GetLookWhereYoureGoing(Vector3 position, Agent agent)
     {
         if (agent == null)
             return 0.0f;
 
-        Vector3 direction = (agent.NextPosition - agent.transform.position).normalized();
+        Vector3 direction = (position - agent.transform.position).normalized();
 
         return GetAlign(agent, direction);
     }

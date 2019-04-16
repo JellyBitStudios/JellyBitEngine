@@ -89,6 +89,7 @@ public static class SteeringCollisionAvoidance
             outputAcceleration *= agent.agentData.maxAcceleration;
             outputAcceleration *= -1;
 
+            outputAcceleration = new Vector3(outputAcceleration.x, 0.0f, outputAcceleration.z);
             return outputAcceleration;
         }
 

@@ -34,6 +34,14 @@ public class PathManager
         return hasPath;
     }
 
+    public void ClearPath()
+    {
+        path = null;
+        hasPath = false;
+        destination = Vector3.zero;
+        index = 0;
+    }
+
     // ----------------------------------------------------------------------------------------------------
 
     public bool UpdateNextPosition()

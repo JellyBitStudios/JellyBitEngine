@@ -10,12 +10,12 @@ public class SteeringSeekData : SteeringAbstract
 
 public static class SteeringSeek
 {
-    public static Vector3 GetSeek(Agent agent)
+    public static Vector3 GetSeek(Vector3 position, Agent agent)
     {
         if (agent == null)
             return Vector3.zero;
 
-        Vector3 direction = agent.NextPosition - agent.transform.position;
+        Vector3 direction = position - agent.transform.position;
         if (direction.magnitude < agent.seekData.arriveMinDistance)
             return Vector3.zero;
 

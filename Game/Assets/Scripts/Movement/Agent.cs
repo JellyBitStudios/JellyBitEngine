@@ -28,6 +28,14 @@ public class Agent : JellyScript
     public bool tmp_isFleeActive = false;
     public uint tmp_fleePriority = 2;
 
+    // SteeringWanderData
+    public bool tmp_isWanderActive = false;
+    public uint tmp_wanderPriority = 2;
+    public float tmp_radius = 1.0f;
+    public float tmp_offset = 1.0f;
+    public float tmp_minTime = 0.5f;
+    public float tmp_maxTime = 3.0f;
+
     // SteeringSeparationData
     public bool tmp_isSeparationActive = true;
     public uint tmp_separationPriority = 1;
@@ -66,6 +74,7 @@ public class Agent : JellyScript
     // SteeringsData
     public SteeringSeekData seekData = new SteeringSeekData();
     public SteeringFleeData fleeData = new SteeringFleeData();
+    public SteeringWanderData wanderData = new SteeringWanderData();
     public SteeringSeparationData separationData = new SteeringSeparationData();
     public SteeringCollisionAvoidanceData collisionAvoidanceData = new SteeringCollisionAvoidanceData();
     public SteeringObstacleAvoidanceData obstacleAvoidanceData = new SteeringObstacleAvoidanceData();
@@ -141,6 +150,14 @@ public class Agent : JellyScript
         // SteeringFleeData
         fleeData.isActive = tmp_isFleeActive;
         fleeData.Priority = tmp_fleePriority;
+
+        // SteeringWanderData
+        wanderData.isActive = tmp_isWanderActive;
+        wanderData.Priority = tmp_wanderPriority;
+        wanderData.radius = tmp_radius;
+        wanderData.offset = tmp_offset;
+        wanderData.minTime = tmp_minTime;
+        wanderData.maxTime = tmp_maxTime;
 
         // SteeringSeparationData
         separationData.isActive = tmp_isSeparationActive;
@@ -220,18 +237,24 @@ public class Agent : JellyScript
         }
 
         // 3. Move
-        /// Velocity
+        /// Velocity      
         if (seekData.isActive)
         {
-            Vector3 seek = SteeringSeek.GetSeek(this);
+            Vector3 seek = SteeringSeek.GetSeek(NextPosition, this);
             seekData.hasOutput = seek.magnitude != 0.0f;
             velocities[seekData.Priority] += seek;
         }
         if (fleeData.isActive)
         {
-            Vector3 flee = SteeringFlee.GetFlee(this);
+            Vector3 flee = SteeringFlee.GetFlee(NextPosition, this);
             fleeData.hasOutput = flee.magnitude != 0.0f;
             velocities[fleeData.Priority] += flee;
+        }
+        if (wanderData.isActive)
+        {
+            Vector3 wander = SteeringWander.GetWander(this);
+            wanderData.hasOutput = wander.magnitude != 0.0f;
+            velocities[wanderData.Priority] += wander;
         }
 
         /// Angular velocity
@@ -242,7 +265,10 @@ public class Agent : JellyScript
 
             if (alignData.lookWhereYoureGoingData.isActive)
             {
-                align = SteeringAlign.GetLookWhereYoureGoing(this);
+                if (wanderData.isActive)
+                    align = SteeringAlign.GetLookWhereYoureGoing(wanderData.point, this);
+                else
+                    align = SteeringAlign.GetLookWhereYoureGoing(NextPosition, this);
                 angularVelocities[alignData.Priority] += align;
             }
 
@@ -315,6 +341,8 @@ public class Agent : JellyScript
             SteeringSeek.DrawGizmos(this);
         if (fleeData.isActive)
             SteeringFlee.DrawGizmos(this);
+        if (wanderData.isActive)
+            SteeringWander.DrawGizmos(this);
         if (separationData.isActive)
             SteeringSeparation.DrawGizmos(this);
         if (collisionAvoidanceData.isActive)
@@ -363,6 +391,11 @@ public class Agent : JellyScript
     {
         isMovementStopped = false;
         isRotationStopped = false;
+    }
+
+    public void ClearPath()
+    {
+        pathManager.ClearPath();
     }
 
     private void Move()
