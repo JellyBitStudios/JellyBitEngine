@@ -16,8 +16,6 @@ and when the prey tries to make a break for it, one wolf sometimes circles aroun
 public class BattleCircle : JellyScript
 {
     #region PUBLIC_VARIABLES
-    public GameObject owner = null; // Alita
-
     public uint maxAttackers = 3;
     #endregion
 
@@ -45,8 +43,8 @@ public class BattleCircle : JellyScript
         if (attackers.Count < maxAttackers
             && !attackers.Contains(attacker))
         {
-            Debug.Log("New attacker ADDED. Total attackers: " + attackers.Count);
             attackers.Add(attacker);
+            Debug.Log("New attacker ADDED. Total attackers: " + attackers.Count);
             return true;
         }
 

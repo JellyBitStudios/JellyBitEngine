@@ -13,7 +13,10 @@ public enum StateType
     GoToAttackDistance,
 
     // Attack
-    Attack
+    Attack,
+
+    // Wander
+    Strafe,
 }
 
 public abstract class ICyborgMeleeState
@@ -90,21 +93,25 @@ public class GoToGameObject : ICyborgMeleeState
 
     public override void Enter(CyborgMeleeController owner)
     {
-        Debug.Log("Enter GoToGameObject");
+        // Activate seek
+        owner.agent.ActivateSeek();
+        owner.agent.SetDestination(target.transform.position);
 
         switch (stateType)
         {
             case StateType.GoToDangerDistance:
                 {
+                    Debug.Log("Enter GoToGameObject: GoToDangerDistance");
+
                     owner.agent.separationData.isActive = false;
                     owner.agent.collisionAvoidanceData.isActive = true;
-
-                    owner.agent.SetDestination(target.transform.position);
                 }
                 break;
 
             case StateType.GoToAttackDistance:
                 {
+                    Debug.Log("Enter GoToGameObject: GoToAttackDistance");
+
                     owner.agent.separationData.isActive = true;
                     owner.agent.collisionAvoidanceData.isActive = false;
                 }
@@ -114,8 +121,6 @@ public class GoToGameObject : ICyborgMeleeState
 
     public override void Execute(CyborgMeleeController owner)
     {
-        Debug.Log("Execute GoToGameObject");
-
         switch (stateType)
         {
             case StateType.GoToDangerDistance:
@@ -132,15 +137,23 @@ public class GoToGameObject : ICyborgMeleeState
             case StateType.GoToAttackDistance:
                 {
                     if (owner.agent.separationData.hasOutput)
+                    {
                         // Avoid the enemies
-                        owner.agent.SetDestination(owner.transform.position);
+                        Debug.Log("Avoiding an enemy");
+                        owner.agent.seekData.isActive = false;
+                    }
                     else
+                    {
                         // Approach the player
-                        owner.agent.SetDestination(target.transform.position);
+                        Debug.Log("Approaching the player");
+                        owner.agent.seekData.isActive = true;
+                    }
 
                     float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
                     if (distanceToTarget <= owner.character.attackDistance)
                     {
+                        Debug.Log("PLAYER REACHED");
+
                         // Am I allowed to attack?
                         if (owner.battleCircle.AddAttacker(owner.gameObject))
                         {
@@ -151,7 +164,7 @@ public class GoToGameObject : ICyborgMeleeState
                         else
                         {
                             // No! Strafe
-                            owner.fsm.ChangeState(new Attack(owner.target, StateType.Attack, stateType));
+                            owner.fsm.ChangeState(new Wander(StateType.Strafe, stateType));
                             return;
                         }
                     }
@@ -162,7 +175,16 @@ public class GoToGameObject : ICyborgMeleeState
 
     public override void Exit(CyborgMeleeController owner)
     {
-        Debug.Log("Exit GoTo");
+        switch (stateType)
+        {
+            case StateType.GoToDangerDistance:
+                Debug.Log("Exit GoToGameObject: GoToDangerDistance");
+                break;
+
+            case StateType.GoToAttackDistance:
+                Debug.Log("Exit GoToGameObject: GoToAttackDistance");
+                break;
+        }
     }
 
     public override void DrawGizmos(CyborgMeleeController owner)
@@ -204,12 +226,15 @@ public class Attack : ICyborgMeleeState
 
     public override void Enter(CyborgMeleeController owner)
     {
-        Debug.Log("Enter Attack");     
+        Debug.Log("Enter Attack");
+
+        // Activate seek
+        owner.agent.ActivateSeek();
     }
 
     public override void Execute(CyborgMeleeController owner)
     {
-        Debug.Log("Execute Attack");      
+     
     }
 
     public override void Exit(CyborgMeleeController owner)
@@ -220,5 +245,79 @@ public class Attack : ICyborgMeleeState
     public override void DrawGizmos(CyborgMeleeController owner)
     {
         Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
+    }
+}
+
+public class Wander : ICyborgMeleeState
+{
+    private StateType prevStateType = StateType.None;
+
+    private float strafeTime = 0.0f;
+    private float timer = 0.0f;
+
+    // --------------------------------------------------
+
+    public Wander(StateType stateType, StateType prevStateType = StateType.None)
+    {
+        this.stateType = stateType;
+        this.prevStateType = prevStateType;
+    }
+
+    // --------------------------------------------------
+
+    public override void Enter(CyborgMeleeController owner)
+    {
+        switch (stateType)
+        {
+            case StateType.Strafe:
+                {
+                    Debug.Log("Enter Wander: Strafe");
+
+                    owner.agent.wanderData.radius = 1.0f;
+                    owner.agent.wanderData.offset = 2.0f;
+
+                    owner.agent.wanderData.minTime = 0.2f;
+                    owner.agent.wanderData.maxTime = 0.8f;
+
+                    // Activate wander
+                    owner.agent.ActivateWander();
+
+                    strafeTime = (float)MathScript.GetRandomDouble(owner.character.strafeMinTime, owner.character.strafeMaxTime);
+                }
+                break;
+        }
+    }
+
+    public override void Execute(CyborgMeleeController owner)
+    {
+        switch (stateType)
+        {
+            case StateType.Strafe:
+                {
+                    if (timer >= strafeTime)
+                    {
+                        owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.GoToDangerDistance, stateType));
+                        break;
+                    }
+
+                    timer += Time.deltaTime;
+                }
+                break;
+        }
+    }
+
+    public override void Exit(CyborgMeleeController owner)
+    {
+        switch (stateType)
+        {
+            case StateType.Strafe:
+                Debug.Log("Exit Wander: Strafe");
+                break;
+        }
+    }
+
+    public override void DrawGizmos(CyborgMeleeController owner)
+    {
+        
     }
 }

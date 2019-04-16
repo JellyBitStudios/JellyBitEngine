@@ -200,6 +200,10 @@ public class Agent : JellyScript
 
     public override void FixedUpdate()
     {
+        UpdateInspectorVariables();
+
+        // --------------------------------------------------
+
         Move();
 
         // --------------------------------------------------
@@ -265,10 +269,7 @@ public class Agent : JellyScript
 
             if (alignData.lookWhereYoureGoingData.isActive)
             {
-                if (wanderData.isActive)
-                    align = SteeringAlign.GetLookWhereYoureGoing(wanderData.point, this);
-                else
-                    align = SteeringAlign.GetLookWhereYoureGoing(NextPosition, this);
+                align = SteeringAlign.GetLookWhereYoureGoing(this);
                 angularVelocities[alignData.Priority] += align;
             }
 
@@ -398,6 +399,27 @@ public class Agent : JellyScript
         pathManager.ClearPath();
     }
 
+    public void ActivateSeek()
+    {
+        seekData.isActive = true;
+        fleeData.isActive = false;
+        wanderData.isActive = false;
+    }
+
+    public void ActivateFlee()
+    {
+        seekData.isActive = false;
+        fleeData.isActive = true;
+        wanderData.isActive = false;
+    }
+
+    public void ActivateWander()
+    {
+        wanderData.isActive = true;
+        seekData.isActive = false;
+        fleeData.isActive = false;
+    }
+
     private void Move()
     {
         switch (movementState)
@@ -427,5 +449,63 @@ public class Agent : JellyScript
             velocities[i] = Vector3.zero;
             angularVelocities[i] = 0.0f;
         }
+    }
+
+    // ----------------------------------------------------------------------------------------------------
+
+    private void UpdateInspectorVariables()
+    {
+        // AgentData
+        tmp_agentMaxVelocity = agentData.maxVelocity;
+        tmp_agentMaxAngularVelocity = agentData.maxAngularVelocity;
+        tmp_agentMaxAcceleration = agentData.maxAcceleration;
+        tmp_agentMaxAngularAcceleration = agentData.maxAngularAcceleration;
+
+        // SteeringSeekData
+        tmp_isSeekActive = seekData.isActive;
+        tmp_seekPriority = seekData.Priority;
+        tmp_arriveMinDistance = seekData.arriveMinDistance;
+
+        // SteeringFleeData
+        tmp_isFleeActive = fleeData.isActive;
+        tmp_fleePriority = fleeData.Priority;
+
+        // SteeringWanderData
+        tmp_isWanderActive = wanderData.isActive;
+        tmp_wanderPriority = wanderData.Priority;
+        tmp_radius = wanderData.radius;
+        tmp_offset = wanderData.offset;
+        tmp_minTime = wanderData.minTime;
+        tmp_maxTime = wanderData.maxTime;
+
+        // SteeringSeparationData
+        tmp_isSeparationActive = separationData.isActive;
+        tmp_separationPriority = separationData.Priority;
+        tmp_separationMask = separationData.mask;
+        tmp_separationRadius = separationData.radius;
+        tmp_separationThreshold = separationData.threshold;
+
+        // SteeringCollisionAvoidance
+        tmp_isCollisionAvoidanceActive = collisionAvoidanceData.isActive;
+        tmp_collisionAvoidancePriority = collisionAvoidanceData.Priority;
+        tmp_collisionAvoidanceMask = collisionAvoidanceData.mask;
+        tmp_collisionAvoidanceRadius = collisionAvoidanceData.radius;
+        tmp_collisionAvoidanceConeHalfAngle = collisionAvoidanceData.coneHalfAngle;
+
+        // SteeringObstacleAvoidance
+        tmp_isObstacleAvoidanceActive = obstacleAvoidanceData.isActive;
+        tmp_obstacleAvoidancePriority = obstacleAvoidanceData.Priority;
+        tmp_obstacleAvoidanceMask = obstacleAvoidanceData.mask;
+        tmp_obstacleAvoidanceAvoidDistance = obstacleAvoidanceData.avoidDistance;
+
+        // SteeringAlignData
+        tmp_isAlignActive = alignData.isActive;
+        tmp_alignPriority = alignData.Priority;
+        tmp_alignMinAngle = alignData.minAngle;
+        tmp_alignSlowAngle = alignData.slowAngle;
+        tmp_alignTimeToTarget = alignData.timeToTarget;
+        tmp_alignIsLookWhereYoureGoingActive = alignData.lookWhereYoureGoingData.isActive;
+        tmp_alignIsFaceToActive = alignData.faceData.isActive;
+        tmp_alignFaceToTarget = alignData.faceData.target;
     }
 }

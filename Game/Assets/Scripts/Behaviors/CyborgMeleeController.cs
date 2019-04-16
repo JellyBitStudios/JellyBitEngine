@@ -12,6 +12,9 @@ public class CyborgMeleeCharacter : Character
 
     public float attackRate = 10.0f;
     public float attackRateFluctuation = 0.0f;
+
+    public float strafeMinTime = 0.0f;
+    public float strafeMaxTime = 0.0f;
 }
 
 public class CyborgMeleeController : JellyScript
@@ -27,6 +30,9 @@ public class CyborgMeleeController : JellyScript
                  
     public float tmp_attackRate = 10.0f;
     public float tmp_attackRateFluctuation = 0.0f;
+
+    public float tmp_strafeMinTime = 0.0f;
+    public float tmp_strafeMaxTime = 0.0f;
     #endregion
 
     #region PUBLIC_VARIABLES
@@ -79,11 +85,14 @@ public class CyborgMeleeController : JellyScript
 
         character.attackRate = tmp_attackRate;
         character.attackRateFluctuation = tmp_attackRateFluctuation;
+
+        character.strafeMinTime = tmp_strafeMinTime;
+        character.strafeMaxTime = tmp_strafeMaxTime;
     }
 
     public override void Start()
     {
-        //fsm.ChangeState(new GoToGameObject(target, StateType.GoToDangerDistance));
+        fsm.ChangeState(new GoToGameObject(target, StateType.GoToDangerDistance));
 
         actualAttackRate = character.attackRate + (float)MathScript.GetRandomDouble(-1.0, 1.0) * character.attackRateFluctuation;      
     }
@@ -91,12 +100,12 @@ public class CyborgMeleeController : JellyScript
     public override void Update()
     {
         //HandleInput();
-        //fsm.UpdateState();
+        fsm.UpdateState();
     }
 
     public override void OnDrawGizmos()
     {
-        //fsm.DrawGizmos();
+        fsm.DrawGizmos();
     }
 
     // ----------------------------------------------------------------------------------------------------
