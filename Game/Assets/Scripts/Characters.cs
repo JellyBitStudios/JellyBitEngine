@@ -34,8 +34,6 @@ public class AlitaCharacter : Character
         }
     }
 
-
-    float dashDistance;
-    public const float attackRotConst = 10.0f;
-    public const float attackRadiusConst = 2.0f;
+    public const float ConstDashStrength = 8.0f;
+    public const float ConstMaxDistance = 4.0f;
 }
