@@ -77,6 +77,11 @@ public class GoToGameObject : ICyborgMeleeState
 
     private GameObject target = null;
 
+    // -----
+
+    private float maxAcceleration = 0.0f;
+    private float maxVelocity = 0.0f;
+
     // --------------------------------------------------
 
     public GoToGameObject(GameObject target, StateType stateType, StateType prevStateType = StateType.None)
@@ -112,6 +117,14 @@ public class GoToGameObject : ICyborgMeleeState
                 {
                     Debug.Log("Enter GoToGameObject: GoToAttackDistance");
 
+                    maxAcceleration = owner.agent.agentData.maxAcceleration;
+                    maxVelocity = owner.agent.agentData.maxVelocity;
+
+                    // -----
+
+                    owner.agent.agentData.maxAcceleration /= 2.0f;
+                    owner.agent.agentData.maxVelocity /= 2.0f;
+
                     owner.agent.separationData.isActive = true;
                     owner.agent.collisionAvoidanceData.isActive = false;
                 }
@@ -136,20 +149,6 @@ public class GoToGameObject : ICyborgMeleeState
 
             case StateType.GoToAttackDistance:
                 {
-                    /*
-                    if (owner.agent.separationData.hasOutput)
-                    {
-                        // Avoid the enemies
-                        Debug.Log("Avoiding an enemy");
-                        owner.agent.seekData.isActive = false;
-                    }
-                    else
-                    {
-                        // Approach the player
-                        Debug.Log("Approaching the player");
-                        owner.agent.seekData.isActive = true;
-                    }*/
-
                     float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
                     if (distanceToTarget <= owner.character.attackDistance)
                     {
@@ -179,11 +178,17 @@ public class GoToGameObject : ICyborgMeleeState
         switch (stateType)
         {
             case StateType.GoToDangerDistance:
+
                 Debug.Log("Exit GoToGameObject: GoToDangerDistance");
+
                 break;
 
             case StateType.GoToAttackDistance:
+
                 Debug.Log("Exit GoToGameObject: GoToAttackDistance");
+                owner.agent.agentData.maxAcceleration = maxAcceleration;
+                owner.agent.agentData.maxVelocity = maxVelocity;
+
                 break;
         }
     }
@@ -282,6 +287,7 @@ public class Wander : ICyborgMeleeState
 
                     // Activate wander
                     owner.agent.ActivateWander();
+                    owner.agent.DeactivateAvoidance();
 
                     strafeTime = (float)MathScript.GetRandomDouble(owner.character.strafeMinTime, owner.character.strafeMaxTime);
                 }
