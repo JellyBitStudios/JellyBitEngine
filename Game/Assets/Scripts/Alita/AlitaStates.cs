@@ -1,46 +1,33 @@
 using JellyBitEngine;
 
-public abstract class AState
+public class AState
 {
-   public abstract void OnAwake(Object controller); // Called at the beginning of the game
-   public abstract void OnStart(); // Called once at the beginning of the frame
-   public abstract void OnExecute(); // Called each frame
-   public abstract void OnStop();  // Called once at the end of the state
-   public abstract void OnPause(); // Called when the game or character must be paused
-   public abstract void OnResume(); // Called to resume the game. OnPause previously called
-   public abstract void ProcessInput(RaycastHit hit); // Process input
-   public abstract void ProcessEvent(Event latestEvent); // called when a Alita recieves a new Event
-   public abstract void NewTarget(GameObject target);
+    public virtual void OnAwake(Object controller) { } // Called at the beginning of the game
+    public virtual void OnStart() { } // Called once at the beginning of the frame
+    public virtual void OnExecute() { } // Called each frame
+    public virtual void OnStop() { }  // Called once at the end of the state
+    public virtual void OnPause() { } // Called when the game or character must be paused
+    public virtual void OnResume() { } // Called to resume the game. OnPause previously called
+    public virtual void ProcessInput(KeyCode code) { } // Process input
+    public virtual void ProcessRaycast(RaycastHit hit) { } // Process raycast
+    public virtual void ProcessEvent(Event latestEvent) { } // called when a Alita recieves a new Event
+    public virtual void NewTarget(GameObject target) { }
 }
 
 class AIdle : AState
 {
-    public override void OnAwake(Object controller)
-    {
-    }
-
     public override void OnStart()
     {
         Alita.Call.animator.PlayAnimation("idle_alita_anim");
     }
 
-    public override void OnExecute()
+    public override void ProcessInput(KeyCode code)
     {
+        if (code == KeyCode.KEY_Q)
+            Alita.Call.SwitchState(Alita.Call.StateSkill_1);
     }
 
-    public override void OnStop()
-    {
-    }
-
-    public override void OnPause()
-    {
-    }
-
-    public override void OnResume()
-    {
-    }
-
-    public override void ProcessInput(RaycastHit hit)
+    public override void ProcessRaycast(RaycastHit hit)
     {
         if (hit.gameObject.GetLayer() == "Terrain")
         {
@@ -48,25 +35,18 @@ class AIdle : AState
             Alita.Call.SwitchState(Alita.Call.StateWalking);
         }
     }
-
-    public override void ProcessEvent(Event latestEvent)
-    {
-    }
-
-    public override void NewTarget(GameObject target)
-    {
-    }
 }
 
 class AWalking : AState
 {
-    public override void OnAwake(Object controller)
-    {
-    }
-
     public override void OnStart()
     {
         Alita.Call.animator.PlayAnimation("anim_run_alita_fist");
+
+        if (Alita.Call.lastState == Alita.Call.StateSkill_1)
+        {
+            // resume Agent
+        }
     }
 
     public override void OnExecute()
@@ -75,32 +55,21 @@ class AWalking : AState
             Alita.Call.SwitchState(Alita.Call.StateIdle);
     }
 
-    public override void OnStop()
+    public override void ProcessInput(KeyCode code)
     {
+        if (code == KeyCode.KEY_Q)
+        {
+            Alita.Call.SwitchState(Alita.Call.StateSkill_1);
+            // stop agent
+        }
     }
 
-    public override void OnPause()
-    {
-    }
-
-    public override void OnResume()
-    {
-    }
-
-    public override void ProcessInput(RaycastHit hit)
+    public override void ProcessRaycast(RaycastHit hit)
     {
         if (hit.gameObject.GetLayer() == "Terrain")
         {
             Alita.Call.agent.SetDestination(hit.point);
         }
-    }
-
-    public override void ProcessEvent(Event latestEvent)
-    {
-    }
-
-    public override void NewTarget(GameObject target)
-    {
     }
 }
 
@@ -108,10 +77,6 @@ class AAttacking : AState
 {
     enum Anim { first, second, third }
     Anim currentAnim;
-
-    public override void OnAwake(Object controller)
-    {
-    }
 
     public override void OnStart()
     {
@@ -140,28 +105,36 @@ class AAttacking : AState
             }
         }
     }
+}
 
-    public override void OnStop()
+class ADash : AState
+{
+    public override void OnStart()
     {
+        Alita.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
+    }
+}
+
+class ASkill1 : AState
+{
+
+    public override void OnStart()
+    {
+        Alita.Call.animator.PlayAnimation("anim_special_attack_q_alita_fist");
     }
 
-    public override void OnPause()
+    public override void OnExecute()
     {
-    }
-
-    public override void OnResume()
-    {
-    }
-
-    public override void ProcessInput(RaycastHit hit)
-    {
-    }
-
-    public override void ProcessEvent(Event latestEvent)
-    {
-    }
-
-    public override void NewTarget(GameObject target)
-    {
+        if (Alita.Call.animator.AnimationFinished())
+        {
+            Debug.Log("finished anim");
+            if (Alita.Call.lastState == Alita.Call.StateWalking)
+            {
+                Alita.Call.SwitchState(Alita.Call.StateWalking);
+                return;
+            }            
+            Alita.Call.SwitchState(Alita.Call.StateIdle);
+        }
+        Debug.Log("non finished anim");
     }
 }

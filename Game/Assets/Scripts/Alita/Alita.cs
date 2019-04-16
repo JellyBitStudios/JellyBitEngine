@@ -7,6 +7,8 @@ class Alita : JellyScript
     public AIdle StateIdle = new AIdle();
     public AWalking StateWalking = new AWalking();
     public AAttacking StateAttacking = new AAttacking();
+    public ADash StateDash = new ADash();
+    public ASkill1 StateSkill_1 = new ASkill1();
 
     private Alita()
     {
@@ -19,6 +21,7 @@ class Alita : JellyScript
     }
 
     private AState m_state;
+    public AState lastState;
 
     public AlitaCharacter character = new AlitaCharacter();
     public Agent agent;
@@ -38,9 +41,6 @@ class Alita : JellyScript
     {
         animator = gameObject.childs[0].GetComponent<Animator>();
         agent = gameObject.GetComponent<Agent>();
-        StateIdle.OnAwake(this);
-        StateWalking.OnAwake(this);
-        StateAttacking.OnAwake(this);
 
         m_state = StateIdle;
         EventsManager.Call.StartListening("Alita", this, "EventsListener");
@@ -60,13 +60,19 @@ class Alita : JellyScript
     public void SwitchState(AState newState)
     {
         m_state.OnStop();
+        lastState = m_state;
         m_state = newState;
         m_state.OnStart();
     }
 
-    public void ProcessInput(RaycastHit hit)
+    public void ProcessInput(KeyCode code)
     {
-        m_state.ProcessInput(hit);
+        m_state.ProcessInput(code);
+    }
+
+    public void ProcessRaycast(RaycastHit hit)
+    {
+        m_state.ProcessRaycast(hit);
     }
 
     public void EventsListener(object type)

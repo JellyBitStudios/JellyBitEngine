@@ -35,6 +35,9 @@ class Player : JellyScript
             else
                 HandleMousePicking(false);
 
+            if (Input.GetKeyDown(KeyCode.KEY_Q))
+                Alita.Call.ProcessInput(KeyCode.KEY_Q);
+
             // if n button pressed open inventory/options/etc 
         }
     }
@@ -79,7 +82,7 @@ class Player : JellyScript
         if (Physics.Raycast(ray, out hit, float.MaxValue, raycastLayer, SceneQueryFlags.Dynamic | SceneQueryFlags.Static))
         {
             if (process)
-                Alita.Call.ProcessInput(hit);
+                Alita.Call.ProcessRaycast(hit);
 
             // mark enemy as red etc
             string layer = hit.gameObject.GetLayer();
