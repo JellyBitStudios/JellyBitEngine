@@ -79,7 +79,9 @@ public:
 
 		float anim_timer = 0.0f;
 		float duration = 0.0f;
-
+		
+		int numKeys = 0;
+		BoneTransformation* boneKeys = nullptr;
 		uint animation_uuid;
 	};
 

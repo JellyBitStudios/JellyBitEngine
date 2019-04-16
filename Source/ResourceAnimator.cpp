@@ -605,7 +605,8 @@ void ResourceAnimator::AddAnimationFromAnimationResource(ResourceAnimation * res
 	animation->animation_uuid = res->GetUuid();
 
 	animation->duration = res->animationData.duration;
-
+	animation->numKeys = res->animationData.numKeys;
+	animation->boneKeys = res->animationData.boneKeys;
 	animations.push_back(animation);
 	current_anim = animations[0];
 	current_anim->interpolate = true;
