@@ -421,6 +421,13 @@ public class Agent : JellyScript
         fleeData.isActive = false;
     }
 
+    public void ActivateAvoidance()
+    {
+        separationData.isActive = true;
+        collisionAvoidanceData.isActive = true;
+        obstacleAvoidanceData.isActive = true;
+    }
+
     public void DeactivateAvoidance()
     {
         separationData.isActive = false;

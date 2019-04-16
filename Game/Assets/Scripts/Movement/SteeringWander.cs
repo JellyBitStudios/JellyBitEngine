@@ -5,7 +5,7 @@ using JellyBitEngine;
 public class SteeringWanderData : SteeringAbstract
 {
     public float radius = 1.0f;
-    public float offset = 1.0f;
+    public float offset = 1.0f; // should be >= than the collider of the agent (probably a sphere collider)
 
     public float minTime = 0.5f;
     public float maxTime = 3.0f;
