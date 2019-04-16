@@ -59,11 +59,11 @@ class AWalking : AState
 
     public override void ProcessInput(KeyCode code)
     {
-        if (code == KeyCode.KEY_Q)
-        {
-            Alita.Call.SwitchState(Alita.Call.StateSkill_1);
+      //  if (code == KeyCode.KEY_Q)
+        //{
+          //  Alita.Call.SwitchState(Alita.Call.StateSkill_1);
             // stop agent
-        }
+    //    }
     }
 
     public override void ProcessRaycast(RaycastHit hit)
@@ -151,7 +151,6 @@ class ASkill1 : AState
     {
         if (Alita.Call.animator.AnimationFinished())
         {
-            Debug.Log("finished anim");
             if (Alita.Call.lastState == Alita.Call.StateWalking)
             {
                 Alita.Call.SwitchState(Alita.Call.StateWalking);
@@ -159,6 +158,9 @@ class ASkill1 : AState
             }            
             Alita.Call.SwitchState(Alita.Call.StateIdle);
         }
-        Debug.Log("non finished anim");
+    }
+
+    public override void OnStop()
+    {
     }
 }
