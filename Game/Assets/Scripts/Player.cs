@@ -37,7 +37,8 @@ class Player : JellyScript
 
             if (Input.GetKeyDown(KeyCode.KEY_Q))
                 Alita.Call.ProcessInput(KeyCode.KEY_Q);
-
+            else if (Input.GetKeyDown(KeyCode.KEY_SPACE))
+                Alita.Call.ProcessInput(KeyCode.KEY_SPACE);
             // if n button pressed open inventory/options/etc 
         }
     }

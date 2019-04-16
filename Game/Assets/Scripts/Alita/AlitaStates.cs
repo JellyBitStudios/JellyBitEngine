@@ -25,6 +25,8 @@ class AIdle : AState
     {
         if (code == KeyCode.KEY_Q)
             Alita.Call.SwitchState(Alita.Call.StateSkill_1);
+        else if (code == KeyCode.KEY_SPACE)
+            Alita.Call.SwitchState(Alita.Call.StateDash);
     }
 
     public override void ProcessRaycast(RaycastHit hit)
@@ -109,9 +111,31 @@ class AAttacking : AState
 
 class ADash : AState
 {
+    float accumulatedDistance = 0.0f;
+    Vector3 dir = new Vector3();
+    float dashStrength = 2.0f;
+    float maxDistance = 10.0f;
+
     public override void OnStart()
     {
-        Alita.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
+        Alita.Call.animator.PlayAnimation("alita_dash_anim");
+        dir = Alita.Call.gameObject.transform.forward;
+    }
+
+    public override void OnExecute()
+    {
+        Vector3 increase = Time.deltaTime * dir * dashStrength;
+        Alita.Call.transform.position += increase;
+        accumulatedDistance += increase.magnitude;
+        if (accumulatedDistance >= maxDistance)
+        {
+            Alita.Call.SwitchState(Alita.Call.StateIdle);
+        }
+    }
+
+    public override void OnStop()
+    {
+        accumulatedDistance = 0.0f;
     }
 }
 
