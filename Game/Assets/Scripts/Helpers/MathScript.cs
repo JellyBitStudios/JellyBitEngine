@@ -51,4 +51,10 @@ public static class MathScript
 
     // Dot Product of two vectors
     public static float Dot(Vector3 lhs, Vector3 rhs) { return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z; }
+
+    public static double GetRandomDouble(double min, double max)
+    {
+        Random random = new Random();
+        return random.NextDouble() * (max - min) + min;
+    }
 }
