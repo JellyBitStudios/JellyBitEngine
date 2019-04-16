@@ -59,11 +59,10 @@ class AWalking : AState
 
     public override void ProcessInput(KeyCode code)
     {
-      //  if (code == KeyCode.KEY_Q)
-        //{
-          //  Alita.Call.SwitchState(Alita.Call.StateSkill_1);
-            // stop agent
-    //    }
+        if (code == KeyCode.KEY_Q)
+            Alita.Call.SwitchState(Alita.Call.StateSkill_1);
+        else if (code == KeyCode.KEY_SPACE)
+            Alita.Call.SwitchState(Alita.Call.StateDash);
     }
 
     public override void ProcessRaycast(RaycastHit hit)
@@ -113,8 +112,6 @@ class ADash : AState
 {
     float accumulatedDistance = 0.0f;
     Vector3 dir = new Vector3();
-    float dashStrength = 2.0f;
-    float maxDistance = 10.0f;
 
     public override void OnStart()
     {
@@ -126,10 +123,10 @@ class ADash : AState
 
     public override void OnExecute()
     {
-        Vector3 increase = Time.deltaTime * dir * dashStrength;
+        Vector3 increase = Time.deltaTime * dir * AlitaCharacter.ConstDashStrength;
         Alita.Call.transform.position += increase;
         accumulatedDistance += increase.magnitude;
-        if (accumulatedDistance >= maxDistance)
+        if (accumulatedDistance >= AlitaCharacter.ConstMaxDistance)
         {
             Alita.Call.SwitchState(Alita.Call.StateIdle);
         }
@@ -139,6 +136,7 @@ class ADash : AState
     {
         Alita.Call.agent.Reset();
         Alita.Call.agent.ClearPath();
+        Alita.Call.agent.ClearMovementAndRotation();
         accumulatedDistance = 0.0f;
     }
 }
