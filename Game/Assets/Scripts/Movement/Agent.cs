@@ -190,36 +190,70 @@ public class Agent : JellyScript
         Vector3 newVelocity = Vector3.zero;
         float newAngularVelocity = 0.0f;
 
+        seekData.hasOutput = false;
+        fleeData.hasOutput = false;
+        separationData.hasOutput = false;
+        collisionAvoidanceData.hasOutput = false;
+        obstacleAvoidanceData.hasOutput = false;
+        alignData.hasOutput = false;
+
         // 1. Obstacle avoidance
         if (obstacleAvoidanceData.isActive)
-            velocities[obstacleAvoidanceData.Priority] += SteeringObstacleAvoidance.GetObstacleAvoidance(this);
+        {
+            Vector3 obstacleAvoidance = SteeringObstacleAvoidance.GetObstacleAvoidance(this);
+            obstacleAvoidanceData.hasOutput = obstacleAvoidance.magnitude != 0.0f;
+            velocities[obstacleAvoidanceData.Priority] += obstacleAvoidance;
+        }
         if (collisionAvoidanceData.isActive)
-            velocities[collisionAvoidanceData.Priority] += SteeringCollisionAvoidance.GetCollisionAvoidance(this);
+        {
+            Vector3 collisionAvoidance = SteeringCollisionAvoidance.GetCollisionAvoidance(this);
+            collisionAvoidanceData.hasOutput = collisionAvoidance.magnitude != 0.0f;
+            velocities[collisionAvoidanceData.Priority] += collisionAvoidance;
+        }
 
         // 2. Separation
         if (separationData.isActive)
-            velocities[separationData.Priority] += SteeringSeparation.GetSeparation(this);
+        {
+            Vector3 separation = SteeringSeparation.GetSeparation(this);
+            separationData.hasOutput = separation.magnitude != 0.0f;
+            velocities[separationData.Priority] += separation;
+        }
 
         // 3. Move
         /// Velocity
         if (seekData.isActive)
-            velocities[seekData.Priority] += SteeringSeek.GetSeek(this);
+        {
+            Vector3 seek = SteeringSeek.GetSeek(this);
+            seekData.hasOutput = seek.magnitude != 0.0f;
+            velocities[seekData.Priority] += seek;
+        }
         if (fleeData.isActive)
-            velocities[fleeData.Priority] += SteeringFlee.GetFlee(this);
+        {
+            Vector3 flee = SteeringFlee.GetFlee(this);
+            fleeData.hasOutput = flee.magnitude != 0.0f;
+            velocities[fleeData.Priority] += flee;
+        }
 
         /// Angular velocity
         hasFaced = false;
         if (alignData.isActive)
         {
+            float align = 0.0f;
+
             if (alignData.lookWhereYoureGoingData.isActive)
-                angularVelocities[alignData.Priority] += SteeringAlign.GetLookWhereYoureGoing(this);
+            {
+                align = SteeringAlign.GetLookWhereYoureGoing(this);
+                angularVelocities[alignData.Priority] += align;
+            }
 
             if (alignData.faceData.isActive)
             {
-                float face = SteeringAlign.GetFace(this);
-                hasFaced = face == 0.0f;
-                angularVelocities[alignData.Priority] += face;             
+                align = SteeringAlign.GetFace(this);
+                hasFaced = align == 0.0f;
+                angularVelocities[alignData.Priority] += align;             
             }
+
+            alignData.hasOutput = align != 0.0f;
         }
 
         // Angular velocities
@@ -323,6 +357,12 @@ public class Agent : JellyScript
     {
         isMovementStopped = true;
         isRotationStopped = true;
+    }
+
+    public void Reset()
+    {
+        isMovementStopped = false;
+        isRotationStopped = false;
     }
 
     private void Move()

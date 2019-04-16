@@ -1,10 +1,15 @@
 ﻿public class Character
 {
-    uint life;
-    uint dmg;
+    uint life = 0;
+    uint dmg = 0;
 
-    public float accSpeed;
-    public float velSpeed;
+    public enum CharacterType
+    {
+        Alita,
+        CyborgMelee,
+        CyborgRanged
+    }
+    public CharacterType characterType;
 }
 
 public class AlitaCharacter : Character
@@ -34,5 +39,3 @@ public class AlitaCharacter : Character
     public const float attackRotConst = 10.0f;
     public const float attackRadiusConst = 2.0f;
 }
-
-
