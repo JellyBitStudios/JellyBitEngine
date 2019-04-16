@@ -92,20 +92,20 @@ public class CyborgMeleeController : JellyScript
 
     public override void Start()
     {
-        fsm.ChangeState(new GoToGameObject(target, StateType.GoToDangerDistance));
+        //fsm.ChangeState(new GoToGameObject(target, StateType.GoToDangerDistance));
 
         actualAttackRate = character.attackRate + (float)MathScript.GetRandomDouble(-1.0, 1.0) * character.attackRateFluctuation;      
     }
 
     public override void Update()
     {
-        //HandleInput();
-        fsm.UpdateState();
+        HandleInput();
+        //fsm.UpdateState();
     }
 
     public override void OnDrawGizmos()
     {
-        fsm.DrawGizmos();
+        //fsm.DrawGizmos();
     }
 
     // ----------------------------------------------------------------------------------------------------

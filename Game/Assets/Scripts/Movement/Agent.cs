@@ -97,14 +97,8 @@ public class Agent : JellyScript
 
     public bool isMovementStopped = false;
     public bool isRotationStopped = false;
-    public Vector3 Velocity
-    {
-        get { return velocity; }
-    }
-    public float AngularVelocity
-    {
-        get { return angularVelocity; }
-    }
+    public Vector3 velocity = Vector3.zero;
+    public float angularVelocity = 0.0f;
     public bool HasFaced
     {
         get { return hasFaced; }
@@ -114,8 +108,6 @@ public class Agent : JellyScript
     #region PRIVATE_VARIABLES
     private PathManager pathManager = new PathManager();
 
-    private Vector3 velocity = Vector3.zero;
-    private float angularVelocity = 0.0f;
     private Vector3[] velocities = null;
     private float[] angularVelocities = null;
 
@@ -269,8 +261,11 @@ public class Agent : JellyScript
 
             if (alignData.lookWhereYoureGoingData.isActive)
             {
-                align = SteeringAlign.GetLookWhereYoureGoing(this);
-                angularVelocities[alignData.Priority] += align;
+                if (velocity.magnitude != 0.0f)
+                {
+                    align = SteeringAlign.GetLookWhereYoureGoing(this);
+                    angularVelocities[alignData.Priority] += align;
+                }
             }
 
             if (alignData.faceData.isActive)
@@ -399,6 +394,12 @@ public class Agent : JellyScript
         pathManager.ClearPath();
     }
 
+    public void ClearMovementAndRotation()
+    {
+        velocity = Vector3.zero;
+        angularVelocity = 0.0f;
+    }
+
     public void ActivateSeek()
     {
         seekData.isActive = true;
@@ -418,6 +419,13 @@ public class Agent : JellyScript
         wanderData.isActive = true;
         seekData.isActive = false;
         fleeData.isActive = false;
+    }
+
+    public void DeactivateAvoidance()
+    {
+        separationData.isActive = false;
+        collisionAvoidanceData.isActive = false;
+        obstacleAvoidanceData.isActive = false;
     }
 
     private void Move()

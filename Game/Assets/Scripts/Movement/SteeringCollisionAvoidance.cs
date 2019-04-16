@@ -47,7 +47,7 @@ public static class SteeringCollisionAvoidance
                 if (MathScript.Dot(agent.transform.forward, direction) > coneThreshold)
                 {
                     Vector3 relativePos = target.transform.position - agent.transform.position;
-                    Vector3 relativeVel = targetAgent.Velocity - agent.Velocity;
+                    Vector3 relativeVel = targetAgent.velocity - agent.velocity;
                     float relativeSpeed = relativeVel.magnitude;
                     float timeToCollision = MathScript.Dot(relativePos, relativeVel) / (relativeSpeed * relativeSpeed);
                     timeToCollision *= -1.0f;

@@ -136,6 +136,7 @@ public class GoToGameObject : ICyborgMeleeState
 
             case StateType.GoToAttackDistance:
                 {
+                    /*
                     if (owner.agent.separationData.hasOutput)
                     {
                         // Avoid the enemies
@@ -147,7 +148,7 @@ public class GoToGameObject : ICyborgMeleeState
                         // Approach the player
                         Debug.Log("Approaching the player");
                         owner.agent.seekData.isActive = true;
-                    }
+                    }*/
 
                     float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
                     if (distanceToTarget <= owner.character.attackDistance)
