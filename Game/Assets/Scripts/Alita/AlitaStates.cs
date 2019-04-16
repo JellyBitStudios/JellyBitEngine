@@ -120,6 +120,8 @@ class ADash : AState
     {
         Alita.Call.animator.PlayAnimation("alita_dash_anim");
         dir = Alita.Call.gameObject.transform.forward;
+
+        Alita.Call.agent.Stop();
     }
 
     public override void OnExecute()
@@ -135,6 +137,8 @@ class ADash : AState
 
     public override void OnStop()
     {
+        Alita.Call.agent.Reset();
+        Alita.Call.agent.ClearPath();
         accumulatedDistance = 0.0f;
     }
 }
