@@ -368,12 +368,7 @@ public class Attack : ICyborgMeleeState
     // -----
 
     private float actualAttackRate = 0.0f;
-    private float thinkPeriod = 1.5f;
-    private float reactPeriod = 0.4f;
-
     private float lastAttackedTime = 0.0f;
-    private float lastThought = 0.0f;
-    private float lastReact = 0.0f;
 
     private float AttackCooldown
     {
@@ -414,7 +409,7 @@ public class Attack : ICyborgMeleeState
 
         owner.agent.SetFace(target);
 
-        RecalculateActualAttackRate(owner);
+        actualAttackRate = owner.character.attackRate + (float)MathScript.GetRandomDouble(-1.0, 1.0) * owner.character.attackRateFluctuation;
         lastAttackedTime = -actualAttackRate;
     }
 
@@ -434,12 +429,14 @@ public class Attack : ICyborgMeleeState
         //Debug.Log("Attack cooldown: " + AttackCooldown);
         if (AttackCooldown <= 0.0f)
         {
-            RecalculateActualAttackRate(owner);
-            lastAttackedTime = timer;
-
-            // Hit!
-            Debug.Log("HIT");
-            // Hit can be successful or not...
+            // Am I allowed to hit?
+            if (owner.battleCircle.AddSimultaneousAttacker(owner.gameObject))
+            {
+                // Yes! Hit
+                owner.fsm.ChangeState(new Attack(owner.target, StateType.Attack, stateType));
+                // Hit can be successful or not...
+                return;
+            }
         }
 
         // -----
@@ -463,13 +460,6 @@ public class Attack : ICyborgMeleeState
     public override void DrawGizmos(CyborgMeleeController owner)
     {
         Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
-    }
-
-    // --------------------------------------------------
-
-    private void RecalculateActualAttackRate(CyborgMeleeController owner)
-    {
-        actualAttackRate = owner.character.attackRate + (float)MathScript.GetRandomDouble(-1.0, 1.0) * owner.character.attackRateFluctuation;
     }
 }
 
@@ -514,6 +504,7 @@ public class Hit : ICyborgMeleeState
     public override void Exit(CyborgMeleeController owner)
     {
         Debug.Log("Exit Hit");
+        owner.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
     }
 
     public override void DrawGizmos(CyborgMeleeController owner)

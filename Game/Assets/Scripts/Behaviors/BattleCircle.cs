@@ -17,15 +17,18 @@ public class BattleCircle : JellyScript
 {
     #region PUBLIC_VARIABLES
     public uint maxAttackers = 3;
+    public uint maxSimultaneousAttackers = 2;
     #endregion
 
     #region PRIVATE_VARIABLES
     private List<GameObject> attackers;
+    private List<GameObject> simultaneousAttackers;
     #endregion
 
     public override void Awake()
     {
         attackers = new List<GameObject>();
+        simultaneousAttackers = new List<GameObject>();
     }
 
     public override void OnDrawGizmos()
@@ -61,6 +64,32 @@ public class BattleCircle : JellyScript
         }
 
         Debug.Log("Attacker could NOT be REMOVED. Total attackers: " + attackers.Count);
+        return false;
+    }
+
+    public bool AddSimultaneousAttacker(GameObject attacker)
+    {
+        if (simultaneousAttackers.Count < maxSimultaneousAttackers
+            && !simultaneousAttackers.Contains(attacker))
+        {
+            simultaneousAttackers.Add(attacker);
+            Debug.Log("New simultaneous attacker ADDED. Total simultaneous attackers: " + simultaneousAttackers.Count);
+            return true;
+        }
+
+        Debug.Log("New simultaneous attacker REJECTED. Total simultaneous attackers: " + simultaneousAttackers.Count);
+        return false;
+    }
+
+    public bool RemoveSimultaneousAttacker(GameObject attacker)
+    {
+        if (simultaneousAttackers.Remove(attacker))
+        {
+            Debug.Log("Attacker simultaneous REMOVED. Total simultaneous attackers: " + simultaneousAttackers.Count);
+            return true;
+        }
+
+        Debug.Log("Attacker simultaneous could NOT be REMOVED. Total simultaneous attackers: " + simultaneousAttackers.Count);
         return false;
     }
 }
