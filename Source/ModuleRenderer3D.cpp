@@ -358,10 +358,11 @@ update_status ModuleRenderer3D::PostUpdate()
 	// 3. Editor
 	App->gui->Draw();
 
-	//App->input->DrawCursor();
 #else
 	App->ui->DrawUI();
 #endif // GAME
+
+	App->input->DrawCursor();
 
 	// 4. Swap buffers
 	SDL_GL_MakeCurrent(App->window->window, context);
