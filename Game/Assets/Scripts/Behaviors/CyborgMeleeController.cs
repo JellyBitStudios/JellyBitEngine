@@ -48,17 +48,8 @@ public class CyborgMeleeController : JellyScript
     public Agent agent = null;
     public LineOfSight lineOfSight = null;
     public BattleCircle battleCircle = null;
-    #endregion
 
-    #region PRIVATE_VARIABLES
-    // Battle Circle
-    private float actualAttackRate = 0.0f;
-    private float thinkPeriod = 1.5f;
-    private float reactPeriod = 0.4f;
-
-    private float lastAttackedTime = 0.0f;
-    private float lastThought = 0.0f;
-    private float lastReact = 0.0f;
+    public bool drawGizmos = true;
     #endregion
 
     // ----------------------------------------------------------------------------------------------------
@@ -92,9 +83,7 @@ public class CyborgMeleeController : JellyScript
 
     public override void Start()
     {
-        fsm.ChangeState(new GoToGameObject(target, StateType.GoToDangerDistance));
-
-        actualAttackRate = character.attackRate + (float)MathScript.GetRandomDouble(-1.0, 1.0) * character.attackRateFluctuation;      
+        fsm.ChangeState(new GoToGameObject(target, StateType.GoToDangerDistance));  
     }
 
     public override void Update()
@@ -105,6 +94,9 @@ public class CyborgMeleeController : JellyScript
 
     public override void OnDrawGizmos()
     {
+        if (!drawGizmos)
+            return;
+
         fsm.DrawGizmos();
     }
 
