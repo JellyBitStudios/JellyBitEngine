@@ -429,10 +429,35 @@ GameObject * ModuleUI::FindCanvas(GameObject * from, uint& count)
 	return (ret) ? ret : nullptr;
 }
 
-void ModuleUI::ReAssignButtonOnClicks()
+#ifndef GAMEMODE
+math::float4x4 ModuleUI::GetUIMatrix()
 {
-
+	return WorldHolder->transform->GetGlobalMatrix();
 }
+math::float3 * ModuleUI::GetWHCorners()
+{
+	return WorldHolder->cmp_rectTransform->GetCorners();
+}
+
+uint * ModuleUI::GetWHRect()
+{
+	return WorldHolder->cmp_rectTransform->GetRect();
+}
+math::float3 ModuleUI::GetPositionWH()
+{
+	return WorldHolder->transform->GetPosition();
+}
+void ModuleUI::SetPositionWH(math::float3 pos)
+{
+	WorldHolder->transform->SetPosition(pos);
+	System_Event WHMoved;
+	WHMoved.type = System_Event_Type::RectTransformUpdated;
+	WorldHolder->cmp_rectTransform->OnSystemEvent(WHMoved);
+	WorldHolder->cmp_rectTransform->Update();
+	for (GameObject* goScreenCanvas : canvas_screen)
+		goScreenCanvas->OnSystemEvent(WHMoved);
+}
+#endif
 
 bool ModuleUI::GetUIMode() const
 {
@@ -442,6 +467,11 @@ bool ModuleUI::GetUIMode() const
 void ModuleUI::SetUIMode(bool stat)
 {
 	uiMode = stat;
+}
+
+bool ModuleUI::ScreenOnWorld() const
+{
+	return screenInWorld;
 }
 
 void ModuleUI::OnWindowResize(uint width, uint height)

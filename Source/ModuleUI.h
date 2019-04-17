@@ -58,6 +58,7 @@ public:
 
 	bool GetUIMode() const;
 	void SetUIMode(bool stat);
+	bool ScreenOnWorld() const;
 
 	void OnWindowResize(uint width, uint height);
 
@@ -75,8 +76,6 @@ public:
 	math::float3 GetPositionWH();
 	void SetPositionWH(math::float3 pos);
 #endif
-
-	void ReAssignButtonOnClicks();
 
 private:
 
@@ -112,7 +111,7 @@ private:
 	uint ui_shader = 0;
 
 	bool uiMode = true;
-
+	bool screenInWorld = true;
 	bool anyItemIsHovered = false;
 
 	bool depthTest, cullFace, lighting, blend;
