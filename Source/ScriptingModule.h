@@ -21,7 +21,7 @@ bool exec(const char* cmd, std::string& error = std::string());
 class ScriptingModule : public Module
 {
 	friend MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, MonoArray* rotation);
-	friend MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type);
+	friend MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type);
 
 	friend void PlayerPrefsSave();
 	friend void PlayerPrefsSetNumber(MonoString* key, double value);
