@@ -10,6 +10,7 @@
 
 #include "MathGeoLib\include\Math\TransformOps.h"
 #include "MathGeoLib\include\Math\MathConstants.h"
+#include "MathGeoLib/include/Math/float4x4.h"
 
 #include "ImGuizmo\ImGuizmo.h"
 
@@ -48,6 +49,7 @@ public:
 
 	// ImGuizmo
 	void OnGizmos(GameObject* gameObject);
+	void OnGizmosList();
 
 #ifndef GAMEMODE
 	void SaveLastTransform(math::float4x4 matrix);
@@ -86,6 +88,8 @@ public:
 	bool saveTransform = false;
 
 	CurrentSelection selectedObject;
+
+	std::list<uint> multipleSelection;
 #endif
 
 	GameObject* child = nullptr;

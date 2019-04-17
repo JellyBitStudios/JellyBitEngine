@@ -2687,6 +2687,9 @@
     <ClCompile Include="ModuleTrails.cpp">
       <Filter>Sources\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="CurrentSelection.cpp">
+      <Filter>Sources\Containers</Filter>
+    </ClCompile>
     <ClCompile Include="GLCache.cpp">
       <Filter>Sources\Helpers</Filter>
     </ClCompile>

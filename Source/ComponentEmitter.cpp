@@ -22,9 +22,9 @@ ComponentEmitter::ComponentEmitter(GameObject* gameObject, bool include) : Compo
 {
 	if (include)
 	{
-		SetAABB(math::float3::one);
-		if (gameObject->IsStatic())
-			App->scene->quadtree.Insert(gameObject);
+		//SetAABB(math::float3::one);
+		//if (gameObject->IsStatic())
+		//	App->scene->quadtree.Insert(gameObject);
 		App->particle->emitters.push_back(this);
 
 		SetMaterialRes(App->resHandler->defaultMaterial);
@@ -95,8 +95,8 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 
 	if (include)
 	{
-		if (parent)
-			SetAABB(parent->boundingBox.Size(), posDifAABB);
+		//if (parent)
+		//	SetAABB(parent->boundingBox.Size(), posDifAABB);
 		App->particle->emitters.push_back(this);
 
 
@@ -648,10 +648,10 @@ void ComponentEmitter::ParticleAABB()
 		if (drawAABB)
 		{
 			math::float3 size = parent->boundingBox.Size();
-			if (ImGui::DragFloat3("Dimensions", &size.x, 1.0f, 0.0f, 0.0f, "%.0f"))
-				SetAABB(size, posDifAABB);
-			if (ImGui::DragFloat3("Pos", &posDifAABB.x, 1.0f, 0.0f, 0.0f, "%.0f"))
-				SetAABB(size, posDifAABB);
+			//if (ImGui::DragFloat3("Dimensions", &size.x, 1.0f, 0.0f, 0.0f, "%.0f"))
+			//	SetAABB(size, posDifAABB);
+			//if (ImGui::DragFloat3("Pos", &posDifAABB.x, 1.0f, 0.0f, 0.0f, "%.0f"))
+			//	SetAABB(size, posDifAABB);
 		}
 	}
 #endif
@@ -858,11 +858,6 @@ void ComponentEmitter::SetAABB(const math::float3 size, const math::float3 extra
 
 			gameObject->originalBoundingBox.SetFromCenterAndSize(pos + extraPosition, size);
 			gameObject->boundingBox = gameObject->originalBoundingBox;
-
-			System_Event newEvent;
-			newEvent.goEvent.gameObject = gameObject;
-			newEvent.type = System_Event_Type::RecreateQuadtree;
-			App->PushSystemEvent(newEvent);
 		}
 	}
 }
@@ -1167,9 +1162,10 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	memcpy(&uuidSubEmitter, cursor, bytes);
 	cursor += bytes;
 
-	memcpy(&materialRes, cursor, bytes);
+	uint uuidMaterial;
+	memcpy(&uuidMaterial, cursor, bytes);
 
-	App->res->GetResource(materialRes) ? SetMaterialRes(materialRes) : SetMaterialRes(App->resHandler->defaultMaterial);
+	App->res->GetResource(uuidMaterial) ? SetMaterialRes(uuidMaterial) : SetMaterialRes(App->resHandler->defaultMaterial);
 	cursor += bytes;
 	//Coment this
 	memcpy(&burstMesh.uuid, cursor, bytes);
@@ -1206,6 +1202,7 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	//memcpy(&namelenghtt, cursor, bytes);
 	//cursor += bytes;
 
+	//std::string bursttypename;
 	//bytes = namelenghtt;
 	//bursttypename.resize(namelenghtt);
 	//memcpy((void*)bursttypename.c_str(), cursor, bytes);

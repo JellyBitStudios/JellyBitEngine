@@ -26,6 +26,7 @@
 #include "ResourceFont.h"
 
 #include "Shaders.h"
+#include "GameObject.h"
 
 PanelAssets::PanelAssets(const char* name) : Panel(name) {}
 

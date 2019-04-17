@@ -255,6 +255,7 @@ void DebugDrawer::DebugDrawLine(const math::float3& origin, const math::float3& 
 {
 	assert(origin.IsFinite() && destination.IsFinite() && globalTransform.IsFinite());
 
+	glLineWidth(2.0f);
 	glColor3f(color.r, color.g, color.b);
 	glPushMatrix();
 	glMultMatrixf(globalTransform.Transposed().ptr());
@@ -265,6 +266,7 @@ void DebugDrawer::DebugDrawLine(const math::float3& origin, const math::float3& 
 	glEnd();
 
 	glPopMatrix();
+	glLineWidth(1.0f);
 }
 
 void DebugDrawer::DebugDrawCone(float radius, float height, const Color & color, const math::float4x4 & globalTransform) const
