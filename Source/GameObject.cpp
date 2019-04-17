@@ -223,7 +223,7 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			components.push_back(cmp_audioSource);
 			break;
 		case ComponentTypes::TrailComponent:
-			cmp_trail = new ComponentTrail(*gameObject.cmp_trail);
+			cmp_trail = new ComponentTrail(*gameObject.cmp_trail, this);
 			cmp_trail->SetParent(this);
 			components.push_back(cmp_trail);
 		}
