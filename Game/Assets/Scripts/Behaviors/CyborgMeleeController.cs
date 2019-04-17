@@ -49,7 +49,7 @@ public class CyborgMeleeController : JellyScript
     public LineOfSight lineOfSight = null;
     public BattleCircle battleCircle = null;
 
-    public bool drawGizmos = true;
+    public bool drawGizmosCyborgMelee = true;
     #endregion
 
     // ----------------------------------------------------------------------------------------------------
@@ -83,21 +83,21 @@ public class CyborgMeleeController : JellyScript
 
     public override void Start()
     {
-        fsm.ChangeState(new GoToGameObject(target, StateType.GoToDangerDistance));  
+        //fsm.ChangeState(new GoToGameObject(target, StateType.GoToDangerDistance));  
     }
 
     public override void Update()
     {
-        //HandleInput();
-        fsm.UpdateState();
+        HandleInput();
+        //fsm.UpdateState();
     }
 
     public override void OnDrawGizmos()
     {
-        if (!drawGizmos)
+        if (!drawGizmosCyborgMelee)
             return;
 
-        fsm.DrawGizmos();
+        //fsm.DrawGizmos();
     }
 
     // ----------------------------------------------------------------------------------------------------

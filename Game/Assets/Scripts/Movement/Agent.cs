@@ -106,7 +106,7 @@ public class Agent : JellyScript
         get { return hasFaced; }
     }
 
-    public bool drawGizmos = true;
+    public bool drawGizmosAgent = true;
     #endregion
 
     #region PRIVATE_VARIABLES
@@ -296,7 +296,7 @@ public class Agent : JellyScript
 
     public override void OnDrawGizmos()
     {
-        if (!drawGizmos)
+        if (!drawGizmosAgent)
             return;
 
         Debug.DrawLine(transform.position, transform.position + Quaternion.Rotate(Vector3.up, angularVelocity) * transform.forward * 3.0f, Color.Black);
@@ -361,6 +361,8 @@ public class Agent : JellyScript
     public void ClearPath()
     {
         pathManager.ClearPath();
+
+        movementState = MovementState.Stop;
     }
 
     public void ClearMovementAndRotation()

@@ -421,25 +421,22 @@ public class Attack : ICyborgMeleeState
         if (distanceToTarget > owner.character.attackDistance
             || owner.character.life <= 0)
         {
+            owner.battleCircle.RemoveAttacker(owner.gameObject);
             owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.GoToAttackDistance, stateType));
             return;
         }
 
         // When attack cooldown is 0.0f...
-        //Debug.Log("Attack cooldown: " + AttackCooldown);
         if (AttackCooldown <= 0.0f)
         {
             // Am I allowed to hit?
             if (owner.battleCircle.AddSimultaneousAttacker(owner.gameObject))
             {
                 // Yes! Hit
-                owner.fsm.ChangeState(new Attack(owner.target, StateType.Attack, stateType));
-                // Hit can be successful or not...
+                owner.fsm.ChangeState(new Attack(owner.target, StateType.Hit, stateType));
                 return;
             }
         }
-
-        // -----
 
         timer += Time.deltaTime;
     }
@@ -451,10 +448,6 @@ public class Attack : ICyborgMeleeState
         owner.agent.alignData.faceData.isActive = faceDataIsActive;
         owner.agent.alignData.lookWhereYoureGoingData.isActive = lookWhereYoureGoingDataIsActive;
         owner.agent.isMovementStopped = isMovementStopped;
-
-        // -----
-
-        owner.battleCircle.RemoveAttacker(owner.gameObject);
     }
 
     public override void DrawGizmos(CyborgMeleeController owner)
@@ -497,6 +490,7 @@ public class Hit : ICyborgMeleeState
     public override void Execute(CyborgMeleeController owner)
     {
         // If animation has finished... Attack
+        owner.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
         owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.Attack, stateType));
         return;
     }
@@ -504,7 +498,6 @@ public class Hit : ICyborgMeleeState
     public override void Exit(CyborgMeleeController owner)
     {
         Debug.Log("Exit Hit");
-        owner.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
     }
 
     public override void DrawGizmos(CyborgMeleeController owner)
