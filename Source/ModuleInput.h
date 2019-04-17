@@ -67,10 +67,13 @@ public:
 		return mouse_y_motion;
 	}
 
+	void SaveStatus(JSON_Object*) const;
+	void LoadStatus(const JSON_Object*);
+
 public:
 	std::string GetCursorTexture() const;
 	void SetCursorTexture(std::string& textureName);
-	void SetCursorTexture(ResourceTexture* textureRes);
+	void SetDefaultCursorTexture(ResourceTexture* textureRes);
 private:
 
 	KEY_STATE* keyboard;

@@ -46,7 +46,7 @@ void ResourceTexture::OnPanelAssets()
 	{
 		if (ImGui::MenuItem("Set as Default Cursor"))
 		{
-			App->input->SetCursorTexture(this);
+			App->input->SetDefaultCursorTexture(this);
 		}
 		ImGui::EndPopup();
 	}
