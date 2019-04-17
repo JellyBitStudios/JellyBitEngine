@@ -287,7 +287,7 @@ void ComponentAnimator::OnUniqueEditor()
 			ImGui::Text("Animator resource UUID: %i", resource->GetUuid());
 			ImGui::Text("Avatar UUID: %i", resource->animator_data.avatar_uuid);
 			ImGui::Text("Meshes affected: %i", resource->animator_data.meshes_uuids.size());
-			ImGui::Text("Animations size: %i", resource->animator_data.animations_uuids.size());
+			ImGui::Text("Animations size: %i", res_animations.size());
 
 			if (ImGui::Button("PLAY"))
 				resource->PlayAnimation();
@@ -313,7 +313,7 @@ void ComponentAnimator::OnUniqueEditor()
 				resource->StepBackwards();
 
 			if (ImGui::Button("CLEAN ANIMATIONS")) {
-				
+				this->CleanAnimations();
 			}
 				
 		}

@@ -601,6 +601,7 @@ void ResourceAnimator::ClearAnimations() {
 		delete animation;
 	}
 	animations.clear();
+	current_anim = nullptr;
 }
 
 void ResourceAnimator::AddAnimationFromAnimationResource(ResourceAnimation * res)
