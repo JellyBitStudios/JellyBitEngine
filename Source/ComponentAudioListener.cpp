@@ -7,6 +7,9 @@
 #include "MathGeoLib/include/Math/Quat.h"
 #include "MathGeoLib/include/Math/float3.h"
 
+#include "imgui\imgui.h"
+#include "imgui\imgui_internal.h"
+
 ComponentAudioListener::ComponentAudioListener(GameObject* parent) : Component(parent, ComponentTypes::AudioListenerComponent) 
 {
 	listener = App->audio->CreateSoundEmitter("listener");
@@ -46,6 +49,16 @@ void ComponentAudioListener::UpdateListenerPos() {
 
 		listener->SetListenerPos(vector_pos.x, vector_pos.y, vector_pos.z, vector_front.x, vector_front.y, vector_front.z, vector_up.x, vector_up.y, vector_up.z);
 	}
+}
+
+void ComponentAudioListener::OnUniqueEditor()
+{
+#ifndef GAMEMODE
+	if (ImGui::CollapsingHeader("AudioListener", ImGuiTreeNodeFlags_DefaultOpen))
+	{	}
+
+#endif // !GAMEMODE
+
 }
 
 uint ComponentAudioListener::GetInternalSerializationBytes()
