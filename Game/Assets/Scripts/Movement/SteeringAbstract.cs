@@ -11,7 +11,7 @@ public class SteeringAbstract
 {
     #region PUBLIC_VARIABLES
     public bool isActive = true;
-    public bool hasOutput = false;
+
     public uint Priority
     {
         get { return priority; }

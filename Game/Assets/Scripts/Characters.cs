@@ -1,7 +1,7 @@
 ﻿public class Character
 {
-    uint life = 0;
-    uint dmg = 0;
+    public int life = 100;
+    public uint dmg = 0;
 
     public enum CharacterType
     {
