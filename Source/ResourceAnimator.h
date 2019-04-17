@@ -94,6 +94,7 @@ public:
 
 	/* ----- SCRIPTING CALLS ----- */
 	void SetAnimationSpeed(float new_speed);
+	void SetAnimationBlendTime(float new_blend);
 	void ClearAnimations();
 	/* ----- SCRIPTING CALLS ----- */
 
@@ -119,6 +120,7 @@ private:
 	bool stop_all = false;
 
 	float blend_timer = 0.0f;
+	float blend_timelapse = 1.0f;
 	float animation_speed_mod = 1.0f;
 	std::vector<ResourceAnimation*> available_animations;
 

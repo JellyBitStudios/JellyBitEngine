@@ -20,7 +20,10 @@ public enum StateType
     Attack,
 
     // Hit
-    Hit
+    Hit,
+
+    // Die
+    Die
 }
 
 public abstract class ICyborgMeleeState
@@ -148,6 +151,12 @@ public class GoToGameObject : ICyborgMeleeState
         {
             case StateType.GoToDangerDistance:
                 {
+                    if (owner.character.life <= owner.character.minLife) // Do I have enough life to attack the target?
+                    {
+                        owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.Wander, stateType));
+                        return;
+                    }
+
                     float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
                     if (distanceToTarget <= owner.character.dangerDistance)
                     {
@@ -159,6 +168,12 @@ public class GoToGameObject : ICyborgMeleeState
 
             case StateType.GoToAttackDistance:
                 {
+                    if (owner.character.life <= owner.character.minLife) // Do I have enough life to attack the target?
+                    {
+                        owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.Wander, stateType));
+                        return;
+                    }
+
                     float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
                     if (distanceToTarget <= owner.character.attackDistance)
                     {
@@ -298,8 +313,10 @@ public class Wander : ICyborgMeleeState
         {
             case StateType.Wander:
 
-                if (owner.lineOfSight.IsTargetSeen)
+                if (owner.lineOfSight.IsTargetSeen // Have I seen the target?
+                    && owner.character.life > owner.character.minLife) // Do I have enough life to attack the target?
                 {
+                    Debug.Log("From Wander to Danger");
                     owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.GoToDangerDistance, stateType));
                     return;
                 }
@@ -364,6 +381,7 @@ public class Attack : ICyborgMeleeState
     private bool faceDataIsActive = false;
     private bool lookWhereYoureGoingDataIsActive = false;
     private bool isMovementStopped = false;
+    private float maxAngularAcceleration = 0.0f;
 
     // -----
 
@@ -398,6 +416,7 @@ public class Attack : ICyborgMeleeState
         faceDataIsActive = owner.agent.alignData.faceData.isActive;
         lookWhereYoureGoingDataIsActive = owner.agent.alignData.lookWhereYoureGoingData.isActive;
         isMovementStopped = owner.agent.isMovementStopped;
+        maxAngularAcceleration = owner.agent.agentData.maxAngularAcceleration;
 
         // -----
 
@@ -407,6 +426,8 @@ public class Attack : ICyborgMeleeState
 
         owner.agent.isMovementStopped = true;
 
+        // Align: Face data
+        owner.agent.agentData.maxAngularAcceleration = owner.character.trackMaxAngularAcceleration;
         owner.agent.SetFace(target);
 
         actualAttackRate = owner.character.attackRate + (float)MathScript.GetRandomDouble(-1.0, 1.0) * owner.character.attackRateFluctuation;
@@ -416,30 +437,26 @@ public class Attack : ICyborgMeleeState
     public override void Execute(CyborgMeleeController owner)
     {
         float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
-        // The target moves out of ATTACK range
-        // The owner dies
-        if (distanceToTarget > owner.character.attackDistance
-            || owner.character.life <= 0)
+
+        if (distanceToTarget > owner.character.attackDistance // The target moves out of ATTACK range
+            || owner.character.life <= owner.character.minLife) // Do I have enough life to attack the target?
         {
+            owner.battleCircle.RemoveAttacker(owner.gameObject);
             owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.GoToAttackDistance, stateType));
             return;
         }
 
         // When attack cooldown is 0.0f...
-        //Debug.Log("Attack cooldown: " + AttackCooldown);
         if (AttackCooldown <= 0.0f)
         {
             // Am I allowed to hit?
             if (owner.battleCircle.AddSimultaneousAttacker(owner.gameObject))
             {
                 // Yes! Hit
-                owner.fsm.ChangeState(new Attack(owner.target, StateType.Attack, stateType));
-                // Hit can be successful or not...
+                owner.fsm.ChangeState(new Attack(owner.target, StateType.Hit, stateType));
                 return;
             }
         }
-
-        // -----
 
         timer += Time.deltaTime;
     }
@@ -451,10 +468,7 @@ public class Attack : ICyborgMeleeState
         owner.agent.alignData.faceData.isActive = faceDataIsActive;
         owner.agent.alignData.lookWhereYoureGoingData.isActive = lookWhereYoureGoingDataIsActive;
         owner.agent.isMovementStopped = isMovementStopped;
-
-        // -----
-
-        owner.battleCircle.RemoveAttacker(owner.gameObject);
+        owner.agent.agentData.maxAngularAcceleration = maxAngularAcceleration;
     }
 
     public override void DrawGizmos(CyborgMeleeController owner)
@@ -496,7 +510,10 @@ public class Hit : ICyborgMeleeState
 
     public override void Execute(CyborgMeleeController owner)
     {
-        // If animation has finished... Attack
+        Debug.Log("Hit");
+        // TODO: hit must last what animation lasts
+        // if animation has finished...
+        owner.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
         owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.Attack, stateType));
         return;
     }
@@ -504,11 +521,58 @@ public class Hit : ICyborgMeleeState
     public override void Exit(CyborgMeleeController owner)
     {
         Debug.Log("Exit Hit");
-        owner.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
     }
 
     public override void DrawGizmos(CyborgMeleeController owner)
     {
         
+    }
+}
+
+// ----------------------------------------------------------------------------------------------------
+// Die
+// ----------------------------------------------------------------------------------------------------
+
+public class Die : ICyborgMeleeState
+{
+    private StateType prevStateType = StateType.None;
+
+    // -----
+
+    private GameObject target = null;
+
+    // --------------------------------------------------
+
+    public Die(GameObject target, StateType stateType, StateType prevStateType = StateType.None)
+    {
+        this.stateType = stateType;
+        this.prevStateType = prevStateType;
+
+        // -----
+
+        this.target = target;
+    }
+
+    // --------------------------------------------------
+
+    public override void Enter(CyborgMeleeController owner)
+    {
+        Debug.Log("Enter Die");
+    }
+
+    public override void Execute(CyborgMeleeController owner)
+    {
+        Debug.Log("Die");
+        // if animation has finished...
+    }
+
+    public override void Exit(CyborgMeleeController owner)
+    {
+        Debug.Log("Exit Die");
+    }
+
+    public override void DrawGizmos(CyborgMeleeController owner)
+    {
+
     }
 }
