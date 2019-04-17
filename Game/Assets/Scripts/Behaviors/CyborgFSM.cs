@@ -153,14 +153,14 @@ public class GoToGameObject : ICyborgMeleeState
                 {
                     if (owner.character.life <= owner.character.minLife) // Do I have enough life to attack the target?
                     {
-                        owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.Wander, stateType));
+                        owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.Wander, stateType));
                         return;
                     }
 
                     float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
                     if (distanceToTarget <= owner.character.dangerDistance)
                     {
-                        owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.GoToAttackDistance, stateType));
+                        owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.GoToAttackDistance, stateType));
                         return;
                     }
                 }
@@ -170,7 +170,7 @@ public class GoToGameObject : ICyborgMeleeState
                 {
                     if (owner.character.life <= owner.character.minLife) // Do I have enough life to attack the target?
                     {
-                        owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.Wander, stateType));
+                        owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.Wander, stateType));
                         return;
                     }
 
@@ -178,10 +178,11 @@ public class GoToGameObject : ICyborgMeleeState
                     if (distanceToTarget <= owner.character.attackDistance)
                     {
                         // Am I allowed to attack?
+
                         if (owner.battleCircle.AddAttacker(owner.gameObject))
                         {
                             // Yes! Attack
-                            owner.fsm.ChangeState(new Attack(owner.target, StateType.Attack, stateType));
+                            owner.fsm.ChangeState(new Attack(Alita.Call.gameObject, StateType.Attack, stateType));
                             return;
                         }
                         else
@@ -317,7 +318,7 @@ public class Wander : ICyborgMeleeState
                     && owner.character.life > owner.character.minLife) // Do I have enough life to attack the target?
                 {
                     Debug.Log("From Wander to Danger");
-                    owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.GoToDangerDistance, stateType));
+                    owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.GoToDangerDistance, stateType));
                     return;
                 }
 
@@ -327,7 +328,7 @@ public class Wander : ICyborgMeleeState
 
                 if (timer >= strafeTime)
                 {
-                    owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.GoToDangerDistance, stateType));
+                    owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.GoToDangerDistance, stateType));
                     return;
                 }
 
@@ -442,7 +443,7 @@ public class Attack : ICyborgMeleeState
             || owner.character.life <= owner.character.minLife) // Do I have enough life to attack the target?
         {
             owner.battleCircle.RemoveAttacker(owner.gameObject);
-            owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.GoToAttackDistance, stateType));
+            owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.GoToAttackDistance, stateType));
             return;
         }
 
@@ -453,7 +454,7 @@ public class Attack : ICyborgMeleeState
             if (owner.battleCircle.AddSimultaneousAttacker(owner.gameObject))
             {
                 // Yes! Hit
-                owner.fsm.ChangeState(new Attack(owner.target, StateType.Hit, stateType));
+                owner.fsm.ChangeState(new Attack(Alita.Call.gameObject, StateType.Hit, stateType));
                 return;
             }
         }
@@ -514,7 +515,7 @@ public class Hit : ICyborgMeleeState
         // TODO: hit must last what animation lasts
         // if animation has finished...
         owner.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
-        owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.Attack, stateType));
+        owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.Attack, stateType));
         return;
     }
 
@@ -537,20 +538,12 @@ public class Die : ICyborgMeleeState
 {
     private StateType prevStateType = StateType.None;
 
-    // -----
-
-    private GameObject target = null;
-
     // --------------------------------------------------
 
-    public Die(GameObject target, StateType stateType, StateType prevStateType = StateType.None)
+    public Die(StateType stateType, StateType prevStateType = StateType.None)
     {
         this.stateType = stateType;
         this.prevStateType = prevStateType;
-
-        // -----
-
-        this.target = target;
     }
 
     // --------------------------------------------------

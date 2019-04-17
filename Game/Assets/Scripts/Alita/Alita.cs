@@ -27,7 +27,7 @@ class Alita : JellyScript
     public Agent agent;
     public Animator animator;
 
-    GameObject currentTarget
+    public GameObject currentTarget
     {
         get { return currentTarget; }
         set

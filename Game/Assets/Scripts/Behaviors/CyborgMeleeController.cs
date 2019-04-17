@@ -32,7 +32,7 @@ public class CyborgMeleeController : JellyScript
 
     // Character
     public float tmp_attackDistance = 1.0f;
-    public float tmp_dangerDistance = 2.0f;              
+    public float tmp_dangerDistance = 2.0f;
     public float tmp_attackRate = 10.0f;
     public float tmp_attackRateFluctuation = 0.0f;
     public float tmp_trackMaxAngularAcceleration = 90.0f;
@@ -47,12 +47,24 @@ public class CyborgMeleeController : JellyScript
 
     public CyborgMeleeCharacter character = new CyborgMeleeCharacter();
 
-    public GameObject target = null; // Alita
-
     public CyborgMeleeFSM fsm = null;
     public Agent agent = null;
     public LineOfSight lineOfSight = null;
     public BattleCircle battleCircle = null;
+
+    public int Life
+    {
+        get { return character.life; }
+        set
+        {
+            character.life += value;
+            if (character.life <= 0)
+            {
+                character.life = 0;
+                fsm.ChangeState(new Die(StateType.GoToDangerDistance));
+            }
+        }
+    }
 
     public bool drawGizmosCyborgMelee = true;
     #endregion
@@ -70,8 +82,7 @@ public class CyborgMeleeController : JellyScript
         if (tmp_lineOfSight != null)
             lineOfSight = tmp_lineOfSight.GetComponent<LineOfSight>();
 
-        if (target != null)
-            battleCircle = target.GetComponent<BattleCircle>();
+        battleCircle = Alita.Call.gameObject.GetComponent<BattleCircle>();
 
         // Character
         character.attackDistance = tmp_attackDistance;
@@ -86,7 +97,7 @@ public class CyborgMeleeController : JellyScript
     public override void Start()
     {
         //fsm.ChangeState(new Wander(StateType.Wander));  
-        fsm.ChangeState(new GoToGameObject(target, StateType.GoToDangerDistance));
+        fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.GoToDangerDistance));
     }
 
     public override void Update()
