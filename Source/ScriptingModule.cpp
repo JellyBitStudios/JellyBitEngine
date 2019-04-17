@@ -2366,7 +2366,6 @@ bool NavAgentGetPath(MonoObject* monoAgent, MonoArray* position, MonoArray* dest
 			for (int i = 0; i < finalPath.size(); ++i)
 			{
 				math::float3 pos = finalPath[i];
-
 				mono_array_set(*out_path, math::float3, i, pos);
 			}
 
