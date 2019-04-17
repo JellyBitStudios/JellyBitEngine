@@ -40,11 +40,11 @@ update_status ModuleAudio::Update(/*float dt*/)
 		iterator._Ptr->_Myval->Update();
 	}
 
-	std::list<ComponentAudioListener*>::const_iterator iterator2;
-	for (iterator2 = App->audio->audio_listeners.begin(); iterator2 != App->audio->audio_listeners.end(); ++iterator2)
-	{
-		iterator2._Ptr->_Myval->Update();
-	}
+	//std::list<ComponentAudioListener*>::const_iterator iterator2;
+	//for (iterator2 = App->audio->audio_listeners.begin(); iterator2 != App->audio->audio_listeners.end(); ++iterator2)
+	//{
+	//	iterator2._Ptr->_Myval->Update();
+	//}
 
 	return UPDATE_CONTINUE;
 }
