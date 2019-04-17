@@ -2535,6 +2535,13 @@ void UpdateAnimationSpeed(MonoObject* animatorComp, float newSpeed)
 		animator->UpdateAnimationSpeed(newSpeed);
 }
 
+void UpdateAnimationBlendTime(MonoObject* animatorComp, float newBlendTime)
+{
+	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(animatorComp);
+	if (animator)
+		animator->UpdateAnimationSpeed(newBlendTime);
+}
+
 void ParticleEmitterPlay(MonoObject* particleComp)
 {
 	ComponentEmitter* emitter = (ComponentEmitter*)App->scripting->ComponentFrom(particleComp);
