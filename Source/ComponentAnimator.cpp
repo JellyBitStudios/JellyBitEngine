@@ -20,7 +20,7 @@
 
 ComponentAnimator::ComponentAnimator(GameObject* embedded_game_object) :
 	Component(embedded_game_object, ComponentTypes::AnimatorComponent)
-{
+{ 
 
 }
 
@@ -52,7 +52,7 @@ ComponentAnimator::~ComponentAnimator()
 
 uint ComponentAnimator::GetInternalSerializationBytes()
 {
-	return sizeof(uint) + sizeof(uint) + sizeof(uint) + sizeof(uint) * res_animations.size();;
+	return sizeof(uint) + sizeof(uint) + sizeof(uint) + sizeof(uint) * res_animations.size();
 }
 
 void ComponentAnimator::OnInternalSave(char*& cursor)
@@ -180,7 +180,7 @@ bool ComponentAnimator::AnimationFinished()const
 	if (!animation_res)
 		return false;
 
-	return (animation_res->numKeys == GetCurrentAnimationFrame());
+	return animation_res->finished;
 }
 
 bool ComponentAnimator::UpdateAnimationSpeed(float new_speed)
@@ -202,7 +202,6 @@ void ComponentAnimator::Update()
 		if (anim_res) {
 			anim_res->Update();
 		}
-
 	}
 }
 
@@ -237,53 +236,30 @@ int ComponentAnimator::GetCurrentAnimationFrame()const
 
 	float current_animation_time = animator_res->GetCurrentAnimationTime();
 
-	for (uint i = 0u; i < animation_res->numKeys; i++)
+	for (uint j = 0; j < animation_res->boneKeys[0].positions.count; ++j)
 	{
-		if (animation_res->boneKeys[i].positions.count > i)
-		{
-			for (uint j = 0; j < animation_res->boneKeys[i].positions.count; ++j)
-			{
-				if (current_animation_time < animation_res->boneKeys[i].positions.time[j])
-					return i - 1;
-				else if (current_animation_time == animation_res->boneKeys[i].positions.time[j])
-					return i;
-			}
-		}
-
-		if (animation_res->boneKeys[i].scalings.count > i)
-		{
-			for (uint j = 0; j < animation_res->boneKeys[i].scalings.count; ++j)
-			{
-				if (current_animation_time < animation_res->boneKeys[i].scalings.time[j])
-					return i - 1;
-				else if (current_animation_time == animation_res->boneKeys[i].scalings.time[j])
-					return i;
-			}
-		}
-
-		if (animation_res->boneKeys[i].scalings.count > i)
-		{
-			for (uint j = 0; j < animation_res->boneKeys[i].scalings.count; ++j)
-			{
-				if (current_animation_time < animation_res->boneKeys[i].scalings.time[j])
-					return i - 1;
-				else if (current_animation_time == animation_res->boneKeys[i].scalings.time[j])
-					return i;
-			}
-		}
-
-		if (animation_res->boneKeys[i].rotations.count > i)
-		{
-			for (uint j = 0; j < animation_res->boneKeys[i].rotations.count; ++j)
-			{
-				if (current_animation_time < animation_res->boneKeys[i].rotations.time[j])
-					return i - 1;
-				else if (current_animation_time == animation_res->boneKeys[i].rotations.time[j])
-					return i;
-			}
-		}
+		if (current_animation_time < animation_res->boneKeys[0].positions.time[j])
+			return j - 1;
+		else if (current_animation_time == animation_res->boneKeys[0].positions.time[j])
+			return j;
 	}
 
+	for (uint j = 0; j < animation_res->boneKeys[0].scalings.count; ++j)
+	{
+		if (current_animation_time < animation_res->boneKeys[0].scalings.time[j])
+			return j - 1;
+		else if (current_animation_time == animation_res->boneKeys[0].scalings.time[j])
+			return j;
+	}
+
+	for (uint j = 0; j < animation_res->boneKeys[0].rotations.count; ++j)
+	{
+		if (current_animation_time < animation_res->boneKeys[0].rotations.time[j])
+			return j - 1;
+		else if (current_animation_time == animation_res->boneKeys[0].rotations.time[j])
+			return j;
+	}
+	
 	return -1;
 }
 

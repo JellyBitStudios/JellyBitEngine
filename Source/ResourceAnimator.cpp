@@ -533,10 +533,15 @@ bool ResourceAnimator::Update()
 
 	if (current_anim->anim_timer >= current_anim->duration && current_anim->duration > 0.0f)
 	{
-		if (current_anim->loop)
+		if (current_anim->loop) {
+			current_anim->finished = true;
 			current_anim->anim_timer = 0.0f;
+		}
 		else
 			anim_state = AnimationState::STOPPED;
+	}
+	else {
+		current_anim->finished = false;
 	}
 
 	switch (anim_state)
