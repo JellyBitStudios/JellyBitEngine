@@ -23,9 +23,9 @@ class AIdle : AState
 
     public override void ProcessInput(KeyCode code)
     {
-        if (code == KeyCode.KEY_Q)
+        if (code == KeyCode.KEY_Q && Alita.Call.skillset.skQ.Use())
             Alita.Call.SwitchState(Alita.Call.StateSkill_1);
-        else if (code == KeyCode.KEY_SPACE)
+        else if (code == KeyCode.KEY_SPACE && Alita.Call.skillset.skDash.Use())
             Alita.Call.SwitchState(Alita.Call.StateDash);
     }
 
@@ -59,9 +59,9 @@ class AWalking : AState
 
     public override void ProcessInput(KeyCode code)
     {
-        if (code == KeyCode.KEY_Q)
+        if (code == KeyCode.KEY_Q && Alita.Call.skillset.skQ.Use())
             Alita.Call.SwitchState(Alita.Call.StateSkill_1);
-        else if (code == KeyCode.KEY_SPACE)
+        else if (code == KeyCode.KEY_SPACE && Alita.Call.skillset.skDash.Use())
             Alita.Call.SwitchState(Alita.Call.StateDash);
     }
 
@@ -143,7 +143,6 @@ class ADash : AState
 
 class ASkill1 : AState
 {
-
     public override void OnStart()
     {
         Alita.Call.animator.PlayAnimation("anim_special_attack_q_alita_fist");
