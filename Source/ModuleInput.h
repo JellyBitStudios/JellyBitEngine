@@ -16,6 +16,8 @@ enum KEY_STATE
 	KEY_UP
 };
 
+class ResourceTexture;
+
 class ModuleInput : public Module
 {
 public:
@@ -68,7 +70,7 @@ public:
 public:
 	std::string GetCursorTexture() const;
 	void SetCursorTexture(std::string& textureName);
-
+	void SetCursorTexture(ResourceTexture* textureRes);
 private:
 
 	KEY_STATE* keyboard;

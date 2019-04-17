@@ -201,22 +201,6 @@ void ModuleInput::DrawCursor()
 
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
 	{
-		if (CursorTextureID == 0)
-		{
-			//Load the default cursor texture
-			std::vector<Resource*> resources = App->res->GetResourcesByType(ResourceTypes::TextureResource);
-			for (Resource* res : resources)
-			{
-				if (res->GetData().name == "defcursor")
-				{
-					CursorTextureUUID = res->GetUuid();
-					App->res->SetAsUsed(CursorTextureUUID);
-					CursorTextureID = ((ResourceTexture*)res)->GetId();
-					break;
-				}
-			}
-		}
-
 		if (CursorTextureID != 0)
 		{
 			uint windowWidth = App->window->GetWindowWidth();
@@ -301,4 +285,14 @@ void ModuleInput::SetCursorTexture(std::string& textureName)
 		}
 	}
 
+}
+
+void ModuleInput::SetCursorTexture(ResourceTexture* textureRes)
+{
+	if (CursorTextureUUID != 0)
+		App->res->SetAsUnused(CursorTextureUUID);
+
+	CursorTextureUUID = textureRes->GetUuid();
+	App->res->SetAsUsed(CursorTextureUUID);
+	CursorTextureID = textureRes->GetId();
 }
