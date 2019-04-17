@@ -1402,9 +1402,9 @@ MonoObject* Vector3RandomInsideSphere()
 	MonoClass* vector3class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
 	MonoObject* ret = mono_object_new(App->scripting->domain, vector3class);
 
-	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "_x"), &randomPoint.x);
-	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "_y"), &randomPoint.y);
-	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "_z"), &randomPoint.z);
+	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "x"), &randomPoint.x);
+	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "y"), &randomPoint.y);
+	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "z"), &randomPoint.z);
 
 	return ret;
 }
@@ -2163,13 +2163,13 @@ MonoObject* ScreenToRay(MonoArray* screenCoordinates, MonoObject* cameraComponen
 	MonoObject* positionObj; mono_field_get_value(ret, positionField, &positionObj);
 	MonoObject* directionObj; mono_field_get_value(ret, directionField, &directionObj);
 
-	mono_field_set_value(positionObj, mono_class_get_field_from_name(mono_object_get_class(positionObj), "_x"), &ray.pos.x);
-	mono_field_set_value(positionObj, mono_class_get_field_from_name(mono_object_get_class(positionObj), "_y"), &ray.pos.y);
-	mono_field_set_value(positionObj, mono_class_get_field_from_name(mono_object_get_class(positionObj), "_z"), &ray.pos.z);
+	mono_field_set_value(positionObj, mono_class_get_field_from_name(mono_object_get_class(positionObj), "x"), &ray.pos.x);
+	mono_field_set_value(positionObj, mono_class_get_field_from_name(mono_object_get_class(positionObj), "y"), &ray.pos.y);
+	mono_field_set_value(positionObj, mono_class_get_field_from_name(mono_object_get_class(positionObj), "z"), &ray.pos.z);
 
-	mono_field_set_value(directionObj, mono_class_get_field_from_name(mono_object_get_class(directionObj), "_x"), &ray.dir.x);
-	mono_field_set_value(directionObj, mono_class_get_field_from_name(mono_object_get_class(directionObj), "_y"), &ray.dir.y);
-	mono_field_set_value(directionObj, mono_class_get_field_from_name(mono_object_get_class(directionObj), "_z"), &ray.dir.z);
+	mono_field_set_value(directionObj, mono_class_get_field_from_name(mono_object_get_class(directionObj), "x"), &ray.dir.x);
+	mono_field_set_value(directionObj, mono_class_get_field_from_name(mono_object_get_class(directionObj), "y"), &ray.dir.y);
+	mono_field_set_value(directionObj, mono_class_get_field_from_name(mono_object_get_class(directionObj), "z"), &ray.dir.z);
 
 	return ret;
 }
@@ -2375,18 +2375,18 @@ bool NavAgentGetPath(MonoObject* monoAgent, MonoArray* position, MonoArray* dest
 			MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
 			*out_path = mono_array_new(App->scripting->domain, vector3Class, finalPath.size());
 
-			MonoClassField* _xField = mono_class_get_field_from_name(vector3Class, "_x");
-			MonoClassField* _yField = mono_class_get_field_from_name(vector3Class, "_y");
-			MonoClassField* _zField = mono_class_get_field_from_name(vector3Class, "_z");
+			MonoClassField* xField = mono_class_get_field_from_name(vector3Class, "x");
+			MonoClassField* yField = mono_class_get_field_from_name(vector3Class, "y");
+			MonoClassField* zField = mono_class_get_field_from_name(vector3Class, "z");
 
 			for (int i = 0; i < finalPath.size(); ++i)
 			{
 				math::float3 pos = finalPath[i];
 
 				MonoObject* posCSharp = mono_object_new(App->scripting->domain, vector3Class);
-				mono_field_set_value(posCSharp, _xField, &pos.x);
-				mono_field_set_value(posCSharp, _yField, &pos.y);
-				mono_field_set_value(posCSharp, _zField, &pos.z);
+				mono_field_set_value(posCSharp, xField, &pos.x);
+				mono_field_set_value(posCSharp, yField, &pos.y);
+				mono_field_set_value(posCSharp, zField, &pos.z);
 
 				mono_array_setref(*out_path, i, posCSharp);
 			}
@@ -2411,18 +2411,18 @@ bool NavigationGetPath(MonoArray* origin, MonoArray* destination, MonoArray** ou
 		MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
 		*out_path = mono_array_new(App->scripting->domain, vector3Class, finalPath.size());
 
-		MonoClassField* _xField = mono_class_get_field_from_name(vector3Class, "_x");
-		MonoClassField* _yField = mono_class_get_field_from_name(vector3Class, "_y");
-		MonoClassField* _zField = mono_class_get_field_from_name(vector3Class, "_z");
+		MonoClassField* xField = mono_class_get_field_from_name(vector3Class, "x");
+		MonoClassField* yField = mono_class_get_field_from_name(vector3Class, "y");
+		MonoClassField* zField = mono_class_get_field_from_name(vector3Class, "z");
 
 		for (int i = 0; i < finalPath.size(); ++i)
 		{
 			math::float3 pos = finalPath[i];
 
 			MonoObject* posCSharp = mono_object_new(App->scripting->domain, vector3Class);
-			mono_field_set_value(posCSharp, _xField, &pos.x);
-			mono_field_set_value(posCSharp, _yField, &pos.y);
-			mono_field_set_value(posCSharp, _zField, &pos.z);
+			mono_field_set_value(posCSharp, xField, &pos.x);
+			mono_field_set_value(posCSharp, yField, &pos.y);
+			mono_field_set_value(posCSharp, zField, &pos.z);
 
 			mono_array_setref(*out_path, i, posCSharp);
 		}
@@ -3457,9 +3457,9 @@ bool Raycast(MonoArray* origin, MonoArray* direction, MonoObject** hitInfo, floa
 		mono_runtime_object_init(pointObj);
 
 		math::float3 point = hitInfocpp.GetPoint();
-		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "_x"), &point.x);
-		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "_y"), &point.y);
-		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "_z"), &point.z);
+		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "x"), &point.x);
+		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "y"), &point.y);
+		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "z"), &point.z);
 
 		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "point"), pointObj);
 
@@ -3468,9 +3468,9 @@ bool Raycast(MonoArray* origin, MonoArray* direction, MonoObject** hitInfo, floa
 		mono_runtime_object_init(normalObj);
 
 		math::float3 normal = hitInfocpp.GetNormal();
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "_x"), &normal.x);
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "_y"), &normal.y);
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "_z"), &normal.z);
+		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "x"), &normal.x);
+		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "y"), &normal.y);
+		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "z"), &normal.z);
 
 		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "normal"), normalObj);
 
