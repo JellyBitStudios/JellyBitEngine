@@ -28,7 +28,6 @@ public class PathManager
 
     public bool GetPath(Vector3 origin, Vector3 destination)
     {
-        Debug.Log("NEW PATH");
         hasPath = Navigation.GetPath(origin, destination, out path);
         hasPath = hasPath && path.Length > 1;
 
@@ -48,7 +47,6 @@ public class PathManager
 
     public void ClearPath()
     {
-        Debug.Log("CLEAR PATH");
         path = null;
         hasPath = false;
         destination = Vector3.zero;
@@ -71,17 +69,7 @@ public class PathManager
     public Vector3 GetNextPosition(Agent agent)
     {
         if (hasPath)
-        {
-            Debug.Log("HAS PATH");
-            Debug.Log("index: " + index);
-            Debug.Log("path length" + path.Length);
             return path[index];
-        }
-        else
-        {
-            Debug.Log("NOT HAS PATH");
-            Debug.Log("index: " + index);
-        }
 
         return agent.transform.position;
     }
@@ -90,7 +78,8 @@ public class PathManager
     {
         if (hasPath)
         {
-            Vector3 diff = path[index] - agent.transform.position;
+            //Vector3 diff = path[index] - agent.transform.position;
+            Vector3 diff = Destination - agent.transform.position;
             return diff.magnitude;
         }
 

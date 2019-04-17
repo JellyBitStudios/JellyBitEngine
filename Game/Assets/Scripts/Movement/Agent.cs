@@ -88,7 +88,7 @@ public class Agent : JellyScript
     }
     public Vector3 NextPosition
     {
-        get { return pathManager.GetNextPosition(this); }
+        get { return /*pathManager.GetNextPosition(this)*/pathManager.Destination; }
     }
     public bool HasArrived
     {
@@ -300,7 +300,7 @@ public class Agent : JellyScript
             return;
 
         Debug.DrawLine(transform.position, transform.position + Quaternion.Rotate(Vector3.up, angularVelocity) * transform.forward * 3.0f, Color.Black);
-        Debug.DrawLine(transform.position, transform.position + velocity.normalized() * 3.0f, Color.White);
+        Debug.DrawLine(transform.position, transform.position + velocity, Color.White);
 
         if (seekData.isActive)
             SteeringSeek.DrawGizmos(this);
