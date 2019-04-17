@@ -53,7 +53,7 @@ public class LineOfSight : JellyScript
 
     private bool IsInLineOfSight()
     {
-        RaycastHit hitInfo = new RaycastHit();
+        RaycastHit hitInfo;
         Ray ray = new Ray();
         ray.position = transform.position;
         ray.direction = target.transform.position - transform.position;

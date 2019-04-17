@@ -1,20 +1,14 @@
+#ifndef __CURRENT_SELECTION_H__
+#define __CURRENT_SELECTION_H__
+
 #ifndef GAMEMODE
 
-#include "Application.h"
-#include "ModuleCameraEditor.h"
-#include "GameObject.h"
-#include "ComponentTransform.h"
-#include "SceneImporter.h"
-#include "MaterialImporter.h"
-#include "ResourceMesh.h"
-#include "PanelInspector.h"
-#include "ModuleGui.h"
-#include "ModuleUI.h"
-#include "Resource.h"
-
-#include <assert.h>
+#include <list>
 
 class Resource;
+class GameObject;
+struct ResourceMeshImportSettings;
+struct FontImportSettings;
 
 struct CurrentSelection
 {
@@ -25,127 +19,38 @@ private:
 	SelectedType type = SelectedType::null;
 
 public:
-	void* Get() const
-	{
-		return cur;
-	}
+	void* Get() const;
 
-	SelectedType GetType() const
-	{
-		return type;
-	}
+	SelectedType GetType() const;
 
-	CurrentSelection& operator=(SelectedType newSelection)
-	{
-		assert((newSelection == SelectedType::null || newSelection == SelectedType::scene) && "Invalid operation");
-		type = newSelection;
-		cur = nullptr;
-		return *this;
-	}
+	CurrentSelection& operator=(SelectedType newSelection);
+	CurrentSelection& operator=(int null);
+	bool operator==(const SelectedType rhs);
+	bool operator==(int null);
+	bool operator!=(const SelectedType rhs);
+	bool operator!=(int null);
 
-	CurrentSelection& operator=(int null)
-	{
-		assert(null == NULL && "Invalid operation");
-		type = SelectedType::null;
-		cur = nullptr;
-		return *this;
-	}
-
-	bool operator==(const SelectedType rhs)
-	{
-		return type == rhs;
-	}
-
-	bool operator==(int null)
-	{
-		assert(null == NULL && "Invalid comparison");
-		return cur == nullptr;
-	}
-
-	bool operator!=(const SelectedType rhs)
-	{
-		return type != rhs;
-	}
-
-	bool operator!=(int null)
-	{
-		assert(null == NULL && "Invalid comparison");
-		return cur != nullptr;
-	}
 
 	//-----------// GAMEOBJECTS //----------//
+	CurrentSelection& operator=(GameObject* newSelection);
+	CurrentSelection & operator+=(GameObject * newSelection);
+	CurrentSelection & operator-=(GameObject * newSelection);
+	bool operator==(const GameObject* rhs);
+	GameObject* GetCurrGameObject();
 
-	CurrentSelection& operator=(GameObject* newSelection)
-	{
-		assert(newSelection != nullptr && "Non valid setter. Set to SelectedType::null instead");
-		cur = (void*)newSelection;
-		type = SelectedType::gameObject;
-
-#ifndef GAMEMODE
-		// New game object selected. Update the camera reference
-
-		if(newSelection->transform)
-			App->camera->SetReference(newSelection->transform->GetPosition());
-#endif
-
-		return *this;
-	}
-
-	bool operator==(const GameObject* rhs)
-	{
-		return cur == rhs;
-	}
-
-	GameObject* GetCurrGameObject()
-	{
-		if (type == SelectedType::gameObject)
-			return (GameObject*)cur;
-		else
-			return nullptr;
-	}
 	//-----------// RESOURCES //----------//
+	CurrentSelection& operator=(const Resource* newSelection);
+	bool operator==(const Resource* rhs);
 
-	CurrentSelection& operator=(const Resource* newSelection)
-	{
-		assert(newSelection != nullptr && "Non valid setter. Set to SelectedType::null instead");
-		cur = (void*)newSelection;
-		type = SelectedType::resource;
-
-		if (newSelection->GetType() == ResourceTypes::TextureResource)
-			App->gui->panelInspector->SetTextureImportSettings(((ResourceTexture*)newSelection)->GetSpecificData().textureImportSettings);
-		
-		return *this;
-	}
-
-	bool operator==(const Resource* rhs)
-	{
-		return cur == rhs;
-	}
 
 	//Mesh Import Settings ----------------------------------
-	CurrentSelection& operator=(ResourceMeshImportSettings& newSelection)
-	{
-		cur = (void*)&newSelection;
-		type = SelectedType::meshImportSettings;
-
-		App->gui->panelInspector->SetMeshImportSettings(newSelection);
-
-		return *this;
-	}
-	//-------------------------------------------------------
+	CurrentSelection& operator=(ResourceMeshImportSettings& newSelection);
 
 	//Font Import Settings ----------------------------------
-	CurrentSelection& operator=(FontImportSettings& newSelection)
-	{
-		FontImportSettings* selection = App->gui->panelInspector->SetFontImportSettings(newSelection);
+	CurrentSelection& operator=(FontImportSettings& newSelection);
 
-		cur = (void*)selection;
-		type = SelectedType::fontImportSettings;
-
-		return *this;
-	}
-	//-------------------------------------------------------
 	// Add operators in case of new kinds of selection :)
 };
 
+#endif
 #endif

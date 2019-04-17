@@ -92,13 +92,17 @@ update_status ModuleScene::Update()
 		}
 	}
 
-	if (selectedObject == CurrentSelection::SelectedType::gameObject)
+	if (selectedObject.GetType() == CurrentSelection::SelectedType::gameObject)
 	{
-		GameObject* currentGameObject = (GameObject*)selectedObject.Get();
-		if(!currentGameObject->cmp_canvas && currentGameObject->transform)
-			OnGizmos(currentGameObject);
+		if (multipleSelection.size() == 1)
+		{
+			GameObject* currentGameObject = (GameObject*)selectedObject.Get();
+			if (!currentGameObject->cmp_canvas && currentGameObject->transform)
+				OnGizmos(currentGameObject);
+		}
+		else
+			OnGizmosList();
 	}
-
 	if(App->IsEditor() && !App->gui->WantTextInput())
 		if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RCTRL) == KEY_REPEAT)
 		{
@@ -241,6 +245,76 @@ void ModuleScene::OnGizmos(GameObject* gameObject)
 	}
 }
 
+void ModuleScene::OnGizmosList()
+{
+	bool canContinue = true;
+	math::float3 globalPosition = math::float3::zero;
+	math::float3 globalSize = math::float3::zero;
+
+	for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+	{
+		GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+		if (go && go->transform)
+		{
+			globalPosition += go->transform->GetGlobalMatrix().TranslatePart();
+			globalSize += go->transform->GetGlobalMatrix().GetScale();
+		}
+		else
+		{
+			canContinue = false;
+			break;
+		}
+	}
+	if (canContinue)
+	{
+		globalPosition /= App->scene->multipleSelection.size();
+		globalSize /= App->scene->multipleSelection.size();
+		ImGuiViewport* vport = ImGui::GetMainViewport();
+		ImGuizmo::SetRect(vport->Pos.x, vport->Pos.y, vport->Size.x, vport->Size.y);
+
+		math::float4x4 viewMatrix = App->renderer3D->GetCurrentCamera()->GetOpenGLViewMatrix();
+		math::float4x4 projectionMatrix = App->renderer3D->GetCurrentCamera()->GetOpenGLProjectionMatrix();
+		math::float4x4 transformMatrix = math::float4x4::FromTRS(globalPosition, math::Quat::identity, globalSize);
+		transformMatrix = transformMatrix.Transposed();
+
+		ImGuizmo::MODE mode = currentImGuizmoMode;
+		if (currentImGuizmoOperation == ImGuizmo::OPERATION::SCALE && mode != ImGuizmo::MODE::LOCAL)
+			mode = ImGuizmo::MODE::LOCAL;
+
+		ImGuizmo::Manipulate(
+			viewMatrix.ptr(), projectionMatrix.ptr(),
+			currentImGuizmoOperation, mode, transformMatrix.ptr()
+		);
+
+		if (ImGuizmo::IsUsing())
+		{
+			transformMatrix = transformMatrix.Transposed();
+			math::float3 transformPos = transformMatrix.TranslatePart();
+			math::Quat resformQuat = transformMatrix.RotatePart().ToQuat();
+			math::float3 transformScale = transformMatrix.GetScale();
+			for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			{
+				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+				if (go && go->CheckAllParentsInSelection(App->scene->multipleSelection))
+				{
+					math::float3 finalPos;
+					math::Quat finalRot;
+					math::float3 finalScale;
+
+					go->transform->GetGlobalMatrix().Decompose(finalPos, finalRot, finalScale);
+
+					finalPos += transformPos - globalPosition;
+					finalRot = resformQuat * finalRot;
+					finalScale += transformScale - globalSize;
+
+					math::float4x4 realTransform = math::float4x4::FromTRS(finalPos, finalRot, finalScale);
+
+					go->transform->SetMatrixFromGlobal(realTransform);
+				}
+			}
+		}
+	}
+}
 
 void ModuleScene::SaveLastTransform(math::float4x4 matrix)
 {

@@ -814,6 +814,7 @@
     <ClCompile Include="ComponentRevoluteJoint.cpp" />
     <ClCompile Include="ComponentSphericalJoint.cpp" />
     <ClCompile Include="ComponentTrail.cpp" />
+    <ClCompile Include="CurrentSelection.cpp" />
     <ClCompile Include="GLCache.cpp" />
     <ClCompile Include="Lights.cpp" />
     <ClCompile Include="ModuleFBOManager.cpp" />

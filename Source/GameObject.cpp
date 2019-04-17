@@ -332,9 +332,22 @@ void GameObject::ToggleIsActive()
 	isActive ? OnEnable() : OnDisable();
 }
 
+void GameObject::SetIsActive(bool activeGO)
+{
+	isActive = activeGO;
+
+	isActive ? OnEnable() : OnDisable();
+}
+
 void GameObject::ToggleIsStatic()
 {
 	isStatic = !isStatic;
+	App->GOs->RecalculateVector(this);
+}
+
+void GameObject::SetIsStatic(bool staticGO)
+{
+	isStatic = staticGO;
 	App->GOs->RecalculateVector(this);
 }
 
@@ -802,6 +815,19 @@ void GameObject::GetChildrenVector(std::vector<GameObject*>& go, bool thisGo)
 
 	for (int i = 0; i < children.size(); i++)
 		children[i]->GetChildrenVector(go);
+}
+
+bool GameObject::CheckAllParentsInSelection(std::list<uint> slectionGO) const
+{
+	bool ret = true;
+	if (std::find(slectionGO.begin(), slectionGO.end(), parent->GetUUID()) == slectionGO.end())
+	{
+		if (parent->GetParent())
+			ret = parent->CheckAllParentsInSelection(slectionGO);
+	}
+	else
+		ret = false;
+	return ret;
 }
 
 uint GameObject::GetSerializationBytes() const

@@ -195,10 +195,8 @@ void ModuleInput::DrawCursor()
 #ifndef GAMEMODE
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY && CursorTextureID != 0u)
 		ImGui::SetMouseCursor(ImGuiMouseCursor_::ImGuiMouseCursor_None);
-	else
-		ImGui::SetMouseCursor(ImGuiMouseCursor_::ImGuiMouseCursor_Arrow);
 #else
-	SDL_SetCursor(SDL_DISABLE);
+	SDL_ShowCursor(SDL_DISABLE);
 #endif
 
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
@@ -225,18 +223,17 @@ void ModuleInput::DrawCursor()
 			uint windowHeight = App->window->GetWindowHeight();
 			
 			glDisable(GL_LIGHTING);
-
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+			
 			glMatrixMode(GL_PROJECTION);
 			glPushMatrix();
 			glLoadIdentity();
 			glOrtho(0.0f, windowWidth, windowHeight, 0.0f, -1.0f, 1.0f);
+
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
 			glLoadIdentity();
-
 			glTranslatef(mouse_x, mouse_y, -0.5);
 
 			App->glCache->SwitchShader(0);
@@ -261,16 +258,17 @@ void ModuleInput::DrawCursor()
 			glVertex3f(0.0f, 0.0f, 0.0f);
 			glEnd();
 
-			
 			glMatrixMode(GL_MODELVIEW);
 			glPopMatrix();
 			glMatrixMode(GL_PROJECTION);
 			glPopMatrix();
 
 			glBindTexture(GL_TEXTURE_2D, 0);
-
+			
 			glEnable(GL_LIGHTING);
 			glDisable(GL_BLEND);
+
+			glMatrixMode(GL_MODELVIEW);
 		}
 	}
 }

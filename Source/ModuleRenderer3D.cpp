@@ -304,9 +304,12 @@ update_status ModuleRenderer3D::PostUpdate()
 
 		if (drawCurrentGO)
 		{
-			GameObject* curr = App->scene->selectedObject.GetCurrGameObject();
-			if (curr && curr->boundingBox.IsFinite())
-				App->debugDrawer->DebugDraw(curr->boundingBox, DeepPink);
+			for (std::list<uint>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			{
+				GameObject* curr = App->GOs->GetGameObjectByUID(*iter);
+				if (curr && curr->boundingBox.IsFinite())
+					App->debugDrawer->DebugDraw(curr->boundingBox, DeepPink);
+			}
 		}
 
 		if (drawBoundingBoxes) // boundingBoxesColor = Yellow
@@ -355,10 +358,11 @@ update_status ModuleRenderer3D::PostUpdate()
 	// 3. Editor
 	App->gui->Draw();
 
-	//App->input->DrawCursor();
 #else
 	App->ui->DrawUI();
 #endif // GAME
+
+	App->input->DrawCursor();
 
 	// 4. Swap buffers
 	SDL_GL_MakeCurrent(App->window->window, context);
@@ -739,7 +743,17 @@ void ModuleRenderer3D::FrustumCulling(std::vector<GameObject*>& statics, std::ve
 	App->GOs->GetGameobjects(gameObjects);
 
 	// Static objects
-	App->scene->quadtree.CollectIntersections(statics, currentCamera->frustum);
+	std::vector<GameObject*> staticsGOs;
+	App->scene->quadtree.CollectIntersections(staticsGOs, currentCamera->frustum);
+
+	for (uint i = 0; i < staticsGOs.size(); ++i)
+	{
+		if (staticsGOs[i]->boundingBox.IsFinite())
+		{
+			if (currentCamera->frustum.Intersects(staticsGOs[i]->boundingBox))
+				statics.push_back(staticsGOs[i]);
+		}
+	}
 
 	// Dynamic objects
 	std::vector<GameObject*> dynamicGameObjects;

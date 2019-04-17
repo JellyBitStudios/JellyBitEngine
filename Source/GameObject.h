@@ -12,6 +12,7 @@
 #include <mono/metadata/object.h>
 
 #include <vector>
+#include <list>
 
 class Component;
 class ResourcePrefab;
@@ -35,7 +36,9 @@ public:
 	GameObject* GetParent() const;
 	uint GetParentUUID() const;
 	void ToggleIsActive();
+	void SetIsActive(bool activeGO);
 	void ToggleIsStatic();
+	void SetIsStatic(bool staticGO);
 	void ToggleChildrenAndThisStatic(bool toStatic);
 	void ToggleChildrenAndThisWalkable(bool walkable);
 	bool IsActive() const;
@@ -70,6 +73,7 @@ public:
 	void ReorderComponents(Component* source, Component* target);
 
 	void GetChildrenVector(std::vector<GameObject*>& go, bool thisGo = true);
+	bool CheckAllParentsInSelection(std::list<uint> slectionGO) const;
 	uint GetSerializationBytes() const;
 	void OnSave(char*& cursor) const;
 	void OnLoad(char*& cursor, bool includeInModules = true);

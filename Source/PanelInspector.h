@@ -9,6 +9,7 @@
 #include "Panel.h"
 
 class Component;
+enum ComponentTypes;
 
 class PanelInspector : public Panel
 {
@@ -26,6 +27,9 @@ public:
 private:
 
 	void ShowGameObjectInspector() const;
+	bool CheckIsComponent(ComponentTypes type, bool allHaveIt = false) const;
+	bool CheckIsComponentCollider() const;
+	void AddComponentInGroup(ComponentTypes type) const;
 	void DragnDropSeparatorTarget(Component* target) const;
 
 	void ShowMeshResourceInspector() const;

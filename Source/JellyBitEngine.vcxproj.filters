@@ -2693,6 +2693,9 @@
     <ClCompile Include="PanelUI.cpp">
       <Filter>Sources\Modules\Panels</Filter>
     </ClCompile>
+    <ClCompile Include="CurrentSelection.cpp">
+      <Filter>Sources\Containers</Filter>
+    </ClCompile>
     <ClCompile Include="GLCache.cpp">
       <Filter>Sources\Helpers</Filter>
     </ClCompile>
