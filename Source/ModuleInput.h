@@ -80,6 +80,7 @@ private:
 	int mouse_y_motion;
 	//int mouse_z_motion;
 
+	//Cursor Settings
 	uint CursorTextureID = 0u;
 	uint CursorTextureUUID = 0u;
 	float cursorSize = 17.5f;

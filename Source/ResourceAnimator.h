@@ -83,6 +83,7 @@ public:
 		int numKeys = 0;
 		BoneTransformation* boneKeys = nullptr;
 		uint animation_uuid;
+		bool finished = false;
 	};
 
 	std::vector<Animation*> animations;
@@ -115,8 +116,6 @@ public:
 
 private:
 
-	Animation* current_anim = nullptr;
-	Animation* last_anim = nullptr;
 	bool stop_all = false;
 
 	float blend_timer = 0.0f;
@@ -124,6 +123,8 @@ private:
 	std::vector<ResourceAnimation*> available_animations;
 
 public:
+	Animation* current_anim = nullptr;
+	Animation* last_anim = nullptr;
 	AnimationState anim_state = AnimationState::PLAYING;
 };
 
