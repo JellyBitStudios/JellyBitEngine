@@ -24,6 +24,7 @@ class Alita : JellyScript
     public AState lastState;
 
     public AlitaCharacter character = new AlitaCharacter();
+    public Skillset skillset = new Skillset();
     public Agent agent;
     public Animator animator;
 
@@ -48,6 +49,8 @@ class Alita : JellyScript
 
     public override void Update()
     {
+        skillset.UpdateTick();
+
         if (!Player.Call.gameStopped)
             m_state.OnExecute();
     }

@@ -32,6 +32,11 @@ public class LineOfSight : JellyScript
         sphereCollider = gameObject.GetComponent<SphereCollider>();
     }
 
+    public override void Start()
+    {
+        UpdateSight();
+    }
+
     private void UpdateSight()
     {
         switch (sightSensitivity)
