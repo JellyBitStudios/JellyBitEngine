@@ -395,9 +395,9 @@ void PanelInspector::ShowGameObjectInspector() const
 					}
 
 					CONSOLE_LOG(LogTypes::Normal, "New Script Created: %s", scriptNames[i].data());
-					ComponentScript* script = App->scripting->CreateScriptComponent(scriptNames[i], res);
 					for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 					{
+						ComponentScript* script = App->scripting->CreateScriptComponent(scriptNames[i], res);
 						GameObject* go = App->GOs->GetGameObjectByUID(*iter);
 						if (go)
 						{
@@ -442,9 +442,9 @@ void PanelInspector::ShowGameObjectInspector() const
 				}
 
 				CONSOLE_LOG(LogTypes::Normal, "New Script Created: %s", scriptName.data());
-				ComponentScript* script = App->scripting->CreateScriptComponent(scriptName, res);
 				for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 				{
+					ComponentScript* script = App->scripting->CreateScriptComponent(scriptName, res);
 					GameObject* go = App->GOs->GetGameObjectByUID(*iter);
 					if (go)
 					{

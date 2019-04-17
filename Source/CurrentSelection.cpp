@@ -1,3 +1,4 @@
+#ifndef GAMEMODE
 #include "CurrentSelection.h"
 #include "Application.h"
 #include "ModuleScene.h"
@@ -159,3 +160,4 @@ CurrentSelection & CurrentSelection::operator=(FontImportSettings & newSelection
 
 	return *this;
 }
+#endif
