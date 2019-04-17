@@ -1880,14 +1880,14 @@ void SetGlobalScale(MonoObject* monoObject, MonoArray* globalScale)
 	gameObject->transform->SetMatrixFromGlobal(newGlobal);
 }
 
-MonoObject* GetComponentByType(MonoObject* monoObject, MonoType* type)
+MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 {
 	if (!monoObject || !type)
 		return nullptr;
 
 	MonoObject* monoComp = nullptr;
 
-	std::string className = mono_class_get_name(mono_type_get_class(type));
+	std::string className = mono_class_get_name(mono_type_get_class(mono_reflection_type_get_type(type)));
 
 	if (className == "NavMeshAgent")
 	{
