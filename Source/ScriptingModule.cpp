@@ -1400,11 +1400,8 @@ MonoObject* Vector3RandomInsideSphere()
 	math::float3 randomPoint = math::float3::RandomSphere(App->randomMathLCG, math::float3(0, 0, 0), 1);
 
 	MonoClass* vector3class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
-	MonoObject* ret = mono_object_new(App->scripting->domain, vector3class);
-
-	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "x"), &randomPoint.x);
-	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "y"), &randomPoint.y);
-	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "z"), &randomPoint.z);
+	
+	MonoObject* ret = mono_value_box(App->scripting->domain, vector3class, &randomPoint);
 
 	return ret;
 }
@@ -1883,14 +1880,14 @@ void SetGlobalScale(MonoObject* monoObject, MonoArray* globalScale)
 	gameObject->transform->SetMatrixFromGlobal(newGlobal);
 }
 
-MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
+MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 {
 	if (!monoObject || !type)
 		return nullptr;
 
 	MonoObject* monoComp = nullptr;
 
-	std::string className = mono_class_get_name(mono_object_get_class(type));
+	std::string className = mono_class_get_name(mono_type_get_class(mono_reflection_type_get_type(type)));
 
 	if (className == "NavMeshAgent")
 	{
@@ -2159,17 +2156,8 @@ MonoObject* ScreenToRay(MonoArray* screenCoordinates, MonoObject* cameraComponen
 	//SetUp the created Ray fields
 	MonoClassField* positionField = mono_class_get_field_from_name(RayClass, "position");
 	MonoClassField* directionField = mono_class_get_field_from_name(RayClass, "direction");
-	
-	MonoObject* positionObj; mono_field_get_value(ret, positionField, &positionObj);
-	MonoObject* directionObj; mono_field_get_value(ret, directionField, &directionObj);
-
-	mono_field_set_value(positionObj, mono_class_get_field_from_name(mono_object_get_class(positionObj), "x"), &ray.pos.x);
-	mono_field_set_value(positionObj, mono_class_get_field_from_name(mono_object_get_class(positionObj), "y"), &ray.pos.y);
-	mono_field_set_value(positionObj, mono_class_get_field_from_name(mono_object_get_class(positionObj), "z"), &ray.pos.z);
-
-	mono_field_set_value(directionObj, mono_class_get_field_from_name(mono_object_get_class(directionObj), "x"), &ray.dir.x);
-	mono_field_set_value(directionObj, mono_class_get_field_from_name(mono_object_get_class(directionObj), "y"), &ray.dir.y);
-	mono_field_set_value(directionObj, mono_class_get_field_from_name(mono_object_get_class(directionObj), "z"), &ray.dir.z);
+	mono_field_set_value(ret, positionField, &ray.pos);
+	mono_field_set_value(ret, directionField, &ray.dir);
 
 	return ret;
 }
@@ -2375,20 +2363,11 @@ bool NavAgentGetPath(MonoObject* monoAgent, MonoArray* position, MonoArray* dest
 			MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
 			*out_path = mono_array_new(App->scripting->domain, vector3Class, finalPath.size());
 
-			MonoClassField* xField = mono_class_get_field_from_name(vector3Class, "x");
-			MonoClassField* yField = mono_class_get_field_from_name(vector3Class, "y");
-			MonoClassField* zField = mono_class_get_field_from_name(vector3Class, "z");
-
 			for (int i = 0; i < finalPath.size(); ++i)
 			{
 				math::float3 pos = finalPath[i];
 
-				MonoObject* posCSharp = mono_object_new(App->scripting->domain, vector3Class);
-				mono_field_set_value(posCSharp, xField, &pos.x);
-				mono_field_set_value(posCSharp, yField, &pos.y);
-				mono_field_set_value(posCSharp, zField, &pos.z);
-
-				mono_array_setref(*out_path, i, posCSharp);
+				mono_array_set(*out_path, math::float3, i, pos);
 			}
 
 			return true;
@@ -2411,20 +2390,11 @@ bool NavigationGetPath(MonoArray* origin, MonoArray* destination, MonoArray** ou
 		MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
 		*out_path = mono_array_new(App->scripting->domain, vector3Class, finalPath.size());
 
-		MonoClassField* xField = mono_class_get_field_from_name(vector3Class, "x");
-		MonoClassField* yField = mono_class_get_field_from_name(vector3Class, "y");
-		MonoClassField* zField = mono_class_get_field_from_name(vector3Class, "z");
-
 		for (int i = 0; i < finalPath.size(); ++i)
 		{
 			math::float3 pos = finalPath[i];
 
-			MonoObject* posCSharp = mono_object_new(App->scripting->domain, vector3Class);
-			mono_field_set_value(posCSharp, xField, &pos.x);
-			mono_field_set_value(posCSharp, yField, &pos.y);
-			mono_field_set_value(posCSharp, zField, &pos.z);
-
-			mono_array_setref(*out_path, i, posCSharp);
+			mono_array_set(*out_path, math::float3, i, pos);
 		}
 
 		return true;
@@ -2563,6 +2533,13 @@ void UpdateAnimationSpeed(MonoObject* animatorComp, float newSpeed)
 	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(animatorComp);
 	if(animator)
 		animator->UpdateAnimationSpeed(newSpeed);
+}
+
+void UpdateAnimationBlendTime(MonoObject* animatorComp, float newBlendTime)
+{
+	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(animatorComp);
+	if (animator)
+		animator->UpdateAnimationSpeed(newBlendTime);
 }
 
 void ParticleEmitterPlay(MonoObject* particleComp)
@@ -3452,27 +3429,12 @@ bool Raycast(MonoArray* origin, MonoArray* direction, MonoObject** hitInfo, floa
 		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "collider"), App->scripting->MonoComponentFrom((Component*)hitInfocpp.GetCollider()));
 
 		//Setup the point field
-		MonoClass* Vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
-		MonoObject* pointObj = mono_object_new(App->scripting->domain, Vector3Class);
-		mono_runtime_object_init(pointObj);
-
 		math::float3 point = hitInfocpp.GetPoint();
-		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "x"), &point.x);
-		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "y"), &point.y);
-		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "z"), &point.z);
-
-		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "point"), pointObj);
+		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "point"), &point);
 
 		//Setup the normal field
-		MonoObject* normalObj = mono_object_new(App->scripting->domain, Vector3Class);
-		mono_runtime_object_init(normalObj);
-
 		math::float3 normal = hitInfocpp.GetNormal();
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "x"), &normal.x);
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "y"), &normal.y);
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "z"), &normal.z);
-
-		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "normal"), normalObj);
+		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "normal"), &normal);
 
 		//Setup the texCoord field
 		MonoClass* Vector2Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector2");
@@ -3480,8 +3442,8 @@ bool Raycast(MonoArray* origin, MonoArray* direction, MonoObject** hitInfo, floa
 		mono_runtime_object_init(texCoordObj);
 
 		math::float2 texCoord = hitInfocpp.GetTexCoord();
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector2Class, "x"), &texCoord.x);
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector2Class, "y"), &texCoord.y);
+		mono_field_set_value(texCoordObj, mono_class_get_field_from_name(Vector2Class, "x"), &texCoord.x);
+		mono_field_set_value(texCoordObj, mono_class_get_field_from_name(Vector2Class, "y"), &texCoord.y);
 
 		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "texCoord"), texCoordObj);
 

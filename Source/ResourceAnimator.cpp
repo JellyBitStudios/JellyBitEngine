@@ -533,10 +533,15 @@ bool ResourceAnimator::Update()
 
 	if (current_anim->anim_timer >= current_anim->duration && current_anim->duration > 0.0f)
 	{
-		if (current_anim->loop)
+		if (current_anim->loop) {
+			current_anim->finished = true;
 			current_anim->anim_timer = 0.0f;
+		}
 		else
 			anim_state = AnimationState::STOPPED;
+	}
+	else {
+		current_anim->finished = false;
 	}
 
 	switch (anim_state)
@@ -596,6 +601,7 @@ void ResourceAnimator::ClearAnimations() {
 		delete animation;
 	}
 	animations.clear();
+	current_anim = nullptr;
 }
 
 void ResourceAnimator::AddAnimationFromAnimationResource(ResourceAnimation * res)
@@ -605,7 +611,8 @@ void ResourceAnimator::AddAnimationFromAnimationResource(ResourceAnimation * res
 	animation->animation_uuid = res->GetUuid();
 
 	animation->duration = res->animationData.duration;
-
+	animation->numKeys = res->animationData.numKeys;
+	animation->boneKeys = res->animationData.boneKeys;
 	animations.push_back(animation);
 	current_anim = animations[0];
 	current_anim->interpolate = true;
