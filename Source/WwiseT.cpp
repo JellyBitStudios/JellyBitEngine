@@ -361,7 +361,7 @@ const char * WwiseT::AudioSource::GetName() const
 	return name;
 }
 
-void WwiseT::AudioSource::SetPos(float pos_x, float pos_y, float pos_z, float front_rot_x, float front_rot_y, float front_rot_z, float top_rot_x, float top_rot_y, float top_rot_z)
+void WwiseT::AudioSource::SetSourcePos(float pos_x, float pos_y, float pos_z, float front_rot_x, float front_rot_y, float front_rot_z, float top_rot_x, float top_rot_y, float top_rot_z)
 {
 	// Setting position vectors
 	math::float3 pos = { 0, 0, 0 };
@@ -405,8 +405,56 @@ void WwiseT::AudioSource::SetPos(float pos_x, float pos_y, float pos_z, float fr
 	ak_rot_top.Z = rot_top.z;
 
 	// Set position
-	position.Set(ak_pos, ak_rot_front, ak_rot_top);
-	AK::SoundEngine::SetPosition(id, position);
+	source_pos.Set(ak_pos, ak_rot_front, ak_rot_top);
+	AK::SoundEngine::SetPosition(id, source_pos);
+}
+
+void WwiseT::AudioSource::SetListenerPos(float pos_x, float pos_y, float pos_z, float front_rot_x, float front_rot_y, float front_rot_z, float top_rot_x, float top_rot_y, float top_rot_z)
+{
+	// Setting position vectors
+	math::float3 pos = { 0, 0, 0 };
+	math::float3 rot_front = { 0, 0, 0 };
+	math::float3 rot_top = { 0, 0, 0 };
+
+	pos.x = pos_x;
+	pos.y = pos_y;
+	pos.z = pos_z;
+	rot_front.x = front_rot_x;
+	rot_front.y = front_rot_y;
+	rot_front.z = front_rot_z;
+	rot_top.x = top_rot_x;
+	rot_top.y = top_rot_y;
+	rot_top.z = top_rot_z;
+
+	// Vectors must be normalized and not be orthogonals
+	rot_front.Normalize();
+	rot_top.Normalize();
+	if (rot_front.x*rot_top.x + rot_front.y*rot_top.y + rot_front.z*rot_top.z >= 0.0001)
+	{
+		Log("SET POSITION to Emmiter failed. Vectors are not orthogonal.", 1, LogTypes::Error, "");
+		return;
+	}
+
+	// Convert float3 vectors to AkVectors
+	AkVector ak_pos;
+	AkVector ak_rot_front;
+	AkVector ak_rot_top;
+
+	ak_pos.X = pos.x;
+	ak_pos.Y = pos.y;
+	ak_pos.Z = pos.z;
+
+	ak_rot_front.X = rot_front.x;
+	ak_rot_front.Y = rot_front.y;
+	ak_rot_front.Z = rot_front.z;
+
+	ak_rot_top.X = rot_top.x;
+	ak_rot_top.Y = rot_top.y;
+	ak_rot_top.Z = rot_top.z;
+
+	// Set position
+	listener_pos.Set(ak_pos, ak_rot_front, ak_rot_top);
+	AK::SoundEngine::SetPosition(id, listener_pos);
 }
 
 void WwiseT::AudioSource::ApplyEnvReverb(AkReal32 desired_level, const char * target)
