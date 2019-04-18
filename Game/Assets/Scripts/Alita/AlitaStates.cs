@@ -33,8 +33,15 @@ class AIdle : AState
     {
         if (hit.gameObject.GetLayer() == "Terrain")
         {
-            Alita.Call.agent.SetDestination(hit.point);
+            //Alita.Call.agent.SetDestination(hit.point);
+            //Alita.Call.SwitchState(Alita.Call.StateWalking);
+        }
+        else if (hit.gameObject.GetLayer() == "Enemy")
+        {
+            Alita.Call.currentTarget = hit.gameObject;
+            Alita.Call.agent.SetDestination(hit.gameObject.transform.position);
             Alita.Call.SwitchState(Alita.Call.StateWalking);
+            Debug.Log("Going to enemy");
         }
     }
 }
@@ -55,6 +62,17 @@ class AWalking : AState
     {
         if (Alita.Call.agent.HasArrived)
             Alita.Call.SwitchState(Alita.Call.StateIdle);
+
+        if (Alita.Call.currentTarget != null)
+        {
+            Debug.Log("super Going to enemy");
+            if ((Alita.Call.transform.position -
+                Alita.Call.currentTarget.transform.position)
+                .magnitude < AlitaCharacter.ConstHitRadius)
+            {
+                Alita.Call.SwitchState(Alita.Call.StateIdle);
+            }
+        }
     }
 
     public override void ProcessInput(KeyCode code)
@@ -69,7 +87,12 @@ class AWalking : AState
     {
         if (hit.gameObject.GetLayer() == "Terrain")
         {
-            Alita.Call.agent.SetDestination(hit.point);
+            //Alita.Call.agent.SetDestination(hit.point);
+        }
+        else if (hit.gameObject.GetLayer() == "Enemy")
+        {
+            Alita.Call.currentTarget = hit.gameObject;
+            Alita.Call.agent.SetDestination(hit.gameObject.transform.position);
         }
     }
 }

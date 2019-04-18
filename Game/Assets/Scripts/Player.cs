@@ -82,6 +82,7 @@ class Player : JellyScript
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, float.MaxValue, raycastLayer, SceneQueryFlags.Dynamic | SceneQueryFlags.Static))
         {
+            Debug.Log("ENEMY!!!");
             if (process)
                 Alita.Call.ProcessRaycast(hit);
 
