@@ -243,11 +243,6 @@ update_status ModulePhysics::Update()
 
 update_status ModulePhysics::FixedUpdate()
 {
-#ifndef GAMEMODE
-	if (App->gui->WantTextInput() || App->gui->IsMouseHoveringAnyWindow())
-		return UPDATE_CONTINUE;
-#endif
-
 	// Call FixedUpdate in all the active scripts
 	App->scripting->FixedUpdate();
 

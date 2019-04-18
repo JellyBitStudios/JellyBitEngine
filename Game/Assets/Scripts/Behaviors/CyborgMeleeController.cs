@@ -61,7 +61,7 @@ public class CyborgMeleeController : JellyScript
             if (character.life <= 0)
             {
                 character.life = 0;
-                fsm.ChangeState(new Die(StateType.GoToDangerDistance));
+                fsm.ChangeState(new Die());
             }
         }
     }
@@ -73,7 +73,7 @@ public class CyborgMeleeController : JellyScript
 
     public override void Awake()
     {
-        fsm = new CyborgMeleeFSM(this);
+        //fsm = new CyborgMeleeFSM(this);
 
         agent = gameObject.GetComponent<Agent>();
         lineOfSight = gameObject.childs[0].GetComponent<LineOfSight>();
@@ -95,7 +95,7 @@ public class CyborgMeleeController : JellyScript
     public override void Start()
     {
         //fsm.ChangeState(new Wander(StateType.Wander));  
-        fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.GoToDangerDistance));
+        //fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.GoToDangerDistance));
     }
 
     public override void Update()
@@ -104,8 +104,8 @@ public class CyborgMeleeController : JellyScript
 
         // --------------------------------------------------
 
-        //HandleInput();
-        fsm.UpdateState();
+        HandleInput();
+        //fsm.UpdateState();
     }
 
     public override void OnDrawGizmos()
@@ -113,14 +113,14 @@ public class CyborgMeleeController : JellyScript
         if (!drawGizmosCyborgMelee)
             return;
 
-        fsm.DrawGizmos();
+        //fsm.DrawGizmos();
     }
 
     // ----------------------------------------------------------------------------------------------------
 
     private void HandleInput()
     {
-        if (Input.GetMouseButton(MouseKeyCode.MOUSE_LEFT))
+        if (Input.GetMouseButtonDown(MouseKeyCode.MOUSE_LEFT))
         {
             Ray ray = Physics.ScreenToRay(Input.GetMousePosition(), Camera.main);
             RaycastHit hitInfo;
