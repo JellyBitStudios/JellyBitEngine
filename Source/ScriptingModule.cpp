@@ -2409,6 +2409,10 @@ bool NavAgentGetPath(MonoObject* monoAgent, MonoArray* position, MonoArray* dest
 
 			return true;
 		}
+		else
+		{
+			*out_path = nullptr;
+		}
 	}
 	return false;
 }
@@ -2435,6 +2439,10 @@ bool NavigationGetPath(MonoArray* origin, MonoArray* destination, MonoArray** ou
 		}
 
 		return true;
+	}
+	else
+	{
+		*out_path = nullptr;
 	}
 	
 	return false;
