@@ -63,6 +63,8 @@ public class CyborgMeleeController : JellyScript
                 character.life = 0;
                 fsm.ChangeState(new Die());
             }
+            else if (character.life <= character.minLife)
+                fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.Runaway));
         }
     }
 
