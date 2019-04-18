@@ -12,8 +12,6 @@ public class LineOfSight : JellyScript
 
     public LayerMask layerMask = new LayerMask();
 
-    public GameObject target = null;
-
     // Gets
     public bool IsTargetSeen
     {
@@ -23,6 +21,7 @@ public class LineOfSight : JellyScript
 
     #region PRIVATE_VARIABLES
     private SphereCollider sphereCollider = null;
+    private GameObject target = null;
 
     private bool isTargetSeen = false;
     #endregion
@@ -30,6 +29,7 @@ public class LineOfSight : JellyScript
     public override void Awake()
     {
         sphereCollider = gameObject.GetComponent<SphereCollider>();
+        target = Alita.Call.gameObject;
     }
 
     public override void Start()
