@@ -87,14 +87,6 @@ class Player : JellyScript
 
             // mark enemy as red etc
             string layer = hit.gameObject.GetLayer();
-            if (layer == "Enemy")
-            {
-                Debug.Log("Enemy");
-            }
-            else if (layer == "Terrain")
-            {
-                Debug.Log("Terrain");
-            }
         }
         return;
     }

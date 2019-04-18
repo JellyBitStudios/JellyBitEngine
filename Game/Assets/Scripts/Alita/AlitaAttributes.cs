@@ -23,7 +23,7 @@ public class AlitaCharacter : Character
         }
     }
 
-    public const float ConstHitRadius = 15.0f;
+    public const float ConstHitRadius = 1.0f;
     public const float ConstDashStrength = 8.0f;
     public const float ConstMaxDistance = 4.0f;
 }
