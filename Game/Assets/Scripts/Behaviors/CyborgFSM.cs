@@ -3,6 +3,7 @@ using System;
 using JellyBitEngine;
 
 // https://forum.unity.com/threads/c-proper-state-machine.380612/
+// >, <=
 
 public abstract class ICyborgMeleeState
 {
@@ -60,7 +61,8 @@ public class GoToGameObject : ICyborgMeleeState
     public enum GoToGameObjectType
     {
         GoToDangerDistance,
-        GoToAttackDistance
+        GoToAttackDistance,
+        Runaway
     }
     private GoToGameObjectType stateType;
 
@@ -88,22 +90,40 @@ public class GoToGameObject : ICyborgMeleeState
 
     public override void Enter(CyborgMeleeController owner)
     {
-        /// Activate/Deactivate
-        owner.agent.ActivateSeek();
-
         switch (stateType)
         {
-            case GoToGameObjectType.GoToDangerDistance:
+            case GoToGameObjectType.GoToDangerDistance: // Seek, default max acceleration and velocity
 
                 Debug.Log("Enter GoToGameObject: GoToDangerDistance");
 
                 /// Activate/Deactivate
                 owner.agent.separationData.isActive = false;
                 owner.agent.collisionAvoidanceData.isActive = true;
+                owner.agent.ActivateSeek();
 
                 break;
 
-            case GoToGameObjectType.GoToAttackDistance:
+            case GoToGameObjectType.Runaway: // Flee, 1.5f max acceleration and velocity
+
+                Debug.Log("Enter GoToGameObject: Runaway");
+
+                maxAcceleration = owner.agent.agentData.maxAcceleration;
+                maxVelocity = owner.agent.agentData.maxVelocity;
+
+                // -----
+
+                // Agent data
+                owner.agent.agentData.maxAcceleration *= 1.5f;
+                owner.agent.agentData.maxVelocity *= 1.5f;
+
+                /// Activate/Deactivate
+                owner.agent.separationData.isActive = false;
+                owner.agent.collisionAvoidanceData.isActive = true;
+                owner.agent.ActivateFlee();
+
+                break;
+
+            case GoToGameObjectType.GoToAttackDistance: // Seek, half max acceleration and velocity
 
                 Debug.Log("Enter GoToGameObject: GoToAttackDistance");
 
@@ -119,6 +139,7 @@ public class GoToGameObject : ICyborgMeleeState
                 /// Activate/Deactivate
                 owner.agent.separationData.isActive = true;
                 owner.agent.collisionAvoidanceData.isActive = false;
+                owner.agent.ActivateSeek();
 
                 break;
         }
@@ -132,17 +153,26 @@ public class GoToGameObject : ICyborgMeleeState
         {
             case GoToGameObjectType.GoToDangerDistance:
                 {
-                    if (owner.character.life <= owner.character.minLife) // minLife: do I have enough life to attack the target?
+                    float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
+                    if (distanceToTarget <= owner.character.dangerDistance) // dangerDistance: am I INSIDE my DANGER range?
                     {
-                        // TODO: RUN AWAY
+                        owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObjectType.GoToAttackDistance));
+                        return;
+                    }
+                    else if (owner.agent.HasArrived) // HasArrived: has my target run away?
+                    {
                         owner.fsm.ChangeState(new Wander(Wander.WanderType.Wander));
                         return;
                     }
+                }
+                break;
 
+            case GoToGameObjectType.Runaway:
+                {
                     float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
-                    if (distanceToTarget <= owner.character.dangerDistance)
+                    if (distanceToTarget > owner.character.dangerDistance) // attackDistance: am I OUTSIDE my DANGER range?
                     {
-                        owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObjectType.GoToAttackDistance));
+                        owner.fsm.ChangeState(new Wander(Wander.WanderType.Wander));
                         return;
                     }
                 }
@@ -150,15 +180,8 @@ public class GoToGameObject : ICyborgMeleeState
 
             case GoToGameObjectType.GoToAttackDistance:
                 {
-                    if (owner.character.life <= owner.character.minLife) // minLife: do I have enough life to attack the target?
-                    {
-                        // TODO: RUN AWAY
-                        owner.fsm.ChangeState(new Wander(Wander.WanderType.Wander));
-                        return;
-                    }
-
                     float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
-                    if (distanceToTarget <= owner.character.attackDistance)
+                    if (distanceToTarget <= owner.character.attackDistance) // attackDistance: am I INSIDE my ATTACK range?
                     {
                         // Am I allowed to attack?
                         if (Alita.Call.battleCircle.AddAttacker(owner.gameObject))
@@ -174,6 +197,11 @@ public class GoToGameObject : ICyborgMeleeState
                             return;
                         }
                     }
+                    else if (owner.agent.HasArrived) // HasArrived: has my target run away?
+                    {
+                        owner.fsm.ChangeState(new Wander(Wander.WanderType.Wander));
+                        return;
+                    }
                 }
                 break;
         }
@@ -186,6 +214,19 @@ public class GoToGameObject : ICyborgMeleeState
             case GoToGameObjectType.GoToDangerDistance:
 
                 Debug.Log("Exit GoToGameObject: GoToDangerDistance");
+
+                break;
+
+            case GoToGameObjectType.Runaway:
+
+                Debug.Log("Exit GoToGameObject: Runaway");
+
+                owner.agent.agentData.maxAcceleration = maxAcceleration;
+                owner.agent.agentData.maxVelocity = maxVelocity;
+
+                owner.agent.separationData.isActive = true;
+                owner.agent.collisionAvoidanceData.isActive = true;
+                owner.agent.ActivateSeek();
 
                 break;
 
@@ -208,8 +249,13 @@ public class GoToGameObject : ICyborgMeleeState
                 Debug.DrawSphere(owner.character.dangerDistance, Color.Blue, owner.transform.position, Quaternion.identity, Vector3.one);
                 break;
 
+            case GoToGameObjectType.Runaway:
+                Debug.DrawSphere(owner.character.dangerDistance, Color.Blue, owner.transform.position, Quaternion.identity, Vector3.one);
+                Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
+                break;
+
             case GoToGameObjectType.GoToAttackDistance:
-                Debug.DrawSphere(owner.character.attackDistance, Color.Green, owner.transform.position, Quaternion.identity, Vector3.one);
+                Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
                 break;
         }
     }
@@ -258,7 +304,13 @@ public class Wander : ICyborgMeleeState
                 Debug.Log("Enter Wander: Wander");
 
                 // Default agent data
-                // Default wander data
+
+                // Wander data (default)
+                owner.agent.wanderData.radius = 1.0f;
+                owner.agent.wanderData.offset = 2.0f;
+
+                owner.agent.wanderData.minTime = 1.0f;
+                owner.agent.wanderData.maxTime = 3.0f;
 
                 /// Activate/Deactivate
                 owner.agent.ActivateWander();
@@ -305,7 +357,6 @@ public class Wander : ICyborgMeleeState
                 if (owner.lineOfSight.IsTargetSeen // IsTargetSeen: have I seen the target?
                     && owner.character.life > owner.character.minLife) // minLife: do I have enough life to attack the target?
                 {
-                    Debug.Log("From Wander to Danger");
                     owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.GoToDangerDistance));
                     return;
                 }
@@ -316,7 +367,7 @@ public class Wander : ICyborgMeleeState
 
                 if (timer >= strafeTime)
                 {
-                    owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.GoToDangerDistance));
+                    owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.GoToDangerDistance)); // danger distance just in case I have moved out of my attack range
                     return;
                 }
 
@@ -334,6 +385,10 @@ public class Wander : ICyborgMeleeState
 
                 Debug.Log("Exit Wander: Wander");
 
+                /// Activate/Deactivate
+                owner.agent.ActivateSeek();
+                // Avoidance is already activated
+
                 break;
 
             case WanderType.Strafe:
@@ -342,6 +397,12 @@ public class Wander : ICyborgMeleeState
 
                 owner.agent.agentData.maxAcceleration = maxAcceleration;
                 owner.agent.agentData.maxVelocity = maxVelocity;
+
+                // -----
+
+                /// Activate/Deactivate
+                owner.agent.ActivateSeek();
+                // Avoidance is already activated
 
                 break;
         }
@@ -365,9 +426,7 @@ public class Attack : ICyborgMeleeState
 
     // -----
 
-    private bool faceDataIsActive = false;
-    private bool lookWhereYoureGoingDataIsActive = false;
-    private bool isMovementStopped = false;
+    private bool isMovementStopped = 0;
     private float maxAngularAcceleration = 0.0f;
 
     // -----
@@ -395,8 +454,6 @@ public class Attack : ICyborgMeleeState
     {
         Debug.Log("Enter Attack");
 
-        faceDataIsActive = owner.agent.alignData.faceData.isActive;
-        lookWhereYoureGoingDataIsActive = owner.agent.alignData.lookWhereYoureGoingData.isActive;
         isMovementStopped = owner.agent.isMovementStopped;
         maxAngularAcceleration = owner.agent.agentData.maxAngularAcceleration;
 
@@ -423,14 +480,12 @@ public class Attack : ICyborgMeleeState
         float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
         bool contains = Alita.Call.battleCircle.AttackersContains(owner.gameObject);
         if (distanceToTarget > owner.character.attackDistance // attackDistance: has the target moved out of my attack range?
-            || owner.character.life <= owner.character.minLife // minLife: do I have enough life to attack the target?
             || !contains) // attackers: am I still an attacker?
         {
             if (contains)
                 Alita.Call.battleCircle.RemoveAttacker(owner.gameObject);
 
-            // TODO: RUN AWAY
-            owner.fsm.ChangeState(new Wander(Wander.WanderType.Wander));
+            owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.Runaway));
             return;
         }
 
@@ -453,10 +508,14 @@ public class Attack : ICyborgMeleeState
     {
         Debug.Log("Exit Attack");
 
-        owner.agent.alignData.faceData.isActive = faceDataIsActive;
-        owner.agent.alignData.lookWhereYoureGoingData.isActive = lookWhereYoureGoingDataIsActive;
         owner.agent.isMovementStopped = isMovementStopped;
         owner.agent.agentData.maxAngularAcceleration = maxAngularAcceleration;
+
+        // -----
+
+        /// Activate/Deactivate
+        owner.agent.alignData.faceData.isActive = false;
+        owner.agent.alignData.lookWhereYoureGoingData.isActive = true;
     }
 
     public override void DrawGizmos(CyborgMeleeController owner)
@@ -477,8 +536,6 @@ public class Hit : ICyborgMeleeState
 
     // -----
 
-    private bool faceDataIsActive = false;
-    private bool lookWhereYoureGoingDataIsActive = false;
     private bool isMovementStopped = false;
     private float maxAngularAcceleration = 0.0f;
 
@@ -499,8 +556,6 @@ public class Hit : ICyborgMeleeState
     {
         Debug.Log("Enter Hit");
 
-        faceDataIsActive = owner.agent.alignData.faceData.isActive;
-        lookWhereYoureGoingDataIsActive = owner.agent.alignData.lookWhereYoureGoingData.isActive;
         isMovementStopped = owner.agent.isMovementStopped;
         maxAngularAcceleration = owner.agent.agentData.maxAngularAcceleration;
 
@@ -533,12 +588,14 @@ public class Hit : ICyborgMeleeState
     {
         Debug.Log("Exit Hit");
 
-        owner.agent.alignData.faceData.isActive = faceDataIsActive;
-        owner.agent.alignData.lookWhereYoureGoingData.isActive = lookWhereYoureGoingDataIsActive;
         owner.agent.isMovementStopped = isMovementStopped;
         owner.agent.agentData.maxAngularAcceleration = maxAngularAcceleration;
 
         // -----
+
+        /// Activate/Deactivate
+        owner.agent.alignData.faceData.isActive = false;
+        owner.agent.alignData.lookWhereYoureGoingData.isActive = true;
 
         Alita.Call.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
     }
