@@ -373,6 +373,31 @@ void ComponentScript::OnDrawGizmos()
 	}
 }
 
+void ComponentScript::OnDrawGizmosSelected()
+{
+	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
+	if (scriptRes && scriptRes->onDrawGizmosSelected)
+	{
+		MonoObject* exc = nullptr;
+		if (IsTreeActive())
+		{
+			mono_runtime_invoke(scriptRes->onDrawGizmosSelected, GetMonoComponent(), NULL, &exc);
+			if (exc)
+			{
+				System_Event event;
+				event.type = System_Event_Type::Pause;
+				App->PushSystemEvent(event);
+				App->Pause();
+
+				MonoString* exceptionMessage = mono_object_to_string(exc, NULL);
+				char* toLogMessage = mono_string_to_utf8(exceptionMessage);
+				CONSOLE_LOG(LogTypes::Error, toLogMessage);
+				mono_free(toLogMessage);
+			}
+		}
+	}
+}
+
 void ComponentScript::OnCollisionEnter(Collision& collision)
 {
 	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);

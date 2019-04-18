@@ -5,7 +5,8 @@ class Alita : JellyScript
     private static Alita m_instance;
 
     public AIdle StateIdle = new AIdle();
-    public AWalking StateWalking = new AWalking();
+    public AWalking2Spot StateWalking2Spot = new AWalking2Spot();
+    public AWalking2Enemy StateWalking2Enemy = new AWalking2Enemy();
     public AAttacking StateAttacking = new AAttacking();
     public ADash StateDash = new ADash();
     public ASkill1 StateSkill_1 = new ASkill1();

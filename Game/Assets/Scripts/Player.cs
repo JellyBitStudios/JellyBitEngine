@@ -85,8 +85,7 @@ class Player : JellyScript
             if (process)
                 Alita.Call.ProcessRaycast(hit);
 
-            // mark enemy as red etc
-
+            string layer = hit.gameObject.GetLayer();
         }
         return;
     }

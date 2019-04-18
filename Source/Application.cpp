@@ -450,11 +450,6 @@ void Application::Play()
 		PushSystemEvent(event);
 		break;
 	}
-	case engine_states::ENGINE_PAUSE:
-		// Enter editor mode
-		engineState = engine_states::ENGINE_PLAY;
-		audio->Resume();
-		break;
 
 	case engine_states::ENGINE_EDITOR:
 	{
@@ -485,6 +480,12 @@ void Application::Pause()
 		System_Event event;
 		event.type = System_Event_Type::Pause;
 		PushSystemEvent(event);
+		break;
+
+	case engine_states::ENGINE_PAUSE:
+		// Enter editor mode
+		engineState = engine_states::ENGINE_PLAY;
+		audio->Resume();
 		break;
 	}
 }

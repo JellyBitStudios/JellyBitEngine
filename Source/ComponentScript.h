@@ -28,6 +28,7 @@ public:
 	void OnStop();
 	void FixedUpdate();
 	void OnDrawGizmos();
+	void OnDrawGizmosSelected();
 	void OnCollisionEnter(Collision& collision);
 	void OnCollisionStay(Collision& collision);
 	void OnCollisionExit(Collision& collision);
