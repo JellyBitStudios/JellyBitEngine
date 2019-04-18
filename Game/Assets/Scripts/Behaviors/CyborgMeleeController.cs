@@ -28,9 +28,9 @@ public class CyborgMeleeCharacter : Character
 public class CyborgMeleeController : JellyScript
 {
     #region INSPECTOR_VARIABLES
-    public GameObject tmp_lineOfSight = null;
-
     // Character
+    public int tmp_life = 100;
+    public uint tmp_minLife = 30;
     public float tmp_attackDistance = 1.0f;
     public float tmp_dangerDistance = 2.0f;
     public float tmp_attackRate = 10.0f;
@@ -47,10 +47,10 @@ public class CyborgMeleeController : JellyScript
 
     public CyborgMeleeCharacter character = new CyborgMeleeCharacter();
 
-    public CyborgMeleeFSM fsm = null;
-    public Agent agent = null;
-    public LineOfSight lineOfSight = null;
-    public BattleCircle battleCircle = null;
+    public CyborgMeleeFSM fsm;
+
+    public Agent agent;
+    public LineOfSight lineOfSight;
 
     public int Life
     {
@@ -76,15 +76,13 @@ public class CyborgMeleeController : JellyScript
         fsm = new CyborgMeleeFSM(this);
 
         agent = gameObject.GetComponent<Agent>();
+        lineOfSight = gameObject.childs[0].GetComponent<LineOfSight>();
 
         // --------------------------------------------------
 
-        if (tmp_lineOfSight != null)
-            lineOfSight = tmp_lineOfSight.GetComponent<LineOfSight>();
-
-        battleCircle = Alita.Call.gameObject.GetComponent<BattleCircle>();
-
         // Character
+        character.life = tmp_life;
+        character.minLife = tmp_minLife;
         character.attackDistance = tmp_attackDistance;
         character.dangerDistance = tmp_dangerDistance;
         character.attackRate = tmp_attackRate;
@@ -136,12 +134,14 @@ public class CyborgMeleeController : JellyScript
 
     private void UpdateInspectorVariables()
     {
-        character.attackDistance = tmp_attackDistance;
-        character.dangerDistance = tmp_dangerDistance;
-        character.attackRate = tmp_attackRate;
-        character.attackRateFluctuation = tmp_attackRateFluctuation;
-        character.trackMaxAngularAcceleration = tmp_trackMaxAngularAcceleration;
-        character.strafeMinTime = tmp_strafeMinTime;
-        character.strafeMaxTime = tmp_strafeMaxTime;
+        tmp_life = character.life;
+        tmp_minLife = character.minLife;
+        tmp_attackDistance = character.attackDistance;
+        tmp_dangerDistance = character.dangerDistance;
+        tmp_attackRate = character.attackRate;
+        tmp_attackRateFluctuation = character.attackRateFluctuation;
+        tmp_trackMaxAngularAcceleration = character.trackMaxAngularAcceleration;
+        tmp_strafeMinTime = character.strafeMinTime;
+        tmp_strafeMaxTime = character.strafeMaxTime;
     }
 }

@@ -27,6 +27,7 @@ class Alita : JellyScript
     public Skillset skillset = new Skillset();
     public Agent agent;
     public Animator animator;
+    public BattleCircle battleCircle;
 
     public GameObject currentTarget = null;
 
@@ -34,6 +35,7 @@ class Alita : JellyScript
     {
         animator = gameObject.childs[0].GetComponent<Animator>();
         agent = gameObject.GetComponent<Agent>();
+        battleCircle = gameObject.GetComponent<BattleCircle>();
 
         m_state = StateIdle;
         EventsManager.Call.StartListening("Alita", this, "EventsListener");

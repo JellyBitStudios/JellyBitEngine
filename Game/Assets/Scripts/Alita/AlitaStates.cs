@@ -33,8 +33,8 @@ class AIdle : AState
     {
         if (hit.gameObject.GetLayer() == "Terrain")
         {
-            //Alita.Call.agent.SetDestination(hit.point);
-            //Alita.Call.SwitchState(Alita.Call.StateWalking);
+            Alita.Call.agent.SetDestination(hit.point);
+            Alita.Call.SwitchState(Alita.Call.StateWalking);
         }
         else if (hit.gameObject.GetLayer() == "Enemy")
         {
@@ -43,6 +43,7 @@ class AIdle : AState
             Alita.Call.SwitchState(Alita.Call.StateWalking);
             Debug.Log("Going to enemy");
         }
+        Debug.Log(hit.gameObject.GetLayer());
     }
 }
 
@@ -65,7 +66,6 @@ class AWalking : AState
 
         if (Alita.Call.currentTarget != null)
         {
-            Debug.Log("super Going to enemy");
             if ((Alita.Call.transform.position -
                 Alita.Call.currentTarget.transform.position)
                 .magnitude < AlitaCharacter.ConstHitRadius)
@@ -87,7 +87,7 @@ class AWalking : AState
     {
         if (hit.gameObject.GetLayer() == "Terrain")
         {
-            //Alita.Call.agent.SetDestination(hit.point);
+            Alita.Call.agent.SetDestination(hit.point);
         }
         else if (hit.gameObject.GetLayer() == "Enemy")
         {

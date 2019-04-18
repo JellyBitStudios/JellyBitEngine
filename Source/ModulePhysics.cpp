@@ -1096,7 +1096,7 @@ bool ModulePhysics::Raycast(math::float3& origin, math::float3& direction, Rayca
 
 	physx::PxQueryFilterData filterData;
 	filterData.data.word0 = filterMask; // raycast against this filter mask
-	filterData.flags |= physx::PxQueryFlag::eANY_HIT;
+	//filterData.flags |= physx::PxQueryFlag::eANY_HIT;
 	if (!(sceneQueryFlags & physx::PxQueryFlag::eSTATIC))
 		filterData.flags &= ~physx::PxQueryFlag::eSTATIC;
 	if (!(sceneQueryFlags & physx::PxQueryFlag::eDYNAMIC))
@@ -1144,7 +1144,7 @@ bool ModulePhysics::Raycast(math::float3& origin, math::float3& direction, std::
 
 	physx::PxQueryFilterData filterData;
 	filterData.data.word0 = filterMask; // raycast against this filter mask
-	filterData.flags |= physx::PxQueryFlag::eNO_BLOCK;
+	//filterData.flags |= physx::PxQueryFlag::eNO_BLOCK;
 	if (!(sceneQueryFlags & physx::PxQueryFlag::eSTATIC))
 		filterData.flags &= ~physx::PxQueryFlag::eSTATIC;
 	if (!(sceneQueryFlags & physx::PxQueryFlag::eDYNAMIC))
@@ -1234,7 +1234,7 @@ bool ModulePhysics::Overlap(physx::PxGeometry& geometry, physx::PxTransform& tra
 
 	physx::PxQueryFilterData filterData;
 	filterData.data.word0 = filterMask; // overlap against this filter mask
-	filterData.flags |= physx::PxQueryFlag::eNO_BLOCK;
+	//filterData.flags |= physx::PxQueryFlag::eNO_BLOCK;
 	if (!(sceneQueryFlags & physx::PxQueryFlag::eSTATIC))
 		filterData.flags &= ~physx::PxQueryFlag::eSTATIC;
 	if (!(sceneQueryFlags & physx::PxQueryFlag::eDYNAMIC))

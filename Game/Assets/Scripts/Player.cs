@@ -82,19 +82,18 @@ class Player : JellyScript
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, float.MaxValue, raycastLayer, SceneQueryFlags.Dynamic | SceneQueryFlags.Static))
         {
-            Debug.Log("ENEMY!!!");
             if (process)
                 Alita.Call.ProcessRaycast(hit);
 
             // mark enemy as red etc
             string layer = hit.gameObject.GetLayer();
-            if (layer == "Terrain")
+            if (layer == "Enemy")
             {
-              
+                Debug.Log("Enemy");
             }
-            else
+            else if (layer == "Terrain")
             {
-              
+                Debug.Log("Terrain");
             }
         }
         return;

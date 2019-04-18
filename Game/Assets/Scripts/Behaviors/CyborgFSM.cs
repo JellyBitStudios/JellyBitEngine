@@ -178,7 +178,7 @@ public class GoToGameObject : ICyborgMeleeState
                     if (distanceToTarget <= owner.character.attackDistance)
                     {
                         // Am I allowed to attack?
-                        if (owner.battleCircle.AddAttacker(owner.gameObject))
+                        if (Alita.Call.battleCircle.AddAttacker(owner.gameObject))
                         {
                             // Yes! Attack
                             owner.fsm.ChangeState(new Attack(Alita.Call.gameObject, StateType.Attack, stateType));
@@ -437,13 +437,13 @@ public class Attack : ICyborgMeleeState
     public override void Execute(CyborgMeleeController owner)
     {
         float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
-        bool contains = owner.battleCircle.AttackersContains(owner.gameObject);
+        bool contains = Alita.Call.battleCircle.AttackersContains(owner.gameObject);
         if (distanceToTarget > owner.character.attackDistance // attackDistance: has the target moved out of my attack range?
             || owner.character.life <= owner.character.minLife // minLife: do I have enough life to attack the target?
             || !contains) // attackers: am I still an attacker?
         {
             if (contains)
-                owner.battleCircle.RemoveAttacker(owner.gameObject);
+                Alita.Call.battleCircle.RemoveAttacker(owner.gameObject);
             owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.GoToAttackDistance, stateType));
             return;
         }
@@ -452,7 +452,7 @@ public class Attack : ICyborgMeleeState
         if (AttackCooldown <= 0.0f)
         {
             // Am I allowed to hit?
-            if (owner.battleCircle.AddSimultaneousAttacker(owner.gameObject))
+            if (Alita.Call.battleCircle.AddSimultaneousAttacker(owner.gameObject))
             {
                 // Yes! Hit
                 owner.fsm.ChangeState(new Attack(Alita.Call.gameObject, StateType.Hit, stateType));
@@ -515,7 +515,7 @@ public class Hit : ICyborgMeleeState
         Debug.Log("Hit");
         // TODO: hit must last what animation lasts
         // if animation has finished...
-        owner.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
+        Alita.Call.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
         owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.Attack, stateType));
         return;
     }
