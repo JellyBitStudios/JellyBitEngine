@@ -22,15 +22,17 @@ public class PathManager
     #region PRIVATE_VARIABLES
     private Vector3 destination = Vector3.zero;
     private bool hasPath = false;
-    private uint index = 0;
+    private int index = 0;
     private Vector3[] path = null;
     #endregion
 
     public bool GetPath(Vector3 origin, Vector3 destination)
     {
-        hasPath = Navigation.GetPath(origin, destination, out path);
+        Vector3[] p = null; // ...
+        hasPath = Navigation.GetPath(origin, destination, out p);
+        path = p; // ...
+
         hasPath = hasPath && path.Length > 1;
-        Debug.Log("New path");
 
         if (hasPath)
         {
@@ -39,6 +41,7 @@ public class PathManager
         }
         else
         {
+            path = null;
             this.destination = Vector3.zero;
             index = 0;
         }
@@ -80,7 +83,6 @@ public class PathManager
         if (hasPath)
         {
             Vector3 diff = path[index] - agent.transform.position;
-            //Vector3 diff = Destination - agent.transform.position;
             return diff.magnitude;
         }
 
@@ -92,7 +94,7 @@ public class PathManager
         if (!hasPath)
             return;
 
-        //for (uint i = 0; i < path.Length - 1; ++i)
-            //Debug.DrawLine(path[i], path[i + 1], Color.Red);
+        for (uint i = 0; i < path.Length - 1; ++i)
+            Debug.DrawLine(path[i], path[i + 1], Color.Red);
     }
 }

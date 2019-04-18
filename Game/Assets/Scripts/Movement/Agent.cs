@@ -88,7 +88,7 @@ public class Agent : JellyScript
     }
     public Vector3 NextPosition
     {
-        get { return pathManager.GetNextPosition(this)/*pathManager.Destination*/; }
+        get { return pathManager.GetNextPosition(this); }
     }
     public bool HasArrived
     {
