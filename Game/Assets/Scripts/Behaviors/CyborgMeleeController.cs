@@ -4,15 +4,23 @@ using JellyBitEngine;
 
 public class CyborgMeleeCharacter : Character
 {
-    // Battle Circle
+    public uint minLife = 30; // when this number is reached, the character runs away
+
+    // -----
+
+    // GoToGameObject
+    /// GoToAttackDistance
     public float attackDistance = 1.0f;
+    /// GoToDangerDistance
     public float dangerDistance = 2.0f;
 
-    public float trackSpeed = 0.1f;
-
+    // Attack
     public float attackRate = 10.0f;
     public float attackRateFluctuation = 0.0f;
+    public float trackMaxAngularAcceleration = 90.0f;
 
+    // Wander
+    /// Strafe
     public float strafeMinTime = 1.0f;
     public float strafeMaxTime = 3.0f;
 }
@@ -20,19 +28,14 @@ public class CyborgMeleeCharacter : Character
 public class CyborgMeleeController : JellyScript
 {
     #region INSPECTOR_VARIABLES
-    public GameObject tmp_lineOfSight = null;
-
-    // Battle Circle
+    // Character
     public float tmp_attackDistance = 1.0f;
     public float tmp_dangerDistance = 2.0f;
-                 
-    public float tmp_trackSpeed = 0.1f;
-                 
     public float tmp_attackRate = 10.0f;
     public float tmp_attackRateFluctuation = 0.0f;
-
-    public float tmp_strafeMinTime = 0.0f;
-    public float tmp_strafeMaxTime = 0.0f;
+    public float tmp_trackMaxAngularAcceleration = 90.0f;
+    public float tmp_strafeMinTime = 1.0f;
+    public float tmp_strafeMaxTime = 3.0f;
     #endregion
 
     #region PUBLIC_VARIABLES
@@ -42,14 +45,30 @@ public class CyborgMeleeController : JellyScript
 
     public CyborgMeleeCharacter character = new CyborgMeleeCharacter();
 
-    public GameObject target = null; // Alita
+    public CyborgMeleeFSM fsm;
 
-    public CyborgMeleeFSM fsm = null;
-    public Agent agent = null;
-    public LineOfSight lineOfSight = null;
-    public BattleCircle battleCircle = null;
+    public Agent agent;
+    public LineOfSight lineOfSight;
 
-    public bool drawGizmos = true;
+    public int CurrentLife
+    {
+        get { return character.currentLife; }
+        set
+        {
+            character.currentLife = value;
+            if (character.currentLife <= 0)
+            {
+                character.currentLife = 0;
+                fsm.ChangeState(new Die());
+            }
+            else if (character.currentLife <= character.minLife)
+                fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.Runaway));
+
+            Debug.Log("Cyborg life: " + character.currentLife);
+        }
+    }
+
+    public bool drawGizmosCyborgMelee = true;
     #endregion
 
     // ----------------------------------------------------------------------------------------------------
@@ -59,42 +78,39 @@ public class CyborgMeleeController : JellyScript
         fsm = new CyborgMeleeFSM(this);
 
         agent = gameObject.GetComponent<Agent>();
+        lineOfSight = gameObject.childs[0].GetComponent<LineOfSight>();
 
         // --------------------------------------------------
 
-        if (tmp_lineOfSight != null)
-            lineOfSight = tmp_lineOfSight.GetComponent<LineOfSight>();
-
-        if (target != null)
-            battleCircle = target.GetComponent<BattleCircle>();
-
-        // Battle Circle
+        // Character
         character.attackDistance = tmp_attackDistance;
         character.dangerDistance = tmp_dangerDistance;
-
-        character.trackSpeed = tmp_trackSpeed;
-
         character.attackRate = tmp_attackRate;
         character.attackRateFluctuation = tmp_attackRateFluctuation;
-
+        character.trackMaxAngularAcceleration = tmp_trackMaxAngularAcceleration;
         character.strafeMinTime = tmp_strafeMinTime;
         character.strafeMaxTime = tmp_strafeMaxTime;
     }
 
     public override void Start()
     {
-        fsm.ChangeState(new GoToGameObject(target, StateType.GoToDangerDistance));  
+        //fsm.ChangeState(new Wander(StateType.Wander));  
+        fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.GoToDangerDistance));
     }
 
     public override void Update()
     {
+        UpdateInspectorVariables();
+
+        // --------------------------------------------------
+
         //HandleInput();
         fsm.UpdateState();
     }
 
     public override void OnDrawGizmos()
     {
-        if (!drawGizmos)
+        if (!drawGizmosCyborgMelee)
             return;
 
         fsm.DrawGizmos();
@@ -104,7 +120,7 @@ public class CyborgMeleeController : JellyScript
 
     private void HandleInput()
     {
-        if (Input.GetMouseButton(MouseKeyCode.MOUSE_LEFT))
+        if (Input.GetMouseButtonDown(MouseKeyCode.MOUSE_LEFT))
         {
             Ray ray = Physics.ScreenToRay(Input.GetMousePosition(), Camera.main);
             RaycastHit hitInfo;
@@ -114,5 +130,16 @@ public class CyborgMeleeController : JellyScript
                 //wanderState = WanderStates.goToPosition;
             }
         }
+    }
+
+    private void UpdateInspectorVariables()
+    {
+        tmp_attackDistance = character.attackDistance;
+        tmp_dangerDistance = character.dangerDistance;
+        tmp_attackRate = character.attackRate;
+        tmp_attackRateFluctuation = character.attackRateFluctuation;
+        tmp_trackMaxAngularAcceleration = character.trackMaxAngularAcceleration;
+        tmp_strafeMinTime = character.strafeMinTime;
+        tmp_strafeMaxTime = character.strafeMaxTime;
     }
 }
