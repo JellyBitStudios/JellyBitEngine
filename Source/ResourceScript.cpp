@@ -19,7 +19,6 @@ std::vector<std::string>ResourceScript::scriptNames;
 ResourceScript::ResourceScript(uint uuid, ResourceData data, ResourceScriptData scriptData) : Resource(ResourceTypes::ScriptResource, uuid, data), scriptData(scriptData) 
 {
 	scriptName = data.name;
-	scriptNames.push_back(scriptName);
 }
 
 ResourceScript::~ResourceScript()
@@ -244,6 +243,21 @@ bool ResourceScript::referenceMethods()
 	mono_method_desc_free(desc);
 
 	return true;
+}
+
+void ResourceScript::IncludeName()
+{
+	MonoClass* JellyScriptClass = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "JellyScript");
+
+	MonoClass* thisClass = mono_class_from_name(App->scripting->scriptsImage, "", scriptName.data());
+	if (thisClass)
+	{
+		MonoClass* parentClass = mono_class_get_parent(thisClass);
+		if (parentClass == JellyScriptClass)
+		{
+			scriptNames.push_back(scriptName);
+		}
+	}
 }
 
 std::string ResourceScript::pathToWindowsNotation(const std::string& path) const

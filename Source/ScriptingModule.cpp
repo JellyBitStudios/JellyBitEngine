@@ -1290,7 +1290,7 @@ MonoString* InputGetCursorTexture()
 	return nullptr;
 }
 
-void InputSetCursorTexture(MonoString* name)
+void InputSetCursorTextureName(MonoString* name)
 {
 	if (!name)
 		return;
@@ -1300,6 +1300,11 @@ void InputSetCursorTexture(MonoString* name)
 	App->input->SetCursorTexture(std::string(namecpp));
 
 	mono_free(namecpp);
+}
+
+void InputSetCursorTextureUUID(uint uuid)
+{
+	App->input->SetCursorTexture(uuid);
 }
 
 MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, MonoArray* rotation)
@@ -2404,6 +2409,10 @@ bool NavAgentGetPath(MonoObject* monoAgent, MonoArray* position, MonoArray* dest
 
 			return true;
 		}
+		else
+		{
+			*out_path = nullptr;
+		}
 	}
 	return false;
 }
@@ -2430,6 +2439,10 @@ bool NavigationGetPath(MonoArray* origin, MonoArray* destination, MonoArray** ou
 		}
 
 		return true;
+	}
+	else
+	{
+		*out_path = nullptr;
 	}
 	
 	return false;
@@ -2572,6 +2585,13 @@ void UpdateAnimationBlendTime(MonoObject* animatorComp, float newBlendTime)
 	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(animatorComp);
 	if (animator)
 		animator->UpdateBlendTime(newBlendTime);
+}
+
+void SetAnimationLoop(MonoObject* animatorComp, bool loop)
+{
+	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(animatorComp);
+	if (animator)
+		animator->SetAnimationLoop(loop);
 }
 
 void ParticleEmitterPlay(MonoObject* particleComp)
@@ -2827,6 +2847,15 @@ void ImageSetResourceName(MonoObject* monoImage, MonoString* imageName)
 		image->SetResImageName(imageNameCpp);
 
 		mono_free(imageNameCpp);
+	}
+}
+
+void ImageSetResourceUUID(MonoObject* monoImage, uint imageUUID)
+{
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
+	{	
+		image->SetResImageUuid(imageUUID);
 	}
 }
 
@@ -3566,7 +3595,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Input::GetWheelMovement", (const void*)&GetWheelMovementCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetMouseDeltaPos", (const void*)&GetMouseDeltaPosCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetCursorTexture", (const void*)&InputGetCursorTexture);
-	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture", (const void*)&InputSetCursorTexture);
+	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture(string)", (const void*)&InputSetCursorTextureName);
+	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture(uint)", (const void*)&InputSetCursorTextureUUID);
 
 	//Object
 	mono_add_internal_call("JellyBitEngine.Object::Destroy", (const void*)&DestroyObj);
@@ -3660,7 +3690,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetColor", (const void*)&ImageSetColor);
 	mono_add_internal_call("JellyBitEngine.UI.Image::ResetColor", (const void*)&ImageResetColor);
 	mono_add_internal_call("JellyBitEngine.UI.Image::GetResource", (const void*)&ImageGetResourceName);
-	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource", (const void*)&ImageSetResourceName);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource(string)", (const void*)&ImageSetResourceName);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource(uint)", (const void*)&ImageSetResourceUUID);
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetMask", (const void*)&ImageSetMask);
 	mono_add_internal_call("JellyBitEngine.UI.Label::SetText", (const void*)&LabelSetText);
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetText", (const void*)&LabelGetText);
@@ -3758,6 +3789,14 @@ void ScriptingModule::UpdateScriptingReferences()
 	MonoImageOpenStatus status = MONO_IMAGE_ERROR_ERRNO;
 	scriptsImage = mono_image_open_from_data(buffer, size, 1, &status);
 	scriptsAssembly = mono_assembly_load_from(scriptsImage, "ScriptingAssembly", &status);
+
+	ResourceScript::ClearScriptNames();
+
+	std::vector<Resource*> scriptResources = App->res->GetResourcesByType(ResourceTypes::ScriptResource);
+	for (Resource* res : scriptResources)
+	{
+		((ResourceScript*)res)->IncludeName();
+	}
 
 	delete[] buffer;
 }
