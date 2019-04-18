@@ -918,7 +918,7 @@ void ComponentScript::OnUniqueEditor()
 							cursorPos = ImGui::GetCursorScreenPos();
 							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
 
-							if (ImGui::Checkbox(("##" + fieldName).data(), &varState))
+							if (ImGui::Checkbox(("##" + fieldName + std::to_string(UUID)).data(), &varState))
 							{
 								mono_field_set_value(GetMonoComponent(), field, &varState);
 							}
@@ -935,7 +935,7 @@ void ComponentScript::OnUniqueEditor()
 							cursorPos = ImGui::GetCursorScreenPos();
 							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
 
-							if (ImGui::InputFloat(("##" + fieldName).data(), &varState))
+							if (ImGui::InputFloat(("##" + fieldName + std::to_string(UUID)).data(), &varState))
 							{
 								mono_field_set_value(GetMonoComponent(), field, &varState);
 							}
@@ -952,7 +952,7 @@ void ComponentScript::OnUniqueEditor()
 							cursorPos = ImGui::GetCursorScreenPos();
 							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
 
-							if (ImGui::InputDouble(("##" + fieldName).data(), &varState))
+							if (ImGui::InputDouble(("##" + fieldName + std::to_string(UUID)).data(), &varState))
 							{
 								mono_field_set_value(GetMonoComponent(), field, &varState);
 							}
@@ -974,10 +974,8 @@ void ComponentScript::OnUniqueEditor()
 							cursorPos = ImGui::GetCursorScreenPos();
 							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
 
-							int varState_int = (int)varState;
-							if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_U32, &varState_int))
+							if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_S32, &varState))
 							{
-								varState = varState_int;
 								mono_field_set_value(GetMonoComponent(), field, &varState);
 							}
 						}
@@ -994,10 +992,8 @@ void ComponentScript::OnUniqueEditor()
 							cursorPos = ImGui::GetCursorScreenPos();
 							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
 
-							int varState_int = (int)varState;
-							if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_U32, &varState_int))
+							if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_U32, &varState))
 							{
-								varState = varState_int;
 								mono_field_set_value(GetMonoComponent(), field, &varState);
 							}
 						}
@@ -1014,10 +1010,8 @@ void ComponentScript::OnUniqueEditor()
 							cursorPos = ImGui::GetCursorScreenPos();
 							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
 
-							int varState_int = (int)varState;
-							if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_S32, &varState_int))
+							if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_S32, &varState))
 							{
-								varState = varState_int;
 								mono_field_set_value(GetMonoComponent(), field, &varState);
 							}
 						}
@@ -1034,10 +1028,8 @@ void ComponentScript::OnUniqueEditor()
 							cursorPos = ImGui::GetCursorScreenPos();
 							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
 
-							int varState_int = (int)varState;
-							if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_U32, &varState_int))
+							if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_U32, &varState))
 							{
-								varState = varState_int;
 								mono_field_set_value(GetMonoComponent(), field, &varState);
 							}
 						}
@@ -1054,7 +1046,7 @@ void ComponentScript::OnUniqueEditor()
 							cursorPos = ImGui::GetCursorScreenPos();
 							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
 
-							if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_S32, &varState))
+							if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_S32, &varState))
 							{
 								mono_field_set_value(GetMonoComponent(), field, &varState);
 							}
@@ -1072,7 +1064,7 @@ void ComponentScript::OnUniqueEditor()
 							cursorPos = ImGui::GetCursorScreenPos();
 							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
 
-							if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_U32, &varState))
+							if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_U32, &varState))
 							{
 								mono_field_set_value(GetMonoComponent(), field, &varState);
 							}
@@ -1090,7 +1082,7 @@ void ComponentScript::OnUniqueEditor()
 							cursorPos = ImGui::GetCursorScreenPos();
 							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
 
-							if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_S64, &varState))
+							if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_S64, &varState))
 							{
 								mono_field_set_value(GetMonoComponent(), field, &varState);
 							}
@@ -1108,7 +1100,7 @@ void ComponentScript::OnUniqueEditor()
 							cursorPos = ImGui::GetCursorScreenPos();
 							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
 
-							if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_U64, &varState))
+							if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_U64, &varState))
 							{
 								mono_field_set_value(GetMonoComponent(), field, &varState);
 							}
@@ -1121,7 +1113,16 @@ void ComponentScript::OnUniqueEditor()
 							char varState = (char)temp;
 
 							std::string stringToModify = std::string(1, varState);
-							if (ImGui::InputText(mono_field_get_name(field), &stringToModify))
+
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+							if (ImGui::InputText(("##" + fieldName + std::to_string(UUID)).data(), &stringToModify))
 							{
 								MonoString* newString = mono_string_new(App->scripting->domain, stringToModify.data());
 								temp = (int)stringToModify[0];
@@ -1139,7 +1140,15 @@ void ComponentScript::OnUniqueEditor()
 
 							ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_FrameBg, { 0.26f, 0.59f, 0.98f, 0.5f });
 
-							if (ImGui::InputText(mono_field_get_name(field), &stringToModify))
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+							if (ImGui::InputText(("##" + fieldName + std::to_string(UUID)).data(), &stringToModify))
 							{
 								MonoString* newString = mono_string_new(App->scripting->domain, stringToModify.data());
 								mono_field_set_value(GetMonoComponent(), field, newString);
@@ -1165,7 +1174,7 @@ void ComponentScript::OnUniqueEditor()
 
 							cursorPos = { cursorPos.x, cursorPos.y - 5 };
 
-							ImGui::ButtonEx(("##" + fieldName).data(), { (float)buttonWidth, 20 }, ImGuiButtonFlags_::ImGuiButtonFlags_Disabled);
+							ImGui::ButtonEx(("##" + fieldName + std::to_string(UUID)).data(), { (float)buttonWidth, 20 }, ImGuiButtonFlags_::ImGuiButtonFlags_Disabled);
 
 							//Case 1: Dragging Real GameObjects
 							if (ImGui::BeginDragDropTarget())
@@ -1304,7 +1313,7 @@ void ComponentScript::OnUniqueEditor()
 
 							cursorPos = { cursorPos.x, cursorPos.y - 5 };
 
-							ImGui::ButtonEx(("##" + fieldName).data(), { (float)buttonWidth, 20 }, ImGuiButtonFlags_::ImGuiButtonFlags_Disabled);
+							ImGui::ButtonEx(("##" + fieldName + std::to_string(UUID)).data(), { (float)buttonWidth, 20 }, ImGuiButtonFlags_::ImGuiButtonFlags_Disabled);
 
 							if (ImGui::BeginDragDropTarget())
 							{
