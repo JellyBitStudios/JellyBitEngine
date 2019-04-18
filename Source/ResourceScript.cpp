@@ -215,6 +215,10 @@ bool ResourceScript::referenceMethods()
 	onDrawGizmos = mono_method_desc_search_in_image(desc, App->scripting->scriptsImage);
 	mono_method_desc_free(desc);
 
+	desc = mono_method_desc_new((scriptName + ":OnDrawGizmosSelected()").data(), false);
+	onDrawGizmosSelected = mono_method_desc_search_in_image(desc, App->scripting->scriptsImage);
+	mono_method_desc_free(desc);
+
 	desc = mono_method_desc_new((scriptName + ":OnCollisionEnter(Collision)").data(), false);
 	OnCollisionEnterMethod = mono_method_desc_search_in_image(desc, App->scripting->scriptsImage);
 	mono_method_desc_free(desc);
