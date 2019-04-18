@@ -58,6 +58,9 @@ public class Skill
 
 public class Skillset
 {
+    // TODO G: skills will remain here for now. Them can be created outside and added to the skills via
+    // skillset.add? how we can acces to each skill? think about it
+
     // skill->Dash
     public Skill skDash = new Skill();
 
