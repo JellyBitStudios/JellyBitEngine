@@ -194,6 +194,19 @@ bool ComponentAnimator::UpdateAnimationSpeed(float new_speed)
 	return true;
 }
 
+void ComponentAnimator::SetAnimationLoop(bool loop)
+{
+	ResourceAnimator* animator_res = (ResourceAnimator*)App->res->GetResource(res);
+	if (!animator_res)
+		return;
+
+	ResourceAnimator::Animation* animation_res = (ResourceAnimator::Animation*)animator_res->GetCurrentAnimation();
+	if (!animation_res)
+		return;
+
+	animation_res->loop = loop;
+}
+
 void ComponentAnimator::Update()
 {
 	if (res != 0) {
