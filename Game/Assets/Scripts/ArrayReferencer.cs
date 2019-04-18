@@ -20,6 +20,7 @@ public class ArrayReferencer : JellyScript
     //Called every frame
     public override void Update()
     {
+        return;
         Debug.ClearConsole();
 
         if (path != null)
@@ -60,6 +61,11 @@ public class ArrayReferencer : JellyScript
             transform.position += (destination - transform.position).normalized() * speed * Time.deltaTime;
         }
 
+    }
+
+    public override void OnDrawGizmosSelected()
+    {
+        Debug.DrawSphere(1f, new float[] { 1, 0, 0, 1 }, gameObject.transform.position, gameObject.transform.rotation, gameObject.transform.scale);
     }
 }
 

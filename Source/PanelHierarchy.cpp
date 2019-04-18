@@ -138,8 +138,6 @@ bool PanelHierarchy::Draw()
 				App->GOs->Instanciate(go, go->GetParent());
 		}
 	}
-
-
 	return true;
 }
 

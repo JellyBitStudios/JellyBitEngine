@@ -1006,6 +1006,19 @@ void ScriptingModule::OnDrawGizmos()
 		}
 }
 
+void ScriptingModule::OnDrawGizmosSelected()
+{
+	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
+		for (int i = 0; i < scripts.size(); ++i)
+		{
+			if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), scripts[i]->GetParent()->GetUUID()) 
+				!= App->scene->multipleSelection.end())
+			{
+				scripts[i]->OnDrawGizmosSelected();
+			}		
+		}
+}
+
 void ScriptingModule::TemporalSave()
 {
 	//Temporal save for scripts

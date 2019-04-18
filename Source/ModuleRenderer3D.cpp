@@ -350,6 +350,8 @@ update_status ModuleRenderer3D::PostUpdate()
 
 		App->scripting->OnDrawGizmos();
 
+		App->scripting->OnDrawGizmosSelected();
+
 		App->debugDrawer->EndDebugDraw();
 	}
 
