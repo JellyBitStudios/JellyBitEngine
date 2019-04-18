@@ -28,15 +28,7 @@ class Alita : JellyScript
     public Agent agent;
     public Animator animator;
 
-    public GameObject currentTarget
-    {
-        get { return currentTarget; }
-        set
-        {
-            currentTarget = value;
-            m_state.NewTarget(value);
-        }
-    }
+    public GameObject currentTarget = null;
 
     public override void Awake()
     {
