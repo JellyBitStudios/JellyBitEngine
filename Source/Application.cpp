@@ -476,9 +476,9 @@ void Application::Pause()
 	{
 	case engine_states::ENGINE_PLAY:
 		// Play again
-		engineState = engine_states::ENGINE_PAUSE;
+		engineState = engine_states::ENGINE_EDITOR;
 		System_Event event;
-		event.type = System_Event_Type::Pause;
+		event.type = System_Event_Type::Stop;
 		PushSystemEvent(event);
 		break;
 
