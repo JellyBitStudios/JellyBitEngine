@@ -30,6 +30,7 @@ public class PathManager
     {
         hasPath = Navigation.GetPath(origin, destination, out path);
         hasPath = hasPath && path.Length > 1;
+        Debug.Log("New path");
 
         if (hasPath)
         {
@@ -78,8 +79,8 @@ public class PathManager
     {
         if (hasPath)
         {
-            //Vector3 diff = path[index] - agent.transform.position;
-            Vector3 diff = Destination - agent.transform.position;
+            Vector3 diff = path[index] - agent.transform.position;
+            //Vector3 diff = Destination - agent.transform.position;
             return diff.magnitude;
         }
 
