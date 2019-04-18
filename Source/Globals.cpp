@@ -4,8 +4,16 @@
 #include "Application.h"
 #include <time.h>
 
-void Log(const char file[], int line, LogTypes mode, const char* format, ...)
+void Log(const char file[], int line, LogTypes mode, bool scripting, const char* format, ...)
 {
+	bool debugdefined = true;
+#ifndef _DEBUG
+	debugdefined = false;
+#endif
+
+	if (!debugdefined && !scripting && mode == LogTypes::Normal)
+		return;
+
 	static char tmp_string[MAX_BUF_SIZE];
 	static char tmp_string2[MAX_BUF_SIZE];
 	static va_list  ap;

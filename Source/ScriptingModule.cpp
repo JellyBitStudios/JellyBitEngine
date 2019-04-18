@@ -1159,7 +1159,7 @@ void DebugLogTranslator(MonoString* msg)
 	if (!mono_error_ok(&error))
 		return;
 
-	CONSOLE_LOG(LogTypes::Normal, string);
+	CONSOLE_SCRIPTING_LOG(LogTypes::Normal, string);
 
 	mono_free(string);
 }
@@ -1172,7 +1172,7 @@ void DebugLogWarningTranslator(MonoString* msg)
 	if (!mono_error_ok(&error))
 		return;
 
-	CONSOLE_LOG(LogTypes::Warning, string);
+	CONSOLE_SCRIPTING_LOG(LogTypes::Warning, string);
 
 	mono_free(string);
 }
@@ -1185,7 +1185,7 @@ void DebugLogErrorTranslator(MonoString* msg)
 	if (!mono_error_ok(&error))
 		return;
 
-	CONSOLE_LOG(LogTypes::Error, string)
+	CONSOLE_SCRIPTING_LOG(LogTypes::Error, string)
 
 	mono_free(string);
 }
