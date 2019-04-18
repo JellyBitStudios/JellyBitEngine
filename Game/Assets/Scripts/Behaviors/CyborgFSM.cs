@@ -178,7 +178,6 @@ public class GoToGameObject : ICyborgMeleeState
                     if (distanceToTarget <= owner.character.attackDistance)
                     {
                         // Am I allowed to attack?
-
                         if (owner.battleCircle.AddAttacker(owner.gameObject))
                         {
                             // Yes! Attack
@@ -438,11 +437,13 @@ public class Attack : ICyborgMeleeState
     public override void Execute(CyborgMeleeController owner)
     {
         float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
-
-        if (distanceToTarget > owner.character.attackDistance // The target moves out of ATTACK range
-            || owner.character.life <= owner.character.minLife) // Do I have enough life to attack the target?
+        bool contains = owner.battleCircle.AttackersContains(owner.gameObject);
+        if (distanceToTarget > owner.character.attackDistance // attackDistance: has the target moved out of my attack range?
+            || owner.character.life <= owner.character.minLife // minLife: do I have enough life to attack the target?
+            || !contains) // attackers: am I still an attacker?
         {
-            owner.battleCircle.RemoveAttacker(owner.gameObject);
+            if (contains)
+                owner.battleCircle.RemoveAttacker(owner.gameObject);
             owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.GoToAttackDistance, stateType));
             return;
         }

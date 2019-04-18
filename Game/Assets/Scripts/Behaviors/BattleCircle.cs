@@ -40,16 +40,35 @@ public class BattleCircle : JellyScript
     }
 
     // ----------------------------------------------------------------------------------------------------
+    // Attackers
+    // ----------------------------------------------------------------------------------------------------
 
     public bool AddAttacker(GameObject attacker)
     {
-        if (attackers.Count < maxAttackers
-            && !attackers.Contains(attacker))
+        if (!attackers.Contains(attacker)
+            && maxAttackers > 0)
         {
-            attackers.Add(attacker);
-            Debug.Log("New attacker ADDED. Total attackers: " + attackers.Count);
-            return true;
+            // Limit number of attackers
+            if (attackers.Count < maxAttackers)
+            {
+                attackers.Add(attacker);
+                Debug.Log("New attacker ADDED. Total attackers: " + attackers.Count);
+                return true;
+            }
+            // Prioritize the attacker that Alita is attacking
+            else if (attacker == Alita.Call.currentTarget)
+            {
+                // 1. Remove the first attacker
+                GameObject firstAttacker = attackers[0];
+                attackers.Remove(firstAttacker);
+
+                // 2. Insert the new attacker
+                attackers.Add(attacker);
+                Debug.Log("New attacker ADDED. Total attackers: " + attackers.Count);
+                return true;
+            }
         }
+
 
         Debug.Log("New attacker REJECTED. Total attackers: " + attackers.Count);
         return false;
@@ -67,10 +86,20 @@ public class BattleCircle : JellyScript
         return false;
     }
 
+    public bool AttackersContains(GameObject attacker)
+    {
+        return attackers.Contains(attacker);
+    }
+
+    // ----------------------------------------------------------------------------------------------------
+    // Simultaneous attackers
+    // ----------------------------------------------------------------------------------------------------
+
     public bool AddSimultaneousAttacker(GameObject attacker)
     {
-        if (simultaneousAttackers.Count < maxSimultaneousAttackers
-            && !simultaneousAttackers.Contains(attacker))
+        if (!simultaneousAttackers.Contains(attacker)
+            && simultaneousAttackers.Count < maxSimultaneousAttackers
+            && maxSimultaneousAttackers > 0)
         {
             simultaneousAttackers.Add(attacker);
             Debug.Log("New simultaneous attacker ADDED. Total simultaneous attackers: " + simultaneousAttackers.Count);
