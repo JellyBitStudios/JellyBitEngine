@@ -31,7 +31,7 @@ class Alita : JellyScript
     public BattleCircle battleCircle;
 
     public GameObject currentTarget = null;
-
+    public float ConstHitRadius = 1.0f;
     public override void Awake()
     {
         animator = gameObject.childs[0].GetComponent<Animator>();
@@ -55,12 +55,14 @@ class Alita : JellyScript
         EventsManager.Call.StopListening("Alita");
     }
 
-    public void SwitchState(AState newState)
+    public void SwitchState(AState newState, bool callStop = true, bool callStart = true)
     {
-        m_state.OnStop();
+        if (callStop)
+            m_state.OnStop();
         lastState = m_state;
         m_state = newState;
-        m_state.OnStart();
+        if (callStart)
+            m_state.OnStart();
     }
 
     public void ProcessInput(KeyCode code)

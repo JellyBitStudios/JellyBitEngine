@@ -29,7 +29,6 @@ class Player : JellyScript
     {
         if (!gameStopped)
         {
-            //Debug.Log("ADSAD");
             if (Input.GetMouseButton(MouseKeyCode.MOUSE_RIGHT))
                 HandleMousePicking(true);
             else
