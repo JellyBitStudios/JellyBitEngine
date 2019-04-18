@@ -1008,6 +1008,7 @@ void ScriptingModule::OnDrawGizmos()
 
 void ScriptingModule::OnDrawGizmosSelected()
 {
+#ifndef GAMEMODE
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
 		for (int i = 0; i < scripts.size(); ++i)
 		{
@@ -1017,6 +1018,7 @@ void ScriptingModule::OnDrawGizmosSelected()
 				scripts[i]->OnDrawGizmosSelected();
 			}		
 		}
+#endif
 }
 
 void ScriptingModule::TemporalSave()
