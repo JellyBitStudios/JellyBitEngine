@@ -43,10 +43,8 @@ public class CameraFollow : JellyScript
         }
         else
         {
-           // Debug.Log("Moving");
             transform.position = objectPos + offset;
             objetctInitial = transform.position - initialOffset;
-           // Debug.Log("Initial: " + objetctInitial.ToString());
             Debug.Log("--------------------");
             if (isInQuad(objectPos - objetctInitial, lastFramePos - objetctInitial))
             {
@@ -73,7 +71,7 @@ public class CameraFollow : JellyScript
 
         Debug.Log(offsetCurr.ToString());
         Debug.Log(offsetLast.ToString());
-        if(offsetCurr.x < offsetLast.x || offsetCurr.z < offsetLast.z)
+        if(offsetCurr.x < offsetLast.x && offsetCurr.z < offsetLast.z)
             ret = true;
         return ret;
     }
