@@ -1302,6 +1302,11 @@ void InputSetCursorTexture(MonoString* name)
 	mono_free(namecpp);
 }
 
+void InputSetCursorTexture(uint uuid)
+{
+	App->input->SetCursorTexture(uuid);
+}
+
 MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, MonoArray* rotation)
 {
 	if (!templateMO)
