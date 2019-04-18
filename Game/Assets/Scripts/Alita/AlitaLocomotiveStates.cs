@@ -51,7 +51,6 @@ class AWalking : AState
     public override void OnStart()
     {
         Alita.Call.animator.PlayAnimation("anim_run_alita_fist");
-        Debug.Log("MOVEMENTSTOPPED = FALSE");
         Alita.Call.agent.isMovementStopped = false;
         Alita.Call.agent.isRotationStopped = false;
     }
