@@ -373,6 +373,31 @@ void ComponentScript::OnDrawGizmos()
 	}
 }
 
+void ComponentScript::OnDrawGizmosSelected()
+{
+	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
+	if (scriptRes && scriptRes->onDrawGizmosSelected)
+	{
+		MonoObject* exc = nullptr;
+		if (IsTreeActive())
+		{
+			mono_runtime_invoke(scriptRes->onDrawGizmosSelected, GetMonoComponent(), NULL, &exc);
+			if (exc)
+			{
+				System_Event event;
+				event.type = System_Event_Type::Pause;
+				App->PushSystemEvent(event);
+				App->Pause();
+
+				MonoString* exceptionMessage = mono_object_to_string(exc, NULL);
+				char* toLogMessage = mono_string_to_utf8(exceptionMessage);
+				CONSOLE_LOG(LogTypes::Error, toLogMessage);
+				mono_free(toLogMessage);
+			}
+		}
+	}
+}
+
 void ComponentScript::OnCollisionEnter(Collision& collision)
 {
 	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
@@ -394,26 +419,13 @@ void ComponentScript::OnCollisionEnter(Collision& collision)
 			
 			//Set the impulse
 			MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
-			MonoObject* impulseOBJ = mono_object_new(App->scripting->domain, vector3Class);
-			mono_runtime_object_init(impulseOBJ);
 
 			math::float3 impulse = collision.GetImpulse();
-			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &impulse.x);
-			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &impulse.y);
-			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &impulse.z);
-
-			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "impulse"), impulseOBJ);
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "impulse"), &impulse);
 
 			//Set the relative velocity
-			MonoObject* relVelocityOBJ = mono_object_new(App->scripting->domain, vector3Class);
-			mono_runtime_object_init(relVelocityOBJ);
-
 			math::float3 relativeVelocity = collision.GetRelativeVelocity();
-			mono_field_set_value(relVelocityOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &relativeVelocity.x);
-			mono_field_set_value(relVelocityOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &relativeVelocity.y);
-			mono_field_set_value(relVelocityOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &relativeVelocity.z);
-
-			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "relativeVelocity"), &relVelocityOBJ);
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "relativeVelocity"), &relativeVelocity);
 
 			//Set the contacts
 			std::vector<ContactPoint> contacts = collision.GetContactPoints();
@@ -431,26 +443,14 @@ void ComponentScript::OnCollisionEnter(Collision& collision)
 
 				//Set normal
 				math::float3 normal = contact.GetNormal();
-				MonoObject* normalOBJ = mono_object_new(App->scripting->domain, vector3Class);
-				mono_runtime_object_init(normalOBJ);
-				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &normal.x);
-				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &normal.y);
-				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &normal.z);
-				
-				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "normal"), normalOBJ);
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "normal"), &normal);
 
 				//Set other collider
 				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "otherCollider"), App->scripting->MonoComponentFrom((Component*)contact.GetOtherCollider()));
 
 				//Set point
 				math::float3 point = contact.GetPoint();
-				MonoObject* pointOBJ = mono_object_new(App->scripting->domain, vector3Class);
-				mono_runtime_object_init(pointOBJ);
-				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &point.x);
-				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &point.y);
-				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &point.z);
-
-				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "point"), pointOBJ);
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "point"), &point);
 
 				//Set separation
 				float separation = contact.GetSeparation();
@@ -504,16 +504,8 @@ void ComponentScript::OnCollisionStay(Collision& collision)
 			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "collider"), App->scripting->MonoComponentFrom((Component*)collision.GetCollider()));
 
 			//Set the impulse
-			MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
-			MonoObject* impulseOBJ = mono_object_new(App->scripting->domain, vector3Class);
-			mono_runtime_object_init(impulseOBJ);
-
 			math::float3 impulse = collision.GetImpulse();
-			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &impulse.x);
-			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &impulse.y);
-			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &impulse.z);
-
-			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "impulse"), impulseOBJ);
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "impulse"), &impulse);
 
 			//TODO: RELATIVE VELOCITY?
 
@@ -533,26 +525,14 @@ void ComponentScript::OnCollisionStay(Collision& collision)
 
 				//Set normal
 				math::float3 normal = contact.GetNormal();
-				MonoObject* normalOBJ = mono_object_new(App->scripting->domain, vector3Class);
-				mono_runtime_object_init(normalOBJ);
-				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &normal.x);
-				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &normal.y);
-				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &normal.z);
-
-				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "normal"), normalOBJ);
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "normal"), &normal);
 
 				//Set other collider
 				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "otherCollider"), App->scripting->MonoComponentFrom((Component*)collision.GetCollider()));
 
 				//Set point
 				math::float3 point = contact.GetPoint();
-				MonoObject* pointOBJ = mono_object_new(App->scripting->domain, vector3Class);
-				mono_runtime_object_init(pointOBJ);
-				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &point.x);
-				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &point.y);
-				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &point.z);
-
-				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "point"), pointOBJ);
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "point"), &point);
 
 				//Set separation
 				float separation = contact.GetSeparation();
@@ -606,16 +586,8 @@ void ComponentScript::OnCollisionExit(Collision& collision)
 			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "collider"), App->scripting->MonoComponentFrom((Component*)collision.GetCollider()));
 
 			//Set the impulse
-			MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
-			MonoObject* impulseOBJ = mono_object_new(App->scripting->domain, vector3Class);
-			mono_runtime_object_init(impulseOBJ);
-
 			math::float3 impulse = collision.GetImpulse();
-			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &impulse.x);
-			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &impulse.y);
-			mono_field_set_value(impulseOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &impulse.z);
-
-			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "impulse"), impulseOBJ);
+			mono_field_set_value(collisionOBJ, mono_class_get_field_from_name(collisionClass, "impulse"), &impulse);
 
 			//TODO: RELATIVE VELOCITY?
 
@@ -635,26 +607,14 @@ void ComponentScript::OnCollisionExit(Collision& collision)
 
 				//Set normal
 				math::float3 normal = contact.GetNormal();
-				MonoObject* normalOBJ = mono_object_new(App->scripting->domain, vector3Class);
-				mono_runtime_object_init(normalOBJ);
-				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &normal.x);
-				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &normal.y);
-				mono_field_set_value(normalOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &normal.z);
-
-				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "normal"), normalOBJ);
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "normal"), &normal);
 
 				//Set other collider
 				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "otherCollider"), App->scripting->MonoComponentFrom((Component*)collision.GetCollider()));
 
 				//Set point
 				math::float3 point = contact.GetPoint();
-				MonoObject* pointOBJ = mono_object_new(App->scripting->domain, vector3Class);
-				mono_runtime_object_init(pointOBJ);
-				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_x"), &point.x);
-				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_y"), &point.y);
-				mono_field_set_value(pointOBJ, mono_class_get_field_from_name(vector3Class, "_z"), &point.z);
-
-				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "point"), pointOBJ);
+				mono_field_set_value(contactOBJ, mono_class_get_field_from_name(ContactPointClass, "point"), &point);
 
 				//Set separation
 				float separation = contact.GetSeparation();

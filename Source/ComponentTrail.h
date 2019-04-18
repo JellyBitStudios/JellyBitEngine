@@ -92,7 +92,7 @@ private:
 	float minDistance = 0.05f;
 	int lifeTime = 200;
 
-	int hight = 5;
+	int high = 5;
 	int low = 4;
 
 	math::OBB spawnBox;

@@ -1006,6 +1006,21 @@ void ScriptingModule::OnDrawGizmos()
 		}
 }
 
+void ScriptingModule::OnDrawGizmosSelected()
+{
+#ifndef GAMEMODE
+	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
+		for (int i = 0; i < scripts.size(); ++i)
+		{
+			if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), scripts[i]->GetParent()->GetUUID()) 
+				!= App->scene->multipleSelection.end())
+			{
+				scripts[i]->OnDrawGizmosSelected();
+			}		
+		}
+#endif
+}
+
 void ScriptingModule::TemporalSave()
 {
 	//Temporal save for scripts
@@ -1146,7 +1161,7 @@ void DebugLogTranslator(MonoString* msg)
 	if (!mono_error_ok(&error))
 		return;
 
-	CONSOLE_LOG(LogTypes::Normal, string);
+	CONSOLE_SCRIPTING_LOG(LogTypes::Normal, string);
 
 	mono_free(string);
 }
@@ -1159,7 +1174,7 @@ void DebugLogWarningTranslator(MonoString* msg)
 	if (!mono_error_ok(&error))
 		return;
 
-	CONSOLE_LOG(LogTypes::Warning, string);
+	CONSOLE_SCRIPTING_LOG(LogTypes::Warning, string);
 
 	mono_free(string);
 }
@@ -1172,7 +1187,7 @@ void DebugLogErrorTranslator(MonoString* msg)
 	if (!mono_error_ok(&error))
 		return;
 
-	CONSOLE_LOG(LogTypes::Error, string)
+	CONSOLE_SCRIPTING_LOG(LogTypes::Error, string)
 
 	mono_free(string);
 }
@@ -1211,6 +1226,24 @@ void DebugDrawLine(MonoArray* origin, MonoArray* destination, MonoArray* color)
 	math::float4 col = color != nullptr ? math::float4(mono_array_get(color, float, 0), mono_array_get(color, float, 1), mono_array_get(color, float, 2), mono_array_get(color, float, 3)) : math::float4(0, 1, 0, 1);
 
 	App->debugDrawer->DebugDrawLine(originCPP, destinationCPP, Color(col.ptr()));
+}
+
+void DebugDrawBox(MonoArray* halfExtents, MonoArray* color, MonoArray* position, MonoArray* rotation, MonoArray* scale)
+{
+	if (!App->debugDrawer->IsDrawing() || !halfExtents)
+		return;
+
+	math::float3 pos = position != nullptr ? math::float3(mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2)) : math::float3::zero;
+	math::Quat rot = rotation != nullptr ? math::Quat(mono_array_get(rotation, float, 0), mono_array_get(rotation, float, 1), mono_array_get(rotation, float, 2), mono_array_get(rotation, float, 3)) : math::Quat::identity;
+	math::float3 sca = scale != nullptr ? math::float3(mono_array_get(scale, float, 0), mono_array_get(scale, float, 1), mono_array_get(scale, float, 2)) : math::float3::one;
+
+	math::float4 col = color != nullptr ? math::float4(mono_array_get(color, float, 0), mono_array_get(color, float, 1), mono_array_get(color, float, 2), mono_array_get(color, float, 3)) : math::float4(0, 1, 0, 1);
+
+	math::float3 halfExtentsCpp(mono_array_get(halfExtents, float, 0), mono_array_get(halfExtents, float, 1), mono_array_get(halfExtents, float, 2));
+
+	math::float4x4 global = math::float4x4::FromTRS(pos, rot, sca);
+
+	App->debugDrawer->DebugDrawBox(halfExtentsCpp, Color(col.ptr()), global);
 }
 
 int32_t GetKeyStateCS(int32_t key)
@@ -1257,7 +1290,7 @@ MonoString* InputGetCursorTexture()
 	return nullptr;
 }
 
-void InputSetCursorTexture(MonoString* name)
+void InputSetCursorTextureName(MonoString* name)
 {
 	if (!name)
 		return;
@@ -1267,6 +1300,11 @@ void InputSetCursorTexture(MonoString* name)
 	App->input->SetCursorTexture(std::string(namecpp));
 
 	mono_free(namecpp);
+}
+
+void InputSetCursorTextureUUID(uint uuid)
+{
+	App->input->SetCursorTexture(uuid);
 }
 
 MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, MonoArray* rotation)
@@ -1400,11 +1438,8 @@ MonoObject* Vector3RandomInsideSphere()
 	math::float3 randomPoint = math::float3::RandomSphere(App->randomMathLCG, math::float3(0, 0, 0), 1);
 
 	MonoClass* vector3class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
-	MonoObject* ret = mono_object_new(App->scripting->domain, vector3class);
-
-	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "_x"), &randomPoint.x);
-	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "_y"), &randomPoint.y);
-	mono_field_set_value(ret, mono_class_get_field_from_name(vector3class, "_z"), &randomPoint.z);
+	
+	MonoObject* ret = mono_value_box(App->scripting->domain, vector3class, &randomPoint);
 
 	return ret;
 }
@@ -1883,14 +1918,14 @@ void SetGlobalScale(MonoObject* monoObject, MonoArray* globalScale)
 	gameObject->transform->SetMatrixFromGlobal(newGlobal);
 }
 
-MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type)
+MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 {
 	if (!monoObject || !type)
 		return nullptr;
 
 	MonoObject* monoComp = nullptr;
 
-	std::string className = mono_class_get_name(mono_object_get_class(type));
+	std::string className = mono_class_get_name(mono_type_get_class(mono_reflection_type_get_type(type)));
 
 	if (className == "NavMeshAgent")
 	{
@@ -2159,17 +2194,8 @@ MonoObject* ScreenToRay(MonoArray* screenCoordinates, MonoObject* cameraComponen
 	//SetUp the created Ray fields
 	MonoClassField* positionField = mono_class_get_field_from_name(RayClass, "position");
 	MonoClassField* directionField = mono_class_get_field_from_name(RayClass, "direction");
-	
-	MonoObject* positionObj; mono_field_get_value(ret, positionField, &positionObj);
-	MonoObject* directionObj; mono_field_get_value(ret, directionField, &directionObj);
-
-	mono_field_set_value(positionObj, mono_class_get_field_from_name(mono_object_get_class(positionObj), "_x"), &ray.pos.x);
-	mono_field_set_value(positionObj, mono_class_get_field_from_name(mono_object_get_class(positionObj), "_y"), &ray.pos.y);
-	mono_field_set_value(positionObj, mono_class_get_field_from_name(mono_object_get_class(positionObj), "_z"), &ray.pos.z);
-
-	mono_field_set_value(directionObj, mono_class_get_field_from_name(mono_object_get_class(directionObj), "_x"), &ray.dir.x);
-	mono_field_set_value(directionObj, mono_class_get_field_from_name(mono_object_get_class(directionObj), "_y"), &ray.dir.y);
-	mono_field_set_value(directionObj, mono_class_get_field_from_name(mono_object_get_class(directionObj), "_z"), &ray.dir.z);
+	mono_field_set_value(ret, positionField, &ray.pos);
+	mono_field_set_value(ret, directionField, &ray.dir);
 
 	return ret;
 }
@@ -2375,23 +2401,17 @@ bool NavAgentGetPath(MonoObject* monoAgent, MonoArray* position, MonoArray* dest
 			MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
 			*out_path = mono_array_new(App->scripting->domain, vector3Class, finalPath.size());
 
-			MonoClassField* _xField = mono_class_get_field_from_name(vector3Class, "_x");
-			MonoClassField* _yField = mono_class_get_field_from_name(vector3Class, "_y");
-			MonoClassField* _zField = mono_class_get_field_from_name(vector3Class, "_z");
-
 			for (int i = 0; i < finalPath.size(); ++i)
 			{
 				math::float3 pos = finalPath[i];
-
-				MonoObject* posCSharp = mono_object_new(App->scripting->domain, vector3Class);
-				mono_field_set_value(posCSharp, _xField, &pos.x);
-				mono_field_set_value(posCSharp, _yField, &pos.y);
-				mono_field_set_value(posCSharp, _zField, &pos.z);
-
-				mono_array_setref(*out_path, i, posCSharp);
+				mono_array_set(*out_path, math::float3, i, pos);
 			}
 
 			return true;
+		}
+		else
+		{
+			*out_path = nullptr;
 		}
 	}
 	return false;
@@ -2411,23 +2431,18 @@ bool NavigationGetPath(MonoArray* origin, MonoArray* destination, MonoArray** ou
 		MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
 		*out_path = mono_array_new(App->scripting->domain, vector3Class, finalPath.size());
 
-		MonoClassField* _xField = mono_class_get_field_from_name(vector3Class, "_x");
-		MonoClassField* _yField = mono_class_get_field_from_name(vector3Class, "_y");
-		MonoClassField* _zField = mono_class_get_field_from_name(vector3Class, "_z");
-
 		for (int i = 0; i < finalPath.size(); ++i)
 		{
 			math::float3 pos = finalPath[i];
 
-			MonoObject* posCSharp = mono_object_new(App->scripting->domain, vector3Class);
-			mono_field_set_value(posCSharp, _xField, &pos.x);
-			mono_field_set_value(posCSharp, _yField, &pos.y);
-			mono_field_set_value(posCSharp, _zField, &pos.z);
-
-			mono_array_setref(*out_path, i, posCSharp);
+			mono_array_set(*out_path, math::float3, i, pos);
 		}
 
 		return true;
+	}
+	else
+	{
+		*out_path = nullptr;
 	}
 	
 	return false;
@@ -2563,6 +2578,13 @@ void UpdateAnimationSpeed(MonoObject* animatorComp, float newSpeed)
 	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(animatorComp);
 	if(animator)
 		animator->UpdateAnimationSpeed(newSpeed);
+}
+
+void UpdateAnimationBlendTime(MonoObject* animatorComp, float newBlendTime)
+{
+	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(animatorComp);
+	if (animator)
+		animator->UpdateAnimationSpeed(newBlendTime);
 }
 
 void ParticleEmitterPlay(MonoObject* particleComp)
@@ -2818,6 +2840,15 @@ void ImageSetResourceName(MonoObject* monoImage, MonoString* imageName)
 		image->SetResImageName(imageNameCpp);
 
 		mono_free(imageNameCpp);
+	}
+}
+
+void ImageSetResourceUUID(MonoObject* monoImage, uint imageUUID)
+{
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
+	{	
+		image->SetResImageUuid(imageUUID);
 	}
 }
 
@@ -3452,27 +3483,12 @@ bool Raycast(MonoArray* origin, MonoArray* direction, MonoObject** hitInfo, floa
 		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "collider"), App->scripting->MonoComponentFrom((Component*)hitInfocpp.GetCollider()));
 
 		//Setup the point field
-		MonoClass* Vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
-		MonoObject* pointObj = mono_object_new(App->scripting->domain, Vector3Class);
-		mono_runtime_object_init(pointObj);
-
 		math::float3 point = hitInfocpp.GetPoint();
-		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "_x"), &point.x);
-		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "_y"), &point.y);
-		mono_field_set_value(pointObj, mono_class_get_field_from_name(Vector3Class, "_z"), &point.z);
-
-		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "point"), pointObj);
+		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "point"), &point);
 
 		//Setup the normal field
-		MonoObject* normalObj = mono_object_new(App->scripting->domain, Vector3Class);
-		mono_runtime_object_init(normalObj);
-
 		math::float3 normal = hitInfocpp.GetNormal();
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "_x"), &normal.x);
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "_y"), &normal.y);
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector3Class, "_z"), &normal.z);
-
-		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "normal"), normalObj);
+		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "normal"), &normal);
 
 		//Setup the texCoord field
 		MonoClass* Vector2Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector2");
@@ -3480,8 +3496,8 @@ bool Raycast(MonoArray* origin, MonoArray* direction, MonoObject** hitInfo, floa
 		mono_runtime_object_init(texCoordObj);
 
 		math::float2 texCoord = hitInfocpp.GetTexCoord();
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector2Class, "x"), &texCoord.x);
-		mono_field_set_value(normalObj, mono_class_get_field_from_name(Vector2Class, "y"), &texCoord.y);
+		mono_field_set_value(texCoordObj, mono_class_get_field_from_name(Vector2Class, "x"), &texCoord.x);
+		mono_field_set_value(texCoordObj, mono_class_get_field_from_name(Vector2Class, "y"), &texCoord.y);
 
 		mono_field_set_value(*hitInfo, mono_class_get_field_from_name(raycastHitClass, "texCoord"), texCoordObj);
 
@@ -3563,6 +3579,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Debug::ClearConsole", (const void*)&ClearConsole);
 	mono_add_internal_call("JellyBitEngine.Debug::_DrawSphere", (const void*)&DebugDrawSphere);
 	mono_add_internal_call("JellyBitEngine.Debug::_DrawLine", (const void*)&DebugDrawLine);
+	mono_add_internal_call("JellyBitEngine.Debug::_DrawBox", (const void*)&DebugDrawBox);
 
 	//Input
 	mono_add_internal_call("JellyBitEngine.Input::GetKeyState", (const void*)&GetKeyStateCS);
@@ -3571,7 +3588,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Input::GetWheelMovement", (const void*)&GetWheelMovementCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetMouseDeltaPos", (const void*)&GetMouseDeltaPosCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetCursorTexture", (const void*)&InputGetCursorTexture);
-	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture", (const void*)&InputSetCursorTexture);
+	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture(string)", (const void*)&InputSetCursorTextureName);
+	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture(uint)", (const void*)&InputSetCursorTextureUUID);
 
 	//Object
 	mono_add_internal_call("JellyBitEngine.Object::Destroy", (const void*)&DestroyObj);
@@ -3665,7 +3683,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetColor", (const void*)&ImageSetColor);
 	mono_add_internal_call("JellyBitEngine.UI.Image::ResetColor", (const void*)&ImageResetColor);
 	mono_add_internal_call("JellyBitEngine.UI.Image::GetResource", (const void*)&ImageGetResourceName);
-	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource", (const void*)&ImageSetResourceName);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource(string)", (const void*)&ImageSetResourceName);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource(uint)", (const void*)&ImageSetResourceUUID);
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetMask", (const void*)&ImageSetMask);
 	mono_add_internal_call("JellyBitEngine.UI.Label::SetText", (const void*)&LabelSetText);
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetText", (const void*)&LabelGetText);
@@ -3763,6 +3782,14 @@ void ScriptingModule::UpdateScriptingReferences()
 	MonoImageOpenStatus status = MONO_IMAGE_ERROR_ERRNO;
 	scriptsImage = mono_image_open_from_data(buffer, size, 1, &status);
 	scriptsAssembly = mono_assembly_load_from(scriptsImage, "ScriptingAssembly", &status);
+
+	ResourceScript::ClearScriptNames();
+
+	std::vector<Resource*> scriptResources = App->res->GetResourcesByType(ResourceTypes::ScriptResource);
+	for (Resource* res : scriptResources)
+	{
+		((ResourceScript*)res)->IncludeName();
+	}
 
 	delete[] buffer;
 }

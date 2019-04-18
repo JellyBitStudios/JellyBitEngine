@@ -15,9 +15,10 @@ enum class LogTypes
 };
 
 #define CONSOLE_LOG(format, ...) Log(__FILE__, __LINE__, LogTypes::Normal, format, __VA_ARGS__);
-#define CONSOLE_LOG(mode, format, ...) Log(__FILE__, __LINE__, mode, format, __VA_ARGS__);
+#define CONSOLE_LOG(mode, format, ...) Log(__FILE__, __LINE__, mode, false, format, __VA_ARGS__);
+#define CONSOLE_SCRIPTING_LOG(mode, format, ...) Log(__FILE__, __LINE__, mode, true, format, __VA_ARGS__);
 
-void Log(const char file[], int line, LogTypes mode, const char* format, ...);
+void Log(const char file[], int line, LogTypes mode, bool scripting, const char* format, ...);
 
 void OpenInBrowser(char* url);
 

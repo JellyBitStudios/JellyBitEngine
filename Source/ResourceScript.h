@@ -56,8 +56,10 @@ public:
 	uint bytesToSerializeMeta() const;
 
 	bool referenceMethods();
+	void IncludeName();
 
 	static std::vector<std::string> getScriptNames() { return scriptNames; }
+	static void ClearScriptNames() { scriptNames.clear(); };
 
 private:
 	std::string pathToWindowsNotation(const std::string& path) const;
@@ -78,6 +80,7 @@ public:
 	_MonoMethod* stopMethod = nullptr;
 	_MonoMethod* fixedUpdateMethod = nullptr;
 	_MonoMethod* onDrawGizmos = nullptr;
+	_MonoMethod* onDrawGizmosSelected = nullptr;
 	_MonoMethod* OnCollisionEnterMethod = nullptr;
 	_MonoMethod* OnCollisionStayMethod = nullptr;
 	_MonoMethod* OnCollisionExitMethod = nullptr;
