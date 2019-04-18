@@ -32,11 +32,12 @@ class AIdle : AState
     {
         if (hit.gameObject.GetLayer() == "Terrain")
         {
-            Alita.Call.agent.SetDestination(hit.point);
-            Alita.Call.SwitchState(Alita.Call.StateWalking2Spot);
+            if (Alita.Call.agent.SetDestination(hit.point))
+                Alita.Call.SwitchState(Alita.Call.StateWalking2Spot);
         }
         else if (hit.gameObject.GetLayer() == "Enemy")
         {
+            // WARNING: SetDestination could return false but here we are targetting an enemy so...
             Alita.Call.currentTarget = hit.gameObject;
             Alita.Call.agent.SetDestination(hit.gameObject.transform.position);
             Alita.Call.SwitchState(Alita.Call.StateWalking2Enemy);
@@ -118,8 +119,8 @@ class AWalking2Enemy : AWalking
         }
         else if (hit.gameObject.GetLayer() == "Enemy")
         {
-            Alita.Call.currentTarget = hit.gameObject;
-            Alita.Call.agent.SetDestination(hit.gameObject.transform.position);
+            if (Alita.Call.agent.SetDestination(hit.gameObject.transform.position))
+                Alita.Call.currentTarget = hit.gameObject;           
         }
     }
 }

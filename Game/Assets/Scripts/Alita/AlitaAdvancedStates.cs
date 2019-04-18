@@ -5,11 +5,14 @@ class AAttacking : AState
     enum Anim { first, second, third }
     Anim currentAnim;
 
+    private bool hasPetition;
+
     public override void OnStart()
     {
         Alita.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
         currentAnim = Anim.first;
-        
+        hasPetition = false;
+
         Alita.Call.agent.isRotationStopped = false;
         Alita.Call.agent.alignData.lookWhereYoureGoingData.isActive = false;
         Alita.Call.agent.alignData.faceData.isActive = true;
@@ -21,20 +24,28 @@ class AAttacking : AState
 
         if (Alita.Call.animator.AnimationFinished())
         {
-            if (currentAnim == Anim.first)
+            if (hasPetition)
             {
-                Alita.Call.animator.PlayAnimation("anim_hand_forward_alita_fist");
-                currentAnim = Anim.second;
-            }
-            else if (currentAnim == Anim.second)
-            {
-                Alita.Call.animator.PlayAnimation("anim_kick_alita_fist");
-                currentAnim = Anim.third;
+                if (currentAnim == Anim.first)
+                {
+                    Alita.Call.animator.PlayAnimation("anim_hand_forward_alita_fist");
+                    currentAnim = Anim.second;
+                }
+                else if (currentAnim == Anim.second)
+                {
+                    Alita.Call.animator.PlayAnimation("anim_kick_alita_fist");
+                    currentAnim = Anim.third;
+                }
+                else
+                {
+                    Alita.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
+                    currentAnim = Anim.first;
+                }
+                hasPetition = false;
             }
             else
             {
-                Alita.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
-                currentAnim = Anim.first;
+                Alita.Call.SwitchState(Alita.Call.StateIdle);
             }
         }
     }
@@ -49,9 +60,15 @@ class AAttacking : AState
         }
         else if (hit.gameObject.GetLayer() == "Enemy")
         {
-            Alita.Call.currentTarget = hit.gameObject;
-            Alita.Call.agent.SetDestination(hit.gameObject.transform.position);
-            Alita.Call.SwitchState(Alita.Call.StateWalking2Enemy);
+            GameObject targeted = hit.gameObject;
+            if (targeted == Alita.Call.currentTarget)
+                hasPetition = true;
+            else
+            {
+                Alita.Call.currentTarget = hit.gameObject;
+                Alita.Call.agent.SetDestination(hit.gameObject.transform.position);
+                Alita.Call.SwitchState(Alita.Call.StateWalking2Enemy);
+            }
         }
     }
 

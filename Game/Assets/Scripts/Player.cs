@@ -29,7 +29,7 @@ class Player : JellyScript
     {
         if (!gameStopped)
         {
-            if (Input.GetMouseButton(MouseKeyCode.MOUSE_RIGHT))
+            if (Input.GetMouseButton(MouseKeyCode.MOUSE_LEFT))
                 HandleMousePicking(true);
             else
                 HandleMousePicking(false);
