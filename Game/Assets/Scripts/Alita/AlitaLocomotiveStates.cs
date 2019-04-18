@@ -51,7 +51,7 @@ class AWalking : AState
     public override void OnStart()
     {
         Alita.Call.animator.PlayAnimation("anim_run_alita_fist");
-
+        Debug.Log("MOVEMENTSTOPPED = FALSE");
         Alita.Call.agent.isMovementStopped = false;
         Alita.Call.agent.isRotationStopped = false;
     }
@@ -91,7 +91,7 @@ class AWalking2Spot : AWalking
         {
             Alita.Call.currentTarget = hit.gameObject;
             Alita.Call.agent.SetDestination(hit.gameObject.transform.position);
-            Alita.Call.SwitchState(Alita.Call.StateWalking2Enemy);
+            Alita.Call.SwitchState(Alita.Call.StateWalking2Enemy, false, false);
         }
     }
 }
@@ -102,7 +102,7 @@ class AWalking2Enemy : AWalking
     {
         if ((Alita.Call.transform.position -
              Alita.Call.currentTarget.transform.position)
-             .magnitude < AlitaCharacter.ConstHitRadius)
+             .magnitude < Alita.Call.ConstHitRadius)
         {
             Alita.Call.SwitchState(Alita.Call.StateAttacking);
         }
@@ -113,14 +113,13 @@ class AWalking2Enemy : AWalking
         if (hit.gameObject.GetLayer() == "Terrain")
         {
             Alita.Call.agent.SetDestination(hit.point);
-            Alita.Call.SwitchState(Alita.Call.StateWalking2Spot);
+            Alita.Call.SwitchState(Alita.Call.StateWalking2Spot, false, false);
             Alita.Call.currentTarget = null;
         }
         else if (hit.gameObject.GetLayer() == "Enemy")
         {
             Alita.Call.currentTarget = hit.gameObject;
             Alita.Call.agent.SetDestination(hit.gameObject.transform.position);
-            Alita.Call.SwitchState(Alita.Call.StateWalking2Enemy);
         }
     }
 }
