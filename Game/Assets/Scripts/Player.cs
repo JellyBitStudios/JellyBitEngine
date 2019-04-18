@@ -29,7 +29,7 @@ class Player : JellyScript
     {
         if (!gameStopped)
         {
-            if (Input.GetMouseButton(MouseKeyCode.MOUSE_RIGHT))
+            if (Input.GetMouseButton(MouseKeyCode.MOUSE_LEFT))
                 HandleMousePicking(true);
             else
                 HandleMousePicking(false);
@@ -84,7 +84,7 @@ class Player : JellyScript
             if (process)
                 Alita.Call.ProcessRaycast(hit);
 
-            string layer = hit.gameObject.GetLayer();
+            //string layer = hit.gameObject.GetLayer();
         }
         return;
     }

@@ -297,6 +297,12 @@ public class Wander : ICyborgMeleeState
 
     public override void Enter(CyborgMeleeController owner)
     {
+        /// Activate/Deactivate
+        owner.agent.ActivateWander();
+        owner.agent.ActivateAvoidance();
+
+        owner.agent.ClearPath();
+
         switch (stateType)
         {
             case WanderType.Wander:
@@ -310,11 +316,7 @@ public class Wander : ICyborgMeleeState
                 owner.agent.wanderData.offset = 2.0f;
 
                 owner.agent.wanderData.minTime = 1.0f;
-                owner.agent.wanderData.maxTime = 3.0f;
-
-                /// Activate/Deactivate
-                owner.agent.ActivateWander();
-                owner.agent.ActivateAvoidance();
+                owner.agent.wanderData.maxTime = 2.0f;
 
                 break;
 
@@ -337,10 +339,6 @@ public class Wander : ICyborgMeleeState
 
                 owner.agent.wanderData.minTime = 0.3f;
                 owner.agent.wanderData.maxTime = 0.7f;
-
-                /// Activate/Deactivate
-                owner.agent.ActivateWander();
-                owner.agent.ActivateAvoidance();
 
                 strafeTime = (float)MathScript.GetRandomDouble(owner.character.strafeMinTime, owner.character.strafeMaxTime);
 
@@ -426,7 +424,7 @@ public class Attack : ICyborgMeleeState
 
     // -----
 
-    private bool isMovementStopped = 0;
+    private bool isMovementStopped = false;
     private float maxAngularAcceleration = 0.0f;
 
     // -----
@@ -485,7 +483,7 @@ public class Attack : ICyborgMeleeState
             if (contains)
                 Alita.Call.battleCircle.RemoveAttacker(owner.gameObject);
 
-            owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.Runaway));
+            owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.GoToDangerDistance)); // danger distance just in case I have moved out of my attack range
             return;
         }
 

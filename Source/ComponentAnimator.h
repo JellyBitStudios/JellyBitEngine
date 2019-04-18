@@ -31,6 +31,7 @@ public:
 	bool AnimationFinished()const;
 	bool UpdateAnimationSpeed(float new_speed);
 	bool UpdateBlendTime(float new_blend);
+	void SetAnimationLoop(bool loop);
 	/* ----- SCRIPTING CALLS ----- */
 
 	void OnInternalSave(char*& cursor);
