@@ -29,7 +29,6 @@ class Player : JellyScript
     {
         if (!gameStopped)
         {
-            //Debug.Log("ADSAD");
             if (Input.GetMouseButton(MouseKeyCode.MOUSE_RIGHT))
                 HandleMousePicking(true);
             else
@@ -85,16 +84,7 @@ class Player : JellyScript
             if (process)
                 Alita.Call.ProcessRaycast(hit);
 
-            // mark enemy as red etc
             string layer = hit.gameObject.GetLayer();
-            if (layer == "Terrain")
-            {
-              
-            }
-            else
-            {
-              
-            }
         }
         return;
     }

@@ -5,24 +5,26 @@ public class AlitaCharacter : Character
 {
     public uint lvl = 1;
     public const float expPerLvlModifier = 20.0f;
+    private float _currentExp;
     public float currentExp
     {
         get //get method for returning value
         {
-            return currentExp;
+            return _currentExp;
         }
         set
         {
             if (value >= lvl * expPerLvlModifier)
             {
                 lvl += 1;
-                currentExp = 0;
+                _currentExp = 0;
             }
             else
-                currentExp = value;
+                _currentExp = value;
         }
     }
 
+    public const float ConstHitRadius = 1.0f;
     public const float ConstDashStrength = 8.0f;
     public const float ConstMaxDistance = 4.0f;
 }
@@ -56,6 +58,9 @@ public class Skill
 
 public class Skillset
 {
+    // TODO G: skills will remain here for now. Them can be created outside and added to the skills via
+    // skillset.add? how we can acces to each skill? think about it
+
     // skill->Dash
     public Skill skDash = new Skill();
 

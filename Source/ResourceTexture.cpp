@@ -4,6 +4,7 @@
 #include "ModuleFileSystem.h"
 #include "MaterialImporter.h"
 #include "ModuleScene.h"
+#include "ModuleInput.h"
 
 #include "imgui\imgui.h"
 
@@ -11,7 +12,7 @@
 
 ResourceTexture::ResourceTexture(ResourceTypes type, uint uuid, ResourceData data, ResourceTextureData textureData) : Resource(type, uuid, data), textureData(textureData) {}
 
-ResourceTexture::~ResourceTexture() 
+ResourceTexture::~ResourceTexture()
 {
 	RELEASE_ARRAY(textureData.data);
 }
@@ -34,6 +35,20 @@ void ResourceTexture::OnPanelAssets()
 	if (ImGui::IsMouseReleased(0) && ImGui::IsItemHovered() /*&& (mouseDelta.x == 0 && mouseDelta.y == 0)*/)
 	{
 		SELECT(this);
+	}
+
+	if (ImGui::IsMouseClicked(1) && ImGui::IsItemHovered())
+	{
+		ImGui::OpenPopup(std::string("TextureAssetsMenu" + std::to_string(uuid)).data());
+	}
+
+	if (ImGui::BeginPopup(std::string("TextureAssetsMenu" + std::to_string(uuid)).data()))
+	{
+		if (ImGui::MenuItem("Set as Default Cursor"))
+		{
+			App->input->SetDefaultCursorTexture(this);
+		}
+		ImGui::EndPopup();
 	}
 
 	if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))

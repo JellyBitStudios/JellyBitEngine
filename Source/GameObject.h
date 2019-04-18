@@ -80,7 +80,7 @@ public:
 
 	void RecursiveForceAllResources(uint forceRes) const;
 
-	// scripting
+	// Scripting
 	MonoObject* GetMonoObject();
 	inline void SetMonoObject(uint32_t monoObjectHandle) { this->monoObjectHandle = monoObjectHandle; };
 

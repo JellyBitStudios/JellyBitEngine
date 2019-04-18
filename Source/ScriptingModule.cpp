@@ -1006,6 +1006,21 @@ void ScriptingModule::OnDrawGizmos()
 		}
 }
 
+void ScriptingModule::OnDrawGizmosSelected()
+{
+#ifndef GAMEMODE
+	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
+		for (int i = 0; i < scripts.size(); ++i)
+		{
+			if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), scripts[i]->GetParent()->GetUUID()) 
+				!= App->scene->multipleSelection.end())
+			{
+				scripts[i]->OnDrawGizmosSelected();
+			}		
+		}
+#endif
+}
+
 void ScriptingModule::TemporalSave()
 {
 	//Temporal save for scripts
@@ -1146,7 +1161,7 @@ void DebugLogTranslator(MonoString* msg)
 	if (!mono_error_ok(&error))
 		return;
 
-	CONSOLE_LOG(LogTypes::Normal, string);
+	CONSOLE_SCRIPTING_LOG(LogTypes::Normal, string);
 
 	mono_free(string);
 }
@@ -1159,7 +1174,7 @@ void DebugLogWarningTranslator(MonoString* msg)
 	if (!mono_error_ok(&error))
 		return;
 
-	CONSOLE_LOG(LogTypes::Warning, string);
+	CONSOLE_SCRIPTING_LOG(LogTypes::Warning, string);
 
 	mono_free(string);
 }
@@ -1172,7 +1187,7 @@ void DebugLogErrorTranslator(MonoString* msg)
 	if (!mono_error_ok(&error))
 		return;
 
-	CONSOLE_LOG(LogTypes::Error, string)
+	CONSOLE_SCRIPTING_LOG(LogTypes::Error, string)
 
 	mono_free(string);
 }
@@ -1211,6 +1226,24 @@ void DebugDrawLine(MonoArray* origin, MonoArray* destination, MonoArray* color)
 	math::float4 col = color != nullptr ? math::float4(mono_array_get(color, float, 0), mono_array_get(color, float, 1), mono_array_get(color, float, 2), mono_array_get(color, float, 3)) : math::float4(0, 1, 0, 1);
 
 	App->debugDrawer->DebugDrawLine(originCPP, destinationCPP, Color(col.ptr()));
+}
+
+void DebugDrawBox(MonoArray* halfExtents, MonoArray* color, MonoArray* position, MonoArray* rotation, MonoArray* scale)
+{
+	if (!App->debugDrawer->IsDrawing() || !halfExtents)
+		return;
+
+	math::float3 pos = position != nullptr ? math::float3(mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2)) : math::float3::zero;
+	math::Quat rot = rotation != nullptr ? math::Quat(mono_array_get(rotation, float, 0), mono_array_get(rotation, float, 1), mono_array_get(rotation, float, 2), mono_array_get(rotation, float, 3)) : math::Quat::identity;
+	math::float3 sca = scale != nullptr ? math::float3(mono_array_get(scale, float, 0), mono_array_get(scale, float, 1), mono_array_get(scale, float, 2)) : math::float3::one;
+
+	math::float4 col = color != nullptr ? math::float4(mono_array_get(color, float, 0), mono_array_get(color, float, 1), mono_array_get(color, float, 2), mono_array_get(color, float, 3)) : math::float4(0, 1, 0, 1);
+
+	math::float3 halfExtentsCpp(mono_array_get(halfExtents, float, 0), mono_array_get(halfExtents, float, 1), mono_array_get(halfExtents, float, 2));
+
+	math::float4x4 global = math::float4x4::FromTRS(pos, rot, sca);
+
+	App->debugDrawer->DebugDrawBox(halfExtentsCpp, Color(col.ptr()), global);
 }
 
 int32_t GetKeyStateCS(int32_t key)
@@ -2366,7 +2399,6 @@ bool NavAgentGetPath(MonoObject* monoAgent, MonoArray* position, MonoArray* dest
 			for (int i = 0; i < finalPath.size(); ++i)
 			{
 				math::float3 pos = finalPath[i];
-
 				mono_array_set(*out_path, math::float3, i, pos);
 			}
 
@@ -3525,6 +3557,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Debug::ClearConsole", (const void*)&ClearConsole);
 	mono_add_internal_call("JellyBitEngine.Debug::_DrawSphere", (const void*)&DebugDrawSphere);
 	mono_add_internal_call("JellyBitEngine.Debug::_DrawLine", (const void*)&DebugDrawLine);
+	mono_add_internal_call("JellyBitEngine.Debug::_DrawBox", (const void*)&DebugDrawBox);
 
 	//Input
 	mono_add_internal_call("JellyBitEngine.Input::GetKeyState", (const void*)&GetKeyStateCS);

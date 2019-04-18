@@ -87,6 +87,7 @@ public:
 
 	void FixedUpdate();
 	void OnDrawGizmos();
+	void OnDrawGizmosSelected();
 
 	void TemporalSave();
 	void TemporalLoad();
