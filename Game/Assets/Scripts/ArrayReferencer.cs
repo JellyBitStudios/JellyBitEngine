@@ -65,7 +65,7 @@ public class ArrayReferencer : JellyScript
 
     public override void OnDrawGizmosSelected()
     {
-        Debug.DrawSphere(1f, new float[] { 1, 0, 0, 1 }, gameObject.transform.position, gameObject.transform.rotation, gameObject.transform.scale);
+        Debug.DrawBox(Vector3.one, new float[] { 1, 0, 0, 1 }, gameObject.transform.position, gameObject.transform.rotation, gameObject.transform.scale);
     }
 }
 
