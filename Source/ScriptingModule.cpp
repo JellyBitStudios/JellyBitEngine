@@ -2835,6 +2835,15 @@ void ImageSetResourceName(MonoObject* monoImage, MonoString* imageName)
 	}
 }
 
+void ImageSetResourceUUID(MonoObject* monoImage, uint imageUUID)
+{
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
+	{	
+		image->SetResImageUuid(imageUUID);
+	}
+}
+
 void ImageSetMask(MonoObject* monoImage)
 {
 	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
@@ -3666,7 +3675,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetColor", (const void*)&ImageSetColor);
 	mono_add_internal_call("JellyBitEngine.UI.Image::ResetColor", (const void*)&ImageResetColor);
 	mono_add_internal_call("JellyBitEngine.UI.Image::GetResource", (const void*)&ImageGetResourceName);
-	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource", (const void*)&ImageSetResourceName);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource(string)", (const void*)&ImageSetResourceName);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource(uint)", (const void*)&ImageSetResourceUUID);
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetMask", (const void*)&ImageSetMask);
 	mono_add_internal_call("JellyBitEngine.UI.Label::SetText", (const void*)&LabelSetText);
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetText", (const void*)&LabelGetText);
