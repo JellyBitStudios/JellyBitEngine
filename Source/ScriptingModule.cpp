@@ -1290,7 +1290,7 @@ MonoString* InputGetCursorTexture()
 	return nullptr;
 }
 
-void InputSetCursorTexture(MonoString* name)
+void InputSetCursorTextureName(MonoString* name)
 {
 	if (!name)
 		return;
@@ -1302,7 +1302,7 @@ void InputSetCursorTexture(MonoString* name)
 	mono_free(namecpp);
 }
 
-void InputSetCursorTexture(uint uuid)
+void InputSetCursorTextureUUID(uint uuid)
 {
 	App->input->SetCursorTexture(uuid);
 }
@@ -3571,7 +3571,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Input::GetWheelMovement", (const void*)&GetWheelMovementCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetMouseDeltaPos", (const void*)&GetMouseDeltaPosCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetCursorTexture", (const void*)&InputGetCursorTexture);
-	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture", (const void*)&InputSetCursorTexture);
+	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture(string)", (const void*)&InputSetCursorTextureName);
+	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture(uint)", (const void*)&InputSetCursorTextureUUID);
 
 	//Object
 	mono_add_internal_call("JellyBitEngine.Object::Destroy", (const void*)&DestroyObj);
