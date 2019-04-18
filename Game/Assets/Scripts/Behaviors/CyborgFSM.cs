@@ -4,32 +4,8 @@ using JellyBitEngine;
 
 // https://forum.unity.com/threads/c-proper-state-machine.380612/
 
-public enum StateType
-{
-    None,
-
-    // GoTo
-    GoToDangerDistance,
-    GoToAttackDistance,
-
-    // Wander
-    Wander,
-    Strafe,
-
-    // Attack
-    Attack,
-
-    // Hit
-    Hit,
-
-    // Die
-    Die
-}
-
 public abstract class ICyborgMeleeState
 {
-    public StateType stateType = StateType.None;
-
     public abstract void Enter(CyborgMeleeController owner);
     public abstract void Execute(CyborgMeleeController owner);
     public abstract void Exit(CyborgMeleeController owner);
@@ -74,13 +50,19 @@ public class CyborgMeleeFSM
     }
 }
 
+#region GO_TO_GAMEOBJECT
 // ----------------------------------------------------------------------------------------------------
 // GoToGameObject
 // ----------------------------------------------------------------------------------------------------
 
 public class GoToGameObject : ICyborgMeleeState
 {
-    private StateType prevStateType = StateType.None;
+    public enum GoToGameObjectType
+    {
+        GoToDangerDistance,
+        GoToAttackDistance
+    }
+    private GoToGameObjectType stateType;
 
     // -----
 
@@ -93,10 +75,9 @@ public class GoToGameObject : ICyborgMeleeState
 
     // --------------------------------------------------
 
-    public GoToGameObject(GameObject target, StateType stateType, StateType prevStateType = StateType.None)
+    public GoToGameObject(GameObject target, GoToGameObjectType stateType)
     {
         this.stateType = stateType;
-        this.prevStateType = prevStateType;
 
         // -----
 
@@ -112,7 +93,7 @@ public class GoToGameObject : ICyborgMeleeState
 
         switch (stateType)
         {
-            case StateType.GoToDangerDistance:
+            case GoToGameObjectType.GoToDangerDistance:
 
                 Debug.Log("Enter GoToGameObject: GoToDangerDistance");
 
@@ -122,7 +103,7 @@ public class GoToGameObject : ICyborgMeleeState
 
                 break;
 
-            case StateType.GoToAttackDistance:
+            case GoToGameObjectType.GoToAttackDistance:
 
                 Debug.Log("Enter GoToGameObject: GoToAttackDistance");
 
@@ -149,28 +130,30 @@ public class GoToGameObject : ICyborgMeleeState
     {
         switch (stateType)
         {
-            case StateType.GoToDangerDistance:
+            case GoToGameObjectType.GoToDangerDistance:
                 {
-                    if (owner.character.life <= owner.character.minLife) // Do I have enough life to attack the target?
+                    if (owner.character.life <= owner.character.minLife) // minLife: do I have enough life to attack the target?
                     {
-                        owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.Wander, stateType));
+                        // TODO: RUN AWAY
+                        owner.fsm.ChangeState(new Wander(Wander.WanderType.Wander));
                         return;
                     }
 
                     float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
                     if (distanceToTarget <= owner.character.dangerDistance)
                     {
-                        owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.GoToAttackDistance, stateType));
+                        owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObjectType.GoToAttackDistance));
                         return;
                     }
                 }
                 break;
 
-            case StateType.GoToAttackDistance:
+            case GoToGameObjectType.GoToAttackDistance:
                 {
-                    if (owner.character.life <= owner.character.minLife) // Do I have enough life to attack the target?
+                    if (owner.character.life <= owner.character.minLife) // minLife: do I have enough life to attack the target?
                     {
-                        owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.Wander, stateType));
+                        // TODO: RUN AWAY
+                        owner.fsm.ChangeState(new Wander(Wander.WanderType.Wander));
                         return;
                     }
 
@@ -181,13 +164,13 @@ public class GoToGameObject : ICyborgMeleeState
                         if (Alita.Call.battleCircle.AddAttacker(owner.gameObject))
                         {
                             // Yes! Attack
-                            owner.fsm.ChangeState(new Attack(Alita.Call.gameObject, StateType.Attack, stateType));
+                            owner.fsm.ChangeState(new Attack(Alita.Call.gameObject));
                             return;
                         }
                         else
                         {
                             // No! Strafe
-                            owner.fsm.ChangeState(new Wander(StateType.Strafe, stateType));
+                            owner.fsm.ChangeState(new Wander(Wander.WanderType.Strafe));
                             return;
                         }
                     }
@@ -200,13 +183,13 @@ public class GoToGameObject : ICyborgMeleeState
     {
         switch (stateType)
         {
-            case StateType.GoToDangerDistance:
+            case GoToGameObjectType.GoToDangerDistance:
 
                 Debug.Log("Exit GoToGameObject: GoToDangerDistance");
 
                 break;
 
-            case StateType.GoToAttackDistance:
+            case GoToGameObjectType.GoToAttackDistance:
 
                 Debug.Log("Exit GoToGameObject: GoToAttackDistance");
 
@@ -221,24 +204,31 @@ public class GoToGameObject : ICyborgMeleeState
     {
         switch (stateType)
         {
-            case StateType.GoToDangerDistance:
+            case GoToGameObjectType.GoToDangerDistance:
                 Debug.DrawSphere(owner.character.dangerDistance, Color.Blue, owner.transform.position, Quaternion.identity, Vector3.one);
                 break;
 
-            case StateType.GoToAttackDistance:
+            case GoToGameObjectType.GoToAttackDistance:
                 Debug.DrawSphere(owner.character.attackDistance, Color.Green, owner.transform.position, Quaternion.identity, Vector3.one);
                 break;
         }
     }
 }
+#endregion
 
+#region WANDER
 // ----------------------------------------------------------------------------------------------------
 // Wander
 // ----------------------------------------------------------------------------------------------------
 
 public class Wander : ICyborgMeleeState
 {
-    private StateType prevStateType = StateType.None;
+    public enum WanderType
+    {
+        Wander,
+        Strafe
+    }
+    private WanderType stateType;
 
     // -----
 
@@ -252,10 +242,9 @@ public class Wander : ICyborgMeleeState
 
     // --------------------------------------------------
 
-    public Wander(StateType stateType, StateType prevStateType = StateType.None)
+    public Wander(WanderType stateType)
     {
         this.stateType = stateType;
-        this.prevStateType = prevStateType;
     }
 
     // --------------------------------------------------
@@ -264,7 +253,7 @@ public class Wander : ICyborgMeleeState
     {
         switch (stateType)
         {
-            case StateType.Wander:
+            case WanderType.Wander:
 
                 Debug.Log("Enter Wander: Wander");
 
@@ -277,7 +266,7 @@ public class Wander : ICyborgMeleeState
 
                 break;
 
-            case StateType.Strafe:
+            case WanderType.Strafe:
 
                 Debug.Log("Enter Wander: Strafe");
 
@@ -311,23 +300,23 @@ public class Wander : ICyborgMeleeState
     {
         switch (stateType)
         {
-            case StateType.Wander:
+            case WanderType.Wander:
 
-                if (owner.lineOfSight.IsTargetSeen // Have I seen the target?
-                    && owner.character.life > owner.character.minLife) // Do I have enough life to attack the target?
+                if (owner.lineOfSight.IsTargetSeen // IsTargetSeen: have I seen the target?
+                    && owner.character.life > owner.character.minLife) // minLife: do I have enough life to attack the target?
                 {
                     Debug.Log("From Wander to Danger");
-                    owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.GoToDangerDistance, stateType));
+                    owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.GoToDangerDistance));
                     return;
                 }
 
                 break;
 
-            case StateType.Strafe:
+            case WanderType.Strafe:
 
                 if (timer >= strafeTime)
                 {
-                    owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.GoToDangerDistance, stateType));
+                    owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.GoToDangerDistance));
                     return;
                 }
 
@@ -341,13 +330,13 @@ public class Wander : ICyborgMeleeState
     {
         switch (stateType)
         {
-            case StateType.Wander:
+            case WanderType.Wander:
 
                 Debug.Log("Exit Wander: Wander");
 
                 break;
 
-            case StateType.Strafe:
+            case WanderType.Strafe:
 
                 Debug.Log("Exit Wander: Strafe");
 
@@ -363,17 +352,15 @@ public class Wander : ICyborgMeleeState
 
     }
 }
+#endregion
 
+#region ATTACK
 // ----------------------------------------------------------------------------------------------------
 // Attack
 // ----------------------------------------------------------------------------------------------------
 
 public class Attack : ICyborgMeleeState
 {
-    private StateType prevStateType = StateType.None;
-
-    // -----
-
     private GameObject target = null;
 
     // -----
@@ -397,13 +384,8 @@ public class Attack : ICyborgMeleeState
 
     // --------------------------------------------------
 
-    public Attack(GameObject target, StateType stateType, StateType prevStateType = StateType.None)
+    public Attack(GameObject target)
     {
-        this.stateType = stateType;
-        this.prevStateType = prevStateType;
-
-        // -----
-
         this.target = target;
     }
 
@@ -430,6 +412,8 @@ public class Attack : ICyborgMeleeState
         owner.agent.agentData.maxAngularAcceleration = owner.character.trackMaxAngularAcceleration;
         owner.agent.SetFace(target);
 
+        // -----
+
         actualAttackRate = owner.character.attackRate + (float)MathScript.GetRandomDouble(-1.0, 1.0) * owner.character.attackRateFluctuation;
         lastAttackedTime = -actualAttackRate;
     }
@@ -444,7 +428,9 @@ public class Attack : ICyborgMeleeState
         {
             if (contains)
                 Alita.Call.battleCircle.RemoveAttacker(owner.gameObject);
-            owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.GoToAttackDistance, stateType));
+
+            // TODO: RUN AWAY
+            owner.fsm.ChangeState(new Wander(Wander.WanderType.Wander));
             return;
         }
 
@@ -455,7 +441,7 @@ public class Attack : ICyborgMeleeState
             if (Alita.Call.battleCircle.AddSimultaneousAttacker(owner.gameObject))
             {
                 // Yes! Hit
-                owner.fsm.ChangeState(new Attack(Alita.Call.gameObject, StateType.Hit, stateType));
+                owner.fsm.ChangeState(new Hit(Alita.Call.gameObject));
                 return;
             }
         }
@@ -478,28 +464,32 @@ public class Attack : ICyborgMeleeState
         Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
     }
 }
+#endregion
 
+#region HIT
 // ----------------------------------------------------------------------------------------------------
 // Hit
 // ----------------------------------------------------------------------------------------------------
 
 public class Hit : ICyborgMeleeState
 {
-    private StateType prevStateType = StateType.None;
+    private GameObject target = null;
 
     // -----
 
-    private GameObject target = null;
+    private bool faceDataIsActive = false;
+    private bool lookWhereYoureGoingDataIsActive = false;
+    private bool isMovementStopped = false;
+    private float maxAngularAcceleration = 0.0f;
+
+    // -----
+
+    private float timer = 0.0f;
 
     // --------------------------------------------------
 
-    public Hit(GameObject target, StateType stateType, StateType prevStateType = StateType.None)
+    public Hit(GameObject target)
     {
-        this.stateType = stateType;
-        this.prevStateType = prevStateType;
-
-        // -----
-
         this.target = target;
     }
 
@@ -508,21 +498,49 @@ public class Hit : ICyborgMeleeState
     public override void Enter(CyborgMeleeController owner)
     {
         Debug.Log("Enter Hit");
+
+        faceDataIsActive = owner.agent.alignData.faceData.isActive;
+        lookWhereYoureGoingDataIsActive = owner.agent.alignData.lookWhereYoureGoingData.isActive;
+        isMovementStopped = owner.agent.isMovementStopped;
+        maxAngularAcceleration = owner.agent.agentData.maxAngularAcceleration;
+
+        // -----
+
+        /// Activate/Deactivate
+        owner.agent.alignData.faceData.isActive = true;
+        owner.agent.alignData.lookWhereYoureGoingData.isActive = false;
+
+        owner.agent.isMovementStopped = true;
+
+        // Align: Face data
+        owner.agent.agentData.maxAngularAcceleration = owner.character.trackMaxAngularAcceleration;
+        owner.agent.SetFace(target);
     }
 
     public override void Execute(CyborgMeleeController owner)
     {
-        Debug.Log("Hit");
-        // TODO: hit must last what animation lasts
-        // if animation has finished...
-        Alita.Call.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
-        owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.Attack, stateType));
-        return;
+        if (timer >= 3.0f)
+        {
+            Debug.Log("HIT!");
+            owner.fsm.ChangeState(new Attack(Alita.Call.gameObject));
+            return;
+        }
+
+        timer += Time.deltaTime;
     }
 
     public override void Exit(CyborgMeleeController owner)
     {
         Debug.Log("Exit Hit");
+
+        owner.agent.alignData.faceData.isActive = faceDataIsActive;
+        owner.agent.alignData.lookWhereYoureGoingData.isActive = lookWhereYoureGoingDataIsActive;
+        owner.agent.isMovementStopped = isMovementStopped;
+        owner.agent.agentData.maxAngularAcceleration = maxAngularAcceleration;
+
+        // -----
+
+        Alita.Call.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
     }
 
     public override void DrawGizmos(CyborgMeleeController owner)
@@ -530,21 +548,18 @@ public class Hit : ICyborgMeleeState
         
     }
 }
+#endregion
 
+#region DIE
 // ----------------------------------------------------------------------------------------------------
 // Die
 // ----------------------------------------------------------------------------------------------------
 
 public class Die : ICyborgMeleeState
 {
-    private StateType prevStateType = StateType.None;
-
-    // --------------------------------------------------
-
-    public Die(StateType stateType, StateType prevStateType = StateType.None)
+    public Die()
     {
-        this.stateType = stateType;
-        this.prevStateType = prevStateType;
+
     }
 
     // --------------------------------------------------
@@ -570,3 +585,4 @@ public class Die : ICyborgMeleeState
 
     }
 }
+#endregion

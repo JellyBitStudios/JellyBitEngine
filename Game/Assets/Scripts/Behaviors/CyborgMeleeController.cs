@@ -61,7 +61,7 @@ public class CyborgMeleeController : JellyScript
             if (character.life <= 0)
             {
                 character.life = 0;
-                fsm.ChangeState(new Die(StateType.GoToDangerDistance));
+                fsm.ChangeState(new Die());
             }
         }
     }
@@ -95,7 +95,7 @@ public class CyborgMeleeController : JellyScript
     public override void Start()
     {
         //fsm.ChangeState(new Wander(StateType.Wander));  
-        fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, StateType.GoToDangerDistance));
+        fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.GoToDangerDistance));
     }
 
     public override void Update()
