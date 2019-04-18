@@ -441,7 +441,7 @@ void Application::Play()
 {
 	switch (engineState)
 	{
-	case engine_states::ENGINE_PLAY:
+	case engine_states::ENGINE_PLAY: case engine_states::ENGINE_PAUSE:
 	{
 		engineState = engine_states::ENGINE_EDITOR;
 
@@ -494,7 +494,7 @@ void Application::Step()
 {
 	switch (engineState)
 	{
-	case engine_states::ENGINE_PLAY:
+	case engine_states::ENGINE_PAUSE:
 
 		// Stop and tick (step 1 frame)
 		engineState = engine_states::ENGINE_STEP;
