@@ -3783,5 +3783,13 @@ void ScriptingModule::UpdateScriptingReferences()
 	scriptsImage = mono_image_open_from_data(buffer, size, 1, &status);
 	scriptsAssembly = mono_assembly_load_from(scriptsImage, "ScriptingAssembly", &status);
 
+	ResourceScript::ClearScriptNames();
+
+	std::vector<Resource*> scriptResources = App->res->GetResourcesByType(ResourceTypes::ScriptResource);
+	for (Resource* res : scriptResources)
+	{
+		((ResourceScript*)res)->IncludeName();
+	}
+
 	delete[] buffer;
 }
