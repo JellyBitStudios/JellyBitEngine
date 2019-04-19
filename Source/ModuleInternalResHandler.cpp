@@ -24,6 +24,7 @@ bool ModuleInternalResHandler::Start()
 	CreateCheckers();
 	CreateDefaultTexture();
 	CreateLightIcon();
+	CreateScreenInWorldTexture();
 
 	// Shader resources
 	CreateDefaultShaderProgram(vShaderTemplate, fShaderTemplate, ShaderProgramTypes::Standard, "Default");
@@ -248,6 +249,12 @@ void ModuleInternalResHandler::CreateLightIcon()
 {
 	lightIcon = App->res->ImportFile("Settings/Light_Icon.png")->GetUuid();
 	App->res->SetAsUsed(lightIcon); // used in lights;
+}
+
+void ModuleInternalResHandler::CreateScreenInWorldTexture()
+{
+	screenInWorldTexture = App->res->ImportFile("Settings/ui_frame.png")->GetUuid();
+	App->res->SetAsUsed(screenInWorldTexture); // used in UI;
 }
 
 void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, const char* fShader, ShaderProgramTypes type, std::string name)

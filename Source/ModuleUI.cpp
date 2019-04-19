@@ -102,7 +102,7 @@ bool ModuleUI::Start()
 	c->Change(ComponentCanvas::CanvasType::WORLD);
 	c->Update();
 	WorldHolder->AddComponent(ComponentTypes::RectTransformComponent);
-
+	((ComponentImage*)WorldHolder->AddComponent(ComponentTypes::ImageComponent))->SetResImageUuid(App->resHandler->screenInWorldTexture);
 #endif // GAMEMODE
 
 	if (FT_Init_FreeType(&library))
@@ -157,6 +157,12 @@ void ModuleUI::OnSystemEvent(System_Event event)
 			goScreenCanvas->OnSystemEvent(windowChanged);
 #else
 		screenInWorld = true;
+		if (App->GetEngineState() == engine_states::ENGINE_EDITOR)
+		{
+			canvas_world.push_front(WorldHolder);
+			canvas.push_front(WorldHolder);
+		}
+		
 		System_Event updateCornersToScreen;
 		updateCornersToScreen.type = System_Event_Type::RectTransformUpdated;
 		for (GameObject* goScreenCanvas : canvas_screen)

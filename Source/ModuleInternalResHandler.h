@@ -39,6 +39,7 @@ public:
 	void CreateCheckers();
 	void CreateDefaultTexture();
 	void CreateLightIcon();
+	void CreateScreenInWorldTexture();
 
 	// Shader resources
 	void CreateDefaultShaderProgram(const char* vShader, const char* fShader, ShaderProgramTypes type, std::string name);
@@ -63,6 +64,7 @@ public:
 	uint checkers;
 	uint defaultTexture;
 	uint lightIcon;
+	uint screenInWorldTexture;
 
 	// Shader resources
 	uint defaultShaderProgram;
