@@ -1729,6 +1729,16 @@ uint ComponentScript::GetPublicVarsSerializationBytes() const
 				uint nameLenght = fieldName.length();
 				bytes += (sizeof(varType) + sizeof(uint) + nameLenght + sizeof(uint32_t));
 			}
+			else if (mono_type_is_struct(type))
+			{
+				varType = VarType::STRUCT;
+				uint nameLenght = fieldName.length();
+
+				int alignment = 0;
+				int size = mono_type_size(type, &alignment);
+
+				bytes += (sizeof(varType) + sizeof(uint) + nameLenght + sizeof(uint) + size);	
+			}
 		}
 		field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 	}
@@ -1952,6 +1962,16 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 			totalSize += bytes;
 			cursor += bytes;
 		}
+		case VarType::STRUCT:
+		{
+			bytes = sizeof(uint32_t);
+
+			uint32_t size;
+			memcpy(&size, cursor, bytes);
+
+			totalSize += bytes + size;
+			cursor += bytes + size;
+		}
 		default:
 			break;
 		}
@@ -1978,23 +1998,24 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 			MonoType* type = mono_field_get_type(field);
 			std::string typeName = mono_type_full_name(type);
 
-			if(	typeName == "bool"							||
-				typeName == "single"						||
-				typeName == "double"						||
-				typeName == "sbyte"							||
-				typeName == "byte"							||
-				typeName == "int16"							||
-				typeName == "uint16"						||
-				typeName == "int"							||
-				typeName == "uint"							||
-				typeName == "long"							||
-				typeName == "ulong"							||
-				typeName == "char"							||
-				typeName == "string"						||
-				typeName == "JellyBitEngine.GameObject"		||
-				typeName == "JellyBitEngine.Transform"		||
-				typeName == "JellyBitEngine.LayerMask"		||
-				mono_class_is_enum(mono_type_get_class(type)))
+			if(	typeName == "bool"								||
+				typeName == "single"							||
+				typeName == "double"							||
+				typeName == "sbyte"								||
+				typeName == "byte"								||
+				typeName == "int16"								||
+				typeName == "uint16"							||
+				typeName == "int"								||
+				typeName == "uint"								||
+				typeName == "long"								||
+				typeName == "ulong"								||
+				typeName == "char"								||
+				typeName == "string"							||
+				typeName == "JellyBitEngine.GameObject"			||
+				typeName == "JellyBitEngine.Transform"			||
+				typeName == "JellyBitEngine.LayerMask"			||
+				mono_class_is_enum(mono_type_get_class(type))	||
+				mono_type_is_struct(type))
 
 			//Only count the serializable ones
 			numVars++;
@@ -2493,6 +2514,41 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 				bytes = sizeof(uint32_t);
 				memcpy(cursor, &value, bytes);
+				cursor += bytes;
+			}
+			else if (mono_type_is_struct(type))
+			{
+				varType = VarType::STRUCT;
+
+				//Serialize the varType
+				bytes = sizeof(varType);
+				memcpy(cursor, &varType, bytes);
+				cursor += bytes;
+
+				//Serialize the varName (length + string)
+
+				bytes = sizeof(uint);
+				uint nameLenght = fieldName.length();
+				memcpy(cursor, &nameLenght, bytes);
+				cursor += bytes;
+
+				bytes = nameLenght;
+				memcpy(cursor, fieldName.c_str(), bytes);
+				cursor += bytes;
+
+				//Serialize the var value
+				int alignment = 0;
+				uint size = mono_type_size(type, &alignment);	
+
+				bytes = sizeof(uint);
+				memcpy(cursor, &size, bytes);
+				cursor += bytes;
+
+				char* value = new char[size];
+				mono_field_get_value(GetMonoComponent(), field, value);
+
+				bytes = size;
+				memcpy(cursor, value, bytes);
 				cursor += bytes;
 			}
 		}
@@ -3086,6 +3142,42 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 							break;
 						}
 					}				
+				}
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
+			}
+			break;
+		}
+		case VarType::STRUCT:
+		{
+			//DeSerialize the var value
+			bytes = sizeof(uint);
+			uint32_t size;
+			memcpy(&size, cursor, bytes);
+			cursor += bytes;
+
+			char* structContent = new char[size];
+			memcpy(structContent, cursor, size);
+			cursor += size;
+
+			void* iterator = 0;
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
+
+			while (field != nullptr)
+			{
+				uint32_t flags = mono_field_get_flags(field);
+				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
+				{
+					MonoType* type = mono_field_get_type(field);
+					if (mono_type_is_struct(type))
+					{
+						std::string fieldName = mono_field_get_name(field);
+
+						if (fieldName == varName)
+						{
+							mono_field_set_value(GetMonoComponent(), field, structContent);
+							break;
+						}
+					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
