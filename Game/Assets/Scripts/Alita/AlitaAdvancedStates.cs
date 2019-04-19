@@ -10,6 +10,7 @@ class AAttacking : AState
     public override void OnStart()
     {
         Alita.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
+        //Alita.Call.animator.SetAnimationLoop(false);
         currentAnim = Anim.first;
         hasPetition = false;
 
@@ -29,16 +30,19 @@ class AAttacking : AState
                 if (currentAnim == Anim.first)
                 {
                     Alita.Call.animator.PlayAnimation("anim_hand_forward_alita_fist");
+                    //Alita.Call.animator.SetAnimationLoop(false);
                     currentAnim = Anim.second;
                 }
                 else if (currentAnim == Anim.second)
                 {
                     Alita.Call.animator.PlayAnimation("anim_kick_alita_fist");
+                    //Alita.Call.animator.SetAnimationLoop(false);
                     currentAnim = Anim.third;
                 }
                 else
                 {
                     Alita.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
+                    //Alita.Call.animator.SetAnimationLoop(false);
                     currentAnim = Anim.first;
                 }
                 hasPetition = false;
