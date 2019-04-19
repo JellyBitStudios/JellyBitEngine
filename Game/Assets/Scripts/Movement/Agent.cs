@@ -64,7 +64,6 @@ public class Agent : JellyScript
     public float tmp_alignTimeToTarget = 0.1f;
     public bool tmp_alignIsLookWhereYoureGoingActive = true;
     public bool tmp_alignIsFaceToActive = false;
-    public GameObject tmp_alignFaceToTarget = null;
     #endregion
 
     #region PUBLIC_VARIABLES
@@ -191,7 +190,6 @@ public class Agent : JellyScript
         alignData.timeToTarget = tmp_alignTimeToTarget;
         alignData.lookWhereYoureGoingData.isActive = tmp_alignIsLookWhereYoureGoingActive;
         alignData.faceData.isActive = tmp_alignIsFaceToActive;
-        alignData.faceData.target = tmp_alignFaceToTarget;
     }
 
     public override void FixedUpdate()
@@ -341,7 +339,20 @@ public class Agent : JellyScript
 
         alignData.lookWhereYoureGoingData.isActive = false;
         alignData.faceData.isActive = true;
-        alignData.faceData.target = gameObject;
+
+        alignData.faceData.faceType = SteeringFaceData.FaceType.GameObject;
+        alignData.faceData.gameObject = gameObject;
+
+        return true;
+    }
+
+    public bool SetFace(Vector3 direction)
+    {
+        alignData.lookWhereYoureGoingData.isActive = false;
+        alignData.faceData.isActive = true;
+
+        alignData.faceData.faceType = SteeringFaceData.FaceType.Direction;
+        alignData.faceData.direction = direction;
 
         return true;
     }
@@ -493,6 +504,5 @@ public class Agent : JellyScript
         tmp_alignTimeToTarget = alignData.timeToTarget;
         tmp_alignIsLookWhereYoureGoingActive = alignData.lookWhereYoureGoingData.isActive;
         tmp_alignIsFaceToActive = alignData.faceData.isActive;
-        tmp_alignFaceToTarget = alignData.faceData.target;
     }
 }
