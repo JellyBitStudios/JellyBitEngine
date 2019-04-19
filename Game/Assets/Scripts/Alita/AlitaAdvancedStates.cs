@@ -1,4 +1,5 @@
 using JellyBitEngine;
+using System;
 
 class AAttacking : AState
 {
@@ -23,12 +24,11 @@ class AAttacking : AState
         Alita.Call.agent.isRotationStopped = false;
         Alita.Call.agent.alignData.lookWhereYoureGoingData.isActive = false;
         Alita.Call.agent.alignData.faceData.isActive = true;
+        Alita.Call.agent.SetFace(Alita.Call.currentTarget);
     }
 
     public override void OnExecute()
     {
-        Alita.Call.agent.SetFace(Alita.Call.currentTarget);
-
         if (firstPetition)
             timerUntilPetitionIsValid += Time.deltaTime;
 
@@ -144,10 +144,10 @@ class ADash : AState
     {
         Alita.Call.animator.PlayAnimation("alita_dash_anim");
 
-        Alita.Call.agent.isRotationStopped = false;
-        Alita.Call.agent.alignData.lookWhereYoureGoingData.isActive = false;
-        Alita.Call.agent.alignData.faceData.isActive = true;
-        //Alita.Call.agent.SetFace(dir);
+        Alita.Call.agent.Stop();
+        float targetOrientation = MathScript.Rad2Deg * (float)Math.Atan2(dir.x, dir.z);
+        Quaternion quat = Quaternion.Rotate(Vector3.up, targetOrientation);
+        Alita.Call.transform.rotation = quat;
     }
 
     public override void OnExecute()
@@ -163,7 +163,7 @@ class ADash : AState
     {
         Alita.Call.agent.alignData.lookWhereYoureGoingData.isActive = true;
         Alita.Call.agent.alignData.faceData.isActive = false;
-        Alita.Call.agent.ClearPath();
+        Alita.Call.agent.Resume();
         accumulatedDistance = 0.0f;
     }
 }
@@ -173,6 +173,7 @@ class ASkill1 : AState
     public override void OnStart()
     {
         Alita.Call.animator.PlayAnimation("anim_special_attack_q_alita_fist");
+        Alita.Call.animator.SetAnimationLoop(false);
     }
 
     public override void OnExecute()

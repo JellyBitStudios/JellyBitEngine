@@ -363,7 +363,7 @@ public class Agent : JellyScript
         isRotationStopped = true;
     }
 
-    public void Reset()
+    public void Resume()
     {
         isMovementStopped = false;
         isRotationStopped = false;
