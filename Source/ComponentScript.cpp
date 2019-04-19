@@ -1882,7 +1882,7 @@ void ComponentScript::OnStructEditor(MonoObject* structOBJ, MonoClassField* stru
 									ImGui::EndCombo();
 								}
 								ImGui::PopItemWidth();
-								}
+							}
 							else if (mono_class_is_enum(mono_type_get_class(type)))
 							{
 								//A public enum
@@ -1893,7 +1893,7 @@ void ComponentScript::OnStructEditor(MonoObject* structOBJ, MonoClassField* stru
 								int32_t enumValue;
 								mono_field_get_value(structOBJ, field, &enumValue);
 
-								MonoObject* enumOBJ = mono_field_get_value_object(App->scripting->domain, field, GetMonoComponent());
+								MonoObject* enumOBJ = mono_field_get_value_object(App->scripting->domain, field, structOBJ);
 
 								MonoMethodDesc* ToStringDesc = mono_method_desc_new("Enum::ToString", false);
 								MonoMethod* ToStringMethod = mono_method_desc_search_in_class(ToStringDesc, enumClass);
