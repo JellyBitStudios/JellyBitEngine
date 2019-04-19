@@ -40,18 +40,21 @@ class AAttacking : AState
                     firstPetition = false;
                     //Alita.Call.animator.SetAnimationLoop(false);
                     currentAnim = Anim.second;
+                    Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
                 }
                 else if (currentAnim == Anim.second)
                 {
                     Alita.Call.animator.PlayAnimation("anim_kick_alita_fist");
                     //Alita.Call.animator.SetAnimationLoop(false);
                     currentAnim = Anim.third;
+                    Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
                 }
                 else
                 {
                     Alita.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
                     //Alita.Call.animator.SetAnimationLoop(false);
                     currentAnim = Anim.first;
+                    Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
                 }
                 hasPetition = false;
             }

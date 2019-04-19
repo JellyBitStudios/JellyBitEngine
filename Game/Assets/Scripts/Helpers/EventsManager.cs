@@ -3,12 +3,25 @@ using System.Collections.Generic;
 
 // This class is not tested, but it should work.
 
-public enum Event_Type { None = 0, PauseGame, ResumeGame }
+public enum Event_Type
+{
+    None = 0,
+
+    PauseGame,
+    ResumeGame,
+
+    EnemyDie
+}
 
 // This struct can be overloaded for future events
 public class Event
 {
     public Event_Type type;
+}
+
+public class EnemyEvent : Event
+{
+    public GameObject gameObject;
 }
 
 public struct Listener
@@ -43,8 +56,9 @@ public sealed class EventsManager : JellyScript
     {
         if (instance.eventsQueue.Count > 0)
         {
+            Debug.Log("PreUpdate...");
             Event newEvent = instance.eventsQueue.Dequeue();
-            foreach(Listener listener in instance.listeners)
+            foreach (Listener listener in instance.listeners)
                 listener.method.Invoke(listener.script, new object[] { newEvent });
         }
     }
@@ -62,6 +76,11 @@ public sealed class EventsManager : JellyScript
         listenerInstance.script = script;
         listenerInstance.listener = listener;
         listenerInstance.method = script.GetType().GetMethod(listener);
+        if (listenerInstance.method == null)
+        {
+            Debug.LogError("Impossible to find method. Make sure the listener name and your method name matches. Your method must look like: public void YOURMETHOD(object)");
+            return false;
+        }
         if (!listeners.Contains(listenerInstance))
         {
             Debug.Log("LISTENER PUSHED: from script " + script.GetType().ToString() + " with listener " + listener);

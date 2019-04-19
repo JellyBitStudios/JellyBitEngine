@@ -9,19 +9,16 @@ public class PathManager
     {
         get { return destination; }
     }
-    public bool HasPath
+    public bool HasArrived
     {
-        get { return hasPath; }
-    }
-    public bool IsLastPosition
-    {
-        get { return hasPath && index == path.Length - 1; }
+        get { return hasArrived; }
     }
     #endregion
 
     #region PRIVATE_VARIABLES
     private Vector3 destination = Vector3.zero;
     private bool hasPath = false;
+    private bool hasArrived = false;
     private int index = 0;
     private Vector3[] path = null;
     #endregion
@@ -30,21 +27,19 @@ public class PathManager
     {
         Vector3[] p = null; // ...
         hasPath = Navigation.GetPath(origin, destination, out p);
-        path = p; // ...
+        hasPath = hasPath && p.Length > 1;
 
-        hasPath = hasPath && path.Length > 1;
-
+        // New path? Start following it!
         if (hasPath)
         {
+            path = p; // ...
             this.destination = destination;
             index = 1;
+            hasArrived = false;
         }
-        else
-        {
-            path = null;
-            this.destination = Vector3.zero;
-            index = 0;
-        }
+        // Old path? Keep following it!
+        else if (path != null)
+            hasPath = true;
 
         return hasPath;
     }
@@ -61,10 +56,19 @@ public class PathManager
 
     public bool UpdateNextPosition()
     {
-        if (hasPath && index < path.Length - 1)
+        if (hasPath)
         {
-            ++index;
-            return true;
+            if (index < path.Length - 1)
+            {
+                ++index;
+                return true;
+            }
+            else
+            {
+                // End of the path
+                ClearPath();
+                hasArrived = true;
+            }
         }
 
         return false;

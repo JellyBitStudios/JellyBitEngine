@@ -92,7 +92,7 @@ public class Agent : JellyScript
     }
     public bool HasArrived
     {
-        get { return pathManager.IsLastPosition && movementState == MovementState.Stop; }
+        get { return pathManager.HasArrived; }
     }
 
     public bool isMovementStopped = false;
@@ -422,6 +422,7 @@ public class Agent : JellyScript
                 if (pathManager.UpdateNextPosition())
                     movementState = MovementState.GoToPosition;
                 else
+                    // End of the path or path not valid
                     movementState = MovementState.Stop;
 
                 break;
