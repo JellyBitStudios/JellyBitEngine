@@ -33,9 +33,15 @@ public class AlitaCharacter : Character
 
 public class Skill
 {
-    public float sk_totalCd = 0.0f;
-    public float sk_currentCd = 0.0f;
-    public float sk_normalizedCd = 0.0f;
+    public float sk_totalCd;
+    public float sk_currentCd;
+    public float sk_normalizedCd = 1.0f;
+
+    public Skill(float totalCD)
+    {
+        sk_totalCd = totalCD;
+        sk_currentCd = sk_totalCd;
+    }
 
     public bool IsAvailable
     {
@@ -62,10 +68,10 @@ public class Skillset
     // skillset.add? how we can acces to each skill? think about it
 
     // skill->Dash
-    public Skill skDash = new Skill();
+    public Skill skDash = new Skill(3.0f);
 
     // skill->Q
-    public Skill skQ = new Skill();
+    public Skill skQ = new Skill(2.0f);
 
     List<Skill> skills = new List<Skill>();
 
@@ -84,8 +90,7 @@ public class Skillset
                 skill.sk_currentCd += Time.deltaTime;
                 if (skill.sk_currentCd > skill.sk_totalCd)
                     skill.sk_currentCd = skill.sk_totalCd;
-
-                skill.sk_normalizedCd = skill.sk_totalCd / skill.sk_currentCd;
+                skill.sk_normalizedCd = skill.sk_currentCd / skill.sk_totalCd;
             }
         }
     }

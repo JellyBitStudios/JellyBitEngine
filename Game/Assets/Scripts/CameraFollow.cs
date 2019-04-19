@@ -14,7 +14,8 @@ public class CameraFollow : JellyScript
     Vector3 initialOffset;
     Vector3 objetctInitial;
     Vector3 lastFramePos;
-    bool moving;
+    bool movingX;
+    bool movingZ;
     bool freeze;
     //Use this method for initialization
     public override void Awake()
@@ -23,21 +24,18 @@ public class CameraFollow : JellyScript
         initialOffset = transform.position - followingTransform.position;
         objetctInitial = lastFramePos = followingTransform.position;
 
-        moving = false;
-        freeze = false;
+        movingX = movingZ = freeze = false;
     }
 
     //Called every frame
     public override void Update()
     {
-        //scenealeix
         Vector3 objectPos = followingTransform.position;
-        if (!moving)
+        if (!movingZ && !movingX)
         {
             offset = transform.position - objectPos;
-            Debug.Log("Stoped: " + (offset - initialOffset).ToString());
-            if(isOutQuad(offset - initialOffset) && !freeze)
-                moving = true;
+            if(!freeze)
+                OutQuad(offset - initialOffset);
             if (freeze)
                 freeze = false;
         }
@@ -45,20 +43,20 @@ public class CameraFollow : JellyScript
         {
             transform.position = objectPos + offset;
             objetctInitial = transform.position - initialOffset;
-            Debug.Log("--------------------");
             if (isInQuad(objectPos - objetctInitial, lastFramePos - objetctInitial))
-            {
-                moving = false;
                 freeze = true;
-            }
+
             lastFramePos = objectPos;
         }
     }
 
-    bool isOutQuad(Vector3 finalOffset)
+    void OutQuad(Vector3 finalOffset)
     {
-        return (finalOffset.x > rangeQuadMove_X || finalOffset.x < -rangeQuadMove_X
-            || finalOffset.z > rangeQuadMove_Y || finalOffset.z < -rangeQuadMove_Y);
+        if(finalOffset.x > rangeQuadMove_X || finalOffset.x < -rangeQuadMove_X)
+            movingX = true;
+
+        if(finalOffset.z > rangeQuadMove_Y || finalOffset.z < -rangeQuadMove_Y)
+            movingZ = true;
     }
 
     bool isInQuad(Vector3 offsetCurr, Vector3 offsetLast)
@@ -69,10 +67,13 @@ public class CameraFollow : JellyScript
         offsetLast.x = Math.Abs(offsetLast.x);
         offsetLast.z = Math.Abs(offsetLast.z);
 
-        Debug.Log(offsetCurr.ToString());
-        Debug.Log(offsetLast.ToString());
-        if(offsetCurr.x < offsetLast.x && offsetCurr.z < offsetLast.z)
+        if (offsetCurr.x < offsetLast.x)
+            movingX = false;
+        if (offsetCurr.z < offsetLast.z)
+            movingZ = false;
+        if (!movingZ && !movingX)
             ret = true;
+
         return ret;
     }
 
