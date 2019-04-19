@@ -873,7 +873,6 @@ void ComponentScript::OnUniqueEditor()
 
 		ImGui::NewLine();
 
-
 		if (!GetMonoComponent())
 		{
 			ImGui::TextColored({ .5,0,0,1 }, "SCRIPT WITH ERRORS, CHECK IT");
@@ -1435,6 +1434,24 @@ void ComponentScript::OnUniqueEditor()
 								ImGui::PopItemWidth();
 							}
 						}
+						else if (typeName == "JellyBitEngine.Vector3")
+						{
+							math::float3 varState;
+							mono_field_get_value(GetMonoComponent(), field, &varState);
+
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+							if (ImGui::DragFloat3(("##" + fieldName + std::to_string(UUID)).data(), varState.ptr()))
+							{
+								mono_field_set_value(GetMonoComponent(), field, &varState);
+							}
+						}
 						else if (mono_class_is_enum(mono_type_get_class(type)))
 						{
 							//A public enum
@@ -1509,7 +1526,7 @@ void ComponentScript::OnUniqueEditor()
 
 							mono_free(string);
 						}
-					}				
+					}
 				}
 			}		
 
