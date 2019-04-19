@@ -37,7 +37,10 @@ class Alita : JellyScript
     {
         set
         {
-            cyborgMelee = value.GetComponent<CyborgMeleeController>();
+            if (value != null)
+                cyborgMelee = value.GetComponent<CyborgMeleeController>();
+            else
+                cyborgMelee = null;
             _currentTarget = value;
         }
         get

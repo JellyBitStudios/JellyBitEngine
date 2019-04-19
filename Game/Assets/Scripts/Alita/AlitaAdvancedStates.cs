@@ -5,6 +5,7 @@ class AAttacking : AState
     enum Anim { first, second, third }
     Anim currentAnim;
 
+    private bool hit;
     private bool hasPetition;
     private bool firstPetition;
     private float timerUntilPetitionIsValid;
@@ -13,10 +14,11 @@ class AAttacking : AState
     public override void OnStart()
     {
         Alita.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
-        //Alita.Call.animator.SetAnimationLoop(false);
+        Alita.Call.animator.SetAnimationLoop(false);
         currentAnim = Anim.first;
         hasPetition = false;
         firstPetition = true;
+        hit = false;
 
         Alita.Call.agent.isRotationStopped = false;
         Alita.Call.agent.alignData.lookWhereYoureGoingData.isActive = false;
@@ -30,31 +32,57 @@ class AAttacking : AState
         if (firstPetition)
             timerUntilPetitionIsValid += Time.deltaTime;
 
+        if (!hit)
+        {
+            switch (currentAnim)
+            {
+                case Anim.first:
+                    if (Alita.Call.animator.GetCurrentFrame() >= 16)
+                    {
+                        hit = true;
+                        Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
+                    }
+                    break;
+                case Anim.second:
+                    if (Alita.Call.animator.GetCurrentFrame() >= 15)
+                    {
+                        hit = true;
+                        Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
+                    }
+                    break;
+                case Anim.third:
+                    if (Alita.Call.animator.GetCurrentFrame() >= 11)
+                    {
+                        hit = true;
+                        Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
+                    }
+                    break;
+            }
+        }
+
         if (Alita.Call.animator.AnimationFinished())
         {
+            hit = false;
             if (hasPetition)
             {
                 if (currentAnim == Anim.first)
                 {
                     Alita.Call.animator.PlayAnimation("anim_hand_forward_alita_fist");
                     firstPetition = false;
-                    //Alita.Call.animator.SetAnimationLoop(false);
+                    Alita.Call.animator.SetAnimationLoop(false);
                     currentAnim = Anim.second;
-                    Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
                 }
                 else if (currentAnim == Anim.second)
                 {
                     Alita.Call.animator.PlayAnimation("anim_kick_alita_fist");
-                    //Alita.Call.animator.SetAnimationLoop(false);
+                    Alita.Call.animator.SetAnimationLoop(false);
                     currentAnim = Anim.third;
-                    Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
                 }
                 else
                 {
                     Alita.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
-                    //Alita.Call.animator.SetAnimationLoop(false);
+                    Alita.Call.animator.SetAnimationLoop(false);
                     currentAnim = Anim.first;
-                    Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
                 }
                 hasPetition = false;
             }
