@@ -40,6 +40,7 @@ public:
 	void OnDisable() override;
 
 	void OnUniqueEditor() override;
+	void OnStructEditor(MonoObject* structOBJ, MonoClassField* field);
 	
 	uint GetInternalSerializationBytes();
 	uint GetPublicVarsSerializationBytes() const;
