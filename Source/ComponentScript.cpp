@@ -3147,8 +3147,6 @@ void ComponentScript::InstanceClass()
 	mono_field_set_value(compInstance, mono_class_get_field_from_name(klass, "gameObject"), App->scripting->MonoObjectFrom(GetParent()));
 
 	monoCompHandle = mono_gchandle_new(compInstance, true);
-
-	App->scripting->monoComponentHandles.push_back(monoCompHandle);
 }
 
 void ComponentScript::InstanceClass(MonoObject* _classInstance)
@@ -3181,7 +3179,6 @@ void ComponentScript::InstanceClass(MonoObject* _classInstance)
 	mono_field_set_value(_classInstance, mono_class_get_field_from_name(klass, "gameObject"), App->scripting->MonoObjectFrom(GetParent()));
 
 	monoCompHandle = mono_gchandle_new(_classInstance, true);
-	App->scripting->monoComponentHandles.push_back(monoCompHandle);
 }
 
 bool ComponentScript::FieldHasHideInInspector(MonoReflectionType* classType, MonoString* fieldName)
