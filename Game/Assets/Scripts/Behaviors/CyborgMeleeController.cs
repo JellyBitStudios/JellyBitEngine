@@ -29,7 +29,7 @@ public class CyborgMeleeController : JellyScript
 {
     #region INSPECTOR_VARIABLES
     // Character
-    public int tmp_life = 100;
+    public uint tmp_maxLife = 100;
     public uint tmp_minLife = 30;
     public float tmp_attackDistance = 1.0f;
     public float tmp_dangerDistance = 2.0f;
@@ -52,19 +52,21 @@ public class CyborgMeleeController : JellyScript
     public Agent agent;
     public LineOfSight lineOfSight;
 
-    public int Life
+    public int CurrentLife
     {
-        get { return character.life; }
+        get { return character.currentLife; }
         set
         {
-            character.life += value;
-            if (character.life <= 0)
+            character.currentLife = value;
+            if (character.currentLife <= 0)
             {
-                character.life = 0;
+                character.currentLife = 0;
                 fsm.ChangeState(new Die());
             }
-            else if (character.life <= character.minLife)
-                fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.Runaway));
+            //else if (character.currentLife <= character.minLife)
+                //fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.Runaway));
+
+            Debug.Log("Cyborg life: " + character.currentLife);
         }
     }
 
@@ -83,8 +85,10 @@ public class CyborgMeleeController : JellyScript
         // --------------------------------------------------
 
         // Character
-        character.life = tmp_life;
+        character.maxLife = tmp_maxLife;
+        character.currentLife = (int)tmp_maxLife;
         character.minLife = tmp_minLife;
+
         character.attackDistance = tmp_attackDistance;
         character.dangerDistance = tmp_dangerDistance;
         character.attackRate = tmp_attackRate;
@@ -98,6 +102,26 @@ public class CyborgMeleeController : JellyScript
     {
         //fsm.ChangeState(new Wander(StateType.Wander));  
         fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.GoToDangerDistance));
+
+        EventsManager.Call.StartListening("CyborgMeleeController", this, "OnEvent");
+    }
+
+    public void OnEvent(object type)
+    {
+        Event myEvent = (Event)type;
+        switch (myEvent.type)
+        {
+            case Event_Type.EnemyDie:
+                {
+                    EnemyEvent myEnemyEvent = (EnemyEvent)myEvent;
+                    if (myEnemyEvent.gameObject == gameObject)
+                    {
+                        Debug.Log("I AM DEAD");
+                        Destroy(gameObject);
+                    }
+                }
+                break;
+        }
     }
 
     public override void Update()
@@ -136,8 +160,6 @@ public class CyborgMeleeController : JellyScript
 
     private void UpdateInspectorVariables()
     {
-        tmp_life = character.life;
-        tmp_minLife = character.minLife;
         tmp_attackDistance = character.attackDistance;
         tmp_dangerDistance = character.dangerDistance;
         tmp_attackRate = character.attackRate;

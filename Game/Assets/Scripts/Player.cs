@@ -47,7 +47,7 @@ class Player : JellyScript
         EventsManager.Call.StopListening("Player");
     }
 
-    void EventsListener(object type)
+    public void EventsListener(object type)
     {
         Event listenedEvent = (Event)type;
         switch (listenedEvent.type)

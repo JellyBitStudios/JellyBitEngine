@@ -3,14 +3,13 @@ using System.Collections.Generic;
 
 public class Character
 {
-    public int life = 1000;
-    public uint dmg = 10;
+    public uint maxLife = 1000;
+    public int dmg = 20;
 
-    public enum CharacterType
+    public int currentLife = 0;
+
+    public Character()
     {
-        Alita,
-        CyborgMelee,
-        CyborgRanged
+        currentLife = (int)maxLife;
     }
-    public CharacterType characterType;
 }
