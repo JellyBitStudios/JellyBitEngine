@@ -12,7 +12,7 @@ public class AgentData
 
 public class Agent : JellyScript
 {
-    #region INSPECTOR_VARIABLES    
+    #region INSPECTOR_VARIABLES
     // AgentData
     public float tmp_agentMaxVelocity = 5.0f;
     public float tmp_agentMaxAngularVelocity = 360.0f;
@@ -216,7 +216,7 @@ public class Agent : JellyScript
             velocities[separationData.Priority] += SteeringSeparation.GetSeparation(this);
 
         // 3. Move
-        /// Velocity      
+        /// Velocity
         if (seekData.isActive)
             velocities[seekData.Priority] += SteeringSeek.GetSeek(NextPosition, this);
         if (fleeData.isActive)
@@ -275,7 +275,7 @@ public class Agent : JellyScript
 
         // Cap angular velocity
         angularVelocity = Mathf.Clamp(angularVelocity, -agentData.maxAngularVelocity, agentData.maxAngularVelocity);
-  
+
         // Cap velocity
         if (velocity.magnitude > agentData.maxVelocity)
         {
@@ -319,7 +319,7 @@ public class Agent : JellyScript
     }
 
     // ----------------------------------------------------------------------------------------------------
-    
+
     public bool SetDestination(Vector3 destination)
     {
         bool hasPath = pathManager.GetPath(transform.position, destination);
@@ -332,6 +332,14 @@ public class Agent : JellyScript
         return hasPath;
     }
 
+    public void ClearPath()
+    {
+        pathManager.ClearPath();
+
+        movementState = MovementState.Stop;
+    }
+
+    // Face
     public bool SetFace(GameObject gameObject)
     {
         if (gameObject == null)
@@ -346,17 +354,24 @@ public class Agent : JellyScript
         return true;
     }
 
-    public bool SetFace(Vector3 direction)
+    // Face
+    public void SetFace(Vector3 direction)
     {
         alignData.lookWhereYoureGoingData.isActive = false;
         alignData.faceData.isActive = true;
 
         alignData.faceData.faceType = SteeringFaceData.FaceType.Direction;
         alignData.faceData.direction = direction;
-
-        return true;
     }
 
+    // Look where you're going
+    public void FinishFace()
+    {
+        alignData.lookWhereYoureGoingData.isActive = true;
+        alignData.faceData.isActive = false;
+    }
+
+    // Stop moving and rotating (if you have future accelerations you won't move nor rotate)
     public void Stop()
     {
         isMovementStopped = true;
@@ -369,13 +384,7 @@ public class Agent : JellyScript
         isRotationStopped = false;
     }
 
-    public void ClearPath()
-    {
-        pathManager.ClearPath();
-
-        movementState = MovementState.Stop;
-    }
-
+    // Suddenly stop moving and rotating (if you have future accelerations you will move and/or rotate)
     public void ClearMovementAndRotation()
     {
         velocity = Vector3.zero;
