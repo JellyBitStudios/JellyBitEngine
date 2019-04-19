@@ -155,18 +155,18 @@ void ModuleUI::OnSystemEvent(System_Event event)
 		windowChanged.type = System_Event_Type::ScreenChanged;
 		for (GameObject* goScreenCanvas : canvas_screen)
 			goScreenCanvas->OnSystemEvent(windowChanged);
-#else
-		screenInWorld = true;
+#else //Chekear scene changes without gamemode
 		if (App->GetEngineState() == engine_states::ENGINE_EDITOR)
 		{
+			screenInWorld = true;
 			canvas_world.push_front(WorldHolder);
 			canvas.push_front(WorldHolder);
+
+			System_Event updateCornersToScreen;
+			updateCornersToScreen.type = System_Event_Type::RectTransformUpdated;
+			for (GameObject* goScreenCanvas : canvas_screen)
+				goScreenCanvas->OnSystemEvent(updateCornersToScreen);
 		}
-		
-		System_Event updateCornersToScreen;
-		updateCornersToScreen.type = System_Event_Type::RectTransformUpdated;
-		for (GameObject* goScreenCanvas : canvas_screen)
-			goScreenCanvas->OnSystemEvent(updateCornersToScreen);
 #endif // GAMEMODE
 	}
 	break;
