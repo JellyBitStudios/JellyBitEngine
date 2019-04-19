@@ -50,24 +50,27 @@ class AAttacking : AState
         }
     }
 
-    public override void ProcessRaycast(RaycastHit hit)
+    public override void ProcessRaycast(RaycastHit hit, bool leftClick)
     {
-        if (hit.gameObject.GetLayer() == "Terrain")
+        if (leftClick)
         {
-            Alita.Call.currentTarget = null;
-            Alita.Call.agent.SetDestination(hit.point);
-            Alita.Call.SwitchState(Alita.Call.StateWalking2Spot);
-        }
-        else if (hit.gameObject.GetLayer() == "Enemy")
-        {
-            GameObject targeted = hit.gameObject;
-            if (targeted == Alita.Call.currentTarget)
-                hasPetition = true;
-            else
+            if (hit.gameObject.GetLayer() == "Terrain")
             {
-                Alita.Call.currentTarget = hit.gameObject;
-                Alita.Call.agent.SetDestination(hit.gameObject.transform.position);
-                Alita.Call.SwitchState(Alita.Call.StateWalking2Enemy);
+                Alita.Call.currentTarget = null;
+                Alita.Call.agent.SetDestination(hit.point);
+                Alita.Call.SwitchState(Alita.Call.StateWalking2Spot);
+            }
+            else if (hit.gameObject.GetLayer() == "Enemy")
+            {
+                GameObject targeted = hit.gameObject;
+                if (targeted == Alita.Call.currentTarget)
+                    hasPetition = true;
+                else
+                {
+                    Alita.Call.currentTarget = hit.gameObject;
+                    Alita.Call.agent.SetDestination(hit.gameObject.transform.position);
+                    Alita.Call.SwitchState(Alita.Call.StateWalking2Enemy);
+                }
             }
         }
     }
@@ -85,12 +88,19 @@ class ADash : AState
     float accumulatedDistance = 0.0f;
     Vector3 dir = new Vector3();
 
+    public void SetDirection(Vector3 position)
+    {
+        dir = (position - Alita.Call.transform.position).normalized();
+    }
+
     public override void OnStart()
     {
         Alita.Call.animator.PlayAnimation("alita_dash_anim");
-        dir = Alita.Call.gameObject.transform.forward;
 
-        Alita.Call.agent.Stop();
+        Alita.Call.agent.isRotationStopped = false;
+        Alita.Call.agent.alignData.lookWhereYoureGoingData.isActive = false;
+        Alita.Call.agent.alignData.faceData.isActive = true;
+        //Alita.Call.agent.SetFace(dir);
     }
 
     public override void OnExecute()
@@ -104,9 +114,9 @@ class ADash : AState
 
     public override void OnStop()
     {
-        Alita.Call.agent.Reset();
+        Alita.Call.agent.alignData.lookWhereYoureGoingData.isActive = true;
+        Alita.Call.agent.alignData.faceData.isActive = false;
         Alita.Call.agent.ClearPath();
-        Alita.Call.agent.ClearMovementAndRotation();
         accumulatedDistance = 0.0f;
     }
 }
