@@ -449,9 +449,33 @@ void ComponentProjector::SetMaterialRes(uint materialUuid)
 	materialRes = materialUuid;
 }
 
+void ComponentProjector::SetMaterialRes(std::string materialName)
+{
+	std::vector<Resource*> materials = App->res->GetResourcesByType(ResourceTypes::MaterialResource);
+	for (Resource* material : materials)
+	{
+		if (material->GetData().name == materialName)
+		{
+			if (materialRes > 0)
+				App->res->SetAsUnused(materialRes);
+			
+			materialRes = material->GetUuid();
+			App->res->SetAsUsed(materialRes);
+		}
+	}
+}
+
 uint ComponentProjector::GetMaterialRes() const
 {
 	return materialRes;
+}
+
+std::string ComponentProjector::GetMaterialResName() const
+{
+	Resource* res = App->res->GetResource(materialRes);
+	if(res)
+		return res->GetName();
+	return "";
 }
 
 void ComponentProjector::SetMeshRes(uint meshUuid)

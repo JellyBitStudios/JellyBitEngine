@@ -27,7 +27,6 @@ public static class SteeringWander
         {
             // Change
             agent.wanderData.dir = new Vector3((float)MathScript.GetRandomDouble(-1.0f, 1.0f), 0.0f, (float)MathScript.GetRandomDouble(-1.0f, 1.0f));
-            agent.wanderData.dir.Normalize();
 
             agent.wanderData.timeToChange = (float)MathScript.GetRandomDouble(agent.wanderData.minTime, agent.wanderData.maxTime);
             agent.wanderData.time = agent.wanderData.timeToChange;

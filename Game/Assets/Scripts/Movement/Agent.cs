@@ -92,7 +92,7 @@ public class Agent : JellyScript
     }
     public bool HasArrived
     {
-        get { return pathManager.IsLastPosition && movementState == MovementState.Stop; }
+        get { return pathManager.HasArrived; }
     }
 
     public bool isMovementStopped = false;
@@ -106,7 +106,7 @@ public class Agent : JellyScript
         get { return hasFaced; }
     }
 
-    public bool drawGizmos = true;
+    public bool drawGizmosAgent = true;
     #endregion
 
     #region PRIVATE_VARIABLES
@@ -296,11 +296,11 @@ public class Agent : JellyScript
 
     public override void OnDrawGizmos()
     {
-        if (!drawGizmos)
+        if (!drawGizmosAgent)
             return;
 
         Debug.DrawLine(transform.position, transform.position + Quaternion.Rotate(Vector3.up, angularVelocity) * transform.forward * 3.0f, Color.Black);
-        Debug.DrawLine(transform.position, transform.position + velocity.normalized() * 3.0f, Color.White);
+        Debug.DrawLine(transform.position, transform.position + velocity, Color.White);
 
         if (seekData.isActive)
             SteeringSeek.DrawGizmos(this);
@@ -324,6 +324,7 @@ public class Agent : JellyScript
     
     public bool SetDestination(Vector3 destination)
     {
+        Debug.Log("destination + " + destination);
         bool hasPath = pathManager.GetPath(transform.position, destination);
 
         if (hasPath)
@@ -361,6 +362,8 @@ public class Agent : JellyScript
     public void ClearPath()
     {
         pathManager.ClearPath();
+
+        movementState = MovementState.Stop;
     }
 
     public void ClearMovementAndRotation()
@@ -420,6 +423,7 @@ public class Agent : JellyScript
                 if (pathManager.UpdateNextPosition())
                     movementState = MovementState.GoToPosition;
                 else
+                    // End of the path or path not valid
                     movementState = MovementState.Stop;
 
                 break;

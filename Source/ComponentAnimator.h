@@ -30,6 +30,7 @@ public:
 	bool CleanAnimations();
 	bool AnimationFinished()const;
 	bool UpdateAnimationSpeed(float new_speed);
+	void SetAnimationLoop(bool loop);
 	/* ----- SCRIPTING CALLS ----- */
 
 	void OnInternalSave(char*& cursor);

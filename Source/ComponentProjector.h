@@ -45,7 +45,10 @@ public:
 	void SetAspectRatio(float aspectRatio);
 
 	void SetMaterialRes(uint materialUuid);
+	void SetMaterialRes(std::string materialName);
 	uint GetMaterialRes() const;
+	std::string GetMaterialResName() const;
+
 	void SetMeshRes(uint meshUuid);
 	uint GetMeshRes() const;
 	void SetFilterMask(uint filterMask);
