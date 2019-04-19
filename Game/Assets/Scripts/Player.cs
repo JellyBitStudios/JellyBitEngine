@@ -46,7 +46,7 @@ class Player : JellyScript
 
     public override void OnStop()
     {
-        EventsManager.Call.StopListening("Player");
+        EventsManager.Call.StopListening(this);
     }
 
     public void EventsListener(object type)

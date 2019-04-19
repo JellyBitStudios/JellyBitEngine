@@ -91,9 +91,10 @@ public sealed class EventsManager : JellyScript
         return false;
     }
 
-    public void StopListening(string name)
+    // Argument must be the current script aka "this"
+    public void StopListening(object script)
     {
-        Listener list = listeners.Find(item => item.name == name);
+        Listener list = listeners.Find(item => item.script == script);
         listeners.Remove(list);
     }
 
