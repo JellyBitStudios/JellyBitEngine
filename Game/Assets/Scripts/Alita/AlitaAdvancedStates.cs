@@ -6,6 +6,9 @@ class AAttacking : AState
     Anim currentAnim;
 
     private bool hasPetition;
+    private bool firstPetition;
+    private float timerUntilPetitionIsValid;
+    private const float timeUntilValidPetitons = 0.3f;
 
     public override void OnStart()
     {
@@ -13,6 +16,7 @@ class AAttacking : AState
         //Alita.Call.animator.SetAnimationLoop(false);
         currentAnim = Anim.first;
         hasPetition = false;
+        firstPetition = true;
 
         Alita.Call.agent.isRotationStopped = false;
         Alita.Call.agent.alignData.lookWhereYoureGoingData.isActive = false;
@@ -23,6 +27,9 @@ class AAttacking : AState
     {
         Alita.Call.agent.SetFace(Alita.Call.currentTarget);
 
+        if (firstPetition)
+            timerUntilPetitionIsValid += Time.deltaTime;
+
         if (Alita.Call.animator.AnimationFinished())
         {
             if (hasPetition)
@@ -30,6 +37,7 @@ class AAttacking : AState
                 if (currentAnim == Anim.first)
                 {
                     Alita.Call.animator.PlayAnimation("anim_hand_forward_alita_fist");
+                    firstPetition = false;
                     //Alita.Call.animator.SetAnimationLoop(false);
                     currentAnim = Anim.second;
                 }
@@ -68,7 +76,11 @@ class AAttacking : AState
             {
                 GameObject targeted = hit.gameObject;
                 if (targeted == Alita.Call.currentTarget)
-                    hasPetition = true;
+                {
+                    if (!firstPetition || (firstPetition && timerUntilPetitionIsValid >
+                                                            timeUntilValidPetitons))
+                        hasPetition = true;
+                }
                 else
                 {
                     Alita.Call.currentTarget = hit.gameObject;
