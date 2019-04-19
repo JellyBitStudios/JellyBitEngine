@@ -42,7 +42,6 @@ public:
 	float GetFOV() const;
 	void SetNearPlaneDistance(float nearPlane);
 	void SetFarPlaneDistance(float farPlane);
-	void SetAspectRatio(float aspectRatio);
 
 	void SetMaterialRes(uint materialUuid);
 	void SetMaterialRes(std::string materialName);

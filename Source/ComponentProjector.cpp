@@ -433,11 +433,6 @@ void ComponentProjector::SetFarPlaneDistance(float farPlane)
 	frustum.farPlaneDistance = farPlane;
 }
 
-void ComponentProjector::SetAspectRatio(float aspectRatio)
-{
-	frustum.horizontalFov = 2.0f * atanf(tanf(frustum.verticalFov * 0.5f) * aspectRatio);
-}
-
 void ComponentProjector::SetMaterialRes(uint materialUuid)
 {
 	if (materialRes > 0)

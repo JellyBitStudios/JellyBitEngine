@@ -52,7 +52,7 @@ public sealed class EventsManager : JellyScript
         }
     }
 
-    public override void PreUpdate()
+    public override void PostUpdate()
     {
         if (instance.eventsQueue.Count > 0)
         {
