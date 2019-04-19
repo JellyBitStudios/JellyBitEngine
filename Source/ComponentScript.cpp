@@ -2398,6 +2398,8 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
+
+			break;
 		}
 		case VarType::STRUCT:
 		{
@@ -2408,6 +2410,8 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 
 			totalSize += bytes + size;
 			cursor += bytes + size;
+
+			break;
 		}
 		default:
 			break;
@@ -3518,7 +3522,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 		{
 			//DeSerialize the var value
 			bytes = sizeof(uint32_t);
-			uint32_t var;
+			uint32_t var = 0u;
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 
