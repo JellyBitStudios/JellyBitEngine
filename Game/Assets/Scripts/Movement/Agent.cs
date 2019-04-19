@@ -332,6 +332,14 @@ public class Agent : JellyScript
         return hasPath;
     }
 
+    public void ClearPath()
+    {
+        pathManager.ClearPath();
+
+        movementState = MovementState.Stop;
+    }
+
+    // Face
     public bool SetFace(GameObject gameObject)
     {
         if (gameObject == null)
@@ -346,36 +354,38 @@ public class Agent : JellyScript
         return true;
     }
 
-    public bool SetFace(Vector3 direction)
+    // Face
+    public void SetFace(Vector3 direction)
     {
         alignData.lookWhereYoureGoingData.isActive = false;
         alignData.faceData.isActive = true;
 
         alignData.faceData.faceType = SteeringFaceData.FaceType.Direction;
         alignData.faceData.direction = direction;
-
-        return true;
     }
 
+    // Look where you're going
+    public void FinishFace()
+    {
+        alignData.lookWhereYoureGoingData.isActive = true;
+        alignData.faceData.isActive = false;
+    }
+
+    // Stop moving and rotating (if you have future accelerations you won't move nor rotate)
     public void Stop()
     {
         isMovementStopped = true;
         isRotationStopped = true;
     }
 
+    // Move and rotate
     public void Reset()
     {
         isMovementStopped = false;
         isRotationStopped = false;
     }
 
-    public void ClearPath()
-    {
-        pathManager.ClearPath();
-
-        movementState = MovementState.Stop;
-    }
-
+    // Suddenly stop moving and rotating (if you have future accelerations you will move and/or rotate)
     public void ClearMovementAndRotation()
     {
         velocity = Vector3.zero;
