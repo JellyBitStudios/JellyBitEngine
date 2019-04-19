@@ -18,6 +18,7 @@
 #include "ComponentMaterial.h"
 #include "ComponentSphereCollider.h"
 #include "ComponentTrail.h"
+#include "ComponentProjector.h"
 
 #include "GameObject.h"
  
@@ -3544,6 +3545,35 @@ void MaterialSetResource(MonoObject* monoMaterial, MonoString* newMatName)
 	}
 }
 
+MonoString* ProjectorGetResource(MonoObject* monoProjector)
+{
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		std::string materialName = projector->GetMaterialResName();
+		if (materialName != "")
+			return mono_string_new(App->scripting->domain, materialName.data());
+		return nullptr;
+	}
+	return nullptr;
+}
+
+void ProjectorSetResource(MonoObject* monoProjector, MonoString* newResource)
+{
+	if (!newResource)
+		return;
+
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		char* matName = mono_string_to_utf8(newResource);
+
+		projector->SetMaterialRes(matName);
+
+		mono_free(matName);
+	}
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -3652,6 +3682,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Animator::GetCurrentFrame", (const void*)&AnimatorGetCurrFrame);
 	mono_add_internal_call("JellyBitEngine.Animator::AnimationFinished", (const void*)&AnimatorAnimationFinished);
 	mono_add_internal_call("JellyBitEngine.Animator::UpdateAnimationSpeed", (const void*)&UpdateAnimationSpeed);
+	mono_add_internal_call("JellyBitEngine.Animator::SetAnimationLoop", (const void*)&SetAnimationLoop);
 	
 	//Particle Emitter
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Play", (const void*)&ParticleEmitterPlay);
@@ -3773,6 +3804,10 @@ void ScriptingModule::CreateDomain()
 	//Material
 	mono_add_internal_call("JellyBitEngine.Material::SetResource", (const void*)&MaterialSetResource);
 
+	//Projector
+	mono_add_internal_call("JellyBitEngine.Projector::SetResource", (const void*)&ProjectorSetResource);
+	mono_add_internal_call("JellyBitEngine.Projector::GetResource", (const void*)&ProjectorGetResource);
+	
 	ClearMap();
 
 	firstDomain = false;

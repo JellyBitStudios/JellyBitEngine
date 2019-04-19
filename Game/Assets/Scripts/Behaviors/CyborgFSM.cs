@@ -170,7 +170,6 @@ public class GoToGameObject : ICyborgMeleeState
                     }
                 }
                 break;
-
             case GoToGameObjectType.GoToAttackDistance:
                 {
                     float distanceToTarget = (Alita.Call.transform.position - owner.transform.position).magnitude;
@@ -246,7 +245,6 @@ public class GoToGameObject : ICyborgMeleeState
                 Debug.DrawSphere(owner.character.dangerDistance, Color.Blue, owner.transform.position, Quaternion.identity, Vector3.one);
                 Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
                 break;
-
             case GoToGameObjectType.GoToAttackDistance:
                 Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
                 break;

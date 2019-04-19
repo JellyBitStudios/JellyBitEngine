@@ -57,6 +57,10 @@ public:
 	void InstanceClass();
 	void InstanceClass(MonoObject* _classInstance);
 
+private:
+	bool FieldHasHideInInspector(MonoReflectionType* classType, MonoString* fieldName);
+	bool FieldHasSerializeField(MonoReflectionType* classType, MonoString* fieldName);
+
 public:
 	bool awaked = false;
 	std::string scriptName;

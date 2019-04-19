@@ -324,6 +324,7 @@ public class Agent : JellyScript
     
     public bool SetDestination(Vector3 destination)
     {
+        Debug.Log("destination + " + destination);
         bool hasPath = pathManager.GetPath(transform.position, destination);
 
         if (hasPath)

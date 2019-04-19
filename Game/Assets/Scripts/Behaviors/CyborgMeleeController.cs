@@ -31,6 +31,7 @@ public class CyborgMeleeController : JellyScript
     // Character
     public uint tmp_maxLife = 100;
     public uint tmp_minLife = 30;
+
     public float tmp_attackDistance = 1.0f;
     public float tmp_dangerDistance = 2.0f;
     public float tmp_attackRate = 10.0f;
