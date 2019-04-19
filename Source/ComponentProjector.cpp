@@ -423,9 +423,19 @@ float ComponentProjector::GetFOV() const
 	return frustum.verticalFov * RADTODEG;
 }
 
+float ComponentProjector::GetNearPlaneDistance()
+{
+	return frustum.nearPlaneDistance;
+}
+
 void ComponentProjector::SetNearPlaneDistance(float nearPlane)
 {
 	frustum.nearPlaneDistance = nearPlane;
+}
+
+float ComponentProjector::GetFarPlaneDistance()
+{
+	return frustum.farPlaneDistance;
 }
 
 void ComponentProjector::SetFarPlaneDistance(float farPlane)

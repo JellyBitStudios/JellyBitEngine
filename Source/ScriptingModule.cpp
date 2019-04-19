@@ -3574,6 +3574,60 @@ void ProjectorSetResource(MonoObject* monoProjector, MonoString* newResource)
 	}
 }
 
+float ProjectorGetFov(MonoObject* monoProjector)
+{
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		return projector->GetFOV();
+	}
+}
+
+void ProjectorSetFov(MonoObject* monoProjector, float fov)
+{
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		projector->SetFOV(fov);
+	}
+}
+
+float ProjectorGetNearDistance(MonoObject* monoProjector)
+{
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		return projector->GetNearPlaneDistance();
+	}
+}
+
+void ProjectorSetNearDistance(MonoObject* monoProjector, float nearDistance)
+{
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		projector->SetNearPlaneDistance(nearDistance);
+	}
+}
+
+float ProjectorGetFarDistance(MonoObject* monoProjector)
+{
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		return projector->GetFarPlaneDistance();
+	}
+}
+
+void ProjectorSetFarDistance(MonoObject* monoProjector, float farDistance)
+{
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		projector->SetFarPlaneDistance(farDistance);
+	}
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -3807,6 +3861,12 @@ void ScriptingModule::CreateDomain()
 	//Projector
 	mono_add_internal_call("JellyBitEngine.Projector::SetResource", (const void*)&ProjectorSetResource);
 	mono_add_internal_call("JellyBitEngine.Projector::GetResource", (const void*)&ProjectorGetResource);
+	mono_add_internal_call("JellyBitEngine.Projector::GetFov", (const void*)&ProjectorGetFov);
+	mono_add_internal_call("JellyBitEngine.Projector::SetFov", (const void*)&ProjectorSetFov);
+	mono_add_internal_call("JellyBitEngine.Projector::GetNearDistance", (const void*)&ProjectorGetNearDistance);
+	mono_add_internal_call("JellyBitEngine.Projector::SetNearDistance", (const void*)&ProjectorSetNearDistance);
+	mono_add_internal_call("JellyBitEngine.Projector::GetFarDistance", (const void*)&ProjectorGetFarDistance);
+	mono_add_internal_call("JellyBitEngine.Projector::SetFarDistance", (const void*)&ProjectorSetFarDistance);
 	
 	ClearMap();
 
