@@ -9,7 +9,7 @@ public class AState
     public virtual void OnPause() { } // Called when the game or character must be paused
     public virtual void OnResume() { } // Called to resume the game. OnPause previously called
     public virtual void ProcessInput(KeyCode code) { } // Process input
-    public virtual void ProcessRaycast(RaycastHit hit) { } // Process raycast
+    public virtual void ProcessRaycast(RaycastHit hit, bool leftClick) { } // Process raycast
     public virtual void ProcessEvent(Event latestEvent) { } // called when a Alita recieves a new Event
 }
 
@@ -28,19 +28,27 @@ class AIdle : AState
         //    Alita.Call.SwitchState(Alita.Call.StateDash);
     }
 
-    public override void ProcessRaycast(RaycastHit hit)
+    public override void ProcessRaycast(RaycastHit hit, bool leftClick = true)
     {
-        if (hit.gameObject.GetLayer() == "Terrain")
+        if (leftClick)
         {
-            if (Alita.Call.agent.SetDestination(hit.point))
-                Alita.Call.SwitchState(Alita.Call.StateWalking2Spot);
+            if (hit.gameObject.GetLayer() == "Terrain")
+            {
+                if (Alita.Call.agent.SetDestination(hit.point))
+                    Alita.Call.SwitchState(Alita.Call.StateWalking2Spot);
+            }
+            else if (hit.gameObject.GetLayer() == "Enemy")
+            {
+                // WARNING: SetDestination could return false but here we are targetting an enemy so...
+                Alita.Call.currentTarget = hit.gameObject;
+                Alita.Call.agent.SetDestination(hit.gameObject.transform.position);
+                Alita.Call.SwitchState(Alita.Call.StateWalking2Enemy);
+            }
         }
-        else if (hit.gameObject.GetLayer() == "Enemy")
+        else
         {
-            // WARNING: SetDestination could return false but here we are targetting an enemy so...
-            Alita.Call.currentTarget = hit.gameObject;
-            Alita.Call.agent.SetDestination(hit.gameObject.transform.position);
-            Alita.Call.SwitchState(Alita.Call.StateWalking2Enemy);
+            Alita.Call.SwitchState(Alita.Call.StateDash);
+            Alita.Call.StateDash.SetDirection(hit.point);
         }
     }
 }
@@ -81,17 +89,25 @@ class AWalking2Spot : AWalking
             Alita.Call.SwitchState(Alita.Call.StateIdle);
     }
 
-    public override void ProcessRaycast(RaycastHit hit)
+    public override void ProcessRaycast(RaycastHit hit, bool leftClick)
     {
-        if (hit.gameObject.GetLayer() == "Terrain")
+        if (leftClick)
         {
-            Alita.Call.agent.SetDestination(hit.point);
+            if (hit.gameObject.GetLayer() == "Terrain")
+            {
+                Alita.Call.agent.SetDestination(hit.point);
+            }
+            else if (hit.gameObject.GetLayer() == "Enemy")
+            {
+                Alita.Call.currentTarget = hit.gameObject;
+                Alita.Call.agent.SetDestination(hit.gameObject.transform.position);
+                Alita.Call.SwitchState(Alita.Call.StateWalking2Enemy, false, false);
+            }
         }
-        else if (hit.gameObject.GetLayer() == "Enemy")
+        else
         {
-            Alita.Call.currentTarget = hit.gameObject;
-            Alita.Call.agent.SetDestination(hit.gameObject.transform.position);
-            Alita.Call.SwitchState(Alita.Call.StateWalking2Enemy, false, false);
+            Alita.Call.SwitchState(Alita.Call.StateDash);
+            Alita.Call.StateDash.SetDirection(hit.point);
         }
     }
 }
@@ -108,18 +124,26 @@ class AWalking2Enemy : AWalking
         }
     }
 
-    public override void ProcessRaycast(RaycastHit hit)
+    public override void ProcessRaycast(RaycastHit hit, bool leftClick)
     {
-        if (hit.gameObject.GetLayer() == "Terrain")
+        if (leftClick)
         {
-            Alita.Call.agent.SetDestination(hit.point);
-            Alita.Call.SwitchState(Alita.Call.StateWalking2Spot, false, false);
-            Alita.Call.currentTarget = null;
+            if (hit.gameObject.GetLayer() == "Terrain")
+            {
+                Alita.Call.agent.SetDestination(hit.point);
+                Alita.Call.SwitchState(Alita.Call.StateWalking2Spot, false, false);
+                Alita.Call.currentTarget = null;
+            }
+            else if (hit.gameObject.GetLayer() == "Enemy")
+            {
+                if (Alita.Call.agent.SetDestination(hit.gameObject.transform.position))
+                    Alita.Call.currentTarget = hit.gameObject;
+            }
         }
-        else if (hit.gameObject.GetLayer() == "Enemy")
+        else
         {
-            if (Alita.Call.agent.SetDestination(hit.gameObject.transform.position))
-                Alita.Call.currentTarget = hit.gameObject;           
+            Alita.Call.SwitchState(Alita.Call.StateDash);
+            Alita.Call.StateDash.SetDirection(hit.point);
         }
     }
 }

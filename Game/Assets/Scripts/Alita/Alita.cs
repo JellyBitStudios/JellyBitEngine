@@ -70,9 +70,9 @@ class Alita : JellyScript
         m_state.ProcessInput(code);
     }
 
-    public void ProcessRaycast(RaycastHit hit)
+    public void ProcessRaycast(RaycastHit hit, bool leftClick)
     {
-        m_state.ProcessRaycast(hit);
+        m_state.ProcessRaycast(hit, leftClick);
     }
 
     public void EventsListener(object type)

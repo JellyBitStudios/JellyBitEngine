@@ -60,7 +60,7 @@ private:
 
 public:
 
-	bool drawNavmesh = true;
+	bool drawNavmesh = false;
 
 protected:
 
