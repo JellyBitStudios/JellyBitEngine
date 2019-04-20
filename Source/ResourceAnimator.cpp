@@ -664,8 +664,6 @@ bool ResourceAnimator::SetCurrentAnimation(const char * anim_name)
 			last_anim = current_anim;
 			current_anim = it_anim;
 			SetCurrentAnimationTime(0.0f);
-			current_anim->anim_timer = 0.0f;
-			current_anim->finished = false;
 			return true;
 		}
 	}
