@@ -10,7 +10,7 @@ public class Character
 
     // --------------------------------------------------
 
-    public uint maxLife = 1000;
+    public uint maxLife = 100;
     public int dmg = 20;
 
     public int currentLife = 0;
