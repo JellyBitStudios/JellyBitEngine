@@ -93,4 +93,59 @@ void Raycaster::ScreenPointToRay(int posX, int posY, float& shortestDistance, ma
 	}
 }
 
+void Raycaster::ScreenQuadToFrustum(int posX, int posY, int posW, int posH) const
+{
+
+	//int winWidth = App->window->GetWindowWidth();
+	//int winHeight = App->window->GetWindowHeight();
+	//math::float2 initialPosNorm;
+	//initialPosNorm.x = -(1.0f - (float(posX) * 2.0f) / winWidth);
+	//initialPosNorm.y = 1.0f - (float(posY) * 2.0f) / winHeight;
+	//math::float2 finalPosNorm;
+	//finalPosNorm.x = -(1.0f - (float(posW) * 2.0f) / winWidth);
+	//finalPosNorm.y = 1.0f - (float(posH) * 2.0f) / winHeight;
+
+	//math::Frustum selectionFrustum = CreateFrustum(App->camera->camera->frustum, initialPosNorm, finalPosNorm);
+
+	// Static objects
+	std::vector<GameObject*> hits;
+	//App->scene->quadtree.CollectIntersections(hits, selectionFrustum);
+
+	// Dynamic objects
+	std::vector<GameObject*> dynamicGameObjects;
+	App->GOs->GetDynamicGameobjects(dynamicGameObjects);
+
+	for (uint i = 0; i < dynamicGameObjects.size(); ++i)
+	{
+		//if (dynamicGameObjects[i]->GetLayer() != UILAYER && selectionFrustum.Contains(dynamicGameObjects[i]->boundingBox))
+		//	hits.push_back(dynamicGameObjects[i]);
+	}
+	if (!hits.empty())
+	{
+		SELECT(hits[0]);
+		if (hits.size() > 1)
+			for (uint i = 1; i < hits.size(); ++i)
+			{
+				App->scene->selectedObject += hits[i];
+			}
+	}
+}
+
+math::Frustum Raycaster::CreateFrustum(math::Frustum cameraFrustum, float width, float heith) const
+{
+	math::Frustum frustumSelection;
+
+	frustumSelection.type = cameraFrustum.type;
+
+	frustumSelection.pos = cameraFrustum.pos;
+	frustumSelection.front = cameraFrustum.front;
+	frustumSelection.up = cameraFrustum.up;
+
+	frustumSelection.nearPlaneDistance = 1.0f;
+	frustumSelection.farPlaneDistance = 500.0f;
+
+	frustumSelection.verticalFov = cameraFrustum.verticalFov;
+	frustumSelection.horizontalFov = 2.0f * atanf(tanf(frustumSelection.verticalFov / 2.0f) * width / heith);
+}
+
 #endif
