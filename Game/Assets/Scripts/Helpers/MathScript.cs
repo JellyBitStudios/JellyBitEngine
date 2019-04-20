@@ -57,4 +57,15 @@ public static class MathScript
         Random random = new Random();
         return random.NextDouble() * (max - min) + min;
     }
+
+    public static int GetRandomInteger(int min, int max)
+    {
+        Random random = new Random();
+        return random.Next(min, max);
+    }
+
+    public static int GetRandomSign()
+    {
+        return GetRandomInteger(0, 1) * 2 - 1;
+    }
 }
