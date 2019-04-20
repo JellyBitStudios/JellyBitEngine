@@ -505,9 +505,8 @@ public class CR_Attack : CR_IState
         ray.position = owner.transform.position;
         ray.direction = owner.transform.forward;
         RaycastHit hitInfo;
-        LayerMask mask = new LayerMask();
 
-        if (Physics.Raycast(ray, out hitInfo, float.MaxValue, mask, SceneQueryFlags.Dynamic))
+        if (Physics.Raycast(ray, out hitInfo, float.MaxValue, LayerMask.GetMask("Enemy"), SceneQueryFlags.Dynamic))
             return true;
 
         return false;
