@@ -36,9 +36,9 @@ class Player : JellyScript
             else
                 HandleMousePicking(false);
 
-            if (Input.GetKeyDown(KeyCode.KEY_Q))
+            if (Input.GetKeyUp(KeyCode.KEY_Q))
                 Alita.Call.ProcessInput(KeyCode.KEY_Q);
-            else if (Input.GetKeyDown(KeyCode.KEY_SPACE))
+            else if (Input.GetKeyUp(KeyCode.KEY_SPACE))
                 Alita.Call.ProcessInput(KeyCode.KEY_SPACE);
             // if n button pressed open inventory/options/etc 
         }
