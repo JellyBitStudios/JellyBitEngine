@@ -159,8 +159,8 @@ void ModuleUI::OnSystemEvent(System_Event event)
 		if (App->GetEngineState() == engine_states::ENGINE_EDITOR)
 		{
 			screenInWorld = true;
-			canvas_world.push_front(WorldHolder);
 			canvas.push_front(WorldHolder);
+			canvas_world.push_front(WorldHolder);
 
 			System_Event updateCornersToScreen;
 			updateCornersToScreen.type = System_Event_Type::RectTransformUpdated;
@@ -190,6 +190,14 @@ void ModuleUI::OnSystemEvent(System_Event event)
 	case System_Event_Type::LoadScene:
 	{
 		App->glCache->ResetUIBufferValues();
+
+#ifndef GAMEMODE
+		if (App->GetEngineState() == engine_states::ENGINE_EDITOR)
+		{
+			uint temp; int tm;
+			App->glCache->RegisterBufferIndex(&temp, &tm, ComponentTypes::ImageComponent, WorldHolder->cmp_image);
+		}
+#endif
 	}
 	case System_Event_Type::Stop:
 	{
