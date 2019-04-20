@@ -12,11 +12,11 @@ public class areaHabDecal : JellyScript
 
     public Vector3 Q_pos;
     public float Q_FOV;
-    //public string Q_material;
+    public string Q_material = "";
 
     public Vector3 W_pos;
     public float W_FOV;
-    //public string W_material;
+    public string W_material = "";
 
 
     AreaHab currHab = AreaHab.None;
@@ -36,7 +36,7 @@ public class areaHabDecal : JellyScript
             {
                 transform.localPosition = Q_pos;
                 projector.FOV = Q_FOV;
-                projector.SetResource("Q_areaDecal");
+                projector.SetResource(Q_material);
                 currHab = AreaHab.Q_area;
             }
             projector.SetActive(true);
@@ -47,7 +47,7 @@ public class areaHabDecal : JellyScript
             {
                 transform.localPosition = W_pos;
                 projector.FOV = W_FOV;
-                projector.SetResource("W_areaDecal");
+                projector.SetResource(W_material);
 
                 currHab = AreaHab.W_area;
             }
