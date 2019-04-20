@@ -15,7 +15,6 @@ class AAttacking : AState
     public override void OnStart()
     {
         Alita.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
-        Alita.Call.animator.SetAnimationLoop(false);
         currentAnim = Anim.first;
         hasPetition = false;
         firstPetition = true;
@@ -69,19 +68,16 @@ class AAttacking : AState
                 {
                     Alita.Call.animator.PlayAnimation("anim_hand_forward_alita_fist");
                     firstPetition = false;
-                    Alita.Call.animator.SetAnimationLoop(false);
                     currentAnim = Anim.second;
                 }
                 else if (currentAnim == Anim.second)
                 {
                     Alita.Call.animator.PlayAnimation("anim_kick_alita_fist");
-                    Alita.Call.animator.SetAnimationLoop(false);
                     currentAnim = Anim.third;
                 }
                 else
                 {
                     Alita.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
-                    Alita.Call.animator.SetAnimationLoop(false);
                     currentAnim = Anim.first;
                 }
                 hasPetition = false;
@@ -136,7 +132,7 @@ class ADash : AState
     Vector3 dir = new Vector3();
 
     public void SetDirection(Vector3 position)
-    {
+    { 
         dir = (position - Alita.Call.transform.position).normalized();
     }
 
@@ -145,6 +141,7 @@ class ADash : AState
         Alita.Call.animator.PlayAnimation("alita_dash_anim");
 
         Alita.Call.agent.Stop();
+        
         float targetOrientation = MathScript.Rad2Deg * (float)Math.Atan2(dir.x, dir.z);
         Quaternion quat = Quaternion.Rotate(Vector3.up, targetOrientation);
         Alita.Call.transform.rotation = quat;
@@ -170,10 +167,16 @@ class ADash : AState
 
 class ASkill1 : AState
 {
+    // TODO GUILLERMO: FIX ANIMATOR PD: MARE DE DEU SANTISSIMA
+    bool finished;
+    bool isFinishedForReal;
+
     public override void OnStart()
     {
         Alita.Call.animator.PlayAnimation("anim_special_attack_q_alita_fist");
         Alita.Call.animator.SetAnimationLoop(false);
+        finished = false;
+        isFinishedForReal = false;
     }
 
     public override void OnExecute()

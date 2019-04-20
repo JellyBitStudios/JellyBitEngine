@@ -17,13 +17,18 @@ class AIdle : AState
 {
     public override void OnStart()
     {
+        Alita.Call.animator.UpdateAnimationBlendTime(0.1f);
         Alita.Call.animator.PlayAnimation("idle_alita_anim");
+        Debug.Log("ANIMATION IDLE");
     }
 
     public override void ProcessInput(KeyCode code)
     {
         if (code == KeyCode.KEY_Q && Alita.Call.skillset.skQ.Use())
+        {
+            Debug.Log("Q HIT");
             Alita.Call.SwitchState(Alita.Call.StateSkill_1);
+        }
     }
 
     public override void ProcessRaycast(RaycastHit hit, bool leftClick = true)
