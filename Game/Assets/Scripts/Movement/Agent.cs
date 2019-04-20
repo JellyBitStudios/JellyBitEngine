@@ -31,10 +31,10 @@ public class Agent : JellyScript
     // SteeringWanderData
     public bool tmp_wanderIsActive = false;
     public uint tmp_wanderPriority = 2;
-    public float tmp_radius = 1.0f;
-    public float tmp_offset = 1.0f;
-    public float tmp_minTime = 0.5f;
-    public float tmp_maxTime = 3.0f;
+    public float tmp_wanderRadius = 1.0f;
+    public float tmp_wanderOffset = 1.0f;
+    public float tmp_wanderMinTime = 0.5f;
+    public float tmp_wanderMaxTime = 3.0f;
 
     // SteeringSeparationData
     public bool tmp_separationIsActive = true;
@@ -149,10 +149,10 @@ public class Agent : JellyScript
         // SteeringWanderData
         wanderData.isActive = tmp_wanderIsActive;
         wanderData.Priority = tmp_wanderPriority;
-        wanderData.radius = tmp_radius;
-        wanderData.offset = tmp_offset;
-        wanderData.minTime = tmp_minTime;
-        wanderData.maxTime = tmp_maxTime;
+        wanderData.radius = tmp_wanderRadius;
+        wanderData.offset = tmp_wanderOffset;
+        wanderData.minTime = tmp_wanderMinTime;
+        wanderData.maxTime = tmp_wanderMaxTime;
 
         // SteeringSeparationData
         separationData.isActive = tmp_separationIsActive;
@@ -298,7 +298,7 @@ public class Agent : JellyScript
             return;
 
         Debug.DrawLine(transform.position, transform.position + Quaternion.Rotate(Vector3.up, angularVelocity) * transform.forward * 3.0f, Color.Black);
-        Debug.DrawLine(transform.position, transform.position + velocity, Color.White);
+        Debug.DrawLine(transform.position, transform.position + transform.forward * 3.0f, Color.White);
 
         if (seekData.isActive)
             SteeringSeek.DrawGizmos(this);
@@ -480,10 +480,10 @@ public class Agent : JellyScript
         // SteeringWanderData
         tmp_wanderIsActive = wanderData.isActive;
         tmp_wanderPriority = wanderData.Priority;
-        tmp_radius = wanderData.radius;
-        tmp_offset = wanderData.offset;
-        tmp_minTime = wanderData.minTime;
-        tmp_maxTime = wanderData.maxTime;
+        tmp_wanderRadius = wanderData.radius;
+        tmp_wanderOffset = wanderData.offset;
+        tmp_wanderMinTime = wanderData.minTime;
+        tmp_wanderMaxTime = wanderData.maxTime;
 
         // SteeringSeparationData
         tmp_separationIsActive = separationData.isActive;

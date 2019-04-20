@@ -459,8 +459,10 @@ public class CR_Attack : CR_IState
             owner.fsm.ChangeState(new CR_Wander());
             return;
         }
-        else if (MathScript.GetRandomDouble(0.0f, 1.0f) <= owner.character.ActualGoToSideProbability)
+        else if (Alita.Call.currentTarget != owner.gameObject // Is Alita attacking me?
+            && MathScript.GetRandomDouble(0.0f, 1.0f) <= owner.character.ActualGoToSideProbability)
         {
+            // Less probability that I will go to side again
             owner.character.ActualGoToSideProbability += owner.character.goToSideProbabilityFluctuation;
 
             owner.fsm.ChangeState(new CR_GoToSide());
@@ -468,6 +470,7 @@ public class CR_Attack : CR_IState
         }
         else
         {
+            // Less probability that I will hit again
             owner.character.ActualGoToSideProbability -= owner.character.goToSideProbabilityFluctuation;
 
             // I am always allowed to hit ;)
