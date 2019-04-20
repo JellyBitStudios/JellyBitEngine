@@ -156,7 +156,20 @@ update_status ModuleCameraEditor::Update()
 		else
 			SELECT(NULL);
 	}
-
+	if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_DOWN
+		 && !ImGuizmo::IsOver() && !ImGuizmo::IsUsing())
+	{
+		mousePressedPos_X = App->input->GetMouseX();
+		mousePressedPos_Y = App->input->GetMouseY();
+		isMultiSelection = true;
+	}
+	if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_UP && isMultiSelection)
+	{	
+		App->scene->multipleSelection.clear();
+		isMultiSelection = false;
+		if(!App->raycaster->ScreenQuadToFrustum(mousePressedPos_X, mousePressedPos_Y, App->input->GetMouseX(), App->input->GetMouseY()))
+			SELECT(NULL)
+	}
 	return UPDATE_CONTINUE;
 }
 
