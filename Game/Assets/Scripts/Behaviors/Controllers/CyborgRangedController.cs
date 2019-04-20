@@ -114,7 +114,12 @@ public class CyborgRangedController : JellyScript
         // Character
         character.currentLife = (int)character.maxLife;
 
-        fsm.ChangeState(new CR_Wander());  
+        // Agent
+        agent.agentData.Radius = 1.0f;
+
+        // -----
+
+        fsm.ChangeState(new CR_Wander());
 
         EventsManager.Call.StartListening("CyborgRanged", this, "OnEvent");
     }
