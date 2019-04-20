@@ -84,40 +84,14 @@ bool PanelAssets::Draw()
 		CreateResourcePopUp(DIR_ASSETS);
 
 		//Create the dummy to receive GameObject drops from the hierarchy;
-		ImVec2 drawingPos = ImGui::GetCursorScreenPos();
+		/*ImVec2 drawingPos = ImGui::GetCursorScreenPos();
 		ImVec2 winSize = ImGui::GetWindowSize();
 
 		ImGui::SetCursorScreenPos(ImGui::GetWindowPos());
 
 		ImGui::Dummy(winSize);
-		ImGui::SetCursorScreenPos(drawingPos);
-		if (ImGui::BeginDragDropTarget())
-		{
-			const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY", 0);
-			if (payload)
-			{
-				GameObject* gameObject = *(GameObject**)payload->Data;
-
-				if (!gameObject->cmp_canvas && gameObject->GetLayer() == UILAYER)
-				{
-					CONSOLE_LOG(LogTypes::Error, "TYou can't make a prefab of child canvas. Only from Canvas.");
-				}
-				else
-				{
-					ResourceData data;
-					data.file = DIR_ASSETS_PREFAB + std::string("/") + gameObject->GetName() + EXTENSION_PREFAB;
-					data.exportedFile = "";
-					data.name = gameObject->GetName();
-
-					PrefabData prefabData;
-					prefabData.root = gameObject;
-
-					App->res->ExportFile(ResourceTypes::PrefabResource, data, &prefabData, std::string());
-				}
-			}
-			ImGui::EndDragDropTarget();
-		}
-
+		ImGui::SetCursorScreenPos(drawingPos);*/
+		
 		if (treeNodeOpened)
 		{
 			RecursiveDrawAssetsDir(App->fs->rootDir);
@@ -211,6 +185,45 @@ void PanelAssets::RecursiveDrawAssetsDir(const Directory& directory)
 			SELECT(NULL);
 
 		CreateResourcePopUp(dir.fullPath.data());
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY", 0);
+			if (payload)
+			{
+				if (dir.fullPath.find("Prefabs") != std::string::npos)
+				{
+					GameObject* gameObject = *(GameObject**)payload->Data;
+
+					if (!gameObject->cmp_canvas && gameObject->GetLayer() == UILAYER)
+					{
+						CONSOLE_LOG(LogTypes::Error, "You can't make a prefab of child canvas. Only from Canvas.");
+					}
+					else
+					{
+						std::vector<Resource*> prefabs = App->res->GetResourcesByType(ResourceTypes::PrefabResource);
+						for (Resource* prefab : prefabs)
+						{
+							if (prefab->GetData().name == gameObject->GetName())
+							{
+								App->res->DeleteResource(prefab->GetUuid());
+							}
+						}
+
+						ResourceData data;
+						data.file = dir.fullPath + std::string("/") + gameObject->GetName() + EXTENSION_PREFAB;
+						data.exportedFile = "";
+						data.name = std::string(gameObject->GetName()) + EXTENSION_PREFAB;
+
+						PrefabData prefabData;
+						prefabData.root = gameObject;
+
+						App->res->ExportFile(ResourceTypes::PrefabResource, data, &prefabData, std::string());
+					}
+				}			
+			}
+			ImGui::EndDragDropTarget();
+		}
 
 		if (treeNodeOpened)
 		{
