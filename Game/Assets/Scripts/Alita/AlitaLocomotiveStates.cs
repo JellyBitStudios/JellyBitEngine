@@ -33,6 +33,7 @@ class AIdle : AState
 
     public override void ProcessRaycast(RaycastHit hit, bool leftClick = true)
     {
+        Alita.Call.agent.FinishFace();
         if (leftClick)
         {
             if (hit.gameObject.GetLayer() == "Terrain")
@@ -43,7 +44,13 @@ class AIdle : AState
                 float diff = (point - alita).magnitude;
                 if (diff > AlitaCharacter.ConstMinRadiusToMove && Alita.Call.agent.SetDestination(hit.point))
                     Alita.Call.SwitchState(Alita.Call.StateWalking2Spot);
-                // TODO G: else face to point click like Torchlight
+                else
+                {
+                    Vector3 dir = new Vector3();
+                    dir = point - alita;
+                    Alita.Call.agent.SetFace(dir);
+                }
+                    // TODO G: else face to point click like Torchlight
             }
             else if (hit.gameObject.GetLayer() == "Enemy")
             {
@@ -80,7 +87,6 @@ class AWalking : AState
         Alita.Call.agent.ClearPath();
         Alita.Call.agent.ClearMovementAndRotation();
         Alita.Call.agent.isMovementStopped = true;
-        Alita.Call.agent.isRotationStopped = true;
     }
 
     public override void ProcessInput(KeyCode code)
@@ -107,7 +113,14 @@ class AWalking2Spot : AWalking
         {
             if (hit.gameObject.GetLayer() == "Terrain")
             {
-                Alita.Call.agent.SetDestination(hit.point);
+                Vector3 point = new Vector3(hit.point.x, 0.0f, hit.point.z);
+                Vector3 alita = new Vector3(Alita.Call.transform.position);
+                alita.y = 0.0f;
+                float diff = (point - alita).magnitude;
+                if (diff > AlitaCharacter.ConstMinRadiusToMove)
+                    Alita.Call.agent.SetDestination(hit.point);
+                else
+                    Alita.Call.SwitchState(Alita.Call.StateIdle);
             }
             else if (hit.gameObject.GetLayer() == "Enemy")
             {
