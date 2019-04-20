@@ -1389,50 +1389,44 @@ void ComponentScript::OnUniqueEditor()
 						}
 						else if (typeName == "JellyBitEngine.LayerMask")
 						{
-							MonoObject* layerMask;
-							mono_field_get_value(GetMonoComponent(), field, &layerMask);
+							uint32_t bits;
+							mono_field_get_value(GetMonoComponent(), field, &bits);
+						
+							std::string enabled;
+							uint totalLayers = 0u;
+							uint amountEnabled = 0u;
 
-							if (layerMask)
+							for (uint i = 0; i < MAX_NUM_LAYERS; ++i)
 							{
-								uint32_t bits;
-								mono_field_get_value(layerMask, mono_class_get_field_from_name(mono_object_get_class(layerMask), "masks"), &bits);
+								const char* layerName = App->layers->NumberToName(i);
+								if (strcmp(layerName, "") == 0)
+									continue;
 
-								std::string enabled;
-								uint totalLayers = 0u;
-								uint amountEnabled = 0u;
+								totalLayers++;
+								enabled = (bits >> i) & 1U == 1 ? layerName : enabled;
+								amountEnabled += (bits >> i) & 1U == 1 ? 1 : 0;
+							}
 
+							const char* title = amountEnabled == 0 ? "None" : amountEnabled == 1 ? enabled.data() : totalLayers == amountEnabled ? "Everything" : "Multiple Selected";
+
+							ImGui::PushItemWidth(150.0f);
+							if (ImGui::BeginCombo((fieldName + "##" + std::to_string(UUID)).data(), title))
+							{
 								for (uint i = 0; i < MAX_NUM_LAYERS; ++i)
 								{
 									const char* layerName = App->layers->NumberToName(i);
 									if (strcmp(layerName, "") == 0)
 										continue;
 
-									totalLayers++;
-									enabled = (bits >> i) & 1U == 1 ? layerName : enabled;
-									amountEnabled += (bits >> i) & 1U == 1 ? 1 : 0;
-								}
-
-								const char* title = amountEnabled == 0 ? "None" : amountEnabled == 1 ? enabled.data() : totalLayers == amountEnabled ? "Everything" : "Multiple Selected";
-
-								ImGui::PushItemWidth(150.0f);
-								if (ImGui::BeginCombo((fieldName + "##" + std::to_string(UUID)).data(), title))
-								{
-									for (uint i = 0; i < MAX_NUM_LAYERS; ++i)
+									if (ImGui::Selectable(layerName, (bits >> i) & 1U == 1 ? true : false, ImGuiSelectableFlags_::ImGuiSelectableFlags_DontClosePopups))
 									{
-										const char* layerName = App->layers->NumberToName(i);
-										if (strcmp(layerName, "") == 0)
-											continue;
-
-										if (ImGui::Selectable(layerName, (bits >> i) & 1U == 1 ? true : false, ImGuiSelectableFlags_::ImGuiSelectableFlags_DontClosePopups))
-										{
-											bits ^= 1UL << i;
-											mono_field_set_value(layerMask, mono_class_get_field_from_name(mono_object_get_class(layerMask), "masks"), &bits);
-										}
+										bits ^= 1UL << i;
+										mono_field_set_value(GetMonoComponent(), field, &bits);
 									}
-									ImGui::EndCombo();
 								}
-								ImGui::PopItemWidth();
+								ImGui::EndCombo();
 							}
+							ImGui::PopItemWidth();
 						}
 						else if (typeName == "JellyBitEngine.Vector3")
 						{
@@ -1848,6 +1842,47 @@ void ComponentScript::OnStructEditor(MonoObject* structOBJ, MonoClassField* stru
 									mono_field_set_value(structOBJ, field, &varState);
 								}
 							}
+							else if (typeName == "JellyBitEngine.LayerMask")
+							{
+								uint32_t bits;
+								mono_field_get_value(structOBJ, field, &bits);
+
+								std::string enabled;
+								uint totalLayers = 0u;
+								uint amountEnabled = 0u;
+
+								for (uint i = 0; i < MAX_NUM_LAYERS; ++i)
+								{
+									const char* layerName = App->layers->NumberToName(i);
+									if (strcmp(layerName, "") == 0)
+										continue;
+
+									totalLayers++;
+									enabled = (bits >> i) & 1U == 1 ? layerName : enabled;
+									amountEnabled += (bits >> i) & 1U == 1 ? 1 : 0;
+								}
+
+								const char* title = amountEnabled == 0 ? "None" : amountEnabled == 1 ? enabled.data() : totalLayers == amountEnabled ? "Everything" : "Multiple Selected";
+
+								ImGui::PushItemWidth(150.0f);
+								if (ImGui::BeginCombo((fieldName + "##" + std::to_string(UUID)).data(), title))
+								{
+									for (uint i = 0; i < MAX_NUM_LAYERS; ++i)
+									{
+										const char* layerName = App->layers->NumberToName(i);
+										if (strcmp(layerName, "") == 0)
+											continue;
+
+										if (ImGui::Selectable(layerName, (bits >> i) & 1U == 1 ? true : false, ImGuiSelectableFlags_::ImGuiSelectableFlags_DontClosePopups))
+										{
+											bits ^= 1UL << i;
+											mono_field_set_value(structOBJ, field, &bits);
+										}
+									}
+									ImGui::EndCombo();
+								}
+								ImGui::PopItemWidth();
+							}
 							else if (mono_class_is_enum(mono_type_get_class(type)))
 							{
 								//A public enum
@@ -1858,7 +1893,7 @@ void ComponentScript::OnStructEditor(MonoObject* structOBJ, MonoClassField* stru
 								int32_t enumValue;
 								mono_field_get_value(structOBJ, field, &enumValue);
 
-								MonoObject* enumOBJ = mono_field_get_value_object(App->scripting->domain, field, GetMonoComponent());
+								MonoObject* enumOBJ = mono_field_get_value_object(App->scripting->domain, field, structOBJ);
 
 								MonoMethodDesc* ToStringDesc = mono_method_desc_new("Enum::ToString", false);
 								MonoMethod* ToStringMethod = mono_method_desc_search_in_class(ToStringDesc, enumClass);
@@ -2363,6 +2398,8 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
+
+			break;
 		}
 		case VarType::STRUCT:
 		{
@@ -2373,6 +2410,8 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 
 			totalSize += bytes + size;
 			cursor += bytes + size;
+
+			break;
 		}
 		default:
 			break;
@@ -2879,12 +2918,9 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 				//Serialize the var value
 
-				MonoObject* layerMask;
-				mono_field_get_value(GetMonoComponent(), field, &layerMask);
-
 				uint32_t varState = 0;
-				mono_field_get_value(layerMask, mono_class_get_field_from_name(mono_object_get_class(layerMask), "masks"), &varState);
-
+				mono_field_get_value(GetMonoComponent(), field, &varState);
+			
 				bytes = sizeof(uint32_t);
 				memcpy(cursor, &varState, bytes);
 				cursor += bytes;
@@ -3486,7 +3522,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 		{
 			//DeSerialize the var value
 			bytes = sizeof(uint32_t);
-			uint32_t var;
+			uint32_t var = 0u;
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 
@@ -3504,10 +3540,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 
 					if (typeName == "JellyBitEngine.LayerMask" && fieldName == varName)
 					{
-						MonoObject* layerMask;
-						mono_field_get_value(GetMonoComponent(), field, &layerMask);
-
-						mono_field_set_value(layerMask, mono_class_get_field_from_name(mono_object_get_class(layerMask), "masks"), &var);
+						mono_field_set_value(GetMonoComponent(), field, &var);
 						break;
 					}
 				}
