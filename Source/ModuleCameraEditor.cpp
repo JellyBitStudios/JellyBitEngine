@@ -61,6 +61,8 @@ update_status ModuleCameraEditor::Update()
 	if (!App->IsEditor() || App->gui->WantTextInput() || App->gui->IsMouseHoveringAnyWindow())
 		return UPDATE_CONTINUE;
 
+	bool UpdateBillboard = false;
+
 	// Free movement and rotation
 	if (App->input->GetMouseButton(SDL_BUTTON_RIGHT) == KEY_REPEAT)
 	{
@@ -80,18 +82,22 @@ update_status ModuleCameraEditor::Update()
 		if (App->input->GetKey(SDL_SCANCODE_E) == KEY_REPEAT)
 			offsetPosition += camera->frustum.up;
 
-		float cameraMovementSpeed = movementSpeed * App->timeManager->GetRealDt();
-
-		if (App->input->GetKey(SDL_SCANCODE_LSHIFT) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RSHIFT) == KEY_REPEAT)
+		if (!offsetPosition.IsZero())
 		{
-			cameraMovementSpeed *= increaseVelFactor; // half speed
-			increaseVelFactor += App->timeManager->GetRealDt() * CAMERASPEED;
+			float cameraMovementSpeed = movementSpeed * App->timeManager->GetRealDt();
+
+			if (App->input->GetKey(SDL_SCANCODE_LSHIFT) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RSHIFT) == KEY_REPEAT)
+			{
+				cameraMovementSpeed *= increaseVelFactor; // half speed
+				increaseVelFactor += App->timeManager->GetRealDt() * CAMERASPEED;
+			}
+			else if (App->input->GetKey(SDL_SCANCODE_LSHIFT) == KEY_UP || App->input->GetKey(SDL_SCANCODE_RSHIFT) == KEY_UP)
+				increaseVelFactor = 1.0f;
+
+			camera->frustum.Translate(offsetPosition * cameraMovementSpeed);
+
+			UpdateBillboard = true;
 		}
-		else if (App->input->GetKey(SDL_SCANCODE_LSHIFT) == KEY_UP || App->input->GetKey(SDL_SCANCODE_RSHIFT) == KEY_UP)
-			increaseVelFactor = 1.0f;
-
-		camera->frustum.Translate(offsetPosition * cameraMovementSpeed);
-
 		// Rotate (Look Around camera position)
 		int dx = -App->input->GetMouseXMotion(); // Affects the Yaw
 		int dy = -App->input->GetMouseYMotion(); // Affects the Pitch
@@ -101,6 +107,7 @@ update_status ModuleCameraEditor::Update()
 			float cameraRotationSpeed = rotationSpeed * App->timeManager->GetRealDt();
 
 			LookAround(camera->frustum.pos, (float)dy * cameraRotationSpeed, (float)dx * cameraRotationSpeed);
+			UpdateBillboard = true;
 		}
 	}
 
@@ -115,12 +122,15 @@ update_status ModuleCameraEditor::Update()
 
 		math::float3 offsetPosition = camera->frustum.front * (float)mouseWheel * cameraZoomSpeed;
 		camera->frustum.Translate(offsetPosition);
+		UpdateBillboard = true;
 	}
 
 	// Look At reference
 	if (App->input->GetKey(SDL_SCANCODE_F) == KEY_DOWN)
+	{
 		LookAt(reference, referenceRadius);
-
+		UpdateBillboard = true;
+	}
 	// Look Around reference
 	if ((App->input->GetKey(SDL_SCANCODE_LALT) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RALT) == KEY_REPEAT) &&
 		App->input->GetMouseButton(SDL_BUTTON_RIGHT) == KEY_REPEAT)
@@ -133,7 +143,16 @@ update_status ModuleCameraEditor::Update()
 			float cameraRotationSpeed = rotationSpeed * App->timeManager->GetRealDt();
 
 			LookAround(reference, (float)dy * cameraRotationSpeed, (float)dx * cameraRotationSpeed);
+			UpdateBillboard = true;
 		}
+	}
+
+	//UpdateBillboard
+	if (UpdateBillboard)
+	{
+		System_Event billboard;
+		billboard.type = System_Event_Type::UpdateBillboard;
+		App->PushSystemEvent(billboard);
 	}
 
 	// Select game object

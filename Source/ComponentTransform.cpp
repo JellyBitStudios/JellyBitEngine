@@ -252,6 +252,14 @@ void ComponentTransform::UpdateGlobal()
 		if (parent->cmp_rigidActor != nullptr)
 			parent->cmp_rigidActor->UpdateTransform(globalMatrix);
 
+		// Transform updated: if the game object has a canvas, Update the rectTransforms
+		if (parent->cmp_canvas != nullptr)
+		{
+			System_Event WTransformUpdated;
+			WTransformUpdated.type = System_Event_Type::WRectTransformUpdated;
+			parent->cmp_canvas->OnSystemEvent(WTransformUpdated);
+		}
+
 		for (std::vector<GameObject*>::iterator childs = parent->children.begin(); childs != parent->children.end(); ++childs)
 		{
 			if ((*childs)->transform)

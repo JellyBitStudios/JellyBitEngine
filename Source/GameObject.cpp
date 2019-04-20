@@ -490,6 +490,7 @@ void GameObject::OnSystemEvent(System_Event event)
 	case System_Event_Type::ScreenChanged:
 	case System_Event_Type::RectTransformUpdated:
 	case System_Event_Type::CanvasChanged:
+	case System_Event_Type::UpdateBillboard:
 	{
 		for (auto component = components.begin(); component != components.end(); ++component)
 		{

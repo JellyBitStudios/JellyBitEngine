@@ -95,21 +95,26 @@ void ComponentRectTransform::OnSystemEvent(System_Event event)
 
 		break;
 	}
+	case System_Event_Type::UpdateBillboard:
+	{
+		if (billboard)
+		{
+			System_Event rectChanged;
+			rectChanged.type = System_Event_Type::RectTransformUpdated;
+
+			std::vector<GameObject*> rectChilds;
+			parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
+
+			for (std::vector<GameObject*>::const_reverse_iterator go = rectChilds.crbegin(); go != rectChilds.crend(); go++)
+				(*go)->OnSystemEvent(rectChanged);
+		}
+		break;
+	}
 	}
 }
 
 void ComponentRectTransform::Update()
 {
-	if (rFrom == RectFrom::WORLD && billboard && App->renderer3D->GetCurrentCamera()->IsCameraMoved())
-	{
-		System_Event cameraMoved;
-		cameraMoved.type = System_Event_Type::RectTransformUpdated;
-		std::vector<GameObject*> childs;
-		parent->GetChildrenAndThisVectorFromLeaf(childs);
-		for (std::vector<GameObject*>::const_reverse_iterator go = childs.crbegin(); go != childs.crend(); go++)
-			(*go)->OnSystemEvent(cameraMoved);
-	}
-
 	if (needed_recalculate)
 	{
 		switch (rFrom)

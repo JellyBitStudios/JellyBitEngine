@@ -37,8 +37,6 @@ public:
 	void SetMainCamera(bool mainCamera);
 	bool IsMainCamera() const;
 
-	bool IsCameraMoved() const;
-
 	uint GetInternalSerializationBytes();
 	virtual void OnInternalSave(char*& cursor);
 	virtual void OnInternalLoad(char*& cursor);
@@ -53,7 +51,6 @@ private:
 
 	bool frustumCulling = true;
 	bool mainCamera = true;
-	bool CameraMoved = false;
 };
 
 #endif

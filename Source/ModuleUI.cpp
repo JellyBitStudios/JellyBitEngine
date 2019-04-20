@@ -226,6 +226,12 @@ void ModuleUI::OnSystemEvent(System_Event event)
 		}
 		break;
 	}
+	case System_Event_Type::UpdateBillboard:
+	{
+		for (GameObject* goWorldCanvas : canvas_world)
+			goWorldCanvas->OnSystemEvent(event);
+		break;
+	}
 	}
 }
 
