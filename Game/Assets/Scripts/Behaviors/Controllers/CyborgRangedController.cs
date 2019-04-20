@@ -25,9 +25,13 @@ public class CyborgRangedCharacter : Character
     public float lookAroundMinAngle = 10.0f;
     public float lookAroundMaxAngle = 30.0f;
 
+    // Attack
+    public float goToSideProbability = 0.5f; // 0.0f-1.0f (%)
+    public float goToSideProbabilityFluctuation = 0.05f;
+
     // Hit
     public float hitRate = 10.0f;
-    public float hitRateFluctuation = 0.0f;
+    public float hitRateFluctuation = 1.0f;
 
     // Wait
     /// WaitHit

@@ -459,7 +459,7 @@ public class CR_Attack : CR_IState
             owner.fsm.ChangeState(new CR_Wander());
             return;
         }
-        else if (IsEnemyBlocking(owner))
+        else if (MathScript.GetRandomDouble(0.0f, 1.0f) == 1)
         {
             color = Color.Red;
 
@@ -495,21 +495,6 @@ public class CR_Attack : CR_IState
     public override void DrawGizmos(CyborgRangedController owner)
     {
         Debug.DrawLine(owner.transform.position, Alita.Call.transform.position, color);
-    }
-
-    // --------------------------------------------------
-
-    private bool IsEnemyBlocking(CyborgRangedController owner)
-    {
-        Ray ray = new Ray();
-        ray.position = owner.transform.position;
-        ray.direction = owner.transform.forward;
-        RaycastHit hitInfo;
-
-        if (Physics.Raycast(ray, out hitInfo, float.MaxValue, LayerMask.GetMask("Enemy"), SceneQueryFlags.Dynamic))
-            return true;
-
-        return false;
     }
 }
 #endregion

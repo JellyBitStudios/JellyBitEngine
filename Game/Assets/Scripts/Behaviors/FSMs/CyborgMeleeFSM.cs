@@ -343,8 +343,7 @@ public class Wander : CM_IState
         {
             case WanderType.Wander:
 
-                if (owner.sight.IsTargetSeen // IsTargetSeen: have I seen the target?
-                    && owner.CurrentLife > owner.character.minLife) // minLife: do I have enough life to attack the target?
+                if (owner.sight.IsTargetSeen) // IsTargetSeen: have I seen the target?
                 {
                     owner.fsm.ChangeState(new CM_GoToGameObject(CM_GoToGameObject.GoToGameObjectType.GoToDangerDistance));
                     return;
