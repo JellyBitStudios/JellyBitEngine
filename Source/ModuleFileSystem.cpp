@@ -17,6 +17,8 @@
 
 #include <assert.h>
 
+#include <stdio.h>
+
 #pragma comment(lib, "physfs/libx86/physfs.lib")
 
 #ifdef _DEBUG
@@ -1288,6 +1290,11 @@ void ModuleFileSystem::EndTempException()
 bool ModuleFileSystem::SetWriteDir(std::string writeDir) const
 {
 	return PHYSFS_setWriteDir(writeDir.data()) != 0;
+}
+
+void ModuleFileSystem::RenameDirectory(const char* dir, const char* newName)
+{
+	rename(dir, newName);
 }
 
 void ModuleFileSystem::RecursiveBuild(const Directory& dir, char * toPath, bool meta, bool inZIP)
