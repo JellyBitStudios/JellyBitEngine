@@ -47,10 +47,17 @@ ComponentCamera::~ComponentCamera()
 
 void ComponentCamera::UpdateTransform()
 {
+	CameraMoved = false;
 	math::float4x4 matrix = parent->transform->GetGlobalMatrix();
-	frustum.pos = matrix.TranslatePart();
-	frustum.front = matrix.WorldZ();
-	frustum.up = matrix.WorldY();
+	math::float3 mPosition = matrix.TranslatePart();
+	if (!ApproximatelyEqual(frustum.pos.x, mPosition.x) || !ApproximatelyEqual(frustum.pos.y, mPosition.y)
+		|| !ApproximatelyEqual(frustum.pos.z, mPosition.z))
+	{
+		CameraMoved = true;
+		frustum.pos = mPosition;
+		frustum.front = matrix.WorldZ();
+		frustum.up = matrix.WorldY();
+	}
 }
 
 void ComponentCamera::OnUniqueEditor()
@@ -136,6 +143,11 @@ void ComponentCamera::SetMainCamera(bool mainCamera)
 bool ComponentCamera::IsMainCamera() const
 {
 	return mainCamera;
+}
+
+bool ComponentCamera::IsCameraMoved() const
+{
+	return CameraMoved;
 }
 
 uint ComponentCamera::GetInternalSerializationBytes()

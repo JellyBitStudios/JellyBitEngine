@@ -100,17 +100,14 @@ void ComponentRectTransform::OnSystemEvent(System_Event event)
 
 void ComponentRectTransform::Update()
 {
-	if (rFrom == ComponentRectTransform::WORLD)
+	if (rFrom == RectFrom::WORLD && billboard && App->renderer3D->GetCurrentCamera()->IsCameraMoved())
 	{
-		CalculateRectFromWorld();
-		std::vector<GameObject*> rectChilds;
-		parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
-		System_Event rect_world;
-		rect_world.type = System_Event_Type::RectTransformUpdated;
-		for (std::vector<GameObject*>::const_reverse_iterator go = rectChilds.crbegin(); go != rectChilds.crend(); go++)
-			if((*go) != parent)
-				(*go)->OnSystemEvent(rect_world);
-		needed_recalculate = false;
+		System_Event cameraMoved;
+		cameraMoved.type = System_Event_Type::RectTransformUpdated;
+		std::vector<GameObject*> childs;
+		parent->GetChildrenAndThisVectorFromLeaf(childs);
+		for (std::vector<GameObject*>::const_reverse_iterator go = childs.crbegin(); go != childs.crend(); go++)
+			(*go)->OnSystemEvent(cameraMoved);
 	}
 
 	if (needed_recalculate)
@@ -126,6 +123,9 @@ void ComponentRectTransform::Update()
 				(rectTransform_modified) ? CalculateAnchors(true) :
 					((usePivot) ? RecaculateAnchors() : RecalculateRectByPercentage());
 				CalculateCornersFromRect();
+				break;
+			case ComponentRectTransform::WORLD:
+				CalculateRectFromWorld();
 				break;
 		}
 
@@ -737,7 +737,18 @@ void ComponentRectTransform::OnUniqueEditor()
 			{
 				bool tmp_billboard = billboard;
 				if (ImGui::Checkbox("Billboard", &tmp_billboard))
+				{
 					billboard = tmp_billboard;
+					if (billboard)
+					{
+						System_Event billboard;
+						billboard.type = System_Event_Type::RectTransformUpdated;
+						std::vector<GameObject*> childs;
+						parent->GetChildrenAndThisVectorFromLeaf(childs);
+						for (std::vector<GameObject*>::const_reverse_iterator go = childs.crbegin(); go != childs.crend(); go++)
+							(*go)->OnSystemEvent(billboard);
+					}
+				}
 			}
 			return;
 		}

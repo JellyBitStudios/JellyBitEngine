@@ -7,6 +7,7 @@
 
 #include "MathGeoLib\include\Geometry\Frustum.h"
 #include "MathGeoLib\include\Geometry\Ray.h"
+#include "MathGeoLib\include\Math\float3.h"
 #include "MathGeoLib\include\Math\float2.h"
 
 class ComponentCamera : public Component
@@ -36,6 +37,8 @@ public:
 	void SetMainCamera(bool mainCamera);
 	bool IsMainCamera() const;
 
+	bool IsCameraMoved() const;
+
 	uint GetInternalSerializationBytes();
 	virtual void OnInternalSave(char*& cursor);
 	virtual void OnInternalLoad(char*& cursor);
@@ -50,6 +53,7 @@ private:
 
 	bool frustumCulling = true;
 	bool mainCamera = true;
+	bool CameraMoved = false;
 };
 
 #endif

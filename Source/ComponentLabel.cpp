@@ -70,7 +70,7 @@ void ComponentLabel::OnSystemEvent(System_Event event)
 	switch (event.type)
 	{
 	case System_Event_Type::ScreenChanged:
-		//change size by x & y
+		//change size by x & y. IMPORTANT TODO TOOOOODOOOOOOO!!!!!!!!!!!!!!!!!!! EMERGENCY! S.O.S.
 	case System_Event_Type::CanvasChanged:
 	case System_Event_Type::RectTransformUpdated:
 		needed_recalculate = true;

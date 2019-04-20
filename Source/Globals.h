@@ -24,9 +24,10 @@ void OpenInBrowser(char* url);
 
 void OpenInExplorer();
 
-bool ApproximatelyEqual(float a, float b, float epsilon);
+#define EPSILON 0.00001
+bool ApproximatelyEqual(float a, float b, float epsilon = EPSILON);
 
-bool EssentiallyEqual(float a, float b, float epsilon);
+bool EssentiallyEqual(float a, float b, float epsilon = EPSILON);
 
 float RandomFloat(float a, float b);
 

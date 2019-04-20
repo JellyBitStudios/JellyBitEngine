@@ -172,6 +172,14 @@ void ModuleUI::OnSystemEvent(System_Event event)
 	break;
 	case System_Event_Type::Play:
 	{
+#ifndef GAMEMODE
+		if (App->GetEngineState() == engine_states::ENGINE_EDITOR)
+		{
+			canvas_world.remove(WorldHolder);
+			canvas.remove(WorldHolder);
+		}
+#endif // GAMEMODE
+
 		screenInWorld = false;
 		System_Event updateCornersToScreen;
 		updateCornersToScreen.type = System_Event_Type::RectTransformUpdated;
@@ -460,6 +468,8 @@ void ModuleUI::SetPositionWH(math::float3 pos)
 	WHMoved.type = System_Event_Type::RectTransformUpdated;
 	WorldHolder->cmp_rectTransform->OnSystemEvent(WHMoved);
 	WorldHolder->cmp_rectTransform->Update();
+	WorldHolder->cmp_image->OnSystemEvent(WHMoved);
+	WorldHolder->cmp_image->Update();
 	for (GameObject* goScreenCanvas : canvas_screen)
 		goScreenCanvas->OnSystemEvent(WHMoved);
 }
