@@ -4,10 +4,6 @@ using JellyBitEngine;
 
 public class CyborgMeleeCharacter : Character
 {
-    public uint minLife = 30; // when this number is reached, the character runs away
-
-    // -----
-
     // GoToGameObject
     /// GoToAttackDistance
     public float attackDistance = 1.0f;
@@ -27,19 +23,6 @@ public class CyborgMeleeCharacter : Character
 
 public class CyborgMeleeController : JellyScript
 {
-    #region INSPECTOR_VARIABLES
-    // Character
-    public uint tmp_maxLife = 100;
-    public uint tmp_minLife = 30;
-    public float tmp_attackDistance = 1.0f;
-    public float tmp_dangerDistance = 2.0f;
-    public float tmp_attackRate = 10.0f;
-    public float tmp_attackRateFluctuation = 0.0f;
-    public float tmp_trackMaxAngularAcceleration = 90.0f;
-    public float tmp_strafeMinTime = 1.0f;
-    public float tmp_strafeMaxTime = 3.0f;
-    #endregion
-
     #region PUBLIC_VARIABLES
     /// <Temporal>
     public LayerMask raycastMask = new LayerMask();
@@ -50,7 +33,7 @@ public class CyborgMeleeController : JellyScript
     public CyborgMeleeFSM fsm;
 
     public Agent agent;
-    public LineOfSight lineOfSight;
+    public LineOfSight sight;
 
     public int CurrentLife
     {
@@ -63,10 +46,8 @@ public class CyborgMeleeController : JellyScript
                 character.currentLife = 0;
                 fsm.ChangeState(new Die());
             }
-            //else if (character.currentLife <= character.minLife)
-                //fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.Runaway));
 
-            Debug.Log("Cyborg life: " + character.currentLife);
+            Debug.Log("Cyborg melee life: " + character.currentLife);
         }
     }
 
@@ -80,30 +61,15 @@ public class CyborgMeleeController : JellyScript
         fsm = new CyborgMeleeFSM(this);
 
         agent = gameObject.GetComponent<Agent>();
-        lineOfSight = gameObject.childs[0].GetComponent<LineOfSight>();
-
-        // --------------------------------------------------
-
-        // Character
-        character.maxLife = tmp_maxLife;
-        character.currentLife = (int)tmp_maxLife;
-        character.minLife = tmp_minLife;
-
-        character.attackDistance = tmp_attackDistance;
-        character.dangerDistance = tmp_dangerDistance;
-        character.attackRate = tmp_attackRate;
-        character.attackRateFluctuation = tmp_attackRateFluctuation;
-        character.trackMaxAngularAcceleration = tmp_trackMaxAngularAcceleration;
-        character.strafeMinTime = tmp_strafeMinTime;
-        character.strafeMaxTime = tmp_strafeMaxTime;
+        sight = gameObject.childs[0].GetComponent<LineOfSight>();
     }
 
     public override void Start()
     {
         //fsm.ChangeState(new Wander(StateType.Wander));  
-        fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.GoToDangerDistance));
+        fsm.ChangeState(new CM_GoToGameObject(CM_GoToGameObject.GoToGameObjectType.GoToDangerDistance));
 
-        EventsManager.Call.StartListening("CyborgMeleeController", this, "OnEvent");
+        EventsManager.Call.StartListening("CyborgMelee", this, "OnEvent");
     }
 
     public void OnEvent(object type)
@@ -126,10 +92,6 @@ public class CyborgMeleeController : JellyScript
 
     public override void Update()
     {
-        UpdateInspectorVariables();
-
-        // --------------------------------------------------
-
         //HandleInput();
         fsm.UpdateState();
     }
@@ -161,16 +123,5 @@ public class CyborgMeleeController : JellyScript
                 //wanderState = WanderStates.goToPosition;
             }
         }
-    }
-
-    private void UpdateInspectorVariables()
-    {
-        tmp_attackDistance = character.attackDistance;
-        tmp_dangerDistance = character.dangerDistance;
-        tmp_attackRate = character.attackRate;
-        tmp_attackRateFluctuation = character.attackRateFluctuation;
-        tmp_trackMaxAngularAcceleration = character.trackMaxAngularAcceleration;
-        tmp_strafeMinTime = character.strafeMinTime;
-        tmp_strafeMaxTime = character.strafeMaxTime;
     }
 }
