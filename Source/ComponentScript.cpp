@@ -1133,6 +1133,9 @@ void ComponentScript::OnUniqueEditor()
 							MonoString* varState;
 							mono_field_get_value(GetMonoComponent(), field, &varState);
 
+							if (!varState)
+								varState = mono_string_new(App->scripting->domain, "");
+
 							char* convertedString = mono_string_to_utf8(varState);
 
 							std::string stringToModify = convertedString;
@@ -1539,6 +1542,8 @@ void ComponentScript::OnUniqueEditor()
 
 void ComponentScript::OnStructEditor(MonoObject* structOBJ, MonoClassField* structField)
 {
+#ifndef GAMEMODE
+
 	MonoClass* structClass = mono_object_get_class(structOBJ);
 	const char* name = mono_class_get_name(structClass);
 	std::string structFieldName = mono_field_get_name(structField);
@@ -1972,6 +1977,7 @@ void ComponentScript::OnStructEditor(MonoObject* structOBJ, MonoClassField* stru
 
 		ImGui::TreePop();
 	}
+#endif
 }
 
 uint ComponentScript::GetInternalSerializationBytes()
