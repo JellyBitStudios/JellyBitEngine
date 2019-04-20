@@ -420,7 +420,7 @@ public class CR_Attack : CR_IState
     private float maxAngularVelocity = 0.0f;
 
     // ----- CR_Attack -----
-    float[] color = Color.Green;    
+    private float[] color = Color.Green;    
 
     // --------------------------------------------------
 
@@ -459,15 +459,17 @@ public class CR_Attack : CR_IState
             owner.fsm.ChangeState(new CR_Wander());
             return;
         }
-        else if (MathScript.GetRandomDouble(0.0f, 1.0f) == 1)
+        else if (MathScript.GetRandomDouble(0.0f, 1.0f) <= owner.character.ActualGoToSideProbability)
         {
-            color = Color.Red;
+            owner.character.ActualGoToSideProbability += owner.character.goToSideProbabilityFluctuation;
 
             owner.fsm.ChangeState(new CR_GoToSide());
             return;
         }
         else
         {
+            owner.character.ActualGoToSideProbability -= owner.character.goToSideProbabilityFluctuation;
+
             // I am always allowed to hit ;)
             owner.fsm.ChangeState(new CR_Hit());
             return;
@@ -494,7 +496,7 @@ public class CR_Attack : CR_IState
 
     public override void DrawGizmos(CyborgRangedController owner)
     {
-        Debug.DrawLine(owner.transform.position, Alita.Call.transform.position, color);
+
     }
 }
 #endregion
@@ -512,7 +514,7 @@ public class CR_Hit : CR_IState
 
     // ----- CR_Hit -----
     private uint hitTimes = 0;
-    private float hitRate = 0.0f;
+    private float actualHitRate = 0.0f;
     private float lastHitTime = 0.0f;
 
     public uint count = 0;
@@ -520,7 +522,7 @@ public class CR_Hit : CR_IState
 
     private float HitCooldown
     {
-        get { return Mathf.Max(hitRate - (timer - lastHitTime), 0.0f); }
+        get { return Mathf.Max(actualHitRate - (timer - lastHitTime), 0.0f); }
     }
 
     // --------------------------------------------------
@@ -552,7 +554,7 @@ public class CR_Hit : CR_IState
         owner.agent.SetFace(Alita.Call.gameObject);
 
         RecalculateHitRate(owner);
-        lastHitTime = -hitRate;
+        lastHitTime = -actualHitRate;
     }
 
     public override void Execute(CyborgRangedController owner)
@@ -603,7 +605,7 @@ public class CR_Hit : CR_IState
 
     private void RecalculateHitRate(CyborgRangedController owner)
     {
-        hitRate = owner.character.hitRate + (float)MathScript.GetRandomDouble(-1.0, 1.0) * owner.character.hitRateFluctuation;
+        actualHitRate = owner.character.hitRate + (float)MathScript.GetRandomDouble(-1.0, 1.0) * owner.character.hitRateFluctuation;
     }
 }
 #endregion
