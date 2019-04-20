@@ -43,6 +43,7 @@ public:
 	virtual void OnEnable() {}
 	virtual void OnDisable() {}
 
+	inline uint32_t GetMonoComponentHandle() const { return monoCompHandle; }
 	MonoObject* GetMonoComponent() const;
 	inline void SetMonoComponent(uint32_t monoCompHandle) { this->monoCompHandle = monoCompHandle; };
 

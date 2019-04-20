@@ -68,10 +68,6 @@ public class GoToGameObject : ICyborgMeleeState
 
     // -----
 
-    private GameObject target = null;
-
-    // -----
-
     private float maxAcceleration = 0.0f;
     private float maxVelocity = 0.0f;
 
@@ -80,10 +76,6 @@ public class GoToGameObject : ICyborgMeleeState
     public GoToGameObject(GameObject target, GoToGameObjectType stateType)
     {
         this.stateType = stateType;
-
-        // -----
-
-        this.target = target;
     }
 
     // --------------------------------------------------
@@ -144,7 +136,8 @@ public class GoToGameObject : ICyborgMeleeState
                 break;
         }
 
-        owner.agent.SetDestination(target.transform.position);
+        if (!owner.agent.SetDestination(Alita.Call.transform.position))
+            owner.fsm.ChangeState(new Wander(Wander.WanderType.Wander));
     }
 
     public override void Execute(CyborgMeleeController owner)
@@ -153,7 +146,7 @@ public class GoToGameObject : ICyborgMeleeState
         {
             case GoToGameObjectType.GoToDangerDistance:
                 {
-                    float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
+                    float distanceToTarget = (Alita.Call.transform.position - owner.transform.position).magnitude;
                     if (distanceToTarget <= owner.character.dangerDistance) // dangerDistance: am I INSIDE my DANGER range?
                     {
                         owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObjectType.GoToAttackDistance));
@@ -169,7 +162,7 @@ public class GoToGameObject : ICyborgMeleeState
 
             case GoToGameObjectType.Runaway:
                 {
-                    float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
+                    float distanceToTarget = (Alita.Call.transform.position - owner.transform.position).magnitude;
                     if (distanceToTarget > owner.character.dangerDistance) // attackDistance: am I OUTSIDE my DANGER range?
                     {
                         owner.fsm.ChangeState(new Wander(Wander.WanderType.Wander));
@@ -177,17 +170,16 @@ public class GoToGameObject : ICyborgMeleeState
                     }
                 }
                 break;
-
             case GoToGameObjectType.GoToAttackDistance:
                 {
-                    float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
+                    float distanceToTarget = (Alita.Call.transform.position - owner.transform.position).magnitude;
                     if (distanceToTarget <= owner.character.attackDistance) // attackDistance: am I INSIDE my ATTACK range?
                     {
                         // Am I allowed to attack?
                         if (Alita.Call.battleCircle.AddAttacker(owner.gameObject))
                         {
                             // Yes! Attack
-                            owner.fsm.ChangeState(new Attack(Alita.Call.gameObject));
+                            owner.fsm.ChangeState(new Attack());
                             return;
                         }
                         else
@@ -253,7 +245,6 @@ public class GoToGameObject : ICyborgMeleeState
                 Debug.DrawSphere(owner.character.dangerDistance, Color.Blue, owner.transform.position, Quaternion.identity, Vector3.one);
                 Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
                 break;
-
             case GoToGameObjectType.GoToAttackDistance:
                 Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
                 break;
@@ -353,7 +344,7 @@ public class Wander : ICyborgMeleeState
             case WanderType.Wander:
 
                 if (owner.lineOfSight.IsTargetSeen // IsTargetSeen: have I seen the target?
-                    && owner.character.life > owner.character.minLife) // minLife: do I have enough life to attack the target?
+                    && owner.CurrentLife > owner.character.minLife) // minLife: do I have enough life to attack the target?
                 {
                     owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.GoToDangerDistance));
                     return;
@@ -420,10 +411,6 @@ public class Wander : ICyborgMeleeState
 
 public class Attack : ICyborgMeleeState
 {
-    private GameObject target = null;
-
-    // -----
-
     private bool isMovementStopped = false;
     private float maxAngularAcceleration = 0.0f;
 
@@ -441,9 +428,9 @@ public class Attack : ICyborgMeleeState
 
     // --------------------------------------------------
 
-    public Attack(GameObject target)
+    public Attack()
     {
-        this.target = target;
+
     }
 
     // --------------------------------------------------
@@ -465,7 +452,7 @@ public class Attack : ICyborgMeleeState
 
         // Align: Face data
         owner.agent.agentData.maxAngularAcceleration = owner.character.trackMaxAngularAcceleration;
-        owner.agent.SetFace(target);
+        owner.agent.SetFace(Alita.Call.gameObject);
 
         // -----
 
@@ -475,7 +462,7 @@ public class Attack : ICyborgMeleeState
 
     public override void Execute(CyborgMeleeController owner)
     {
-        float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
+        float distanceToTarget = (Alita.Call.gameObject.transform.position - owner.transform.position).magnitude;
         bool contains = Alita.Call.battleCircle.AttackersContains(owner.gameObject);
         if (distanceToTarget > owner.character.attackDistance // attackDistance: has the target moved out of my attack range?
             || !contains) // attackers: am I still an attacker?
@@ -494,7 +481,7 @@ public class Attack : ICyborgMeleeState
             if (Alita.Call.battleCircle.AddSimultaneousAttacker(owner.gameObject))
             {
                 // Yes! Hit
-                owner.fsm.ChangeState(new Hit(Alita.Call.gameObject));
+                owner.fsm.ChangeState(new Hit());
                 return;
             }
         }
@@ -530,10 +517,6 @@ public class Attack : ICyborgMeleeState
 
 public class Hit : ICyborgMeleeState
 {
-    private GameObject target = null;
-
-    // -----
-
     private bool isMovementStopped = false;
     private float maxAngularAcceleration = 0.0f;
 
@@ -543,9 +526,9 @@ public class Hit : ICyborgMeleeState
 
     // --------------------------------------------------
 
-    public Hit(GameObject target)
+    public Hit()
     {
-        this.target = target;
+
     }
 
     // --------------------------------------------------
@@ -567,7 +550,7 @@ public class Hit : ICyborgMeleeState
 
         // Align: Face data
         owner.agent.agentData.maxAngularAcceleration = owner.character.trackMaxAngularAcceleration;
-        owner.agent.SetFace(target);
+        owner.agent.SetFace(Alita.Call.gameObject);
     }
 
     public override void Execute(CyborgMeleeController owner)
@@ -575,7 +558,9 @@ public class Hit : ICyborgMeleeState
         if (timer >= 3.0f)
         {
             Debug.Log("HIT!");
-            owner.fsm.ChangeState(new Attack(Alita.Call.gameObject));
+            Alita.Call.character.currentLife -= owner.character.dmg;
+
+            owner.fsm.ChangeState(new Attack());
             return;
         }
 
@@ -600,7 +585,7 @@ public class Hit : ICyborgMeleeState
 
     public override void DrawGizmos(CyborgMeleeController owner)
     {
-        
+        Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
     }
 }
 #endregion
@@ -622,12 +607,21 @@ public class Die : ICyborgMeleeState
     public override void Enter(CyborgMeleeController owner)
     {
         Debug.Log("Enter Die");
+
+        owner.agent.ClearPath();
+        owner.agent.ClearMovementAndRotation();
+        owner.agent.isMovementStopped = true;
+        owner.agent.isRotationStopped = true;
     }
 
     public override void Execute(CyborgMeleeController owner)
     {
         Debug.Log("Die");
         // if animation has finished...
+        EnemyEvent myEvent = new EnemyEvent();
+        myEvent.type = Event_Type.EnemyDie;
+        myEvent.gameObject = owner.gameObject;
+        EventsManager.Call.PushEvent(myEvent);
     }
 
     public override void Exit(CyborgMeleeController owner)

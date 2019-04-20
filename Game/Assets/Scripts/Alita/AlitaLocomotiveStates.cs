@@ -22,10 +22,8 @@ class AIdle : AState
 
     public override void ProcessInput(KeyCode code)
     {
-        //if (code == KeyCode.KEY_Q && Alita.Call.skillset.skQ.Use())
-        //    Alita.Call.SwitchState(Alita.Call.StateSkill_1);
-        //else if (code == KeyCode.KEY_SPACE && Alita.Call.skillset.skDash.Use())
-        //    Alita.Call.SwitchState(Alita.Call.StateDash);
+        if (code == KeyCode.KEY_Q && Alita.Call.skillset.skQ.Use())
+            Alita.Call.SwitchState(Alita.Call.StateSkill_1);
     }
 
     public override void ProcessRaycast(RaycastHit hit, bool leftClick = true)
@@ -47,8 +45,11 @@ class AIdle : AState
         }
         else
         {
-            Alita.Call.SwitchState(Alita.Call.StateDash);
-            Alita.Call.StateDash.SetDirection(hit.point);
+            if (Alita.Call.skillset.skDash.Use())
+            {
+                Alita.Call.SwitchState(Alita.Call.StateDash);
+                Alita.Call.StateDash.SetDirection(hit.point);
+            }
         }
     }
 }
@@ -74,10 +75,11 @@ class AWalking : AState
 
     public override void ProcessInput(KeyCode code)
     {
-        //if (code == KeyCode.KEY_Q && Alita.Call.skillset.skQ.Use())
-        //    Alita.Call.SwitchState(Alita.Call.StateSkill_1);
-        //else if (code == KeyCode.KEY_SPACE && Alita.Call.skillset.skDash.Use())
-        //    Alita.Call.SwitchState(Alita.Call.StateDash);
+        if (code == KeyCode.KEY_Q && Alita.Call.skillset.skQ.Use())
+        {
+            Alita.Call.SwitchState(Alita.Call.StateSkill_1);
+            Alita.Call.currentTarget = null;
+        }
     }
 }
 
@@ -106,8 +108,11 @@ class AWalking2Spot : AWalking
         }
         else
         {
-            Alita.Call.SwitchState(Alita.Call.StateDash);
-            Alita.Call.StateDash.SetDirection(hit.point);
+            if (Alita.Call.skillset.skDash.Use())
+            {
+                Alita.Call.SwitchState(Alita.Call.StateDash);
+                Alita.Call.StateDash.SetDirection(hit.point);
+            }
         }
     }
 }
@@ -142,8 +147,12 @@ class AWalking2Enemy : AWalking
         }
         else
         {
-            Alita.Call.SwitchState(Alita.Call.StateDash);
-            Alita.Call.StateDash.SetDirection(hit.point);
+            if (Alita.Call.skillset.skDash.Use())
+            {
+                Alita.Call.currentTarget = null;
+                Alita.Call.SwitchState(Alita.Call.StateDash);
+                Alita.Call.StateDash.SetDirection(hit.point);
+            }
         }
     }
 }

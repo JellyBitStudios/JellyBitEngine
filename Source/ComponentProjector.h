@@ -40,12 +40,20 @@ public:
 	// Sets
 	void SetFOV(float fov);
 	float GetFOV() const;
+
+	float GetNearPlaneDistance();
 	void SetNearPlaneDistance(float nearPlane);
+
+	float GetFarPlaneDistance();
 	void SetFarPlaneDistance(float farPlane);
+
 	void SetAspectRatio(float aspectRatio);
 
 	void SetMaterialRes(uint materialUuid);
+	void SetMaterialRes(std::string materialName);
 	uint GetMaterialRes() const;
+	std::string GetMaterialResName() const;
+
 	void SetMeshRes(uint meshUuid);
 	uint GetMeshRes() const;
 	void SetFilterMask(uint filterMask);

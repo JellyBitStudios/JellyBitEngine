@@ -9,7 +9,7 @@ public class SteeringAlignData : SteeringAbstract
     public float timeToTarget = 0.1f;
 
     public SteeringLookWhereYoureGoingData lookWhereYoureGoingData = new SteeringLookWhereYoureGoingData();
-    public SteeringFaceToData faceData = new SteeringFaceToData();
+    public SteeringFaceData faceData = new SteeringFaceData();
 }
 
 public class SteeringLookWhereYoureGoingData
@@ -17,10 +17,15 @@ public class SteeringLookWhereYoureGoingData
     public bool isActive = false;
 }
 
-public class SteeringFaceToData
+public class SteeringFaceData
 {
     public bool isActive = false;
-    public GameObject target = null;
+
+    public enum FaceType { GameObject, Direction };
+    public FaceType faceType = FaceType.GameObject;
+
+    public GameObject gameObject = null;
+    public Vector3 direction = Vector3.zero;
 }
 
 public static class SteeringAlign
@@ -73,10 +78,24 @@ public static class SteeringAlign
         if (agent == null)
             return 0.0f;
 
-        if (agent.alignData.faceData.target == null)
-            return 0.0f;
+        Vector3 direction = Vector3.zero;
+        switch (agent.alignData.faceData.faceType)
+        {
+            case SteeringFaceData.FaceType.GameObject:
 
-        Vector3 direction = (agent.alignData.faceData.target.transform.position - agent.transform.position).normalized();
+                if (agent.alignData.faceData.gameObject == null)
+                    return 0.0f;
+
+                direction = (agent.alignData.faceData.gameObject.transform.position - agent.transform.position).normalized();
+
+                break;
+
+            case SteeringFaceData.FaceType.Direction:
+
+                direction = agent.alignData.faceData.direction;
+
+                break;
+        }
 
         return GetAlign(agent, direction);
     }

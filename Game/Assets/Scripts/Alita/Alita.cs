@@ -30,7 +30,25 @@ class Alita : JellyScript
     public Animator animator;
     public BattleCircle battleCircle;
 
-    public GameObject currentTarget = null;
+    private GameObject _currentTarget = null;
+    public CyborgMeleeController cyborgMelee = null;
+
+    public GameObject currentTarget
+    {
+        set
+        {
+            if (value != null)
+                cyborgMelee = value.GetComponent<CyborgMeleeController>();
+            else
+                cyborgMelee = null;
+            _currentTarget = value;
+        }
+        get
+        {
+            return _currentTarget;
+        }
+    }
+
     public float ConstHitRadius = 1.0f;
     public override void Awake()
     {
