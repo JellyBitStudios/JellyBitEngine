@@ -11,14 +11,13 @@ public class PathManager
     }
     public bool HasArrived
     {
-        get { return hasArrived; }
+        get { return path == null; }
     }
     #endregion
 
     #region PRIVATE_VARIABLES
     private Vector3 destination = Vector3.zero;
     private bool hasPath = false;
-    private bool hasArrived = false;
     private int index = 0;
     private Vector3[] path = null;
     #endregion
@@ -35,7 +34,6 @@ public class PathManager
             path = p; // ...
             this.destination = destination;
             index = 1;
-            hasArrived = false;
         }
         // Old path? Keep following it!
         else if (path != null)
@@ -64,11 +62,8 @@ public class PathManager
                 return true;
             }
             else
-            {
                 // End of the path
                 ClearPath();
-                hasArrived = true;
-            }
         }
 
         return false;

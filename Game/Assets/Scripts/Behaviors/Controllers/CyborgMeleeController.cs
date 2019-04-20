@@ -53,7 +53,7 @@ public class CyborgMeleeController : JellyScript
             if (character.currentLife <= 0)
             {
                 character.currentLife = 0;
-                //fsm.ChangeState(new Die());
+                fsm.ChangeState(new CM_Die());
             }
 
             Debug.Log("Cyborg melee life: " + character.currentLife);

@@ -26,10 +26,10 @@ public static class SteeringObstacleAvoidance
 
         foreach (SteeringRay steeringRay in agent.obstacleAvoidanceData.rays)
         {
-            RaycastHit hitInfo;
             Ray ray = new Ray();
             ray.position = agent.transform.position;
             ray.direction = agent.transform.rotation * steeringRay.direction;
+            RaycastHit hitInfo;
 
             if (Physics.Raycast(ray, out hitInfo, steeringRay.length, agent.obstacleAvoidanceData.mask, SceneQueryFlags.Static | SceneQueryFlags.Dynamic))
             {

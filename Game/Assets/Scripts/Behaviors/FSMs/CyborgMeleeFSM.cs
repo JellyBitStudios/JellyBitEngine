@@ -553,14 +553,14 @@ public class CM_Hit : CM_IState
 }
 #endregion
 
-#region GM_Die
+#region CM_Die
 // ----------------------------------------------------------------------------------------------------
 // Die
 // ----------------------------------------------------------------------------------------------------
 
-public class GM_Die : CM_IState
+public class CM_Die : CM_IState
 {
-    public GM_Die()
+    public CM_Die()
     {
         name = "Die";
     }

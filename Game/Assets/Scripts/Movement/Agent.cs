@@ -126,6 +126,8 @@ public class Agent : JellyScript
 
     private enum MovementState { Stop, GoToPosition, UpdateNextPosition };
     private MovementState movementState = MovementState.Stop;
+
+    private float timer = 0.0f;
     #endregion
 
     // ----------------------------------------------------------------------------------------------------
@@ -203,6 +205,19 @@ public class Agent : JellyScript
         UpdateInspectorVariables();
 
         // --------------------------------------------------
+
+        timer += Time.fixedDeltaTime;
+
+        if (timer >= 1.0f)
+        {
+            if (AnyBlockingObstacles())
+            {
+                ClearMovementAndRotation();
+                ClearPath();
+            }
+
+            timer = 0.0f;
+        }
 
         Move();
 
@@ -336,7 +351,15 @@ public class Agent : JellyScript
         bool hasPath = pathManager.GetPath(transform.position, destination);
 
         if (hasPath)
-            movementState = MovementState.GoToPosition;
+        {
+            if (AnyBlockingObstacles())
+            {
+                ClearMovementAndRotation();
+                ClearPath();
+            }
+            else
+                movementState = MovementState.GoToPosition;
+        }
         else
             movementState = MovementState.Stop;
 
@@ -437,6 +460,8 @@ public class Agent : JellyScript
         obstacleAvoidanceData.isActive = false;
     }
 
+    // ----------------------------------------------------------------------------------------------------
+
     private void Move()
     {
         switch (movementState)
@@ -451,9 +476,16 @@ public class Agent : JellyScript
             case MovementState.UpdateNextPosition:
 
                 if (pathManager.UpdateNextPosition())
-                    movementState = MovementState.GoToPosition;
+                {
+                    if (AnyBlockingObstacles())
+                    {
+                        ClearMovementAndRotation();
+                        ClearPath();
+                    }
+                    else
+                        movementState = MovementState.GoToPosition;
+                }
                 else
-                    // End of the path or path not valid
                     movementState = MovementState.Stop;
 
                 break;
@@ -467,6 +499,19 @@ public class Agent : JellyScript
             velocities[i] = Vector3.zero;
             angularVelocities[i] = 0.0f;
         }
+    }
+
+    private bool AnyBlockingObstacles()
+    {
+        Ray ray = new Ray();
+        ray.position = transform.position;
+        ray.direction = (pathManager.GetNextPosition(this) - transform.position).normalized();
+        RaycastHit hitInfo;
+
+        if (Physics.Raycast(ray, out hitInfo, pathManager.GetRemainingDistance(this), LayerMask.GetMask("Block"), SceneQueryFlags.Static | SceneQueryFlags.Dynamic))
+            return true;
+
+        return false;
     }
 
     // ----------------------------------------------------------------------------------------------------
