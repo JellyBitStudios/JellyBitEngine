@@ -20,6 +20,7 @@ class AAttacking : AState
         firstPetition = true;
         hit = false;
 
+        Alita.Call.agent.isMovementStopped = true;
         Alita.Call.agent.isRotationStopped = false;
         Alita.Call.agent.alignData.lookWhereYoureGoingData.isActive = false;
         Alita.Call.agent.alignData.faceData.isActive = true;
@@ -121,6 +122,7 @@ class AAttacking : AState
     public override void OnStop()
     {
         currentAnim = Anim.first;
+        Alita.Call.agent.isMovementStopped = false;
         Alita.Call.agent.alignData.lookWhereYoureGoingData.isActive = true;
         Alita.Call.agent.alignData.faceData.isActive = false;
     }
