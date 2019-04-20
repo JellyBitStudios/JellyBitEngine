@@ -200,7 +200,7 @@ bool ComponentAnimator::UpdateBlendTime(float new_blend)
 	if (!animator_res)
 		return false;
 
-	animator_res->SetAnimationSpeed(new_blend);
+	animator_res->SetAnimationBlendTime(new_blend);
 
 	return true;
 }
