@@ -1133,6 +1133,9 @@ void ComponentScript::OnUniqueEditor()
 							MonoString* varState;
 							mono_field_get_value(GetMonoComponent(), field, &varState);
 
+							if (!varState)
+								varState = mono_string_new(App->scripting->domain, "");
+
 							char* convertedString = mono_string_to_utf8(varState);
 
 							std::string stringToModify = convertedString;
