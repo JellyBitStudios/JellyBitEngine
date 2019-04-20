@@ -675,6 +675,7 @@ bool ResourceAnimator::SetCurrentAnimation(const char * anim_name)
 void ResourceAnimator::PlayAnimation()
 {
 	anim_state = AnimationState::PLAYING;
+	current_anim->anim_timer = 0.0f;
 	ResourceAvatar* ava = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
 	ava->SetIsAnimated(true);
 }
