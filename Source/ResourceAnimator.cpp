@@ -571,7 +571,7 @@ bool ResourceAnimator::Update()
 		last_anim->anim_timer += dt * last_anim->anim_speed * animation_speed_mod;
 		current_anim->anim_timer += dt * current_anim->anim_speed * animation_speed_mod;
 		blend_timer += dt;
-		float blend_percentage = blend_timer / blend_timelapse;
+		float blend_percentage = blend_timer / 1.0f;
 		
 		ResourceAvatar* tmp_avatar = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
 		if (tmp_avatar) {
@@ -579,7 +579,7 @@ bool ResourceAnimator::Update()
 			tmp_avatar->StepBones(current_anim->animation_uuid, current_anim->anim_timer, blend_percentage);
 		}
 
-		if (blend_percentage >= 1.0f)
+		if (blend_percentage >= blend_timelapse)
 			anim_state = PLAYING;
 	}
 		break;
