@@ -12,7 +12,7 @@ class Barrelman : JellyScript
 
     public override void Update()
     {
-        if (Input.GetKeyDown(KeyCode.KEY_0))
+        if (animator.AnimationFinished())
         {
             animator.UpdateAnimationBlendTime(0.0f);
             animator.PlayAnimation("barrelman_idle_anim_z");
