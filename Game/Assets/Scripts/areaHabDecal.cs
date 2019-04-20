@@ -5,11 +5,21 @@ public class areaHabDecal : JellyScript
 {
     public enum AreaHab
     {
+        None,
         Q_area,
         W_area
     };
 
-    AreaHab currHab = AreaHab.Q_area;
+    public Vector3 Q_pos;
+    public float Q_FOV;
+    //public string Q_material;
+
+    public Vector3 W_pos;
+    public float W_FOV;
+    //public string W_material;
+
+
+    AreaHab currHab = AreaHab.None;
     Projector projector;
     //Use this method for initialization
     public override void Awake()
@@ -20,34 +30,32 @@ public class areaHabDecal : JellyScript
     //Called every frame
     public override void Update()
     {
-        Debug.Log("Working");
         if (Input.GetKeyDown(KeyCode.KEY_Q))
         {
-            Debug.Log("in");
             if (currHab != AreaHab.Q_area)
             {
-                transform.localPosition = new Vector3(0, 21, 0);
-                projector.FOV = 140;
+                transform.localPosition = Q_pos;
+                projector.FOV = Q_FOV;
                 projector.SetResource("Q_areaDecal");
                 currHab = AreaHab.Q_area;
             }
-            gameObject.active = true;
+            projector.SetActive(true);
         }
         else if (Input.GetKeyDown(KeyCode.KEY_W))
         {
             if (currHab != AreaHab.W_area)
             {
-                transform.localPosition = new Vector3(0, 21, 10.5f);
-                projector.FOV = 160;
+                transform.localPosition = W_pos;
+                projector.FOV = W_FOV;
                 projector.SetResource("W_areaDecal");
 
                 currHab = AreaHab.W_area;
             }
-            gameObject.active = true;
+            projector.SetActive(true);
         }
 
         if (Input.GetKeyUp(KeyCode.KEY_Q) || Input.GetKeyUp(KeyCode.KEY_W))
-            gameObject.active = false;
+            projector.SetActive(false);
     }
 }
 
