@@ -4,6 +4,14 @@ using JellyBitEngine;
 
 public class CyborgRangedCharacter : Character
 {
+    public CyborgRangedCharacter()
+    {
+        actualGoToSideProbability = goToSideProbability;
+        actualHitRate = hitRate;
+    }
+
+    // --------------------------------------------------
+
     public string name = "Cyborg Ranged";
     public uint minLife = 30;
 
@@ -26,10 +34,25 @@ public class CyborgRangedCharacter : Character
     public float lookAroundMaxAngle = 30.0f;
 
     // Attack
-    public float goToSideProbability = 0.5f; // 0.0f-1.0f (%)
+    public float ActualGoToSideProbability
+    {
+        get { return actualGoToSideProbability; }
+        set
+        {
+            actualGoToSideProbability = value;
+
+            if (actualGoToSideProbability < 0.0f)
+                actualGoToSideProbability = 0.0f;
+            else if (actualGoToSideProbability > goToSideProbability)
+                actualGoToSideProbability = goToSideProbability;
+        }
+    }
+    private float actualGoToSideProbability = 0.0f;
+    public float goToSideProbability = 0.5f;
     public float goToSideProbabilityFluctuation = 0.05f;
 
     // Hit
+    public float actualHitRate = 0.0f;
     public float hitRate = 10.0f;
     public float hitRateFluctuation = 1.0f;
 
