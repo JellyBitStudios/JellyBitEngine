@@ -167,20 +167,28 @@ class ADash : AState
 
 class ASkill1 : AState
 {
-    // TODO GUILLERMO: FIX ANIMATOR PD: MARE DE DEU SANTISSIMA
-    bool finished;
-    bool isFinishedForReal;
+    bool hit;
 
     public override void OnStart()
     {
         Alita.Call.animator.PlayAnimation("anim_special_attack_q_alita_fist");
         Alita.Call.animator.SetAnimationLoop(false);
-        finished = false;
-        isFinishedForReal = false;
+        hit = false;
     }
 
     public override void OnExecute()
     {
+        if (!hit && Alita.Call.animator.GetCurrentFrame() >= 27)
+        {
+            Debug.Log("DAMAAAAAAAAAAGEEEEE");
+            // overlap sphere
+            // SEND DECAL
+            OverlapHit[] hitInfo;
+            LayerMask mask = new LayerMask();
+            Physics.OverlapSphere(AlitaCharacter.ConstSkillqRadius, Alita.Call.transform.position, out hitInfo, mask, SceneQueryFlags.Static | SceneQueryFlags.Dynamic);
+            hit = true;
+        }
+
         if (Alita.Call.animator.AnimationFinished())
             Alita.Call.SwitchState(Alita.Call.StateIdle);
     }
