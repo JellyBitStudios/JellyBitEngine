@@ -194,6 +194,17 @@ bool ComponentAnimator::UpdateAnimationSpeed(float new_speed)
 	return true;
 }
 
+bool ComponentAnimator::UpdateBlendTime(float new_blend)
+{
+	ResourceAnimator* animator_res = (ResourceAnimator*)App->res->GetResource(res);
+	if (!animator_res)
+		return false;
+
+	animator_res->SetAnimationSpeed(new_blend);
+
+	return true;
+}
+
 void ComponentAnimator::SetAnimationLoop(bool loop)
 {
 	ResourceAnimator* animator_res = (ResourceAnimator*)App->res->GetResource(res);

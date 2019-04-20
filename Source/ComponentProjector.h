@@ -40,8 +40,13 @@ public:
 	// Sets
 	void SetFOV(float fov);
 	float GetFOV() const;
+
+	float GetNearPlaneDistance();
 	void SetNearPlaneDistance(float nearPlane);
+
+	float GetFarPlaneDistance();
 	void SetFarPlaneDistance(float farPlane);
+
 	void SetAspectRatio(float aspectRatio);
 
 	void SetMaterialRes(uint materialUuid);

@@ -5,7 +5,8 @@ class Alita : JellyScript
     private static Alita m_instance;
 
     public AIdle StateIdle = new AIdle();
-    public AWalking StateWalking = new AWalking();
+    public AWalking2Spot StateWalking2Spot = new AWalking2Spot();
+    public AWalking2Enemy StateWalking2Enemy = new AWalking2Enemy();
     public AAttacking StateAttacking = new AAttacking();
     public ADash StateDash = new ADash();
     public ASkill1 StateSkill_1 = new ASkill1();
@@ -24,23 +25,36 @@ class Alita : JellyScript
     public AState lastState;
 
     public AlitaCharacter character = new AlitaCharacter();
+    public Skillset skillset = new Skillset();
     public Agent agent;
     public Animator animator;
+    public BattleCircle battleCircle;
 
-    GameObject currentTarget
+    private GameObject _currentTarget = null;
+    public CyborgMeleeController cyborgMelee = null;
+
+    public GameObject currentTarget
     {
-        get { return currentTarget; }
         set
         {
-            currentTarget = value;
-            m_state.NewTarget(value);
+            if (value != null)
+                cyborgMelee = value.GetComponent<CyborgMeleeController>();
+            else
+                cyborgMelee = null;
+            _currentTarget = value;
+        }
+        get
+        {
+            return _currentTarget;
         }
     }
 
+    public float ConstHitRadius = 1.0f;
     public override void Awake()
     {
         animator = gameObject.childs[0].GetComponent<Animator>();
         agent = gameObject.GetComponent<Agent>();
+        battleCircle = gameObject.GetComponent<BattleCircle>();
 
         m_state = StateIdle;
         EventsManager.Call.StartListening("Alita", this, "EventsListener");
@@ -48,6 +62,8 @@ class Alita : JellyScript
 
     public override void Update()
     {
+        skillset.UpdateTick();
+
         if (!Player.Call.gameStopped)
             m_state.OnExecute();
     }
@@ -57,12 +73,14 @@ class Alita : JellyScript
         EventsManager.Call.StopListening("Alita");
     }
 
-    public void SwitchState(AState newState)
+    public void SwitchState(AState newState, bool callStop = true, bool callStart = true)
     {
-        m_state.OnStop();
+        if (callStop)
+            m_state.OnStop();
         lastState = m_state;
         m_state = newState;
-        m_state.OnStart();
+        if (callStart)
+            m_state.OnStart();
     }
 
     public void ProcessInput(KeyCode code)
@@ -70,9 +88,9 @@ class Alita : JellyScript
         m_state.ProcessInput(code);
     }
 
-    public void ProcessRaycast(RaycastHit hit)
+    public void ProcessRaycast(RaycastHit hit, bool leftClick)
     {
-        m_state.ProcessRaycast(hit);
+        m_state.ProcessRaycast(hit, leftClick);
     }
 
     public void EventsListener(object type)

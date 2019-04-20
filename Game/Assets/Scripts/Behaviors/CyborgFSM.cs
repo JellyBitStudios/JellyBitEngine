@@ -170,7 +170,6 @@ public class GoToGameObject : ICyborgMeleeState
                     }
                 }
                 break;
-
             case GoToGameObjectType.GoToAttackDistance:
                 {
                     float distanceToTarget = (Alita.Call.transform.position - owner.transform.position).magnitude;
@@ -246,7 +245,6 @@ public class GoToGameObject : ICyborgMeleeState
                 Debug.DrawSphere(owner.character.dangerDistance, Color.Blue, owner.transform.position, Quaternion.identity, Vector3.one);
                 Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
                 break;
-
             case GoToGameObjectType.GoToAttackDistance:
                 Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
                 break;
@@ -609,12 +607,21 @@ public class Die : ICyborgMeleeState
     public override void Enter(CyborgMeleeController owner)
     {
         Debug.Log("Enter Die");
+
+        owner.agent.ClearPath();
+        owner.agent.ClearMovementAndRotation();
+        owner.agent.isMovementStopped = true;
+        owner.agent.isRotationStopped = true;
     }
 
     public override void Execute(CyborgMeleeController owner)
     {
         Debug.Log("Die");
         // if animation has finished...
+        EnemyEvent myEvent = new EnemyEvent();
+        myEvent.type = Event_Type.EnemyDie;
+        myEvent.gameObject = owner.gameObject;
+        EventsManager.Call.PushEvent(myEvent);
     }
 
     public override void Exit(CyborgMeleeController owner)

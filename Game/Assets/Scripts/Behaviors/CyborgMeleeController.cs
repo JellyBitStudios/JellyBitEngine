@@ -29,6 +29,8 @@ public class CyborgMeleeController : JellyScript
 {
     #region INSPECTOR_VARIABLES
     // Character
+    public uint tmp_maxLife = 100;
+    public uint tmp_minLife = 30;
     public float tmp_attackDistance = 1.0f;
     public float tmp_dangerDistance = 2.0f;
     public float tmp_attackRate = 10.0f;
@@ -61,8 +63,8 @@ public class CyborgMeleeController : JellyScript
                 character.currentLife = 0;
                 fsm.ChangeState(new Die());
             }
-            else if (character.currentLife <= character.minLife)
-                fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.Runaway));
+            //else if (character.currentLife <= character.minLife)
+                //fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.Runaway));
 
             Debug.Log("Cyborg life: " + character.currentLife);
         }
@@ -83,6 +85,10 @@ public class CyborgMeleeController : JellyScript
         // --------------------------------------------------
 
         // Character
+        character.maxLife = tmp_maxLife;
+        character.currentLife = (int)tmp_maxLife;
+        character.minLife = tmp_minLife;
+
         character.attackDistance = tmp_attackDistance;
         character.dangerDistance = tmp_dangerDistance;
         character.attackRate = tmp_attackRate;
@@ -96,6 +102,26 @@ public class CyborgMeleeController : JellyScript
     {
         //fsm.ChangeState(new Wander(StateType.Wander));  
         fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.GoToDangerDistance));
+
+        EventsManager.Call.StartListening("CyborgMeleeController", this, "OnEvent");
+    }
+
+    public void OnEvent(object type)
+    {
+        Event myEvent = (Event)type;
+        switch (myEvent.type)
+        {
+            case Event_Type.EnemyDie:
+                {
+                    EnemyEvent myEnemyEvent = (EnemyEvent)myEvent;
+                    if (myEnemyEvent.gameObject == gameObject)
+                    {
+                        Debug.Log("I AM DEAD x_x");
+                        GameObject.Destroy(gameObject);
+                    }
+                }
+                break;
+        }
     }
 
     public override void Update()
@@ -114,6 +140,11 @@ public class CyborgMeleeController : JellyScript
             return;
 
         fsm.DrawGizmos();
+    }
+
+    public override void OnStop()
+    {
+        EventsManager.Call.StopListening(this);
     }
 
     // ----------------------------------------------------------------------------------------------------

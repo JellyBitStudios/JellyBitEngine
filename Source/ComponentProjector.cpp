@@ -423,19 +423,24 @@ float ComponentProjector::GetFOV() const
 	return frustum.verticalFov * RADTODEG;
 }
 
+float ComponentProjector::GetNearPlaneDistance()
+{
+	return frustum.nearPlaneDistance;
+}
+
 void ComponentProjector::SetNearPlaneDistance(float nearPlane)
 {
 	frustum.nearPlaneDistance = nearPlane;
 }
 
+float ComponentProjector::GetFarPlaneDistance()
+{
+	return frustum.farPlaneDistance;
+}
+
 void ComponentProjector::SetFarPlaneDistance(float farPlane)
 {
 	frustum.farPlaneDistance = farPlane;
-}
-
-void ComponentProjector::SetAspectRatio(float aspectRatio)
-{
-	frustum.horizontalFov = 2.0f * atanf(tanf(frustum.verticalFov * 0.5f) * aspectRatio);
 }
 
 void ComponentProjector::SetMaterialRes(uint materialUuid)
