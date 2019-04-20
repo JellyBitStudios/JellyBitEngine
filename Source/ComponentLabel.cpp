@@ -90,7 +90,7 @@ void ComponentLabel::Update()
 		if (fontRes && !fontRes->fontData.charactersMap.empty())
 		{
 			uint x_moving = 0;
-			uint* rectParent = parent->cmp_rectTransform->GetRect();
+			int* rectParent = parent->cmp_rectTransform->GetRect();
 			math::float3* parentCorners = parent->cmp_rectTransform->GetCorners();
 			x_moving = rectParent[X_UI_RECT];
 			float sizeNorm = size / (float)fontRes->fontData.fontSize;
@@ -261,7 +261,7 @@ void ComponentLabel::RowAlignment(const uint firstLabelRow, const uint lastLabel
 	}
 }
 
-void ComponentLabel::WorldDraw(math::float3 * parentCorners, math::float4 corners[4], uint * rectParent, uint rect[4])
+void ComponentLabel::WorldDraw(math::float3 * parentCorners, math::float4 corners[4], int * rectParent, int rect[4])
 {
 	math::float3 xDirection = (parentCorners[CORNER_TOP_LEFT] - parentCorners[CORNER_TOP_RIGHT]).Normalized();
 	math::float3 yDirection = (parentCorners[2] - parentCorners[CORNER_TOP_LEFT]).Normalized();
@@ -285,9 +285,9 @@ void ComponentLabel::WorldDraw(math::float3 * parentCorners, math::float4 corner
 		corners[i] -= { zDirection * z , 0.0f };
 }
 
-void ComponentLabel::ScreenDraw(math::float4 corners[4], uint rect[4])
+void ComponentLabel::ScreenDraw(math::float4 corners[4], int rect[4])
 {
-	uint* screen = App->ui->GetScreen();
+	int* screen = App->ui->GetScreen();
 	uint w_width = screen[ModuleUI::Screen::WIDTH];
 	uint w_height = screen[ModuleUI::Screen::HEIGHT];
 

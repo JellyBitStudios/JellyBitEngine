@@ -44,7 +44,7 @@ private:
 
 	void OnUniqueEditor();
 
-	bool MouseInScreen(const uint* rect) const;
+	bool MouseInScreen(const int* rect) const;
 
 private:
 

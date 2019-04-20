@@ -140,7 +140,7 @@ void ComponentRectTransform::Update()
 }
 // ------------------------------------------------------------------------------
 // --------- Base Rect Methods
-void ComponentRectTransform::SetRect(uint x, uint y, uint x_dist, uint y_dist)
+void ComponentRectTransform::SetRect(int x, int y, int x_dist, int y_dist)
 {
 	if (rFrom != ComponentRectTransform::WORLD)
 	{
@@ -166,7 +166,7 @@ void ComponentRectTransform::InitRect()
 	{
 	case ComponentRectTransform::RECT:
 	{
-		uint* rectParent = nullptr;
+		int* rectParent = nullptr;
 		if (parent->cmp_canvas)
 #ifndef GAMEMODE
 			rectParent = (App->ui->ScreenOnWorld()) ? App->ui->GetWHRect() : App->ui->GetRectUI();
@@ -198,7 +198,7 @@ void ComponentRectTransform::InitRect()
 	case ComponentRectTransform::RECT_WORLD:
 	{
 		ComponentRectTransform* rTParent = parent->GetParent()->cmp_rectTransform;
-		uint* rectParent = rTParent->GetRect();
+		int* rectParent = rTParent->GetRect();
 
 		z = parent->cmp_canvas->GetZ(parent, GetType());
 		if (rectTransform[Rect::XDIST] > rectParent[Rect::XDIST])
@@ -214,7 +214,7 @@ void ComponentRectTransform::InitRect()
 }
 // ------------------------------------------------------------------------------
 // ------------------- Getters ---------------------
-uint* ComponentRectTransform::GetRect()
+int* ComponentRectTransform::GetRect()
 {
 	return rectTransform;
 }
@@ -321,7 +321,7 @@ void ComponentRectTransform::CalculateRectFromWorld()
 void ComponentRectTransform::CalculateCornersFromRect()
 {
 	math::float3* parentCorners = nullptr;
-	uint* rectParent = nullptr;
+	int* rectParent = nullptr;
 #ifndef GAMEMODE
 	if (rFrom == RectFrom::RECT)
 	{
@@ -355,7 +355,7 @@ void ComponentRectTransform::CalculateCornersFromRect()
 //NDC coordinates 
 void ComponentRectTransform::CalculateScreenCorners()
 {
-	uint* screen = App->ui->GetScreen();
+	int* screen = App->ui->GetScreen();
 	uint w_width = screen[ModuleUI::Screen::WIDTH];
 	uint w_height = screen[ModuleUI::Screen::HEIGHT];
 	corners[Rect::RTOPLEFT] = { math::Frustum::ScreenToViewportSpace({ (float)rectTransform[ComponentRectTransform::Rect::X], (float)rectTransform[ComponentRectTransform::Rect::Y] }, w_width, w_height), 0.0f };
@@ -367,7 +367,7 @@ void ComponentRectTransform::CalculateScreenCorners()
 // ------------------------ Percentages ----------------------------------------
 void ComponentRectTransform::CaculatePercentage()
 {
-	uint* rectParent = nullptr;
+	int* rectParent = nullptr;
 	if (parent->cmp_canvas)
 		rectParent = App->ui->GetRectUI();
 	else
@@ -381,7 +381,7 @@ void ComponentRectTransform::CaculatePercentage()
 
 void ComponentRectTransform::RecalculateRectByPercentage()
 {
-	uint* rectParent = nullptr;
+	int* rectParent = nullptr;
 	if (parent->cmp_canvas)
 		rectParent = App->ui->GetRectUI();
 	else
@@ -395,10 +395,10 @@ void ComponentRectTransform::RecalculateRectByPercentage()
 	CalculateAnchors();
 }
 // ------------------------------------------------------------------------------
-// ------------------------ Ancors ----------------------------------------
+// ------------------------ Anchors ----------------------------------------
 void ComponentRectTransform::CalculateAnchors(bool needed_newPercentages)
 {
-	uint* rectParent = nullptr;
+	int* rectParent = nullptr;
 	if (parent->cmp_canvas)
 		rectParent = App->ui->GetRectUI();
 	else
@@ -491,7 +491,7 @@ void ComponentRectTransform::CalculateAnchors(bool needed_newPercentages)
 
 void ComponentRectTransform::RecaculateAnchors()
 {
-	uint* rectParent = nullptr;
+	int* rectParent = nullptr;
 	if (parent->cmp_canvas)
 		rectParent = App->ui->GetRectUI();
 	else
@@ -694,23 +694,25 @@ void ComponentRectTransform::OnUniqueEditor()
 	if (ImGui::CollapsingHeader("Rect Transform", ImGuiTreeNodeFlags_DefaultOpen))
 	{
 
-		uint* rectParent = nullptr;
+		int* rectParent = nullptr;
 		if (parent->cmp_canvas)
 			rectParent = App->ui->GetRectUI();
 		else
 			rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
 
-		uint r_height = 0;
-		uint r_width = 0;
+		int r_height = 0;
+		int r_width = 0;
 
-		uint max_xpos = 0;
-		uint max_ypos = 0;
+		int max_xpos = 0;
+		int max_ypos = 0;
+		int min_xpos = -rectTransform[Rect::XDIST];
+		int min_ypos = -rectTransform[Rect::YDIST];
 
-		uint max_xdist = 0;
-		uint max_ydist = 0;
+		int max_xdist = 0;
+		int max_ydist = 0;
 
-		uint x_editor = 0;
-		uint y_editor = 0;
+		int x_editor = 0;
+		int y_editor = 0;
 		int i = 0;
 		switch (rFrom)
 		{
@@ -719,8 +721,8 @@ void ComponentRectTransform::OnUniqueEditor()
 			r_width = rectParent[Rect::XDIST];
 			r_height = rectParent[Rect::YDIST];
 
-			max_xpos = r_width - rectTransform[Rect::XDIST];
-			max_ypos = r_height - rectTransform[Rect::YDIST];
+			max_xpos = r_width;
+			max_ypos = r_height;
 
 			x_editor = rectTransform[Rect::X] - rectParent[Rect::X];
 			y_editor = rectTransform[Rect::Y] - rectParent[Rect::Y];
@@ -761,8 +763,8 @@ void ComponentRectTransform::OnUniqueEditor()
 			r_width = rectParent[Rect::XDIST];
 			r_height = rectParent[Rect::YDIST];
 
-			max_xpos = r_width - rectTransform[Rect::XDIST];
-			max_ypos = r_height - rectTransform[Rect::YDIST];
+			max_xpos = r_width;
+			max_ypos = r_height;
 
 			x_editor = rectTransform[Rect::X] - rectParent[Rect::X];
 			y_editor = rectTransform[Rect::Y] - rectParent[Rect::Y];
@@ -776,7 +778,7 @@ void ComponentRectTransform::OnUniqueEditor()
 		ImGui::PushItemWidth(50.0f);
 
 		ImGui::Text("Positions X & Y");
-		if (ImGui::DragScalar("##PosX", ImGuiDataType_U32, &x_editor, 1, 0, &max_xpos, "%u", 1.0f))
+		if (ImGui::DragScalar("##PosX", ImGuiDataType_S32, &x_editor, 1, &min_xpos, &max_xpos, "%i", 1.0f))
 		{
 			if (x_editor > max_xpos)
 				x_editor = max_xpos;
@@ -789,7 +791,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			needed_recalculate = true;
 		}
 		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-		if (ImGui::DragScalar("##PosY", ImGuiDataType_U32, &y_editor, 1, 0, &max_ypos, "%u", 1.0f))
+		if (ImGui::DragScalar("##PosY", ImGuiDataType_S32, &y_editor, 1, &min_ypos, &max_ypos, "%i", 1.0f))
 		{
 			if (y_editor > max_ypos)
 				y_editor = max_ypos;
@@ -802,7 +804,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			needed_recalculate = true;
 		}
 		ImGui::Text("Size X & Y");
-		if (ImGui::DragScalar("##SizeX", ImGuiDataType_U32, (void*)&rectTransform[Rect::XDIST], 1, 0, &max_xdist, "%u", 1.0f))
+		if (ImGui::DragScalar("##SizeX", ImGuiDataType_S32, (void*)&rectTransform[Rect::XDIST], 1, 0, &max_xdist, "%i", 1.0f))
 		{
 			if (rectTransform[Rect::XDIST] > max_xdist)
 				rectTransform[Rect::XDIST] = max_xdist;
@@ -810,7 +812,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			needed_recalculate = true;
 		}
 		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-		if (ImGui::DragScalar("##SizeY", ImGuiDataType_U32, (void*)&rectTransform[Rect::YDIST], 1, 0, &max_ydist, "%u", 1.0f))
+		if (ImGui::DragScalar("##SizeY", ImGuiDataType_S32, (void*)&rectTransform[Rect::YDIST], 1, 0, &max_ydist, "%i", 1.0f))
 		{
 			if (rectTransform[Rect::YDIST] > max_ydist)
 				rectTransform[Rect::YDIST] = max_ydist;
@@ -841,15 +843,15 @@ void ComponentRectTransform::OnUniqueEditor()
 
 			ImGui::Text("Margin");
 
-			uint max_yAnchor = rectParent[Rect::YDIST] - rectTransform[Rect::YDIST];
-			uint max_xAnchor = rectParent[Rect::XDIST] - rectTransform[Rect::XDIST];
+			int max_yAnchor = rectParent[Rect::YDIST] - rectTransform[Rect::YDIST];
+			int max_xAnchor = rectParent[Rect::XDIST] - rectTransform[Rect::XDIST];
 
 			switch (pivot)
 			{
 			case ComponentRectTransform::P_TOPLEFT:
 			{
 				ImGui::Text("Top Left");
-				if (ImGui::DragScalar("##MTop", ImGuiDataType_U32, (void*)&anchor[Anchor::TOP], 1, 0, &max_yAnchor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MTop", ImGuiDataType_S32, (void*)&anchor[Anchor::TOP], 1, 0, &max_yAnchor, "%i", 1.0f))
 					needed_recalculate = true;
 				if (ImGui::IsItemHovered())
 				{
@@ -858,7 +860,7 @@ void ComponentRectTransform::OnUniqueEditor()
 					ImGui::EndTooltip();
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-				if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_xAnchor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MLeft", ImGuiDataType_S32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_xAnchor, "%i", 1.0f))
 					needed_recalculate = true;
 				if (ImGui::IsItemHovered())
 				{
@@ -871,7 +873,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			case ComponentRectTransform::P_TOPRIGHT:
 			{
 				ImGui::Text("Top Right");
-				if (ImGui::DragScalar("##MTop", ImGuiDataType_U32, (void*)&anchor[Anchor::TOP], 1, 0, &max_yAnchor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MTop", ImGuiDataType_S32, (void*)&anchor[Anchor::TOP], 1, 0, &max_yAnchor, "%i", 1.0f))
 					needed_recalculate = true;
 				if (ImGui::IsItemHovered())
 				{
@@ -880,7 +882,7 @@ void ComponentRectTransform::OnUniqueEditor()
 					ImGui::EndTooltip();
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-				if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_xAnchor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MRight", ImGuiDataType_S32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_xAnchor, "%i", 1.0f))
 					needed_recalculate = true;
 				if (ImGui::IsItemHovered())
 				{
@@ -893,7 +895,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			case ComponentRectTransform::P_BOTTOMLEFT:
 			{
 				ImGui::Text("Bottom Left");
-				if (ImGui::DragScalar("##MBottom", ImGuiDataType_U32, (void*)&anchor[Anchor::BOTTOM], 1, 0, &max_yAnchor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MBottom", ImGuiDataType_S32, (void*)&anchor[Anchor::BOTTOM], 1, 0, &max_yAnchor, "%i", 1.0f))
 					needed_recalculate = true;
 				if (ImGui::IsItemHovered())
 				{
@@ -902,7 +904,7 @@ void ComponentRectTransform::OnUniqueEditor()
 					ImGui::EndTooltip();
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-				if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_xAnchor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MLeft", ImGuiDataType_S32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_xAnchor, "%i", 1.0f))
 					needed_recalculate = true;
 				if (ImGui::IsItemHovered())
 				{
@@ -915,7 +917,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			case ComponentRectTransform::P_BOTTOMRIGHT:
 			{
 				ImGui::Text("Bottom Right");
-				if (ImGui::DragScalar("##MBottom", ImGuiDataType_U32, (void*)&anchor[Anchor::BOTTOM], 1, 0, &max_yAnchor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MBottom", ImGuiDataType_S32, (void*)&anchor[Anchor::BOTTOM], 1, 0, &max_yAnchor, "%i", 1.0f))
 					needed_recalculate = true;
 				if (ImGui::IsItemHovered())
 				{
@@ -924,7 +926,7 @@ void ComponentRectTransform::OnUniqueEditor()
 					ImGui::EndTooltip();
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-				if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_xAnchor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MRight", ImGuiDataType_S32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_xAnchor, "%i", 1.0f))
 					needed_recalculate = true;
 				if (ImGui::IsItemHovered())
 				{
@@ -936,8 +938,8 @@ void ComponentRectTransform::OnUniqueEditor()
 			break;
 			case ComponentRectTransform::P_CENTER:
 			{
-				uint pxCenter = rectParent[Rect::X] + (rectParent[Rect::XDIST] / 2);
-				uint pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2);
+				int pxCenter = rectParent[Rect::X] + (rectParent[Rect::XDIST] / 2);
+				int pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2);
 				ImGui::Text("Center point from parent (screen point):");
 				ImGui::Text("X: %u | Y: %u", pxCenter, pyCenter);
 				break;
@@ -956,7 +958,7 @@ void ComponentRectTransform::OnUniqueEditor()
 					ImGui::EndTooltip();
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-				if (ImGui::DragScalar("##Top", ImGuiDataType_U32, (void*)&anchor[Anchor::TOP], 1, 0, &max_yAnchor, "%u", 1.0f))
+				if (ImGui::DragScalar("##Top", ImGuiDataType_S32, (void*)&anchor[Anchor::TOP], 1, 0, &max_yAnchor, "%i", 1.0f))
 					needed_recalculate = true;
 				if (ImGui::IsItemHovered())
 				{
@@ -980,7 +982,7 @@ void ComponentRectTransform::OnUniqueEditor()
 					ImGui::EndTooltip();
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-				if (ImGui::DragScalar("##MLeft", ImGuiDataType_U32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_xAnchor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MLeft", ImGuiDataType_S32, (void*)&anchor[Anchor::LEFT], 1, 0, &max_xAnchor, "%i", 1.0f))
 					needed_recalculate = true;
 				if (ImGui::IsItemHovered())
 				{
@@ -1004,7 +1006,7 @@ void ComponentRectTransform::OnUniqueEditor()
 					ImGui::EndTooltip();
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-				if (ImGui::DragScalar("##MRight", ImGuiDataType_U32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_xAnchor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MRight", ImGuiDataType_S32, (void*)&anchor[Anchor::RIGHT], 1, 0, &max_xAnchor, "%i", 1.0f))
 					needed_recalculate = true;
 				if (ImGui::IsItemHovered())
 				{
@@ -1028,7 +1030,7 @@ void ComponentRectTransform::OnUniqueEditor()
 					ImGui::EndTooltip();
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-				if (ImGui::DragScalar("##MBottom", ImGuiDataType_U32, (void*)&anchor[Anchor::BOTTOM], 1, 0, &max_yAnchor, "%u", 1.0f))
+				if (ImGui::DragScalar("##MBottom", ImGuiDataType_S32, (void*)&anchor[Anchor::BOTTOM], 1, 0, &max_yAnchor, "%i", 1.0f))
 					needed_recalculate = true;
 				if (ImGui::IsItemHovered())
 				{

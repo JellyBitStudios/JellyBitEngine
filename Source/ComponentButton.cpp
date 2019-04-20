@@ -124,7 +124,7 @@ void ComponentButton::Update()
 {
 	if (IsTreeActive())
 	{
-		const uint* rect = parent->cmp_rectTransform->GetRect();
+		const int* rect = parent->cmp_rectTransform->GetRect();
 
 		if (App->input->GetKey(button_blinded) == KEY_DOWN)
 			KeyPressed();
@@ -512,7 +512,7 @@ void ComponentButton::OnUniqueEditor()
 #endif
 }
 
-bool ComponentButton::MouseInScreen(const uint* rect) const
+bool ComponentButton::MouseInScreen(const int* rect) const
 {
 	uint mouseX = App->input->GetMouseX();
 	uint mouseY = App->input->GetMouseY();

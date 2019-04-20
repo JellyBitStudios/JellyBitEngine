@@ -467,7 +467,7 @@ math::float3 * ModuleUI::GetWHCorners()
 	return WorldHolder->cmp_rectTransform->GetCorners();
 }
 
-uint * ModuleUI::GetWHRect()
+int * ModuleUI::GetWHRect()
 {
 	return WorldHolder->cmp_rectTransform->GetRect();
 }
@@ -521,12 +521,12 @@ void ModuleUI::OnWindowResize(uint width, uint height)
 #endif // GAMEMODE
 }
 
-uint* ModuleUI::GetRectUI()
+int* ModuleUI::GetRectUI()
 {
 	return ui_size_draw;
 }
 
-uint * ModuleUI::GetScreen()
+int * ModuleUI::GetScreen()
 {
 	return ui_size_draw;
 }
@@ -539,7 +539,7 @@ bool ModuleUI::MouseInScreen()
 		{
 			if (goScreenCanvas->cmp_rectTransform)
 			{
-				uint* rect = goScreenCanvas->cmp_rectTransform->GetRect();
+				int* rect = goScreenCanvas->cmp_rectTransform->GetRect();
 
 				if (rect)
 				{

@@ -2660,13 +2660,13 @@ MonoArray* RectTransform_GetRect(MonoObject* rectComp)
 	if (!rectCpp)
 		return nullptr;
 
-	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_uint32_class(), 4);
+	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_int32_class(), 4);
 
-	uint* rectVector = rectCpp->GetRect();
-	mono_array_set(ret, uint, 0, rectVector[0]);
-	mono_array_set(ret, uint, 1, rectVector[1]);
-	mono_array_set(ret, uint, 2, rectVector[2]);
-	mono_array_set(ret, uint, 3, rectVector[3]);
+	int* rectVector = rectCpp->GetRect();
+	mono_array_set(ret, int, 0, rectVector[0]);
+	mono_array_set(ret, int, 1, rectVector[1]);
+	mono_array_set(ret, int, 2, rectVector[2]);
+	mono_array_set(ret, int, 3, rectVector[3]);
 
 	return ret;
 }
@@ -2680,11 +2680,11 @@ void RectTransform_SetRect(MonoObject* rectComp, MonoArray* newRect)
 	if (!rectCpp)
 		return;
 
-	uint rectVector[4];
-	rectVector[0] = mono_array_get(newRect, uint, 0);
-	rectVector[1] = mono_array_get(newRect, uint, 1);
-	rectVector[2] = mono_array_get(newRect, uint, 2);
-	rectVector[3] = mono_array_get(newRect, uint, 3);
+	int rectVector[4];
+	rectVector[0] = mono_array_get(newRect, int, 0);
+	rectVector[1] = mono_array_get(newRect, int, 1);
+	rectVector[2] = mono_array_get(newRect, int, 2);
+	rectVector[3] = mono_array_get(newRect, int, 3);
 	
 	rectCpp->SetRect(rectVector[0], rectVector[1], rectVector[2], rectVector[3]);
 }

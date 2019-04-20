@@ -62,8 +62,8 @@ public:
 
 	void OnWindowResize(uint width, uint height);
 
-	uint* GetRectUI();
-	uint* GetScreen();
+	int* GetRectUI();
+	int* GetScreen();
 
 	bool IsUIHovered();
 	static GameObject* FindCanvas(GameObject* from, uint& count);
@@ -72,7 +72,7 @@ public:
 	//Engine world
 	math::float4x4 GetUIMatrix();
 	math::float3* GetWHCorners();
-	uint* GetWHRect();
+	int* GetWHRect();
 	math::float3 GetPositionWH();
 	void SetPositionWH(math::float3 pos);
 #endif
@@ -105,7 +105,7 @@ public:
 	FT_Library library;
 
 private:
-	uint ui_size_draw[4];
+	int ui_size_draw[4];
 	uint reference_vertex;
 
 	uint ui_shader = 0;
