@@ -4,6 +4,17 @@ using JellyBitEngine;
 
 public class AgentData
 {
+    public float Radius
+    {
+        get { return radius; }
+        set
+        {
+            radius = value;
+            AgentsManager.Call.RecalculateRadius();
+        }
+    }
+    private float radius = 0.0f;
+
     public float maxVelocity = 5.0f;
     public float maxAngularVelocity = 360.0f;
     public float maxAcceleration = 10.0f;
@@ -40,14 +51,11 @@ public class Agent : JellyScript
     public bool tmp_separationIsActive = true;
     public uint tmp_separationPriority = 1;
     public LayerMask tmp_separationMask = new LayerMask();
-    public float tmp_separationRadius = 5.0f;
-    public float tmp_separationThreshold = 3.0f;
 
     // SteeringCollisionAvoidance
     public bool tmp_collisionAvoidanceIsActive = true;
     public uint tmp_collisionAvoidancePriority = 0;
     public LayerMask tmp_collisionAvoidanceMask = new LayerMask();
-    public float tmp_collisionAvoidanceRadius = 5.0f;
     public float tmp_collisionAvoidanceConeHalfAngle = 45.0f;
 
     // SteeringObstacleAvoidance
@@ -129,6 +137,8 @@ public class Agent : JellyScript
 
         ResetPriorities();
 
+        AgentsManager.Call.AddAgent(this);
+
         // --------------------------------------------------
 
         // AgentData
@@ -158,14 +168,11 @@ public class Agent : JellyScript
         separationData.isActive = tmp_separationIsActive;
         separationData.Priority = tmp_separationPriority;
         separationData.mask = tmp_separationMask;
-        separationData.radius = tmp_separationRadius;
-        separationData.threshold = tmp_separationThreshold;
 
         // SteeringCollisionAvoidance
         collisionAvoidanceData.isActive = tmp_collisionAvoidanceIsActive;
         collisionAvoidanceData.Priority = tmp_collisionAvoidancePriority;
         collisionAvoidanceData.mask = tmp_collisionAvoidanceMask;
-        collisionAvoidanceData.radius = tmp_collisionAvoidanceRadius;
         collisionAvoidanceData.coneHalfAngle = tmp_collisionAvoidanceConeHalfAngle;
 
         // SteeringObstacleAvoidance
@@ -173,7 +180,6 @@ public class Agent : JellyScript
         obstacleAvoidanceData.Priority = tmp_obstacleAvoidancePriority;
         obstacleAvoidanceData.mask = tmp_obstacleAvoidanceMask;
         obstacleAvoidanceData.avoidDistance = tmp_obstacleAvoidanceAvoidDistance;
-        obstacleAvoidanceData.rays = new SteeringRay[3];
         for (uint i = 0; i < obstacleAvoidanceData.rays.Length; ++i)
             obstacleAvoidanceData.rays[i] = new SteeringRay();
         obstacleAvoidanceData.rays[0].length = 3.0f;
@@ -489,14 +495,11 @@ public class Agent : JellyScript
         tmp_separationIsActive = separationData.isActive;
         tmp_separationPriority = separationData.Priority;
         tmp_separationMask = separationData.mask;
-        tmp_separationRadius = separationData.radius;
-        tmp_separationThreshold = separationData.threshold;
 
         // SteeringCollisionAvoidance
         tmp_collisionAvoidanceIsActive = collisionAvoidanceData.isActive;
         tmp_collisionAvoidancePriority = collisionAvoidanceData.Priority;
         tmp_collisionAvoidanceMask = collisionAvoidanceData.mask;
-        tmp_collisionAvoidanceRadius = collisionAvoidanceData.radius;
         tmp_collisionAvoidanceConeHalfAngle = collisionAvoidanceData.coneHalfAngle;
 
         // SteeringObstacleAvoidance

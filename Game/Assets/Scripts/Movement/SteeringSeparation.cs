@@ -5,8 +5,8 @@ using JellyBitEngine;
 public class SteeringSeparationData : SteeringAbstract
 {
     public LayerMask mask = new LayerMask();
-    public float radius = 5.0f;
-    public float threshold = 3.0f;
+    //public float radius = 1.0f;
+    //public float threshold = 1.0f;
 }
 
 public static class SteeringSeparation
@@ -17,7 +17,7 @@ public static class SteeringSeparation
             return Vector3.zero;
 
         OverlapHit[] hitInfo;
-        if (Physics.OverlapSphere(agent.separationData.radius, agent.transform.position, out hitInfo, agent.separationData.mask, SceneQueryFlags.Dynamic))
+        if (Physics.OverlapSphere(AgentsManager.Call.Radius, agent.transform.position, out hitInfo, agent.separationData.mask, SceneQueryFlags.Dynamic))
         {
             Vector3 outputAcceleration = Vector3.zero;
 
@@ -31,12 +31,17 @@ public static class SteeringSeparation
                 if (target == null)
                     continue;
 
+                Agent targetAgent = target.GetComponent<Agent>();
+
+                if (targetAgent == null)
+                    continue;
+
                 Vector3 direction = agent.transform.position - target.transform.position;
 
                 float distance = direction.magnitude;
-                if (distance < agent.separationData.threshold)
+                if (distance < targetAgent.agentData.Radius)
                 {
-                    float strength = agent.agentData.maxAcceleration * (agent.separationData.threshold - distance) / agent.separationData.threshold;
+                    float strength = agent.agentData.maxAcceleration * (targetAgent.agentData.Radius - distance) / targetAgent.agentData.Radius;
                     direction.Normalize();
                     direction *= strength;
 
@@ -59,7 +64,6 @@ public static class SteeringSeparation
 
     public static void DrawGizmos(Agent agent)
     {
-        Debug.DrawSphere(agent.separationData.radius, Color.Red, agent.transform.position, Quaternion.identity, Vector3.one);
-        Debug.DrawSphere(agent.separationData.threshold, Color.Red, agent.transform.position, Quaternion.identity, Vector3.one);
+        Debug.DrawSphere(AgentsManager.Call.Radius, Color.Red, agent.transform.position, Quaternion.identity, Vector3.one);
     }
 }

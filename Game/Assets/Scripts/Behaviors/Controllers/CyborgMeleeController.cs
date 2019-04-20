@@ -70,6 +70,9 @@ public class CyborgMeleeController : JellyScript
         fsm.ChangeState(new CM_GoToGameObject(CM_GoToGameObject.GoToGameObjectType.GoToDangerDistance));
 
         EventsManager.Call.StartListening("CyborgMelee", this, "OnEvent");
+
+        // Agent
+        agent.agentData.Radius = 1.0f;
     }
 
     public void OnEvent(object type)
