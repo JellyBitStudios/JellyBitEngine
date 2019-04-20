@@ -15,6 +15,7 @@ public:
 	void Update();
 
 	void UpdateListenerPos();
+	void OnUniqueEditor();
 
 	//Serialization
 	uint GetInternalSerializationBytes();

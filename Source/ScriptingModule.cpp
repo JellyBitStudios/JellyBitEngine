@@ -18,6 +18,7 @@
 #include "ComponentMaterial.h"
 #include "ComponentSphereCollider.h"
 #include "ComponentTrail.h"
+#include "ComponentProjector.h"
 
 #include "GameObject.h"
  
@@ -253,14 +254,6 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 				}
 			}
 
-			ClearMap();
-
-			break;
-		}
-
-		case System_Event_Type::LoadScene:
-		{
-			ClearMap();
 			break;
 		}
 
@@ -288,36 +281,24 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 
 		case System_Event_Type::GameObjectDestroyed:
 		{
-			for (int i = 0; i < monoObjectHandles.size(); ++i)
+			MonoObject* monoObject = MonoObjectFrom(event.goEvent.gameObject);
+
+			if (!monoObject)
+				return;
+
+			MonoClassField* deletedField = mono_class_get_field_from_name(mono_object_get_class(monoObject), "destroyed");
+
+			bool temp = true;
+			mono_field_set_value(monoObject, deletedField, &temp);
+
+			mono_gchandle_free(event.goEvent.gameObject->GetMonoObjectHandle());
+
+			//Erase this gameObject from all the public variables in scripts
+			for (int i = 0; i < scripts.size(); ++i)
 			{
-				MonoObject* monoObject = mono_gchandle_get_target(monoObjectHandles[i]);
-
-				int address;
-				mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
-
-				GameObject* gameObject = (GameObject*)address;
-					
-				if (gameObject == event.goEvent.gameObject)
-				{
-					MonoClass* monoObjectClass = mono_object_get_class(monoObject);
-
-					MonoClassField* deletedField = mono_class_get_field_from_name(monoObjectClass, "destroyed");
-
-					bool temp = true;
-					mono_field_set_value(monoObject, deletedField, &temp);
-
-					mono_gchandle_free(monoObjectHandles[i]);
-
-					monoObjectHandles.erase(monoObjectHandles.begin() + i);
-					i--;
-
-					//Erase this gameObject from all the public variables in scripts
-					for (int i = 0; i < scripts.size(); ++i)
-					{
-						scripts[i]->OnSystemEvent(event);
-					}
-				}
-			}		
+				scripts[i]->OnSystemEvent(event);
+			}
+			
 			break;
 		}
 
@@ -330,15 +311,7 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 				bool destroyed = true;
 				mono_field_set_value(monoComponent, mono_class_get_field_from_name(mono_object_get_class(monoComponent), "destroyed"), &destroyed);
 
-				for (int i = 0; i < monoComponentHandles.size(); ++i)
-				{
-					if (monoComponent == mono_gchandle_get_target(monoComponentHandles[i]))
-					{
-						mono_gchandle_free(monoComponentHandles[i]);
-						monoComponentHandles.erase(monoComponentHandles.begin() + i);
-						i--;
-					}						
-				}
+				mono_gchandle_free(toDelete->GetMonoComponentHandle());
 			}
 			break;
 		}
@@ -479,8 +452,6 @@ MonoObject* ScriptingModule::MonoObjectFrom(GameObject* gameObject)
 
 	gameObject->SetMonoObject(handleID);
 
-	monoObjectHandles.push_back(handleID);
-
 	return monoObject;
 }
 
@@ -616,8 +587,6 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 
 	uint32_t handleID = mono_gchandle_new(monoComponent, true);
 	component->SetMonoComponent(handleID);
-
-	monoComponentHandles.push_back(handleID);
 
 	return monoComponent;
 }
@@ -814,15 +783,6 @@ void ScriptingModule::ReInstance()
 	}
 }
 
-void ScriptingModule::ClearMap()
-{
-	for (int i = 0; i < monoObjectHandles.size(); ++i)
-	{
-		mono_gchandle_free(monoObjectHandles[i]);
-	}
-	monoObjectHandles.clear();
-}
-
 Resource* ScriptingModule::ImportScriptResource(const char* file)
 {
 	//May be new file or generic file event
@@ -970,23 +930,33 @@ void ScriptingModule::GameObjectKilled(GameObject* killed)
 	if (!monoObject)
 		return;
 
-	for (int i = 0; i < monoObjectHandles.size(); ++i)
-	{	
-		if (mono_gchandle_get_target(monoObjectHandles[i]) == monoObject)
-		{
-			MonoClass* monoObjectClass = mono_object_get_class(monoObject);
+	MonoClass* monoObjectClass = mono_object_get_class(monoObject);
 
-			MonoClassField* deletedField = mono_class_get_field_from_name(monoObjectClass, "destroyed");
+	MonoClassField* deletedField = mono_class_get_field_from_name(monoObjectClass, "destroyed");
 
-			bool temp = true;
-			mono_field_set_value(monoObject, deletedField, &temp);
+	bool temp = true;
+	mono_field_set_value(monoObject, deletedField, &temp);
 
-			mono_gchandle_free(monoObjectHandles[i]);
+	mono_gchandle_free(killed->GetMonoObjectHandle());
+}
 
-			monoObjectHandles.erase(monoObjectHandles.begin() + i);
-			break;
-		}
-	}
+void ScriptingModule::ComponentKilled(Component* killed)
+{
+	if (!killed)
+		return;
+
+	MonoObject* monoComponent = killed->GetMonoComponent();
+	if (!monoComponent)
+		return;
+
+	MonoClass* monoComponentClass = mono_object_get_class(monoComponent);
+
+	MonoClassField* deletedField = mono_class_get_field_from_name(monoComponentClass, "destroyed");
+
+	bool temp = true;
+	mono_field_set_value(monoComponent, deletedField, &temp);
+
+	mono_gchandle_free(killed->GetMonoComponentHandle());
 }
 
 void ScriptingModule::FixedUpdate()
@@ -1004,6 +974,21 @@ void ScriptingModule::OnDrawGizmos()
 		{
 			scripts[i]->OnDrawGizmos();
 		}
+}
+
+void ScriptingModule::OnDrawGizmosSelected()
+{
+#ifndef GAMEMODE
+	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
+		for (int i = 0; i < scripts.size(); ++i)
+		{
+			if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), scripts[i]->GetParent()->GetUUID()) 
+				!= App->scene->multipleSelection.end())
+			{
+				scripts[i]->OnDrawGizmosSelected();
+			}		
+		}
+#endif
 }
 
 void ScriptingModule::TemporalSave()
@@ -1146,7 +1131,7 @@ void DebugLogTranslator(MonoString* msg)
 	if (!mono_error_ok(&error))
 		return;
 
-	CONSOLE_LOG(LogTypes::Normal, string);
+	CONSOLE_SCRIPTING_LOG(LogTypes::Normal, string);
 
 	mono_free(string);
 }
@@ -1159,7 +1144,7 @@ void DebugLogWarningTranslator(MonoString* msg)
 	if (!mono_error_ok(&error))
 		return;
 
-	CONSOLE_LOG(LogTypes::Warning, string);
+	CONSOLE_SCRIPTING_LOG(LogTypes::Warning, string);
 
 	mono_free(string);
 }
@@ -1172,7 +1157,7 @@ void DebugLogErrorTranslator(MonoString* msg)
 	if (!mono_error_ok(&error))
 		return;
 
-	CONSOLE_LOG(LogTypes::Error, string)
+	CONSOLE_SCRIPTING_LOG(LogTypes::Error, string)
 
 	mono_free(string);
 }
@@ -1211,6 +1196,24 @@ void DebugDrawLine(MonoArray* origin, MonoArray* destination, MonoArray* color)
 	math::float4 col = color != nullptr ? math::float4(mono_array_get(color, float, 0), mono_array_get(color, float, 1), mono_array_get(color, float, 2), mono_array_get(color, float, 3)) : math::float4(0, 1, 0, 1);
 
 	App->debugDrawer->DebugDrawLine(originCPP, destinationCPP, Color(col.ptr()));
+}
+
+void DebugDrawBox(MonoArray* halfExtents, MonoArray* color, MonoArray* position, MonoArray* rotation, MonoArray* scale)
+{
+	if (!App->debugDrawer->IsDrawing() || !halfExtents)
+		return;
+
+	math::float3 pos = position != nullptr ? math::float3(mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2)) : math::float3::zero;
+	math::Quat rot = rotation != nullptr ? math::Quat(mono_array_get(rotation, float, 0), mono_array_get(rotation, float, 1), mono_array_get(rotation, float, 2), mono_array_get(rotation, float, 3)) : math::Quat::identity;
+	math::float3 sca = scale != nullptr ? math::float3(mono_array_get(scale, float, 0), mono_array_get(scale, float, 1), mono_array_get(scale, float, 2)) : math::float3::one;
+
+	math::float4 col = color != nullptr ? math::float4(mono_array_get(color, float, 0), mono_array_get(color, float, 1), mono_array_get(color, float, 2), mono_array_get(color, float, 3)) : math::float4(0, 1, 0, 1);
+
+	math::float3 halfExtentsCpp(mono_array_get(halfExtents, float, 0), mono_array_get(halfExtents, float, 1), mono_array_get(halfExtents, float, 2));
+
+	math::float4x4 global = math::float4x4::FromTRS(pos, rot, sca);
+
+	App->debugDrawer->DebugDrawBox(halfExtentsCpp, Color(col.ptr()), global);
 }
 
 int32_t GetKeyStateCS(int32_t key)
@@ -1257,7 +1260,7 @@ MonoString* InputGetCursorTexture()
 	return nullptr;
 }
 
-void InputSetCursorTexture(MonoString* name)
+void InputSetCursorTextureName(MonoString* name)
 {
 	if (!name)
 		return;
@@ -1269,6 +1272,11 @@ void InputSetCursorTexture(MonoString* name)
 	mono_free(namecpp);
 }
 
+void InputSetCursorTextureUUID(uint uuid)
+{
+	App->input->SetCursorTexture(uuid);
+}
+
 MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, MonoArray* rotation)
 {
 	if (!templateMO)
@@ -1276,11 +1284,9 @@ MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, M
 		//Instantiate an empty GameObject and returns the MonoObject
 
 		GameObject* instance = App->GOs->CreateGameObject("default", App->scene->root);
-
-		MonoClass* gameObjectClass = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "GameObject");
-		MonoObject* monoInstance = mono_object_new(App->scripting->domain, gameObjectClass);
-		mono_runtime_object_init(monoInstance);
-
+		
+		MonoObject* monoInstance = App->scripting->MonoObjectFrom(instance);
+		
 		if (position)
 		{
 			math::float3 newPos{mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2)};
@@ -1293,15 +1299,6 @@ MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, M
 			instance->transform->SetRotation(newRotation);
 		}
 
-		uint32_t handleID = mono_gchandle_new(monoInstance, true);
-
-		instance->SetMonoObject(handleID);
-
-		int address = (int)instance;
-		mono_field_set_value(monoInstance, mono_class_get_field_from_name(gameObjectClass, "cppAddress"), &instance);
-
-		App->scripting->monoObjectHandles.push_back(handleID);
-
 		return monoInstance;
 	}
 
@@ -1310,28 +1307,15 @@ MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, M
 		//Search for the monoTemplate and his GameObject representation in the map, create 2 new copies,
 		//add the GameObject to the Scene Hierarchy and returns the monoObject. Store this new Instantiated objects in the map.
 
-		GameObject* templateGO = nullptr;
-
-		for (int i = 0; i < App->scripting->monoObjectHandles.size(); ++i)
-		{
-			uint32_t handleID = App->scripting->monoObjectHandles[i];
-			MonoObject* temp = mono_gchandle_get_target(handleID);
-
-			if (temp == templateMO)
-			{
-				int address;
-				mono_field_get_value(temp, mono_class_get_field_from_name(mono_object_get_class(temp), "cppAddress"), &address);
-				templateGO = (GameObject*)address;
-				break;
-			}
-		}
+		GameObject* templateGO = App->scripting->GameObjectFrom(templateMO);
 
 		if (!templateGO)
 		{
 			//The user may be trying to instantiate a GameObject created through script. 
 			//This feature is not implemented for now.
-			CONSOLE_LOG(LogTypes::Error,	"Missing GameObject/MonoObject pair when instantiating from a MonoObject template.\n"
-											"Instantiating from a GameObject created through script is not supported for now.\n");
+			CONSOLE_LOG(LogTypes::Error, "Missing GameObject/MonoObject pair when instantiating from a MonoObject template.");
+			CONSOLE_LOG(LogTypes::Error, "Instantiating from a GameObject created through script is not supported for now.");
+											
 			return nullptr;
 		}
 
@@ -1361,38 +1345,16 @@ void DestroyObj(MonoObject* obj)
 	if (!obj)
 		return;
 
-	bool found = false;
-
 	std::string className = mono_class_get_name(mono_object_get_class(obj));
+	if (className != "GameObject")
+		return;
 
-	if (className == "GameObject")
-	{
-		for (int i = 0; i < App->scripting->monoObjectHandles.size(); ++i)
-		{
-			if (obj == mono_gchandle_get_target(App->scripting->monoObjectHandles[i]))
-			{
-				found = true;
+	GameObject* toDelete = App->scripting->GameObjectFrom(obj);
+	if (!toDelete)
+		return;
 
-				MonoClass* monoClass = mono_object_get_class(obj);
-				MonoClassField* destroyed = mono_class_get_field_from_name(monoClass, "destroyed");
-				mono_field_set_value(obj, destroyed, &found);
-
-				int address;
-				mono_field_get_value(obj, mono_class_get_field_from_name(monoClass, "cppAddress"), &address);
-
-				GameObject* toDelete = (GameObject*)address;
-
-				mono_gchandle_free(App->scripting->monoObjectHandles[i]);
-
-				App->scripting->monoObjectHandles.erase(App->scripting->monoObjectHandles.begin() + i);
-
-				//Destroy this GameObject
-				App->GOs->DeleteGameObject(toDelete);				
-
-				break;
-			}
-		}
-	}
+	//Destroy this GameObject
+	App->GOs->DeleteGameObject(toDelete);
 }
 
 MonoObject* Vector3RandomInsideSphere()
@@ -2371,6 +2333,10 @@ bool NavAgentGetPath(MonoObject* monoAgent, MonoArray* position, MonoArray* dest
 
 			return true;
 		}
+		else
+		{
+			*out_path = nullptr;
+		}
 	}
 	return false;
 }
@@ -2397,6 +2363,10 @@ bool NavigationGetPath(MonoArray* origin, MonoArray* destination, MonoArray** ou
 		}
 
 		return true;
+	}
+	else
+	{
+		*out_path = nullptr;
 	}
 	
 	return false;
@@ -2538,7 +2508,14 @@ void UpdateAnimationBlendTime(MonoObject* animatorComp, float newBlendTime)
 {
 	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(animatorComp);
 	if (animator)
-		animator->UpdateAnimationSpeed(newBlendTime);
+		animator->UpdateBlendTime(newBlendTime);
+}
+
+void SetAnimationLoop(MonoObject* animatorComp, bool loop)
+{
+	ComponentAnimator* animator = (ComponentAnimator*)App->scripting->ComponentFrom(animatorComp);
+	if (animator)
+		animator->SetAnimationLoop(loop);
 }
 
 void ParticleEmitterPlay(MonoObject* particleComp)
@@ -2794,6 +2771,15 @@ void ImageSetResourceName(MonoObject* monoImage, MonoString* imageName)
 		image->SetResImageName(imageNameCpp);
 
 		mono_free(imageNameCpp);
+	}
+}
+
+void ImageSetResourceUUID(MonoObject* monoImage, uint imageUUID)
+{
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
+	{	
+		image->SetResImageUuid(imageUUID);
 	}
 }
 
@@ -3482,6 +3468,89 @@ void MaterialSetResource(MonoObject* monoMaterial, MonoString* newMatName)
 	}
 }
 
+MonoString* ProjectorGetResource(MonoObject* monoProjector)
+{
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		std::string materialName = projector->GetMaterialResName();
+		if (materialName != "")
+			return mono_string_new(App->scripting->domain, materialName.data());
+		return nullptr;
+	}
+	return nullptr;
+}
+
+void ProjectorSetResource(MonoObject* monoProjector, MonoString* newResource)
+{
+	if (!newResource)
+		return;
+
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		char* matName = mono_string_to_utf8(newResource);
+
+		projector->SetMaterialRes(matName);
+
+		mono_free(matName);
+	}
+}
+
+float ProjectorGetFov(MonoObject* monoProjector)
+{
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		return projector->GetFOV();
+	}
+}
+
+void ProjectorSetFov(MonoObject* monoProjector, float fov)
+{
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		projector->SetFOV(fov);
+	}
+}
+
+float ProjectorGetNearDistance(MonoObject* monoProjector)
+{
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		return projector->GetNearPlaneDistance();
+	}
+}
+
+void ProjectorSetNearDistance(MonoObject* monoProjector, float nearDistance)
+{
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		projector->SetNearPlaneDistance(nearDistance);
+	}
+}
+
+float ProjectorGetFarDistance(MonoObject* monoProjector)
+{
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		return projector->GetFarPlaneDistance();
+	}
+}
+
+void ProjectorSetFarDistance(MonoObject* monoProjector, float farDistance)
+{
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		projector->SetFarPlaneDistance(farDistance);
+	}
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -3524,6 +3593,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Debug::ClearConsole", (const void*)&ClearConsole);
 	mono_add_internal_call("JellyBitEngine.Debug::_DrawSphere", (const void*)&DebugDrawSphere);
 	mono_add_internal_call("JellyBitEngine.Debug::_DrawLine", (const void*)&DebugDrawLine);
+	mono_add_internal_call("JellyBitEngine.Debug::_DrawBox", (const void*)&DebugDrawBox);
 
 	//Input
 	mono_add_internal_call("JellyBitEngine.Input::GetKeyState", (const void*)&GetKeyStateCS);
@@ -3532,7 +3602,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Input::GetWheelMovement", (const void*)&GetWheelMovementCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetMouseDeltaPos", (const void*)&GetMouseDeltaPosCS);
 	mono_add_internal_call("JellyBitEngine.Input::GetCursorTexture", (const void*)&InputGetCursorTexture);
-	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture", (const void*)&InputSetCursorTexture);
+	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture(string)", (const void*)&InputSetCursorTextureName);
+	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture(uint)", (const void*)&InputSetCursorTextureUUID);
 
 	//Object
 	mono_add_internal_call("JellyBitEngine.Object::Destroy", (const void*)&DestroyObj);
@@ -3588,6 +3659,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Animator::GetCurrentFrame", (const void*)&AnimatorGetCurrFrame);
 	mono_add_internal_call("JellyBitEngine.Animator::AnimationFinished", (const void*)&AnimatorAnimationFinished);
 	mono_add_internal_call("JellyBitEngine.Animator::UpdateAnimationSpeed", (const void*)&UpdateAnimationSpeed);
+	mono_add_internal_call("JellyBitEngine.Animator::SetAnimationLoop", (const void*)&SetAnimationLoop);
 	
 	//Particle Emitter
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Play", (const void*)&ParticleEmitterPlay);
@@ -3626,7 +3698,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetColor", (const void*)&ImageSetColor);
 	mono_add_internal_call("JellyBitEngine.UI.Image::ResetColor", (const void*)&ImageResetColor);
 	mono_add_internal_call("JellyBitEngine.UI.Image::GetResource", (const void*)&ImageGetResourceName);
-	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource", (const void*)&ImageSetResourceName);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource(string)", (const void*)&ImageSetResourceName);
+	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource(uint)", (const void*)&ImageSetResourceUUID);
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetMask", (const void*)&ImageSetMask);
 	mono_add_internal_call("JellyBitEngine.UI.Label::SetText", (const void*)&LabelSetText);
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetText", (const void*)&LabelGetText);
@@ -3708,8 +3781,16 @@ void ScriptingModule::CreateDomain()
 	//Material
 	mono_add_internal_call("JellyBitEngine.Material::SetResource", (const void*)&MaterialSetResource);
 
-	ClearMap();
-
+	//Projector
+	mono_add_internal_call("JellyBitEngine.Projector::SetResource", (const void*)&ProjectorSetResource);
+	mono_add_internal_call("JellyBitEngine.Projector::GetResource", (const void*)&ProjectorGetResource);
+	mono_add_internal_call("JellyBitEngine.Projector::GetFov", (const void*)&ProjectorGetFov);
+	mono_add_internal_call("JellyBitEngine.Projector::SetFov", (const void*)&ProjectorSetFov);
+	mono_add_internal_call("JellyBitEngine.Projector::GetNearDistance", (const void*)&ProjectorGetNearDistance);
+	mono_add_internal_call("JellyBitEngine.Projector::SetNearDistance", (const void*)&ProjectorSetNearDistance);
+	mono_add_internal_call("JellyBitEngine.Projector::GetFarDistance", (const void*)&ProjectorGetFarDistance);
+	mono_add_internal_call("JellyBitEngine.Projector::SetFarDistance", (const void*)&ProjectorSetFarDistance);
+	
 	firstDomain = false;
 }
 
@@ -3724,6 +3805,14 @@ void ScriptingModule::UpdateScriptingReferences()
 	MonoImageOpenStatus status = MONO_IMAGE_ERROR_ERRNO;
 	scriptsImage = mono_image_open_from_data(buffer, size, 1, &status);
 	scriptsAssembly = mono_assembly_load_from(scriptsImage, "ScriptingAssembly", &status);
+
+	ResourceScript::ClearScriptNames();
+
+	std::vector<Resource*> scriptResources = App->res->GetResourcesByType(ResourceTypes::ScriptResource);
+	for (Resource* res : scriptResources)
+	{
+		((ResourceScript*)res)->IncludeName();
+	}
 
 	delete[] buffer;
 }

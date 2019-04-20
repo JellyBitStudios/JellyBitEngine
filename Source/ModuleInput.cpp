@@ -321,7 +321,20 @@ void ModuleInput::SetCursorTexture(std::string& textureName)
 			break;
 		}
 	}
+}
 
+void ModuleInput::SetCursorTexture(uint textureUUID)
+{	
+	ResourceTexture* textureRes = (ResourceTexture*)App->res->GetResource(textureUUID);
+	if (!textureRes)
+		return;
+
+	if (CursorTextureUUID != 0)
+		App->res->SetAsUnused(CursorTextureUUID);
+
+	CursorTextureUUID = textureUUID;
+	App->res->SetAsUsed(CursorTextureUUID);
+	CursorTextureID = textureRes->GetId();
 }
 
 void ModuleInput::SetDefaultCursorTexture(ResourceTexture* textureRes)

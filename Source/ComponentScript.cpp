@@ -373,6 +373,31 @@ void ComponentScript::OnDrawGizmos()
 	}
 }
 
+void ComponentScript::OnDrawGizmosSelected()
+{
+	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
+	if (scriptRes && scriptRes->onDrawGizmosSelected)
+	{
+		MonoObject* exc = nullptr;
+		if (IsTreeActive())
+		{
+			mono_runtime_invoke(scriptRes->onDrawGizmosSelected, GetMonoComponent(), NULL, &exc);
+			if (exc)
+			{
+				System_Event event;
+				event.type = System_Event_Type::Pause;
+				App->PushSystemEvent(event);
+				App->Pause();
+
+				MonoString* exceptionMessage = mono_object_to_string(exc, NULL);
+				char* toLogMessage = mono_string_to_utf8(exceptionMessage);
+				CONSOLE_LOG(LogTypes::Error, toLogMessage);
+				mono_free(toLogMessage);
+			}
+		}
+	}
+}
+
 void ComponentScript::OnCollisionEnter(Collision& collision)
 {
 	ResourceScript* scriptRes = (ResourceScript*)App->res->GetResource(scriptResUUID);
@@ -848,7 +873,6 @@ void ComponentScript::OnUniqueEditor()
 
 		ImGui::NewLine();
 
-
 		if (!GetMonoComponent())
 		{
 			ImGui::TextColored({ .5,0,0,1 }, "SCRIPT WITH ERRORS, CHECK IT");
@@ -865,316 +889,354 @@ void ComponentScript::OnUniqueEditor()
 			std::string typeName = mono_type_full_name(type);
 			std::string fieldName = mono_field_get_name(field);
 
-			MonoClass* HideInInspectorClass = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "HideInInspector");
-			MonoMethodDesc* isHiddenDesc = mono_method_desc_new("JellyBitEngine.HideInInspector::IsHidden", true);
-			MonoMethod* isHiddenMethod = mono_method_desc_search_in_class(isHiddenDesc, HideInInspectorClass);
-			mono_method_desc_free(isHiddenDesc);
-
-			MonoString* fieldNameCS = mono_string_new(App->scripting->domain, fieldName.data());
+			MonoString* fieldNameCS = mono_string_new(App->scripting->domain, (char*)fieldName.data());
 			MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 			
-			void* params[2];
-			params[0] = myClassType;
-			params[1] = fieldNameCS;
-			
-			MonoObject* ret = mono_runtime_invoke(isHiddenMethod, NULL, params, NULL);
+			bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
 
-			bool hidden = *(bool*)mono_object_unbox(ret);
 			if(!hidden)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
+				if (!(flags & MONO_FIELD_ATTR_STATIC))
 				{
-					//This field is public and not static.
-					//Show the field, check the type and adapt the gui to it.
-
-					if (typeName == "bool")
+					bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+					if ( (flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
 					{
-						bool varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+						//This field is public and not static.
+						//Show the field, check the type and adapt the gui to it.
 
-						ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
-
-						ImGui::Text(fieldName.data()); ImGui::SameLine();
-
-						cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
-
-						if (ImGui::Checkbox(("##" + fieldName).data(), &varState))
+						if (typeName == "bool")
 						{
-							mono_field_set_value(GetMonoComponent(), field, &varState);
-						}
-					}
-					else if (typeName == "single") //this is a float, idk
-					{
-						float varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+							bool varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 
-						ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
 
-						ImGui::Text(fieldName.data()); ImGui::SameLine();
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
 
-						cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
 
-						if (ImGui::InputFloat(("##" + fieldName).data(), &varState))
-						{
-							mono_field_set_value(GetMonoComponent(), field, &varState);
-						}
-					}
-					else if (typeName == "double")
-					{
-						double varState;
-						mono_field_get_value(GetMonoComponent(), field, &varState);
-						ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
-
-						ImGui::Text(fieldName.data()); ImGui::SameLine();
-
-						cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
-
-						if (ImGui::InputDouble(("##" + fieldName).data(), &varState))
-						{
-							mono_field_set_value(GetMonoComponent(), field, &varState);
-						}
-					}
-					else if (typeName == "System.Decimal")
-					{
-						//We cant convert System.Decimal, since we do not have this decimal precision in any C++ type.
-					}
-					else if (typeName == "sbyte")
-					{
-						int8_t varState;
-						mono_field_get_value(GetMonoComponent(), field, &varState);
-
-						ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
-
-						ImGui::Text(fieldName.data()); ImGui::SameLine();
-
-						cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
-
-						int varState_int = (int)varState;
-						if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_U32, &varState_int))
-						{
-							varState = varState_int;
-							mono_field_set_value(GetMonoComponent(), field, &varState);
-						}
-					}
-					else if (typeName == "byte")
-					{
-						uint8_t varState;
-						mono_field_get_value(GetMonoComponent(), field, &varState);
-
-						ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
-
-						ImGui::Text(fieldName.data()); ImGui::SameLine();
-
-						cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
-
-						int varState_int = (int)varState;
-						if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_U32, &varState_int))
-						{
-							varState = varState_int;
-							mono_field_set_value(GetMonoComponent(), field, &varState);
-						}
-					}
-					else if (typeName == "int16")
-					{
-						int16_t varState;
-						mono_field_get_value(GetMonoComponent(), field, &varState);
-
-						ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
-
-						ImGui::Text(fieldName.data()); ImGui::SameLine();
-
-						cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
-
-						int varState_int = (int)varState;
-						if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_S32, &varState_int))
-						{
-							varState = varState_int;
-							mono_field_set_value(GetMonoComponent(), field, &varState);
-						}
-					}
-					else if (typeName == "uint16")
-					{
-						uint16_t varState;
-						mono_field_get_value(GetMonoComponent(), field, &varState);
-
-						ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
-
-						ImGui::Text(fieldName.data()); ImGui::SameLine();
-
-						cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
-
-						int varState_int = (int)varState;
-						if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_U32, &varState_int))
-						{
-							varState = varState_int;
-							mono_field_set_value(GetMonoComponent(), field, &varState);
-						}
-					}
-					else if (typeName == "int")
-					{
-						int32_t varState;
-						mono_field_get_value(GetMonoComponent(), field, &varState);
-
-						ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
-
-						ImGui::Text(fieldName.data()); ImGui::SameLine();
-
-						cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
-
-						if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_S32, &varState))
-						{
-							mono_field_set_value(GetMonoComponent(), field, &varState);
-						}
-					}
-					else if (typeName == "uint")
-					{
-						uint32_t varState;
-						mono_field_get_value(GetMonoComponent(), field, &varState);
-
-						ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
-
-						ImGui::Text(fieldName.data()); ImGui::SameLine();
-
-						cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
-
-						if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_U32, &varState))
-						{
-							mono_field_set_value(GetMonoComponent(), field, &varState);
-						}
-					}
-					else if (typeName == "long")
-					{
-						int64_t varState;
-						mono_field_get_value(GetMonoComponent(), field, &varState);
-
-						ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
-
-						ImGui::Text(fieldName.data()); ImGui::SameLine();
-
-						cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
-
-						if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_S64, &varState))
-						{
-							mono_field_set_value(GetMonoComponent(), field, &varState);
-						}
-					}
-					else if (typeName == "ulong")
-					{
-						uint64_t varState;
-						mono_field_get_value(GetMonoComponent(), field, &varState);
-
-						ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
-
-						ImGui::Text(fieldName.data()); ImGui::SameLine();
-
-						cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
-
-						if (ImGui::InputScalar(("##" + fieldName).data(), ImGuiDataType_U64, &varState))
-						{
-							mono_field_set_value(GetMonoComponent(), field, &varState);
-						}
-					}
-					else if (typeName == "char")
-					{
-						int temp;
-						mono_field_get_value(GetMonoComponent(), field, &temp);
-
-						char varState = (char)temp;
-
-						std::string stringToModify = std::string(1, varState);
-						if (ImGui::InputText(mono_field_get_name(field), &stringToModify))
-						{
-							MonoString* newString = mono_string_new(App->scripting->domain, stringToModify.data());
-							temp = (int)stringToModify[0];
-							mono_field_set_value(GetMonoComponent(), field, &temp);
-						}
-					}
-					else if (typeName == "string")
-					{
-						MonoString* varState;
-						mono_field_get_value(GetMonoComponent(), field, &varState);
-
-						char* convertedString = mono_string_to_utf8(varState);
-
-						std::string stringToModify = convertedString;
-
-						ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_FrameBg, { 0.26f, 0.59f, 0.98f, 0.5f });
-
-						if (ImGui::InputText(mono_field_get_name(field), &stringToModify))
-						{
-							MonoString* newString = mono_string_new(App->scripting->domain, stringToModify.data());
-							mono_field_set_value(GetMonoComponent(), field, newString);
-						}
-
-						ImGui::PopStyleColor();
-
-						mono_free(convertedString);
-					}
-					else if (typeName == "JellyBitEngine.GameObject")
-					{
-						uint buttonWidth = 0.65 * ImGui::GetWindowWidth();
-
-						float varState; mono_field_get_value(GetMonoComponent(), field, &varState);
-
-						ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
-
-						ImGui::Text(fieldName.data()); ImGui::SameLine();
-
-						cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
-
-						cursorPos = { cursorPos.x, cursorPos.y - 5 };
-
-						ImGui::ButtonEx(("##" + fieldName).data(), { (float)buttonWidth, 20 }, ImGuiButtonFlags_::ImGuiButtonFlags_Disabled);
-
-						//Case 1: Dragging Real GameObjects
-						if (ImGui::BeginDragDropTarget())
-						{
-							const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY", ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
-							if (payload)
+							if (ImGui::Checkbox(("##" + fieldName + std::to_string(UUID)).data(), &varState))
 							{
-								GameObject* go = *(GameObject**)payload->Data;
-
-								if (ImGui::IsMouseReleased(0))
-								{
-									MonoObject* monoObject = App->scripting->MonoObjectFrom(go);
-									mono_field_set_value(GetMonoComponent(), field, monoObject);
-								}
+								mono_field_set_value(GetMonoComponent(), field, &varState);
 							}
-							ImGui::EndDragDropTarget();
 						}
-
-						//Case 2: Dragging Prefabs
-						if (ImGui::BeginDragDropTarget())
+						else if (typeName == "single") //this is a float, idk
 						{
-							const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("PREFAB_RESOURCE", ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
-							if (payload)
-							{
-								ResourcePrefab* prefab = *(ResourcePrefab**)payload->Data;
+							float varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 
-								if (ImGui::IsMouseReleased(0))
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+							if (ImGui::InputFloat(("##" + fieldName + std::to_string(UUID)).data(), &varState))
+							{
+								mono_field_set_value(GetMonoComponent(), field, &varState);
+							}
+						}
+						else if (typeName == "double")
+						{
+							double varState;
+							mono_field_get_value(GetMonoComponent(), field, &varState);
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+							if (ImGui::InputDouble(("##" + fieldName + std::to_string(UUID)).data(), &varState))
+							{
+								mono_field_set_value(GetMonoComponent(), field, &varState);
+							}
+						}
+						else if (typeName == "System.Decimal")
+						{
+							//We cant convert System.Decimal, since we do not have this decimal precision in any C++ type.
+						}
+						else if (typeName == "sbyte")
+						{
+							int8_t varState;
+							mono_field_get_value(GetMonoComponent(), field, &varState);
+
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+							if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_S32, &varState))
+							{
+								mono_field_set_value(GetMonoComponent(), field, &varState);
+							}
+						}
+						else if (typeName == "byte")
+						{
+							uint8_t varState;
+							mono_field_get_value(GetMonoComponent(), field, &varState);
+
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+							if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_U32, &varState))
+							{
+								mono_field_set_value(GetMonoComponent(), field, &varState);
+							}
+						}
+						else if (typeName == "int16")
+						{
+							int16_t varState;
+							mono_field_get_value(GetMonoComponent(), field, &varState);
+
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+							if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_S32, &varState))
+							{
+								mono_field_set_value(GetMonoComponent(), field, &varState);
+							}
+						}
+						else if (typeName == "uint16")
+						{
+							uint16_t varState;
+							mono_field_get_value(GetMonoComponent(), field, &varState);
+
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+							if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_U32, &varState))
+							{
+								mono_field_set_value(GetMonoComponent(), field, &varState);
+							}
+						}
+						else if (typeName == "int")
+						{
+							int32_t varState;
+							mono_field_get_value(GetMonoComponent(), field, &varState);
+
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+							if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_S32, &varState))
+							{
+								mono_field_set_value(GetMonoComponent(), field, &varState);
+							}
+						}
+						else if (typeName == "uint")
+						{
+							uint32_t varState;
+							mono_field_get_value(GetMonoComponent(), field, &varState);
+
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+							if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_U32, &varState))
+							{
+								mono_field_set_value(GetMonoComponent(), field, &varState);
+							}
+						}
+						else if (typeName == "long")
+						{
+							int64_t varState;
+							mono_field_get_value(GetMonoComponent(), field, &varState);
+
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+							if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_S64, &varState))
+							{
+								mono_field_set_value(GetMonoComponent(), field, &varState);
+							}
+						}
+						else if (typeName == "ulong")
+						{
+							uint64_t varState;
+							mono_field_get_value(GetMonoComponent(), field, &varState);
+
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+							if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_U64, &varState))
+							{
+								mono_field_set_value(GetMonoComponent(), field, &varState);
+							}
+						}
+						else if (typeName == "char")
+						{
+							int temp;
+							mono_field_get_value(GetMonoComponent(), field, &temp);
+
+							char varState = (char)temp;
+
+							std::string stringToModify = std::string(1, varState);
+
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+							if (ImGui::InputText(("##" + fieldName + std::to_string(UUID)).data(), &stringToModify))
+							{
+								MonoString* newString = mono_string_new(App->scripting->domain, stringToModify.data());
+								temp = (int)stringToModify[0];
+								mono_field_set_value(GetMonoComponent(), field, &temp);
+							}
+						}
+						else if (typeName == "string")
+						{
+							MonoString* varState;
+							mono_field_get_value(GetMonoComponent(), field, &varState);
+
+							char* convertedString = mono_string_to_utf8(varState);
+
+							std::string stringToModify = convertedString;
+
+							ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_FrameBg, { 0.26f, 0.59f, 0.98f, 0.5f });
+
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+							if (ImGui::InputText(("##" + fieldName + std::to_string(UUID)).data(), &stringToModify))
+							{
+								MonoString* newString = mono_string_new(App->scripting->domain, stringToModify.data());
+								mono_field_set_value(GetMonoComponent(), field, newString);
+							}
+
+							ImGui::PopStyleColor();
+
+							mono_free(convertedString);
+						}
+						else if (typeName == "JellyBitEngine.GameObject")
+						{
+							uint buttonWidth = 0.65 * ImGui::GetWindowWidth();
+
+							float varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+							cursorPos = { cursorPos.x, cursorPos.y - 5 };
+
+							ImGui::ButtonEx(("##" + fieldName + std::to_string(UUID)).data(), { (float)buttonWidth, 20 }, ImGuiButtonFlags_::ImGuiButtonFlags_Disabled);
+
+							//Case 1: Dragging Real GameObjects
+							if (ImGui::BeginDragDropTarget())
+							{
+								const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY", ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
+								if (payload)
+								{
+									GameObject* go = *(GameObject**)payload->Data;
+
+									if (ImGui::IsMouseReleased(0))
+									{
+										MonoObject* monoObject = App->scripting->MonoObjectFrom(go);
+										mono_field_set_value(GetMonoComponent(), field, monoObject);
+									}
+								}
+								ImGui::EndDragDropTarget();
+							}
+
+							//Case 2: Dragging Prefabs
+							if (ImGui::BeginDragDropTarget())
+							{
+								const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("PREFAB_RESOURCE", ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
+								if (payload)
+								{
+									ResourcePrefab* prefab = *(ResourcePrefab**)payload->Data;
+
+									if (ImGui::IsMouseReleased(0))
+									{
+										MonoObject* oldObject;
+										mono_field_get_value(GetMonoComponent(), field, &oldObject);
+
+										if (oldObject != nullptr)
+										{
+											GameObject* oldGameObject = App->scripting->GameObjectFrom(oldObject);
+											if (oldGameObject)
+											{
+												if (oldGameObject->prefab)
+												{
+													App->res->SetAsUnused(oldGameObject->prefab->GetUuid());
+												}
+											}
+										}
+
+										App->res->SetAsUsed(prefab->GetUuid());
+
+										MonoObject* monoObject = App->scripting->MonoObjectFrom(prefab->GetRoot());
+										mono_field_set_value(GetMonoComponent(), field, monoObject);
+									}
+								}
+								ImGui::EndDragDropTarget();
+							}
+
+							if (ImGui::IsItemClicked(0))
+							{
+								ImDrawList* drawList = ImGui::GetWindowDrawList();
+								drawList->AddRectFilled(cursorPos, { cursorPos.x + buttonWidth, cursorPos.y + 20 }, ImGui::GetColorU32(ImGuiCol_::ImGuiCol_ButtonActive));
+							}
+							else if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
+							{
+								ImDrawList* drawList = ImGui::GetWindowDrawList();
+								drawList->AddRectFilled(cursorPos, { cursorPos.x + buttonWidth, cursorPos.y + 20 }, ImGui::GetColorU32(ImGuiCol_::ImGuiCol_ButtonHovered));
+
+								if (App->input->GetKey(SDL_SCANCODE_BACKSPACE) == KEY_DOWN)
 								{
 									MonoObject* oldObject;
 									mono_field_get_value(GetMonoComponent(), field, &oldObject);
@@ -1191,186 +1253,145 @@ void ComponentScript::OnUniqueEditor()
 										}
 									}
 
-									App->res->SetAsUsed(prefab->GetUuid());
-
-									MonoObject* monoObject = App->scripting->MonoObjectFrom(prefab->GetRoot());
-									mono_field_set_value(GetMonoComponent(), field, monoObject);
+									mono_field_set_value(GetMonoComponent(), field, NULL);
 								}
 							}
-							ImGui::EndDragDropTarget();
-						}
 
-						if (ImGui::IsItemClicked(0))
-						{
-							ImDrawList* drawList = ImGui::GetWindowDrawList();
-							drawList->AddRectFilled(cursorPos, { cursorPos.x + buttonWidth, cursorPos.y + 20 }, ImGui::GetColorU32(ImGuiCol_::ImGuiCol_ButtonActive));
-						}
-						else if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
-						{
-							ImDrawList* drawList = ImGui::GetWindowDrawList();
-							drawList->AddRectFilled(cursorPos, { cursorPos.x + buttonWidth, cursorPos.y + 20 }, ImGui::GetColorU32(ImGuiCol_::ImGuiCol_ButtonHovered));
+							//Button text
+							MonoObject* monoObject;
+							mono_field_get_value(GetMonoComponent(), field, &monoObject);
 
-							if (App->input->GetKey(SDL_SCANCODE_BACKSPACE) == KEY_DOWN)
+							std::string text;
+
+							if (monoObject)
 							{
-								MonoObject* oldObject;
-								mono_field_get_value(GetMonoComponent(), field, &oldObject);
+								bool destroyed;
+								mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "destroyed"), &destroyed);
 
-								if (oldObject != nullptr)
+								if (!destroyed)
 								{
-									GameObject* oldGameObject = App->scripting->GameObjectFrom(oldObject);
-									if (oldGameObject)
+									GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+									if (gameObject)
 									{
-										if (oldGameObject->prefab)
-										{
-											App->res->SetAsUnused(oldGameObject->prefab->GetUuid());
-										}
+										if (gameObject->prefab)
+											text = gameObject->GetName() + std::string(" (Prefab)");
+										else
+											text = gameObject->GetName() + std::string(" (GameObject)");
 									}
 								}
-
-								mono_field_set_value(GetMonoComponent(), field, NULL);
-							}
-						}
-
-						//Button text
-						MonoObject* monoObject;
-						mono_field_get_value(GetMonoComponent(), field, &monoObject);
-
-						std::string text;
-
-						if (monoObject)
-						{
-							bool destroyed;
-							mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "destroyed"), &destroyed);
-
-							if (!destroyed)
-							{
-								GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
-								if (gameObject)
+								else
 								{
-									if (gameObject->prefab)
-										text = gameObject->GetName() + std::string(" (Prefab)");
-									else
-										text = gameObject->GetName() + std::string(" (GameObject)");
+									mono_field_set_value(GetMonoComponent(), field, NULL);
 								}
 							}
 							else
 							{
-								mono_field_set_value(GetMonoComponent(), field, NULL);
+								text = "NULL (GameObject)";
 							}
+
+							ImGui::SetCursorScreenPos({ cursorPos.x + 5, cursorPos.y + 3 });
+
+							ImGui::Text(text.data());
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 4 });
 						}
-						else
+						else if (typeName == "JellyBitEngine.Transform")
 						{
-							text = "NULL (GameObject)";
-						}
+							uint buttonWidth = 0.65 * ImGui::GetWindowWidth();
 
-						ImGui::SetCursorScreenPos({ cursorPos.x + 5, cursorPos.y + 3 });
+							float varState; mono_field_get_value(GetMonoComponent(), field, &varState);
 
-						ImGui::Text(text.data());
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
 
-						cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 4 });
-					}
-					else if (typeName == "JellyBitEngine.Transform")
-					{
-						uint buttonWidth = 0.65 * ImGui::GetWindowWidth();
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
 
-						float varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
 
-						ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+							cursorPos = { cursorPos.x, cursorPos.y - 5 };
 
-						ImGui::Text(fieldName.data()); ImGui::SameLine();
+							ImGui::ButtonEx(("##" + fieldName + std::to_string(UUID)).data(), { (float)buttonWidth, 20 }, ImGuiButtonFlags_::ImGuiButtonFlags_Disabled);
 
-						cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
-
-						cursorPos = { cursorPos.x, cursorPos.y - 5 };
-
-						ImGui::ButtonEx(("##" + fieldName).data(), { (float)buttonWidth, 20 }, ImGuiButtonFlags_::ImGuiButtonFlags_Disabled);
-
-						if (ImGui::BeginDragDropTarget())
-						{
-							const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY", ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
-							if (payload)
+							if (ImGui::BeginDragDropTarget())
 							{
-								GameObject* go = *(GameObject**)payload->Data;
-
-								if (ImGui::IsMouseReleased(0))
+								const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY", ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
+								if (payload)
 								{
-									MonoObject* monoObject = App->scripting->MonoObjectFrom(go);
+									GameObject* go = *(GameObject**)payload->Data;
 
-									MonoObject* monoTransform;
-									mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "transform"), &monoTransform);
+									if (ImGui::IsMouseReleased(0))
+									{
+										MonoObject* monoObject = App->scripting->MonoObjectFrom(go);
 
-									mono_field_set_value(GetMonoComponent(), field, monoTransform);
+										MonoObject* monoTransform;
+										mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "transform"), &monoTransform);
+
+										mono_field_set_value(GetMonoComponent(), field, monoTransform);
+									}
+								}
+								ImGui::EndDragDropTarget();
+							}
+
+							if (ImGui::IsItemClicked(0))
+							{
+								ImDrawList* drawList = ImGui::GetWindowDrawList();
+								drawList->AddRectFilled(cursorPos, { cursorPos.x + buttonWidth, cursorPos.y + 20 }, ImGui::GetColorU32(ImGuiCol_::ImGuiCol_ButtonActive));
+							}
+							else if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
+							{
+								ImDrawList* drawList = ImGui::GetWindowDrawList();
+								drawList->AddRectFilled(cursorPos, { cursorPos.x + buttonWidth, cursorPos.y + 20 }, ImGui::GetColorU32(ImGuiCol_::ImGuiCol_ButtonHovered));
+
+								if (App->input->GetKey(SDL_SCANCODE_BACKSPACE) == KEY_DOWN)
+								{
+									mono_field_set_value(GetMonoComponent(), field, NULL);
 								}
 							}
-							ImGui::EndDragDropTarget();
-						}
 
-						if (ImGui::IsItemClicked(0))
-						{
-							ImDrawList* drawList = ImGui::GetWindowDrawList();
-							drawList->AddRectFilled(cursorPos, { cursorPos.x + buttonWidth, cursorPos.y + 20 }, ImGui::GetColorU32(ImGuiCol_::ImGuiCol_ButtonActive));
-						}
-						else if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
-						{
-							ImDrawList* drawList = ImGui::GetWindowDrawList();
-							drawList->AddRectFilled(cursorPos, { cursorPos.x + buttonWidth, cursorPos.y + 20 }, ImGui::GetColorU32(ImGuiCol_::ImGuiCol_ButtonHovered));
+							//Button text
+							MonoObject* monoTransform;
+							mono_field_get_value(GetMonoComponent(), field, &monoTransform);
 
-							if (App->input->GetKey(SDL_SCANCODE_BACKSPACE) == KEY_DOWN)
+							MonoObject* monoObject;
+							if (monoTransform)
+								mono_field_get_value(monoTransform, mono_class_get_field_from_name(mono_object_get_class(monoTransform), "gameObject"), &monoObject);
+
+							std::string text;
+
+							if (monoTransform)
 							{
-								mono_field_set_value(GetMonoComponent(), field, NULL);
-							}
-						}
+								bool destroyed;
+								mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "destroyed"), &destroyed);
 
-						//Button text
-						MonoObject* monoTransform;
-						mono_field_get_value(GetMonoComponent(), field, &monoTransform);
-
-						MonoObject* monoObject;
-						if (monoTransform)
-							mono_field_get_value(monoTransform, mono_class_get_field_from_name(mono_object_get_class(monoTransform), "gameObject"), &monoObject);
-
-						std::string text;
-
-						if (monoTransform)
-						{
-							bool destroyed;
-							mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "destroyed"), &destroyed);
-
-							if (!destroyed)
-							{
-								GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
-								text = gameObject->GetName() + std::string(" (Transform)");
+								if (!destroyed)
+								{
+									GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+									text = gameObject->GetName() + std::string(" (Transform)");
+								}
+								else
+								{
+									mono_field_set_value(GetMonoComponent(), field, NULL);
+								}
 							}
 							else
 							{
-								mono_field_set_value(GetMonoComponent(), field, NULL);
+								text = "NULL (Transform)";
 							}
+
+							ImGui::SetCursorScreenPos({ cursorPos.x + 5, cursorPos.y + 3 });
+
+							ImGui::Text(text.data());
+
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 4 });
 						}
-						else
-						{
-							text = "NULL (Transform)";
-						}
-
-						ImGui::SetCursorScreenPos({ cursorPos.x + 5, cursorPos.y + 3 });
-
-						ImGui::Text(text.data());
-
-						cursorPos = ImGui::GetCursorScreenPos();
-						ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 4 });
-					}
-					else if (typeName == "JellyBitEngine.LayerMask")
-					{
-						MonoObject* layerMask;
-						mono_field_get_value(GetMonoComponent(), field, &layerMask);
-
-						if (layerMask)
+						else if (typeName == "JellyBitEngine.LayerMask")
 						{
 							uint32_t bits;
-							mono_field_get_value(layerMask, mono_class_get_field_from_name(mono_object_get_class(layerMask), "masks"), &bits);
-
+							mono_field_get_value(GetMonoComponent(), field, &bits);
+						
 							std::string enabled;
 							uint totalLayers = 0u;
 							uint amountEnabled = 0u;
@@ -1400,87 +1421,111 @@ void ComponentScript::OnUniqueEditor()
 									if (ImGui::Selectable(layerName, (bits >> i) & 1U == 1 ? true : false, ImGuiSelectableFlags_::ImGuiSelectableFlags_DontClosePopups))
 									{
 										bits ^= 1UL << i;
-										mono_field_set_value(layerMask, mono_class_get_field_from_name(mono_object_get_class(layerMask), "masks"), &bits);
+										mono_field_set_value(GetMonoComponent(), field, &bits);
 									}
 								}
 								ImGui::EndCombo();
 							}
 							ImGui::PopItemWidth();
 						}
-					}
-					else if (mono_class_is_enum(mono_type_get_class(type)))
-					{
-						//A public enum
-
-						//Get the saved value, as int and as string
-						MonoClass* enumClass = mono_get_enum_class();
-
-						int32_t enumValue;
-						mono_field_get_value(GetMonoComponent(), field, &enumValue);
-
-						MonoObject* enumOBJ = mono_field_get_value_object(App->scripting->domain, field, GetMonoComponent());
-
-						MonoMethodDesc* ToStringDesc = mono_method_desc_new("Enum::ToString", false);
-						MonoMethod* ToStringMethod = mono_method_desc_search_in_class(ToStringDesc, enumClass);
-						mono_method_desc_free(ToStringDesc);
-
-						MonoObject* ret = mono_runtime_invoke(ToStringMethod, enumOBJ, NULL, NULL);
-						MonoString* monoString = mono_object_to_string(ret, NULL);
-
-						char* string = mono_string_to_utf8(monoString);
-
-						//Create the combo
-						if (ImGui::BeginCombo((fieldName + std::string("##") + std::to_string(UUID)).data(), string))
+						else if (typeName == "JellyBitEngine.Vector3")
 						{
-							//ImGui::TextColored({ 1,0,0,1 }, "IN PROGRESS");
+							math::float3 varState;
+							mono_field_get_value(GetMonoComponent(), field, &varState);
 
-							//Get the number of values this enum has
+							ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
 
-							MonoMethodDesc* GetValuesDesc = mono_method_desc_new("Enum::GetValues", false);
-							MonoMethod* GetValuesMethod = mono_method_desc_search_in_class(GetValuesDesc, enumClass);
-							mono_method_desc_free(GetValuesDesc);
+							ImGui::Text(fieldName.data()); ImGui::SameLine();
 
-							MonoMethodDesc* ParseDesc = mono_method_desc_new("Enum::Parse", false);
-							MonoMethod* ParseMethod = mono_method_desc_search_in_class(ParseDesc, enumClass);
-							mono_method_desc_free(ParseDesc);
+							cursorPos = ImGui::GetCursorScreenPos();
+							ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
 
-							MonoMethodDesc* GetTypeDesc = mono_method_desc_new("object::GetType", false);
-							MonoMethod* GetTypeMethod = mono_method_desc_search_in_class(GetTypeDesc, mono_get_object_class());
-							mono_method_desc_free(GetTypeDesc);
-
-							MonoObject* enumType = mono_runtime_invoke(GetTypeMethod, enumOBJ, NULL, NULL);
-
-							void* params[1];
-							params[0] = enumType;
-
-							MonoArray* values = (MonoArray*)mono_runtime_invoke(GetValuesMethod, NULL, params, NULL);
-
-							uint numValues = mono_array_length(values);
-
-							for (int i = 0; i < numValues; ++i)
+							if (ImGui::DragFloat3(("##" + fieldName + std::to_string(UUID)).data(), varState.ptr()))
 							{
-								void* nameParams[2];
-								nameParams[0] = enumType;
-								nameParams[1] = mono_string_new(App->scripting->domain, std::to_string(i).data());
+								mono_field_set_value(GetMonoComponent(), field, &varState);
+							}
+						}
+						else if (mono_class_is_enum(mono_type_get_class(type)))
+						{
+							//A public enum
 
-								MonoObject* stringOBJ = mono_runtime_invoke(ParseMethod, NULL, nameParams, NULL);
+							//Get the saved value, as int and as string
+							MonoClass* enumClass = mono_get_enum_class();
 
-								MonoString* stringCS = mono_object_to_string(stringOBJ, NULL);
+							int32_t enumValue;
+							mono_field_get_value(GetMonoComponent(), field, &enumValue);
 
-								char* stringcpp = mono_string_to_utf8(stringCS);
+							MonoObject* enumOBJ = mono_field_get_value_object(App->scripting->domain, field, GetMonoComponent());
 
-								if (ImGui::Selectable(stringcpp))
+							MonoMethodDesc* ToStringDesc = mono_method_desc_new("Enum::ToString", false);
+							MonoMethod* ToStringMethod = mono_method_desc_search_in_class(ToStringDesc, enumClass);
+							mono_method_desc_free(ToStringDesc);
+
+							MonoObject* ret = mono_runtime_invoke(ToStringMethod, enumOBJ, NULL, NULL);
+							MonoString* monoString = mono_object_to_string(ret, NULL);
+
+							char* string = mono_string_to_utf8(monoString);
+
+							//Create the combo
+							if (ImGui::BeginCombo((fieldName + std::string("##") + std::to_string(UUID)).data(), string))
+							{
+								//ImGui::TextColored({ 1,0,0,1 }, "IN PROGRESS");
+
+								//Get the number of values this enum has
+
+								MonoMethodDesc* GetValuesDesc = mono_method_desc_new("Enum::GetValues", false);
+								MonoMethod* GetValuesMethod = mono_method_desc_search_in_class(GetValuesDesc, enumClass);
+								mono_method_desc_free(GetValuesDesc);
+
+								MonoMethodDesc* ParseDesc = mono_method_desc_new("Enum::Parse", false);
+								MonoMethod* ParseMethod = mono_method_desc_search_in_class(ParseDesc, enumClass);
+								mono_method_desc_free(ParseDesc);
+
+								MonoMethodDesc* GetTypeDesc = mono_method_desc_new("object::GetType", false);
+								MonoMethod* GetTypeMethod = mono_method_desc_search_in_class(GetTypeDesc, mono_get_object_class());
+								mono_method_desc_free(GetTypeDesc);
+
+								MonoObject* enumType = mono_runtime_invoke(GetTypeMethod, enumOBJ, NULL, NULL);
+
+								void* params[1];
+								params[0] = enumType;
+
+								MonoArray* values = (MonoArray*)mono_runtime_invoke(GetValuesMethod, NULL, params, NULL);
+
+								uint numValues = mono_array_length(values);
+
+								for (int i = 0; i < numValues; ++i)
 								{
-									mono_field_set_value(GetMonoComponent(), field, &i);
+									void* nameParams[2];
+									nameParams[0] = enumType;
+									nameParams[1] = mono_string_new(App->scripting->domain, std::to_string(i).data());
+
+									MonoObject* stringOBJ = mono_runtime_invoke(ParseMethod, NULL, nameParams, NULL);
+
+									MonoString* stringCS = mono_object_to_string(stringOBJ, NULL);
+
+									char* stringcpp = mono_string_to_utf8(stringCS);
+
+									if (ImGui::Selectable(stringcpp))
+									{
+										mono_field_set_value(GetMonoComponent(), field, &i);
+									}
+
+									mono_free(stringcpp);
 								}
 
-								mono_free(stringcpp);
+								ImGui::EndCombo();
 							}
 
-							ImGui::EndCombo();
+							mono_free(string);
 						}
-
-						mono_free(string);
+						else if (mono_type_is_struct(type))
+						{
+							MonoObject* structOBJ = mono_field_get_value_object(App->scripting->domain, field, GetMonoComponent());
+							OnStructEditor(structOBJ, field);
+							mono_field_set_value(GetMonoComponent(), field, mono_object_unbox(structOBJ));
+						}
 					}
 				}
 			}		
@@ -1488,6 +1533,446 @@ void ComponentScript::OnUniqueEditor()
 			field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 		}
 		ImGui::NewLine();
+	}
+#endif
+}
+
+void ComponentScript::OnStructEditor(MonoObject* structOBJ, MonoClassField* structField)
+{
+#ifndef GAMEMODE
+
+	MonoClass* structClass = mono_object_get_class(structOBJ);
+	const char* name = mono_class_get_name(structClass);
+	std::string structFieldName = mono_field_get_name(structField);
+	
+	if (ImGui::TreeNode((structFieldName + "##" + std::to_string(UUID)).data()))
+	{
+		void* iterator = 0;
+		MonoClassField* field = nullptr;
+		do
+		{
+			field = mono_class_get_fields(structClass, &iterator);
+			if (field)
+			{
+				MonoType* type = mono_field_get_type(field);
+				std::string fieldName = mono_field_get_name(field);
+				std::string typeName = mono_type_full_name(type);
+
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, (char*)fieldName.data());
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(structClass));
+
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
+					{
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							if (typeName == "bool")
+							{
+								bool varState; mono_field_get_value(structOBJ, field, &varState);
+
+								ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+								ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+								cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+								if (ImGui::Checkbox(("##" + fieldName + std::to_string(UUID)).data(), &varState))
+								{
+									mono_field_set_value(structOBJ, field, &varState);
+								}
+							}
+							else if (typeName == "single") //this is a float, idk
+							{
+								float varState; mono_field_get_value(structOBJ, field, &varState);
+
+								ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+								ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+								cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+								if (ImGui::InputFloat(("##" + fieldName + std::to_string(UUID)).data(), &varState))
+								{
+									mono_field_set_value(structOBJ, field, &varState);
+								}
+							}
+							else if (typeName == "double")
+							{
+								double varState;
+								mono_field_get_value(structOBJ, field, &varState);
+								ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+								ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+								cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+								if (ImGui::InputDouble(("##" + fieldName + std::to_string(UUID)).data(), &varState))
+								{
+									mono_field_set_value(structOBJ, field, &varState);
+								}
+							}
+							else if (typeName == "System.Decimal")
+							{
+								//We cant convert System.Decimal, since we do not have this decimal precision in any C++ type.
+							}
+							else if (typeName == "sbyte")
+							{
+								int8_t varState;
+								mono_field_get_value(structOBJ, field, &varState);
+
+								ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+								ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+								cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+								if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_S32, &varState))
+								{
+									mono_field_set_value(structOBJ, field, &varState);
+								}
+							}
+							else if (typeName == "byte")
+							{
+								uint8_t varState;
+								mono_field_get_value(structOBJ, field, &varState);
+
+								ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+								ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+								cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+								if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_U32, &varState))
+								{
+									mono_field_set_value(structOBJ, field, &varState);
+								}
+							}
+							else if (typeName == "int16")
+							{
+								int16_t varState;
+								mono_field_get_value(structOBJ, field, &varState);
+
+								ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+								ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+								cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+								if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_S32, &varState))
+								{
+									mono_field_set_value(structOBJ, field, &varState);
+								}
+							}
+							else if (typeName == "uint16")
+							{
+								uint16_t varState;
+								mono_field_get_value(structOBJ, field, &varState);
+
+								ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+								ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+								cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+								if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_U32, &varState))
+								{
+									mono_field_set_value(structOBJ, field, &varState);
+								}
+							}
+							else if (typeName == "int")
+							{
+								int32_t varState;
+								mono_field_get_value(structOBJ, field, &varState);
+
+								ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+								ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+								cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+								if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_S32, &varState))
+								{
+									mono_field_set_value(structOBJ, field, &varState);
+								}
+							}
+							else if (typeName == "uint")
+							{
+								uint32_t varState;
+								mono_field_get_value(structOBJ, field, &varState);
+
+								ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+								ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+								cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+								if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_U32, &varState))
+								{
+									mono_field_set_value(structOBJ, field, &varState);
+								}
+							}
+							else if (typeName == "long")
+							{
+								int64_t varState;
+								mono_field_get_value(structOBJ, field, &varState);
+
+								ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+								ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+								cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+								if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_S64, &varState))
+								{
+									mono_field_set_value(structOBJ, field, &varState);
+								}
+							}
+							else if (typeName == "ulong")
+							{
+								uint64_t varState;
+								mono_field_get_value(structOBJ, field, &varState);
+
+								ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+								ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+								cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+								if (ImGui::InputScalar(("##" + fieldName + std::to_string(UUID)).data(), ImGuiDataType_::ImGuiDataType_U64, &varState))
+								{
+									mono_field_set_value(structOBJ, field, &varState);
+								}
+							}
+							else if (typeName == "char")
+							{
+								int temp;
+								mono_field_get_value(structOBJ, field, &temp);
+
+								char varState = (char)temp;
+
+								std::string stringToModify = std::string(1, varState);
+
+								ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+								ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+								cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+								if (ImGui::InputText(("##" + fieldName + std::to_string(UUID)).data(), &stringToModify))
+								{
+									MonoString* newString = mono_string_new(App->scripting->domain, stringToModify.data());
+									temp = (int)stringToModify[0];
+									mono_field_set_value(structOBJ, field, &temp);
+								}
+							}
+							else if (typeName == "string")
+							{
+								MonoString* varState = nullptr;
+								mono_field_get_value(structOBJ, field, &varState);
+
+								if (!varState)
+									varState = mono_string_new(App->scripting->domain, "");
+
+								char* convertedString = mono_string_to_utf8(varState);
+
+								std::string stringToModify = convertedString;
+
+								ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_FrameBg, { 0.26f, 0.59f, 0.98f, 0.5f });
+
+								ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+								ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+								cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+								if (ImGui::InputText(("##" + fieldName + std::to_string(UUID)).data(), &stringToModify))
+								{
+									MonoString* newString = mono_string_new(App->scripting->domain, stringToModify.data());
+									mono_field_set_value(structOBJ, field, newString);
+								}
+
+								ImGui::PopStyleColor();
+
+								mono_free(convertedString);
+							}
+							else if (typeName == "JellyBitEngine.Vector3")
+							{
+								math::float3 varState;
+								mono_field_get_value(structOBJ, field, &varState);
+
+								ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 5 });
+
+								ImGui::Text(fieldName.data()); ImGui::SameLine();
+
+								cursorPos = ImGui::GetCursorScreenPos();
+								ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y - 5 });
+
+								if (ImGui::DragFloat3(("##" + fieldName + std::to_string(UUID)).data(), varState.ptr()))
+								{
+									mono_field_set_value(structOBJ, field, &varState);
+								}
+							}
+							else if (typeName == "JellyBitEngine.LayerMask")
+							{
+								uint32_t bits;
+								mono_field_get_value(structOBJ, field, &bits);
+
+								std::string enabled;
+								uint totalLayers = 0u;
+								uint amountEnabled = 0u;
+
+								for (uint i = 0; i < MAX_NUM_LAYERS; ++i)
+								{
+									const char* layerName = App->layers->NumberToName(i);
+									if (strcmp(layerName, "") == 0)
+										continue;
+
+									totalLayers++;
+									enabled = (bits >> i) & 1U == 1 ? layerName : enabled;
+									amountEnabled += (bits >> i) & 1U == 1 ? 1 : 0;
+								}
+
+								const char* title = amountEnabled == 0 ? "None" : amountEnabled == 1 ? enabled.data() : totalLayers == amountEnabled ? "Everything" : "Multiple Selected";
+
+								ImGui::PushItemWidth(150.0f);
+								if (ImGui::BeginCombo((fieldName + "##" + std::to_string(UUID)).data(), title))
+								{
+									for (uint i = 0; i < MAX_NUM_LAYERS; ++i)
+									{
+										const char* layerName = App->layers->NumberToName(i);
+										if (strcmp(layerName, "") == 0)
+											continue;
+
+										if (ImGui::Selectable(layerName, (bits >> i) & 1U == 1 ? true : false, ImGuiSelectableFlags_::ImGuiSelectableFlags_DontClosePopups))
+										{
+											bits ^= 1UL << i;
+											mono_field_set_value(structOBJ, field, &bits);
+										}
+									}
+									ImGui::EndCombo();
+								}
+								ImGui::PopItemWidth();
+							}
+							else if (mono_class_is_enum(mono_type_get_class(type)))
+							{
+								//A public enum
+
+								//Get the saved value, as int and as string
+								MonoClass* enumClass = mono_get_enum_class();
+
+								int32_t enumValue;
+								mono_field_get_value(structOBJ, field, &enumValue);
+
+								MonoObject* enumOBJ = mono_field_get_value_object(App->scripting->domain, field, structOBJ);
+
+								MonoMethodDesc* ToStringDesc = mono_method_desc_new("Enum::ToString", false);
+								MonoMethod* ToStringMethod = mono_method_desc_search_in_class(ToStringDesc, enumClass);
+								mono_method_desc_free(ToStringDesc);
+
+								MonoObject* ret = mono_runtime_invoke(ToStringMethod, enumOBJ, NULL, NULL);
+								MonoString* monoString = mono_object_to_string(ret, NULL);
+
+								char* string = mono_string_to_utf8(monoString);
+
+								//Create the combo
+								if (ImGui::BeginCombo((fieldName + std::string("##") + std::to_string(UUID)).data(), string))
+								{
+									//ImGui::TextColored({ 1,0,0,1 }, "IN PROGRESS");
+
+									//Get the number of values this enum has
+
+									MonoMethodDesc* GetValuesDesc = mono_method_desc_new("Enum::GetValues", false);
+									MonoMethod* GetValuesMethod = mono_method_desc_search_in_class(GetValuesDesc, enumClass);
+									mono_method_desc_free(GetValuesDesc);
+
+									MonoMethodDesc* ParseDesc = mono_method_desc_new("Enum::Parse", false);
+									MonoMethod* ParseMethod = mono_method_desc_search_in_class(ParseDesc, enumClass);
+									mono_method_desc_free(ParseDesc);
+
+									MonoMethodDesc* GetTypeDesc = mono_method_desc_new("object::GetType", false);
+									MonoMethod* GetTypeMethod = mono_method_desc_search_in_class(GetTypeDesc, mono_get_object_class());
+									mono_method_desc_free(GetTypeDesc);
+
+									MonoObject* enumType = mono_runtime_invoke(GetTypeMethod, enumOBJ, NULL, NULL);
+
+									void* params[1];
+									params[0] = enumType;
+
+									MonoArray* values = (MonoArray*)mono_runtime_invoke(GetValuesMethod, NULL, params, NULL);
+
+									uint numValues = mono_array_length(values);
+
+									for (int i = 0; i < numValues; ++i)
+									{
+										void* nameParams[2];
+										nameParams[0] = enumType;
+										nameParams[1] = mono_string_new(App->scripting->domain, std::to_string(i).data());
+
+										MonoObject* stringOBJ = mono_runtime_invoke(ParseMethod, NULL, nameParams, NULL);
+
+										MonoString* stringCS = mono_object_to_string(stringOBJ, NULL);
+
+										char* stringcpp = mono_string_to_utf8(stringCS);
+
+										if (ImGui::Selectable(stringcpp))
+										{
+											mono_field_set_value(structOBJ, field, &i);
+										}
+
+										mono_free(stringcpp);
+									}
+
+									ImGui::EndCombo();
+								}
+
+								mono_free(string);
+							}
+							else if (mono_type_is_struct(type))
+							{
+								MonoObject* childOBJ = mono_field_get_value_object(App->scripting->domain, field, structOBJ);
+								OnStructEditor(childOBJ, field);
+								mono_field_set_value(structOBJ, field, mono_object_unbox(childOBJ));
+							}
+						}
+					}
+				}
+			}
+
+		} while (field);
+
+		ImGui::TreePop();
 	}
 #endif
 }
@@ -1683,6 +2168,16 @@ uint ComponentScript::GetPublicVarsSerializationBytes() const
 
 				uint nameLenght = fieldName.length();
 				bytes += (sizeof(varType) + sizeof(uint) + nameLenght + sizeof(uint32_t));
+			}
+			else if (mono_type_is_struct(type))
+			{
+				varType = VarType::STRUCT;
+				uint nameLenght = fieldName.length();
+
+				int alignment = 0;
+				int size = mono_type_size(type, &alignment);
+
+				bytes += (sizeof(varType) + sizeof(uint) + nameLenght + sizeof(uint) + size);	
 			}
 		}
 		field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -1906,6 +2401,20 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 			memcpy(&var, cursor, bytes);
 			totalSize += bytes;
 			cursor += bytes;
+
+			break;
+		}
+		case VarType::STRUCT:
+		{
+			bytes = sizeof(uint32_t);
+
+			uint32_t size;
+			memcpy(&size, cursor, bytes);
+
+			totalSize += bytes + size;
+			cursor += bytes + size;
+
+			break;
 		}
 		default:
 			break;
@@ -1933,23 +2442,24 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 			MonoType* type = mono_field_get_type(field);
 			std::string typeName = mono_type_full_name(type);
 
-			if(	typeName == "bool"							||
-				typeName == "single"						||
-				typeName == "double"						||
-				typeName == "sbyte"							||
-				typeName == "byte"							||
-				typeName == "int16"							||
-				typeName == "uint16"						||
-				typeName == "int"							||
-				typeName == "uint"							||
-				typeName == "long"							||
-				typeName == "ulong"							||
-				typeName == "char"							||
-				typeName == "string"						||
-				typeName == "JellyBitEngine.GameObject"		||
-				typeName == "JellyBitEngine.Transform"		||
-				typeName == "JellyBitEngine.LayerMask"		||
-				mono_class_is_enum(mono_type_get_class(type)))
+			if(	typeName == "bool"								||
+				typeName == "single"							||
+				typeName == "double"							||
+				typeName == "sbyte"								||
+				typeName == "byte"								||
+				typeName == "int16"								||
+				typeName == "uint16"							||
+				typeName == "int"								||
+				typeName == "uint"								||
+				typeName == "long"								||
+				typeName == "ulong"								||
+				typeName == "char"								||
+				typeName == "string"							||
+				typeName == "JellyBitEngine.GameObject"			||
+				typeName == "JellyBitEngine.Transform"			||
+				typeName == "JellyBitEngine.LayerMask"			||
+				mono_class_is_enum(mono_type_get_class(type))	||
+				mono_type_is_struct(type))
 
 			//Only count the serializable ones
 			numVars++;
@@ -2411,12 +2921,9 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 				//Serialize the var value
 
-				MonoObject* layerMask;
-				mono_field_get_value(GetMonoComponent(), field, &layerMask);
-
 				uint32_t varState = 0;
-				mono_field_get_value(layerMask, mono_class_get_field_from_name(mono_object_get_class(layerMask), "masks"), &varState);
-
+				mono_field_get_value(GetMonoComponent(), field, &varState);
+			
 				bytes = sizeof(uint32_t);
 				memcpy(cursor, &varState, bytes);
 				cursor += bytes;
@@ -2448,6 +2955,41 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 
 				bytes = sizeof(uint32_t);
 				memcpy(cursor, &value, bytes);
+				cursor += bytes;
+			}
+			else if (mono_type_is_struct(type))
+			{
+				varType = VarType::STRUCT;
+
+				//Serialize the varType
+				bytes = sizeof(varType);
+				memcpy(cursor, &varType, bytes);
+				cursor += bytes;
+
+				//Serialize the varName (length + string)
+
+				bytes = sizeof(uint);
+				uint nameLenght = fieldName.length();
+				memcpy(cursor, &nameLenght, bytes);
+				cursor += bytes;
+
+				bytes = nameLenght;
+				memcpy(cursor, fieldName.c_str(), bytes);
+				cursor += bytes;
+
+				//Serialize the var value
+				int alignment = 0;
+				uint size = mono_type_size(type, &alignment);	
+
+				bytes = sizeof(uint);
+				memcpy(cursor, &size, bytes);
+				cursor += bytes;
+
+				char* value = new char[size];
+				mono_field_get_value(GetMonoComponent(), field, value);
+
+				bytes = size;
+				memcpy(cursor, value, bytes);
 				cursor += bytes;
 			}
 		}
@@ -2983,7 +3525,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 		{
 			//DeSerialize the var value
 			bytes = sizeof(uint32_t);
-			uint32_t var;
+			uint32_t var = 0u;
 			memcpy(&var, cursor, bytes);
 			cursor += bytes;
 
@@ -3001,10 +3543,7 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 
 					if (typeName == "JellyBitEngine.LayerMask" && fieldName == varName)
 					{
-						MonoObject* layerMask;
-						mono_field_get_value(GetMonoComponent(), field, &layerMask);
-
-						mono_field_set_value(layerMask, mono_class_get_field_from_name(mono_object_get_class(layerMask), "masks"), &var);
+						mono_field_set_value(GetMonoComponent(), field, &var);
 						break;
 					}
 				}
@@ -3041,6 +3580,42 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 							break;
 						}
 					}				
+				}
+				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
+			}
+			break;
+		}
+		case VarType::STRUCT:
+		{
+			//DeSerialize the var value
+			bytes = sizeof(uint);
+			uint32_t size;
+			memcpy(&size, cursor, bytes);
+			cursor += bytes;
+
+			char* structContent = new char[size];
+			memcpy(structContent, cursor, size);
+			cursor += size;
+
+			void* iterator = 0;
+			MonoClassField* field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
+
+			while (field != nullptr)
+			{
+				uint32_t flags = mono_field_get_flags(field);
+				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
+				{
+					MonoType* type = mono_field_get_type(field);
+					if (mono_type_is_struct(type))
+					{
+						std::string fieldName = mono_field_get_name(field);
+
+						if (fieldName == varName)
+						{
+							mono_field_set_value(GetMonoComponent(), field, structContent);
+							break;
+						}
+					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
@@ -3119,8 +3694,6 @@ void ComponentScript::InstanceClass()
 	mono_field_set_value(compInstance, mono_class_get_field_from_name(klass, "gameObject"), App->scripting->MonoObjectFrom(GetParent()));
 
 	monoCompHandle = mono_gchandle_new(compInstance, true);
-
-	App->scripting->monoComponentHandles.push_back(monoCompHandle);
 }
 
 void ComponentScript::InstanceClass(MonoObject* _classInstance)
@@ -3153,5 +3726,36 @@ void ComponentScript::InstanceClass(MonoObject* _classInstance)
 	mono_field_set_value(_classInstance, mono_class_get_field_from_name(klass, "gameObject"), App->scripting->MonoObjectFrom(GetParent()));
 
 	monoCompHandle = mono_gchandle_new(_classInstance, true);
-	App->scripting->monoComponentHandles.push_back(monoCompHandle);
+}
+
+bool ComponentScript::FieldHasHideInInspector(MonoReflectionType* classType, MonoString* fieldName)
+{
+	MonoClass* HideInInspectorClass = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "HideInInspector");
+	MonoMethodDesc* isHiddenDesc = mono_method_desc_new("JellyBitEngine.HideInInspector::IsHidden", true);
+	MonoMethod* isHiddenMethod = mono_method_desc_search_in_class(isHiddenDesc, HideInInspectorClass);
+	mono_method_desc_free(isHiddenDesc);
+
+	void* params[2];
+	params[0] = classType;
+	params[1] = fieldName;
+
+	MonoObject* ret = mono_runtime_invoke(isHiddenMethod, NULL, params, NULL);
+
+	return *(bool*)mono_object_unbox(ret);
+}
+
+bool ComponentScript::FieldHasSerializeField(MonoReflectionType* classType, MonoString* fieldName)
+{
+	MonoClass* SerializeFieldClass = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "SerializeField");
+	MonoMethodDesc* IsSerializableDesc = mono_method_desc_new("JellyBitEngine.SerializeField::IsSerializable", true);
+	MonoMethod* IsSerializableMethod = mono_method_desc_search_in_class(IsSerializableDesc, SerializeFieldClass);
+	mono_method_desc_free(IsSerializableDesc);
+
+	void* params[2];
+	params[0] = classType;
+	params[1] = fieldName;
+
+	MonoObject* ret = mono_runtime_invoke(IsSerializableMethod, NULL, params, NULL);
+
+	return *(bool*)mono_object_unbox(ret);
 }

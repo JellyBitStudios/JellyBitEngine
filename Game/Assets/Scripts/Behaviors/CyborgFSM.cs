@@ -3,30 +3,10 @@ using System;
 using JellyBitEngine;
 
 // https://forum.unity.com/threads/c-proper-state-machine.380612/
-
-public enum StateType
-{
-    None,
-
-    // GoTo
-    GoToDangerDistance,
-    GoToAttackDistance,
-
-    // Wander
-    Wander,
-    Strafe,
-
-    // Attack
-    Attack,
-
-    // Hit
-    Hit
-}
+// >, <=
 
 public abstract class ICyborgMeleeState
 {
-    public StateType stateType = StateType.None;
-
     public abstract void Enter(CyborgMeleeController owner);
     public abstract void Execute(CyborgMeleeController owner);
     public abstract void Exit(CyborgMeleeController owner);
@@ -71,17 +51,20 @@ public class CyborgMeleeFSM
     }
 }
 
+#region GO_TO_GAMEOBJECT
 // ----------------------------------------------------------------------------------------------------
 // GoToGameObject
 // ----------------------------------------------------------------------------------------------------
 
 public class GoToGameObject : ICyborgMeleeState
 {
-    private StateType prevStateType = StateType.None;
-
-    // -----
-
-    private GameObject target = null;
+    public enum GoToGameObjectType
+    {
+        GoToDangerDistance,
+        GoToAttackDistance,
+        Runaway
+    }
+    private GoToGameObjectType stateType;
 
     // -----
 
@@ -90,36 +73,49 @@ public class GoToGameObject : ICyborgMeleeState
 
     // --------------------------------------------------
 
-    public GoToGameObject(GameObject target, StateType stateType, StateType prevStateType = StateType.None)
+    public GoToGameObject(GameObject target, GoToGameObjectType stateType)
     {
         this.stateType = stateType;
-        this.prevStateType = prevStateType;
-
-        // -----
-
-        this.target = target;
     }
 
     // --------------------------------------------------
 
     public override void Enter(CyborgMeleeController owner)
     {
-        /// Activate/Deactivate
-        owner.agent.ActivateSeek();
-
         switch (stateType)
         {
-            case StateType.GoToDangerDistance:
+            case GoToGameObjectType.GoToDangerDistance: // Seek, default max acceleration and velocity
 
                 Debug.Log("Enter GoToGameObject: GoToDangerDistance");
 
                 /// Activate/Deactivate
                 owner.agent.separationData.isActive = false;
                 owner.agent.collisionAvoidanceData.isActive = true;
+                owner.agent.ActivateSeek();
 
                 break;
 
-            case StateType.GoToAttackDistance:
+            case GoToGameObjectType.Runaway: // Flee, 1.5f max acceleration and velocity
+
+                Debug.Log("Enter GoToGameObject: Runaway");
+
+                maxAcceleration = owner.agent.agentData.maxAcceleration;
+                maxVelocity = owner.agent.agentData.maxVelocity;
+
+                // -----
+
+                // Agent data
+                owner.agent.agentData.maxAcceleration *= 1.5f;
+                owner.agent.agentData.maxVelocity *= 1.5f;
+
+                /// Activate/Deactivate
+                owner.agent.separationData.isActive = false;
+                owner.agent.collisionAvoidanceData.isActive = true;
+                owner.agent.ActivateFlee();
+
+                break;
+
+            case GoToGameObjectType.GoToAttackDistance: // Seek, half max acceleration and velocity
 
                 Debug.Log("Enter GoToGameObject: GoToAttackDistance");
 
@@ -135,46 +131,68 @@ public class GoToGameObject : ICyborgMeleeState
                 /// Activate/Deactivate
                 owner.agent.separationData.isActive = true;
                 owner.agent.collisionAvoidanceData.isActive = false;
+                owner.agent.ActivateSeek();
 
                 break;
         }
 
-        owner.agent.SetDestination(target.transform.position);
+        if (!owner.agent.SetDestination(Alita.Call.transform.position))
+            owner.fsm.ChangeState(new Wander(Wander.WanderType.Wander));
     }
 
     public override void Execute(CyborgMeleeController owner)
     {
         switch (stateType)
         {
-            case StateType.GoToDangerDistance:
+            case GoToGameObjectType.GoToDangerDistance:
                 {
-                    float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
-                    if (distanceToTarget <= owner.character.dangerDistance)
+                    float distanceToTarget = (Alita.Call.transform.position - owner.transform.position).magnitude;
+                    if (distanceToTarget <= owner.character.dangerDistance) // dangerDistance: am I INSIDE my DANGER range?
                     {
-                        owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.GoToAttackDistance, stateType));
+                        owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObjectType.GoToAttackDistance));
+                        return;
+                    }
+                    else if (owner.agent.HasArrived) // HasArrived: has my target run away?
+                    {
+                        owner.fsm.ChangeState(new Wander(Wander.WanderType.Wander));
                         return;
                     }
                 }
                 break;
 
-            case StateType.GoToAttackDistance:
+            case GoToGameObjectType.Runaway:
                 {
-                    float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
-                    if (distanceToTarget <= owner.character.attackDistance)
+                    float distanceToTarget = (Alita.Call.transform.position - owner.transform.position).magnitude;
+                    if (distanceToTarget > owner.character.dangerDistance) // attackDistance: am I OUTSIDE my DANGER range?
+                    {
+                        owner.fsm.ChangeState(new Wander(Wander.WanderType.Wander));
+                        return;
+                    }
+                }
+                break;
+            case GoToGameObjectType.GoToAttackDistance:
+                {
+                    float distanceToTarget = (Alita.Call.transform.position - owner.transform.position).magnitude;
+                    if (distanceToTarget <= owner.character.attackDistance) // attackDistance: am I INSIDE my ATTACK range?
                     {
                         // Am I allowed to attack?
-                        if (owner.battleCircle.AddAttacker(owner.gameObject))
+                        if (Alita.Call.battleCircle.AddAttacker(owner.gameObject))
                         {
                             // Yes! Attack
-                            owner.fsm.ChangeState(new Attack(owner.target, StateType.Attack, stateType));
+                            owner.fsm.ChangeState(new Attack());
                             return;
                         }
                         else
                         {
                             // No! Strafe
-                            owner.fsm.ChangeState(new Wander(StateType.Strafe, stateType));
+                            owner.fsm.ChangeState(new Wander(Wander.WanderType.Strafe));
                             return;
                         }
+                    }
+                    else if (owner.agent.HasArrived) // HasArrived: has my target run away?
+                    {
+                        owner.fsm.ChangeState(new Wander(Wander.WanderType.Wander));
+                        return;
                     }
                 }
                 break;
@@ -185,13 +203,26 @@ public class GoToGameObject : ICyborgMeleeState
     {
         switch (stateType)
         {
-            case StateType.GoToDangerDistance:
+            case GoToGameObjectType.GoToDangerDistance:
 
                 Debug.Log("Exit GoToGameObject: GoToDangerDistance");
 
                 break;
 
-            case StateType.GoToAttackDistance:
+            case GoToGameObjectType.Runaway:
+
+                Debug.Log("Exit GoToGameObject: Runaway");
+
+                owner.agent.agentData.maxAcceleration = maxAcceleration;
+                owner.agent.agentData.maxVelocity = maxVelocity;
+
+                owner.agent.separationData.isActive = true;
+                owner.agent.collisionAvoidanceData.isActive = true;
+                owner.agent.ActivateSeek();
+
+                break;
+
+            case GoToGameObjectType.GoToAttackDistance:
 
                 Debug.Log("Exit GoToGameObject: GoToAttackDistance");
 
@@ -206,24 +237,35 @@ public class GoToGameObject : ICyborgMeleeState
     {
         switch (stateType)
         {
-            case StateType.GoToDangerDistance:
+            case GoToGameObjectType.GoToDangerDistance:
                 Debug.DrawSphere(owner.character.dangerDistance, Color.Blue, owner.transform.position, Quaternion.identity, Vector3.one);
                 break;
 
-            case StateType.GoToAttackDistance:
-                Debug.DrawSphere(owner.character.attackDistance, Color.Green, owner.transform.position, Quaternion.identity, Vector3.one);
+            case GoToGameObjectType.Runaway:
+                Debug.DrawSphere(owner.character.dangerDistance, Color.Blue, owner.transform.position, Quaternion.identity, Vector3.one);
+                Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
+                break;
+            case GoToGameObjectType.GoToAttackDistance:
+                Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
                 break;
         }
     }
 }
+#endregion
 
+#region WANDER
 // ----------------------------------------------------------------------------------------------------
 // Wander
 // ----------------------------------------------------------------------------------------------------
 
 public class Wander : ICyborgMeleeState
 {
-    private StateType prevStateType = StateType.None;
+    public enum WanderType
+    {
+        Wander,
+        Strafe
+    }
+    private WanderType stateType;
 
     // -----
 
@@ -237,32 +279,39 @@ public class Wander : ICyborgMeleeState
 
     // --------------------------------------------------
 
-    public Wander(StateType stateType, StateType prevStateType = StateType.None)
+    public Wander(WanderType stateType)
     {
         this.stateType = stateType;
-        this.prevStateType = prevStateType;
     }
 
     // --------------------------------------------------
 
     public override void Enter(CyborgMeleeController owner)
     {
+        /// Activate/Deactivate
+        owner.agent.ActivateWander();
+        owner.agent.ActivateAvoidance();
+
+        owner.agent.ClearPath();
+
         switch (stateType)
         {
-            case StateType.Wander:
+            case WanderType.Wander:
 
                 Debug.Log("Enter Wander: Wander");
 
                 // Default agent data
-                // Default wander data
 
-                /// Activate/Deactivate
-                owner.agent.ActivateWander();
-                owner.agent.ActivateAvoidance();
+                // Wander data (default)
+                owner.agent.wanderData.radius = 1.0f;
+                owner.agent.wanderData.offset = 2.0f;
+
+                owner.agent.wanderData.minTime = 1.0f;
+                owner.agent.wanderData.maxTime = 2.0f;
 
                 break;
 
-            case StateType.Strafe:
+            case WanderType.Strafe:
 
                 Debug.Log("Enter Wander: Strafe");
 
@@ -282,10 +331,6 @@ public class Wander : ICyborgMeleeState
                 owner.agent.wanderData.minTime = 0.3f;
                 owner.agent.wanderData.maxTime = 0.7f;
 
-                /// Activate/Deactivate
-                owner.agent.ActivateWander();
-                owner.agent.ActivateAvoidance();
-
                 strafeTime = (float)MathScript.GetRandomDouble(owner.character.strafeMinTime, owner.character.strafeMaxTime);
 
                 break;
@@ -296,21 +341,22 @@ public class Wander : ICyborgMeleeState
     {
         switch (stateType)
         {
-            case StateType.Wander:
+            case WanderType.Wander:
 
-                if (owner.lineOfSight.IsTargetSeen)
+                if (owner.lineOfSight.IsTargetSeen // IsTargetSeen: have I seen the target?
+                    && owner.CurrentLife > owner.character.minLife) // minLife: do I have enough life to attack the target?
                 {
-                    owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.GoToDangerDistance, stateType));
+                    owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.GoToDangerDistance));
                     return;
                 }
 
                 break;
 
-            case StateType.Strafe:
+            case WanderType.Strafe:
 
                 if (timer >= strafeTime)
                 {
-                    owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.GoToDangerDistance, stateType));
+                    owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.GoToDangerDistance)); // danger distance just in case I have moved out of my attack range
                     return;
                 }
 
@@ -324,18 +370,28 @@ public class Wander : ICyborgMeleeState
     {
         switch (stateType)
         {
-            case StateType.Wander:
+            case WanderType.Wander:
 
                 Debug.Log("Exit Wander: Wander");
 
+                /// Activate/Deactivate
+                owner.agent.ActivateSeek();
+                // Avoidance is already activated
+
                 break;
 
-            case StateType.Strafe:
+            case WanderType.Strafe:
 
                 Debug.Log("Exit Wander: Strafe");
 
                 owner.agent.agentData.maxAcceleration = maxAcceleration;
                 owner.agent.agentData.maxVelocity = maxVelocity;
+
+                // -----
+
+                /// Activate/Deactivate
+                owner.agent.ActivateSeek();
+                // Avoidance is already activated
 
                 break;
         }
@@ -346,24 +402,17 @@ public class Wander : ICyborgMeleeState
 
     }
 }
+#endregion
 
+#region ATTACK
 // ----------------------------------------------------------------------------------------------------
 // Attack
 // ----------------------------------------------------------------------------------------------------
 
 public class Attack : ICyborgMeleeState
 {
-    private StateType prevStateType = StateType.None;
-
-    // -----
-
-    private GameObject target = null;
-
-    // -----
-
-    private bool faceDataIsActive = false;
-    private bool lookWhereYoureGoingDataIsActive = false;
     private bool isMovementStopped = false;
+    private float maxAngularAcceleration = 0.0f;
 
     // -----
 
@@ -379,14 +428,9 @@ public class Attack : ICyborgMeleeState
 
     // --------------------------------------------------
 
-    public Attack(GameObject target, StateType stateType, StateType prevStateType = StateType.None)
+    public Attack()
     {
-        this.stateType = stateType;
-        this.prevStateType = prevStateType;
 
-        // -----
-
-        this.target = target;
     }
 
     // --------------------------------------------------
@@ -395,9 +439,8 @@ public class Attack : ICyborgMeleeState
     {
         Debug.Log("Enter Attack");
 
-        faceDataIsActive = owner.agent.alignData.faceData.isActive;
-        lookWhereYoureGoingDataIsActive = owner.agent.alignData.lookWhereYoureGoingData.isActive;
         isMovementStopped = owner.agent.isMovementStopped;
+        maxAngularAcceleration = owner.agent.agentData.maxAngularAcceleration;
 
         // -----
 
@@ -407,7 +450,11 @@ public class Attack : ICyborgMeleeState
 
         owner.agent.isMovementStopped = true;
 
-        owner.agent.SetFace(target);
+        // Align: Face data
+        owner.agent.agentData.maxAngularAcceleration = owner.character.trackMaxAngularAcceleration;
+        owner.agent.SetFace(Alita.Call.gameObject);
+
+        // -----
 
         actualAttackRate = owner.character.attackRate + (float)MathScript.GetRandomDouble(-1.0, 1.0) * owner.character.attackRateFluctuation;
         lastAttackedTime = -actualAttackRate;
@@ -415,31 +462,29 @@ public class Attack : ICyborgMeleeState
 
     public override void Execute(CyborgMeleeController owner)
     {
-        float distanceToTarget = (target.transform.position - owner.transform.position).magnitude;
-        // The target moves out of ATTACK range
-        // The owner dies
-        if (distanceToTarget > owner.character.attackDistance
-            || owner.character.life <= 0)
+        float distanceToTarget = (Alita.Call.gameObject.transform.position - owner.transform.position).magnitude;
+        bool contains = Alita.Call.battleCircle.AttackersContains(owner.gameObject);
+        if (distanceToTarget > owner.character.attackDistance // attackDistance: has the target moved out of my attack range?
+            || !contains) // attackers: am I still an attacker?
         {
-            owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.GoToAttackDistance, stateType));
+            if (contains)
+                Alita.Call.battleCircle.RemoveAttacker(owner.gameObject);
+
+            owner.fsm.ChangeState(new GoToGameObject(Alita.Call.gameObject, GoToGameObject.GoToGameObjectType.GoToDangerDistance)); // danger distance just in case I have moved out of my attack range
             return;
         }
 
         // When attack cooldown is 0.0f...
-        //Debug.Log("Attack cooldown: " + AttackCooldown);
         if (AttackCooldown <= 0.0f)
         {
             // Am I allowed to hit?
-            if (owner.battleCircle.AddSimultaneousAttacker(owner.gameObject))
+            if (Alita.Call.battleCircle.AddSimultaneousAttacker(owner.gameObject))
             {
                 // Yes! Hit
-                owner.fsm.ChangeState(new Attack(owner.target, StateType.Attack, stateType));
-                // Hit can be successful or not...
+                owner.fsm.ChangeState(new Hit());
                 return;
             }
         }
-
-        // -----
 
         timer += Time.deltaTime;
     }
@@ -448,13 +493,14 @@ public class Attack : ICyborgMeleeState
     {
         Debug.Log("Exit Attack");
 
-        owner.agent.alignData.faceData.isActive = faceDataIsActive;
-        owner.agent.alignData.lookWhereYoureGoingData.isActive = lookWhereYoureGoingDataIsActive;
         owner.agent.isMovementStopped = isMovementStopped;
+        owner.agent.agentData.maxAngularAcceleration = maxAngularAcceleration;
 
         // -----
 
-        owner.battleCircle.RemoveAttacker(owner.gameObject);
+        /// Activate/Deactivate
+        owner.agent.alignData.faceData.isActive = false;
+        owner.agent.alignData.lookWhereYoureGoingData.isActive = true;
     }
 
     public override void DrawGizmos(CyborgMeleeController owner)
@@ -462,29 +508,27 @@ public class Attack : ICyborgMeleeState
         Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
     }
 }
+#endregion
 
+#region HIT
 // ----------------------------------------------------------------------------------------------------
 // Hit
 // ----------------------------------------------------------------------------------------------------
 
 public class Hit : ICyborgMeleeState
 {
-    private StateType prevStateType = StateType.None;
+    private bool isMovementStopped = false;
+    private float maxAngularAcceleration = 0.0f;
 
     // -----
 
-    private GameObject target = null;
+    private float timer = 0.0f;
 
     // --------------------------------------------------
 
-    public Hit(GameObject target, StateType stateType, StateType prevStateType = StateType.None)
+    public Hit()
     {
-        this.stateType = stateType;
-        this.prevStateType = prevStateType;
 
-        // -----
-
-        this.target = target;
     }
 
     // --------------------------------------------------
@@ -492,23 +536,102 @@ public class Hit : ICyborgMeleeState
     public override void Enter(CyborgMeleeController owner)
     {
         Debug.Log("Enter Hit");
+
+        isMovementStopped = owner.agent.isMovementStopped;
+        maxAngularAcceleration = owner.agent.agentData.maxAngularAcceleration;
+
+        // -----
+
+        /// Activate/Deactivate
+        owner.agent.alignData.faceData.isActive = true;
+        owner.agent.alignData.lookWhereYoureGoingData.isActive = false;
+
+        owner.agent.isMovementStopped = true;
+
+        // Align: Face data
+        owner.agent.agentData.maxAngularAcceleration = owner.character.trackMaxAngularAcceleration;
+        owner.agent.SetFace(Alita.Call.gameObject);
     }
 
     public override void Execute(CyborgMeleeController owner)
     {
-        // If animation has finished... Attack
-        owner.fsm.ChangeState(new GoToGameObject(owner.target, StateType.Attack, stateType));
-        return;
+        if (timer >= 3.0f)
+        {
+            Debug.Log("HIT!");
+            Alita.Call.character.currentLife -= owner.character.dmg;
+
+            owner.fsm.ChangeState(new Attack());
+            return;
+        }
+
+        timer += Time.deltaTime;
     }
 
     public override void Exit(CyborgMeleeController owner)
     {
         Debug.Log("Exit Hit");
-        owner.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
+
+        owner.agent.isMovementStopped = isMovementStopped;
+        owner.agent.agentData.maxAngularAcceleration = maxAngularAcceleration;
+
+        // -----
+
+        /// Activate/Deactivate
+        owner.agent.alignData.faceData.isActive = false;
+        owner.agent.alignData.lookWhereYoureGoingData.isActive = true;
+
+        Alita.Call.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
     }
 
     public override void DrawGizmos(CyborgMeleeController owner)
     {
-        
+        Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
     }
 }
+#endregion
+
+#region DIE
+// ----------------------------------------------------------------------------------------------------
+// Die
+// ----------------------------------------------------------------------------------------------------
+
+public class Die : ICyborgMeleeState
+{
+    public Die()
+    {
+
+    }
+
+    // --------------------------------------------------
+
+    public override void Enter(CyborgMeleeController owner)
+    {
+        Debug.Log("Enter Die");
+
+        owner.agent.ClearPath();
+        owner.agent.ClearMovementAndRotation();
+        owner.agent.isMovementStopped = true;
+        owner.agent.isRotationStopped = true;
+    }
+
+    public override void Execute(CyborgMeleeController owner)
+    {
+        Debug.Log("Die");
+        // if animation has finished...
+        EnemyEvent myEvent = new EnemyEvent();
+        myEvent.type = Event_Type.EnemyDie;
+        myEvent.gameObject = owner.gameObject;
+        EventsManager.Call.PushEvent(myEvent);
+    }
+
+    public override void Exit(CyborgMeleeController owner)
+    {
+        Debug.Log("Exit Die");
+    }
+
+    public override void DrawGizmos(CyborgMeleeController owner)
+    {
+
+    }
+}
+#endregion

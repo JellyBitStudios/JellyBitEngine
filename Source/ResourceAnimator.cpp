@@ -11,8 +11,6 @@
 
 #include <assert.h>
 
-#define BLEND_TIME 1.0f
-
 ResourceAnimator::ResourceAnimator(ResourceTypes type, uint uuid, ResourceData data, ResourceAnimatorData animator_data) : Resource(type, uuid, data), animator_data(animator_data)
 {}
 
@@ -533,12 +531,13 @@ bool ResourceAnimator::Update()
 
 	if (current_anim->anim_timer >= current_anim->duration && current_anim->duration > 0.0f)
 	{
-		if (current_anim->loop) {
-			current_anim->finished = true;
+		current_anim->finished = true;
+
+		if (current_anim->loop) 
 			current_anim->anim_timer = 0.0f;
-		}
-		else
+		else 
 			anim_state = AnimationState::STOPPED;
+		
 	}
 	else {
 		current_anim->finished = false;
@@ -572,7 +571,7 @@ bool ResourceAnimator::Update()
 		last_anim->anim_timer += dt * last_anim->anim_speed * animation_speed_mod;
 		current_anim->anim_timer += dt * current_anim->anim_speed * animation_speed_mod;
 		blend_timer += dt;
-		float blend_percentage = blend_timer / BLEND_TIME;
+		float blend_percentage = blend_timer / blend_timelapse;
 		
 		ResourceAvatar* tmp_avatar = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
 		if (tmp_avatar) {
@@ -592,6 +591,11 @@ bool ResourceAnimator::Update()
 void ResourceAnimator::SetAnimationSpeed(float new_speed)
 {
 	animation_speed_mod = new_speed;
+}
+
+void ResourceAnimator::SetAnimationBlendTime(float new_blend)
+{
+	blend_timelapse = new_blend;
 }
 
 void ResourceAnimator::ClearAnimations() {

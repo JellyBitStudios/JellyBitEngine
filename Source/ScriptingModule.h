@@ -77,16 +77,16 @@ public:
 
 	void ReInstance();
 
-	void ClearMap();
-
 	Resource* ImportScriptResource(const char* file);
 	void ScriptModified(const char* scriptPath);
 	void RecompileScripts();
 
 	void GameObjectKilled(GameObject* killed);
+	void ComponentKilled(Component* killed);
 
 	void FixedUpdate();
 	void OnDrawGizmos();
+	void OnDrawGizmosSelected();
 
 	void TemporalSave();
 	void TemporalLoad();
@@ -103,9 +103,6 @@ public:
 
 	_MonoAssembly*			scriptsAssembly		= nullptr;
 	_MonoImage*				scriptsImage		= nullptr;
-
-	std::vector<uint32_t>	monoObjectHandles;
-	std::vector<uint32_t>	monoComponentHandles;
 
 private:
 

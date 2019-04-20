@@ -29,9 +29,10 @@ class Player : JellyScript
     {
         if (!gameStopped)
         {
-            //Debug.Log("ADSAD");
-            if (Input.GetMouseButton(MouseKeyCode.MOUSE_RIGHT))
-                HandleMousePicking(true);
+            if (Input.GetMouseButton(MouseKeyCode.MOUSE_LEFT))
+                HandleMousePicking(true, true);
+            else if (Input.GetMouseButtonDown(MouseKeyCode.MOUSE_RIGHT))
+                HandleMousePicking(true, false);
             else
                 HandleMousePicking(false);
 
@@ -45,10 +46,10 @@ class Player : JellyScript
 
     public override void OnStop()
     {
-        EventsManager.Call.StopListening("Player");
+        EventsManager.Call.StopListening(this);
     }
 
-    void EventsListener(object type)
+    public void EventsListener(object type)
     {
         Event listenedEvent = (Event)type;
         switch (listenedEvent.type)
@@ -76,25 +77,16 @@ class Player : JellyScript
         EventsManager.Call.PushEvent(resumeEvent);
     }
 
-    void HandleMousePicking(bool process)
+    void HandleMousePicking(bool process, bool leftClick = true)
     {
         Ray ray = Physics.ScreenToRay(Input.GetMousePosition(), Camera.main);
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, float.MaxValue, raycastLayer, SceneQueryFlags.Dynamic | SceneQueryFlags.Static))
         {
             if (process)
-                Alita.Call.ProcessRaycast(hit);
+                Alita.Call.ProcessRaycast(hit, leftClick);
 
-            // mark enemy as red etc
-            string layer = hit.gameObject.GetLayer();
-            if (layer == "Terrain")
-            {
-              
-            }
-            else
-            {
-              
-            }
+            //string layer = hit.gameObject.GetLayer();
         }
         return;
     }

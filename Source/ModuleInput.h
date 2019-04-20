@@ -73,6 +73,7 @@ public:
 public:
 	std::string GetCursorTexture() const;
 	void SetCursorTexture(std::string& textureName);
+	void SetCursorTexture(uint textureUUID);
 	void SetDefaultCursorTexture(ResourceTexture* textureRes);
 private:
 
