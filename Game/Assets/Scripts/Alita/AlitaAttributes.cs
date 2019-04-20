@@ -24,6 +24,7 @@ public class AlitaCharacter : Character
         }
     }
 
+    public const float ConstMinRadiusToMove = 0.8f;
     public const float ConstHitRadius = 1.0f;
     public const float ConstSkillqRadius = 2.0f;
     public const float ConstDashStrength = 8.0f;

@@ -186,8 +186,7 @@ class ASkill1 : AState
             // overlap sphere
             // SEND DECAL
             OverlapHit[] hitInfo;
-            LayerMask mask = new LayerMask();
-            Physics.OverlapSphere(AlitaCharacter.ConstSkillqRadius, Alita.Call.transform.position, out hitInfo, mask, SceneQueryFlags.Static | SceneQueryFlags.Dynamic);
+            Physics.OverlapSphere(AlitaCharacter.ConstSkillqRadius, Alita.Call.transform.position, out hitInfo, LayerMask.GetMask("Enemy"), SceneQueryFlags.Static | SceneQueryFlags.Dynamic);
             hit = true;
         }
 

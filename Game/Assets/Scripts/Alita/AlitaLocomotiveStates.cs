@@ -37,8 +37,13 @@ class AIdle : AState
         {
             if (hit.gameObject.GetLayer() == "Terrain")
             {
-                if (Alita.Call.agent.SetDestination(hit.point))
+                Vector3 point = new Vector3(hit.point.x, 0.0f, hit.point.z);
+                Vector3 alita = new Vector3(Alita.Call.transform.position);
+                alita.y = 0.0f;
+                float diff = (point - alita).magnitude;
+                if (diff > AlitaCharacter.ConstMinRadiusToMove && Alita.Call.agent.SetDestination(hit.point))
                     Alita.Call.SwitchState(Alita.Call.StateWalking2Spot);
+                // TODO G: else face to point click like Torchlight
             }
             else if (hit.gameObject.GetLayer() == "Enemy")
             {
