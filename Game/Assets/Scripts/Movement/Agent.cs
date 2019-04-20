@@ -13,7 +13,7 @@ public class AgentData
             AgentsManager.Call.RecalculateRadius();
         }
     }
-    private float radius = 0.0f;
+    private float radius = 1.0f;
 
     public float maxVelocity = 5.0f;
     public float maxAngularVelocity = 360.0f;
@@ -296,6 +296,11 @@ public class Agent : JellyScript
         if (!isMovementStopped)
             // Move
             transform.position += velocity * Time.deltaTime;
+    }
+
+    public override void OnStop()
+    {
+        AgentsManager.Call.RemoveAgent(this);
     }
 
     public override void OnDrawGizmos()

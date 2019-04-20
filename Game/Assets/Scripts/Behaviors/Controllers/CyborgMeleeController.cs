@@ -4,16 +4,29 @@ using JellyBitEngine;
 
 public class CyborgMeleeCharacter : Character
 {
+    public CyborgMeleeCharacter()
+    {
+
+    }
+
+    // --------------------------------------------------
+
+    public string name = "Cyborg Melee";
+
+    // -----
+
     // GoToGameObject
     /// GoToAttackDistance
-    public float attackDistance = 1.0f;
+    public float attackDistance = 2.0f;
     /// GoToDangerDistance
-    public float dangerDistance = 2.0f;
+    public float dangerDistance = 5.0f;
 
     // Attack
     public float attackRate = 10.0f;
     public float attackRateFluctuation = 0.0f;
+
     public float trackMaxAngularAcceleration = 90.0f;
+    public float trackMaxAngularVelocity = 90.0f;
 
     // Wander
     /// Strafe
@@ -24,10 +37,6 @@ public class CyborgMeleeCharacter : Character
 public class CyborgMeleeController : JellyScript
 {
     #region PUBLIC_VARIABLES
-    /// <Temporal>
-    public LayerMask raycastMask = new LayerMask();
-    /// </Temporal>
-
     public CyborgMeleeCharacter character = new CyborgMeleeCharacter();
 
     public CyborgMeleeFSM fsm;
@@ -66,13 +75,17 @@ public class CyborgMeleeController : JellyScript
 
     public override void Start()
     {
-        //fsm.ChangeState(new Wander(StateType.Wander));  
-        fsm.ChangeState(new CM_GoToGameObject(CM_GoToGameObject.GoToGameObjectType.GoToDangerDistance));
-
-        EventsManager.Call.StartListening("CyborgMelee", this, "OnEvent");
+        // Character
+        character.currentLife = (int)character.maxLife;
 
         // Agent
         agent.agentData.Radius = 1.0f;
+
+        // -----
+
+        fsm.ChangeState(new CM_GoToDangerDistance());
+
+        EventsManager.Call.StartListening("CyborgMelee", this, "OnEvent");
     }
 
     public void OnEvent(object type)
@@ -120,7 +133,7 @@ public class CyborgMeleeController : JellyScript
         {
             Ray ray = Physics.ScreenToRay(Input.GetMousePosition(), Camera.main);
             RaycastHit hitInfo;
-            if (Physics.Raycast(ray, out hitInfo, float.MaxValue, raycastMask, SceneQueryFlags.Static))
+            if (Physics.Raycast(ray, out hitInfo, float.MaxValue, LayerMask.GetMask("Terrain"), SceneQueryFlags.Static))
             {
                 agent.SetDestination(hitInfo.point);
                 //wanderState = WanderStates.goToPosition;
