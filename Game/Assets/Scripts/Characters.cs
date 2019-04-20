@@ -7,9 +7,4 @@ public class Character
     public int dmg = 20;
 
     public int currentLife = 0;
-
-    public Character()
-    {
-        currentLife = (int)maxLife;
-    }
 }
