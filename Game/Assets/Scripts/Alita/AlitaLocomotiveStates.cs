@@ -17,6 +17,7 @@ class AIdle : AState
 {
     public override void OnStart()
     {
+        Alita.Call.animator.UpdateAnimationBlendTime(0.1f);
         Alita.Call.animator.PlayAnimation("idle_alita_anim");
         Debug.Log("ANIMATION IDLE");
     }

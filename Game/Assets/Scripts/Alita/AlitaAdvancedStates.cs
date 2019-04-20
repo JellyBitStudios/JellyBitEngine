@@ -167,14 +167,21 @@ class ADash : AState
 
 class ASkill1 : AState
 {
+    // TODO GUILLERMO: FIX ANIMATOR PD: MARE DE DEU SANTISSIMA
+    bool finished;
+    bool isFinishedForReal;
+
     public override void OnStart()
     {
         Alita.Call.animator.PlayAnimation("anim_special_attack_q_alita_fist");
+        Alita.Call.animator.SetAnimationLoop(false);
+        finished = false;
+        isFinishedForReal = false;
     }
 
     public override void OnExecute()
     {
         if (Alita.Call.animator.AnimationFinished())
-                Alita.Call.SwitchState(Alita.Call.StateIdle);
+            Alita.Call.SwitchState(Alita.Call.StateIdle);
     }
 }
