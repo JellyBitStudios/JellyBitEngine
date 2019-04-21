@@ -33,7 +33,7 @@ public class Agent : JellyScript
     // SteeringSeekData
     public bool tmp_seekIsActive = true;
     public uint tmp_seekPriority = 2;
-    public float tmp_arriveMinDistance = 0.6f;
+    public float tmp_arriveMinDistance = 1.0f;
 
     // SteeringFleeData
     public bool tmp_fleeIsActive = false;
@@ -352,12 +352,13 @@ public class Agent : JellyScript
 
         if (hasPath)
         {
+            /*
             if (AnyBlockingObstacles())
             {
                 ClearMovementAndRotation();
                 ClearPath();
             }
-            else
+            else*/
                 movementState = MovementState.GoToPosition;
         }
         else
@@ -477,12 +478,13 @@ public class Agent : JellyScript
 
                 if (pathManager.UpdateNextPosition())
                 {
+                    /*
                     if (AnyBlockingObstacles())
                     {
                         ClearMovementAndRotation();
                         ClearPath();
                     }
-                    else
+                    else*/
                         movementState = MovementState.GoToPosition;
                 }
                 else

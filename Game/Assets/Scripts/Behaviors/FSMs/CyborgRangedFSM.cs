@@ -69,6 +69,11 @@ public class CR_GoToGameObject : CR_IState
     {
         //Debug.Log(owner.character.name + ": " + "ENTER" + " " + name);
 
+        // ----- Agent -----
+
+        owner.agent.isMovementStopped = false;
+        owner.agent.isRotationStopped = false;
+
         // ----- CR_GoToGameObject -----
 
         if (!owner.agent.SetDestination(Alita.Call.transform.position))

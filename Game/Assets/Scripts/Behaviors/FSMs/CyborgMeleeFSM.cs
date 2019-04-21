@@ -69,6 +69,13 @@ public class CM_GoToGameObject : CM_IState
     {
         //Debug.Log(owner.character.name + ": " + "ENTER" + " " + name);
 
+        // ----- Agent -----
+
+        owner.agent.isMovementStopped = false;
+        owner.agent.isRotationStopped = false;
+
+        // ----- CM_GoToGameObject -----
+
         if (!owner.agent.SetDestination(Alita.Call.transform.position))
         {
             owner.fsm.ChangeState(new CM_WanderDefault());
@@ -76,6 +83,7 @@ public class CM_GoToGameObject : CM_IState
         }
 
         owner.animator.PlayAnimation("melee_run_cyborg_animation");
+        owner.animator.SetAnimationLoop(true);
     }
 
     public override void Execute(CyborgMeleeController owner) { }
@@ -184,7 +192,7 @@ public class CM_GoToAttackDistance : CM_GoToGameObject
     {
         float distanceToTarget = (Alita.Call.transform.position - owner.transform.position).magnitude;
         if (distanceToTarget <= owner.character.attackDistance + Alita.Call.agent.agentData.Radius) // attackDistance: am I INSIDE my ATTACK range?
-        {
+        { 
             // Am I allowed to attack?
             if (Alita.Call.battleCircle.AddAttacker(owner.gameObject))
             {
@@ -243,6 +251,7 @@ public class CM_Wander : CM_IState
         owner.agent.ActivateAvoidance();
 
         owner.animator.PlayAnimation("melee_run_cyborg_animation");
+        owner.animator.SetAnimationLoop(true);
     }
 
     public override void Execute(CyborgMeleeController owner) { }
@@ -425,10 +434,11 @@ public class CM_Attack : CM_IState
 
         /// Activate/Deactivate
         owner.agent.isMovementStopped = true;
+        owner.agent.isRotationStopped = false;
 
         // Align: Face data
-        owner.agent.agentData.maxAngularAcceleration = owner.character.trackMaxAngularAcceleration;
-        owner.agent.agentData.maxAngularVelocity = owner.character.trackMaxAngularVelocity;
+        owner.agent.agentData.maxAngularAcceleration = owner.agent.agentData.maxAngularAcceleration * 0.5f;
+        owner.agent.agentData.maxAngularVelocity = owner.agent.agentData.maxAngularVelocity * 0.5f;
 
         // ----- CM_Attack -----
 
@@ -438,6 +448,7 @@ public class CM_Attack : CM_IState
         lastAttackedTime = -actualAttackRate;
 
         owner.animator.PlayAnimation("melee_iddle_attack_cyborg_animation");
+        owner.animator.SetAnimationLoop(true);
     }
 
     public override void Execute(CyborgMeleeController owner)
@@ -454,8 +465,8 @@ public class CM_Attack : CM_IState
             return;
         }
 
-        // When attack cooldown is 0.0f...
-        if (AttackCooldown <= 0.0f)
+        if (owner.agent.HasFaced
+            && AttackCooldown <= 0.0f)
         {
             // Am I allowed to hit?
             if (Alita.Call.battleCircle.AddSimultaneousAttacker(owner.gameObject))
@@ -478,6 +489,11 @@ public class CM_Attack : CM_IState
         owner.agent.agentData.maxAngularAcceleration = maxAngularAcceleration;
         owner.agent.agentData.maxAngularVelocity = maxAngularVelocity;
 
+        // ----- Agent -----
+
+        /// Activate/Deactivate
+        owner.agent.isMovementStopped = false;
+
         // ----- CM_Attack -----
 
         owner.agent.FinishFace();
@@ -497,10 +513,6 @@ public class CM_Attack : CM_IState
 
 public class CM_Hit : CM_IState
 {
-    // ----- Save&Load -----
-    private float maxAngularAcceleration = 0.0f;
-    private float maxAngularVelocity = 0.0f;
-
     // ----- CM_Hit -----
     private bool animationHit = false;
 
@@ -515,23 +527,12 @@ public class CM_Hit : CM_IState
     {
         Debug.Log(owner.character.name + ": " + "ENTER" + " " + name);
 
-        // ----- Save -----
-
-        maxAngularAcceleration = owner.agent.agentData.maxAngularAcceleration;
-        maxAngularVelocity = owner.agent.agentData.maxAngularVelocity;
-
         // ----- Agent -----
 
         /// Activate/Deactivate
-        owner.agent.isMovementStopped = true;
-
-        // Align: Face data
-        owner.agent.agentData.maxAngularAcceleration = owner.character.trackMaxAngularAcceleration;
-        owner.agent.agentData.maxAngularVelocity = owner.character.trackMaxAngularVelocity;
+        owner.agent.Stop();
 
         // ----- CM_Hit -----
-
-        owner.agent.SetFace(Alita.Call.gameObject);
 
         owner.animator.PlayAnimation("melee_attack_cyborg_animation");
         owner.animator.SetAnimationLoop(false);
@@ -557,14 +558,12 @@ public class CM_Hit : CM_IState
     {
         Debug.Log(owner.character.name + ": " + "EXIT" + " " + name);
 
-        // ----- Load -----
+        // ----- Agent -----
 
-        owner.agent.agentData.maxAngularAcceleration = maxAngularAcceleration;
-        owner.agent.agentData.maxAngularVelocity = maxAngularVelocity;
+        /// Activate/Deactivate
+        owner.agent.Resume();
 
         // ----- CM_Hit -----
-
-        owner.agent.FinishFace();
 
         Alita.Call.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
     }

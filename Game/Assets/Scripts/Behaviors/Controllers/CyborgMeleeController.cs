@@ -25,8 +25,8 @@ public class CyborgMeleeCharacter : Character
     public float attackRate = 10.0f;
     public float attackRateFluctuation = 0.0f;
 
-    public float trackMaxAngularAcceleration = 90.0f;
-    public float trackMaxAngularVelocity = 90.0f;
+    //public float trackMaxAngularAcceleration = 360.0f;
+    //public float trackMaxAngularVelocity = 360.0f;
 
     // Wander
     /// Strafe
@@ -111,7 +111,7 @@ public class CyborgMeleeController : JellyScript
         }
     }
 
-    public override void Update()
+    public override void FixedUpdate()
     {
         //HandleInput();
         fsm.UpdateState();
