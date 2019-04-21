@@ -365,7 +365,8 @@ public class CM_WanderStrafe : CM_Wander
 
     public override void Execute(CyborgMeleeController owner)
     {
-        if (timer >= actualStrafeTime)
+        if (timer >= actualStrafeTime
+            || owner.isBeingAttacked)
         {
             owner.fsm.ChangeState(new CM_GoToDangerDistance()); // danger distance just in case I have moved out of my attack range
             return;

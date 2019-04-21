@@ -44,12 +44,6 @@ public class CyborgMeleeController : Controller
         get { return entity.currentLife; }
         set
         {
-            if (value < 0)
-            {
-                animator.PlayAnimation("melee_hurt_cyborg_animation");
-                animator.SetAnimationLoop(false);
-            }
-
             entity.currentLife = value;
             if (entity.currentLife <= 0)
             {
@@ -60,6 +54,7 @@ public class CyborgMeleeController : Controller
             Debug.Log("Cyborg melee life: " + entity.currentLife);
         }
     }
+    public bool isBeingAttacked = false;
 
     public bool drawGizmosCyborgMelee = true;
     #endregion
@@ -113,6 +108,8 @@ public class CyborgMeleeController : Controller
     {
         //HandleInput();
         fsm.UpdateState();
+
+        isBeingAttacked = false;
     }
 
     public override void OnDrawGizmos()
@@ -154,18 +151,30 @@ public class CyborgMeleeController : Controller
             case Entity.Action.selected:
 
                 break;
+
             case Entity.Action.hit:
+
                 entity.currentLife -= (int)hpModifier;
-                // currentLife -= hpModifier;
+
+                isBeingAttacked = true;
+
                 break;
+
             case Entity.Action.thirdHit:
+
                 entity.currentLife -= (int)hpModifier;
-                // currentLife -= hpModifier;
+
+                animator.PlayAnimation("melee_hurt_cyborg_animation");
+                animator.SetAnimationLoop(false);
+                // TODO
+
                 break;
+
             case Entity.Action.skillQ:
                 // move character backwards-> originGo.transform.positin - gameobject.transform.position etc
                 // current life -= hpModifier;
                 break;
+
             case Entity.Action.skillW:
                 // ?
                 break;
