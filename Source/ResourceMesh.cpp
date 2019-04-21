@@ -179,14 +179,15 @@ uint ResourceMesh::CreateMeta(const char* file, ResourceMeshImportSettings& mesh
 
 	// 2. Store meshes uuids size
 	bytes = sizeof(uint);
-	assert(mesh_uuids_size > 0);
+	//assert(mesh_uuids_size > 0);
 	memcpy(cursor, &mesh_uuids_size, bytes);
 
 	cursor += bytes;
 
 	// 3. Store meshes uuids
 	bytes = sizeof(uint) * meshesUuids.size();
-	memcpy(cursor, &meshesUuids[0], bytes);
+	if(meshesUuids.size()>0)
+		memcpy(cursor, &meshesUuids[0], bytes);
 
 	cursor += bytes;
 
@@ -262,14 +263,15 @@ bool ResourceMesh::ReadMeta(const char* metaFile, int64_t& lastModTime, Resource
 		uint uuidsSize = 0;
 		bytes = sizeof(uint);
 		memcpy(&uuidsSize, cursor, bytes);
-		assert(uuidsSize > 0);
+		//assert(uuidsSize > 0);
 
 		cursor += bytes;
 
 		// 3. Load meshes uuids
 		meshesUuids.resize(uuidsSize);
 		bytes = sizeof(uint) * uuidsSize;
-		memcpy(&meshesUuids[0], cursor, bytes);
+		if (meshesUuids.size() > 0)
+			memcpy(&meshesUuids[0], cursor, bytes);
 
 		cursor += bytes;
 
@@ -337,14 +339,15 @@ bool ResourceMesh::ReadMeshesUuidsFromBuffer(const char* buffer,
 	uint uuidsSize = 0;
 	bytes = sizeof(uint);
 	memcpy(&uuidsSize, cursor, bytes);
-	assert(uuidsSize > 0);
+	//assert(uuidsSize > 0);
 
 	cursor += bytes;
 
 	// 3. Load meshes uuids
 	meshesUuids.resize(uuidsSize);
 	bytes = sizeof(uint) * uuidsSize;
-	memcpy(&meshesUuids[0], cursor, bytes);
+	if (meshesUuids.size() > 0)
+		memcpy(&meshesUuids[0], cursor, bytes);
 
 	cursor += bytes;
 

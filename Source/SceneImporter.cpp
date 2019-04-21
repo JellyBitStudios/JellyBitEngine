@@ -162,19 +162,24 @@ bool SceneImporter::Import(const void* buffer, uint size, const char* prefabName
 			mesh_files, dummyForcedMeshesUuids);
 		//rootGameObject->transform->scale *= importSettings.scale; // TODO FIX SCALE
 
-		if (rootBone != nullptr)
+		if (rootBone != nullptr || mode_export_animation)
 		{
 			/// Import bones
-			std::vector<uint> dummyForcedBonesUuids = forced_bones_uuids;
+			if (!mode_export_animation) {
+				std::vector<uint> dummyForcedBonesUuids = forced_bones_uuids;
 
-			ImportBones(rootGameObject, 
-				bonesByName,
-				bone_files, dummyForcedBonesUuids);
+				ImportBones(rootGameObject,
+					bonesByName,
+					bone_files, dummyForcedBonesUuids);
+			}
 
 			/// Import animations
 			std::vector<uint> dummyForcedAnimationsUuids = forced_anim_uuids;
 			ImportAnimations(scene, rootBone, anim_files, prefabName, dummyForcedAnimationsUuids);
 		}
+
+		//chill
+		mode_export_animation = false;
 
 		// Create Prefab
 		GameObject* prefab_go = rootGameObject;
@@ -289,15 +294,21 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 		if (!broken)
 		{
 			// Create the Mesh Component
-			gameObject->AddComponent(ComponentTypes::MeshComponent);
-
-			if (forcedUuids.size() > 0)
-			{
-				gameObject->cmp_mesh->res = forcedUuids.front();
-				forcedUuids.erase(forcedUuids.begin());
+			if (nodeMesh->mName.length == 0) { // .dae without mesh but with animation
+				mode_export_animation = true;
 			}
-			else
-				gameObject->cmp_mesh->res = App->GenerateRandomNumber();
+
+			if (!mode_export_animation) {
+				gameObject->AddComponent(ComponentTypes::MeshComponent);
+
+				if (forcedUuids.size() > 0)
+				{
+					gameObject->cmp_mesh->res = forcedUuids.front();
+					forcedUuids.erase(forcedUuids.begin());
+				}
+				else
+					gameObject->cmp_mesh->res = App->GenerateRandomNumber();
+			}
 
 			float* vertices = nullptr;
 			uint verticesSize = 0;
@@ -329,7 +340,7 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 			memcpy(vertices, nodeMesh->mVertices, sizeof(float) * verticesSize * 3);
 
 			// Indices
-			if (nodeMesh->HasFaces())
+			if (nodeMesh->HasFaces() && !mode_export_animation)
 			{
 				uint facesSize = nodeMesh->mNumFaces;
 				indicesSize = facesSize * 3;
@@ -347,7 +358,7 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 			}
 
 			// Normals
-			if (nodeMesh->HasNormals())
+			if (nodeMesh->HasNormals() && !mode_export_animation)
 			{
 				normalsSize = verticesSize;
 				normals = new float[normalsSize * 3];
@@ -355,7 +366,7 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 			}
 
 			// Tangents and Bitangents
-			if (nodeMesh->HasTangentsAndBitangents())
+			if (nodeMesh->HasTangentsAndBitangents() && !mode_export_animation)
 			{
 				tangentsSize = verticesSize;
 				tangents = new float[tangentsSize * 3];
@@ -376,7 +387,7 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 			}*/
 
 			// Bones
-			if (nodeMesh->HasBones())
+			if (nodeMesh->HasBones() && !mode_export_animation)
 			{
 				boneInfluencesSize = nodeMesh->mNumBones;
 				boneInfluences = new BoneInfluence[boneInfluencesSize];
@@ -407,7 +418,7 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 			}
 
 			// Texture coords
-			if (nodeMesh->HasTextureCoords(0))
+			if (nodeMesh->HasTextureCoords(0) && !mode_export_animation)
 			{
 				texCoordsSize = verticesSize;
 				texCoords = new float[texCoordsSize * 2];
@@ -448,159 +459,163 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 				}
 			}
 
+
 			// --------------------------------------------------
 
-			uint nameSize = DEFAULT_BUF_SIZE;
+			if (!mode_export_animation) {
 
-			// Name
-			char meshName[DEFAULT_BUF_SIZE];
-			strcpy_s(meshName, DEFAULT_BUF_SIZE, name.data());
+				uint nameSize = DEFAULT_BUF_SIZE;
 
-			// Vertices + Normals + Tangents + Bitangents + Colors + Texture Coords + Bones + Indices + Name
-			uint ranges[] = 
-			{
-				verticesSize, normalsSize,
-				tangentsSize, bitangentsSize,
-				colorsSize, texCoordsSize,
+				// Name
+				char meshName[DEFAULT_BUF_SIZE];
+				strcpy_s(meshName, DEFAULT_BUF_SIZE, name.data());
 
-				// Bones
-				boneInfluencesSize,
+				// Vertices + Normals + Tangents + Bitangents + Colors + Texture Coords + Bones + Indices + Name
+				uint ranges[] =
+				{
+					verticesSize, normalsSize,
+					tangentsSize, bitangentsSize,
+					colorsSize, texCoordsSize,
 
-				indicesSize, nameSize 
-			};
+					// Bones
+					boneInfluencesSize,
 
-			uint bonesSize = 0;
-			for (uint i = 0; i < boneInfluencesSize; ++i)
-			{
-				bonesSize += sizeof(uint); // bonesWeightsSize
-				bonesSize += sizeof(float) * boneInfluences[i].bonesWeightsSize; // boneWeights
-				bonesSize += sizeof(uint) * boneInfluences[i].bonesWeightsSize; // boneIds
-				bonesSize += sizeof(char) * nameSize; // boneName
-			}
+					indicesSize, nameSize
+				};
 
-			uint size = sizeof(ranges) +
-				sizeof(float) * verticesSize * 3 +
-				sizeof(float) * normalsSize * 3 +
-				sizeof(float) * tangentsSize * 3 +
-				sizeof(float) * bitangentsSize * 3 +
-				sizeof(uchar) * colorsSize * 4 +
-				sizeof(float) * texCoordsSize * 2 +
+				uint bonesSize = 0;
+				for (uint i = 0; i < boneInfluencesSize; ++i)
+				{
+					bonesSize += sizeof(uint); // bonesWeightsSize
+					bonesSize += sizeof(float) * boneInfluences[i].bonesWeightsSize; // boneWeights
+					bonesSize += sizeof(uint) * boneInfluences[i].bonesWeightsSize; // boneIds
+					bonesSize += sizeof(char) * nameSize; // boneName
+				}
 
-				// Bones
-				bonesSize +
+				uint size = sizeof(ranges) +
+					sizeof(float) * verticesSize * 3 +
+					sizeof(float) * normalsSize * 3 +
+					sizeof(float) * tangentsSize * 3 +
+					sizeof(float) * bitangentsSize * 3 +
+					sizeof(uchar) * colorsSize * 4 +
+					sizeof(float) * texCoordsSize * 2 +
 
-				sizeof(uint) * indicesSize +
-				sizeof(char) * nameSize;
+					// Bones
+					bonesSize +
 
-			char* data = new char[size];
-			char* cursor = data;
+					sizeof(uint) * indicesSize +
+					sizeof(char) * nameSize;
 
-			// 1. Store ranges
-			uint bytes = sizeof(ranges);
-			memcpy(cursor, ranges, bytes);
+				char* data = new char[size];
+				char* cursor = data;
 
-			cursor += bytes;
-
-			// 2. Store vertices
-			bytes = sizeof(float) * verticesSize * 3;
-			memcpy(cursor, vertices, bytes);
-
-			cursor += bytes;
-
-			// 3. Store normals
-			if (normalsSize > 0)
-			{
-				bytes = sizeof(float) * normalsSize * 3;
-				memcpy(cursor, normals, bytes);
+				// 1. Store ranges
+				uint bytes = sizeof(ranges);
+				memcpy(cursor, ranges, bytes);
 
 				cursor += bytes;
-			}
 
-			// 4. Store tangents
-			if (tangentsSize > 0)
-			{
-				bytes = sizeof(float) * tangentsSize * 3;
-				memcpy(cursor, tangents, bytes);
+				// 2. Store vertices
+				bytes = sizeof(float) * verticesSize * 3;
+				memcpy(cursor, vertices, bytes);
 
 				cursor += bytes;
-			}
 
-			// 5. Store bitangents
-			if (bitangentsSize > 0)
-			{
-				bytes = sizeof(float) * bitangentsSize * 3;
-				memcpy(cursor, bitangents, bytes);
+				// 3. Store normals
+				if (normalsSize > 0)
+				{
+					bytes = sizeof(float) * normalsSize * 3;
+					memcpy(cursor, normals, bytes);
+
+					cursor += bytes;
+				}
+
+				// 4. Store tangents
+				if (tangentsSize > 0)
+				{
+					bytes = sizeof(float) * tangentsSize * 3;
+					memcpy(cursor, tangents, bytes);
+
+					cursor += bytes;
+				}
+
+				// 5. Store bitangents
+				if (bitangentsSize > 0)
+				{
+					bytes = sizeof(float) * bitangentsSize * 3;
+					memcpy(cursor, bitangents, bytes);
+
+					cursor += bytes;
+				}
+
+				// 6. Store colors
+				if (colorsSize > 0)
+				{
+					bytes = sizeof(uchar) * colorsSize * 4;
+					memcpy(cursor, colors, bytes);
+
+					cursor += bytes;
+				}
+
+				// 7. Store texture coords
+				if (texCoordsSize > 0)
+				{
+					bytes = sizeof(float) * texCoordsSize * 2;
+					memcpy(cursor, texCoords, bytes);
+
+					cursor += bytes;
+				}
+
+				// 8. Store bones
+				for (uint i = 0; i < boneInfluencesSize; ++i)
+				{
+					bytes = sizeof(uint);
+					memcpy(cursor, &boneInfluences[i].bonesWeightsSize, bytes);
+					cursor += bytes;
+
+					bytes = sizeof(float) * boneInfluences[i].bonesWeightsSize;
+					memcpy(cursor, boneInfluences[i].boneWeights, bytes);
+					cursor += bytes;
+
+					bytes = sizeof(uint) * boneInfluences[i].bonesWeightsSize;
+					memcpy(cursor, boneInfluences[i].boneIds, bytes);
+					cursor += bytes;
+
+					bytes = sizeof(char) * nameSize;
+					memcpy(cursor, boneInfluences[i].boneName, bytes);
+					cursor += bytes;
+				}
+
+				// 9. Store indices
+				bytes = sizeof(uint) * indicesSize;
+				memcpy(cursor, indices, bytes);
 
 				cursor += bytes;
-			}
 
-			// 6. Store colors
-			if (colorsSize > 0)
-			{
-				bytes = sizeof(uchar) * colorsSize * 4;
-				memcpy(cursor, colors, bytes);
-
-				cursor += bytes;
-			}
-
-			// 7. Store texture coords
-			if (texCoordsSize > 0)
-			{
-				bytes = sizeof(float) * texCoordsSize * 2;
-				memcpy(cursor, texCoords, bytes);
-
-				cursor += bytes;
-			}
-
-			// 8. Store bones
-			for (uint i = 0; i < boneInfluencesSize; ++i)
-			{
-				bytes = sizeof(uint);
-				memcpy(cursor, &boneInfluences[i].bonesWeightsSize, bytes);
-				cursor += bytes;
-
-				bytes = sizeof(float) * boneInfluences[i].bonesWeightsSize;
-				memcpy(cursor, boneInfluences[i].boneWeights, bytes);
-				cursor += bytes;
-
-				bytes = sizeof(uint) * boneInfluences[i].bonesWeightsSize;
-				memcpy(cursor, boneInfluences[i].boneIds, bytes);
-				cursor += bytes;
-
+				// 10. Store name
 				bytes = sizeof(char) * nameSize;
-				memcpy(cursor, boneInfluences[i].boneName, bytes);
-				cursor += bytes;
+				memcpy(cursor, meshName, bytes);
+
+				// Create the Mesh Resource
+				std::string outputFile = std::to_string(gameObject->cmp_mesh->res);
+				if (App->fs->SaveInGame(data, size, FileTypes::MeshFile, outputFile) > 0)
+				{
+					CONSOLE_LOG(LogTypes::Normal, "SCENE IMPORTER: Successfully saved Mesh '%s' to own format", gameObject->GetName());
+					mesh_files.push_back(outputFile);
+				}
+				else
+					CONSOLE_LOG(LogTypes::Error, "SCENE IMPORTER: Could not save Mesh '%s' to own format", gameObject->GetName());
+
+				RELEASE_ARRAY(data);
+				RELEASE_ARRAY(vertices);
+				RELEASE_ARRAY(normals);
+				RELEASE_ARRAY(tangents);
+				RELEASE_ARRAY(bitangents);
+				RELEASE_ARRAY(colors);
+				RELEASE_ARRAY(texCoords);
+				RELEASE_ARRAY(boneInfluences);
+				RELEASE_ARRAY(indices);
 			}
-
-			// 9. Store indices
-			bytes = sizeof(uint) * indicesSize;
-			memcpy(cursor, indices, bytes);
-
-			cursor += bytes;
-
-			// 10. Store name
-			bytes = sizeof(char) * nameSize;
-			memcpy(cursor, meshName, bytes);
-
-			// Create the Mesh Resource
-			std::string outputFile = std::to_string(gameObject->cmp_mesh->res);
-			if (App->fs->SaveInGame(data, size, FileTypes::MeshFile, outputFile) > 0)
-			{
-				CONSOLE_LOG(LogTypes::Normal, "SCENE IMPORTER: Successfully saved Mesh '%s' to own format", gameObject->GetName());
-				mesh_files.push_back(outputFile);
-			}
-			else
-				CONSOLE_LOG(LogTypes::Error, "SCENE IMPORTER: Could not save Mesh '%s' to own format", gameObject->GetName());
-
-			RELEASE_ARRAY(data);
-			RELEASE_ARRAY(vertices);
-			RELEASE_ARRAY(normals);
-			RELEASE_ARRAY(tangents);
-			RELEASE_ARRAY(bitangents);
-			RELEASE_ARRAY(colors);
-			RELEASE_ARRAY(texCoords);
-			RELEASE_ARRAY(boneInfluences);
-			RELEASE_ARRAY(indices);
 		}
 	}
 
@@ -667,10 +682,9 @@ void SceneImporter::ImportAnimations(const aiScene * scene, GameObject* rootBone
 		CONSOLE_LOG(LogTypes::Normal, "Importing animation [%s] -----------------", anim->mName.C_Str());
 		std::string output;
 
-		if (rootBone)
+		if (rootBone || mode_export_animation)
 		{
 			uint res_uuid = 0u;
-			GameObject* go = rootBone;
 			if (forcedUuids.size() > 0)
 			{
 				res_uuid = forcedUuids.front();
