@@ -17,10 +17,6 @@ public class LineOfSight : JellyScript
     {
         get { return isTargetSeen; }
     }
-    public float Radius
-    {
-        get { return sphereCollider.radius; }
-    }
     #endregion
 
     #region PRIVATE_VARIABLES

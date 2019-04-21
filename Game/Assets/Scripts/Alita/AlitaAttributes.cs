@@ -1,7 +1,7 @@
 ﻿using JellyBitEngine;
 using System.Collections.Generic;
 
-public class Alita_Entity : Entity
+public class AlitaCharacter : Character
 {
     public uint lvl = 1;
     public const float expPerLvlModifier = 20.0f;
@@ -25,20 +25,8 @@ public class Alita_Entity : Entity
     }
 
     public const float ConstMinRadiusToMove = 0.8f;
-
-    // const basic attack
     public const float ConstHitRadius = 1.0f;
-    public const uint ConstFirstHitDmg = 15;
-    public const uint ConstSecondHitDmg = 20;
-    public const uint ConstThirdHitDmg = 30;
-
-    public enum Action { hit, skillQ, skillW }
-
-    // const skill Q
-    public const uint ConstSkillqDmg = 30;
     public const float ConstSkillqRadius = 2.0f;
-
-    // const dash
     public const float ConstDashStrength = 8.0f;
     public const float ConstMaxDistance = 4.0f;
 }
@@ -47,15 +35,12 @@ public class Alita_Entity : Entity
 
 public class Skill
 {
-    public bool isUnlocked;
-
     public float sk_totalCd;
     public float sk_currentCd;
     public float sk_normalizedCd = 1.0f;
 
-    public Skill(float totalCD, bool locked)
+    public Skill(float totalCD)
     {
-        isUnlocked = !locked;
         sk_totalCd = totalCD;
         sk_currentCd = sk_totalCd;
     }
@@ -64,7 +49,7 @@ public class Skill
     {
         get
         {
-            return isUnlocked && sk_normalizedCd >= 1.0f;
+            return sk_normalizedCd >= 1.0f;
         }
     }
 
@@ -85,13 +70,10 @@ public class Skillset
     // skillset.add? how we can acces to each skill? think about it
 
     // skill->Dash
-    public Skill skDash = new Skill(3.0f, false);
+    public Skill skDash = new Skill(3.0f);
 
     // skill->Q
-    public Skill skQ = new Skill(2.0f, false);
-
-    // skill->W
-    public Skill skW = new Skill(4.0f, false);
+    public Skill skQ = new Skill(2.0f);
 
     List<Skill> skills = new List<Skill>();
 
@@ -99,14 +81,13 @@ public class Skillset
     {
         skills.Add(skDash);
         skills.Add(skQ);
-        skills.Add(skW);
     }
 
     public void UpdateTick()
     {
         foreach (Skill skill in skills)
         {
-            if (skill.isUnlocked && skill.sk_currentCd < skill.sk_totalCd)
+            if (skill.sk_currentCd < skill.sk_totalCd)
             {
                 skill.sk_currentCd += Time.deltaTime;
                 if (skill.sk_currentCd > skill.sk_totalCd)

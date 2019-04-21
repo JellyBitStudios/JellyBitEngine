@@ -33,7 +33,7 @@ public class Agent : JellyScript
     // SteeringSeekData
     public bool tmp_seekIsActive = true;
     public uint tmp_seekPriority = 2;
-    public float tmp_arriveMinDistance = 1.0f;
+    public float tmp_arriveMinDistance = 0.6f;
 
     // SteeringFleeData
     public bool tmp_fleeIsActive = false;
@@ -184,11 +184,11 @@ public class Agent : JellyScript
         obstacleAvoidanceData.avoidDistance = tmp_obstacleAvoidanceAvoidDistance;
         for (uint i = 0; i < obstacleAvoidanceData.rays.Length; ++i)
             obstacleAvoidanceData.rays[i] = new SteeringRay();
-        obstacleAvoidanceData.rays[0].length = 1.0f;
+        obstacleAvoidanceData.rays[0].length = 3.0f;
         obstacleAvoidanceData.rays[1].direction = new Vector3(-1.0f, 0.0f, 1.0f);
-        obstacleAvoidanceData.rays[1].length = 0.5f;
+        obstacleAvoidanceData.rays[1].length = 1.5f;
         obstacleAvoidanceData.rays[2].direction = new Vector3(1.0f, 0.0f, 1.0f);
-        obstacleAvoidanceData.rays[2].length = 0.5f;
+        obstacleAvoidanceData.rays[2].length = 1.5f;
 
         // SteeringAlignData
         alignData.isActive = tmp_alignIsActive;
@@ -352,13 +352,12 @@ public class Agent : JellyScript
 
         if (hasPath)
         {
-            /*
             if (AnyBlockingObstacles())
             {
                 ClearMovementAndRotation();
                 ClearPath();
             }
-            else*/
+            else
                 movementState = MovementState.GoToPosition;
         }
         else
@@ -443,8 +442,6 @@ public class Agent : JellyScript
     public void ActivateWander()
     {
         wanderData.isActive = true;
-        wanderData.time = 0.0f;
-
         seekData.isActive = false;
         fleeData.isActive = false;
     }
@@ -480,13 +477,12 @@ public class Agent : JellyScript
 
                 if (pathManager.UpdateNextPosition())
                 {
-                    /*
                     if (AnyBlockingObstacles())
                     {
                         ClearMovementAndRotation();
                         ClearPath();
                     }
-                    else*/
+                    else
                         movementState = MovementState.GoToPosition;
                 }
                 else

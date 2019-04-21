@@ -24,24 +24,23 @@ class Alita : JellyScript
     private AState m_state;
     public AState lastState;
 
-    public Alita_Entity character = new Alita_Entity();
+    public AlitaCharacter character = new AlitaCharacter();
     public Skillset skillset = new Skillset();
     public Agent agent;
     public Animator animator;
     public BattleCircle battleCircle;
 
     private GameObject _currentTarget = null;
-    public Controller targetController = null;
+    public CyborgMeleeController cyborgMelee = null;
 
     public GameObject currentTarget
     {
         set
         {
             if (value != null)
-                // TODO G: GetComponent should be something as <Controller> but it doesnt actually works
-                targetController = value.GetComponent<CyborgMeleeController>();
+                cyborgMelee = value.GetComponent<CyborgMeleeController>();
             else
-                targetController = null;
+                cyborgMelee = null;
             _currentTarget = value;
         }
         get

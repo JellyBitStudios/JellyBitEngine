@@ -42,7 +42,7 @@ class AIdle : AState
                 Vector3 alita = new Vector3(Alita.Call.transform.position);
                 alita.y = 0.0f;
                 float diff = (point - alita).magnitude;
-                if (diff > Alita_Entity.ConstMinRadiusToMove && Alita.Call.agent.SetDestination(hit.point))
+                if (diff > AlitaCharacter.ConstMinRadiusToMove && Alita.Call.agent.SetDestination(hit.point))
                     Alita.Call.SwitchState(Alita.Call.StateWalking2Spot);
                 else
                 {
@@ -117,7 +117,7 @@ class AWalking2Spot : AWalking
                 Vector3 alita = new Vector3(Alita.Call.transform.position);
                 alita.y = 0.0f;
                 float diff = (point - alita).magnitude;
-                if (diff > Alita_Entity.ConstMinRadiusToMove)
+                if (diff > AlitaCharacter.ConstMinRadiusToMove)
                     Alita.Call.agent.SetDestination(hit.point);
                 else
                     Alita.Call.SwitchState(Alita.Call.StateIdle);
@@ -146,7 +146,7 @@ class AWalking2Enemy : AWalking
     {
         if ((Alita.Call.transform.position -
              Alita.Call.currentTarget.transform.position)
-             .magnitude < Alita.Call.targetController.entity.DistanceToTarget)
+             .magnitude < Alita.Call.ConstHitRadius)
         {
             Alita.Call.SwitchState(Alita.Call.StateAttacking);
         }

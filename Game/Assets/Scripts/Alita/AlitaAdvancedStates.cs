@@ -40,27 +40,21 @@ class AAttacking : AState
                     if (Alita.Call.animator.GetCurrentFrame() >= 16)
                     {
                         hit = true;
-                        Alita.Call.targetController.Actuate(Alita_Entity.ConstFirstHitDmg,
-                                                            Alita.Call.gameObject,
-                                                            Alita_Entity.Action.hit);
+                        Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
                     }
                     break;
                 case Anim.second:
                     if (Alita.Call.animator.GetCurrentFrame() >= 15)
                     {
                         hit = true;
-                        Alita.Call.targetController.Actuate(Alita_Entity.ConstSecondHitDmg,
-                                                            Alita.Call.gameObject,
-                                                            Alita_Entity.Action.hit);
+                        Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
                     }
                     break;
                 case Anim.third:
                     if (Alita.Call.animator.GetCurrentFrame() >= 11)
                     {
                         hit = true;
-                        Alita.Call.targetController.Actuate(Alita_Entity.ConstThirdHitDmg,
-                                                            Alita.Call.gameObject,
-                                                            Alita_Entity.Action.hit);
+                        Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
                     }
                     break;
             }
@@ -166,7 +160,7 @@ class ADash : AState
 
     public override void OnExecute()
     {
-
+    
         float time_bezier = accumulatedDistance/ AlitaCharacter.ConstMaxDistance;
 
         Vector3 bezier = MathScript.BezierCurve.GetPointOnBezierCurve(time_bezier);
@@ -175,7 +169,7 @@ class ADash : AState
 
         Alita.Call.transform.position += increase;
         accumulatedDistance += increase.magnitude;
-        if (accumulatedDistance >= Alita_Entity.ConstMaxDistance)
+        if (accumulatedDistance >= AlitaCharacter.ConstMaxDistance)
             Alita.Call.SwitchState(Alita.Call.StateIdle);
     }
 
@@ -205,11 +199,7 @@ class ASkill1 : AState
             // overlap sphere
             // SEND DECAL
             OverlapHit[] hitInfo;
-            Physics.OverlapSphere(Alita_Entity.ConstSkillqRadius, Alita.Call.transform.position, out hitInfo, LayerMask.GetMask("Enemy"), SceneQueryFlags.Static | SceneQueryFlags.Dynamic);
-
-            foreach(OverlapHit goHit in hitInfo)
-                goHit.gameObject.GetComponent<Controller>().Actuate(Alita_Entity.ConstSkillqDmg, Alita.Call.gameObject, Alita_Entity.Action.skillQ);
-
+            Physics.OverlapSphere(AlitaCharacter.ConstSkillqRadius, Alita.Call.transform.position, out hitInfo, LayerMask.GetMask("Enemy"), SceneQueryFlags.Static | SceneQueryFlags.Dynamic);
             hit = true;
         }
 

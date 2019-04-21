@@ -69,11 +69,6 @@ public class CR_GoToGameObject : CR_IState
     {
         //Debug.Log(owner.character.name + ": " + "ENTER" + " " + name);
 
-        // ----- Agent -----
-
-        owner.agent.isMovementStopped = false;
-        owner.agent.isRotationStopped = false;
-
         // ----- CR_GoToGameObject -----
 
         if (!owner.agent.SetDestination(Alita.Call.transform.position))
@@ -269,7 +264,7 @@ public class CR_Wander : CR_IState
 
         // Wander data
         owner.agent.wanderData.radius = 1.0f;
-        owner.agent.wanderData.offset = 1.0f;
+        owner.agent.wanderData.offset = 2.0f;
 
         owner.agent.wanderData.minTime = 0.3f;
         owner.agent.wanderData.maxTime = 0.7f;
@@ -727,9 +722,10 @@ public class CR_Die : CR_IState
 
         // ----- Agent -----
 
-        owner.agent.Stop();
-        owner.agent.ClearMovementAndRotation();
         owner.agent.ClearPath();
+        owner.agent.ClearMovementAndRotation();
+        owner.agent.isMovementStopped = true;
+        owner.agent.isRotationStopped = true;
     }
 
     public override void Execute(CyborgRangedController owner)

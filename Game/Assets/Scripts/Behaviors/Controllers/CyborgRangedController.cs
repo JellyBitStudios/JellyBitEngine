@@ -2,17 +2,17 @@
 using System;
 using JellyBitEngine;
 
-public class CyborgRangedCharacter : Entity
+public class CyborgRangedCharacter : Character
 {
     public CyborgRangedCharacter()
     {
-        name = "Cyborg Ranged";
         actualGoToSideProbability = goToSideProbability;
         actualHitRate = hitRate;
     }
 
     // --------------------------------------------------
-    
+
+    public string name = "Cyborg Ranged";
     public uint minLife = 30;
 
     // -----

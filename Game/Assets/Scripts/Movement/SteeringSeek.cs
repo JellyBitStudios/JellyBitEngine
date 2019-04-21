@@ -5,7 +5,7 @@ using JellyBitEngine;
 public class SteeringSeekData : SteeringAbstract
 {
     // Arrive
-    public float arriveMinDistance = 1.0f;
+    public float arriveMinDistance = 0.6f;
 }
 
 public static class SteeringSeek

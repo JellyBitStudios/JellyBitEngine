@@ -75,8 +75,6 @@ public static class SteeringCollisionAvoidance
             if (firstTarget == null)
                 return Vector3.zero;
 
-            Debug.Log("Alita");
-
             Vector3 outputAcceleration = Vector3.zero;
             // Are we going to hit exactly or are we already colliding?
             if (firstMinSeparation <= 0.0f || firstDistance < 2.0f * AgentsManager.Call.Radius)
