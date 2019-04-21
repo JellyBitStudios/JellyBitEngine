@@ -35,7 +35,13 @@ public class BattleCircle : JellyScript
     {
         foreach (GameObject attacker in attackers)
         {
-            Debug.DrawSphere(1.0f, Color.Red, attacker.transform.position, Quaternion.identity, Vector3.one);
+            if (attacker == null)
+                return;
+
+            if (simultaneousAttackers.Contains(attacker))
+                Debug.DrawSphere(1.0f, Color.White, attacker.transform.position, Quaternion.identity, Vector3.one);
+            else
+                Debug.DrawSphere(1.0f, Color.Red, attacker.transform.position, Quaternion.identity, Vector3.one);
         }
     }
 
@@ -52,7 +58,7 @@ public class BattleCircle : JellyScript
             if (attackers.Count < maxAttackers)
             {
                 attackers.Add(attacker);
-                Debug.Log("New attacker ADDED. Total attackers: " + attackers.Count);
+                //Debug.Log("New attacker ADDED. Total attackers: " + attackers.Count);
                 return true;
             }
             // Prioritize the attacker that Alita is attacking
@@ -64,13 +70,12 @@ public class BattleCircle : JellyScript
 
                 // 2. Insert the new attacker
                 attackers.Add(attacker);
-                Debug.Log("New attacker ADDED. Total attackers: " + attackers.Count);
+                //Debug.Log("New attacker ADDED. Total attackers: " + attackers.Count);
                 return true;
             }
         }
 
-
-        Debug.Log("New attacker REJECTED. Total attackers: " + attackers.Count);
+        //Debug.Log("New attacker REJECTED. Total attackers: " + attackers.Count);
         return false;
     }
 
@@ -78,11 +83,11 @@ public class BattleCircle : JellyScript
     {
         if (attackers.Remove(attacker))
         {
-            Debug.Log("Attacker REMOVED. Total attackers: " + attackers.Count);
+            //Debug.Log("Attacker REMOVED. Total attackers: " + attackers.Count);
             return true;
         }
 
-        Debug.Log("Attacker could NOT be REMOVED. Total attackers: " + attackers.Count);
+        //Debug.Log("Attacker could NOT be REMOVED. Total attackers: " + attackers.Count);
         return false;
     }
 
@@ -102,11 +107,11 @@ public class BattleCircle : JellyScript
             && maxSimultaneousAttackers > 0)
         {
             simultaneousAttackers.Add(attacker);
-            Debug.Log("New simultaneous attacker ADDED. Total simultaneous attackers: " + simultaneousAttackers.Count);
+            //Debug.Log("New simultaneous attacker ADDED. Total simultaneous attackers: " + simultaneousAttackers.Count);
             return true;
         }
 
-        Debug.Log("New simultaneous attacker REJECTED. Total simultaneous attackers: " + simultaneousAttackers.Count);
+        //Debug.Log("New simultaneous attacker REJECTED. Total simultaneous attackers: " + simultaneousAttackers.Count);
         return false;
     }
 
@@ -114,11 +119,11 @@ public class BattleCircle : JellyScript
     {
         if (simultaneousAttackers.Remove(attacker))
         {
-            Debug.Log("Attacker simultaneous REMOVED. Total simultaneous attackers: " + simultaneousAttackers.Count);
+            //Debug.Log("Attacker simultaneous REMOVED. Total simultaneous attackers: " + simultaneousAttackers.Count);
             return true;
         }
 
-        Debug.Log("Attacker simultaneous could NOT be REMOVED. Total simultaneous attackers: " + simultaneousAttackers.Count);
+        //Debug.Log("Attacker simultaneous could NOT be REMOVED. Total simultaneous attackers: " + simultaneousAttackers.Count);
         return false;
     }
 }
