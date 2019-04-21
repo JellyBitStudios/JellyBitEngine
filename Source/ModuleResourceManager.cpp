@@ -1309,7 +1309,7 @@ Resource* ModuleResourceManager::ExportFile(ResourceTypes type, ResourceData& da
 
 	case ResourceTypes::PrefabResource:
 	{
-		resource = (Resource*)ResourcePrefab::ExportFile(data.name.data(), (*(PrefabData*)specificData).root);
+		resource = (Resource*)ResourcePrefab::ExportFile(data, (*(PrefabData*)specificData).root);
 		this->resources[resource->GetUuid()] = resource;
 	}
 	break;

@@ -21,7 +21,7 @@ public:
 	bool GenerateLibraryFiles() const;
 
 	static ResourcePrefab* ImportFile(const char* file);
-	static ResourcePrefab* ExportFile(const char* prefabName, GameObject* templateRoot);
+	static ResourcePrefab* ExportFile(ResourceData& data, GameObject* templateRoot);
 	static bool CreateMeta(ResourcePrefab* prefab, int64_t lastModTime);
 	bool UpdateFromMeta();
 
@@ -38,6 +38,8 @@ public:
 	void Load();
 
 	void OnSystemEvent(System_Event event);
+
+	void DeleteExportedFile();
 
 private:
 	PrefabData prefabData;

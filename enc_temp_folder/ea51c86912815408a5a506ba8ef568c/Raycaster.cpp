@@ -93,42 +93,6 @@ void Raycaster::ScreenPointToRay(int posX, int posY, float& shortestDistance, ma
 	}
 }
 
-void Raycaster::GetGOFromFrustum(math::Frustum frustumSelecteds) const
-{
-	// Static objects
-	std::vector<GameObject*> hits;
-	App->scene->quadtree.CollectContains(hits, frustumSelecteds);
-
-	// Dynamic objects
-	std::vector<GameObject*> dynamicGameObjects;
-	App->GOs->GetDynamicGameobjects(dynamicGameObjects);
-
-	for (uint i = 0; i < dynamicGameObjects.size(); ++i)
-	{
-		if (dynamicGameObjects[i]->GetLayer() != UILAYER)
-		{
-			if (frustumSelecteds.Contains(dynamicGameObjects[i]->boundingBox))
-				hits.push_back(dynamicGameObjects[i]);
-			else if(!dynamicGameObjects[i]->boundingBox.IsFinite())
-			{
-				math::float3 posGO = dynamicGameObjects[i]->transform->GetGlobalMatrix().TranslatePart();
-				if (frustumSelecteds.ClosestPoint(posGO).Equals(posGO))
-				{
-					hits.push_back(dynamicGameObjects[i]);
-				}
-			}
-		}
-	}
-
-	if (!hits.empty())
-	{
-		for (uint i = 0; i < hits.size(); ++i)
-		{
-			App->scene->selectedObject += hits[i];
-		}
-	}
-}
-
 void Raycaster::ScreenQuadToFrustum(int posX, int posY, int posW, int posH)
 {
 	int winWidth = App->window->GetWindowWidth();
@@ -173,7 +137,7 @@ math::Frustum Raycaster::CreateFrustum(math::Frustum cameraFrustum, math::float2
 	newFrustum.nearPlaneDistance = cameraFrustum.nearPlaneDistance;
 	newFrustum.farPlaneDistance = cameraFrustum.farPlaneDistance;
 
-	newFrustum.pos = cameraFrustum.NearPlanePos(centerPos);
+	newFrustum.pos = cameraFrustum.NearPlanePos(centerPos) - math::float3::one.Mul(cameraFrustum.ViewProjMatrix().TranslatePart());
 	math::float3 lookAt = cameraFrustum.FarPlanePos(centerPos);
 
 	math::float3 Z = -(newFrustum.pos - lookAt).Normalized(); // Direction the camera is looking at (reverse direction of what the camera is targeting)
