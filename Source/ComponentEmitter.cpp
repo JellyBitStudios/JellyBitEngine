@@ -928,8 +928,8 @@ uint ComponentEmitter::GetInternalSerializationBytes()
 		sizeOfList += (*it).GetColorListSerializationBytes();
 	}
 
-	return sizeof(bool) * 17 + sizeof(int) * 3 + sizeof(float) * 6 + sizeof(uint) * 5
-		+ sizeof(ShapeType) * 2 + sizeof(math::AABB) * 2 + sizeof(math::float2) * 7 + sizeof(math::float3) * 2
+	return sizeof(bool) * 17 + sizeof(int) * 3 + sizeof(float) * 5 + sizeof(uint) * 5
+		+ sizeof(ShapeType) * 2 + sizeof(math::AABB) * 2 + sizeof(math::float2) * 8 + sizeof(math::float3) * 2
 		+ particleAnim.GetPartAnimationSerializationBytes() + sizeOfList;//Bytes of all Start Values Struct
 }
 
