@@ -952,3 +952,19 @@ uint GameObject::GetLayer() const
 {
 	return layer;
 }
+
+void GameObject::ApplyLayerChildren(uint layerNumber)
+{
+	for each (GameObject* go in children)
+	{
+		if (go->layer != layerNumber)
+		{
+			go->layer = layerNumber;
+			System_Event newEvent;
+			newEvent.type = System_Event_Type::LayerChanged;
+			newEvent.layerEvent.layer = layerNumber;
+			newEvent.layerEvent.collider = go->cmp_collider;
+		}
+		go->ApplyLayerChildren(layerNumber);
+	}
+}
