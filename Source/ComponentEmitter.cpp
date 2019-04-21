@@ -56,6 +56,8 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 	coneHeight = componentEmitter.coneHeight;
 
 	normalShapeType = componentEmitter.normalShapeType;
+	burstType = componentEmitter.burstType;
+	SetBurstText();
 
 	startValues = componentEmitter.startValues;
 
@@ -1325,7 +1327,7 @@ void StartValues::operator=(StartValues startValue)
 
 	particleDirection = startValue.particleDirection;
 
-
+	color.clear();
 	for (std::list<ColorTime>::iterator it = startValue.color.begin(); it != startValue.color.end(); ++it)
 	{
 		color.push_back(*it);
