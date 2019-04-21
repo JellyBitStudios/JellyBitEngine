@@ -51,8 +51,9 @@ public class BattleCircle : JellyScript
 
     public bool AddAttacker(GameObject attacker)
     {
-        if (!attackers.Contains(attacker)
-            && maxAttackers > 0)
+        if (attackers.Contains(attacker))
+            return true;
+        else if (maxAttackers > 0)
         {
             // Limit number of attackers
             if (attackers.Count < maxAttackers)
@@ -102,16 +103,32 @@ public class BattleCircle : JellyScript
 
     public bool AddSimultaneousAttacker(GameObject attacker)
     {
-        if (!simultaneousAttackers.Contains(attacker)
-            && simultaneousAttackers.Count < maxSimultaneousAttackers
-            && maxSimultaneousAttackers > 0)
-        {
-            simultaneousAttackers.Add(attacker);
-            //Debug.Log("New simultaneous attacker ADDED. Total simultaneous attackers: " + simultaneousAttackers.Count);
+        if (simultaneousAttackers.Contains(attacker))
             return true;
+        else if (maxSimultaneousAttackers > 0)
+        {
+            // Limit number of attackers
+            if (simultaneousAttackers.Count < maxSimultaneousAttackers)
+            {
+                simultaneousAttackers.Add(attacker);
+                Debug.Log("New attacker ADDED. Total attackers: " + attackers.Count);
+                return true;
+            }
+            // Prioritize the attacker that Alita is attacking
+            else if (attacker == Alita.Call.currentTarget)
+            {
+                // 1. Remove the first attacker
+                GameObject firstAttacker = simultaneousAttackers[0];
+                simultaneousAttackers.Remove(firstAttacker);
+
+                // 2. Insert the new attacker
+                simultaneousAttackers.Add(attacker);
+                Debug.Log("New attacker ADDED. Total attackers: " + attackers.Count);
+                return true;
+            }
         }
 
-        //Debug.Log("New simultaneous attacker REJECTED. Total simultaneous attackers: " + simultaneousAttackers.Count);
+        Debug.Log("New simultaneous attacker REJECTED. Total simultaneous attackers: " + simultaneousAttackers.Count);
         return false;
     }
 
@@ -125,5 +142,10 @@ public class BattleCircle : JellyScript
 
         //Debug.Log("Attacker simultaneous could NOT be REMOVED. Total simultaneous attackers: " + simultaneousAttackers.Count);
         return false;
+    }
+
+    public bool SimultaneousAttackersContains(GameObject attacker)
+    {
+        return simultaneousAttackers.Contains(attacker);
     }
 }

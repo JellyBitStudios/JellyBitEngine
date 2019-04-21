@@ -164,8 +164,8 @@ public class CyborgMeleeController : Controller
 
                 entity.currentLife -= (int)hpModifier;
 
-                animator.PlayAnimation("melee_hurt_cyborg_animation");
-                animator.SetAnimationLoop(false);
+                //animator.PlayAnimation("melee_hurt_cyborg_animation");
+                //animator.SetAnimationLoop(false);
                 // TODO
 
                 break;
