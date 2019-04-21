@@ -147,7 +147,17 @@ update_status ModuleCameraEditor::Update()
 		App->raycaster->ScreenPointToRay(App->input->GetMouseX(), App->input->GetMouseY(), distance, hitPoint, &hitGameObject);
 		if (hitGameObject != nullptr)
 		{
-			SELECT(hitGameObject);
+			if (App->input->GetKey(SDL_SCANCODE_LCTRL) != KEY_REPEAT && App->input->GetKey(SDL_SCANCODE_RCTRL) != KEY_REPEAT)
+			{
+				SELECT(hitGameObject);
+			}
+			else
+			{
+				if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), hitGameObject->GetUUID()) == App->scene->multipleSelection.end())
+					App->scene->selectedObject += hitGameObject;
+				else
+					App->scene->selectedObject -= hitGameObject;
+			}
 
 			GameObject* parent = hitGameObject->GetParent();
 			if (parent)
