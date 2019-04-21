@@ -43,12 +43,16 @@ public class CyborgMeleeController : JellyScript
 
     public Agent agent;
     public LineOfSight sight;
+    public Animator animator;
 
     public int CurrentLife
     {
         get { return character.currentLife; }
         set
         {
+            if (value < 0)
+                animator.PlayAnimation("melee_hurt_cyborg_animation");
+
             character.currentLife = value;
             if (character.currentLife <= 0)
             {
@@ -71,6 +75,7 @@ public class CyborgMeleeController : JellyScript
 
         agent = gameObject.GetComponent<Agent>();
         sight = gameObject.childs[0].GetComponent<LineOfSight>();
+        animator = gameObject.childs[2].GetComponent<Animator>();
     }
 
     public override void Start()

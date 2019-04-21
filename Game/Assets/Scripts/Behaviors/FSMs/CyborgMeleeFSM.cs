@@ -70,7 +70,12 @@ public class CM_GoToGameObject : CM_IState
         //Debug.Log(owner.character.name + ": " + "ENTER" + " " + name);
 
         if (!owner.agent.SetDestination(Alita.Call.transform.position))
+        {
             owner.fsm.ChangeState(new CM_WanderDefault());
+            return;
+        }
+
+        owner.animator.PlayAnimation("melee_run_cyborg_animation");
     }
 
     public override void Execute(CyborgMeleeController owner) { }
@@ -235,7 +240,9 @@ public class CM_Wander : CM_IState
 
         /// Activate/Deactivate
         owner.agent.ActivateWander();
-        owner.agent.ActivateAvoidance(); 
+        owner.agent.ActivateAvoidance();
+
+        owner.animator.PlayAnimation("melee_run_cyborg_animation");
     }
 
     public override void Execute(CyborgMeleeController owner) { }
@@ -429,6 +436,8 @@ public class CM_Attack : CM_IState
 
         actualAttackRate = owner.character.attackRate + (float)MathScript.GetRandomDouble(-1.0, 1.0) * owner.character.attackRateFluctuation;
         lastAttackedTime = -actualAttackRate;
+
+        owner.animator.PlayAnimation("melee_iddle_attack_cyborg_animation");
     }
 
     public override void Execute(CyborgMeleeController owner)
@@ -492,6 +501,9 @@ public class CM_Hit : CM_IState
     private float maxAngularAcceleration = 0.0f;
     private float maxAngularVelocity = 0.0f;
 
+    // ----- CM_Hit -----
+    private bool animationHit = false;
+
     // --------------------------------------------------
 
     public CM_Hit()
@@ -520,14 +532,25 @@ public class CM_Hit : CM_IState
         // ----- CM_Hit -----
 
         owner.agent.SetFace(Alita.Call.gameObject);
+
+        owner.animator.PlayAnimation("melee_attack_cyborg_animation");
+        owner.animator.SetAnimationLoop(false);
     }
 
     public override void Execute(CyborgMeleeController owner)
     {
-        Alita.Call.character.currentLife -= owner.character.dmg;
+        if (owner.animator.GetCurrentFrame() >= 25
+            && !animationHit)
+        {
+            Alita.Call.character.currentLife -= owner.character.dmg;
 
-        owner.fsm.ChangeState(new CM_Attack());
-        return;
+            animationHit = true;
+        }
+        else if (owner.animator.AnimationFinished())
+        {
+            owner.fsm.ChangeState(new CM_Attack());
+            return;
+        }
     }
 
     public override void Exit(CyborgMeleeController owner)
