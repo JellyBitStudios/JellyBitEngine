@@ -139,6 +139,7 @@ public:
 	void ParticleShape();
 	void ParticleSpace();
 	
+	void UpdateTransform();
 	void SetNewAnimation();
 	void CreateParticles(int particlesToCreate, ShapeType shapeType, const math::float3 & pos, bool isBurst = false);
 	math::float3 RandPos(ShapeType shapeType, bool isBurst = false);

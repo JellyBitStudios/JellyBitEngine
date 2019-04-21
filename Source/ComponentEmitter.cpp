@@ -654,6 +654,17 @@ void ComponentEmitter::ParticleAABB()
 #endif
 }
 
+void ComponentEmitter::UpdateTransform()
+{
+#ifndef GAMEMODE
+
+	math::float3 size = boundingBox.Size();
+	math::float3 pos = parent->transform->GetGlobalMatrix().TranslatePart();
+	boundingBox.SetFromCenterAndSize(pos, size);
+
+#endif
+}
+
 void ComponentEmitter::ParticleTexture()
 {
 #ifndef GAMEMODE
@@ -747,10 +758,7 @@ void ComponentEmitter::ParticleSubEmitter()
 				subEmitter = App->GOs->CreateGameObject("SubEmition", parent);
 				subEmitter->AddComponent(EmitterComponent);
 				((ComponentEmitter*)subEmitter->GetComponent(EmitterComponent))->isSubEmitter = true;
-				subEmitter->originalBoundingBox.SetFromCenterAndSize(subEmitter->transform->GetPosition(), math::float3::one);
-				App->scene->quadtree.Insert(subEmitter);
 			}
-
 		}
 		else
 			subEmitter->ToggleIsActive();
