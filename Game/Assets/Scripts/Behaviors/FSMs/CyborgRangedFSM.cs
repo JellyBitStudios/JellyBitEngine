@@ -572,8 +572,8 @@ public class CR_Hit : CR_IState
         }
         else if (HitCooldown <= 0.0f)
         {
-            // Hit!
-            Alita.Call.character.currentLife -= owner.character.dmg;
+            // Hit!                         TODO FIX THIS
+            Alita.Call.character.currentLife -= -10;
 
             ++count;
 

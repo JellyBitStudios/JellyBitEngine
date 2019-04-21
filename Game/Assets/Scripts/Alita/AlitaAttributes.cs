@@ -32,8 +32,6 @@ public class Alita_Entity : Entity
     public const uint ConstSecondHitDmg = 20;
     public const uint ConstThirdHitDmg = 30;
 
-    public enum Action { hit, skillQ, skillW }
-
     // const skill Q
     public const uint ConstSkillqDmg = 30;
     public const float ConstSkillqRadius = 2.0f;

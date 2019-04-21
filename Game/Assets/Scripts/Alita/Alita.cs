@@ -42,7 +42,10 @@ class Alita : JellyScript
         set
         {
             if (value != null)
+            {
                 targetController = value.GetComponent<Controller>();
+                targetController.Actuate(0, Entity.Action.selected);
+            }
             else
                 targetController = null;
             _currentTarget = value;

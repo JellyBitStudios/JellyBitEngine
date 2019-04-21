@@ -9,5 +9,5 @@ public class Controller : JellyScript
     // maybe move agent/animator/fsm here?
     // start at subController can call base.Start()
 
-    public virtual void Actuate(uint hpModifier, GameObject originGO, Alita_Entity.Action action) { }
+    public virtual void Actuate(uint hpModifier, Entity.Action action) { }
 }

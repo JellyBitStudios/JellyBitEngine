@@ -542,7 +542,7 @@ public class CM_Hit : CM_IState
         if (owner.animator.GetCurrentFrame() >= 25
             && !animationHit)
         {
-            Alita.Call.character.currentLife -= owner.cbg_Entity.dmg;
+            Alita.Call.character.currentLife -= (int)owner.cbg_Entity.dmg;
 
             animationHit = true;
         }

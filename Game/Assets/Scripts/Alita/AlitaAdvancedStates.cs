@@ -41,8 +41,7 @@ class AAttacking : AState
                     {
                         hit = true;
                         Alita.Call.targetController.Actuate(Alita_Entity.ConstFirstHitDmg,
-                                                            Alita.Call.gameObject,
-                                                            Alita_Entity.Action.hit);
+                                                            Entity.Action.hit);
                     }
                     break;
                 case Anim.second:
@@ -50,8 +49,7 @@ class AAttacking : AState
                     {
                         hit = true;
                         Alita.Call.targetController.Actuate(Alita_Entity.ConstSecondHitDmg,
-                                                            Alita.Call.gameObject,
-                                                            Alita_Entity.Action.hit);
+                                                            Entity.Action.hit);
                     }
                     break;
                 case Anim.third:
@@ -59,8 +57,7 @@ class AAttacking : AState
                     {
                         hit = true;
                         Alita.Call.targetController.Actuate(Alita_Entity.ConstThirdHitDmg,
-                                                            Alita.Call.gameObject,
-                                                            Alita_Entity.Action.hit);
+                                                            Entity.Action.thirdHit);
                     }
                     break;
             }
@@ -207,7 +204,7 @@ class ASkill1 : AState
             Physics.OverlapSphere(Alita_Entity.ConstSkillqRadius, Alita.Call.transform.position, out hitInfo, LayerMask.GetMask("Enemy"), SceneQueryFlags.Static | SceneQueryFlags.Dynamic);
 
             foreach(OverlapHit goHit in hitInfo)
-                goHit.gameObject.GetComponent<Controller>().Actuate(Alita_Entity.ConstSkillqDmg, Alita.Call.gameObject, Alita_Entity.Action.skillQ);
+                goHit.gameObject.GetComponent<Controller>().Actuate(Alita_Entity.ConstSkillqDmg, Entity.Action.skillQ);
 
             hit = true;
         }

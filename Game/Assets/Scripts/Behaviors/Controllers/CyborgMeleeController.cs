@@ -147,19 +147,26 @@ public class CyborgMeleeController : Controller
         }
     }
 
-    public override void Actuate(uint hpModifier, GameObject originGO, Alita_Entity.Action action)
+    public override void Actuate(uint hpModifier, Entity.Action action)
     {
         switch (action)
         {
-            case Alita_Entity.Action.hit:
+            case Entity.Action.selected:
+
+                break;
+            case Entity.Action.hit:
                 entity.currentLife -= (int)hpModifier;
                 // currentLife -= hpModifier;
                 break;
-            case Alita_Entity.Action.skillQ:
+            case Entity.Action.thirdHit:
+                entity.currentLife -= (int)hpModifier;
+                // currentLife -= hpModifier;
+                break;
+            case Entity.Action.skillQ:
                 // move character backwards-> originGo.transform.positin - gameobject.transform.position etc
                 // current life -= hpModifier;
                 break;
-            case Alita_Entity.Action.skillW:
+            case Entity.Action.skillW:
                 // ?
                 break;
                 // healing, other skills etc
