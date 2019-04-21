@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System;
-using JellyBitEngine;
+﻿using JellyBitEngine;
 
 // https://forum.unity.com/threads/c-proper-state-machine.380612/
 // >, <=
@@ -69,6 +67,13 @@ public class CM_GoToGameObject : CM_IState
     {
         //Debug.Log(owner.character.name + ": " + "ENTER" + " " + name);
 
+        // ----- Agent -----
+
+        owner.agent.isMovementStopped = false;
+        owner.agent.isRotationStopped = false;
+
+        // ----- CM_GoToGameObject -----
+
         if (!owner.agent.SetDestination(Alita.Call.transform.position))
         {
             owner.fsm.ChangeState(new CM_WanderDefault());
@@ -76,6 +81,7 @@ public class CM_GoToGameObject : CM_IState
         }
 
         owner.animator.PlayAnimation("melee_run_cyborg_animation");
+        owner.animator.SetAnimationLoop(true);
     }
 
     public override void Execute(CyborgMeleeController owner) { }
@@ -103,7 +109,7 @@ public class CM_GoToDangerDistance : CM_GoToGameObject
 
     public override void Enter(CyborgMeleeController owner)
     {
-        Debug.Log(owner.character.name + ": " + "ENTER" + " " + name);
+        Debug.Log(owner.cbg_Entity.name + ": " + "ENTER" + " " + name);
 
         // ----- Save -----
 
@@ -129,7 +135,7 @@ public class CM_GoToDangerDistance : CM_GoToGameObject
     public override void Execute(CyborgMeleeController owner)
     {
         float distanceToTarget = (Alita.Call.transform.position - owner.transform.position).magnitude;
-        if (distanceToTarget <= owner.character.dangerDistance + Alita.Call.agent.agentData.Radius) // dangerDistance: am I INSIDE my DANGER range?
+        if (distanceToTarget <= owner.cbg_Entity.dangerDistance + Alita.Call.agent.agentData.Radius) // dangerDistance: am I INSIDE my DANGER range?
         {
             owner.fsm.ChangeState(new CM_GoToAttackDistance());
             return;
@@ -143,7 +149,7 @@ public class CM_GoToDangerDistance : CM_GoToGameObject
 
     public override void Exit(CyborgMeleeController owner)
     {
-        Debug.Log(owner.character.name + ": " + "EXIT" + " " + name);
+        Debug.Log(owner.cbg_Entity.name + ": " + "EXIT" + " " + name);
 
         // ----- Load -----
 
@@ -153,7 +159,7 @@ public class CM_GoToDangerDistance : CM_GoToGameObject
 
     public override void DrawGizmos(CyborgMeleeController owner)
     {
-        Debug.DrawSphere(owner.character.dangerDistance + Alita.Call.agent.agentData.Radius, Color.Blue, owner.transform.position, Quaternion.identity, Vector3.one);
+        Debug.DrawSphere(owner.cbg_Entity.dangerDistance + Alita.Call.agent.agentData.Radius, Color.Blue, owner.transform.position, Quaternion.identity, Vector3.one);
     }
 }
 
@@ -166,7 +172,7 @@ public class CM_GoToAttackDistance : CM_GoToGameObject
 
     public override void Enter(CyborgMeleeController owner)
     {
-        Debug.Log(owner.character.name + ": " + "ENTER" + " " + name);
+        Debug.Log(owner.cbg_Entity.name + ": " + "ENTER" + " " + name);
 
         // ----- Agent -----
 
@@ -183,7 +189,7 @@ public class CM_GoToAttackDistance : CM_GoToGameObject
     public override void Execute(CyborgMeleeController owner)
     {
         float distanceToTarget = (Alita.Call.transform.position - owner.transform.position).magnitude;
-        if (distanceToTarget <= owner.character.attackDistance + Alita.Call.agent.agentData.Radius) // attackDistance: am I INSIDE my ATTACK range?
+        if (distanceToTarget <= owner.cbg_Entity.attackDistance + Alita.Call.agent.agentData.Radius) // attackDistance: am I INSIDE my ATTACK range?
         {
             // Am I allowed to attack?
             if (Alita.Call.battleCircle.AddAttacker(owner.gameObject))
@@ -208,12 +214,12 @@ public class CM_GoToAttackDistance : CM_GoToGameObject
 
     public override void Exit(CyborgMeleeController owner)
     {
-        Debug.Log(owner.character.name + ": " + "EXIT" + " " + name);
+        Debug.Log(owner.cbg_Entity.name + ": " + "EXIT" + " " + name);
     }
 
     public override void DrawGizmos(CyborgMeleeController owner)
     {
-        Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
+        Debug.DrawSphere(owner.cbg_Entity.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
     }
 }
 #endregion
@@ -243,6 +249,7 @@ public class CM_Wander : CM_IState
         owner.agent.ActivateAvoidance();
 
         owner.animator.PlayAnimation("melee_run_cyborg_animation");
+        owner.animator.SetAnimationLoop(true);
     }
 
     public override void Execute(CyborgMeleeController owner) { }
@@ -270,13 +277,13 @@ public class CM_WanderDefault : CM_Wander
 
     public override void Enter(CyborgMeleeController owner)
     {
-        Debug.Log(owner.character.name + ": " + "ENTER" + " " + name);
+        Debug.Log(owner.cbg_Entity.name + ": " + "ENTER" + " " + name);
 
         // ----- Agent -----
 
         // Wander data
         owner.agent.wanderData.radius = 1.0f;
-        owner.agent.wanderData.offset = 2.0f;
+        owner.agent.wanderData.offset = 1.0f;
 
         owner.agent.wanderData.minTime = 0.3f;
         owner.agent.wanderData.maxTime = 0.7f;
@@ -297,14 +304,17 @@ public class CM_WanderDefault : CM_Wander
 
     public override void Exit(CyborgMeleeController owner)
     {
-        Debug.Log(owner.character.name + ": " + "EXIT" + " " + name);
+        Debug.Log(owner.cbg_Entity.name + ": " + "EXIT" + " " + name);
 
         // ----- Base -----
 
         base.Exit(owner);
     }
 
-    public override void DrawGizmos(CyborgMeleeController owner) { }
+    public override void DrawGizmos(CyborgMeleeController owner)
+    {
+        Debug.DrawSphere(owner.sight.Radius, Color.Green, owner.transform.position, Quaternion.identity, Vector3.one);
+    }
 }
 
 public class CM_WanderStrafe : CM_Wander
@@ -326,7 +336,7 @@ public class CM_WanderStrafe : CM_Wander
 
     public override void Enter(CyborgMeleeController owner)
     {
-        Debug.Log(owner.character.name + ": " + "ENTER" + " " + name);
+        Debug.Log(owner.cbg_Entity.name + ": " + "ENTER" + " " + name);
 
         // ----- Save -----
 
@@ -341,14 +351,14 @@ public class CM_WanderStrafe : CM_Wander
 
         // Wander data
         owner.agent.wanderData.radius = 1.0f;
-        owner.agent.wanderData.offset = 2.0f;
+        owner.agent.wanderData.offset = 0.5f;
 
         owner.agent.wanderData.minTime = 0.3f;
         owner.agent.wanderData.maxTime = 0.7f;
 
         // ----- CM_WanderStrafe -----
 
-        actualStrafeTime = (float)MathScript.GetRandomDouble(owner.character.strafeMinTime, owner.character.strafeMaxTime);
+        actualStrafeTime = (float)MathScript.GetRandomDouble(owner.cbg_Entity.strafeMinTime, owner.cbg_Entity.strafeMaxTime);
 
         // ----- Base -----
 
@@ -368,7 +378,7 @@ public class CM_WanderStrafe : CM_Wander
 
     public override void Exit(CyborgMeleeController owner)
     {
-        Debug.Log(owner.character.name + ": " + "EXIT" + " " + name);
+        Debug.Log(owner.cbg_Entity.name + ": " + "EXIT" + " " + name);
 
         // ----- Load -----
 
@@ -414,7 +424,7 @@ public class CM_Attack : CM_IState
 
     public override void Enter(CyborgMeleeController owner)
     {
-        Debug.Log(owner.character.name + ": " + "ENTER" + " " + name);
+        Debug.Log(owner.cbg_Entity.name + ": " + "ENTER" + " " + name);
 
         // ----- Save -----
 
@@ -425,26 +435,28 @@ public class CM_Attack : CM_IState
 
         /// Activate/Deactivate
         owner.agent.isMovementStopped = true;
+        owner.agent.isRotationStopped = false;
 
         // Align: Face data
-        owner.agent.agentData.maxAngularAcceleration = owner.character.trackMaxAngularAcceleration;
-        owner.agent.agentData.maxAngularVelocity = owner.character.trackMaxAngularVelocity;
+        owner.agent.agentData.maxAngularAcceleration /= 2.0f;
+        owner.agent.agentData.maxAngularVelocity /= 2.0f;
 
         // ----- CM_Attack -----
 
         owner.agent.SetFace(Alita.Call.gameObject);
 
-        actualAttackRate = owner.character.attackRate + (float)MathScript.GetRandomDouble(-1.0, 1.0) * owner.character.attackRateFluctuation;
+        actualAttackRate = owner.cbg_Entity.attackRate + (float)MathScript.GetRandomDouble(-1.0, 1.0) * owner.cbg_Entity.attackRateFluctuation;
         lastAttackedTime = -actualAttackRate;
 
         owner.animator.PlayAnimation("melee_iddle_attack_cyborg_animation");
+        owner.animator.SetAnimationLoop(true);
     }
 
     public override void Execute(CyborgMeleeController owner)
     {
         float distanceToTarget = (Alita.Call.gameObject.transform.position - owner.transform.position).magnitude;
         bool contains = Alita.Call.battleCircle.AttackersContains(owner.gameObject);
-        if (distanceToTarget > owner.character.attackDistance + Alita.Call.agent.agentData.Radius // attackDistance: has the target moved out of my attack range?
+        if (distanceToTarget > owner.cbg_Entity.attackDistance + Alita.Call.agent.agentData.Radius // attackDistance: has the target moved out of my attack range?
             || !contains) // attackers: am I still an attacker?
         {
             if (contains)
@@ -454,8 +466,8 @@ public class CM_Attack : CM_IState
             return;
         }
 
-        // When attack cooldown is 0.0f...
-        if (AttackCooldown <= 0.0f)
+        if (owner.agent.HasFaced
+            && AttackCooldown <= 0.0f)
         {
             // Am I allowed to hit?
             if (Alita.Call.battleCircle.AddSimultaneousAttacker(owner.gameObject))
@@ -471,12 +483,17 @@ public class CM_Attack : CM_IState
 
     public override void Exit(CyborgMeleeController owner)
     {
-        Debug.Log(owner.character.name + ": " + "EXIT" + " " + name);
+        Debug.Log(owner.cbg_Entity.name + ": " + "EXIT" + " " + name);
 
         // ----- Load -----
 
         owner.agent.agentData.maxAngularAcceleration = maxAngularAcceleration;
         owner.agent.agentData.maxAngularVelocity = maxAngularVelocity;
+
+        // ----- Agent -----
+
+        /// Activate/Deactivate
+        owner.agent.isMovementStopped = false;
 
         // ----- CM_Attack -----
 
@@ -485,7 +502,7 @@ public class CM_Attack : CM_IState
 
     public override void DrawGizmos(CyborgMeleeController owner)
     {
-        Debug.DrawSphere(owner.character.attackDistance + Alita.Call.agent.agentData.Radius, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
+        Debug.DrawSphere(owner.cbg_Entity.attackDistance + Alita.Call.agent.agentData.Radius, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
     }
 }
 #endregion
@@ -497,10 +514,6 @@ public class CM_Attack : CM_IState
 
 public class CM_Hit : CM_IState
 {
-    // ----- Save&Load -----
-    private float maxAngularAcceleration = 0.0f;
-    private float maxAngularVelocity = 0.0f;
-
     // ----- CM_Hit -----
     private bool animationHit = false;
 
@@ -513,25 +526,15 @@ public class CM_Hit : CM_IState
 
     public override void Enter(CyborgMeleeController owner)
     {
-        Debug.Log(owner.character.name + ": " + "ENTER" + " " + name);
-
-        // ----- Save -----
-
-        maxAngularAcceleration = owner.agent.agentData.maxAngularAcceleration;
-        maxAngularVelocity = owner.agent.agentData.maxAngularVelocity;
+        Debug.Log(owner.cbg_Entity.name + ": " + "ENTER" + " " + name);
 
         // ----- Agent -----
 
         /// Activate/Deactivate
-        owner.agent.isMovementStopped = true;
 
-        // Align: Face data
-        owner.agent.agentData.maxAngularAcceleration = owner.character.trackMaxAngularAcceleration;
-        owner.agent.agentData.maxAngularVelocity = owner.character.trackMaxAngularVelocity;
+        owner.agent.Stop();
 
         // ----- CM_Hit -----
-
-        owner.agent.SetFace(Alita.Call.gameObject);
 
         owner.animator.PlayAnimation("melee_attack_cyborg_animation");
         owner.animator.SetAnimationLoop(false);
@@ -542,7 +545,7 @@ public class CM_Hit : CM_IState
         if (owner.animator.GetCurrentFrame() >= 25
             && !animationHit)
         {
-            Alita.Call.character.currentLife -= owner.character.dmg;
+            Alita.Call.character.currentLife -= owner.cbg_Entity.dmg;
 
             animationHit = true;
         }
@@ -555,23 +558,21 @@ public class CM_Hit : CM_IState
 
     public override void Exit(CyborgMeleeController owner)
     {
-        Debug.Log(owner.character.name + ": " + "EXIT" + " " + name);
+        Debug.Log(owner.cbg_Entity.name + ": " + "EXIT" + " " + name);
 
-        // ----- Load -----
+        // ----- Agent -----
 
-        owner.agent.agentData.maxAngularAcceleration = maxAngularAcceleration;
-        owner.agent.agentData.maxAngularVelocity = maxAngularVelocity;
+        /// Activate/Deactivate
+        owner.agent.Resume();
 
         // ----- CM_Hit -----
-
-        owner.agent.FinishFace();
 
         Alita.Call.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
     }
 
     public override void DrawGizmos(CyborgMeleeController owner)
     {
-        Debug.DrawSphere(owner.character.attackDistance + Alita.Call.agent.agentData.Radius, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
+        Debug.DrawSphere(owner.cbg_Entity.attackDistance + Alita.Call.agent.agentData.Radius, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
     }
 }
 #endregion
@@ -590,14 +591,12 @@ public class CM_Die : CM_IState
 
     public override void Enter(CyborgMeleeController owner)
     {
-        Debug.Log(owner.character.name + ": " + "ENTER" + " " + name);
+        Debug.Log(owner.cbg_Entity.name + ": " + "ENTER" + " " + name);
 
         // ----- Agent -----
 
         /// Activate/Deactivate
-        owner.agent.isMovementStopped = true;
-        owner.agent.isRotationStopped = true;
-
+        owner.agent.Stop();
         owner.agent.ClearPath();
         owner.agent.ClearMovementAndRotation();
     }
@@ -612,7 +611,7 @@ public class CM_Die : CM_IState
 
     public override void Exit(CyborgMeleeController owner)
     {
-        Debug.Log(owner.character.name + ": " + "EXIT" + " " + name);
+        Debug.Log(owner.cbg_Entity.name + ": " + "EXIT" + " " + name);
     }
 
     public override void DrawGizmos(CyborgMeleeController owner) { }
