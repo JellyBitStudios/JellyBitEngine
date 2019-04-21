@@ -95,11 +95,21 @@ public class Agent : JellyScript
     }
     public Vector3 NextPosition
     {
-        get { return pathManager.GetNextPosition(this); }
+        get
+        {
+            return pathManager.GetNextPosition(this);
+        }
     }
     public bool HasArrived
     {
-        get { return pathManager.HasArrived; }
+        get
+        {
+            return pathManager.HasArrived;
+        }
+    }
+    public bool HasFaced
+    {
+        get { return hasFaced; }
     }
 
     public bool isMovementStopped = false;
@@ -108,10 +118,9 @@ public class Agent : JellyScript
     public Vector3 velocity = Vector3.zero;
     [HideInInspector]
     public float angularVelocity = 0.0f;
-    public bool HasFaced
-    {
-        get { return hasFaced; }
-    }
+
+    public Vector3 direction = Vector3.zero;
+    public bool useDirection = false;
 
     public bool drawGizmosAgent = true;
     #endregion
@@ -239,7 +248,12 @@ public class Agent : JellyScript
         // 3. Move
         /// Velocity
         if (seekData.isActive)
-            velocities[seekData.Priority] += SteeringSeek.GetSeek(NextPosition, this);
+        {
+            if (useDirection)
+                velocities[seekData.Priority] += SteeringSeek.GetSeekDirection(direction, this);
+            else
+                velocities[seekData.Priority] += SteeringSeek.GetSeekPosition(NextPosition, this);
+        }
         if (fleeData.isActive)
             velocities[fleeData.Priority] += SteeringFlee.GetFlee(NextPosition, this);
         if (wanderData.isActive)
@@ -471,7 +485,7 @@ public class Agent : JellyScript
         {
             case MovementState.GoToPosition:
 
-                if (pathManager.GetRemainingDistance(this) < seekData.arriveMinDistance)
+                if (pathManager.GetRemainingDistance(this) <= seekData.arriveMinDistance)
                     movementState = MovementState.UpdateNextPosition;
 
                 break;

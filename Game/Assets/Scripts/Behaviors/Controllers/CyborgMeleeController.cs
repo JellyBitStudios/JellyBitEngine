@@ -26,6 +26,10 @@ public class CyborgMelee_Entity : NPC_Entity
     /// Strafe
     public float strafeMinTime = 3.0f;
     public float strafeMaxTime = 10.0f;
+
+    // Stun
+    /// StunForce
+    public float stunTime = 0.2f;
 }
 
 public class CyborgMeleeController : Controller
@@ -153,17 +157,23 @@ public class CyborgMeleeController : Controller
 
                 entity.currentLife -= (int)hpModifier;
 
+                // Stun basic
                 if (!isStunned)
-                    fsm.ChangeState(new CM_Stun(fsm.GetState()));
+                    fsm.ChangeState(new CM_StunBasic(fsm.GetState()));
 
                 break;
 
             case Entity.Action.skillQ:
-                // move character backwards-> originGo.transform.positin - gameobject.transform.position etc
-                // current life -= hpModifier;
+
+                entity.currentLife -= (int)hpModifier;
+
+                // Stun force (always!)
+                fsm.ChangeState(new CM_StunForce(fsm.GetState()));
+
                 break;
 
             case Entity.Action.skillW:
+
                 // ?
                 break;
                 // healing, other skills etc

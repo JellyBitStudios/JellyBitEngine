@@ -37,7 +37,7 @@ public static class SteeringWander
         Vector3 circlePos = agent.transform.position + agent.transform.forward * (agent.wanderData.offset + agent.wanderData.radius + agent.seekData.arriveMinDistance);
         agent.wanderData.point = circlePos + agent.wanderData.dir * agent.wanderData.radius;
 
-        return SteeringSeek.GetSeek(agent.wanderData.point, agent);
+        return SteeringSeek.GetSeekPosition(agent.wanderData.point, agent);
     }
 
     public static void DrawGizmos(Agent agent)

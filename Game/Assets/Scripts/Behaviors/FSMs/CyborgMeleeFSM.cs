@@ -597,7 +597,7 @@ public class CM_Hit : CM_IState
 public class CM_Stun : CM_IState
 {
     // ----- CM_Stun -----
-    CM_IState lastState = null;
+    public CM_IState lastState = null;
 
     // --------------------------------------------------
 
@@ -614,17 +614,47 @@ public class CM_Stun : CM_IState
     {
         Debug.Log(owner.cbg_Entity.name + ": " + "ENTER" + " " + name);
 
-        // ----- Agent -----
-
-        /// Activate/Deactivate
-        owner.agent.Stop();
-
         // ----- CM_Stun -----
 
         owner.animator.PlayAnimation("melee_hurt_cyborg_animation");
         owner.animator.SetAnimationLoop(false);
 
         owner.isStunned = true;
+    }
+
+    public override void Execute(CyborgMeleeController owner) { }
+
+    public override void Exit(CyborgMeleeController owner)
+    {
+        Debug.Log(owner.cbg_Entity.name + ": " + "EXIT" + " " + name);
+
+        // ----- CM_Stun -----
+
+        owner.isStunned = false;
+    }
+
+    public override void DrawGizmos(CyborgMeleeController owner) { }
+}
+
+public class CM_StunBasic : CM_Stun
+{
+    public CM_StunBasic(CM_IState lastState) : base(lastState)
+    {
+        name = "StunBasic";
+    }
+
+    public override void Enter(CyborgMeleeController owner)
+    {
+        Debug.Log(owner.cbg_Entity.name + ": " + "ENTER" + " " + name);
+
+        // ----- Agent -----
+
+        /// Activate/Deactivate
+        owner.agent.Stop();
+
+        // ----- Base -----
+
+        base.Enter(owner);
     }
 
     public override void Execute(CyborgMeleeController owner)
@@ -645,9 +675,96 @@ public class CM_Stun : CM_IState
         /// Activate/Deactivate
         owner.agent.Resume();
 
-        // ----- CM_Stun -----
+        // ----- Base -----
 
-        owner.isStunned = false;
+        base.Exit(owner);
+    }
+
+    public override void DrawGizmos(CyborgMeleeController owner) { }
+}
+
+public class CM_StunForce : CM_Stun
+{
+    // ----- Save&Load -----
+    private float maxAcceleration = 0.0f;
+    private float maxVelocity = 0.0f;
+
+    // ----- CM_StunForce -----
+    private float timer = 0.0f;
+
+    // --------------------------------------------------
+
+    public CM_StunForce(CM_IState lastState) : base(lastState)
+    {
+        name = "StunForce";
+    }
+
+    public override void Enter(CyborgMeleeController owner)
+    {
+        Debug.Log(owner.cbg_Entity.name + ": " + "ENTER" + " " + name);
+
+        // ----- Save -----
+
+        maxAcceleration = owner.agent.agentData.maxAcceleration;
+        maxVelocity = owner.agent.agentData.maxVelocity;
+
+        // ----- Agent -----
+
+        /// Activate/Deactivate
+        owner.agent.isMovementStopped = false;
+        owner.agent.isRotationStopped = true;
+
+        owner.agent.agentData.maxAcceleration *= 4.0f;
+        owner.agent.agentData.maxVelocity *= 4.0f;
+
+        // ----- CM_StunForce -----
+
+        owner.agent.direction = (owner.transform.position - Alita.Call.transform.position).normalized();
+        owner.agent.useDirection = true;
+
+        // ----- Base -----
+
+        base.Enter(owner);
+    }
+
+    public override void Execute(CyborgMeleeController owner)
+    {
+        if (timer >= owner.cbg_Entity.stunTime)
+        {
+            owner.agent.isMovementStopped = true;
+
+            if (owner.animator.AnimationFinished())
+            {
+                owner.fsm.ChangeState(lastState);
+                return;
+            }
+        }
+
+        timer += Time.deltaTime;
+    }
+
+    public override void Exit(CyborgMeleeController owner)
+    {
+        Debug.Log(owner.cbg_Entity.name + ": " + "EXIT" + " " + name);
+
+        // ----- Load -----
+
+        owner.agent.agentData.maxAcceleration = maxAcceleration;
+        owner.agent.agentData.maxVelocity = maxVelocity;
+
+        // ----- Agent -----
+
+        /// Activate/Deactivate
+        owner.agent.isMovementStopped = false;
+        owner.agent.isRotationStopped = false;
+
+        // ----- CM_StunForce -----
+
+        owner.agent.useDirection = false;
+
+        // ----- Base -----
+
+        base.Exit(owner);
     }
 
     public override void DrawGizmos(CyborgMeleeController owner) { }
