@@ -68,43 +68,4 @@ public static class MathScript
     {
         return GetRandomInteger(0, 1) * 2 - 1;
     }
-
-    public static float Lerp(float a, float b, float t)
-    {
-        return (1f - t) * a + t * b;
-    }
-
-    public static Vector3 Lerp(Vector3 a, Vector3 b, float t)
-    {
-        return (1f - t) * a + t * b;
-    }
-
-    public class BezierCurve
-    {
-        private static Vector3 p0 = Vector3.zero;
-        private static Vector3 p1 = Vector3.zero;
-        private static Vector3 p2 = Vector3.zero;
-        private static Vector3 p3 = Vector3.zero;
-
-        public static void CreateBezierCurve(Vector3 point0, Vector3 point1, Vector3 point2, Vector3 point3)
-        {
-            p0 = point0;
-            p1 = point1;
-            p2 = point2;
-            p3 = point3;
-        }
-
-        public static Vector3 GetPointOnBezierCurve(float t)
-        {
-            Vector3 a = Lerp(p0, p1, t);
-            Vector3 b = Lerp(p1, p2, t);
-            Vector3 c = Lerp(p2, p3, t);
-            Vector3 d = Lerp(a, b, t);
-            Vector3 e = Lerp(b, c, t);
-
-            return Lerp(d, e, t);
-        }
-
-    }
-
 }

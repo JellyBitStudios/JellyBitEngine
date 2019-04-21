@@ -143,16 +143,7 @@ class ADash : AState
         Alita.Call.animator.PlayAnimation("alita_dash_anim");
 
         Alita.Call.agent.Stop();
-
-        //Points to Bezier curve 
         
-        Vector3 p0 = new Vector3(AlitaCharacter.ConstDashStrength, AlitaCharacter.ConstDashStrength, AlitaCharacter.ConstDashStrength);
-        Vector3 p1 = new Vector3(AlitaCharacter.ConstDashStrength/2, AlitaCharacter.ConstDashStrength/2, AlitaCharacter.ConstDashStrength/2);
-        Vector3 p2 = new Vector3(AlitaCharacter.ConstDashStrength/3, AlitaCharacter.ConstDashStrength/3 , AlitaCharacter.ConstDashStrength/3);
-        Vector3 p3 = new Vector3(2.0f, 2.0f, 2.0f);
-
-        MathScript.BezierCurve.CreateBezierCurve(p0, p1, p2, p3);
-
         float targetOrientation = MathScript.Rad2Deg * (float)Math.Atan2(dir.x, dir.z);
         Quaternion quat = Quaternion.Rotate(Vector3.up, targetOrientation);
         Alita.Call.transform.rotation = quat;
@@ -160,13 +151,7 @@ class ADash : AState
 
     public override void OnExecute()
     {
-    
-        float time_bezier = accumulatedDistance/ AlitaCharacter.ConstMaxDistance;
-
-        Vector3 bezier = MathScript.BezierCurve.GetPointOnBezierCurve(time_bezier);
-
-        Vector3 increase = Time.deltaTime * dir * bezier.magnitude;
-
+        Vector3 increase = Time.deltaTime * dir * AlitaCharacter.ConstDashStrength;
         Alita.Call.transform.position += increase;
         accumulatedDistance += increase.magnitude;
         if (accumulatedDistance >= AlitaCharacter.ConstMaxDistance)
