@@ -48,6 +48,10 @@ private:
 	float zoomSpeed = 0.0f;
 	float referenceRadius = 0.0f;
 	float increaseVelFactor = 1.0f;
+	float mousePressedPos_X = 0.0f;
+	float mousePressedPos_Y = 0.0f;
+
+	bool isMultiSelection = false;
 };
 
 #endif
