@@ -231,6 +231,7 @@ private:
 
 	// Loop the particle (if true the particle emitter will never stop)
 	bool loop = true;
+	bool burstLoop = true;
 	GameTimer loopTimer;
 	// Warm up the particle emitter (if true the particle emitter will be already started at play-time)
 	bool preWarm = true;

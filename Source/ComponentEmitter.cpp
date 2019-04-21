@@ -138,6 +138,7 @@ void ComponentEmitter::StartEmitter()
 
 		timeToParticle = 0.0f;
 		isPlaying = true;
+		burstLoop = true;
 		if (subEmitter)
 			((ComponentEmitter*)subEmitter)->isPlaying = true;
 	}
@@ -180,8 +181,7 @@ void ComponentEmitter::Update()
 
 			}
 		}
-		float burstT = burstTime.ReadSec();
-		if (burst && burstT > repeatTime)
+		if (burst && burstTime.ReadSec() > repeatTime && (loop || burstLoop))
 		{
 			if (App->IsPlay() || simulatedGame == SimulatedGame_PLAY || App->IsStep())
 			{
@@ -191,6 +191,8 @@ void ComponentEmitter::Update()
 				CreateParticles(particlesToCreate, burstType, math::float3::zero, true);
 			}
 			burstTime.Start();
+			if (!loop)
+				burstLoop = false;
 		}
 
 		//Used for SubEmitter. Create particles from ParticleEmiter death (On Emiter update because need to resize before Particle update)
@@ -590,7 +592,7 @@ void ComponentEmitter::ParticleBurst()
 		ImGui::DragInt("Max Particles", &maxPart, 1.0f, 0, 100);
 		if (maxPart < minPart)
 			minPart = maxPart;
-		ImGui::DragFloat("Repeat Time", &repeatTime, 0.5f, 0.0f, 0.0f, "%.1f");
+		ImGui::DragFloat("Repeat Time", &repeatTime, 0.5f, 0.0f, 50.0f, "%.1f");
 
 		if (burstType == ShapeType_MESH)
 		{
