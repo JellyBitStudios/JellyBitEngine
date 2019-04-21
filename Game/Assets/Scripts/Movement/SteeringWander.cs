@@ -34,7 +34,7 @@ public static class SteeringWander
 
         agent.wanderData.time -= Time.deltaTime;
 
-        Vector3 circlePos = agent.transform.position + agent.transform.forward * agent.wanderData.offset;
+        Vector3 circlePos = agent.transform.position + agent.transform.forward * (agent.wanderData.offset + agent.agentData.Radius + agent.seekData.arriveMinDistance);
         agent.wanderData.point = circlePos + agent.wanderData.dir * agent.wanderData.radius;
 
         return SteeringSeek.GetSeek(agent.wanderData.point, agent);

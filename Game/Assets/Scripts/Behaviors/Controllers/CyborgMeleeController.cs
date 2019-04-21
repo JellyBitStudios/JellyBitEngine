@@ -17,9 +17,9 @@ public class CyborgMeleeCharacter : Character
 
     // GoToGameObject
     /// GoToAttackDistance
-    public float attackDistance = 0.5f;
+    public float attackDistance = 1.5f;
     /// GoToDangerDistance
-    public float dangerDistance = 4.0f;
+    public float dangerDistance = 5.0f;
 
     // Attack
     public float attackRate = 10.0f;
@@ -30,8 +30,8 @@ public class CyborgMeleeCharacter : Character
 
     // Wander
     /// Strafe
-    public float strafeMinTime = 1.0f;
-    public float strafeMaxTime = 3.0f;
+    public float strafeMinTime = 3.0f;
+    public float strafeMaxTime = 10.0f;
 }
 
 public class CyborgMeleeController : JellyScript
@@ -75,7 +75,7 @@ public class CyborgMeleeController : JellyScript
 
         agent = gameObject.GetComponent<Agent>();
         sight = gameObject.childs[0].GetComponent<LineOfSight>();
-        animator = gameObject.childs[2].GetComponent<Animator>();
+        animator = gameObject.childs[1].GetComponent<Animator>();
     }
 
     public override void Start()

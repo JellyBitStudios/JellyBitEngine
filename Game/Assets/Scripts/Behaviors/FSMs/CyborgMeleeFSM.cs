@@ -285,7 +285,7 @@ public class CM_WanderDefault : CM_Wander
 
         // Wander data
         owner.agent.wanderData.radius = 1.0f;
-        owner.agent.wanderData.offset = 2.0f;
+        owner.agent.wanderData.offset = 1.0f;
 
         owner.agent.wanderData.minTime = 0.3f;
         owner.agent.wanderData.maxTime = 0.7f;
@@ -313,7 +313,10 @@ public class CM_WanderDefault : CM_Wander
         base.Exit(owner);
     }
 
-    public override void DrawGizmos(CyborgMeleeController owner) { }
+    public override void DrawGizmos(CyborgMeleeController owner)
+    {
+        Debug.DrawSphere(owner.sight.Radius, Color.Green, owner.transform.position, Quaternion.identity, Vector3.one);
+    }
 }
 
 public class CM_WanderStrafe : CM_Wander
@@ -350,7 +353,7 @@ public class CM_WanderStrafe : CM_Wander
 
         // Wander data
         owner.agent.wanderData.radius = 1.0f;
-        owner.agent.wanderData.offset = 2.0f;
+        owner.agent.wanderData.offset = 0.5f;
 
         owner.agent.wanderData.minTime = 0.3f;
         owner.agent.wanderData.maxTime = 0.7f;
@@ -437,8 +440,8 @@ public class CM_Attack : CM_IState
         owner.agent.isRotationStopped = false;
 
         // Align: Face data
-        owner.agent.agentData.maxAngularAcceleration = owner.agent.agentData.maxAngularAcceleration * 0.5f;
-        owner.agent.agentData.maxAngularVelocity = owner.agent.agentData.maxAngularVelocity * 0.5f;
+        owner.agent.agentData.maxAngularAcceleration /= 2.0f;
+        owner.agent.agentData.maxAngularVelocity /= 2.0f;
 
         // ----- CM_Attack -----
 
@@ -594,9 +597,7 @@ public class CM_Die : CM_IState
         // ----- Agent -----
 
         /// Activate/Deactivate
-        owner.agent.isMovementStopped = true;
-        owner.agent.isRotationStopped = true;
-
+        owner.agent.Stop();
         owner.agent.ClearPath();
         owner.agent.ClearMovementAndRotation();
     }
