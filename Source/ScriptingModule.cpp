@@ -1847,9 +1847,8 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 	if (!monoObject || !type)
 		return nullptr;
 
-	MonoObject* monoComp = nullptr;
-
-	std::string className = mono_class_get_name(mono_type_get_class(mono_reflection_type_get_type(type)));
+	MonoClass* objectClass = mono_type_get_class(mono_reflection_type_get_type(type));
+	std::string className = mono_class_get_name(objectClass);
 
 	if (className == "NavMeshAgent")
 	{
@@ -2068,7 +2067,7 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 			return nullptr;
 
 		//Find a script named as this class
-
+		
 		for (int i = 0; i < gameObject->components.size(); ++i)
 		{
 			Component* comp = gameObject->components[i];
@@ -2081,9 +2080,27 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 				}
 			}
 		}
-	}
 
-	return monoComp;
+		//Find a script whose parent class is named as this class
+		for (int i = 0; i < gameObject->components.size(); ++i)
+		{
+			Component* comp = gameObject->components[i];
+			if (comp->GetType() == ComponentTypes::ScriptComponent)
+			{
+				ComponentScript* script = (ComponentScript*)comp;
+				
+				MonoClass* parentClass = mono_class_get_parent(mono_object_get_class(App->scripting->MonoComponentFrom(script)));
+				while (parentClass != nullptr)
+				{
+					if (className == mono_class_get_name(parentClass))
+						return script->GetMonoComponent();
+
+					parentClass = mono_class_get_parent(parentClass);
+				}
+			}
+		}
+	}
+	return nullptr;
 }
 
 MonoObject* GetGameCamera()
