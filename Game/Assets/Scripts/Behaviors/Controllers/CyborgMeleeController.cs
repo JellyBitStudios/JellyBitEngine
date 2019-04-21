@@ -17,9 +17,9 @@ public class CyborgMeleeCharacter : Character
 
     // GoToGameObject
     /// GoToAttackDistance
-    public float attackDistance = 2.0f;
+    public float attackDistance = 0.5f;
     /// GoToDangerDistance
-    public float dangerDistance = 5.0f;
+    public float dangerDistance = 4.0f;
 
     // Attack
     public float attackRate = 10.0f;
@@ -43,12 +43,16 @@ public class CyborgMeleeController : JellyScript
 
     public Agent agent;
     public LineOfSight sight;
+    public Animator animator;
 
     public int CurrentLife
     {
         get { return character.currentLife; }
         set
         {
+            if (value < 0)
+                animator.PlayAnimation("melee_hurt_cyborg_animation");
+
             character.currentLife = value;
             if (character.currentLife <= 0)
             {
@@ -71,6 +75,7 @@ public class CyborgMeleeController : JellyScript
 
         agent = gameObject.GetComponent<Agent>();
         sight = gameObject.childs[0].GetComponent<LineOfSight>();
+        animator = gameObject.childs[2].GetComponent<Animator>();
     }
 
     public override void Start()
@@ -123,6 +128,9 @@ public class CyborgMeleeController : JellyScript
     public override void OnStop()
     {
         EventsManager.Call.StopListening(this);
+
+        Alita.Call.battleCircle.RemoveSimultaneousAttacker(gameObject);
+        Alita.Call.battleCircle.RemoveAttacker(gameObject);
     }
 
     // ----------------------------------------------------------------------------------------------------

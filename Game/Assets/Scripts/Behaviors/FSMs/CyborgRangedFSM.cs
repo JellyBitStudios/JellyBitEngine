@@ -72,7 +72,10 @@ public class CR_GoToGameObject : CR_IState
         // ----- CR_GoToGameObject -----
 
         if (!owner.agent.SetDestination(Alita.Call.transform.position))
+        {
             owner.fsm.ChangeState(new CR_Wander());
+            return;
+        }
     }
 
     public override void Execute(CyborgRangedController owner)
