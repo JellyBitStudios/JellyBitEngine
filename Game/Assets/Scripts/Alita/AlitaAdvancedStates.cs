@@ -40,21 +40,27 @@ class AAttacking : AState
                     if (Alita.Call.animator.GetCurrentFrame() >= 16)
                     {
                         hit = true;
-                        Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
+                        Alita.Call.targetController.Actuate(Alita_Entity.ConstFirstHitDmg,
+                                                            Alita.Call.gameObject,
+                                                            Alita_Entity.Action.hit);
                     }
                     break;
                 case Anim.second:
                     if (Alita.Call.animator.GetCurrentFrame() >= 15)
                     {
                         hit = true;
-                        Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
+                        Alita.Call.targetController.Actuate(Alita_Entity.ConstSecondHitDmg,
+                                                            Alita.Call.gameObject,
+                                                            Alita_Entity.Action.hit);
                     }
                     break;
                 case Anim.third:
                     if (Alita.Call.animator.GetCurrentFrame() >= 11)
                     {
                         hit = true;
-                        Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
+                        Alita.Call.targetController.Actuate(Alita_Entity.ConstThirdHitDmg,
+                                                            Alita.Call.gameObject,
+                                                            Alita_Entity.Action.hit);
                     }
                     break;
             }
@@ -143,16 +149,7 @@ class ADash : AState
         Alita.Call.animator.PlayAnimation("alita_dash_anim");
 
         Alita.Call.agent.Stop();
-
-        //Points to Bezier curve 
-
-        Vector3 p0 = new Vector3(AlitaCharacter.ConstDashStrength, AlitaCharacter.ConstDashStrength, AlitaCharacter.ConstDashStrength);
-        Vector3 p1 = new Vector3(AlitaCharacter.ConstDashStrength / 2, AlitaCharacter.ConstDashStrength / 2, AlitaCharacter.ConstDashStrength / 2);
-        Vector3 p2 = new Vector3(AlitaCharacter.ConstDashStrength / 3, AlitaCharacter.ConstDashStrength / 3, AlitaCharacter.ConstDashStrength / 3);
-        Vector3 p3 = new Vector3(2.0f, 2.0f, 2.0f);
-
-        MathScript.BezierCurve.CreateBezierCurve(p0, p1, p2, p3);
-
+        
         float targetOrientation = MathScript.Rad2Deg * (float)Math.Atan2(dir.x, dir.z);
         Quaternion quat = Quaternion.Rotate(Vector3.up, targetOrientation);
         Alita.Call.transform.rotation = quat;
@@ -160,16 +157,10 @@ class ADash : AState
 
     public override void OnExecute()
     {
-
-        float time_bezier = accumulatedDistance / AlitaCharacter.ConstMaxDistance;
-
-        Vector3 bezier = MathScript.BezierCurve.GetPointOnBezierCurve(time_bezier);
-
-        Vector3 increase = Time.deltaTime * dir * bezier.magnitude;
-
+        Vector3 increase = Time.deltaTime * dir * Alita_Entity.ConstDashStrength;
         Alita.Call.transform.position += increase;
         accumulatedDistance += increase.magnitude;
-        if (accumulatedDistance >= AlitaCharacter.ConstMaxDistance)
+        if (accumulatedDistance >= Alita_Entity.ConstMaxDistance)
             Alita.Call.SwitchState(Alita.Call.StateIdle);
     }
 
@@ -199,7 +190,11 @@ class ASkill1 : AState
             // overlap sphere
             // SEND DECAL
             OverlapHit[] hitInfo;
-            Physics.OverlapSphere(AlitaCharacter.ConstSkillqRadius, Alita.Call.transform.position, out hitInfo, LayerMask.GetMask("Enemy"), SceneQueryFlags.Static | SceneQueryFlags.Dynamic);
+            Physics.OverlapSphere(Alita_Entity.ConstSkillqRadius, Alita.Call.transform.position, out hitInfo, LayerMask.GetMask("Enemy"), SceneQueryFlags.Static | SceneQueryFlags.Dynamic);
+
+            foreach(OverlapHit goHit in hitInfo)
+                goHit.gameObject.GetComponent<Controller>().Actuate(Alita_Entity.ConstSkillqDmg, Alita.Call.gameObject, Alita_Entity.Action.skillQ);
+
             hit = true;
         }
 

@@ -2,18 +2,15 @@
 using System;
 using JellyBitEngine;
 
-public class CyborgMeleeCharacter : Character
+public class CyborgMelee_Entity : NPC_Entity
 {
-    public CyborgMeleeCharacter()
+    public CyborgMelee_Entity()
     {
-
+        name = "Cyborg Melee";
+        //DistanceToTarget = 3.0f?
     }
 
-    // --------------------------------------------------
-
-    public string name = "Cyborg Melee";
-
-    // -----
+    // -------------------------------------------------
 
     // GoToGameObject
     /// GoToAttackDistance
@@ -34,12 +31,12 @@ public class CyborgMeleeCharacter : Character
     public float strafeMaxTime = 3.0f;
 }
 
-public class CyborgMeleeController : JellyScript
+public class CyborgMeleeController : Controller
 {
     #region PUBLIC_VARIABLES
-    public CyborgMeleeCharacter character = new CyborgMeleeCharacter();
-
     public CyborgMeleeFSM fsm;
+
+    public CyborgMelee_Entity cbg_Entity;
 
     public Agent agent;
     public LineOfSight sight;
@@ -47,20 +44,20 @@ public class CyborgMeleeController : JellyScript
 
     public int CurrentLife
     {
-        get { return character.currentLife; }
+        get { return entity.currentLife; }
         set
         {
             if (value < 0)
                 animator.PlayAnimation("melee_hurt_cyborg_animation");
 
-            character.currentLife = value;
-            if (character.currentLife <= 0)
+            entity.currentLife = value;
+            if (entity.currentLife <= 0)
             {
-                character.currentLife = 0;
+                entity.currentLife = 0;
                 fsm.ChangeState(new CM_Die());
             }
 
-            Debug.Log("Cyborg melee life: " + character.currentLife);
+            Debug.Log("Cyborg melee life: " + entity.currentLife);
         }
     }
 
@@ -71,6 +68,7 @@ public class CyborgMeleeController : JellyScript
 
     public override void Awake()
     {
+        entity = cbg_Entity = new CyborgMelee_Entity();
         fsm = new CyborgMeleeFSM(this);
 
         agent = gameObject.GetComponent<Agent>();
@@ -81,7 +79,7 @@ public class CyborgMeleeController : JellyScript
     public override void Start()
     {
         // Character
-        character.currentLife = (int)character.maxLife;
+        entity.currentLife = (int)entity.maxLife;
 
         // Agent
         agent.agentData.Radius = 1.0f;
@@ -146,6 +144,27 @@ public class CyborgMeleeController : JellyScript
                 agent.SetDestination(hitInfo.point);
                 //wanderState = WanderStates.goToPosition;
             }
+        }
+    }
+
+
+
+    public override void Actuate(uint hpModifier, GameObject originGO, Alita_Entity.Action action)
+    {
+        switch (action)
+        {
+            case Alita_Entity.Action.hit:
+                entity.currentLife -= (int)hpModifier;
+                // currentLife -= hpModifier;
+                break;
+            case Alita_Entity.Action.skillQ:
+                // move character backwards-> originGo.transform.positin - gameobject.transform.position etc
+                // current life -= hpModifier;
+                break;
+            case Alita_Entity.Action.skillW:
+                // ?
+                break;
+                // healing, other skills etc
         }
     }
 }
