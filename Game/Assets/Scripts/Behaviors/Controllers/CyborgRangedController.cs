@@ -158,5 +158,8 @@ public class CyborgRangedController : JellyScript
     public override void OnStop()
     {
         EventsManager.Call.StopListening(this);
+
+        Alita.Call.battleCircle.RemoveSimultaneousAttacker(gameObject);
+        Alita.Call.battleCircle.RemoveAttacker(gameObject);
     }
 }

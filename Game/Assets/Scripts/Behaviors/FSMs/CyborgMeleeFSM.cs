@@ -129,7 +129,7 @@ public class CM_GoToDangerDistance : CM_GoToGameObject
     public override void Execute(CyborgMeleeController owner)
     {
         float distanceToTarget = (Alita.Call.transform.position - owner.transform.position).magnitude;
-        if (distanceToTarget <= owner.character.dangerDistance) // dangerDistance: am I INSIDE my DANGER range?
+        if (distanceToTarget <= owner.character.dangerDistance + Alita.Call.agent.agentData.Radius) // dangerDistance: am I INSIDE my DANGER range?
         {
             owner.fsm.ChangeState(new CM_GoToAttackDistance());
             return;
@@ -153,7 +153,7 @@ public class CM_GoToDangerDistance : CM_GoToGameObject
 
     public override void DrawGizmos(CyborgMeleeController owner)
     {
-        Debug.DrawSphere(owner.character.dangerDistance, Color.Blue, owner.transform.position, Quaternion.identity, Vector3.one);
+        Debug.DrawSphere(owner.character.dangerDistance + Alita.Call.agent.agentData.Radius, Color.Blue, owner.transform.position, Quaternion.identity, Vector3.one);
     }
 }
 
@@ -183,7 +183,7 @@ public class CM_GoToAttackDistance : CM_GoToGameObject
     public override void Execute(CyborgMeleeController owner)
     {
         float distanceToTarget = (Alita.Call.transform.position - owner.transform.position).magnitude;
-        if (distanceToTarget <= owner.character.attackDistance) // attackDistance: am I INSIDE my ATTACK range?
+        if (distanceToTarget <= owner.character.attackDistance + Alita.Call.agent.agentData.Radius) // attackDistance: am I INSIDE my ATTACK range?
         {
             // Am I allowed to attack?
             if (Alita.Call.battleCircle.AddAttacker(owner.gameObject))
@@ -444,7 +444,7 @@ public class CM_Attack : CM_IState
     {
         float distanceToTarget = (Alita.Call.gameObject.transform.position - owner.transform.position).magnitude;
         bool contains = Alita.Call.battleCircle.AttackersContains(owner.gameObject);
-        if (distanceToTarget > owner.character.attackDistance // attackDistance: has the target moved out of my attack range?
+        if (distanceToTarget > owner.character.attackDistance + Alita.Call.agent.agentData.Radius // attackDistance: has the target moved out of my attack range?
             || !contains) // attackers: am I still an attacker?
         {
             if (contains)
@@ -485,7 +485,7 @@ public class CM_Attack : CM_IState
 
     public override void DrawGizmos(CyborgMeleeController owner)
     {
-        Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
+        Debug.DrawSphere(owner.character.attackDistance + Alita.Call.agent.agentData.Radius, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
     }
 }
 #endregion
@@ -571,7 +571,7 @@ public class CM_Hit : CM_IState
 
     public override void DrawGizmos(CyborgMeleeController owner)
     {
-        Debug.DrawSphere(owner.character.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
+        Debug.DrawSphere(owner.character.attackDistance + Alita.Call.agent.agentData.Radius, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
     }
 }
 #endregion

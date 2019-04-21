@@ -17,9 +17,9 @@ public class CyborgMeleeCharacter : Character
 
     // GoToGameObject
     /// GoToAttackDistance
-    public float attackDistance = 2.0f;
+    public float attackDistance = 0.5f;
     /// GoToDangerDistance
-    public float dangerDistance = 5.0f;
+    public float dangerDistance = 4.0f;
 
     // Attack
     public float attackRate = 10.0f;
@@ -128,6 +128,9 @@ public class CyborgMeleeController : JellyScript
     public override void OnStop()
     {
         EventsManager.Call.StopListening(this);
+
+        Alita.Call.battleCircle.RemoveSimultaneousAttacker(gameObject);
+        Alita.Call.battleCircle.RemoveAttacker(gameObject);
     }
 
     // ----------------------------------------------------------------------------------------------------
