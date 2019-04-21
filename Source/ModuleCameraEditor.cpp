@@ -165,9 +165,11 @@ update_status ModuleCameraEditor::Update()
 	}
 	if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_UP && isMultiSelection)
 	{	
-		App->scene->multipleSelection.clear();
+		if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_IDLE && App->input->GetKey(SDL_SCANCODE_RCTRL) == KEY_IDLE)
+			App->scene->multipleSelection.clear();
+		App->raycaster->ScreenQuadToFrustum(mousePressedPos_X, mousePressedPos_Y, App->input->GetMouseX(), App->input->GetMouseY());
 		isMultiSelection = false;
-		if(!App->raycaster->ScreenQuadToFrustum(mousePressedPos_X, mousePressedPos_Y, App->input->GetMouseX(), App->input->GetMouseY()))
+		if(App->scene->multipleSelection.empty())
 			SELECT(NULL)
 	}
 	return UPDATE_CONTINUE;

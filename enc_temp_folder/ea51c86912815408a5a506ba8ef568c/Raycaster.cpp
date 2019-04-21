@@ -137,7 +137,7 @@ math::Frustum Raycaster::CreateFrustum(math::Frustum cameraFrustum, math::float2
 	newFrustum.nearPlaneDistance = cameraFrustum.nearPlaneDistance;
 	newFrustum.farPlaneDistance = cameraFrustum.farPlaneDistance;
 
-	newFrustum.pos = cameraFrustum.NearPlanePos(centerPos);
+	newFrustum.pos = cameraFrustum.NearPlanePos(centerPos) - math::float3::one.Mul(cameraFrustum.ViewProjMatrix().TranslatePart());
 	math::float3 lookAt = cameraFrustum.FarPlanePos(centerPos);
 
 	math::float3 Z = -(newFrustum.pos - lookAt).Normalized(); // Direction the camera is looking at (reverse direction of what the camera is targeting)
