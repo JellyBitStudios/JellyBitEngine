@@ -93,6 +93,31 @@ void Raycaster::ScreenPointToRay(int posX, int posY, float& shortestDistance, ma
 	}
 }
 
+void Raycaster::GetGOFromFrustum(math::Frustum frustumSelecteds) const
+{
+	// Static objects
+	std::vector<GameObject*> hits;
+	App->scene->quadtree.CollectContains(hits, frustumSelecteds);
+
+	// Dynamic objects
+	std::vector<GameObject*> dynamicGameObjects;
+	App->GOs->GetDynamicGameobjects(dynamicGameObjects);
+
+	for (uint i = 0; i < dynamicGameObjects.size(); ++i)
+	{
+		if (dynamicGameObjects[i]->GetLayer() != UILAYER && frustumSelecteds.Contains(dynamicGameObjects[i]->boundingBox))
+			hits.push_back(dynamicGameObjects[i]);
+	}
+
+	if (!hits.empty())
+	{
+		for (uint i = 0; i < hits.size(); ++i)
+		{
+			App->scene->selectedObject += hits[i];
+		}
+	}
+}
+
 void Raycaster::ScreenQuadToFrustum(int posX, int posY, int posW, int posH)
 {
 	int winWidth = App->window->GetWindowWidth();

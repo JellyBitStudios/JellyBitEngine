@@ -16,8 +16,9 @@ public:
 	~Raycaster();
 
 	void ScreenPointToRay(int posX, int posY, float& distance, math::float3& hitPoint, GameObject** hit) const;
-	void ScreenQuadToFrustum(int posX, int posY, int posW, int posH);
+	void GetGOFromFrustum(math::Frustum frustumSelecteds) const;
 
+	void ScreenQuadToFrustum(int posX, int posY, int posW, int posH);
 	math::Frustum CreateFrustum(math::Frustum cameraFrustum, math::float2 width_heith, math::float2 centerPos) const;
 
 public:

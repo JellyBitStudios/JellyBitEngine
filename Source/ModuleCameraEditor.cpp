@@ -14,7 +14,7 @@
 #include "Raycaster.h"
 #include "ModuleTimeManager.h"
 #include "ModuleScene.h"
-
+#include "ModuleGOs.h"
 #include "SDL\include\SDL_scancode.h"
 #include "SDL\include\SDL_mouse.h"
 
@@ -156,7 +156,29 @@ update_status ModuleCameraEditor::Update()
 		else
 			SELECT(NULL);
 	}
-	if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_DOWN
+
+	if (App->input->GetKey(SDL_SCANCODE_SPACE) == KEY_DOWN)
+	{
+		std::vector<math::Frustum> frustumSelecteds;
+		for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+		{
+			GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+			if (go && go->cmp_camera)
+				frustumSelecteds.push_back(go->cmp_camera->frustum);
+		}
+		if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_IDLE && App->input->GetKey(SDL_SCANCODE_RCTRL) == KEY_IDLE)
+			App->scene->multipleSelection.clear();
+
+		if (!frustumSelecteds.empty())
+			for (uint i = 0; i < frustumSelecteds.size(); ++i)
+			{
+				App->raycaster->GetGOFromFrustum(frustumSelecteds[i]);
+			}
+
+		if (App->scene->multipleSelection.empty())
+			SELECT(NULL)
+	}
+	/*if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_DOWN
 		 && !ImGuizmo::IsOver() && !ImGuizmo::IsUsing())
 	{
 		mousePressedPos_X = App->input->GetMouseX();
@@ -171,7 +193,7 @@ update_status ModuleCameraEditor::Update()
 		isMultiSelection = false;
 		if(App->scene->multipleSelection.empty())
 			SELECT(NULL)
-	}
+	}*/
 	return UPDATE_CONTINUE;
 }
 
