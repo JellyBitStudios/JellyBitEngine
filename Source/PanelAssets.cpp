@@ -53,8 +53,8 @@ bool PanelAssets::Draw()
 
 		ImGui::SameLine();
 
-		if(ImGui::Button("Read Assets changes"))
-			App->fs->UpdateAssetsDir();
+		/*if(ImGui::Button("Read Assets changes"))
+			App->fs->UpdateAssetsDir();*/
 
 		ImGui::SameLine();
 
@@ -94,7 +94,9 @@ bool PanelAssets::Draw()
 		
 		if (treeNodeOpened)
 		{
+			App->fs->mut.lock();
 			RecursiveDrawAssetsDir(App->fs->rootDir);
+			App->fs->mut.unlock();
 			ImGui::TreePop();
 		}
 	}

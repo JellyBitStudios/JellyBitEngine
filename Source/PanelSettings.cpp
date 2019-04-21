@@ -15,7 +15,6 @@
 #include "ImGui\imgui.h"
 #include "SDL\include\SDL_cpuinfo.h"
 #include "SDL\include\SDL_version.h"
-#include "mmgr\mmgr.h"
 #include <vector>
 
 #include "glew\include\GL\glew.h"
@@ -134,27 +133,6 @@ void PanelSettings::ApplicationNode() const
 	std::vector<float> msTrack = App->GetMsTrack();
 	sprintf_s(title, IM_ARRAYSIZE(title), "Milliseconds %.1f", msTrack.back());
 	ImGui::PlotHistogram("##milliseconds", &msTrack.front(), msTrack.size(), 0, title, 0.0f, 40.0f, ImVec2(310, 100));
-
-	sMStats memStats = m_getMemoryStatistics();
-
-	static std::vector<float> memory(100);
-
-	for (uint i = memory.size() - 1; i > 0; --i)
-		memory[i] = memory[i - 1];
-
-	memory[0] = (float)memStats.peakActualMemory;
-
-	ImGui::PlotHistogram("##RAMusage", &memory.front(), memory.size(), 0, "Ram Usage", 0.0f, (float)memStats.peakReportedMemory * 1.2f, ImVec2(310, 100));
-
-	ImGui::Text("Total Reported Mem: %u", memStats.totalReportedMemory);
-	ImGui::Text("Total Actual Mem: %u", memStats.totalActualMemory);
-	ImGui::Text("Peak Reported Mem: %u", memStats.peakReportedMemory);
-	ImGui::Text("Peak Actual Mem: %u", memStats.peakActualMemory);
-	ImGui::Text("Accumulated Reported Mem: %u", memStats.accumulatedReportedMemory);
-	ImGui::Text("Accumulated Actual Mem: %u", memStats.accumulatedActualMemory);
-	ImGui::Text("Acumulated Alloc Unit Count: %u", memStats.accumulatedAllocUnitCount);
-	ImGui::Text("Total Alloc Unit Count: %u", memStats.totalAllocUnitCount);
-	ImGui::Text("Peak Alloc Unit Count: %u", memStats.peakAllocUnitCount);
 }
 
 void PanelSettings::WindowNode() const

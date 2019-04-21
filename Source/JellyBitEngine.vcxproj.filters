@@ -52,9 +52,6 @@
     <Filter Include="Sources\3rd Party\Parson">
       <UniqueIdentifier>{37458c2d-2446-4a39-8810-472d4db3e650}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Sources\3rd Party\mmgr">
-      <UniqueIdentifier>{96460a6b-227d-4af5-a9d0-7ac3d10fa049}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Sources\3rd Party\glew">
       <UniqueIdentifier>{232e3b40-7839-487f-9b39-b23a8f248872}</UniqueIdentifier>
     </Filter>
@@ -512,12 +509,6 @@
     </ClInclude>
     <ClInclude Include="parson\parson.h">
       <Filter>Sources\3rd Party\Parson</Filter>
-    </ClInclude>
-    <ClInclude Include="mmgr\mmgr.h">
-      <Filter>Sources\3rd Party\mmgr</Filter>
-    </ClInclude>
-    <ClInclude Include="mmgr\nommgr.h">
-      <Filter>Sources\3rd Party\mmgr</Filter>
     </ClInclude>
     <ClInclude Include="glew\include\GL\eglew.h">
       <Filter>Sources\3rd Party\glew</Filter>
@@ -2278,9 +2269,6 @@
     </ClCompile>
     <ClCompile Include="parson\parson.c">
       <Filter>Sources\3rd Party\Parson</Filter>
-    </ClCompile>
-    <ClCompile Include="mmgr\mmgr.cpp">
-      <Filter>Sources\3rd Party\mmgr</Filter>
     </ClCompile>
     <ClCompile Include="Globals.cpp">
       <Filter>Sources</Filter>

@@ -43,6 +43,8 @@
 #define IS_SCENE(extension) strcmp(extension, EXTENSION_SCENE) == 0
 #define IS_META(extension) strcmp(extension, EXTENSION_META) == 0
 
+#include <mutex>
+
 class Resource;
 
 enum FileTypes
@@ -284,7 +286,7 @@ public:
 	ModuleFileSystem(bool start_enabled = true);
 	~ModuleFileSystem();
 
-	update_status PreUpdate() override;
+	update_status PostUpdate() override;
 	bool Init(JSON_Object* data);
 	bool Start();
 	bool CleanUp();
@@ -352,9 +354,12 @@ public:
 
 	bool build = false;
 
+	std::mutex mut;
+
 private:
 	float updateAssetsRate = 1.0f;	
 	std::string tempException;
+	bool firstUpdate = true;
 
 };
 

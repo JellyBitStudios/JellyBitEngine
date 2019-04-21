@@ -19,6 +19,8 @@
 
 #include <stdio.h>
 
+#include <thread>
+
 #pragma comment(lib, "physfs/libx86/physfs.lib")
 
 #ifdef _DEBUG
@@ -89,10 +91,16 @@ ModuleFileSystem::ModuleFileSystem(bool start_enabled) : Module(start_enabled)
 
 ModuleFileSystem::~ModuleFileSystem() {}
 
-update_status ModuleFileSystem::PreUpdate()
+update_status ModuleFileSystem::PostUpdate()
 {
-	// Now is a button.
+	if (firstUpdate)
+	{
+		firstUpdate = false;
 
+		std::thread updater(&ModuleFileSystem::UpdateAssetsDir, this);
+		updater.detach();
+	}
+	
 	return update_status::UPDATE_CONTINUE;
 }
 
@@ -104,6 +112,8 @@ bool ModuleFileSystem::Init(JSON_Object * data)
 
 bool ModuleFileSystem::Start()
 {
+	//MODIFICA EL ROOTDIR
+
 #ifndef GAMEMODE
 	rootDir = RecursiveGetFilesFromDir("Assets");
 #else
@@ -772,13 +782,26 @@ std::string ModuleFileSystem::getAppPath()
 
 void ModuleFileSystem::UpdateAssetsDir()
 {
+	static uint started_time = SDL_GetTicks();
+	uint timer = SDL_GetTicks() - started_time;
+
+	while (timer < 1000)
+	{
+		timer = SDL_GetTicks() - started_time;
+	}
+
 	Directory newAssetsDir = RecursiveGetFilesFromDir("Assets");
 
 	if (newAssetsDir != rootDir)
 	{
+		mut.lock();
 		SendEvents(newAssetsDir);
 		rootDir = newAssetsDir;
+		mut.unlock();
 	}
+
+	std::thread updater(&ModuleFileSystem::UpdateAssetsDir, this);
+	updater.detach();
 }
 
 bool ModuleFileSystem::MoveFileInto(const std::string& file, const std::string& newLocation)
