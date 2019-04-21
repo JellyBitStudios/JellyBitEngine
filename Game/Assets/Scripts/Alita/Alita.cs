@@ -38,8 +38,7 @@ class Alita : JellyScript
         set
         {
             if (value != null)
-                // TODO G: GetComponent should be something as <Controller> but it doesnt actually works
-                targetController = value.GetComponent<CyborgMeleeController>();
+                targetController = value.GetComponent<Controller>();
             else
                 targetController = null;
             _currentTarget = value;
@@ -49,8 +48,7 @@ class Alita : JellyScript
             return _currentTarget;
         }
     }
-
-    public float ConstHitRadius = 1.0f;
+    
     public override void Awake()
     {
         animator = gameObject.childs[0].GetComponent<Animator>();
