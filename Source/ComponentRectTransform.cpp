@@ -440,7 +440,7 @@ void ComponentRectTransform::CalculateAnchors(bool needed_newPercentages)
 		}
 		case ComponentRectTransform::P_TOP:
 		{
-			uint pCenter = rectParent[Rect::X] + (rectParent[Rect::XDIST] / 2) + center;
+			int pCenter = rectParent[Rect::X] + (rectParent[Rect::XDIST] / 2) + center;
 			anchor[Anchor::LEFT] = anchor[Anchor::RIGHT] = (rectTransform[Rect::XDIST] / 2);
 			rectTransform[Rect::X] = pCenter - anchor[Anchor::LEFT];
 			anchor[Anchor::TOP] = rectTransform[Rect::Y] - rectParent[Rect::Y];
@@ -449,7 +449,7 @@ void ComponentRectTransform::CalculateAnchors(bool needed_newPercentages)
 		}
 		case ComponentRectTransform::P_LEFT:
 		{
-			uint pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2) + center;
+			int pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2) + center;
 			anchor[Anchor::TOP] = anchor[Anchor::BOTTOM] = (rectTransform[Rect::YDIST] / 2);
 			rectTransform[Rect::Y] = pyCenter - anchor[Anchor::TOP];
 			anchor[Anchor::LEFT] = rectTransform[Rect::X] - rectParent[Rect::X];
@@ -458,7 +458,7 @@ void ComponentRectTransform::CalculateAnchors(bool needed_newPercentages)
 		}
 		case ComponentRectTransform::P_RIGHT:
 		{
-			uint pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2) + center;
+			int pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2) + center;
 			anchor[Anchor::TOP] = anchor[Anchor::BOTTOM] = (rectTransform[Rect::YDIST] / 2);
 			rectTransform[Rect::Y] = pyCenter - anchor[Anchor::TOP];
 			anchor[Anchor::RIGHT] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - (rectTransform[Rect::X] + rectTransform[Rect::XDIST]);
@@ -467,7 +467,7 @@ void ComponentRectTransform::CalculateAnchors(bool needed_newPercentages)
 		}
 		case ComponentRectTransform::P_BOTTOM:
 		{
-			uint pCenter = rectParent[Rect::X] + (rectParent[Rect::XDIST] / 2) + center;
+			int pCenter = rectParent[Rect::X] + (rectParent[Rect::XDIST] / 2) + center;
 			rectTransform[Rect::X] = pCenter - (rectTransform[Rect::XDIST] / 2);
 			anchor[Anchor::BOTTOM] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - (rectTransform[Rect::Y] + rectTransform[Rect::YDIST]);
 			anchor[Anchor::TOP] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - rectTransform[Rect::Y];
@@ -476,8 +476,8 @@ void ComponentRectTransform::CalculateAnchors(bool needed_newPercentages)
 		}
 		case ComponentRectTransform::P_CENTER:
 		{
-			uint pxCenter = rectParent[Rect::X] + (rectParent[Rect::XDIST] / 2);
-			uint pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2);
+			int pxCenter = rectParent[Rect::X] + (rectParent[Rect::XDIST] / 2);
+			int pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2);
 			anchor[Anchor::TOP] = anchor[Anchor::BOTTOM] = (rectTransform[Rect::YDIST] / 2);
 			anchor[Anchor::LEFT] = anchor[Anchor::RIGHT] = (rectTransform[Rect::XDIST] / 2);
 			rectTransform[Rect::X] = pxCenter - anchor[Anchor::LEFT];
@@ -533,7 +533,7 @@ void ComponentRectTransform::RecaculateAnchors()
 		}
 		case ComponentRectTransform::P_TOP:
 		{
-			uint pCenter = rectParent[Rect::X] + (rectParent[Rect::XDIST] / 2) + center;
+			int pCenter = rectParent[Rect::X] + (rectParent[Rect::XDIST] / 2) + center;
 			anchor[Anchor::LEFT] = anchor[Anchor::RIGHT] = (rectTransform[Rect::XDIST] / 2);
 			rectTransform[Rect::X] = pCenter - anchor[Anchor::LEFT];
 			rectTransform[Rect::Y] = rectParent[Rect::Y] + anchor[Anchor::TOP];
@@ -542,7 +542,7 @@ void ComponentRectTransform::RecaculateAnchors()
 		}
 		case ComponentRectTransform::P_LEFT:
 		{
-			uint pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2) + center;
+			int pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2) + center;
 			anchor[Anchor::TOP] = anchor[Anchor::BOTTOM] = (rectTransform[Rect::YDIST] / 2);
 			rectTransform[Rect::X] = rectParent[Rect::X]  + anchor[Anchor::LEFT];
 			rectTransform[Rect::Y] = pyCenter - anchor[Anchor::TOP];
@@ -551,7 +551,7 @@ void ComponentRectTransform::RecaculateAnchors()
 		}
 		case ComponentRectTransform::P_RIGHT:
 		{
-			uint pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2) + center;
+			int pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2) + center;
 			anchor[Anchor::TOP] = anchor[Anchor::BOTTOM] = (rectTransform[Rect::YDIST] / 2);
 			rectTransform[Rect::Y] = pyCenter - anchor[Anchor::TOP];
 			rectTransform[Rect::X] = (rectParent[Rect::X] + rectParent[Rect::XDIST]) - (anchor[Anchor::RIGHT] + rectTransform[Rect::XDIST]);
@@ -560,7 +560,7 @@ void ComponentRectTransform::RecaculateAnchors()
 		}
 		case ComponentRectTransform::P_BOTTOM:
 		{
-			uint pCenter = rectParent[Rect::X] + (rectParent[Rect::XDIST] / 2) + center;
+			int pCenter = rectParent[Rect::X] + (rectParent[Rect::XDIST] / 2) + center;
 			rectTransform[Rect::X] = pCenter - anchor[Anchor::LEFT];
 			rectTransform[Rect::Y] = (rectParent[Rect::Y] + rectParent[Rect::YDIST]) - (anchor[Anchor::BOTTOM] + rectTransform[Rect::YDIST]);
 			anchor[Anchor::TOP] = anchor[Anchor::BOTTOM] + rectTransform[Rect::YDIST];
@@ -569,8 +569,8 @@ void ComponentRectTransform::RecaculateAnchors()
 		}
 		case ComponentRectTransform::P_CENTER:
 		{
-			uint pxCenter = rectParent[Rect::X] + (rectParent[Rect::XDIST] / 2);
-			uint pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2);
+			int pxCenter = rectParent[Rect::X] + (rectParent[Rect::XDIST] / 2);
+			int pyCenter = rectParent[Rect::Y] + (rectParent[Rect::YDIST] / 2);
 			anchor[Anchor::TOP] = anchor[Anchor::BOTTOM] = (rectTransform[Rect::YDIST] / 2);
 			anchor[Anchor::LEFT] = anchor[Anchor::RIGHT] = (rectTransform[Rect::XDIST] / 2);
 			rectTransform[Rect::X] = pxCenter - anchor[Anchor::LEFT];
@@ -809,6 +809,9 @@ void ComponentRectTransform::OnUniqueEditor()
 			if (rectTransform[Rect::XDIST] > max_xdist)
 				rectTransform[Rect::XDIST] = max_xdist;
 
+			if (rectTransform[Rect::XDIST] < 0)
+				rectTransform[Rect::XDIST] = 0;
+
 			needed_recalculate = true;
 		}
 		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
@@ -817,13 +820,24 @@ void ComponentRectTransform::OnUniqueEditor()
 			if (rectTransform[Rect::YDIST] > max_ydist)
 				rectTransform[Rect::YDIST] = max_ydist;
 
+			if (rectTransform[Rect::YDIST] < 0)
+				rectTransform[Rect::YDIST] = 0;
+
 			needed_recalculate = true;
 		}
 
 		if (needed_recalculate)
 			rectTransform_modified = true;
 
-		ImGui::Checkbox("Use Pivot", &usePivot);
+		if(ImGui::Checkbox("Use Pivot", &usePivot))
+			if (!usePivot)
+			{
+				pivot = RectPrivot::P_TOPLEFT;
+
+				CalculateAnchors();
+				needed_recalculate = true;
+			}
+
 		if (usePivot)
 		{
 			ImGui::PushItemWidth(150.0f);
