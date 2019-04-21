@@ -84,6 +84,7 @@ CurrentSelection& CurrentSelection::operator+=(GameObject * newSelection)
 {
 	assert(newSelection != nullptr && "Non valid setter. Set to SelectedType::null instead");
 	type = SelectedType::gameObject;
+	cur = (void*)newSelection;
 
 	// New game object selected. Update the camera reference
 	if (newSelection->transform)
@@ -104,6 +105,8 @@ CurrentSelection& CurrentSelection::operator-=(GameObject * newSelection)
 
 	App->scene->multipleSelection.remove(newSelection->GetUUID());
 
+	if(cur == newSelection)
+		cur = (void*)App->scene->multipleSelection.back();
 	return *this;
 }
 bool CurrentSelection::operator==(const GameObject * rhs)
