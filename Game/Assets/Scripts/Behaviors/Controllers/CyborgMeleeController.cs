@@ -14,21 +14,18 @@ public class CyborgMelee_Entity : NPC_Entity
 
     // GoToGameObject
     /// GoToAttackDistance
-    public float attackDistance = 0.5f;
+    public float attackDistance = 1.5f;
     /// GoToDangerDistance
-    public float dangerDistance = 4.0f;
+    public float dangerDistance = 5.0f;
 
     // Attack
     public float attackRate = 10.0f;
     public float attackRateFluctuation = 0.0f;
 
-    public float trackMaxAngularAcceleration = 90.0f;
-    public float trackMaxAngularVelocity = 90.0f;
-
     // Wander
     /// Strafe
-    public float strafeMinTime = 1.0f;
-    public float strafeMaxTime = 3.0f;
+    public float strafeMinTime = 3.0f;
+    public float strafeMaxTime = 10.0f;
 }
 
 public class CyborgMeleeController : Controller
@@ -48,7 +45,10 @@ public class CyborgMeleeController : Controller
         set
         {
             if (value < 0)
+            {
                 animator.PlayAnimation("melee_hurt_cyborg_animation");
+                animator.SetAnimationLoop(false);
+            }
 
             entity.currentLife = value;
             if (entity.currentLife <= 0)
@@ -73,7 +73,7 @@ public class CyborgMeleeController : Controller
 
         agent = gameObject.GetComponent<Agent>();
         sight = gameObject.childs[0].GetComponent<LineOfSight>();
-        animator = gameObject.childs[2].GetComponent<Animator>();
+        animator = gameObject.childs[1].GetComponent<Animator>();
     }
 
     public override void Start()
@@ -146,8 +146,6 @@ public class CyborgMeleeController : Controller
             }
         }
     }
-
-
 
     public override void Actuate(uint hpModifier, GameObject originGO, Alita_Entity.Action action)
     {
