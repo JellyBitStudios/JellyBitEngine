@@ -460,6 +460,12 @@ GameObject* ScriptingModule::GameObjectFrom(MonoObject* monoObject)
 	if (!monoObject)
 		return nullptr;
 
+	bool destroyed;
+	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "destroyed"), &destroyed);
+
+	if (destroyed)
+		return nullptr;
+
 	int address;
 	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
 
@@ -594,6 +600,12 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 Component* ScriptingModule::ComponentFrom(MonoObject* monoComponent)
 {
 	if (!monoComponent)
+		return nullptr;
+
+	bool destroyed;
+	mono_field_get_value(monoComponent, mono_class_get_field_from_name(mono_object_get_class(monoComponent), "destroyed"), &destroyed);
+
+	if (destroyed)
 		return nullptr;
 
 	int componentAddress;
