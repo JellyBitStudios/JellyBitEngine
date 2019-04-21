@@ -76,11 +76,11 @@ struct ParticleAnimation
 	int  textureColumns = 1;
 	float textureRowsNorm = 1.0f;
 	float textureColumnsNorm = 1.0f;
-	float animationSpeed = 0.1f;
+	math::float2 animationSpeed = math::float2(0.1f,0.1f);
 	bool randAnim = false;
 
 	uint GetPartAnimationSerializationBytes()
-	{ return sizeof(bool) * 2 + sizeof(float) * 3 + sizeof(int) * 2; }
+	{ return sizeof(bool) * 2 + sizeof(float) * 2 + sizeof(int) * 2 + sizeof(math::float2); }
 	void OnInternalSave(char *& cursor);
 	void OnInternalLoad(char *& cursor);
 };
@@ -228,6 +228,7 @@ private:
 	bool checkRotation = false;
 	bool checkAngularAcceleration = false;
 	bool checkAngularVelocity = false;
+	bool checkAnimationSpeed = false;
 
 	// Loop the particle (if true the particle emitter will never stop)
 	bool loop = true;

@@ -75,6 +75,7 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 	particleAnim.isParticleAnimated = componentEmitter.particleAnim.isParticleAnimated;
 	if (particleAnim.isParticleAnimated)
 	{
+		checkAnimationSpeed = componentEmitter.checkAnimationSpeed;
 		particleAnim.animationSpeed = componentEmitter.particleAnim.animationSpeed;
 		particleAnim.textureRows = componentEmitter.particleAnim.textureRows;
 		particleAnim.textureColumns = componentEmitter.particleAnim.textureColumns;
@@ -715,7 +716,10 @@ void ComponentEmitter::ParticleTexture()
 		}
 		if (particleAnim.isParticleAnimated)
 		{
-			ImGui::DragFloat("Animation Speed", &particleAnim.animationSpeed, 0.001f, 0.0f, 5.0f, "%.3f");
+			if (ImGui::Checkbox("##AnimationSpeed", &checkAnimationSpeed))
+				EqualsMinMaxValues(startValues.acceleration);
+			ShowFloatValue(particleAnim.animationSpeed, checkAnimationSpeed, "Animation Speed", 0.001, 0.0f, 5.0f);
+
 			if (ImGui::DragInt("Rows", &particleAnim.textureRows, 1, 1, 10))
 				particleAnim.textureRowsNorm = 1.0f / particleAnim.textureRows;
 			if (ImGui::DragInt("Columns", &particleAnim.textureColumns, 1, 1, 10))
@@ -726,7 +730,7 @@ void ComponentEmitter::ParticleTexture()
 			if (dieOnAnimation)
 			{
 				checkLife = false;
-				startValues.life.x = particleAnim.animationSpeed * (particleAnim.textureColumns * particleAnim.textureRows - 1);
+				startValues.life.x = particleAnim.animationSpeed.x * (particleAnim.textureColumns * particleAnim.textureRows - 1);
 			}
 			if (ImGui::Button("Instant Animation", ImVec2(150.0f, 25.0f)))
 			{
@@ -940,7 +944,7 @@ uint ComponentEmitter::GetInternalSerializationBytes()
 		sizeOfList += (*it).GetColorListSerializationBytes();
 	}
 
-	return sizeof(bool) * 17 + sizeof(int) * 3 + sizeof(float) * 5 + sizeof(uint) * 5
+	return sizeof(bool) * 18 + sizeof(int) * 3 + sizeof(float) * 5 + sizeof(uint) * 5
 		+ sizeof(ShapeType) * 2 + sizeof(math::AABB) * 2 + sizeof(math::float2) * 8 + sizeof(math::float3) * 2
 		+ particleAnim.GetPartAnimationSerializationBytes() + sizeOfList;//Bytes of all Start Values Struct
 }
@@ -987,6 +991,9 @@ void ComponentEmitter::OnInternalSave(char *& cursor)
 	cursor += bytes;
 
 	memcpy(cursor, &checkAngularVelocity, bytes);
+	cursor += bytes;
+	//Coment this
+	memcpy(cursor, &checkAnimationSpeed, bytes);
 	cursor += bytes;
 
 	memcpy(cursor, &drawAABB, bytes);
@@ -1143,10 +1150,6 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	memcpy(&sphereCreation.r, cursor, bytes);
 	cursor += bytes;
 
-	//float gravity;
-	//memcpy(&gravity, cursor, bytes);
-	//cursor += bytes;
-
 	memcpy(&coneHeight, cursor, bytes);
 	cursor += bytes;
 
@@ -1159,7 +1162,7 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 
 	App->res->GetResource(uuidMaterial) ? SetMaterialRes(uuidMaterial) : SetMaterialRes(App->resHandler->defaultMaterial);
 	cursor += bytes;
-	//Coment this
+
 	memcpy(&burstMesh.uuid, cursor, bytes);
 	Resource* res = App->res->GetResource(burstMesh.uuid);
 	if (res)
@@ -1171,7 +1174,7 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	if (res)
 		SetMeshInfo((ResourceMesh*)res, shapeMesh);
 	cursor += bytes;
-	//---
+
 	particleAnim.OnInternalLoad(cursor);
 
 	bytes = sizeof(ShapeType);
@@ -1187,18 +1190,6 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 
 	memcpy(&boundingBox, cursor, bytes);
 	cursor += bytes;
-
-	//bytes = sizeof(uint);
-	//uint namelenghtt;
-	//memcpy(&namelenghtt, cursor, bytes);
-	//cursor += bytes;
-
-	//std::string bursttypename;
-	//bytes = namelenghtt;
-	//bursttypename.resize(namelenghtt);
-	//memcpy((void*)bursttypename.c_str(), cursor, bytes);
-	//bursttypename.resize(namelenghtt);
-	//cursor += bytes;
 
 	SetBurstText();
 }
@@ -1280,7 +1271,7 @@ void StartValues::OnInternalLoad(char *& cursor)
 
 	memcpy(&angularVelocity, cursor, bytes);
 	cursor += bytes;
-	//Coment this
+
 	memcpy(&acceleration, cursor, bytes);
 	cursor += bytes;
 
@@ -1422,6 +1413,7 @@ void ParticleAnimation::OnInternalSave(char *& cursor)
 	memcpy(cursor, &textureColumnsNorm, bytes);
 	cursor += bytes;
 
+	bytes = sizeof(math::float2);
 	memcpy(cursor, &animationSpeed, bytes);
 	cursor += bytes;
 }
@@ -1449,6 +1441,8 @@ void ParticleAnimation::OnInternalLoad(char *& cursor)
 	memcpy(&textureColumnsNorm, cursor, bytes);
 	cursor += bytes;
 
+	//Change float2 -> to -> float
+	bytes = sizeof(math::float2);
 	memcpy(&animationSpeed, cursor, bytes);
 	cursor += bytes;
 }
