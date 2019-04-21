@@ -105,8 +105,19 @@ void Raycaster::GetGOFromFrustum(math::Frustum frustumSelecteds) const
 
 	for (uint i = 0; i < dynamicGameObjects.size(); ++i)
 	{
-		if (dynamicGameObjects[i]->GetLayer() != UILAYER && frustumSelecteds.Contains(dynamicGameObjects[i]->boundingBox))
-			hits.push_back(dynamicGameObjects[i]);
+		if (dynamicGameObjects[i]->GetLayer() != UILAYER)
+		{
+			if (frustumSelecteds.Contains(dynamicGameObjects[i]->boundingBox))
+				hits.push_back(dynamicGameObjects[i]);
+			else if(!dynamicGameObjects[i]->boundingBox.IsFinite())
+			{
+				math::float3 posGO = dynamicGameObjects[i]->transform->GetGlobalMatrix().TranslatePart();
+				if (frustumSelecteds.ClosestPoint(posGO).Equals(posGO))
+				{
+					hits.push_back(dynamicGameObjects[i]);
+				}
+			}
+		}
 	}
 
 	if (!hits.empty())

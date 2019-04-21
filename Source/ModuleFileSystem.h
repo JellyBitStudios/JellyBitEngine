@@ -340,6 +340,8 @@ public:
 
 	bool SetWriteDir(std::string writeDir) const;
 
+	void RenameDirectory(const char* dir, const char* newName);
+
 	//GenerateBuild  methods
 	void RecursiveBuild(const Directory& dir, char* toPath, bool meta = false, bool inZIP = false);
 
