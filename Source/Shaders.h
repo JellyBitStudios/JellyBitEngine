@@ -147,25 +147,25 @@
 "		vec3 diffuse = vec3(0.0, 0.0, 0.0);\n" \
 "		if (lights[i].type == 1)\n" \
 "		{\n" \
-"			//if (FragPosA == 2) // cartoon\n" \
-"			//{\n" \
-"			//	float cosine = max(0.0, dot(Normal, lights[i].dir));\n" \
-"			//	float scaleFactor = 1.0 / NormalA;\n" \
-"			//	diffuse = Albedo * lights[i].color * floor(cosine * NormalA) * scaleFactor;\n" \
-"			//}\n" \
-"			//else\n" \
+"			if (FragPosA == 2) // cartoon\n" \
+"			{\n" \
+"				float cosine = max(0.0, dot(Normal, lights[i].dir));\n" \
+"				float scaleFactor = 1.0 / NormalA;\n" \
+"				diffuse = Albedo * lights[i].color * floor(cosine * NormalA) * scaleFactor;\n" \
+"			}\n" \
+"			else\n" \
 "				diffuse = max(dot(Normal, lights[i].dir), 0.0) * Albedo * lights[i].color;\n" \
 "		}\n" \
 "		else if (lights[i].type == 2)\n" \
 "		{\n" \
 "			vec3 lightDir = normalize(lights[i].position - FragPos);\n" \
-"			//if (FragPosA == 2) // cartoon\n" \
-"			//{\n" \
-"			//	float cosine = max(0.0, dot(Normal, lightDir));\n" \
-"			//	float scaleFactor = 1.0 / NormalA;\n" \
-"			//	diffuse = Albedo * lights[i].color * floor(cosine * NormalA) * scaleFactor;\n" \
-"			//}\n" \
-"			//else\n" \
+"			if (FragPosA == 2) // cartoon\n" \
+"			{\n" \
+"				float cosine = max(0.0, dot(Normal, lightDir));\n" \
+"				float scaleFactor = 1.0 / NormalA;\n" \
+"				diffuse = Albedo * lights[i].color * floor(cosine * NormalA) * scaleFactor;\n" \
+"			}\n" \
+"			else\n" \
 "				diffuse = max(dot(Normal, lightDir), 0.0) * Albedo * lights[i].color;\n" \
 "			float distance = length(lights[i].position - FragPos);\n" \
 "			float attenuation = 1.0 / (1.0 + lights[i].linear * distance + lights[i].quadratic * distance * distance);\n" \

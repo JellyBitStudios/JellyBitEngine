@@ -223,7 +223,7 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			components.push_back(cmp_audioSource);
 			break;
 		case ComponentTypes::TrailComponent:
-			cmp_trail = new ComponentTrail(*gameObject.cmp_trail);
+			cmp_trail = new ComponentTrail(*gameObject.cmp_trail, this);
 			cmp_trail->SetParent(this);
 			components.push_back(cmp_trail);
 		}
@@ -250,13 +250,14 @@ GameObject::~GameObject()
 void GameObject::DestroyTemplate()
 {
 	for (int i = 0; i < components.size(); ++i)
+	{
+		App->scripting->ComponentKilled(components[i]);
 		delete components[i];
-
+	}
 	components.clear();
 
 	for (int i = 0; i < children.size(); ++i)
 		children[i]->DestroyTemplate();
-
 	children.clear();
 
 	App->scripting->GameObjectKilled(this);

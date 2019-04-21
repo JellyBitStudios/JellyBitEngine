@@ -18,6 +18,7 @@ ResourcePrefab::~ResourcePrefab()
 	if (prefabData.root != nullptr)
 	{
 		prefabData.root->DestroyTemplate();
+		prefabData.root = nullptr;
 	}
 }
 
@@ -122,16 +123,8 @@ ResourcePrefab* ResourcePrefab::ImportFile(const char* file)
 	return retPrefab;
 }
 
-ResourcePrefab* ResourcePrefab::ExportFile(const char* prefabName, GameObject* templateRoot)
+ResourcePrefab* ResourcePrefab::ExportFile(ResourceData& data, GameObject* templateRoot)
 {
-	char filePath[DEFAULT_BUF_SIZE];
-	sprintf(filePath, "%s/%s%s", DIR_ASSETS_PREFAB, prefabName, EXTENSION_PREFAB);
-
-	ResourceData data;
-	data.file = DIR_ASSETS_PREFAB + std::string("/") + prefabName + EXTENSION_PREFAB;
-	data.exportedFile = "";
-	data.name = prefabName + std::string(EXTENSION_PREFAB);
-
 	ResourcePrefab* retPrefab = new ResourcePrefab(App->GenerateRandomNumber(), data, PrefabData());
 
 	char* buffer;
@@ -293,4 +286,9 @@ void ResourcePrefab::OnSystemEvent(System_Event event)
 		}
 	}
 
+}
+
+void ResourcePrefab::DeleteExportedFile()
+{
+	App->fs->deleteFile(data.file);
 }

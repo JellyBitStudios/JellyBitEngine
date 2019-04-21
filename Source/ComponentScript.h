@@ -28,6 +28,7 @@ public:
 	void OnStop();
 	void FixedUpdate();
 	void OnDrawGizmos();
+	void OnDrawGizmosSelected();
 	void OnCollisionEnter(Collision& collision);
 	void OnCollisionStay(Collision& collision);
 	void OnCollisionExit(Collision& collision);
@@ -39,6 +40,7 @@ public:
 	void OnDisable() override;
 
 	void OnUniqueEditor() override;
+	void OnStructEditor(MonoObject* structOBJ, MonoClassField* field);
 	
 	uint GetInternalSerializationBytes();
 	uint GetPublicVarsSerializationBytes() const;
@@ -55,6 +57,10 @@ public:
 public:
 	void InstanceClass();
 	void InstanceClass(MonoObject* _classInstance);
+
+private:
+	bool FieldHasHideInInspector(MonoReflectionType* classType, MonoString* fieldName);
+	bool FieldHasSerializeField(MonoReflectionType* classType, MonoString* fieldName);
 
 public:
 	bool awaked = false;

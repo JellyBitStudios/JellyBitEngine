@@ -13,6 +13,7 @@
 #include "ScriptingModule.h"
 
 #include "imgui\imgui.h"
+#include "imgui/imgui_stl.h"
 #include "Brofiler\Brofiler.h"
 
 #include "Resource.h"
@@ -83,40 +84,14 @@ bool PanelAssets::Draw()
 		CreateResourcePopUp(DIR_ASSETS);
 
 		//Create the dummy to receive GameObject drops from the hierarchy;
-		ImVec2 drawingPos = ImGui::GetCursorScreenPos();
+		/*ImVec2 drawingPos = ImGui::GetCursorScreenPos();
 		ImVec2 winSize = ImGui::GetWindowSize();
 
 		ImGui::SetCursorScreenPos(ImGui::GetWindowPos());
 
 		ImGui::Dummy(winSize);
-		ImGui::SetCursorScreenPos(drawingPos);
-		if (ImGui::BeginDragDropTarget())
-		{
-			const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY", 0);
-			if (payload)
-			{
-				GameObject* gameObject = *(GameObject**)payload->Data;
-
-				if (!gameObject->cmp_canvas && gameObject->GetLayer() == UILAYER)
-				{
-					CONSOLE_LOG(LogTypes::Error, "TYou can't make a prefab of child canvas. Only from Canvas.");
-				}
-				else
-				{
-					ResourceData data;
-					data.file = DIR_ASSETS_PREFAB + std::string("/") + gameObject->GetName() + EXTENSION_PREFAB;
-					data.exportedFile = "";
-					data.name = gameObject->GetName();
-
-					PrefabData prefabData;
-					prefabData.root = gameObject;
-
-					App->res->ExportFile(ResourceTypes::PrefabResource, data, &prefabData, std::string());
-				}
-			}
-			ImGui::EndDragDropTarget();
-		}
-
+		ImGui::SetCursorScreenPos(drawingPos);*/
+		
 		if (treeNodeOpened)
 		{
 			RecursiveDrawAssetsDir(App->fs->rootDir);
@@ -189,6 +164,74 @@ void PanelAssets::RecursiveDrawAssetsDir(const Directory& directory)
 	//	1* The stantard draw
 	//	2* Manage the selection and show the import settings
 	//	3* Drag and Drop support
+
+	for (uint i = 0; i < directory.directories.size(); ++i)
+	{
+		ImGuiTreeNodeFlags flags = 0;
+		flags |= ImGuiTreeNodeFlags_OpenOnArrow;
+
+		Directory dir = directory.directories[i];
+
+		bool treeNodeOpened = false;
+
+		char id[DEFAULT_BUF_SIZE];
+		sprintf_s(id, DEFAULT_BUF_SIZE, "%s##%s", dir.name.data(), dir.fullPath.data());
+
+		if (ImGui::TreeNodeEx(id, flags))
+			treeNodeOpened = true;
+
+		if (ImGui::IsMouseReleased(0) && ImGui::IsItemHovered(ImGuiHoveredFlags_None)
+			&& (ImGui::GetMousePos().x - ImGui::GetItemRectMin().x) > ImGui::GetTreeNodeToLabelSpacing())
+			SELECT(NULL);
+
+		CreateResourcePopUp(dir.fullPath.data());
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY", 0);
+			if (payload)
+			{
+				if (dir.fullPath.find("Prefabs") != std::string::npos)
+				{
+					GameObject* gameObject = *(GameObject**)payload->Data;
+
+					if (!gameObject->cmp_canvas && gameObject->GetLayer() == UILAYER)
+					{
+						CONSOLE_LOG(LogTypes::Error, "You can't make a prefab of child canvas. Only from Canvas.");
+					}
+					else
+					{
+						std::vector<Resource*> prefabs = App->res->GetResourcesByType(ResourceTypes::PrefabResource);
+						for (Resource* prefab : prefabs)
+						{
+							if (prefab->GetData().name == gameObject->GetName())
+							{
+								App->res->DeleteResource(prefab->GetUuid());
+							}
+						}
+
+						ResourceData data;
+						data.file = dir.fullPath + std::string("/") + gameObject->GetName() + EXTENSION_PREFAB;
+						data.exportedFile = "";
+						data.name = std::string(gameObject->GetName()) + EXTENSION_PREFAB;
+
+						PrefabData prefabData;
+						prefabData.root = gameObject;
+
+						App->res->ExportFile(ResourceTypes::PrefabResource, data, &prefabData, std::string());
+					}
+				}			
+			}
+			ImGui::EndDragDropTarget();
+		}
+
+		if (treeNodeOpened)
+		{
+			if (!(dir.files.empty() && dir.directories.empty()))
+				RecursiveDrawAssetsDir(dir);
+			ImGui::TreePop();
+		}
+	}
 
 	for (uint i = 0; i < directory.files.size(); ++i)
 	{
@@ -347,42 +390,34 @@ void PanelAssets::RecursiveDrawAssetsDir(const Directory& directory)
 
 		delete[] metaBuffer;
 	}
-
-	for (uint i = 0; i < directory.directories.size(); ++i)
-	{
-		ImGuiTreeNodeFlags flags = 0;
-		flags |= ImGuiTreeNodeFlags_OpenOnArrow;
-
-		Directory dir = directory.directories[i];
-
-		bool treeNodeOpened = false;
-
-		char id[DEFAULT_BUF_SIZE];
-		sprintf_s(id, DEFAULT_BUF_SIZE, "%s##%s", dir.name.data(), dir.fullPath.data());
-
-		if (ImGui::TreeNodeEx(id, flags))
-			treeNodeOpened = true;
-
-		if (ImGui::IsMouseReleased(0) && ImGui::IsItemHovered(ImGuiHoveredFlags_None)
-			&& (ImGui::GetMousePos().x - ImGui::GetItemRectMin().x) > ImGui::GetTreeNodeToLabelSpacing())
-			SELECT(NULL);
-
-		CreateResourcePopUp(dir.fullPath.data());
-
-		if (treeNodeOpened)
-		{
-			if (!(dir.files.empty() && dir.directories.empty()))
-				RecursiveDrawAssetsDir(dir);
-			ImGui::TreePop();
-		}
-	}
 }
 
 void PanelAssets::CreateResourcePopUp(const char* path)
 {
+	bool renameFolderClicked = false;
+
 	if (ImGui::BeginPopupContextItem(path))
 	{
-		if (ImGui::Selectable("Create Vertex Shader"))
+		if (ImGui::Selectable("Rename Folder"))
+		{
+			renameFolderClicked = true;		
+		}
+		else if (ImGui::Selectable("Delete Folder"))
+		{
+			App->fs->deleteFiles(path, "", true);
+
+			ImGui::CloseCurrentPopup();
+		}
+		else if (ImGui::Selectable("Create SubFolder"))
+		{
+			char newDir[DEFAULT_BUF_SIZE];
+			sprintf(newDir, "%s/NewFolder", path);
+
+			App->fs->CreateDir(newDir);
+
+			ImGui::CloseCurrentPopup();
+		}
+		else if (ImGui::Selectable("Create Vertex Shader"))
 		{
 			extension = EXTENSION_VERTEX_SHADER_OBJECT;
 			strcpy_s(resourceName, strlen("New Vertex Shader") + 1, "New Vertex Shader");
@@ -430,6 +465,27 @@ void PanelAssets::CreateResourcePopUp(const char* path)
 			file.append("/");
 
 			showCreateResourceConfirmationPopUp = true;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+
+	if (renameFolderClicked)
+	{
+		ImGui::OpenPopup((std::string(path) + "RenameFolder").data());
+	}
+
+	if (ImGui::BeginPopup((std::string(path) + "RenameFolder").data()))
+	{
+		std::string fullPath = path;
+		fullPath = fullPath.substr(0, fullPath.find_last_of("/") + 1);
+
+		static std::string newName;
+		if (ImGui::InputText((std::string("NewName") + std::string("##") + path).data(), &newName, ImGuiInputTextFlags_::ImGuiInputTextFlags_EnterReturnsTrue))
+		{
+			fullPath += newName;
+			App->fs->RenameDirectory(path, fullPath.data());
+			newName = "";
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::EndPopup();

@@ -30,19 +30,33 @@ ComponentTrail::ComponentTrail(GameObject * parent) : Component(parent, Componen
 	spawnBox = _spawnBox = originalSpawnBox;
 }
 
-ComponentTrail::ComponentTrail(const ComponentTrail & componentTransform, GameObject * parent) : Component(parent, ComponentTypes::TrailComponent)
+ComponentTrail::ComponentTrail(const ComponentTrail& componentTrail, GameObject* parent) : Component(parent, ComponentTypes::TrailComponent)
 {
 	App->trails->trails.push_back(this);
 	timer.Start();
 
 	App->res->SetAsUsed(App->resHandler->plane);
 
-	originalSpawnBox = parent->rotationBB;
-	if (!originalSpawnBox.IsFinite())
-	{
-		originalSpawnBox = math::AABB::FromCenterAndSize(math::float3::zero, math::float3::one);
-	}
-	spawnBox = _spawnBox = originalSpawnBox;
+	originalSpawnBox = componentTrail.originalSpawnBox;
+	spawnBox = componentTrail.spawnBox;
+	_spawnBox = componentTrail._spawnBox;
+
+	SetMaterialRes(componentTrail.materialRes);
+
+	color = componentTrail.color;
+	vector = componentTrail.vector;
+
+	orient = componentTrail.orient;
+
+	create = componentTrail.create;
+	customSpawn = componentTrail.customSpawn;
+
+	minDistance = componentTrail.minDistance;
+	lifeTime = componentTrail.lifeTime;
+
+	high = componentTrail.high;
+	low = componentTrail.low;
+
 }
 
 ComponentTrail::~ComponentTrail()
@@ -80,12 +94,12 @@ void ComponentTrail::Update()
 			spawnBox = originalSpawnBox;
 			spawnBox.Transform(transformMatrix);
 
-			originHigh = spawnBox.FaceCenterPoint(hight);
+			originHigh = spawnBox.FaceCenterPoint(high);
 			originLow = spawnBox.FaceCenterPoint(low);
 		}
 		else
 		{
-			originHigh = parent->rotationBB.FaceCenterPoint(hight);
+			originHigh = parent->rotationBB.FaceCenterPoint(high);
 			originLow = parent->rotationBB.FaceCenterPoint(low);
 		}
 
@@ -123,23 +137,25 @@ void ComponentTrail::Update()
 
 		timer.Start();
 	}
-
-	// Remove old nodes
-	Uint32 time = SDL_GetTicks();
-	std::list< TrailNode*> toRemove;
-	for (std::list< TrailNode*>::iterator curr = trailVertex.begin(); curr != trailVertex.end(); ++curr)
+	if (trailVertex.size() > 0)
 	{
-		if (time - (*curr)->createTime > lifeTime)
+		// Remove old nodes
+		Uint32 time = SDL_GetTicks();
+		std::list< TrailNode*> toRemove;
+		for (std::list< TrailNode*>::iterator curr = trailVertex.begin(); curr != trailVertex.end(); ++curr)
 		{
-			toRemove.push_back(*curr);
+			if (time - (*curr)->createTime > lifeTime)
+			{
+				toRemove.push_back(*curr);
+			}
+			else break;
 		}
-		else break;
-	}
 
-	for (std::list< TrailNode*>::iterator it = toRemove.begin(); it != toRemove.end(); ++it)
-	{
-		trailVertex.remove(*it);
-		delete *it;
+		for (std::list< TrailNode*>::iterator it = toRemove.begin(); it != toRemove.end(); ++it)
+		{
+			trailVertex.remove(*it);
+			delete *it;
+		}
 	}
 }
 
@@ -158,17 +174,17 @@ void ComponentTrail::OnUniqueEditor()
 		This index corresponds to the planes in the order (-X, +X, -Y, +Y, -Z, +Z).*/
 		if (ImGui::RadioButton("X", vector == TrailVector::X))
 		{
-			low = 4; hight = 5;
+			low = 4; high = 5;
 			vector = TrailVector::X;
 		} ImGui::SameLine();
 		if (ImGui::RadioButton("Y", vector == TrailVector::Y))
 		{
-			low = 2; hight = 3;
+			low = 2; high = 3;
 			vector = TrailVector::Y;
 		} ImGui::SameLine();
 		if (ImGui::RadioButton("Z", vector == TrailVector::Z))
 		{
-			low = 0; hight = 1;
+			low = 0; high = 1;
 			vector = TrailVector::Z;
 		}
 
@@ -290,13 +306,13 @@ void ComponentTrail::SetVector(TrailVector vec)
 	switch (vec)
 	{
 	case X:
-		low = 4; hight = 5;
+		low = 4; high = 5;
 		break;
 	case Y:
-		low = 2; hight = 3;
+		low = 2; high = 3;
 		break;
 	case Z:
-		low = 0; hight = 1;
+		low = 0; high = 1;
 		break;
 	default:
 		break;
@@ -323,7 +339,7 @@ void ComponentTrail::SetColor(math::float4 color)
 
 uint ComponentTrail::GetInternalSerializationBytes()
 {
-	return sizeof(materialRes) + sizeof(minDistance) + sizeof(lifeTime) + sizeof(create) + sizeof(color) + sizeof(vector) + sizeof(hight) + sizeof(low) + sizeof(orient) + sizeof(customSpawn) + sizeof(originalSpawnBox);
+	return sizeof(materialRes) + sizeof(minDistance) + sizeof(lifeTime) + sizeof(create) + sizeof(color) + sizeof(vector) + sizeof(high) + sizeof(low) + sizeof(orient) + sizeof(customSpawn) + sizeof(originalSpawnBox);
 }
 
 void ComponentTrail::OnInternalSave(char *& cursor)
@@ -352,8 +368,8 @@ void ComponentTrail::OnInternalSave(char *& cursor)
 	memcpy(cursor, &vector, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(hight);
-	memcpy(cursor, &hight, bytes);
+	bytes = sizeof(high);
+	memcpy(cursor, &high, bytes);
 	cursor += bytes;
 
 	bytes = sizeof(low);
@@ -399,8 +415,8 @@ void ComponentTrail::OnInternalLoad(char *& cursor)
 	memcpy(&vector, cursor, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(hight);
-	memcpy(&hight, cursor, bytes);
+	bytes = sizeof(high);
+	memcpy(&high, cursor, bytes);
 	cursor += bytes;
 
 	bytes = sizeof(low);

@@ -21,7 +21,7 @@ bool exec(const char* cmd, std::string& error = std::string());
 class ScriptingModule : public Module
 {
 	friend MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, MonoArray* rotation);
-	friend MonoObject* GetComponentByType(MonoObject* monoObject, MonoObject* type);
+	friend MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type);
 
 	friend void PlayerPrefsSave();
 	friend void PlayerPrefsSetNumber(MonoString* key, double value);
@@ -77,16 +77,16 @@ public:
 
 	void ReInstance();
 
-	void ClearMap();
-
 	Resource* ImportScriptResource(const char* file);
 	void ScriptModified(const char* scriptPath);
 	void RecompileScripts();
 
 	void GameObjectKilled(GameObject* killed);
+	void ComponentKilled(Component* killed);
 
 	void FixedUpdate();
 	void OnDrawGizmos();
+	void OnDrawGizmosSelected();
 
 	void TemporalSave();
 	void TemporalLoad();
@@ -103,9 +103,6 @@ public:
 
 	_MonoAssembly*			scriptsAssembly		= nullptr;
 	_MonoImage*				scriptsImage		= nullptr;
-
-	std::vector<uint32_t>	monoObjectHandles;
-	std::vector<uint32_t>	monoComponentHandles;
 
 private:
 

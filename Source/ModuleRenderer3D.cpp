@@ -23,6 +23,7 @@
 #include "SceneImporter.h"
 #include "Quadtree.h"
 #include "GLCache.h"
+#include "Raycaster.h"
 
 #include "ComponentBone.h"
 #include "ResourceBone.h"
@@ -335,6 +336,8 @@ update_status ModuleRenderer3D::PostUpdate()
 				App->debugDrawer->DebugDraw(projectorComponents[i]->GetFrustum(), frustumsColor);
 				App->debugDrawer->DebugDraw(projectorComponents[i]->GetFrustum().MinimalEnclosingAABB());
 			}
+			if(App->raycaster->frustumSelection.MinimalEnclosingAABB().IsFinite())
+				App->debugDrawer->DebugDraw(App->raycaster->frustumSelection, frustumsColor);
 		}
 
 		if (drawColliders)
@@ -350,6 +353,8 @@ update_status ModuleRenderer3D::PostUpdate()
 
 		App->scripting->OnDrawGizmos();
 
+		App->scripting->OnDrawGizmosSelected();
+
 		App->debugDrawer->EndDebugDraw();
 	}
 
@@ -358,10 +363,11 @@ update_status ModuleRenderer3D::PostUpdate()
 	// 3. Editor
 	App->gui->Draw();
 
-	//App->input->DrawCursor();
 #else
 	App->ui->DrawUI();
 #endif // GAME
+
+	App->input->DrawCursor();
 
 	// 4. Swap buffers
 	SDL_GL_MakeCurrent(App->window->window, context);

@@ -1,38 +1,15 @@
-﻿public class Character
-{
-    uint                    life;
-    uint                    dmg;
+﻿using JellyBitEngine;
+using System.Collections.Generic;
 
-    public float accSpeed;
-    public float velSpeed;
-}
-
-public class AlitaCharacter : Character
+public class Character
 {
-    public uint lvl = 1;
-    public const float expPerLvlModifier = 20.0f;
-    public float currentExp
+    public uint maxLife = 1000;
+    public int dmg = 20;
+
+    public int currentLife = 0;
+
+    public Character()
     {
-        get //get method for returning value
-        {
-            return currentExp;
-        }
-        set
-        {
-            if (value >= lvl * expPerLvlModifier)
-            {
-                lvl += 1;
-                currentExp = 0;
-            }
-            else
-                currentExp = value;
-        }
+        currentLife = (int)maxLife;
     }
-
-
-    float dashDistance;
-    public const float attackRotConst = 10.0f;
-    public const float attackRadiusConst = 2.0f;
 }
-
-

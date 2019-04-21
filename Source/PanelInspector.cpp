@@ -102,349 +102,300 @@ bool PanelInspector::Draw()
 
 void PanelInspector::ShowGameObjectInspector() const
 {
-	if (!App->scene->multipleSelection.empty())
+	GameObject* gameObject = App->scene->selectedObject.GetCurrGameObject();
+
+	if (gameObject == nullptr)
 	{
-		GameObject* gameObject = App->GOs->GetGameObjectByUID(App->scene->multipleSelection.back());
+		assert(gameObject != nullptr);
+		return;
+	}
 
-		if (gameObject == nullptr)
+	bool isActive = gameObject->IsActive();
+	if (ImGui::Checkbox("##Active", &isActive))
+	{
+		for (std::list<uint>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 		{
-			assert(gameObject != nullptr);
-			return;
+			GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+			if (go)
+				go->SetIsActive(isActive);
 		}
+	}
+	ImGui::SameLine();
 
-		bool isActive = gameObject->IsActive();
-		if (ImGui::Checkbox("##Active", &isActive))
+	static char objName[INPUT_BUF_SIZE];
+	if (gameObject->GetName() != nullptr)
+		strcpy_s(objName, IM_ARRAYSIZE(objName), gameObject->GetName());
+
+	ImGui::PushItemWidth(100.0f);
+	ImGuiInputTextFlags inputFlag = ImGuiInputTextFlags_EnterReturnsTrue;
+	if (ImGui::InputText("##objName", objName, IM_ARRAYSIZE(objName), inputFlag))
+		for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 		{
-			for (std::list<uint>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+			if (go)
+				go->SetName(objName);
+		}
+	ImGui::PopItemWidth();
+
+
+	bool isStatic = gameObject->IsStatic();
+	if (ImGui::Checkbox("Static", &isStatic))
+	{
+		for (std::list<uint>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+		{
+			GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+			if (go)
+				go->SetIsStatic(isStatic);
+		}
+	}
+
+
+	ImGui::SameLine();
+	if (ImGui::Button("Everybody Static"))
+	{
+		for (std::list<uint>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+		{
+			GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+			if (go)
+				go->ToggleChildrenAndThisStatic(!isStatic);
+		}
+	}
+
+	// Layer
+	std::vector<const char*> layers;
+	int currentLayer = 0;
+	for (uint i = 0; i < MAX_NUM_LAYERS; ++i)
+	{
+		const char* layerName = App->layers->NumberToName(i);
+		if (strcmp(layerName, "") == 0)
+			continue;
+
+		layers.push_back(layerName);
+		if (i == gameObject->GetLayer())
+			currentLayer = layers.size() - 1;
+	}
+	layers.shrink_to_fit();
+
+	ImGui::PushItemWidth(150.0f);
+	if (ImGui::Combo("Layer", &currentLayer, &layers[0], layers.size()))
+	{
+		for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+		{
+			GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+			if (go)
+				go->SetLayer(App->layers->NameToNumber(layers[currentLayer]));
+		}
+	}
+	ImGui::PopItemWidth();
+
+	// -----
+
+	ImVec2 inspectorSize = ImGui::GetWindowSize();
+	ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+
+	ImGui::SetCursorScreenPos(ImGui::GetWindowPos());
+
+	ImGui::SetCursorScreenPos(cursorPos);
+
+	ImGui::Separator();
+	if (App->scene->multipleSelection.size() == 1)
+	{
+		for (int i = 0; i < gameObject->GetComponentsLength(); ++i)
+		{
+			ImGui::Separator();
+			DragnDropSeparatorTarget(gameObject->GetComponent(i));
+			gameObject->GetComponent(i)->OnEditor();
+		}
+	}
+	else
+	{
+
+		DragnDropSeparatorTarget(gameObject->GetComponent(TransformComponent));
+		gameObject->GetComponent(TransformComponent)->OnEditor();
+	}
+
+	ImGui::Separator();
+	DragnDropSeparatorTarget(gameObject->GetComponent(gameObject->GetComponentsLength() - 1));
+
+	ImGui::Button("Add Component");
+	bool scriptSelected = false;
+	if (ImGui::BeginPopupContextItem((const char*)0, 0))
+	{
+		bool uiLayer = true;
+		for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+		{
+			GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+			if (go && go->GetLayer() != UILAYER)
 			{
-				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
-				if (go)
-					go->SetIsActive(isActive);
+				uiLayer = false;
+				break;
 			}
 		}
-		ImGui::SameLine();
-
-		static char objName[INPUT_BUF_SIZE];
-		if (gameObject->GetName() != nullptr)
-			strcpy_s(objName, IM_ARRAYSIZE(objName), gameObject->GetName());
-
-		ImGui::PushItemWidth(100.0f);
-		ImGuiInputTextFlags inputFlag = ImGuiInputTextFlags_EnterReturnsTrue;
-		if (ImGui::InputText("##objName", objName, IM_ARRAYSIZE(objName), inputFlag))
-			for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
-			{
-				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
-				if (go)
-					go->SetName(objName);
-			}
-		ImGui::PopItemWidth();
-
-
-		bool isStatic = gameObject->IsStatic();
-		if (ImGui::Checkbox("Static", &isStatic))
+		if (uiLayer)
 		{
-			for (std::list<uint>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
-			{
-				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
-				if (go)
-					go->SetIsStatic(isStatic);
-			}
-		}
-
-
-		ImGui::SameLine();
-		if (ImGui::Button("Everybody Static"))
-		{
-			for (std::list<uint>::iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
-			{
-				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
-				if (go)
-					go->ToggleChildrenAndThisStatic(!isStatic);
-			}
-		}
-
-		// Layer
-		std::vector<const char*> layers;
-		int currentLayer = 0;
-		for (uint i = 0; i < MAX_NUM_LAYERS; ++i)
-		{
-			const char* layerName = App->layers->NumberToName(i);
-			if (strcmp(layerName, "") == 0)
-				continue;
-
-			layers.push_back(layerName);
-			if (i == gameObject->GetLayer())
-				currentLayer = layers.size() - 1;
-		}
-		layers.shrink_to_fit();
-
-		ImGui::PushItemWidth(150.0f);
-		if (ImGui::Combo("Layer", &currentLayer, &layers[0], layers.size()))
-		{
-			for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
-			{
-				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
-				if (go)
-					go->SetLayer(App->layers->NameToNumber(layers[currentLayer]));
-			}
-		}
-		ImGui::PopItemWidth();
-
-		// -----
-
-		ImVec2 inspectorSize = ImGui::GetWindowSize();
-		ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-
-		ImGui::SetCursorScreenPos(ImGui::GetWindowPos());
-
-		ImGui::SetCursorScreenPos(cursorPos);
-
-		ImGui::Separator();
-		if (App->scene->multipleSelection.size() == 1)
-		{
-			for (int i = 0; i < gameObject->GetComponentsLength(); ++i)
-			{
-				ImGui::Separator();
-				DragnDropSeparatorTarget(gameObject->GetComponent(i));
-				gameObject->GetComponent(i)->OnEditor();
-			}
-		}
-		else
-		{
-
-			DragnDropSeparatorTarget(gameObject->GetComponent(TransformComponent));
-			gameObject->GetComponent(TransformComponent)->OnEditor();
-		}
-
-		ImGui::Separator();
-		DragnDropSeparatorTarget(gameObject->GetComponent(gameObject->GetComponentsLength() - 1));
-
-		ImGui::Button("Add Component");
-		bool scriptSelected = false;
-		if (ImGui::BeginPopupContextItem((const char*)0, 0))
-		{
-			bool uiLayer = true;
-			for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
-			{
-				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
-				if (go && go->GetLayer() != UILAYER)
-				{
-					uiLayer = false;
-					break;
+			if (CheckIsComponent(ImageComponent))
+				if (ImGui::Selectable("Image UI")) {
+					AddComponentInGroup(ComponentTypes::ImageComponent);
+					ImGui::CloseCurrentPopup();
 				}
-			}
-			if (uiLayer)
-			{
-				if (CheckIsComponent(ImageComponent))
-					if (ImGui::Selectable("Image UI")) {
-						AddComponentInGroup(ComponentTypes::ImageComponent);
-						ImGui::CloseCurrentPopup();
-					}
-				if (CheckIsComponent(ButtonComponent))
-					if (ImGui::Selectable("Button UI")) {
-						AddComponentInGroup(ComponentTypes::ButtonComponent);
-						ImGui::CloseCurrentPopup();
-					}
-				if (CheckIsComponent(LabelComponent))
-					if (ImGui::Selectable("Label UI")) {
-						AddComponentInGroup(ComponentTypes::LabelComponent);
-						ImGui::CloseCurrentPopup();
-					}
-			}
-			if (ImGui::Selectable("Script")) {
-				//Open new Popup, with input text and autocompletion to select scripts by name
-				scriptSelected = true;
-				ImGui::CloseCurrentPopup();
-			}
-
-			if (gameObject->transform)
-			{
-				if (CheckIsComponent(MeshComponent))
-					if (ImGui::Selectable("Mesh")) {
-						AddComponentInGroup(ComponentTypes::MeshComponent);
-						ImGui::CloseCurrentPopup();
-					}
-				if (CheckIsComponent(CameraComponent))
-					if (ImGui::Selectable("Camera")) {
-						AddComponentInGroup(ComponentTypes::CameraComponent);
-						ImGui::CloseCurrentPopup();
-					}
-				if (CheckIsComponent(EmitterComponent))
-					if (ImGui::Selectable("Particle Emitter")) {
-						AddComponentInGroup(ComponentTypes::EmitterComponent);
-						ImGui::CloseCurrentPopup();
-					}
-				if (CheckIsComponent(LightComponent))
-					if (ImGui::Selectable("Light")) {
-						AddComponentInGroup(ComponentTypes::LightComponent);
-						ImGui::CloseCurrentPopup();
-					}
-				if (CheckIsComponent(ProjectorComponent))
-					if (ImGui::Selectable("Projector")) {
-						AddComponentInGroup(ComponentTypes::ProjectorComponent);
-						ImGui::CloseCurrentPopup();
-					}
-				if (CheckIsComponent(AnimatorComponent))
-					if (ImGui::Selectable("Animator")) {
-						AddComponentInGroup(ComponentTypes::AnimatorComponent);
-						ImGui::CloseCurrentPopup();
-					}
-
-				if (CheckIsComponent(NavAgentComponent))
-					if (ImGui::Selectable("Nav Agent")) {
-						AddComponentInGroup(ComponentTypes::NavAgentComponent);
-						ImGui::CloseCurrentPopup();
-					}
-
-
-				if (CheckIsComponent(RigidStaticComponent) && CheckIsComponent(RigidDynamicComponent)) {
-					if (ImGui::Selectable("Rigid Static")) {
-						AddComponentInGroup(ComponentTypes::RigidStaticComponent);
-						ImGui::CloseCurrentPopup();
-					}
-					else if ((CheckIsComponentCollider() || CheckIsComponent(PlaneColliderComponent))
-						&& ImGui::Selectable("Rigid Dynamic")) {
-						AddComponentInGroup(ComponentTypes::RigidDynamicComponent);
-						ImGui::CloseCurrentPopup();
-					}
+			if (CheckIsComponent(ButtonComponent))
+				if (ImGui::Selectable("Button UI")) {
+					AddComponentInGroup(ComponentTypes::ButtonComponent);
+					ImGui::CloseCurrentPopup();
 				}
-				if (CheckIsComponentCollider()) {
-					if (ImGui::Selectable("Box Collider")) {
-						AddComponentInGroup(ComponentTypes::BoxColliderComponent);
-						ImGui::CloseCurrentPopup();
-					}
-					else if (ImGui::Selectable("Sphere Collider")) {
-						AddComponentInGroup(ComponentTypes::SphereColliderComponent);
-						ImGui::CloseCurrentPopup();
-					}
-					else if (ImGui::Selectable("Capsule Collider")) {
-						AddComponentInGroup(ComponentTypes::CapsuleColliderComponent);
-						ImGui::CloseCurrentPopup();
-					}
-					else if (((CheckIsComponent(RigidStaticComponent) && CheckIsComponent(RigidDynamicComponent)) || CheckIsComponent(RigidStaticComponent, true))
-						&& ImGui::Selectable("Plane Collider")) {
-						AddComponentInGroup(ComponentTypes::PlaneColliderComponent);
-						ImGui::CloseCurrentPopup();
-					}
+			if (CheckIsComponent(LabelComponent))
+				if (ImGui::Selectable("Label UI")) {
+					AddComponentInGroup(ComponentTypes::LabelComponent);
+					ImGui::CloseCurrentPopup();
 				}
-				if (CheckIsComponent(AudioListenerComponent))
-					if (ImGui::Selectable("Audio Listener")) {
-						AddComponentInGroup(ComponentTypes::AudioListenerComponent);
-						ImGui::CloseCurrentPopup();
-					}
-
-				if (CheckIsComponent(AudioSourceComponent))
-					if (ImGui::Selectable("Audio Source")) {
-						AddComponentInGroup(ComponentTypes::AudioSourceComponent);
-						ImGui::CloseCurrentPopup();
-					}
-
-				if (CheckIsComponent(TrailComponent))
-				{
-					if (ImGui::Selectable("Trail")) {
-						AddComponentInGroup(ComponentTypes::TrailComponent);
-						ImGui::CloseCurrentPopup();
-					}
-				}
-			}
-			ImGui::EndPopup();
+		}
+		if (ImGui::Selectable("Script")) {
+			//Open new Popup, with input text and autocompletion to select scripts by name
+			scriptSelected = true;
+			ImGui::CloseCurrentPopup();
 		}
 
-		if (scriptSelected)
+		if (gameObject->transform)
 		{
-			ImGui::OpenPopup("AddingScript");
-		}
+			if (CheckIsComponent(MeshComponent))
+				if (ImGui::Selectable("Mesh")) {
+					AddComponentInGroup(ComponentTypes::MeshComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			if (CheckIsComponent(CameraComponent))
+				if (ImGui::Selectable("Camera")) {
+					AddComponentInGroup(ComponentTypes::CameraComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			if (CheckIsComponent(EmitterComponent))
+				if (ImGui::Selectable("Particle Emitter")) {
+					AddComponentInGroup(ComponentTypes::EmitterComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			if (CheckIsComponent(LightComponent))
+				if (ImGui::Selectable("Light")) {
+					AddComponentInGroup(ComponentTypes::LightComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			if (CheckIsComponent(ProjectorComponent))
+				if (ImGui::Selectable("Projector")) {
+					AddComponentInGroup(ComponentTypes::ProjectorComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			if (CheckIsComponent(AnimatorComponent))
+				if (ImGui::Selectable("Animator")) {
+					AddComponentInGroup(ComponentTypes::AnimatorComponent);
+					ImGui::CloseCurrentPopup();
+				}
 
-		inspectorSize = ImGui::GetWindowSize();
-		ImGui::SetNextWindowPos({ ImGui::GetWindowPos().x, ImGui::GetCursorScreenPos().y });
-		ImGui::SetNextWindowSize({ inspectorSize.x, 0.0f });
-		if (ImGui::BeginPopup("AddingScript"))
-		{
-			std::vector<std::string> scriptNames = ResourceScript::getScriptNames();
+			if (CheckIsComponent(NavAgentComponent))
+				if (ImGui::Selectable("Nav Agent")) {
+					AddComponentInGroup(ComponentTypes::NavAgentComponent);
+					ImGui::CloseCurrentPopup();
+				}
 
-			float totalHeight = 0;
 
-			float windowPaddingY = ImGui::GetCurrentWindow()->WindowPadding.y - 2;
-
-			for (int i = 0; i < scriptNames.size(); ++i)
-			{
-				totalHeight += ImGui::CalcTextSize(scriptNames[i].data()).y + 4;
-			}
-
-			ImGui::SetNextWindowContentSize({ 0, totalHeight });
-
-			//TODO: Add a maximum height, fix the totalHeight calculation
-
-			totalHeight = totalHeight > 300 ? 300 : totalHeight;
-
-			ImGui::BeginChild("Names Available", { inspectorSize.x - 15, totalHeight + windowPaddingY * 2 }, true);
-
-			for (int i = 0; i < scriptNames.size(); ++i)
-			{
-				if (ImGui::Selectable(scriptNames[i].data()))
-				{
-					ResourceScript* res = nullptr;
-
-					std::vector<Resource*> scriptResources = App->res->GetResourcesByType(ResourceTypes::ScriptResource);
-					for (Resource* resource : scriptResources)
-					{
-						if (resource->GetData().name == scriptNames[i])
-						{
-							res = (ResourceScript*)resource;
-						}
-					}
-
-					CONSOLE_LOG(LogTypes::Normal, "New Script Created: %s", scriptNames[i].data());
-					ComponentScript* script = App->scripting->CreateScriptComponent(scriptNames[i], res);
-					for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
-					{
-						GameObject* go = App->GOs->GetGameObjectByUID(*iter);
-						if (go)
-						{
-							go->AddComponent(script);
-							script->SetParent(go);
-							script->InstanceClass();
-						}
-					}
-
+			if (CheckIsComponent(RigidStaticComponent) && CheckIsComponent(RigidDynamicComponent)) {
+				if (ImGui::Selectable("Rigid Static")) {
+					AddComponentInGroup(ComponentTypes::RigidStaticComponent);
+					ImGui::CloseCurrentPopup();
+				}
+				else if ((CheckIsComponentCollider() || CheckIsComponent(PlaneColliderComponent))
+					&& ImGui::Selectable("Rigid Dynamic")) {
+					AddComponentInGroup(ComponentTypes::RigidDynamicComponent);
 					ImGui::CloseCurrentPopup();
 				}
 			}
+			if (CheckIsComponentCollider()) {
+				if (ImGui::Selectable("Box Collider")) {
+					AddComponentInGroup(ComponentTypes::BoxColliderComponent);
+					ImGui::CloseCurrentPopup();
+				}
+				else if (ImGui::Selectable("Sphere Collider")) {
+					AddComponentInGroup(ComponentTypes::SphereColliderComponent);
+					ImGui::CloseCurrentPopup();
+				}
+				else if (ImGui::Selectable("Capsule Collider")) {
+					AddComponentInGroup(ComponentTypes::CapsuleColliderComponent);
+					ImGui::CloseCurrentPopup();
+				}
+				else if (((CheckIsComponent(RigidStaticComponent) && CheckIsComponent(RigidDynamicComponent)) || CheckIsComponent(RigidStaticComponent, true))
+					&& ImGui::Selectable("Plane Collider")) {
+					AddComponentInGroup(ComponentTypes::PlaneColliderComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			}
+			if (CheckIsComponent(AudioListenerComponent))
+				if (ImGui::Selectable("Audio Listener")) {
+					AddComponentInGroup(ComponentTypes::AudioListenerComponent);
+					ImGui::CloseCurrentPopup();
+				}
 
-			ImGui::EndChild();
+			if (CheckIsComponent(AudioSourceComponent))
+				if (ImGui::Selectable("Audio Source")) {
+					AddComponentInGroup(ComponentTypes::AudioSourceComponent);
+					ImGui::CloseCurrentPopup();
+				}
 
-			static std::string scriptName;
-
-			ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_FrameBg, { 0.26f, 0.59f, 0.98f, 0.5f });
-
-			ImGui::PushItemWidth(inspectorSize.x - ImGui::CalcTextSize("Script Name").x - 30);
-			if (ImGui::InputText("Script Name", &scriptName, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsNoBlank))
+			if (CheckIsComponent(TrailComponent))
 			{
-				App->scripting->clearSpaces(scriptName);
+				if (ImGui::Selectable("Trail")) {
+					AddComponentInGroup(ComponentTypes::TrailComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			}
+		}
+		ImGui::EndPopup();
+	}
 
-				//Find the ResourceScript with this name, extracting the UUID from the .meta
+	if (scriptSelected)
+	{
+		ImGui::OpenPopup("AddingScript");
+	}
 
+	inspectorSize = ImGui::GetWindowSize();
+	ImGui::SetNextWindowPos({ ImGui::GetWindowPos().x, ImGui::GetCursorScreenPos().y });
+	ImGui::SetNextWindowSize({ inspectorSize.x, 0.0f });
+	if (ImGui::BeginPopup("AddingScript"))
+	{
+		std::vector<std::string> scriptNames = ResourceScript::getScriptNames();
+
+		float totalHeight = 0;
+
+		float windowPaddingY = ImGui::GetCurrentWindow()->WindowPadding.y - 2;
+
+		for (int i = 0; i < scriptNames.size(); ++i)
+		{
+			totalHeight += ImGui::CalcTextSize(scriptNames[i].data()).y + 4;
+		}
+
+		ImGui::SetNextWindowContentSize({ 0, totalHeight });
+
+		//TODO: Add a maximum height, fix the totalHeight calculation
+
+		totalHeight = totalHeight > 300 ? 300 : totalHeight;
+
+		ImGui::BeginChild("Names Available", { inspectorSize.x - 15, totalHeight + windowPaddingY * 2 }, true);
+
+		for (int i = 0; i < scriptNames.size(); ++i)
+		{
+			if (ImGui::Selectable(scriptNames[i].data()))
+			{
 				ResourceScript* res = nullptr;
 
-				if (App->fs->Exists("Assets/Scripts/" + scriptName + ".cs.meta"))
+				std::vector<Resource*> scriptResources = App->res->GetResourcesByType(ResourceTypes::ScriptResource);
+				for (Resource* resource : scriptResources)
 				{
-					char* metaBuffer;
-					uint size = App->fs->Load("Assets/Scripts/" + scriptName + ".cs.meta", &metaBuffer);
-					if (size > 0)
+					if (resource->GetData().name == scriptNames[i])
 					{
-						uint32_t UUID;
-						memcpy(&UUID, metaBuffer, sizeof(uint32_t));
-
-						res = (ResourceScript*)App->res->GetResource(UUID);
-
-						delete[] metaBuffer;
+						res = (ResourceScript*)resource;
 					}
 				}
 
-				CONSOLE_LOG(LogTypes::Normal, "New Script Created: %s", scriptName.data());
-				ComponentScript* script = App->scripting->CreateScriptComponent(scriptName, res);
+				CONSOLE_LOG(LogTypes::Normal, "New Script Created: %s", scriptNames[i].data());
 				for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
 				{
+					ComponentScript* script = App->scripting->CreateScriptComponent(scriptNames[i], res);
 					GameObject* go = App->GOs->GetGameObjectByUID(*iter);
 					if (go)
 					{
@@ -453,14 +404,60 @@ void PanelInspector::ShowGameObjectInspector() const
 						script->InstanceClass();
 					}
 				}
-				scriptName = "";
+
 				ImGui::CloseCurrentPopup();
 			}
-			ImGui::PopItemWidth();
-
-			ImGui::PopStyleColor();
-			ImGui::EndPopup();
 		}
+
+		ImGui::EndChild();
+
+		static std::string scriptName;
+
+		ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_FrameBg, { 0.26f, 0.59f, 0.98f, 0.5f });
+
+		ImGui::PushItemWidth(inspectorSize.x - ImGui::CalcTextSize("Script Name").x - 30);
+		if (ImGui::InputText("Script Name", &scriptName, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsNoBlank))
+		{
+			App->scripting->clearSpaces(scriptName);
+
+			//Find the ResourceScript with this name, extracting the UUID from the .meta
+
+			ResourceScript* res = nullptr;
+
+			if (App->fs->Exists("Assets/Scripts/" + scriptName + ".cs.meta"))
+			{
+				char* metaBuffer;
+				uint size = App->fs->Load("Assets/Scripts/" + scriptName + ".cs.meta", &metaBuffer);
+				if (size > 0)
+				{
+					uint32_t UUID;
+					memcpy(&UUID, metaBuffer, sizeof(uint32_t));
+
+					res = (ResourceScript*)App->res->GetResource(UUID);
+
+					delete[] metaBuffer;
+				}
+			}
+
+			CONSOLE_LOG(LogTypes::Normal, "New Script Created: %s", scriptName.data());
+			for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			{
+				ComponentScript* script = App->scripting->CreateScriptComponent(scriptName, res);
+				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+				if (go)
+				{
+					go->AddComponent(script);
+					script->SetParent(go);
+					script->InstanceClass();
+				}
+			}
+			scriptName = "";
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::PopItemWidth();
+
+		ImGui::PopStyleColor();
+		ImGui::EndPopup();
 	}
 }
 

@@ -1142,9 +1142,10 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	memcpy(&uuidSubEmitter, cursor, bytes);
 	cursor += bytes;
 
-	memcpy(&materialRes, cursor, bytes);
+	uint uuidMaterial;
+	memcpy(&uuidMaterial, cursor, bytes);
 
-	App->res->GetResource(materialRes) ? SetMaterialRes(materialRes) : SetMaterialRes(App->resHandler->defaultMaterial);
+	App->res->GetResource(uuidMaterial) ? SetMaterialRes(uuidMaterial) : SetMaterialRes(App->resHandler->defaultMaterial);
 	cursor += bytes;
 	//Coment this
 	memcpy(&burstMesh.uuid, cursor, bytes);
@@ -1180,6 +1181,7 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	//memcpy(&namelenghtt, cursor, bytes);
 	//cursor += bytes;
 
+	//std::string bursttypename;
 	//bytes = namelenghtt;
 	//bursttypename.resize(namelenghtt);
 	//memcpy((void*)bursttypename.c_str(), cursor, bytes);
