@@ -294,7 +294,7 @@ void SceneImporter::RecursivelyImportNodes(const aiScene* scene, const aiNode* n
 		if (!broken)
 		{
 			// Create the Mesh Component
-			if (nodeMesh->mName.length == 0) { // .dae without mesh but with animation
+			if (nodeMesh->mName.length == 0 && nodeMesh->HasBones()) { // .dae without mesh but with animation
 				mode_export_animation = true;
 			}
 
