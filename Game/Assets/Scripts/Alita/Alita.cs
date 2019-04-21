@@ -4,12 +4,14 @@ class Alita : JellyScript
 {
     private static Alita m_instance;
 
+    #region States
     public AIdle StateIdle = new AIdle();
     public AWalking2Spot StateWalking2Spot = new AWalking2Spot();
     public AWalking2Enemy StateWalking2Enemy = new AWalking2Enemy();
     public AAttacking StateAttacking = new AAttacking();
     public ADash StateDash = new ADash();
     public ASkill1 StateSkill_1 = new ASkill1();
+    #endregion
 
     private Alita()
     {
@@ -24,11 +26,13 @@ class Alita : JellyScript
     private AState m_state;
     public AState lastState;
 
+    #region Scripts
     public Alita_Entity character = new Alita_Entity();
     public Skillset skillset = new Skillset();
     public Agent agent;
     public Animator animator;
     public BattleCircle battleCircle;
+    #endregion
 
     private GameObject _currentTarget = null;
     public Controller targetController = null;
