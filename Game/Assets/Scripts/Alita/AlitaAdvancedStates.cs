@@ -160,8 +160,6 @@ class ADash : AState
 
     public override void OnStop()
     {
-        Alita.Call.agent.alignData.lookWhereYoureGoingData.isActive = true;
-        Alita.Call.agent.alignData.faceData.isActive = false;
         Alita.Call.agent.Resume();
         accumulatedDistance = 0.0f;
     }
