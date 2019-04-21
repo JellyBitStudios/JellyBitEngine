@@ -23,6 +23,11 @@ public class CyborgMeleeFSM
         this.owner = owner;
     }
 
+    public CM_IState GetState()
+    {
+        return state;
+    }
+
     public void ChangeState(CM_IState state)
     {
         if (state == null)
@@ -135,14 +140,16 @@ public class CM_GoToDangerDistance : CM_GoToGameObject
     public override void Execute(CyborgMeleeController owner)
     {
         float distanceToTarget = (Alita.Call.transform.position - owner.transform.position).magnitude;
-        if (distanceToTarget <= owner.cbg_Entity.dangerDistance) // dangerDistance: am I INSIDE my DANGER range?
-        {
-            owner.fsm.ChangeState(new CM_GoToAttackDistance());
-            return;
-        }
-        else if (owner.agent.HasArrived) // HasArrived: has my target run away?
+
+        if (!owner.sight.IsTargetSeen // IsTargetSeen: have I seen my target?
+            || owner.agent.HasArrived) // HasArrived: has my target run away?
         {
             owner.fsm.ChangeState(new CM_Wander());
+            return;
+        }
+        else if (distanceToTarget <= owner.cbg_Entity.dangerDistance) // dangerDistance: am I INSIDE my DANGER range?
+        {
+            owner.fsm.ChangeState(new CM_GoToAttackDistance());
             return;
         }
     }
@@ -189,7 +196,14 @@ public class CM_GoToAttackDistance : CM_GoToGameObject
     public override void Execute(CyborgMeleeController owner)
     {
         float distanceToTarget = (Alita.Call.transform.position - owner.transform.position).magnitude;
-        if (distanceToTarget <= owner.cbg_Entity.attackDistance) // attackDistance: am I INSIDE my ATTACK range?
+
+        if (!owner.sight.IsTargetSeen // IsTargetSeen: have I seen my target?
+            || owner.agent.HasArrived) // HasArrived: has my target run away?
+        {
+            owner.fsm.ChangeState(new CM_WanderDefault());
+            return;
+        }
+        else if (distanceToTarget <= owner.cbg_Entity.attackDistance) // attackDistance: am I INSIDE my ATTACK range?
         {
             // Am I allowed to attack?
             if (Alita.Call.battleCircle.AddAttacker(owner.gameObject))
@@ -204,11 +218,6 @@ public class CM_GoToAttackDistance : CM_GoToGameObject
                 owner.fsm.ChangeState(new CM_WanderStrafe());
                 return;
             }
-        }
-        else if (owner.agent.HasArrived) // HasArrived: has my target run away?
-        {
-            owner.fsm.ChangeState(new CM_WanderDefault());
-            return;
         }
     }
 
@@ -251,6 +260,7 @@ public class CM_Wander : CM_IState
         // ----- CM_Wander -----
 
         owner.animator.PlayAnimation("melee_run_cyborg_animation");
+        owner.animator.SetAnimationLoop(true);
     }
 
     public override void Execute(CyborgMeleeController owner) { }
@@ -296,7 +306,7 @@ public class CM_WanderDefault : CM_Wander
 
     public override void Execute(CyborgMeleeController owner)
     {
-        if (owner.sight.IsTargetSeen) // IsTargetSeen: have I seen the target?
+        if (owner.sight.IsTargetSeen) // IsTargetSeen: have I seen my target?
         {
             owner.fsm.ChangeState(new CM_GoToDangerDistance());
             return;
@@ -576,6 +586,71 @@ public class CM_Hit : CM_IState
     {
         Debug.DrawSphere(owner.cbg_Entity.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
     }
+}
+#endregion
+
+#region CM_Stun
+// ----------------------------------------------------------------------------------------------------
+// Stun
+// ----------------------------------------------------------------------------------------------------
+
+public class CM_Stun : CM_IState
+{
+    // ----- CM_Stun -----
+    CM_IState lastState = null;
+
+    // --------------------------------------------------
+
+    public CM_Stun(CM_IState lastState)
+    {
+        name = "Stun";
+
+        // -----
+
+        this.lastState = lastState;
+    }
+
+    public override void Enter(CyborgMeleeController owner)
+    {
+        Debug.Log(owner.cbg_Entity.name + ": " + "ENTER" + " " + name);
+
+        // ----- Agent -----
+
+        /// Activate/Deactivate
+        owner.agent.Stop();
+
+        // ----- CM_Stun -----
+
+        owner.animator.PlayAnimation("melee_hurt_cyborg_animation");
+        owner.animator.SetAnimationLoop(false);
+
+        owner.isStunned = true;
+    }
+
+    public override void Execute(CyborgMeleeController owner)
+    {
+        if (owner.animator.AnimationFinished())
+        {
+            owner.fsm.ChangeState(lastState);
+            return;
+        }
+    }
+
+    public override void Exit(CyborgMeleeController owner)
+    {
+        Debug.Log(owner.cbg_Entity.name + ": " + "EXIT" + " " + name);
+
+        // ----- Agent -----
+
+        /// Activate/Deactivate
+        owner.agent.Resume();
+
+        // ----- CM_Stun -----
+
+        owner.isStunned = false;
+    }
+
+    public override void DrawGizmos(CyborgMeleeController owner) { }
 }
 #endregion
 

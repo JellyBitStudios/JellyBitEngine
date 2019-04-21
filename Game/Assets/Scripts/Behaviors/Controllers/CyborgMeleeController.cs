@@ -54,6 +54,8 @@ public class CyborgMeleeController : Controller
             Debug.Log("Cyborg melee life: " + entity.currentLife);
         }
     }
+
+    public bool isStunned = false;
     public bool isBeingAttacked = false;
 
     public bool drawGizmosCyborgMelee = true;
@@ -106,8 +108,9 @@ public class CyborgMeleeController : Controller
 
     public override void Update()
     {
-        //HandleInput();
         fsm.UpdateState();
+
+        // -------------------------------------------------
 
         isBeingAttacked = false;
     }
@@ -128,27 +131,13 @@ public class CyborgMeleeController : Controller
         Alita.Call.battleCircle.RemoveAttacker(gameObject);
     }
 
-    // ----------------------------------------------------------------------------------------------------
-
-    private void HandleInput()
-    {
-        if (Input.GetMouseButtonDown(MouseKeyCode.MOUSE_LEFT))
-        {
-            Ray ray = Physics.ScreenToRay(Input.GetMousePosition(), Camera.main);
-            RaycastHit hitInfo;
-            if (Physics.Raycast(ray, out hitInfo, float.MaxValue, LayerMask.GetMask("Terrain"), SceneQueryFlags.Static))
-            {
-                agent.SetDestination(hitInfo.point);
-                //wanderState = WanderStates.goToPosition;
-            }
-        }
-    }
-
     public override void Actuate(uint hpModifier, Entity.Action action)
     {
         switch (action)
         {
             case Entity.Action.selected:
+
+                // Nothing to do here...
 
                 break;
 
@@ -164,9 +153,8 @@ public class CyborgMeleeController : Controller
 
                 entity.currentLife -= (int)hpModifier;
 
-                //animator.PlayAnimation("melee_hurt_cyborg_animation");
-                //animator.SetAnimationLoop(false);
-                // TODO
+                if (!isStunned)
+                    fsm.ChangeState(new CM_Stun(fsm.GetState()));
 
                 break;
 
@@ -179,6 +167,24 @@ public class CyborgMeleeController : Controller
                 // ?
                 break;
                 // healing, other skills etc
+        }
+    }
+
+    // ----------------------------------------------------------------------------------------------------
+
+    // ----------------------------------------------------------------------------------------------------
+
+    private void HandleInput()
+    {
+        if (Input.GetMouseButtonDown(MouseKeyCode.MOUSE_LEFT))
+        {
+            Ray ray = Physics.ScreenToRay(Input.GetMousePosition(), Camera.main);
+            RaycastHit hitInfo;
+            if (Physics.Raycast(ray, out hitInfo, float.MaxValue, LayerMask.GetMask("Terrain"), SceneQueryFlags.Static))
+            {
+                agent.SetDestination(hitInfo.point);
+                //wanderState = WanderStates.goToPosition;
+            }
         }
     }
 }
