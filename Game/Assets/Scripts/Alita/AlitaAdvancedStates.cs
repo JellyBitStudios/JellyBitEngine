@@ -88,6 +88,7 @@ class AAttacking : AState
             }
             else
             {
+                Alita.Call.currentTarget = null;
                 Alita.Call.SwitchState(Alita.Call.StateIdle);
             }
         }
