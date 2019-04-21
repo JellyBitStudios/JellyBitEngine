@@ -124,7 +124,10 @@ void Raycaster::GetGOFromFrustum(math::Frustum frustumSelecteds) const
 	{
 		for (uint i = 0; i < hits.size(); ++i)
 		{
-			App->scene->selectedObject += hits[i];
+			if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), hits[i]->GetUUID()) == App->scene->multipleSelection.end())
+				App->scene->selectedObject += hits[i];
+			else
+				App->scene->selectedObject -= hits[i];
 		}
 	}
 }
