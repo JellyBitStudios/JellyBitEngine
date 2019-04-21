@@ -76,11 +76,11 @@ struct ParticleAnimation
 	int  textureColumns = 1;
 	float textureRowsNorm = 1.0f;
 	float textureColumnsNorm = 1.0f;
-	float animationSpeed = 0.1f;
+	math::float2 animationSpeed = math::float2(0.1f,0.1f);
 	bool randAnim = false;
 
 	uint GetPartAnimationSerializationBytes()
-	{ return sizeof(bool) * 2 + sizeof(float) * 3 + sizeof(int) * 2; }
+	{ return sizeof(bool) * 2 + sizeof(float) * 2 + sizeof(int) * 2 + sizeof(math::float2); }
 	void OnInternalSave(char *& cursor);
 	void OnInternalLoad(char *& cursor);
 };
@@ -139,6 +139,7 @@ public:
 	void ParticleShape();
 	void ParticleSpace();
 	
+	void UpdateTransform();
 	void SetNewAnimation();
 	void CreateParticles(int particlesToCreate, ShapeType shapeType, const math::float3 & pos, bool isBurst = false);
 	math::float3 RandPos(ShapeType shapeType, bool isBurst = false);
@@ -149,7 +150,6 @@ public:
 	void ConnectSubEmitter();
 	void SoftClearEmitter();
 	bool EditColor(ColorTime & colorTime, uint pos = 0u);
-	void SetAABB(const math::float3 size, const math::float3 extraPosition = math::float3::zero);
 
 	math::float3 GetPos();
 
@@ -211,6 +211,8 @@ public:
 
 	bool burst = false;
 	ShapeType burstType = ShapeType_BOX;
+
+	math::AABB boundingBox;
 private:
 	// General info
 	//---------------------------------------
@@ -226,9 +228,11 @@ private:
 	bool checkRotation = false;
 	bool checkAngularAcceleration = false;
 	bool checkAngularVelocity = false;
+	bool checkAnimationSpeed = false;
 
 	// Loop the particle (if true the particle emitter will never stop)
 	bool loop = true;
+	bool burstLoop = true;
 	GameTimer loopTimer;
 	// Warm up the particle emitter (if true the particle emitter will be already started at play-time)
 	bool preWarm = true;
@@ -239,8 +243,6 @@ private:
 	int minPart = 0;
 	int maxPart = 10;
 	float repeatTime = 1.0f;
-
-	math::float3 posDifAABB = math::float3::zero;
 
 	std::string burstTypeName = "Box Burst";
 

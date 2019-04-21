@@ -188,6 +188,10 @@ void PanelInspector::ShowGameObjectInspector() const
 	}
 	ImGui::PopItemWidth();
 
+
+	if (ImGui::Button("Layerify children"))
+		gameObject->ApplyLayerChildren(gameObject->GetLayer());
+
 	// -----
 
 	ImVec2 inspectorSize = ImGui::GetWindowSize();
