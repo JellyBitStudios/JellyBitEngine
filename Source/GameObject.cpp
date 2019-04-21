@@ -454,7 +454,7 @@ void GameObject::CalculateBoundingBox()
 
 	}
 	else
-		originalBoundingBox.SetNegativeInfinity();
+		boundingBox.SetNegativeInfinity();
 }
 
 
