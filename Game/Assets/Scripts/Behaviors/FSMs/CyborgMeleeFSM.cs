@@ -56,6 +56,66 @@ public class CyborgMeleeFSM
     }
 }
 
+#region CM_Think
+// ----------------------------------------------------------------------------------------------------
+// Think
+// ----------------------------------------------------------------------------------------------------
+
+public class CM_Think : CM_IState
+{
+    public CM_Think()
+    {
+        name = "Think";
+    }
+
+    public override void Enter(CyborgMeleeController owner)
+    {
+        Debug.Log(owner.cbg_Entity.name + ": " + "ENTER" + " " + name);
+
+        float distanceToTarget = (Alita.Call.transform.position - owner.transform.position).magnitude;
+
+        // GoToAttackDistance
+        if (distanceToTarget <= owner.cbg_Entity.attackDistance)
+        {
+            if (Alita.Call.battleCircle.AddAttacker(owner.gameObject))
+            {
+                owner.fsm.ChangeState(new CM_Attack());
+                return;
+            }
+            else
+            {
+                owner.fsm.ChangeState(new CM_WanderStrafe());
+                return;
+            }
+        }
+        // GoToDangerDistance
+        else if (distanceToTarget <= owner.cbg_Entity.dangerDistance)
+        {
+            owner.fsm.ChangeState(new CM_GoToAttackDistance());
+            return;
+        }
+        // Wander
+        else if (owner.sight.IsTargetSeen)
+        {
+            owner.fsm.ChangeState(new CM_GoToDangerDistance());
+            return;
+        }
+
+        owner.fsm.ChangeState(new CM_WanderDefault());
+        return;
+    }
+
+    public override void Execute(CyborgMeleeController owner) { }
+
+    public override void Exit(CyborgMeleeController owner)
+    {
+        Debug.Log(owner.cbg_Entity.name + ": " + "EXIT" + " " + name);
+    }
+
+    public override void DrawGizmos(CyborgMeleeController owner) { }
+}
+#endregion
+
 #region CM_GoToGameObject
 // ----------------------------------------------------------------------------------------------------
 // GoToGameObject
@@ -144,7 +204,7 @@ public class CM_GoToDangerDistance : CM_GoToGameObject
         if (!owner.sight.IsTargetSeen // IsTargetSeen: have I seen my target?
             || owner.agent.HasArrived) // HasArrived: has my target run away?
         {
-            owner.fsm.ChangeState(new CM_Wander());
+            owner.fsm.ChangeState(new CM_WanderDefault());
             return;
         }
         else if (distanceToTarget <= owner.cbg_Entity.dangerDistance) // dangerDistance: am I INSIDE my DANGER range?
@@ -378,7 +438,7 @@ public class CM_WanderStrafe : CM_Wander
         if (timer >= actualStrafeTime
             || owner.isBeingAttacked)
         {
-            owner.fsm.ChangeState(new CM_GoToDangerDistance()); // danger distance just in case I have moved out of my attack range
+            owner.fsm.ChangeState(new CM_Think());
             return;
         }
 
@@ -652,7 +712,7 @@ public class CM_StunBasic : CM_Stun
     {
         if (owner.animator.AnimationFinished())
         {
-            owner.fsm.ChangeState(new CM_GoToDangerDistance());
+            owner.fsm.ChangeState(new CM_Think());
             return;
         }
     }
@@ -729,7 +789,7 @@ public class CM_StunForce : CM_Stun
 
             if (owner.animator.AnimationFinished())
             {
-                owner.fsm.ChangeState(new CM_GoToDangerDistance());
+                owner.fsm.ChangeState(new CM_Think());
                 return;
             }
         }
