@@ -113,7 +113,7 @@ public class CyborgMeleeController : Controller
         entity.currentLife = (int)entity.maxLife;
 
         // Agent
-        agent.agentData.Radius = 1.0f;
+        agent.agentData.Radius = gameObject.GetComponent<CapsuleCollider>().radius;
 
         // -------------------------------------------------
 

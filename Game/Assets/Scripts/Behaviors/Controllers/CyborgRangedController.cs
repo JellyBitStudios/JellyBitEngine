@@ -115,7 +115,7 @@ public class CyborgRangedController : JellyScript
         character.currentLife = (int)character.maxLife;
 
         // Agent
-        agent.agentData.Radius = 0.4f;
+        agent.agentData.Radius = gameObject.GetComponent<CapsuleCollider>().radius;
 
         // -----
 

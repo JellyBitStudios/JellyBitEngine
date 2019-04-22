@@ -70,7 +70,7 @@ class Alita : JellyScript
     public override void Start()
     {
         // Agent
-        agent.agentData.Radius = 0.5f;
+        agent.agentData.Radius = gameObject.GetComponent<CapsuleCollider>().radius;
     }
 
     public override void Update()
