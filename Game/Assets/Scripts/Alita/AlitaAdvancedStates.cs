@@ -204,9 +204,11 @@ class ASkill1 : AState
             OverlapHit[] hitInfo;
             Physics.OverlapSphere(Alita_Entity.ConstSkillqRadius, Alita.Call.transform.position, out hitInfo, LayerMask.GetMask("Enemy"), SceneQueryFlags.Static | SceneQueryFlags.Dynamic);
 
-            foreach(OverlapHit goHit in hitInfo)
-                goHit.gameObject.GetComponent<Controller>().Actuate(Alita_Entity.ConstSkillqDmg, Entity.Action.skillQ);
-
+            if (hitInfo != null)
+            {
+                foreach (OverlapHit goHit in hitInfo)
+                    goHit.gameObject.GetComponent<Controller>().Actuate(Alita_Entity.ConstSkillqDmg, Entity.Action.skillQ);
+            }
             hit = true;
         }
 
