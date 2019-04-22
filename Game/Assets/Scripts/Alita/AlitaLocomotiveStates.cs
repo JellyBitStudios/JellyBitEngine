@@ -32,6 +32,7 @@ class AIdle : AState
         else if (code == KeyCode.KEY_W && Alita.Call.skillset.skW.Use())
         {
             Debug.Log("W HIT");
+            Alita.Call.StateSkill_W.SetDirection(Player.lastRaycastHit.point);
             Alita.Call.SwitchState(Alita.Call.StateSkill_W);
         }
     }
@@ -104,6 +105,7 @@ class AWalking : AState
         else if (code == KeyCode.KEY_W && Alita.Call.skillset.skW.Use())
         {
             Alita.Call.currentTarget = null;
+            Alita.Call.StateSkill_W.SetDirection(Player.lastRaycastHit.point);
             Alita.Call.SwitchState(Alita.Call.StateSkill_W);
         }
     }

@@ -4,6 +4,8 @@ class Player : JellyScript
 {
     private static Player m_instance;
 
+    public static RaycastHit lastRaycastHit;
+
     public LayerMask raycastLayer = new LayerMask();
 
     public bool inputEnabled = true;
@@ -85,6 +87,7 @@ class Player : JellyScript
         {
             if (process)
                 Alita.Call.ProcessRaycast(hit, leftClick);
+            lastRaycastHit = hit;
 
             //string layer = hit.gameObject.GetLayer();
         }

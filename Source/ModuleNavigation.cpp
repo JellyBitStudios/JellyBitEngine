@@ -322,6 +322,18 @@ bool ModuleNavigation::FindPath(float* start, float* end, std::vector<math::floa
 	return true;
 }
 
+bool ModuleNavigation::ProjectPoint(float* point, math::float3 projectedPoint, math::float3 extents = math::float3(1.2f,0.9f,1.2f)) const
+{
+	dtPolyRef startRef;
+	dtQueryFilter filter;
+	dtStatus status;
+	//Find start position poly
+	status = m_navQuery->findNearestPoly(point, extents.ptr(), &filter, &startRef, NULL);
+	if (!dtStatusSucceed(status))
+		return false;
+	return true;
+}
+
 int ModuleNavigation::AddAgent(const float* p, float radius, float height, float maxAcc, float maxSpeed, float collQueryRange, float pathOptimRange, unsigned char updateFlags, unsigned char obstacleAvoidanceType, float stopAtLength) const
 {
 	if (!m_crowd) return -1;

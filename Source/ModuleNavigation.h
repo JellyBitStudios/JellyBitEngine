@@ -30,7 +30,7 @@ public:
 	void EraseComponent(class ComponentNavAgent*);
 	void SetInputGeom(class NMInputGeom& inputGeom);
 	bool FindPath(float* start, float* end, std::vector<math::float3>& finalPath) const;
-
+	bool ProjectPoint(float* point, math::float3 projectedPoint, math::float3 extends) const;
 	int  AddAgent(const float* p, float radius, float height, float maxAcc, float maxSpeed,
 				  float collQueryRange, float pathOptimRange, unsigned char updateFlags,
 				  unsigned char obstacleAvoidanceType, float stopAtLength) const;
