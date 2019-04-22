@@ -157,61 +157,7 @@ public class Agent : JellyScript
 
         // --------------------------------------------------
 
-        // AgentData
-        agentData.maxVelocity = tmp_agentMaxVelocity;
-        agentData.maxAngularVelocity = tmp_agentMaxAngularVelocity;
-        agentData.maxAcceleration = tmp_agentMaxAcceleration;
-        agentData.maxAngularAcceleration = tmp_agentMaxAngularAcceleration;
-
-        // SteeringSeekData
-        seekData.isActive = tmp_seekIsActive;
-        seekData.Priority = tmp_seekPriority;
-        seekData.arriveMinDistance = tmp_arriveMinDistance;
-
-        // SteeringFleeData
-        fleeData.isActive = tmp_fleeIsActive;
-        fleeData.Priority = tmp_fleePriority;
-
-        // SteeringWanderData
-        wanderData.isActive = tmp_wanderIsActive;
-        wanderData.Priority = tmp_wanderPriority;
-        wanderData.radius = tmp_wanderRadius;
-        wanderData.offset = tmp_wanderOffset;
-        wanderData.minTime = tmp_wanderMinTime;
-        wanderData.maxTime = tmp_wanderMaxTime;
-
-        // SteeringSeparationData
-        separationData.isActive = tmp_separationIsActive;
-        separationData.Priority = tmp_separationPriority;
-        separationData.mask = tmp_separationMask;
-
-        // SteeringCollisionAvoidance
-        collisionAvoidanceData.isActive = tmp_collisionAvoidanceIsActive;
-        collisionAvoidanceData.Priority = tmp_collisionAvoidancePriority;
-        collisionAvoidanceData.mask = tmp_collisionAvoidanceMask;
-        collisionAvoidanceData.coneHalfAngle = tmp_collisionAvoidanceConeHalfAngle;
-
-        // SteeringObstacleAvoidance
-        obstacleAvoidanceData.isActive = tmp_obstacleAvoidanceIsActive;
-        obstacleAvoidanceData.Priority = tmp_obstacleAvoidancePriority;
-        obstacleAvoidanceData.mask = tmp_obstacleAvoidanceMask;
-        obstacleAvoidanceData.avoidDistance = tmp_obstacleAvoidanceAvoidDistance;
-        for (uint i = 0; i < obstacleAvoidanceData.rays.Length; ++i)
-            obstacleAvoidanceData.rays[i] = new SteeringRay();
-        obstacleAvoidanceData.rays[0].length = 1.0f;
-        obstacleAvoidanceData.rays[1].direction = new Vector3(-1.0f, 0.0f, 1.0f);
-        obstacleAvoidanceData.rays[1].length = 0.5f;
-        obstacleAvoidanceData.rays[2].direction = new Vector3(1.0f, 0.0f, 1.0f);
-        obstacleAvoidanceData.rays[2].length = 0.5f;
-
-        // SteeringAlignData
-        alignData.isActive = tmp_alignIsActive;
-        alignData.Priority = tmp_alignPriority;
-        alignData.minAngle = tmp_alignMinAngle;
-        alignData.slowAngle = tmp_alignSlowAngle;
-        alignData.timeToTarget = tmp_alignTimeToTarget;
-        alignData.lookWhereYoureGoingData.isActive = tmp_alignIsLookWhereYoureGoingActive;
-        alignData.faceData.isActive = tmp_alignIsFaceToActive;
+        AssignInspectorVariables();
     }
 
     public override void FixedUpdate()
@@ -363,7 +309,7 @@ public class Agent : JellyScript
             return;
 
         Debug.DrawLine(transform.position, transform.position + Quaternion.Rotate(Vector3.up, angularVelocity) * transform.forward * 3.0f, Color.Black);
-        Debug.DrawLine(transform.position, transform.position + transform.forward * 3.0f, Color.White);
+        Debug.DrawLine(transform.position, transform.position + velocity.normalized() * 3.0f, Color.White);
 
         if (seekData.isActive)
             SteeringSeek.DrawGizmos(this);
@@ -435,7 +381,7 @@ public class Agent : JellyScript
         alignData.faceData.isActive = true;
 
         alignData.faceData.faceType = SteeringFaceData.FaceType.Direction;
-        alignData.faceData.direction = direction;
+        alignData.faceData.direction = direction.normalized();
     }
 
     // Look where you're going
@@ -558,6 +504,65 @@ public class Agent : JellyScript
     }
 
     // ----------------------------------------------------------------------------------------------------
+
+    private void AssignInspectorVariables()
+    {
+        // AgentData
+        agentData.maxVelocity = tmp_agentMaxVelocity;
+        agentData.maxAngularVelocity = tmp_agentMaxAngularVelocity;
+        agentData.maxAcceleration = tmp_agentMaxAcceleration;
+        agentData.maxAngularAcceleration = tmp_agentMaxAngularAcceleration;
+
+        // SteeringSeekData
+        seekData.isActive = tmp_seekIsActive;
+        seekData.Priority = tmp_seekPriority;
+        seekData.arriveMinDistance = tmp_arriveMinDistance;
+
+        // SteeringFleeData
+        fleeData.isActive = tmp_fleeIsActive;
+        fleeData.Priority = tmp_fleePriority;
+
+        // SteeringWanderData
+        wanderData.isActive = tmp_wanderIsActive;
+        wanderData.Priority = tmp_wanderPriority;
+        wanderData.radius = tmp_wanderRadius;
+        wanderData.offset = tmp_wanderOffset;
+        wanderData.minTime = tmp_wanderMinTime;
+        wanderData.maxTime = tmp_wanderMaxTime;
+
+        // SteeringSeparationData
+        separationData.isActive = tmp_separationIsActive;
+        separationData.Priority = tmp_separationPriority;
+        separationData.mask = tmp_separationMask;
+
+        // SteeringCollisionAvoidance
+        collisionAvoidanceData.isActive = tmp_collisionAvoidanceIsActive;
+        collisionAvoidanceData.Priority = tmp_collisionAvoidancePriority;
+        collisionAvoidanceData.mask = tmp_collisionAvoidanceMask;
+        collisionAvoidanceData.coneHalfAngle = tmp_collisionAvoidanceConeHalfAngle;
+
+        // SteeringObstacleAvoidance
+        obstacleAvoidanceData.isActive = tmp_obstacleAvoidanceIsActive;
+        obstacleAvoidanceData.Priority = tmp_obstacleAvoidancePriority;
+        obstacleAvoidanceData.mask = tmp_obstacleAvoidanceMask;
+        obstacleAvoidanceData.avoidDistance = tmp_obstacleAvoidanceAvoidDistance;
+        for (uint i = 0; i < obstacleAvoidanceData.rays.Length; ++i)
+            obstacleAvoidanceData.rays[i] = new SteeringRay();
+        obstacleAvoidanceData.rays[0].length = agentData.Radius;
+        obstacleAvoidanceData.rays[1].direction = new Vector3(-1.0f, 0.0f, 1.0f);
+        obstacleAvoidanceData.rays[1].length = agentData.Radius / 2.0f;
+        obstacleAvoidanceData.rays[2].direction = new Vector3(1.0f, 0.0f, 1.0f);
+        obstacleAvoidanceData.rays[2].length = agentData.Radius / 2.0f;
+
+        // SteeringAlignData
+        alignData.isActive = tmp_alignIsActive;
+        alignData.Priority = tmp_alignPriority;
+        alignData.minAngle = tmp_alignMinAngle;
+        alignData.slowAngle = tmp_alignSlowAngle;
+        alignData.timeToTarget = tmp_alignTimeToTarget;
+        alignData.lookWhereYoureGoingData.isActive = tmp_alignIsLookWhereYoureGoingActive;
+        alignData.faceData.isActive = tmp_alignIsFaceToActive;
+    }
 
     private void UpdateInspectorVariables()
     {

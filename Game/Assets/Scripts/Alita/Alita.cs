@@ -67,6 +67,12 @@ class Alita : JellyScript
         EventsManager.Call.StartListening("Alita", this, "EventsListener");
     }
 
+    public override void Start()
+    {
+        // Agent
+        agent.agentData.Radius = 0.5f;
+    }
+
     public override void Update()
     {
         skillset.UpdateTick();

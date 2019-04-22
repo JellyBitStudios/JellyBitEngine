@@ -53,7 +53,7 @@ public static class SteeringObstacleAvoidance
             if (agent.invertSight)
                 direction = Quaternion.Rotate(Vector3.up, 180.0f) * direction;
 
-            Debug.DrawLine(agent.transform.position, agent.transform.position + direction, Color.Blue);
+            Debug.DrawLine(agent.transform.position, agent.transform.position + direction, Color.Red);
         }
     }
 }

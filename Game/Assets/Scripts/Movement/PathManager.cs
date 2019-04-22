@@ -95,10 +95,10 @@ public class PathManager
 
         for (uint i = 0; i < path.Length - 1; ++i)
         {
-            Debug.DrawSphere(0.1f, Color.White, path[i], Quaternion.identity, Vector3.one);
-            Debug.DrawLine(path[i], path[i + 1], Color.White);
+            Debug.DrawSphere(0.1f, Color.Blue, path[i], Quaternion.identity, Vector3.one);
+            Debug.DrawLine(path[i], path[i + 1], Color.Blue);
         }
 
-        Debug.DrawSphere(0.1f, Color.White, path[path.Length - 1], Quaternion.identity, Vector3.one);
+        Debug.DrawSphere(0.1f, Color.Blue, path[path.Length - 1], Quaternion.identity, Vector3.one);
     }
 }

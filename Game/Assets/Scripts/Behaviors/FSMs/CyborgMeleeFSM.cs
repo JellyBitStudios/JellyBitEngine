@@ -355,8 +355,8 @@ public class CM_WanderDefault : CM_Wander
         owner.agent.wanderData.radius = 1.0f;
         owner.agent.wanderData.offset = 1.0f;
 
-        owner.agent.wanderData.minTime = 0.3f;
-        owner.agent.wanderData.maxTime = 0.7f;
+        owner.agent.wanderData.minTime = 0.6f;
+        owner.agent.wanderData.maxTime = 1.0f;
 
         // ----- Base -----
 

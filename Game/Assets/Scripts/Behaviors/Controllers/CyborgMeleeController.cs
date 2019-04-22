@@ -117,7 +117,7 @@ public class CyborgMeleeController : Controller
 
         // -------------------------------------------------
 
-        fsm.ChangeState(new CM_GoToDangerDistance());
+        fsm.ChangeState(new CM_Think());
 
         EventsManager.Call.StartListening("CyborgMelee", this, "OnEvent");
     }
