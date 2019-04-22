@@ -140,6 +140,7 @@ class AAttacking : AState
 class ADash : AState
 {
     float accumulatedDistance = 0.0f;
+    float maxVelocity = 0.0f;
     Vector3 dir = new Vector3();
 
     public void SetDirection(Vector3 position)
@@ -164,17 +165,26 @@ class ADash : AState
         float targetOrientation = MathScript.Rad2Deg * (float)Math.Atan2(dir.x, dir.z);
         Quaternion quat = Quaternion.Rotate(Vector3.up, targetOrientation);
         Alita.Call.transform.rotation = quat;
+
+        // Agent
+        maxVelocity = Alita.Call.agent.agentData.maxVelocity;
+
+        Alita.Call.agent.isMovementStopped = false;
+        Alita.Call.agent.isRotationStopped = true;
+        Alita.Call.agent.ActivateAvoidance();
+
+        Alita.Call.agent.direction = Alita.Call.transform.forward;
+        Alita.Call.agent.useDirection = true;
     }
 
     public override void OnExecute()
     {
         float time_bezier = accumulatedDistance / Alita_Entity.ConstMaxDistance;
-
         Vector3 bezier = MathScript.BezierCurve.GetPointOnBezierCurve(time_bezier);
 
-        Vector3 increase = Time.deltaTime * dir * bezier.magnitude;
+        Alita.Call.agent.agentData.maxVelocity = bezier.magnitude;
 
-        Alita.Call.transform.position += increase;
+        Vector3 increase = Time.fixedDeltaTime * dir * bezier.magnitude;
         accumulatedDistance += increase.magnitude;
         if (accumulatedDistance >= Alita_Entity.ConstMaxDistance)
             Alita.Call.SwitchState(Alita.Call.StateIdle);
@@ -182,7 +192,12 @@ class ADash : AState
 
     public override void OnStop()
     {
+        // Agent
+        Alita.Call.agent.agentData.maxVelocity = maxVelocity;
+
         Alita.Call.agent.Resume();
+        Alita.Call.agent.useDirection = false;
+
         accumulatedDistance = 0.0f;
     }
 }
