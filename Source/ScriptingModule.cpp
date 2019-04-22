@@ -2401,6 +2401,54 @@ bool NavigationGetPath(MonoArray* origin, MonoArray* destination, MonoArray** ou
 	return false;
 }
 
+bool NavigationProjectPoint(MonoArray* original, MonoArray** projected, MonoArray* extents)
+{
+	if (!original || !extents)
+		return false;
+
+	math::float3 originalCPP = { mono_array_get(original, float, 0), mono_array_get(original, float, 1), mono_array_get(original, float, 2) };
+	math::float3 extentsCPP = math::float3(mono_array_get(extents, float, 0), mono_array_get(extents, float, 1), mono_array_get(extents, float, 2));
+
+	math::float3 projectedCPP;
+	if (App->navigation->ProjectPoint(originalCPP.ptr(), projectedCPP, extentsCPP))
+	{
+		*projected = mono_array_new(App->scripting->domain, mono_get_single_class(), 3);
+		mono_array_set(*projected, float, 0, projectedCPP.x);
+		mono_array_set(*projected, float, 1, projectedCPP.y);
+		mono_array_set(*projected, float, 2, projectedCPP.z);
+
+		return true;
+	}
+
+	*projected = nullptr;
+
+	return false;
+}
+
+bool NavigationProjectPointPolyBoundary(MonoArray* original, MonoArray** projected, MonoArray* extents)
+{
+	if (!original || !extents)
+		return false;
+
+	math::float3 originalCPP = { mono_array_get(original, float, 0), mono_array_get(original, float, 1), mono_array_get(original, float, 2) };
+	math::float3 extentsCPP = math::float3(mono_array_get(extents, float, 0), mono_array_get(extents, float, 1), mono_array_get(extents, float, 2));
+
+	math::float3 projectedCPP;
+	if (App->navigation->ProjectPointPolyBoundary(originalCPP.ptr(), projectedCPP, extentsCPP))
+	{
+		*projected = mono_array_new(App->scripting->domain, mono_get_single_class(), 3);
+		mono_array_set(*projected, float, 0, projectedCPP.x);
+		mono_array_set(*projected, float, 1, projectedCPP.y);
+		mono_array_set(*projected, float, 2, projectedCPP.z);
+
+		return true;
+	}
+
+	*projected = nullptr;
+
+	return false;
+}
+
 void SetCompActive(MonoObject* monoComponent, bool active)
 {
 	Component* component = App->scripting->ComponentFrom(monoComponent);
@@ -3773,6 +3821,8 @@ void ScriptingModule::CreateDomain()
 	//mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetPath", (const void*)&NavAgentGetPath);
 
 	mono_add_internal_call("JellyBitEngine.Navigation::_GetPath", (const void*)&NavigationGetPath);
+	mono_add_internal_call("JellyBitEngine.Navigation::_ProjectPoint", (const void*)&NavigationProjectPoint);
+	mono_add_internal_call("JellyBitEngine.Navigation::_ProjectPointPolyBoundary", (const void*)&NavigationProjectPointPolyBoundary);
 
 	//Audio
 	mono_add_internal_call("JellyBitEngine.AudioSource::GetAudio", (const void*)&AudioSourceGetAudio);
