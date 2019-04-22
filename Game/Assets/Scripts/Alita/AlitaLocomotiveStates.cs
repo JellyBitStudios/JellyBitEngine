@@ -64,8 +64,8 @@ class AIdle : AState
         {
             if (Alita.Call.skillset.skDash.Use())
             {
+                Alita.Call.StateDash.SetDirection(hit.point - Alita.Call.transform.position);
                 Alita.Call.SwitchState(Alita.Call.StateDash);
-                Alita.Call.StateDash.SetDirection(hit.point);
             }
         }
     }
@@ -133,8 +133,8 @@ class AWalking2Spot : AWalking
         {
             if (Alita.Call.skillset.skDash.Use())
             {
+                Alita.Call.StateDash.SetDirection(hit.point - Alita.Call.transform.position);
                 Alita.Call.SwitchState(Alita.Call.StateDash);
-                Alita.Call.StateDash.SetDirection(hit.point);
             }
         }
     }
@@ -173,8 +173,8 @@ class AWalking2Enemy : AWalking
             if (Alita.Call.skillset.skDash.Use())
             {
                 Alita.Call.currentTarget = null;
+                Alita.Call.StateDash.SetDirection(hit.point - Alita.Call.transform.position);
                 Alita.Call.SwitchState(Alita.Call.StateDash);
-                Alita.Call.StateDash.SetDirection(hit.point);
             }
         }
     }
