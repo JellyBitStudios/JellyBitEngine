@@ -7,6 +7,7 @@
 #include "ModuleInternalResHandler.h"
 #include "ModuleRenderer3D.h"
 #include "ModuleUI.h"
+#include "Lights.h"
 
 #include "GameObject.h"
 #include "ComponentMaterial.h"
@@ -299,7 +300,10 @@ bool ModuleGOs::SerializeFromNode(GameObject* node, char*& outStateBuffer, size_
 
 	// Get size navmesh tiles data
 	if (navmesh)
-	sizeBuffer += App->navigation->GetNavMeshSerialitzationBytes();
+		sizeBuffer += App->navigation->GetNavMeshSerialitzationBytes();
+
+	// ambient light value
+	sizeBuffer += sizeof(float);
 
 	outStateBuffer = new char[sizeBuffer];
 	char* cursor = outStateBuffer;
@@ -314,6 +318,9 @@ bool ModuleGOs::SerializeFromNode(GameObject* node, char*& outStateBuffer, size_
 	// Discuss if this should be a resource
 	if (navmesh)
 		App->navigation->SaveNavmesh(cursor);
+
+	memcpy(cursor, &App->lights->ambientValue, sizeof(float));
+	cursor += sizeof(float);
 
 	return true;
 }
@@ -393,6 +400,9 @@ bool ModuleGOs::LoadScene(char*& buffer, size_t sizeBuffer, bool navmesh)
 	// Discuss if this should be a resource
 	if (navmesh)
 		App->navigation->LoadNavmesh(cursor);
+	
+	memcpy(&App->lights->ambientValue, cursor, sizeof(float));
+	cursor += sizeof(float);
 
 	//App->animation->SetUpAnimations();
 

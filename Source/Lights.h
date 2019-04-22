@@ -15,6 +15,9 @@ public:
 	void UseLights(const unsigned int shaderProgram);
 	void DebugDrawLights() const;
 
+public:
+	float ambientValue = 0.3f;
+
 private:
 
 	std::vector<class ComponentLight*> lights;
