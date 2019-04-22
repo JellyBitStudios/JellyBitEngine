@@ -194,7 +194,7 @@ class ADash : AState
         // Agent
         Alita.Call.agent.agentData.maxVelocity = maxVelocity;
 
-        Alita.Call.agent.Resume();
+        Alita.Call.agent.isRotationStopped = false;
         Alita.Call.agent.useDirection = false;
 
         accumulatedDistance = 0.0f;
