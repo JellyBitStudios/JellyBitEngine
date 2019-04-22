@@ -819,8 +819,7 @@ public class CM_StunForce : CM_Stun
         // ----- Agent -----
 
         /// Activate/Deactivate
-        owner.agent.isMovementStopped = false;
-        owner.agent.isRotationStopped = false;
+        owner.agent.Resume();
 
         // ----- CM_StunForce -----
 

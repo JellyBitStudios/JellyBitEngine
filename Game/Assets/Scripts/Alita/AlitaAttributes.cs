@@ -38,7 +38,7 @@ public class Alita_Entity : Entity
 
     // const dash
     public const float ConstDashStrength = 8.0f;
-    public const float ConstMaxDistance = 4.0f;
+    public const float ConstMaxDistance = 8.0f;
 }
 
 //---------------------------------- SKILLS  ------------------------------------//
