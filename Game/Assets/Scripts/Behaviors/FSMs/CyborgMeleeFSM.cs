@@ -596,18 +596,9 @@ public class CM_Hit : CM_IState
 
 public class CM_Stun : CM_IState
 {
-    // ----- CM_Stun -----
-    public CM_IState lastState = null;
-
-    // --------------------------------------------------
-
-    public CM_Stun(CM_IState lastState)
+    public CM_Stun()
     {
         name = "Stun";
-
-        // -----
-
-        this.lastState = lastState;
     }
 
     public override void Enter(CyborgMeleeController owner)
@@ -638,7 +629,7 @@ public class CM_Stun : CM_IState
 
 public class CM_StunBasic : CM_Stun
 {
-    public CM_StunBasic(CM_IState lastState) : base(lastState)
+    public CM_StunBasic()
     {
         name = "StunBasic";
     }
@@ -661,7 +652,7 @@ public class CM_StunBasic : CM_Stun
     {
         if (owner.animator.AnimationFinished())
         {
-            owner.fsm.ChangeState(lastState);
+            owner.fsm.ChangeState(new CM_GoToDangerDistance());
             return;
         }
     }
@@ -695,7 +686,7 @@ public class CM_StunForce : CM_Stun
 
     // --------------------------------------------------
 
-    public CM_StunForce(CM_IState lastState) : base(lastState)
+    public CM_StunForce()
     {
         name = "StunForce";
     }
