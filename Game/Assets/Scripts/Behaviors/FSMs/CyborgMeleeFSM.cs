@@ -596,18 +596,9 @@ public class CM_Hit : CM_IState
 
 public class CM_Stun : CM_IState
 {
-    // ----- CM_Stun -----
-    public CM_IState lastState = null;
-
-    // --------------------------------------------------
-
-    public CM_Stun(CM_IState lastState)
+    public CM_Stun()
     {
         name = "Stun";
-
-        // -----
-
-        this.lastState = lastState;
     }
 
     public override void Enter(CyborgMeleeController owner)
@@ -638,7 +629,7 @@ public class CM_Stun : CM_IState
 
 public class CM_StunBasic : CM_Stun
 {
-    public CM_StunBasic(CM_IState lastState) : base(lastState)
+    public CM_StunBasic()
     {
         name = "StunBasic";
     }
@@ -661,7 +652,7 @@ public class CM_StunBasic : CM_Stun
     {
         if (owner.animator.AnimationFinished())
         {
-            owner.fsm.ChangeState(lastState);
+            owner.fsm.ChangeState(new CM_GoToDangerDistance());
             return;
         }
     }
@@ -690,11 +681,12 @@ public class CM_StunForce : CM_Stun
     private float maxVelocity = 0.0f;
 
     // ----- CM_StunForce -----
+    private float stunForceMaxVelocity = 0.0f;
     private float timer = 0.0f;
 
     // --------------------------------------------------
 
-    public CM_StunForce(CM_IState lastState) : base(lastState)
+    public CM_StunForce()
     {
         name = "StunForce";
     }
@@ -719,6 +711,8 @@ public class CM_StunForce : CM_Stun
 
         // ----- CM_StunForce -----
 
+        stunForceMaxVelocity = owner.agent.agentData.maxVelocity;
+
         owner.agent.direction = (owner.transform.position - Alita.Call.transform.position).normalized();
         owner.agent.useDirection = true;
 
@@ -735,9 +729,17 @@ public class CM_StunForce : CM_Stun
 
             if (owner.animator.AnimationFinished())
             {
-                owner.fsm.ChangeState(lastState);
+                owner.fsm.ChangeState(new CM_GoToDangerDistance());
                 return;
             }
+        }
+        else
+        {
+            owner.agent.agentData.maxVelocity = stunForceMaxVelocity;
+
+            float diff = (owner.transform.position - Alita.Call.transform.position).magnitude;
+            if (diff > 0.0f)
+                owner.agent.agentData.maxVelocity /= diff;
         }
 
         timer += Time.deltaTime;
