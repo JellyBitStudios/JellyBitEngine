@@ -159,7 +159,7 @@ public class CyborgMeleeController : Controller
 
                 // Stun basic
                 if (!isStunned)
-                    fsm.ChangeState(new CM_StunBasic(fsm.GetState()));
+                    fsm.ChangeState(new CM_StunBasic());
 
                 break;
 
@@ -168,7 +168,7 @@ public class CyborgMeleeController : Controller
                 entity.currentLife -= (int)hpModifier;
 
                 // Stun force (always!)
-                fsm.ChangeState(new CM_StunForce(fsm.GetState()));
+                fsm.ChangeState(new CM_StunForce());
 
                 break;
 
