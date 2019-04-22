@@ -20,6 +20,9 @@ class AIdle : AState
         Alita.Call.animator.UpdateAnimationBlendTime(0.1f);
         Alita.Call.animator.PlayAnimation("idle_alita_anim");
         Debug.Log("ANIMATION IDLE");
+
+        Alita.Call.agent.isMovementStopped = true;
+        Alita.Call.agent.isRotationStopped = false;
     }
 
     public override void ProcessInput(KeyCode code)
@@ -56,7 +59,6 @@ class AIdle : AState
                     dir = point - alita;
                     Alita.Call.agent.SetFace(dir);
                 }
-                    // TODO G: else face to point click like Torchlight
             }
             else if (hit.gameObject.GetLayer() == "Enemy")
             {
@@ -92,7 +94,6 @@ class AWalking : AState
     {
         Alita.Call.agent.ClearPath();
         Alita.Call.agent.ClearMovementAndRotation();
-        Alita.Call.agent.isMovementStopped = true;
     }
 
     public override void ProcessInput(KeyCode code)
