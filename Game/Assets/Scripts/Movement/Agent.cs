@@ -252,10 +252,16 @@ public class Agent : JellyScript
         /// Velocity
         if (seekData.isActive)
         {
+            Vector3 seekPosition = SteeringSeek.GetSeekPosition(NextPosition, this);
+
             if (useDirection)
-                velocities[seekData.Priority] += SteeringSeek.GetSeekDirection(direction, this);
+            {
+                Vector3 seekDirection = SteeringSeek.GetSeekDirection(direction, this);
+                seekDirection = new Vector3(seekDirection.x, seekPosition.y, seekDirection.z);
+                velocities[seekData.Priority] += seekDirection;
+            }
             else
-                velocities[seekData.Priority] += SteeringSeek.GetSeekPosition(NextPosition, this);
+                velocities[seekData.Priority] += seekPosition;
         }
         if (fleeData.isActive)
             velocities[fleeData.Priority] += SteeringFlee.GetFlee(NextPosition, this);
@@ -299,14 +305,16 @@ public class Agent : JellyScript
 
                 if (newVelocity.y == 0.0f)
                 {
-                    for (uint j = i; j < SteeringData.maxPriorities; ++j)
+                    uint j = i + 1;
+                    while (j < SteeringData.maxPriorities)
                     {
-                        if (velocities[j].y != 0.0f)
+                        if (!MathScript.Approximately(velocities[j].y, 0.0f))
                         {
-                            Debug.Log("new velocity y: " + velocities[j].y);
                             newVelocity = new Vector3(newVelocity.x, velocities[j].y, newVelocity.z);
                             break;
                         }
+
+                        ++j;
                     }
                 }
 
