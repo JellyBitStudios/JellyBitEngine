@@ -690,6 +690,7 @@ public class CM_StunForce : CM_Stun
     private float maxVelocity = 0.0f;
 
     // ----- CM_StunForce -----
+    private float stunForceMaxVelocity = 0.0f;
     private float timer = 0.0f;
 
     // --------------------------------------------------
@@ -719,6 +720,8 @@ public class CM_StunForce : CM_Stun
 
         // ----- CM_StunForce -----
 
+        stunForceMaxVelocity = owner.agent.agentData.maxVelocity;
+
         owner.agent.direction = (owner.transform.position - Alita.Call.transform.position).normalized();
         owner.agent.useDirection = true;
 
@@ -735,9 +738,17 @@ public class CM_StunForce : CM_Stun
 
             if (owner.animator.AnimationFinished())
             {
-                owner.fsm.ChangeState(lastState);
+                owner.fsm.ChangeState(new CM_GoToDangerDistance());
                 return;
             }
+        }
+        else
+        {
+            owner.agent.agentData.maxVelocity = stunForceMaxVelocity;
+
+            float diff = (owner.transform.position - Alita.Call.transform.position).magnitude;
+            if (diff > 0.0f)
+                owner.agent.agentData.maxVelocity /= diff;
         }
 
         timer += Time.deltaTime;
