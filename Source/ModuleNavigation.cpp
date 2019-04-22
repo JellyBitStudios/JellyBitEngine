@@ -322,15 +322,41 @@ bool ModuleNavigation::FindPath(float* start, float* end, std::vector<math::floa
 	return true;
 }
 
-bool ModuleNavigation::ProjectPoint(float* point, math::float3 projectedPoint, math::float3 extents = math::float3(1.2f,0.9f,1.2f)) const
+bool ModuleNavigation::ProjectPoint(float* point, math::float3& projectedPoint, math::float3 extents) const
 {
 	dtPolyRef startRef;
 	dtQueryFilter filter;
 	dtStatus status;
-	//Find start position poly
+
+	// Find nearest poly
 	status = m_navQuery->findNearestPoly(point, extents.ptr(), &filter, &startRef, NULL);
 	if (!dtStatusSucceed(status))
 		return false;
+
+	// Query position on poly // we are not interested about if point is above or below so last arguemnt is null
+	status = m_navQuery->closestPointOnPoly(startRef, point, projectedPoint.ptr(), 0);
+	if (!dtStatusSucceed(status))
+		return false;
+
+	return true;
+}
+
+bool ModuleNavigation::ProjectPointPolyBoundary(float* point, math::float3 & projectedPoint, math::float3 extents) const
+{
+	dtPolyRef startRef;
+	dtQueryFilter filter;
+	dtStatus status;
+
+	// Find nearest poly
+	status = m_navQuery->findNearestPoly(point, extents.ptr(), &filter, &startRef, NULL);
+	if (!dtStatusSucceed(status))
+		return false;
+
+	// Query position on poly
+	status = m_navQuery->closestPointOnPolyBoundary(startRef, point, projectedPoint.ptr());
+	if (!dtStatusSucceed(status))
+		return false;
+
 	return true;
 }
 
