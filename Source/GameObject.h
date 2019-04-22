@@ -87,6 +87,7 @@ public:
 
 	void SetLayer(uint layerNumber);
 	uint GetLayer() const;
+	void ApplyLayerChildren(uint layerNumber);
 
 public:
 

@@ -70,7 +70,7 @@ void Particle::SetActive(math::float3 pos, StartValues data, ParticleAnimation p
 	textureColumns = partAnim.textureColumns;
 	textureRowsNorm = partAnim.textureRowsNorm;
 	textureColumnsNorm = partAnim.textureColumnsNorm;
-	animationSpeed = partAnim.animationSpeed;
+	animationSpeed = CreateRandomNum(partAnim.animationSpeed);
 
 	if (partAnim.randAnim)
 		currentFrame = rand() % (textureColumns * textureRows);
@@ -304,7 +304,7 @@ void Particle::ChangeAnim(ParticleAnimation partAnim)
 	textureColumns = partAnim.textureColumns;
 	textureRowsNorm = partAnim.textureRowsNorm;
 	textureColumnsNorm = partAnim.textureColumnsNorm;
-	animationSpeed = partAnim.animationSpeed;
+	animationSpeed = CreateRandomNum(partAnim.animationSpeed);
 	if (!partAnim.randAnim)
 		currentFrame = 0u;
 	else
