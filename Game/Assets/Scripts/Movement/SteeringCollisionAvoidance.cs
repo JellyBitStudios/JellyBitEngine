@@ -44,7 +44,7 @@ public static class SteeringCollisionAvoidance
 
                 Vector3 direction = (target.transform.position - agent.transform.position).normalized();
                 float coneThreshold = (float)Math.Cos(MathScript.Deg2Rad * agent.collisionAvoidanceData.coneHalfAngle);
-                if (MathScript.Dot(agent.transform.forward, direction) > coneThreshold)
+                if (MathScript.Dot(agent.invertSight ? Quaternion.Rotate(Vector3.up, 180.0f) * agent.transform.forward : agent.transform.forward, direction) > coneThreshold)
                 {
                     Vector3 relativePos = target.transform.position - agent.transform.position;
                     Vector3 relativeVel = targetAgent.velocity - agent.velocity;
@@ -100,7 +100,16 @@ public static class SteeringCollisionAvoidance
     {
         Debug.DrawSphere(AgentsManager.Call.Radius, Color.Red, agent.transform.position, Quaternion.identity, Vector3.one);
 
-        Debug.DrawLine(agent.transform.position, agent.transform.position + Quaternion.Rotate(Vector3.up, agent.collisionAvoidanceData.coneHalfAngle) * agent.transform.forward * 3.0f, Color.Red);
-        Debug.DrawLine(agent.transform.position, agent.transform.position + Quaternion.Rotate(Vector3.up, -agent.collisionAvoidanceData.coneHalfAngle) * agent.transform.forward * 3.0f, Color.Red);
+        Vector3 positiveDirection = Quaternion.Rotate(Vector3.up, agent.collisionAvoidanceData.coneHalfAngle) * agent.transform.forward * AgentsManager.Call.Radius;
+        Vector3 negativeDirection = Quaternion.Rotate(Vector3.up, -agent.collisionAvoidanceData.coneHalfAngle) * agent.transform.forward * AgentsManager.Call.Radius;
+
+        if (agent.invertSight)
+        {
+            positiveDirection = Quaternion.Rotate(Vector3.up, 180.0f) * positiveDirection;
+            negativeDirection = Quaternion.Rotate(Vector3.up, 180.0f) * negativeDirection;
+        }
+
+        Debug.DrawLine(agent.transform.position, agent.transform.position + positiveDirection, Color.Red);
+        Debug.DrawLine(agent.transform.position, agent.transform.position + negativeDirection, Color.Red);
     }
 }

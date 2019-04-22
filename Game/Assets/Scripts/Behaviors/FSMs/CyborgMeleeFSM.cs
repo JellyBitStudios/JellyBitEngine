@@ -102,7 +102,6 @@ public class CM_Think : CM_IState
         }
 
         owner.fsm.ChangeState(new CM_WanderDefault());
-        return;
     }
 
     public override void Execute(CyborgMeleeController owner) { }
@@ -765,6 +764,7 @@ public class CM_StunForce : CM_Stun
         /// Activate/Deactivate
         owner.agent.isMovementStopped = false;
         owner.agent.isRotationStopped = true;
+        owner.agent.ActivateAvoidance();
 
         owner.agent.agentData.maxAcceleration *= 4.0f;
         owner.agent.agentData.maxVelocity *= 4.0f;
@@ -775,6 +775,8 @@ public class CM_StunForce : CM_Stun
 
         owner.agent.direction = (owner.transform.position - Alita.Call.transform.position).normalized();
         owner.agent.useDirection = true;
+
+        owner.agent.invertSight = true;
 
         // ----- Base -----
 
@@ -823,6 +825,8 @@ public class CM_StunForce : CM_Stun
         // ----- CM_StunForce -----
 
         owner.agent.useDirection = false;
+
+        owner.agent.invertSight = false;
 
         // ----- Base -----
 

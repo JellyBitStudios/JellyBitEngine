@@ -119,8 +119,13 @@ public class Agent : JellyScript
     [HideInInspector]
     public float angularVelocity = 0.0f;
 
+    [HideInInspector]
     public Vector3 direction = Vector3.zero;
+    [HideInInspector]
     public bool useDirection = false;
+
+    [HideInInspector]
+    public bool invertSight = false;
 
     public bool drawGizmosAgent = true;
     #endregion
@@ -235,17 +240,15 @@ public class Agent : JellyScript
         Vector3 newVelocity = Vector3.zero;
         float newAngularVelocity = 0.0f;
 
-        // 1. Obstacle avoidance
+        // 1. Avoidance
         if (obstacleAvoidanceData.isActive)
             velocities[obstacleAvoidanceData.Priority] += SteeringObstacleAvoidance.GetObstacleAvoidance(this);
         if (collisionAvoidanceData.isActive)
             velocities[collisionAvoidanceData.Priority] += SteeringCollisionAvoidance.GetCollisionAvoidance(this);
-
-        // 2. Separation
         if (separationData.isActive)
             velocities[separationData.Priority] += SteeringSeparation.GetSeparation(this);
 
-        // 3. Move
+        // 2. Move
         /// Velocity
         if (seekData.isActive)
         {
@@ -293,6 +296,20 @@ public class Agent : JellyScript
             if (!MathScript.Approximately(velocities[i].magnitude, 0.0f))
             {
                 newVelocity = velocities[i];
+
+                if (newVelocity.y == 0.0f)
+                {
+                    for (uint j = i; j < SteeringData.maxPriorities; ++j)
+                    {
+                        if (velocities[j].y != 0.0f)
+                        {
+                            Debug.Log("new velocity y: " + velocities[j].y);
+                            newVelocity = new Vector3(newVelocity.x, velocities[j].y, newVelocity.z);
+                            break;
+                        }
+                    }
+                }
+
                 break;
             }
         }

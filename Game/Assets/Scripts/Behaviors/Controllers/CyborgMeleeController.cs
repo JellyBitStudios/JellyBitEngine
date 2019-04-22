@@ -29,7 +29,7 @@ public class CyborgMelee_Entity : NPC_Entity
 
     // Stun
     /// StunForce
-    public float stunTime = 0.2f;
+    public float stunTime = 0.5f;
 }
 
 public class CyborgMeleeController : Controller
@@ -146,16 +146,11 @@ public class CyborgMeleeController : Controller
                 break;
 
             case Entity.Action.hit:
+            case Entity.Action.thirdHit:
 
                 entity.currentLife -= (int)hpModifier;
 
                 isBeingAttacked = true;
-
-                break;
-
-            case Entity.Action.thirdHit:
-
-                entity.currentLife -= (int)hpModifier;
 
                 // Stun basic
                 if (!isStunned)

@@ -22,7 +22,6 @@ public static class SteeringSeek
         direction.Normalize();
         direction *= agent.agentData.maxAcceleration;
 
-        direction = new Vector3(direction.x, 0.0f, direction.z);
         return direction;
     }
 
@@ -37,7 +36,6 @@ public static class SteeringSeek
         direction.Normalize();
         direction *= agent.agentData.maxAcceleration;
 
-        direction = new Vector3(direction.x, 0.0f, direction.z);
         return direction;
     }
 

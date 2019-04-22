@@ -29,6 +29,8 @@ public static class SteeringObstacleAvoidance
             Ray ray = new Ray();
             ray.position = agent.transform.position;
             ray.direction = agent.transform.rotation * steeringRay.direction;
+            if (agent.invertSight)
+                ray.direction = Quaternion.Rotate(Vector3.up, 180.0f) * ray.direction;
             RaycastHit hitInfo;
 
             if (Physics.Raycast(ray, out hitInfo, steeringRay.length, agent.obstacleAvoidanceData.mask, SceneQueryFlags.Static | SceneQueryFlags.Dynamic))
@@ -46,6 +48,12 @@ public static class SteeringObstacleAvoidance
     public static void DrawGizmos(Agent agent)
     {
         foreach (SteeringRay ray in agent.obstacleAvoidanceData.rays)
-            Debug.DrawLine(agent.transform.position, agent.transform.position + agent.transform.rotation * ray.direction * ray.length, Color.Blue);
+        {
+            Vector3 direction = agent.transform.rotation * ray.direction * ray.length;
+            if (agent.invertSight)
+                direction = Quaternion.Rotate(Vector3.up, 180.0f) * direction;
+
+            Debug.DrawLine(agent.transform.position, agent.transform.position + direction, Color.Blue);
+        }
     }
 }

@@ -42,6 +42,6 @@ public static class SteeringWander
 
     public static void DrawGizmos(Agent agent)
     {
-        Debug.DrawSphere(agent.wanderData.radius, Color.Red, agent.transform.position + agent.transform.forward * (agent.wanderData.offset + agent.wanderData.radius + agent.seekData.arriveMinDistance), Quaternion.identity, Vector3.one);
+        Debug.DrawSphere(agent.wanderData.radius, Color.Green, agent.transform.position + agent.transform.forward * (agent.wanderData.offset + agent.wanderData.radius + agent.seekData.arriveMinDistance), Quaternion.identity, Vector3.one);
     }
 }
