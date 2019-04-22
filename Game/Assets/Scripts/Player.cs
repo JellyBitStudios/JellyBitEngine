@@ -24,6 +24,7 @@ class Player : JellyScript
 
     public override void Awake()
     {
+        Debug.ClearConsole();
         EventsManager.Call.StartListening("Player", this, "EventsListener");
     }
 
@@ -42,6 +43,8 @@ class Player : JellyScript
                 Alita.Call.ProcessInput(KeyCode.KEY_Q);
             else if (Input.GetKeyUp(KeyCode.KEY_SPACE))
                 Alita.Call.ProcessInput(KeyCode.KEY_SPACE);
+            else if (Input.GetKeyUp(KeyCode.KEY_W))
+                Alita.Call.ProcessInput(KeyCode.KEY_W);
             // if n button pressed open inventory/options/etc 
         }
     }

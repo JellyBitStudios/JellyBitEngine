@@ -196,6 +196,8 @@ class ASkillQ : AState
         Alita.Call.animator.PlayAnimation("anim_special_attack_q_alita_fist");
         Alita.Call.animator.SetAnimationLoop(false);
         hit = false;
+        Alita.Call.agent.isMovementStopped = true;
+        Alita.Call.agent.isRotationStopped = true;
     }
 
     public override void OnExecute()
