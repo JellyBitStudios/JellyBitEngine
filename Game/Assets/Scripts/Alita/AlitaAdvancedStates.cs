@@ -1,4 +1,5 @@
 using JellyBitEngine;
+using System;
 
 class AAttacking : AState
 {
@@ -14,21 +15,20 @@ class AAttacking : AState
     public override void OnStart()
     {
         Alita.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
-        Alita.Call.animator.SetAnimationLoop(false);
         currentAnim = Anim.first;
         hasPetition = false;
         firstPetition = true;
         hit = false;
 
+        Alita.Call.agent.isMovementStopped = true;
         Alita.Call.agent.isRotationStopped = false;
         Alita.Call.agent.alignData.lookWhereYoureGoingData.isActive = false;
         Alita.Call.agent.alignData.faceData.isActive = true;
+        Alita.Call.agent.SetFace(Alita.Call.currentTarget);
     }
 
     public override void OnExecute()
     {
-        Alita.Call.agent.SetFace(Alita.Call.currentTarget);
-
         if (firstPetition)
             timerUntilPetitionIsValid += Time.deltaTime;
 
@@ -40,21 +40,24 @@ class AAttacking : AState
                     if (Alita.Call.animator.GetCurrentFrame() >= 16)
                     {
                         hit = true;
-                        Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
+                        Alita.Call.targetController.Actuate(Alita_Entity.ConstFirstHitDmg,
+                                                            Entity.Action.hit);
                     }
                     break;
                 case Anim.second:
                     if (Alita.Call.animator.GetCurrentFrame() >= 15)
                     {
                         hit = true;
-                        Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
+                        Alita.Call.targetController.Actuate(Alita_Entity.ConstSecondHitDmg,
+                                                            Entity.Action.hit);
                     }
                     break;
                 case Anim.third:
                     if (Alita.Call.animator.GetCurrentFrame() >= 11)
                     {
                         hit = true;
-                        Alita.Call.cyborgMelee.CurrentLife -= Alita.Call.character.dmg;
+                        Alita.Call.targetController.Actuate(Alita_Entity.ConstThirdHitDmg,
+                                                            Entity.Action.thirdHit);
                     }
                     break;
             }
@@ -69,28 +72,31 @@ class AAttacking : AState
                 {
                     Alita.Call.animator.PlayAnimation("anim_hand_forward_alita_fist");
                     firstPetition = false;
-                    Alita.Call.animator.SetAnimationLoop(false);
                     currentAnim = Anim.second;
                 }
                 else if (currentAnim == Anim.second)
                 {
                     Alita.Call.animator.PlayAnimation("anim_kick_alita_fist");
-                    Alita.Call.animator.SetAnimationLoop(false);
                     currentAnim = Anim.third;
                 }
                 else
                 {
                     Alita.Call.animator.PlayAnimation("anim_basic_attack_alita_fist");
-                    Alita.Call.animator.SetAnimationLoop(false);
                     currentAnim = Anim.first;
                 }
                 hasPetition = false;
             }
             else
             {
+                Alita.Call.currentTarget = null;
                 Alita.Call.SwitchState(Alita.Call.StateIdle);
             }
         }
+    }
+
+    public override void ProcessInput(KeyCode code)
+    {
+        // Should process input?
     }
 
     public override void ProcessRaycast(RaycastHit hit, bool leftClick)
@@ -125,6 +131,7 @@ class AAttacking : AState
     public override void OnStop()
     {
         currentAnim = Anim.first;
+        Alita.Call.agent.isMovementStopped = false;
         Alita.Call.agent.alignData.lookWhereYoureGoingData.isActive = true;
         Alita.Call.agent.alignData.faceData.isActive = false;
     }
@@ -133,6 +140,7 @@ class AAttacking : AState
 class ADash : AState
 {
     float accumulatedDistance = 0.0f;
+    float maxVelocity = 0.0f;
     Vector3 dir = new Vector3();
 
     public void SetDirection(Vector3 position)
@@ -144,40 +152,126 @@ class ADash : AState
     {
         Alita.Call.animator.PlayAnimation("alita_dash_anim");
 
-        Alita.Call.agent.isRotationStopped = false;
-        Alita.Call.agent.alignData.lookWhereYoureGoingData.isActive = false;
-        Alita.Call.agent.alignData.faceData.isActive = true;
-        //Alita.Call.agent.SetFace(dir);
+        //Points to Bezier curve 
+        Vector3 p0 = new Vector3(Alita_Entity.ConstDashStrength, Alita_Entity.ConstDashStrength, Alita_Entity.ConstDashStrength);
+        Vector3 p1 = new Vector3(Alita_Entity.ConstDashStrength / 2, Alita_Entity.ConstDashStrength / 2, Alita_Entity.ConstDashStrength / 2);
+        Vector3 p2 = new Vector3(Alita_Entity.ConstDashStrength / 3, Alita_Entity.ConstDashStrength / 3, Alita_Entity.ConstDashStrength / 3);
+        Vector3 p3 = new Vector3(2.0f, 2.0f, 2.0f);
+
+        MathScript.BezierCurve.CreateBezierCurve(p0, p1, p2, p3);
+
+        float targetOrientation = MathScript.Rad2Deg * (float)Math.Atan2(dir.x, dir.z);
+        Quaternion quat = Quaternion.Rotate(Vector3.up, targetOrientation);
+        Alita.Call.transform.rotation = quat;
+
+        // Agent
+        maxVelocity = Alita.Call.agent.agentData.maxVelocity;
+
+        Alita.Call.agent.isMovementStopped = false;
+        Alita.Call.agent.isRotationStopped = true;
+        Alita.Call.agent.ActivateSeek();
+        Alita.Call.agent.ActivateAvoidance();
+
+        Alita.Call.agent.direction = Alita.Call.transform.forward.normalized();
+        Alita.Call.agent.useDirection = true;
     }
 
     public override void OnExecute()
     {
-        Vector3 increase = Time.deltaTime * dir * AlitaCharacter.ConstDashStrength;
-        Alita.Call.transform.position += increase;
+        float time_bezier = accumulatedDistance / Alita_Entity.ConstMaxDistance;
+        Vector3 bezier = MathScript.BezierCurve.GetPointOnBezierCurve(time_bezier);
+
+        Alita.Call.agent.agentData.maxVelocity = bezier.magnitude;
+
+        Vector3 increase = Time.fixedDeltaTime * dir * bezier.magnitude;
         accumulatedDistance += increase.magnitude;
-        if (accumulatedDistance >= AlitaCharacter.ConstMaxDistance)
+        if (accumulatedDistance >= Alita_Entity.ConstMaxDistance)
             Alita.Call.SwitchState(Alita.Call.StateIdle);
     }
 
     public override void OnStop()
     {
-        Alita.Call.agent.alignData.lookWhereYoureGoingData.isActive = true;
-        Alita.Call.agent.alignData.faceData.isActive = false;
-        Alita.Call.agent.ClearPath();
+        // Agent
+        Alita.Call.agent.agentData.maxVelocity = maxVelocity;
+
+        Alita.Call.agent.isRotationStopped = false;
+        Alita.Call.agent.useDirection = false;
+
         accumulatedDistance = 0.0f;
     }
 }
 
-class ASkill1 : AState
+class ASkillQ : AState
 {
+    bool hit;
+
     public override void OnStart()
     {
         Alita.Call.animator.PlayAnimation("anim_special_attack_q_alita_fist");
+        Alita.Call.animator.SetAnimationLoop(false);
+        hit = false;
+        Alita.Call.agent.isMovementStopped = true;
+        Alita.Call.agent.isRotationStopped = true;
     }
 
     public override void OnExecute()
     {
+        if (!hit && Alita.Call.animator.GetCurrentFrame() >= 27)
+        {
+            Debug.Log("DAMAAAAAAAAAAGEEEEE");
+            // overlap sphere
+            // SEND DECAL
+            OverlapHit[] hitInfo;
+            Physics.OverlapSphere(Alita_Entity.ConstSkillqRadius, Alita.Call.transform.position, out hitInfo, LayerMask.GetMask("Enemy"), SceneQueryFlags.Static | SceneQueryFlags.Dynamic);
+
+            if (hitInfo != null)
+            {
+                foreach (OverlapHit goHit in hitInfo)
+                    goHit.gameObject.GetComponent<Controller>().Actuate(Alita_Entity.ConstSkillqDmg, Entity.Action.skillQ);
+            }
+            hit = true;
+        }
+
         if (Alita.Call.animator.AnimationFinished())
             Alita.Call.SwitchState(Alita.Call.StateIdle);
+    }
+}
+
+class ASkillW : AState
+{
+    bool hit;
+    Vector3 dir = new Vector3();
+
+    public void SetDirection(Vector3 position)
+    {
+        dir = (position - Alita.Call.transform.position).normalized();
+    }
+
+    public override void OnStart()
+    {
+        Alita.Call.animator.PlayAnimation("alita_dash_anim");
+        hit = false;
+        Alita.Call.agent.Stop();
+
+        float targetOrientation = MathScript.Rad2Deg * (float)Math.Atan2(dir.x, dir.z);
+        Quaternion quat = Quaternion.Rotate(Vector3.up, targetOrientation);
+        Alita.Call.transform.rotation = quat;
+    }
+
+    public override void OnExecute()
+    {
+        if (!hit && Alita.Call.animator.GetCurrentFrame() >= 27)
+        {
+
+            hit = true;
+        }
+
+        if (Alita.Call.animator.AnimationFinished())
+            Alita.Call.SwitchState(Alita.Call.StateIdle);
+    }
+
+    public override void OnStop()
+    {
+        Alita.Call.agent.Resume();
     }
 }

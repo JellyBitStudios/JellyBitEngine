@@ -322,6 +322,44 @@ bool ModuleNavigation::FindPath(float* start, float* end, std::vector<math::floa
 	return true;
 }
 
+bool ModuleNavigation::ProjectPoint(float* point, math::float3& projectedPoint, math::float3 extents) const
+{
+	dtPolyRef startRef;
+	dtQueryFilter filter;
+	dtStatus status;
+
+	// Find nearest poly
+	status = m_navQuery->findNearestPoly(point, extents.ptr(), &filter, &startRef, NULL);
+	if (!dtStatusSucceed(status))
+		return false;
+
+	// Query position on poly // we are not interested about if point is above or below so last arguemnt is null
+	status = m_navQuery->closestPointOnPoly(startRef, point, projectedPoint.ptr(), 0);
+	if (!dtStatusSucceed(status))
+		return false;
+
+	return true;
+}
+
+bool ModuleNavigation::ProjectPointPolyBoundary(float* point, math::float3 & projectedPoint, math::float3 extents) const
+{
+	dtPolyRef startRef;
+	dtQueryFilter filter;
+	dtStatus status;
+
+	// Find nearest poly
+	status = m_navQuery->findNearestPoly(point, extents.ptr(), &filter, &startRef, NULL);
+	if (!dtStatusSucceed(status))
+		return false;
+
+	// Query position on poly
+	status = m_navQuery->closestPointOnPolyBoundary(startRef, point, projectedPoint.ptr());
+	if (!dtStatusSucceed(status))
+		return false;
+
+	return true;
+}
+
 int ModuleNavigation::AddAgent(const float* p, float radius, float height, float maxAcc, float maxSpeed, float collQueryRange, float pathOptimRange, unsigned char updateFlags, unsigned char obstacleAvoidanceType, float stopAtLength) const
 {
 	if (!m_crowd) return -1;

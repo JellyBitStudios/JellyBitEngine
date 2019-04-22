@@ -68,6 +68,8 @@ private:
 	/*Mutable stuff uwu*/
 	mutable GameObject* imported_root_go = nullptr;
 	mutable std::map<std::string, uint> imported_bones;
+
+	mutable bool mode_export_animation = false;
 };
 
 #endif

@@ -453,6 +453,8 @@ void GameObject::CalculateBoundingBox()
 		delete[] vertices;
 
 	}
+	else
+		boundingBox.SetNegativeInfinity();
 }
 
 
@@ -753,8 +755,14 @@ bool GameObject::DestroyComponent(Component* destroyed)
 		newEvent.compEvent.type = System_Event_Type::ComponentDestroyed;
 		newEvent.compEvent.component = cmp_material;
 		App->PushSystemEvent(newEvent);
+
+		System_Event createBB;
+		createBB.goEvent.type = System_Event_Type::CalculateBBoxes;
+		createBB.goEvent.gameObject = this;
+		App->PushSystemEvent(createBB);
 	}
 
+	
 	return true;
 }
 
