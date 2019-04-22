@@ -257,6 +257,7 @@ public class Agent : JellyScript
             if (useDirection)
             {
                 Vector3 seekDirection = SteeringSeek.GetSeekDirection(direction, this);
+                //Debug.Log("Seek direction : " + seekDirection);
                 seekDirection = new Vector3(seekDirection.x, seekPosition.y, seekDirection.z);
                 velocities[seekData.Priority] += seekDirection;
             }

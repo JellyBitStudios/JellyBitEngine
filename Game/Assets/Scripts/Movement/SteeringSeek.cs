@@ -30,9 +30,6 @@ public static class SteeringSeek
         if (agent == null)
             return Vector3.zero;
 
-        if (direction.magnitude < agent.seekData.arriveMinDistance)
-            return Vector3.zero;
-
         direction.Normalize();
         direction *= agent.agentData.maxAcceleration;
 
