@@ -94,6 +94,11 @@ class AAttacking : AState
         }
     }
 
+    public override void ProcessInput(KeyCode code)
+    {
+        // Should process input?
+    }
+
     public override void ProcessRaycast(RaycastHit hit, bool leftClick)
     {
         if (leftClick)
@@ -182,7 +187,7 @@ class ADash : AState
     }
 }
 
-class ASkill1 : AState
+class ASkillQ : AState
 {
     bool hit;
 
@@ -209,6 +214,29 @@ class ASkill1 : AState
                     goHit.gameObject.GetComponent<Controller>().Actuate(Alita_Entity.ConstSkillqDmg, Entity.Action.skillQ);
             }
             hit = true;
+        }
+
+        if (Alita.Call.animator.AnimationFinished())
+            Alita.Call.SwitchState(Alita.Call.StateIdle);
+    }
+}
+
+class ASkillW : AState
+{
+    bool hit;
+
+    public override void OnStart()
+    {
+        Alita.Call.animator.PlayAnimation("anim_special_attack_q_alita_fist");
+        Alita.Call.animator.SetAnimationLoop(false);
+        hit = false;
+    }
+
+    public override void OnExecute()
+    {
+        if (!hit && Alita.Call.animator.GetCurrentFrame() >= 27)
+        {
+           
         }
 
         if (Alita.Call.animator.AnimationFinished())

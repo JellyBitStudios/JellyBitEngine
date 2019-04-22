@@ -27,7 +27,12 @@ class AIdle : AState
         if (code == KeyCode.KEY_Q && Alita.Call.skillset.skQ.Use())
         {
             Debug.Log("Q HIT");
-            Alita.Call.SwitchState(Alita.Call.StateSkill_1);
+            Alita.Call.SwitchState(Alita.Call.StateSkill_Q);
+        }
+        else if (code == KeyCode.KEY_W && Alita.Call.skillset.skW.Use())
+        {
+            Debug.Log("W HIT");
+            Alita.Call.SwitchState(Alita.Call.StateSkill_W);
         }
     }
 
@@ -93,8 +98,13 @@ class AWalking : AState
     {
         if (code == KeyCode.KEY_Q && Alita.Call.skillset.skQ.Use())
         {
-            Alita.Call.SwitchState(Alita.Call.StateSkill_1);
             Alita.Call.currentTarget = null;
+            Alita.Call.SwitchState(Alita.Call.StateSkill_Q);
+        }
+        else if (code == KeyCode.KEY_W && Alita.Call.skillset.skW.Use())
+        {
+            Alita.Call.currentTarget = null;
+            Alita.Call.SwitchState(Alita.Call.StateSkill_W);
         }
     }
 }

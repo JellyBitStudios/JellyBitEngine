@@ -10,7 +10,8 @@ class Alita : JellyScript
     public AWalking2Enemy StateWalking2Enemy = new AWalking2Enemy();
     public AAttacking StateAttacking = new AAttacking();
     public ADash StateDash = new ADash();
-    public ASkill1 StateSkill_1 = new ASkill1();
+    public ASkillQ StateSkill_Q = new ASkillQ();
+    public ASkillW StateSkill_W = new ASkillW();
     #endregion
 
     private Alita()
