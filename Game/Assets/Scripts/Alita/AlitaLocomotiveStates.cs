@@ -157,6 +157,11 @@ class AWalking2Enemy : AWalking
 {
     public override void OnExecute()
     {
+        if (Alita.Call.currentTarget == null)
+        {
+            Debug.LogError("TARGET NULL at Walking2Enemy. Previous state"+ Alita.Call.lastState.ToString());
+            return;
+        }
         if ((Alita.Call.transform.position -
              Alita.Call.currentTarget.transform.position)
              .magnitude < Alita.Call.targetController.entity.distanceToTarget)
