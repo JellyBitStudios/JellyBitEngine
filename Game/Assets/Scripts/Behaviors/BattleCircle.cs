@@ -41,7 +41,7 @@ public class BattleCircle : JellyScript
             if (simultaneousAttackers.Contains(attacker))
                 Debug.DrawSphere(1.0f, Color.White, attacker.transform.position, Quaternion.identity, Vector3.one);
             else
-                Debug.DrawSphere(1.0f, Color.Red, attacker.transform.position, Quaternion.identity, Vector3.one);
+                Debug.DrawSphere(1.0f, Color.Black, attacker.transform.position, Quaternion.identity, Vector3.one);
         }
     }
 
@@ -67,8 +67,7 @@ public class BattleCircle : JellyScript
             else if (attacker.gameObject == Alita.Call.currentTarget)
             {
                 // 1. Remove the first attacker
-                Controller firstAttacker = attackers[0];
-                attackers.Remove(firstAttacker);
+                RemoveFirstAttacker();
 
                 // 2. Insert the new attacker
                 attackers.Add(attacker);
@@ -150,8 +149,8 @@ public class BattleCircle : JellyScript
             // Prioritize the attacker that Alita is attacking
             else if (attacker.gameObject == Alita.Call.currentTarget)
             {
-                // 1. Remove the first attacker
-                RemoveFirstAttacker();
+                // 1. Remove the first simultaneous attacker
+                RemoveFirstSimultaneousAttacker();
 
                 // 2. Insert the new attacker
                 simultaneousAttackers.Add(attacker);
