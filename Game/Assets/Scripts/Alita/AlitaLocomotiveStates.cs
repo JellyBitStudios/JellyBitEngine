@@ -164,7 +164,7 @@ class AWalking2Enemy : AWalking
         }
         if ((Alita.Call.transform.position -
              Alita.Call.currentTarget.transform.position)
-             .magnitude < Alita.Call.targetController.entity.DistanceToTarget)
+             .magnitude < Alita.Call.targetController.entity.distanceToTarget)
         {
             Alita.Call.SwitchState(Alita.Call.StateAttacking);
         }
