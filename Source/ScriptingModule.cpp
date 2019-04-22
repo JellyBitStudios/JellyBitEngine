@@ -17,6 +17,7 @@
 #include "ComponentRigidDynamic.h"
 #include "ComponentMaterial.h"
 #include "ComponentSphereCollider.h"
+#include "ComponentCapsuleCollider.h"
 #include "ComponentTrail.h"
 #include "ComponentProjector.h"
 
@@ -498,7 +499,6 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 			break;
 		}
 		case ComponentTypes::BoxColliderComponent:
-		case ComponentTypes::CapsuleColliderComponent:
 		case ComponentTypes::PlaneColliderComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Collider"));
@@ -508,6 +508,12 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 		case ComponentTypes::SphereColliderComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "SphereCollider"));
+			break;
+		}
+
+		case ComponentTypes::CapsuleColliderComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "CapsuleCollider"));
 			break;
 		}
 
@@ -2005,7 +2011,6 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 
 		return App->scripting->MonoComponentFrom(comp);
 	}
-
 	else if (className == "Material")
 	{
 		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
@@ -2056,6 +2061,19 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 			return nullptr;
 
 		return App->scripting->MonoComponentFrom(comp);	
+	}
+	else if (className == "SphereCollider")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::CapsuleColliderComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
 	}
 	else if (className == "Trail")
 	{
@@ -3531,6 +3549,44 @@ float ColliderSphereGetRadius(MonoObject* monoSphere)
 	}
 }
 
+float ColliderCapsuleGetRadius(MonoObject* monoCapsule)
+{
+	ComponentCapsuleCollider* capsule = (ComponentCapsuleCollider*)App->scripting->ComponentFrom(monoCapsule);
+	if (capsule)
+	{
+		return capsule->GetRadius();
+	}
+	return -1.0f;
+}
+
+void ColliderCapsuleSetRadius(MonoObject* monoCapsule, float newRadius)
+{
+	ComponentCapsuleCollider* capsule = (ComponentCapsuleCollider*)App->scripting->ComponentFrom(monoCapsule);
+	if (capsule)
+	{
+		capsule->SetRadius(newRadius);
+	}
+}
+
+float ColliderCapsuleGetHalfHeight(MonoObject* monoCapsule)
+{
+	ComponentCapsuleCollider* capsule = (ComponentCapsuleCollider*)App->scripting->ComponentFrom(monoCapsule);
+	if (capsule)
+	{
+		return capsule->GetHalfHeight();
+	}
+	return -1.0f;
+}
+
+void ColliderCapsuleSetHalfHeight(MonoObject* monoCapsule, float newHalfHeight)
+{
+	ComponentCapsuleCollider* capsule = (ComponentCapsuleCollider*)App->scripting->ComponentFrom(monoCapsule);
+	if (capsule)
+	{
+		capsule->SetHalfHeight(newHalfHeight);
+	}
+}
+
 void MaterialSetResource(MonoObject* monoMaterial, MonoString* newMatName)
 {
 	if (!newMatName)
@@ -3764,6 +3820,10 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Physics::_OverlapSphere", (const void*)&OverlapSphere);
 	mono_add_internal_call("JellyBitEngine.Physics::_Raycast", (const void*)&Raycast);
 	mono_add_internal_call("JellyBitEngine.SphereCollider::GetRadius", (const void*)ColliderSphereGetRadius);
+	mono_add_internal_call("JellyBitEngine.CapsuleCollider::GetRadius", (const void*)ColliderCapsuleGetRadius);
+	mono_add_internal_call("JellyBitEngine.CapsuleCollider::SetRadius", (const void*)ColliderCapsuleSetRadius);
+	mono_add_internal_call("JellyBitEngine.CapsuleCollider::GetHalfHeight", (const void*)ColliderCapsuleGetHalfHeight);
+	mono_add_internal_call("JellyBitEngine.CapsuleCollider::SetHalfHeight", (const void*)ColliderCapsuleSetHalfHeight);
 
 	//UI
 	mono_add_internal_call("JellyBitEngine.UI.UI::UIHovered", (const void*)&UIHovered);

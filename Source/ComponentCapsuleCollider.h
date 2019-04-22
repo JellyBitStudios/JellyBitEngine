@@ -38,6 +38,8 @@ public:
 
 	// Gets
 	physx::PxCapsuleGeometry GetCapsuleGeometry() const;
+	inline float GetRadius() const { return radius; }
+	inline float GetHalfHeight() const { return halfHeight; }
 
 private:
 
