@@ -163,7 +163,6 @@ class ADash : AState
 
     public override void OnExecute()
     {
-
         float time_bezier = accumulatedDistance / Alita_Entity.ConstMaxDistance;
 
         Vector3 bezier = MathScript.BezierCurve.GetPointOnBezierCurve(time_bezier);
