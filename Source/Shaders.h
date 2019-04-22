@@ -126,6 +126,7 @@
 "\n" \
 "const int NR_LIGHTS = 50;\n" \
 "\n" \
+"uniform float ambient;\n" \
 "uniform Light lights[NR_LIGHTS];\n" \
 "\n" \
 "void main()\n" \
@@ -141,7 +142,7 @@
 "	vec3 Albedo = AlbedoTexture.rgb;\n" \
 "	float AlbedoA = AlbedoTexture.a;\n" \
 "	uvec4 InfoTexture = texture(gInfo, TexCoords);\n" \
-"	vec3 lighting = Albedo * 0.3; // hard-coded ambient component\n" \
+"	vec3 lighting = Albedo * ambient; // hard-coded ambient component\n" \
 "	for (int i = 0; i < NR_LIGHTS; ++i)\n" \
 "	{\n" \
 "		vec3 diffuse = vec3(0.0, 0.0, 0.0);\n" \

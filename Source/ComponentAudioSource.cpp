@@ -22,6 +22,23 @@ ComponentAudioSource::ComponentAudioSource(const ComponentAudioSource& component
 	source = App->audio->CreateSoundEmitter("");
 	App->audio->audio_sources.push_back(this);
 	memset(audio_to_play, '\0', DEFAULT_BUF_SIZE);
+	
+	mute = componentAudioSource.isMuted();
+	bypass_effects = componentAudioSource.GetBypassEffects();
+	play_on_awake = componentAudioSource.GetPlayOnAwake();
+	loop = componentAudioSource.isInLoop();
+	priority = componentAudioSource.GetPriority();
+	volume = componentAudioSource.GetVolume();
+	mono = componentAudioSource.isMono();
+	pitch = componentAudioSource.GetPitch();
+	stereo_pan_l = componentAudioSource.GetStereoPanLeft();
+	stereo_pan_r = componentAudioSource.GetStereoPanRight();
+	min_distance = componentAudioSource.GetMinDistance();
+	max_distance = componentAudioSource.GetMaxDistance();
+	memcpy(&audio_to_play, &componentAudioSource.GetAudioToPlay(), sizeof(char) * DEFAULT_BUF_SIZE);
+	current_state = componentAudioSource.GetState();
+
+
 }
 
 ComponentAudioSource::~ComponentAudioSource()

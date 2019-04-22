@@ -17,25 +17,48 @@ class AIdle : AState
 {
     public override void OnStart()
     {
+        Alita.Call.animator.UpdateAnimationBlendTime(0.1f);
         Alita.Call.animator.PlayAnimation("idle_alita_anim");
+        Debug.Log("ANIMATION IDLE");
+
+        Alita.Call.agent.isMovementStopped = true;
+        Alita.Call.agent.isRotationStopped = false;
     }
 
     public override void ProcessInput(KeyCode code)
     {
-        //if (code == KeyCode.KEY_Q && Alita.Call.skillset.skQ.Use())
-        //    Alita.Call.SwitchState(Alita.Call.StateSkill_1);
-        //else if (code == KeyCode.KEY_SPACE && Alita.Call.skillset.skDash.Use())
-        //    Alita.Call.SwitchState(Alita.Call.StateDash);
+        if (code == KeyCode.KEY_Q && Alita.Call.skillset.skQ.Use())
+        {
+            Debug.Log("Q HIT");
+            Alita.Call.SwitchState(Alita.Call.StateSkill_Q);
+        }
+        else if (code == KeyCode.KEY_W && Alita.Call.skillset.skW.Use())
+        {
+            Debug.Log("W HIT");
+            Alita.Call.StateSkill_W.SetDirection(Player.lastRaycastHit.point);
+            Alita.Call.SwitchState(Alita.Call.StateSkill_W);
+        }
     }
 
     public override void ProcessRaycast(RaycastHit hit, bool leftClick = true)
     {
+        Alita.Call.agent.FinishFace();
         if (leftClick)
         {
             if (hit.gameObject.GetLayer() == "Terrain")
             {
-                if (Alita.Call.agent.SetDestination(hit.point))
+                Vector3 point = new Vector3(hit.point.x, 0.0f, hit.point.z);
+                Vector3 alita = new Vector3(Alita.Call.transform.position);
+                alita.y = 0.0f;
+                float diff = (point - alita).magnitude;
+                if (diff > Alita_Entity.ConstMinRadiusToMove && Alita.Call.agent.SetDestination(hit.point))
                     Alita.Call.SwitchState(Alita.Call.StateWalking2Spot);
+                else
+                {
+                    Vector3 dir = new Vector3();
+                    dir = point - alita;
+                    Alita.Call.agent.SetFace(dir);
+                }
             }
             else if (hit.gameObject.GetLayer() == "Enemy")
             {
@@ -49,8 +72,8 @@ class AIdle : AState
         {
             if (Alita.Call.skillset.skDash.Use())
             {
-                Alita.Call.SwitchState(Alita.Call.StateDash);
                 Alita.Call.StateDash.SetDirection(hit.point);
+                Alita.Call.SwitchState(Alita.Call.StateDash);
             }
         }
     }
@@ -71,16 +94,21 @@ class AWalking : AState
     {
         Alita.Call.agent.ClearPath();
         Alita.Call.agent.ClearMovementAndRotation();
-        Alita.Call.agent.isMovementStopped = true;
-        Alita.Call.agent.isRotationStopped = true;
     }
 
     public override void ProcessInput(KeyCode code)
     {
-        //if (code == KeyCode.KEY_Q && Alita.Call.skillset.skQ.Use())
-        //    Alita.Call.SwitchState(Alita.Call.StateSkill_1);
-        //else if (code == KeyCode.KEY_SPACE && Alita.Call.skillset.skDash.Use())
-        //    Alita.Call.SwitchState(Alita.Call.StateDash);
+        if (code == KeyCode.KEY_Q && Alita.Call.skillset.skQ.Use())
+        {
+            Alita.Call.currentTarget = null;
+            Alita.Call.SwitchState(Alita.Call.StateSkill_Q);
+        }
+        else if (code == KeyCode.KEY_W && Alita.Call.skillset.skW.Use())
+        {
+            Alita.Call.currentTarget = null;
+            Alita.Call.StateSkill_W.SetDirection(Player.lastRaycastHit.point);
+            Alita.Call.SwitchState(Alita.Call.StateSkill_W);
+        }
     }
 }
 
@@ -98,7 +126,14 @@ class AWalking2Spot : AWalking
         {
             if (hit.gameObject.GetLayer() == "Terrain")
             {
-                Alita.Call.agent.SetDestination(hit.point);
+                Vector3 point = new Vector3(hit.point.x, 0.0f, hit.point.z);
+                Vector3 alita = new Vector3(Alita.Call.transform.position);
+                alita.y = 0.0f;
+                float diff = (point - alita).magnitude;
+                if (diff > Alita_Entity.ConstMinRadiusToMove)
+                    Alita.Call.agent.SetDestination(hit.point);
+                else
+                    Alita.Call.SwitchState(Alita.Call.StateIdle);
             }
             else if (hit.gameObject.GetLayer() == "Enemy")
             {
@@ -111,8 +146,8 @@ class AWalking2Spot : AWalking
         {
             if (Alita.Call.skillset.skDash.Use())
             {
-                Alita.Call.SwitchState(Alita.Call.StateDash);
                 Alita.Call.StateDash.SetDirection(hit.point);
+                Alita.Call.SwitchState(Alita.Call.StateDash);
             }
         }
     }
@@ -122,9 +157,14 @@ class AWalking2Enemy : AWalking
 {
     public override void OnExecute()
     {
+        if (Alita.Call.targetController == null)
+        {
+            Debug.LogError("TARGET NULL at Walking2Enemy. Previous state"+ Alita.Call.lastState.ToString());
+            return;
+        }
         if ((Alita.Call.transform.position -
              Alita.Call.currentTarget.transform.position)
-             .magnitude < Alita.Call.ConstHitRadius)
+             .magnitude < Alita.Call.targetController.entity.distanceToTarget)
         {
             Alita.Call.SwitchState(Alita.Call.StateAttacking);
         }
@@ -151,8 +191,8 @@ class AWalking2Enemy : AWalking
             if (Alita.Call.skillset.skDash.Use())
             {
                 Alita.Call.currentTarget = null;
-                Alita.Call.SwitchState(Alita.Call.StateDash);
                 Alita.Call.StateDash.SetDirection(hit.point);
+                Alita.Call.SwitchState(Alita.Call.StateDash);
             }
         }
     }
