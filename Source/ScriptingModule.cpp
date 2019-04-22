@@ -2062,7 +2062,7 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 
 		return App->scripting->MonoComponentFrom(comp);	
 	}
-	else if (className == "SphereCollider")
+	else if (className == "CapsuleCollider")
 	{
 		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
 		if (!gameObject)
