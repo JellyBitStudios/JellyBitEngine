@@ -152,8 +152,6 @@ class ADash : AState
     {
         Alita.Call.animator.PlayAnimation("alita_dash_anim");
 
-        Alita.Call.agent.Stop();
-
         //Points to Bezier curve 
         Vector3 p0 = new Vector3(Alita_Entity.ConstDashStrength, Alita_Entity.ConstDashStrength, Alita_Entity.ConstDashStrength);
         Vector3 p1 = new Vector3(Alita_Entity.ConstDashStrength / 2, Alita_Entity.ConstDashStrength / 2, Alita_Entity.ConstDashStrength / 2);
@@ -171,9 +169,10 @@ class ADash : AState
 
         Alita.Call.agent.isMovementStopped = false;
         Alita.Call.agent.isRotationStopped = true;
+        Alita.Call.agent.ActivateSeek();
         Alita.Call.agent.ActivateAvoidance();
 
-        Alita.Call.agent.direction = Alita.Call.transform.forward;
+        Alita.Call.agent.direction = Alita.Call.transform.forward.normalized();
         Alita.Call.agent.useDirection = true;
     }
 
@@ -195,7 +194,7 @@ class ADash : AState
         // Agent
         Alita.Call.agent.agentData.maxVelocity = maxVelocity;
 
-        Alita.Call.agent.Resume();
+        Alita.Call.agent.isRotationStopped = false;
         Alita.Call.agent.useDirection = false;
 
         accumulatedDistance = 0.0f;

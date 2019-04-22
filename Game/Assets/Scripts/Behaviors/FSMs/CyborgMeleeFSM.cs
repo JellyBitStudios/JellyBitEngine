@@ -764,6 +764,7 @@ public class CM_StunForce : CM_Stun
         /// Activate/Deactivate
         owner.agent.isMovementStopped = false;
         owner.agent.isRotationStopped = true;
+        owner.agent.ActivateSeek();
         owner.agent.ActivateAvoidance();
 
         owner.agent.agentData.maxAcceleration *= 4.0f;
