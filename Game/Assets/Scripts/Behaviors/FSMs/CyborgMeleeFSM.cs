@@ -77,7 +77,7 @@ public class CM_Think : CM_IState
         // GoToAttackDistance
         if (distanceToTarget <= owner.cbg_Entity.attackDistance)
         {
-            if (Alita.Call.battleCircle.AddAttacker(owner.gameObject))
+            if (Alita.Call.battleCircle.AddAttacker(owner))
             {
                 owner.fsm.ChangeState(new CM_Attack());
                 return;
@@ -265,7 +265,7 @@ public class CM_GoToAttackDistance : CM_GoToGameObject
         else if (distanceToTarget <= owner.cbg_Entity.attackDistance) // attackDistance: am I INSIDE my ATTACK range?
         {
             // Am I allowed to attack?
-            if (Alita.Call.battleCircle.AddAttacker(owner.gameObject))
+            if (Alita.Call.battleCircle.AddAttacker(owner))
             {
                 // Yes! Attack
                 owner.fsm.ChangeState(new CM_Attack());
@@ -523,14 +523,14 @@ public class CM_Attack : CM_IState
     public override void Execute(CyborgMeleeController owner)
     {
         float distanceToTarget = (Alita.Call.gameObject.transform.position - owner.transform.position).magnitude;
-        bool contains = Alita.Call.battleCircle.AttackersContains(owner.gameObject);
+        bool contains = Alita.Call.battleCircle.AttackersContains(owner);
         if (distanceToTarget > owner.cbg_Entity.attackDistance // attackDistance: has the target moved out of my attack range?
             || !contains) // Am I still an attacker?
         {
-            if (Alita.Call.battleCircle.SimultaneousAttackersContains(owner.gameObject))
-                Alita.Call.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
+            if (Alita.Call.battleCircle.SimultaneousAttackersContains(owner))
+                Alita.Call.battleCircle.RemoveSimultaneousAttacker(owner);
             if (contains)
-                Alita.Call.battleCircle.RemoveAttacker(owner.gameObject);
+                Alita.Call.battleCircle.RemoveAttacker(owner);
 
             owner.fsm.ChangeState(new CM_GoToDangerDistance());
             return;
@@ -540,7 +540,7 @@ public class CM_Attack : CM_IState
            && AttackCooldown <= 0.0f)
         {
             // Am I allowed to hit?
-            if (Alita.Call.battleCircle.AddSimultaneousAttacker(owner.gameObject))
+            if (Alita.Call.battleCircle.AddSimultaneousAttacker(owner))
             {
                 // Yes! Hit
                 owner.fsm.ChangeState(new CM_Hit());
@@ -636,9 +636,9 @@ public class CM_Hit : CM_IState
 
         // ----- CM_Hit -----
 
-        if (Alita.Call.battleCircle.SimultaneousAttackersContains(owner.gameObject)
+        if (Alita.Call.battleCircle.SimultaneousAttackersContains(owner)
             && Alita.Call.currentTarget != owner.gameObject) // Am I the current target?
-            Alita.Call.battleCircle.RemoveSimultaneousAttacker(owner.gameObject);
+            Alita.Call.battleCircle.RemoveSimultaneousAttacker(owner);
     }
 
     public override void DrawGizmos(CyborgMeleeController owner)

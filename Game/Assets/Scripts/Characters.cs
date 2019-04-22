@@ -9,6 +9,7 @@ public class Entity
     }
 
     // --------------------------------------------------
+
     public string name = "Entity";
 
     public uint maxLife = 100;
@@ -21,8 +22,7 @@ public class Entity
 public class NPC_Entity : Entity
 {
     // Alita uses this var as distance hit. Every entity, in function of its weight, should redefine it.
-    public float DistanceToTarget = 2.0f;
-
-    // temporal
+    public float distanceToTarget = 2.0f;
     public uint dmg = 10;
+    public bool isBoss = false;
 }
