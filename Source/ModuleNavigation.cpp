@@ -747,6 +747,7 @@ void ModuleNavigation::SaveNavmesh(char*& cursor)
 	{
 		size_t noData = 0;
 		memcpy(cursor, &noData, sizeof(size_t));
+		cursor += sizeof(size_t);
 		return;
 	}
 	size_t size = 0;
@@ -780,7 +781,6 @@ void ModuleNavigation::LoadNavmesh(char*& cursor)
 
 	if (size <= 0)
 	{
-		cursor += sizeof(rcConfig);
 		return;
 	}
 
