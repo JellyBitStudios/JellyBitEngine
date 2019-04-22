@@ -198,16 +198,10 @@ public class Agent : JellyScript
         /// Velocity
         if (seekData.isActive)
         {
-            Vector3 seekPosition = SteeringSeek.GetSeekPosition(NextPosition, this);
-
             if (useDirection)
-            {
-                Vector3 seekDirection = SteeringSeek.GetSeekDirection(direction, this);
-                seekDirection = new Vector3(seekDirection.x, seekPosition.y, seekDirection.z);
-                velocities[seekData.Priority] += seekDirection;
-            }
+                velocities[seekData.Priority] += SteeringSeek.GetSeekDirection(direction, this);
             else
-                velocities[seekData.Priority] += seekPosition;
+                velocities[seekData.Priority] += SteeringSeek.GetSeekPosition(NextPosition, this);
         }
         if (fleeData.isActive)
             velocities[fleeData.Priority] += SteeringFlee.GetFlee(NextPosition, this);
@@ -248,22 +242,6 @@ public class Agent : JellyScript
             if (!MathScript.Approximately(velocities[i].magnitude, 0.0f))
             {
                 newVelocity = velocities[i];
-
-                if (newVelocity.y == 0.0f)
-                {
-                    uint j = i + 1;
-                    while (j < SteeringData.maxPriorities)
-                    {
-                        if (!MathScript.Approximately(velocities[j].y, 0.0f))
-                        {
-                            newVelocity = new Vector3(newVelocity.x, velocities[j].y, newVelocity.z);
-                            break;
-                        }
-
-                        ++j;
-                    }
-                }
-
                 break;
             }
         }
@@ -296,6 +274,10 @@ public class Agent : JellyScript
         if (!isMovementStopped)
             // Move
             transform.position += velocity * Time.deltaTime;
+
+        Vector3 projected = Vector3.zero;
+        if (Navigation.ProjectPoint(transform.position, out projected))
+            transform.position = new Vector3(transform.position.x, projected.y, transform.position.z);
     }
 
     public override void OnStop()
@@ -550,9 +532,11 @@ public class Agent : JellyScript
             obstacleAvoidanceData.rays[i] = new SteeringRay();
         obstacleAvoidanceData.rays[0].length = agentData.Radius;
         obstacleAvoidanceData.rays[1].direction = new Vector3(-1.0f, 0.0f, 1.0f);
-        obstacleAvoidanceData.rays[1].length = agentData.Radius / 2.0f;
+        obstacleAvoidanceData.rays[1].direction.Normalize();
+        obstacleAvoidanceData.rays[1].length = agentData.Radius;
         obstacleAvoidanceData.rays[2].direction = new Vector3(1.0f, 0.0f, 1.0f);
-        obstacleAvoidanceData.rays[2].length = agentData.Radius / 2.0f;
+        obstacleAvoidanceData.rays[2].direction.Normalize();
+        obstacleAvoidanceData.rays[2].length = agentData.Radius;
 
         // SteeringAlignData
         alignData.isActive = tmp_alignIsActive;

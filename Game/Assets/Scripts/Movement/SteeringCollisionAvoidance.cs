@@ -98,7 +98,6 @@ public static class SteeringCollisionAvoidance
 
     public static void DrawGizmos(Agent agent)
     {
-        /*
         Debug.DrawSphere(AgentsManager.Call.Radius, Color.Red, agent.transform.position, Quaternion.identity, Vector3.one);
 
         Vector3 positiveDirection = Quaternion.Rotate(Vector3.up, agent.collisionAvoidanceData.coneHalfAngle) * agent.transform.forward * AgentsManager.Call.Radius;
@@ -112,6 +111,5 @@ public static class SteeringCollisionAvoidance
 
         Debug.DrawLine(agent.transform.position, agent.transform.position + positiveDirection, Color.Red);
         Debug.DrawLine(agent.transform.position, agent.transform.position + negativeDirection, Color.Red);
-        */
     }
 }

@@ -614,7 +614,18 @@ public class CM_Hit : CM_IState
         if (owner.animator.GetCurrentFrame() >= 25
             && !animationHit)
         {
-            Alita.Call.character.currentLife -= (int)owner.cbg_Entity.dmg;
+            Ray ray = new Ray();
+            ray.position = new Vector3(owner.transform.position.x, owner.sight.transform.position.y, owner.transform.position.z);
+            ray.direction = owner.transform.forward;
+            RaycastHit hitInfo;
+
+            if (Physics.Raycast(ray, out hitInfo, owner.cbg_Entity.attackDistance, LayerMask.GetMask("Alita"), SceneQueryFlags.Dynamic))
+            {
+                Debug.Log("Hit Alita!");
+                Alita.Call.character.currentLife -= (int)owner.cbg_Entity.dmg;
+            }
+            else
+                Debug.Log("Hit the air...");
 
             animationHit = true;
         }
@@ -643,6 +654,8 @@ public class CM_Hit : CM_IState
 
     public override void DrawGizmos(CyborgMeleeController owner)
     {
+        Vector3 position = new Vector3(owner.transform.position.x, owner.sight.transform.position.y, owner.transform.position.z);
+        Debug.DrawLine(position, position + owner.transform.forward * owner.cbg_Entity.attackDistance, Color.White);
         Debug.DrawSphere(owner.cbg_Entity.attackDistance, Color.Red, owner.transform.position, Quaternion.identity, Vector3.one);
     }
 }
