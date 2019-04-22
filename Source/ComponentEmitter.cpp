@@ -936,19 +936,6 @@ int ComponentEmitter::GetEmition() const
 	return rateOverTime;
 }
 
-uint ComponentEmitter::GetInternalSerializationBytes()
-{
-	uint sizeOfList = 0u;
-	for (std::list<ColorTime>::iterator it = startValues.color.begin(); it != startValues.color.end(); ++it)
-	{
-		sizeOfList += (*it).GetColorListSerializationBytes();
-	}
-
-	return sizeof(bool) * 18 + sizeof(int) * 3 + sizeof(float) * 5 + sizeof(uint) * 5
-		+ sizeof(ShapeType) * 2 + sizeof(math::AABB) * 2 + sizeof(math::float2) * 8 + sizeof(math::float3) * 2
-		+ particleAnim.GetPartAnimationSerializationBytes() + sizeOfList;//Bytes of all Start Values Struct
-}
-
 math::float3 ComponentEmitter::GetPos()
 {
 	math::float3 pos = math::float3::zero;
@@ -963,6 +950,20 @@ math::float3 ComponentEmitter::GetPos()
 
 	return pos;
 }
+
+uint ComponentEmitter::GetInternalSerializationBytes()
+{
+	uint sizeOfList = 0u;
+	for (std::list<ColorTime>::iterator it = startValues.color.begin(); it != startValues.color.end(); ++it)
+	{
+		sizeOfList += (*it).GetColorListSerializationBytes();
+	}
+
+	return sizeof(bool) * 18 + sizeof(int) * 3 + sizeof(float) * 5 + sizeof(uint) * 5
+		+ sizeof(ShapeType) * 2 + sizeof(math::AABB) * 2 + sizeof(math::float2) * 8 + sizeof(math::float3) * 2
+		+ particleAnim.GetPartAnimationSerializationBytes() + sizeOfList;//Bytes of all Start Values Struct
+}
+
 
 void ComponentEmitter::OnInternalSave(char *& cursor)
 {
@@ -1104,6 +1105,9 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	cursor += bytes;
 
 	memcpy(&checkAngularVelocity, cursor, bytes);
+	cursor += bytes;
+
+	memcpy(&checkAnimationSpeed, cursor, bytes);
 	cursor += bytes;
 
 	memcpy(&drawAABB, cursor, bytes);
