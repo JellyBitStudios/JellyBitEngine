@@ -224,22 +224,38 @@ class ASkillQ : AState
 class ASkillW : AState
 {
     bool hit;
+    Vector3 dir = new Vector3();
+
+    public void SetDirection(Vector3 position)
+    {
+        dir = (position - Alita.Call.transform.position).normalized();
+    }
 
     public override void OnStart()
     {
-        Alita.Call.animator.PlayAnimation("anim_special_attack_q_alita_fist");
-        Alita.Call.animator.SetAnimationLoop(false);
+        Alita.Call.animator.PlayAnimation("alita_dash_anim");
         hit = false;
+        Alita.Call.agent.Stop();
+
+        float targetOrientation = MathScript.Rad2Deg * (float)Math.Atan2(dir.x, dir.z);
+        Quaternion quat = Quaternion.Rotate(Vector3.up, targetOrientation);
+        Alita.Call.transform.rotation = quat;
     }
 
     public override void OnExecute()
     {
         if (!hit && Alita.Call.animator.GetCurrentFrame() >= 27)
         {
-           
+
+            hit = true;
         }
 
         if (Alita.Call.animator.AnimationFinished())
             Alita.Call.SwitchState(Alita.Call.StateIdle);
+    }
+
+    public override void OnStop()
+    {
+        Alita.Call.agent.Resume();
     }
 }
