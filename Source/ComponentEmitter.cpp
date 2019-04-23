@@ -28,8 +28,8 @@ ComponentEmitter::ComponentEmitter(GameObject* gameObject, bool include) : Compo
 
 		SetMaterialRes(App->resHandler->defaultMaterial);
 
-		App->res->SetAsUsed(App->resHandler->plane);
 	}
+	App->res->SetAsUsed(App->resHandler->plane);
 }
 
 ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, GameObject* parent, bool include) : Component(parent, EmitterComponent)
@@ -111,6 +111,8 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 ComponentEmitter::~ComponentEmitter()
 {
 	SetMaterialRes(0);
+	SetMeshParticleRes(0);
+	SetBurstMeshParticleRes(0);
 
 	App->timeManager->RemoveGameTimer(&timer);
 	App->timeManager->RemoveGameTimer(&burstTime);
@@ -118,15 +120,9 @@ ComponentEmitter::~ComponentEmitter()
 	App->timeManager->RemoveGameTimer(&timeSimulating);
 
 	App->particle->RemoveEmitter(this);
-
 	ClearEmitter();
 
-
 	App->res->SetAsUnused(App->resHandler->plane);
-	if (burstMesh.uuid > 0)
-		App->res->SetAsUnused(burstMesh.uuid);
-	if (shapeMesh.uuid > 0)
-		App->res->SetAsUnused(shapeMesh.uuid);
 }
 
 void ComponentEmitter::StartEmitter()
