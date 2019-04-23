@@ -84,6 +84,7 @@ private:
 
 public:
 	void SetRect(int x, int y, int x_dist, int y_dist);
+	void SetRect(int rect[4]);
 
 	int* GetRect();
 	math::float3* GetCorners();

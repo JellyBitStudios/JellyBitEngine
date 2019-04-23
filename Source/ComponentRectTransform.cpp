@@ -144,6 +144,8 @@ void ComponentRectTransform::SetRect(int x, int y, int x_dist, int y_dist)
 {
 	if (rFrom != ComponentRectTransform::WORLD)
 	{
+		rectTransform_modified = true;
+
 		rectTransform[Rect::X] = x;
 		rectTransform[Rect::Y] = y;
 		rectTransform[Rect::XDIST] = x_dist;
@@ -159,7 +161,27 @@ void ComponentRectTransform::SetRect(int x, int y, int x_dist, int y_dist)
 			(*go)->OnSystemEvent(rectChanged);
 	}
 }
+void ComponentRectTransform::SetRect(int rect[4])
+{
+	if (rFrom != ComponentRectTransform::WORLD)
+	{
+		rectTransform_modified = true;
 
+		rectTransform[Rect::X] = rect[Rect::X];
+		rectTransform[Rect::Y] = rect[Rect::Y];
+		rectTransform[Rect::XDIST] = rect[Rect::XDIST];
+		rectTransform[Rect::YDIST] = rect[Rect::YDIST];
+
+		System_Event rectChanged;
+		rectChanged.type = System_Event_Type::RectTransformUpdated;
+
+		std::vector<GameObject*> rectChilds;
+		parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
+
+		for (std::vector<GameObject*>::const_reverse_iterator go = rectChilds.crbegin(); go != rectChilds.crend(); go++)
+			(*go)->OnSystemEvent(rectChanged);
+	}
+}
 void ComponentRectTransform::InitRect()
 {
 	switch (rFrom)
@@ -693,6 +715,10 @@ void ComponentRectTransform::OnUniqueEditor()
 #ifndef GAMEMODE
 	if (ImGui::CollapsingHeader("Rect Transform", ImGuiTreeNodeFlags_DefaultOpen))
 	{
+		int rectToModify[4];
+		memcpy(&rectToModify, &rectTransform, sizeof(int)*4); //copying rect
+
+		bool recalculate4Pivot = false;
 
 		int* rectParent = nullptr;
 		if (parent->cmp_canvas)
@@ -700,15 +726,11 @@ void ComponentRectTransform::OnUniqueEditor()
 		else
 			rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
 
-		int x_editor = 0;
-		int y_editor = 0;
 		int i = 0;
 		switch (rFrom)
 		{
 		case ComponentRectTransform::RECT:
 			if (parent->cmp_canvas && App->ui->ScreenOnWorld()) rectParent = App->ui->GetWHRect();
-			x_editor = rectTransform[Rect::X] - rectParent[Rect::X];
-			y_editor = rectTransform[Rect::Y] - rectParent[Rect::Y];
 			break;
 		case ComponentRectTransform::WORLD:
 		{
@@ -739,11 +761,10 @@ void ComponentRectTransform::OnUniqueEditor()
 			}
 			return;
 		}
-		case ComponentRectTransform::RECT_WORLD:
-			x_editor = rectTransform[Rect::X] - rectParent[Rect::X];
-			y_editor = rectTransform[Rect::Y] - rectParent[Rect::Y];
-			break;
 		}
+
+		int x_editor = rectTransform[Rect::X] - rectParent[Rect::X];
+		int y_editor = rectTransform[Rect::Y] - rectParent[Rect::Y];
 
 		ImGui::PushItemWidth(50.0f);
 
@@ -751,9 +772,9 @@ void ComponentRectTransform::OnUniqueEditor()
 		if (ImGui::DragScalar("##PosX", ImGuiDataType_S32, &x_editor, 1))
 		{
 			if (rectParent != nullptr)
-				rectTransform[Rect::X] = x_editor + rectParent[Rect::X];
+				rectToModify[Rect::X] = x_editor + rectParent[Rect::X];
 			else
-				rectTransform[Rect::X] = x_editor;
+				rectToModify[Rect::X] = x_editor;
 
 			needed_recalculate = true;
 		}
@@ -761,21 +782,21 @@ void ComponentRectTransform::OnUniqueEditor()
 		if (ImGui::DragScalar("##PosY", ImGuiDataType_S32, &y_editor, 1))
 		{
 			if (rectParent != nullptr)
-				rectTransform[Rect::Y] = y_editor + rectParent[Rect::Y];
+				rectToModify[Rect::Y] = y_editor + rectParent[Rect::Y];
 			else
-				rectTransform[Rect::Y] = y_editor;
+				rectToModify[Rect::Y] = y_editor;
 
 			needed_recalculate = true;
 		}
 		ImGui::Text("Size X & Y");
-		if (ImGui::DragScalar("##SizeX", ImGuiDataType_S32, (void*)&rectTransform[Rect::XDIST], 1))
+		if (ImGui::DragScalar("##SizeX", ImGuiDataType_S32, (void*)&rectToModify[Rect::XDIST], 1, 0))
 			needed_recalculate = true;
 		ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
-		if (ImGui::DragScalar("##SizeY", ImGuiDataType_S32, (void*)&rectTransform[Rect::YDIST], 1))
+		if (ImGui::DragScalar("##SizeY", ImGuiDataType_S32, (void*)&rectToModify[Rect::YDIST], 1, 0))
 			needed_recalculate = true;
 
 		if (needed_recalculate)
-			rectTransform_modified = true;
+			SetRect(rectToModify);
 
 		if(ImGui::Checkbox("Use Pivot", &usePivot))
 			if (!usePivot)
@@ -783,7 +804,6 @@ void ComponentRectTransform::OnUniqueEditor()
 				pivot = RectPrivot::P_TOPLEFT;
 
 				CalculateAnchors();
-				needed_recalculate = true;
 			}
 
 		if (usePivot)
@@ -798,7 +818,6 @@ void ComponentRectTransform::OnUniqueEditor()
 				pivot = (RectPrivot)current_anchor_flag;
 
 				CalculateAnchors();
-				needed_recalculate = true;
 			}
 
 			ImGui::PushItemWidth(50.0f);
@@ -811,7 +830,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			{
 				ImGui::Text("Top Left");
 				if (ImGui::DragScalar("##MTop", ImGuiDataType_S32, (void*)&anchor[Anchor::TOP], 1))
-					needed_recalculate = true;
+					recalculate4Pivot = true;
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
@@ -820,7 +839,7 @@ void ComponentRectTransform::OnUniqueEditor()
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
 				if (ImGui::DragScalar("##MLeft", ImGuiDataType_S32, (void*)&anchor[Anchor::LEFT], 1))
-					needed_recalculate = true;
+					recalculate4Pivot = true;
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
@@ -833,7 +852,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			{
 				ImGui::Text("Top Right");
 				if (ImGui::DragScalar("##MTop", ImGuiDataType_S32, (void*)&anchor[Anchor::TOP], 1))
-					needed_recalculate = true;
+					recalculate4Pivot = true;
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
@@ -842,7 +861,7 @@ void ComponentRectTransform::OnUniqueEditor()
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
 				if (ImGui::DragScalar("##MRight", ImGuiDataType_S32, (void*)&anchor[Anchor::RIGHT], 1))
-					needed_recalculate = true;
+					recalculate4Pivot = true;
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
@@ -855,7 +874,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			{
 				ImGui::Text("Bottom Left");
 				if (ImGui::DragScalar("##MBottom", ImGuiDataType_S32, (void*)&anchor[Anchor::BOTTOM], 1))
-					needed_recalculate = true;
+					recalculate4Pivot = true;
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
@@ -864,7 +883,7 @@ void ComponentRectTransform::OnUniqueEditor()
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
 				if (ImGui::DragScalar("##MLeft", ImGuiDataType_S32, (void*)&anchor[Anchor::LEFT], 1))
-					needed_recalculate = true;
+					recalculate4Pivot = true;
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
@@ -877,7 +896,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			{
 				ImGui::Text("Bottom Right");
 				if (ImGui::DragScalar("##MBottom", ImGuiDataType_S32, (void*)&anchor[Anchor::BOTTOM], 1))
-					needed_recalculate = true;
+					recalculate4Pivot = true;
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
@@ -886,7 +905,7 @@ void ComponentRectTransform::OnUniqueEditor()
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
 				if (ImGui::DragScalar("##MRight", ImGuiDataType_S32, (void*)&anchor[Anchor::RIGHT], 1))
-					needed_recalculate = true;
+					recalculate4Pivot = true;
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
@@ -907,7 +926,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			{
 				ImGui::Text("Top");
 				if (ImGui::DragScalar("##MCenter", ImGuiDataType_S32, (void*)&center, 1))
-					needed_recalculate = true;
+					recalculate4Pivot = true;
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
@@ -916,7 +935,7 @@ void ComponentRectTransform::OnUniqueEditor()
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
 				if (ImGui::DragScalar("##Top", ImGuiDataType_S32, (void*)&anchor[Anchor::TOP], 1))
-					needed_recalculate = true;
+					recalculate4Pivot = true;
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
@@ -929,7 +948,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			{
 				ImGui::Text("Left");
 				if (ImGui::DragScalar("##MCenter", ImGuiDataType_S32, (void*)&center, 1))
-					needed_recalculate = true;
+					recalculate4Pivot = true;
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
@@ -938,7 +957,7 @@ void ComponentRectTransform::OnUniqueEditor()
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
 				if (ImGui::DragScalar("##MLeft", ImGuiDataType_S32, (void*)&anchor[Anchor::LEFT], 1))
-					needed_recalculate = true;
+					recalculate4Pivot = true;
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
@@ -951,7 +970,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			{
 				ImGui::Text("Right");
 				if (ImGui::DragScalar("##MCenter", ImGuiDataType_S32, (void*)&center, 1))
-					needed_recalculate = true;
+					recalculate4Pivot = true;
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
@@ -960,7 +979,7 @@ void ComponentRectTransform::OnUniqueEditor()
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
 				if (ImGui::DragScalar("##MRight", ImGuiDataType_S32, (void*)&anchor[Anchor::RIGHT], 1))
-					needed_recalculate = true;
+					recalculate4Pivot = true;
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
@@ -973,7 +992,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			{
 				ImGui::Text("Bottom");
 				if (ImGui::DragScalar("##MCenter", ImGuiDataType_S32, (void*)&center, 1))
-					needed_recalculate = true;
+					recalculate4Pivot = true;
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
@@ -982,7 +1001,7 @@ void ComponentRectTransform::OnUniqueEditor()
 				}
 				ImGui::SameLine(); ImGui::PushItemWidth(50.0f);
 				if (ImGui::DragScalar("##MBottom", ImGuiDataType_S32, (void*)&anchor[Anchor::BOTTOM], 1))
-					needed_recalculate = true;
+					recalculate4Pivot = true;
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::BeginTooltip();
@@ -994,7 +1013,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			}
 		}
 
-		if (needed_recalculate)
+		if (!needed_recalculate && recalculate4Pivot)
 		{
 			System_Event rectChanged;
 			rectChanged.type = System_Event_Type::RectTransformUpdated;
