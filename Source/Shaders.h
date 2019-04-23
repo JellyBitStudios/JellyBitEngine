@@ -60,7 +60,6 @@
 "layout(location = 1) out vec4 gNormal;\n"										\
 "layout(location = 2) out vec4 gAlbedoSpec;\n"									\
 "layout(location = 3) out uvec4 gInfo;\n"										\
-"\n"																			\
 "in VS_OUT\n"																	\
 "{\n"																			\
 "	vec3 gPosition;\n"															\
@@ -787,7 +786,7 @@
 "layout(location = 1) out vec4 gNormal;\n"												\
 "layout(location = 2) out vec4 gAlbedoSpec;\n"											\
 "layout(location = 3) out uvec4 gInfo;\n"												\
-"\n"																					\
+"uniform int lightCartoon;\n"															\
 "in GS_OUT\n"																			\
 "{\n"																					\
 "  vec3 fPosition;\n"																	\
@@ -828,7 +827,7 @@
 "	else\n"																				\
 "	{\n"																				\
 "		gNormal.a = levels;\n"															\
-"		gPosition.a = 2;\n"																\
+"		gPosition.a = lightCartoon;\n"																\
 "\n"																					\
 "		vec4 albedo = texture(material.albedo, fs_in.fTexCoord);\n"						\
 "		vec3 diffuse = vec3(albedo);\n"													\
