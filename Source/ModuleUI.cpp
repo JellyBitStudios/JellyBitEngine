@@ -103,6 +103,13 @@ bool ModuleUI::Start()
 	c->Update();
 	WorldHolder->AddComponent(ComponentTypes::RectTransformComponent);
 	((ComponentImage*)WorldHolder->AddComponent(ComponentTypes::ImageComponent))->SetResImageUuid(App->resHandler->screenInWorldTexture);
+
+	uiSizeEditor[Screen::X] = 0;
+	uiSizeEditor[Screen::Y] = 0;
+	uiSizeEditor[Screen::WIDTH] = 1600;
+	uiSizeEditor[Screen::HEIGHT] = 900;
+
+
 #endif // GAMEMODE
 
 	if (FT_Init_FreeType(&library))
@@ -523,7 +530,11 @@ void ModuleUI::OnWindowResize(uint width, uint height)
 
 int* ModuleUI::GetRectUI()
 {
+#ifdef GAMEMODE
 	return ui_size_draw;
+#else
+	return uiSizeEditor;
+#endif
 }
 
 int * ModuleUI::GetScreen()

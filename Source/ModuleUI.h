@@ -106,6 +106,7 @@ public:
 
 private:
 	int ui_size_draw[4];
+	int uiSizeEditor[4];
 	uint reference_vertex;
 
 	uint ui_shader = 0;
