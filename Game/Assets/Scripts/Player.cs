@@ -4,6 +4,8 @@ class Player : JellyScript
 {
     private static Player m_instance;
 
+    public static RaycastHit lastRaycastHit;
+
     public LayerMask raycastLayer = new LayerMask();
 
     public bool inputEnabled = true;
@@ -22,6 +24,7 @@ class Player : JellyScript
 
     public override void Awake()
     {
+        Debug.ClearConsole();
         EventsManager.Call.StartListening("Player", this, "EventsListener");
     }
 
@@ -29,26 +32,29 @@ class Player : JellyScript
     {
         if (!gameStopped)
         {
-            //Debug.Log("ADSAD");
-            if (Input.GetMouseButton(MouseKeyCode.MOUSE_RIGHT))
-                HandleMousePicking(true);
+            if (Input.GetMouseButton(MouseKeyCode.MOUSE_LEFT))
+                HandleMousePicking(true, true);
+            else if (Input.GetMouseButtonDown(MouseKeyCode.MOUSE_RIGHT))
+                HandleMousePicking(true, false);
             else
                 HandleMousePicking(false);
 
-            if (Input.GetKeyDown(KeyCode.KEY_Q))
+            if (Input.GetKeyUp(KeyCode.KEY_Q))
                 Alita.Call.ProcessInput(KeyCode.KEY_Q);
-            else if (Input.GetKeyDown(KeyCode.KEY_SPACE))
+            else if (Input.GetKeyUp(KeyCode.KEY_SPACE))
                 Alita.Call.ProcessInput(KeyCode.KEY_SPACE);
+            else if (Input.GetKeyUp(KeyCode.KEY_W))
+                Alita.Call.ProcessInput(KeyCode.KEY_W);
             // if n button pressed open inventory/options/etc 
         }
     }
 
     public override void OnStop()
     {
-        EventsManager.Call.StopListening("Player");
+        EventsManager.Call.StopListening(this);
     }
 
-    void EventsListener(object type)
+    public void EventsListener(object type)
     {
         Event listenedEvent = (Event)type;
         switch (listenedEvent.type)
@@ -76,25 +82,17 @@ class Player : JellyScript
         EventsManager.Call.PushEvent(resumeEvent);
     }
 
-    void HandleMousePicking(bool process)
+    void HandleMousePicking(bool process, bool leftClick = true)
     {
         Ray ray = Physics.ScreenToRay(Input.GetMousePosition(), Camera.main);
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, float.MaxValue, raycastLayer, SceneQueryFlags.Dynamic | SceneQueryFlags.Static))
         {
             if (process)
-                Alita.Call.ProcessRaycast(hit);
+                Alita.Call.ProcessRaycast(hit, leftClick);
+            lastRaycastHit = hit;
 
-            // mark enemy as red etc
-            string layer = hit.gameObject.GetLayer();
-            if (layer == "Terrain")
-            {
-              
-            }
-            else
-            {
-              
-            }
+            //string layer = hit.gameObject.GetLayer();
         }
         return;
     }

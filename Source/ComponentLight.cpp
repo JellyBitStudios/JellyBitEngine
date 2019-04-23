@@ -21,6 +21,10 @@ ComponentLight::ComponentLight(const ComponentLight& componentLight, GameObject*
 	quadratic = componentLight.quadratic;
 	linear = componentLight.linear;
 	memcpy(color, componentLight.color, sizeof(float) * 3);
+
+	behaviour = componentLight.behaviour;
+	lightBB = componentLight.lightBB;
+
 	App->lights->AddLight(this);
 }
 

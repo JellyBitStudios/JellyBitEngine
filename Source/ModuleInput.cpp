@@ -46,6 +46,8 @@ bool ModuleInput::Init(JSON_Object* jObject)
 		ret = false;
 	}
 
+	LoadStatus(jObject);
+
 	return ret;
 }
 
@@ -192,6 +194,16 @@ bool ModuleInput::CleanUp()
 
 void ModuleInput::DrawCursor()
 {
+	if (CursorTextureUUID != 0 && CursorTextureID == 0)
+	{
+		Resource* res = App->res->GetResource(CursorTextureUUID);
+		if (res)
+		{
+			App->res->SetAsUsed(CursorTextureUUID);
+			CursorTextureID = ((ResourceTexture*)res)->GetId();
+		}
+	}
+
 #ifndef GAMEMODE
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY && CursorTextureID != 0u)
 		ImGui::SetMouseCursor(ImGuiMouseCursor_::ImGuiMouseCursor_None);
@@ -201,22 +213,6 @@ void ModuleInput::DrawCursor()
 
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
 	{
-		if (CursorTextureID == 0)
-		{
-			//Load the default cursor texture
-			std::vector<Resource*> resources = App->res->GetResourcesByType(ResourceTypes::TextureResource);
-			for (Resource* res : resources)
-			{
-				if (res->GetData().name == "defcursor")
-				{
-					CursorTextureUUID = res->GetUuid();
-					App->res->SetAsUsed(CursorTextureUUID);
-					CursorTextureID = ((ResourceTexture*)res)->GetId();
-					break;
-				}
-			}
-		}
-
 		if (CursorTextureID != 0)
 		{
 			uint windowWidth = App->window->GetWindowWidth();
@@ -273,6 +269,31 @@ void ModuleInput::DrawCursor()
 	}
 }
 
+void ModuleInput::SaveStatus(JSON_Object* node) const
+{
+	json_object_set_number(node, "DefCursor", CursorTextureUUID);
+}
+
+void ModuleInput::LoadStatus(const JSON_Object* node)
+{
+	if (CursorTextureUUID != 0)
+	{
+		App->res->SetAsUnused(CursorTextureUUID);
+		CursorTextureUUID = 0u;
+	}
+
+	CursorTextureUUID = (uint)json_object_get_number(node, "DefCursor");	
+	if (CursorTextureUUID != 0)
+	{
+		Resource* res = App->res->GetResource(CursorTextureUUID);
+		if (res)
+		{
+			App->res->SetAsUsed(CursorTextureUUID);
+			CursorTextureID = ((ResourceTexture*)res)->GetId();
+		}
+	}
+}
+
 std::string ModuleInput::GetCursorTexture() const
 {
 	ResourceTexture* texture = CursorTextureUUID != 0u ? (ResourceTexture*)App->res->GetResource(CursorTextureUUID) : nullptr;
@@ -300,5 +321,30 @@ void ModuleInput::SetCursorTexture(std::string& textureName)
 			break;
 		}
 	}
+}
 
+void ModuleInput::SetCursorTexture(uint textureUUID)
+{	
+	ResourceTexture* textureRes = (ResourceTexture*)App->res->GetResource(textureUUID);
+	if (!textureRes)
+		return;
+
+	if (CursorTextureUUID != 0)
+		App->res->SetAsUnused(CursorTextureUUID);
+
+	CursorTextureUUID = textureUUID;
+	App->res->SetAsUsed(CursorTextureUUID);
+	CursorTextureID = textureRes->GetId();
+}
+
+void ModuleInput::SetDefaultCursorTexture(ResourceTexture* textureRes)
+{
+	if (CursorTextureUUID != 0)
+		App->res->SetAsUnused(CursorTextureUUID);
+
+	CursorTextureUUID = textureRes->GetUuid();
+	App->res->SetAsUsed(CursorTextureUUID);
+	CursorTextureID = textureRes->GetId();
+
+	App->SaveState();
 }

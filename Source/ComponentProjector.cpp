@@ -423,19 +423,24 @@ float ComponentProjector::GetFOV() const
 	return frustum.verticalFov * RADTODEG;
 }
 
+float ComponentProjector::GetNearPlaneDistance()
+{
+	return frustum.nearPlaneDistance;
+}
+
 void ComponentProjector::SetNearPlaneDistance(float nearPlane)
 {
 	frustum.nearPlaneDistance = nearPlane;
 }
 
+float ComponentProjector::GetFarPlaneDistance()
+{
+	return frustum.farPlaneDistance;
+}
+
 void ComponentProjector::SetFarPlaneDistance(float farPlane)
 {
 	frustum.farPlaneDistance = farPlane;
-}
-
-void ComponentProjector::SetAspectRatio(float aspectRatio)
-{
-	frustum.horizontalFov = 2.0f * atanf(tanf(frustum.verticalFov * 0.5f) * aspectRatio);
 }
 
 void ComponentProjector::SetMaterialRes(uint materialUuid)
@@ -449,9 +454,33 @@ void ComponentProjector::SetMaterialRes(uint materialUuid)
 	materialRes = materialUuid;
 }
 
+void ComponentProjector::SetMaterialRes(std::string materialName)
+{
+	std::vector<Resource*> materials = App->res->GetResourcesByType(ResourceTypes::MaterialResource);
+	for (Resource* material : materials)
+	{
+		if (material->GetData().name == materialName)
+		{
+			if (materialRes > 0)
+				App->res->SetAsUnused(materialRes);
+			
+			materialRes = material->GetUuid();
+			App->res->SetAsUsed(materialRes);
+		}
+	}
+}
+
 uint ComponentProjector::GetMaterialRes() const
 {
 	return materialRes;
+}
+
+std::string ComponentProjector::GetMaterialResName() const
+{
+	Resource* res = App->res->GetResource(materialRes);
+	if(res)
+		return res->GetName();
+	return "";
 }
 
 void ComponentProjector::SetMeshRes(uint meshUuid)

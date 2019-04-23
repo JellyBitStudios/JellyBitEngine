@@ -12,6 +12,8 @@
 #include "GameObject.h"
 #include "Quadtree.h"
 
+#include"Lights.h"
+
 #include "ImGui\imgui.h"
 #include "SDL\include\SDL_cpuinfo.h"
 #include "SDL\include\SDL_version.h"
@@ -203,6 +205,8 @@ void PanelSettings::WindowNode() const
 
 void PanelSettings::RendererNode() const
 {
+	ImGui::DragFloat("Ambient", &App->lights->ambientValue, 0.01f, 0.0f, 1.0f, "%.2f");
+
 	GLenum capability = 0;
 
 	capability = GL_DEPTH_TEST;

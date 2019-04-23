@@ -44,6 +44,19 @@ bool ModuleResourceManager::Start()
 	return true;
 }
 
+update_status ModuleResourceManager::Update()
+{
+	std::vector<Resource*> materials = GetResourcesByType(ResourceTypes::MaterialResource);
+	for (Resource* material : materials)
+	{
+		ResourceMaterial* realMaterial = (ResourceMaterial*)material;
+		int a = 2;
+	}
+
+
+	return UPDATE_CONTINUE;
+}
+
 bool ModuleResourceManager::CleanUp()
 {
 	for (std::unordered_map<uint, Resource*>::iterator it = resources.begin(); it != resources.end(); ++it)
@@ -1296,7 +1309,7 @@ Resource* ModuleResourceManager::ExportFile(ResourceTypes type, ResourceData& da
 
 	case ResourceTypes::PrefabResource:
 	{
-		resource = (Resource*)ResourcePrefab::ExportFile(data.name.data(), (*(PrefabData*)specificData).root);
+		resource = (Resource*)ResourcePrefab::ExportFile(data, (*(PrefabData*)specificData).root);
 		this->resources[resource->GetUuid()] = resource;
 	}
 	break;

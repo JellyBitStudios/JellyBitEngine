@@ -14,7 +14,7 @@
 #include "Raycaster.h"
 #include "ModuleTimeManager.h"
 #include "ModuleScene.h"
-
+#include "ModuleGOs.h"
 #include "SDL\include\SDL_scancode.h"
 #include "SDL\include\SDL_mouse.h"
 
@@ -147,7 +147,17 @@ update_status ModuleCameraEditor::Update()
 		App->raycaster->ScreenPointToRay(App->input->GetMouseX(), App->input->GetMouseY(), distance, hitPoint, &hitGameObject);
 		if (hitGameObject != nullptr)
 		{
-			SELECT(hitGameObject);
+			if (App->input->GetKey(SDL_SCANCODE_LCTRL) != KEY_REPEAT && App->input->GetKey(SDL_SCANCODE_RCTRL) != KEY_REPEAT)
+			{
+				SELECT(hitGameObject);
+			}
+			else
+			{
+				if (std::find(App->scene->multipleSelection.begin(), App->scene->multipleSelection.end(), hitGameObject->GetUUID()) == App->scene->multipleSelection.end())
+					App->scene->selectedObject += hitGameObject;
+				else
+					App->scene->selectedObject -= hitGameObject;
+			}
 
 			GameObject* parent = hitGameObject->GetParent();
 			if (parent)
@@ -157,6 +167,32 @@ update_status ModuleCameraEditor::Update()
 			SELECT(NULL);
 	}
 
+	if (App->input->GetKey(SDL_SCANCODE_SPACE) == KEY_DOWN)
+	{
+		if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_IDLE && App->input->GetKey(SDL_SCANCODE_RCTRL) == KEY_IDLE)
+			App->scene->multipleSelection.clear();
+
+		App->raycaster->GetGOFromFrustum(camera->frustum);
+
+		if (App->scene->multipleSelection.empty())
+			SELECT(NULL)
+	}
+	/*if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_DOWN
+		 && !ImGuizmo::IsOver() && !ImGuizmo::IsUsing())
+	{
+		mousePressedPos_X = App->input->GetMouseX();
+		mousePressedPos_Y = App->input->GetMouseY();
+		isMultiSelection = true;
+	}
+	if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_UP && isMultiSelection)
+	{	
+		if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_IDLE && App->input->GetKey(SDL_SCANCODE_RCTRL) == KEY_IDLE)
+			App->scene->multipleSelection.clear();
+		App->raycaster->ScreenQuadToFrustum(mousePressedPos_X, mousePressedPos_Y, App->input->GetMouseX(), App->input->GetMouseY());
+		isMultiSelection = false;
+		if(App->scene->multipleSelection.empty())
+			SELECT(NULL)
+	}*/
 	return UPDATE_CONTINUE;
 }
 

@@ -48,6 +48,7 @@ bool Lights::EraseLight(ComponentLight* light)
 
 void Lights::UseLights(const unsigned int shaderID)
 {
+	glUniform1f(glGetUniformLocation(shaderID, "ambient"), ambientValue);
 	for (int i = 0; i < 32; ++i)
 	{
 		if (i < lights.size())

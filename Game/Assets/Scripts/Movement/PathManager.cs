@@ -9,31 +9,36 @@ public class PathManager
     {
         get { return destination; }
     }
-    public bool HasPath
+    public bool HasArrived
     {
-        get { return hasPath; }
-    }
-    public bool IsLastPosition
-    {
-        get { return hasPath && index == path.Length - 1; }
+        get { return path == null; }
     }
     #endregion
 
     #region PRIVATE_VARIABLES
     private Vector3 destination = Vector3.zero;
     private bool hasPath = false;
-    private uint index = 0;
+    private int index = 0;
     private Vector3[] path = null;
     #endregion
 
     public bool GetPath(Vector3 origin, Vector3 destination)
     {
-        hasPath = Navigation.GetPath(origin, destination, out path);
-        this.destination = hasPath ? destination : origin;
-        if (hasPath && path.Length > 1)
+        Vector3[] p = null; // ...
+        hasPath = Navigation.GetPath(origin, destination, out p);
+        hasPath = hasPath && p.Length > 1;
+
+        // New path? Start following it!
+        if (hasPath)
+        {
+            path = p; // ...
+            this.destination = destination;
             index = 1;
-        else
-            index = 0;
+        }
+        // Old path? Keep following it!
+        else if (path != null)
+            hasPath = true;
+
         return hasPath;
     }
 
@@ -49,10 +54,16 @@ public class PathManager
 
     public bool UpdateNextPosition()
     {
-        if (hasPath && index < path.Length - 1)
+        if (hasPath)
         {
-            ++index;
-            return true;
+            if (index < path.Length - 1)
+            {
+                ++index;
+                return true;
+            }
+            else
+                // End of the path
+                ClearPath();
         }
 
         return false;
@@ -83,6 +94,11 @@ public class PathManager
             return;
 
         for (uint i = 0; i < path.Length - 1; ++i)
-            Debug.DrawLine(path[i], path[i + 1], Color.Red);
+        {
+            Debug.DrawSphere(0.1f, Color.Blue, path[i], Quaternion.identity, Vector3.one);
+            Debug.DrawLine(path[i], path[i + 1], Color.Blue);
+        }
+
+        Debug.DrawSphere(0.1f, Color.Blue, path[path.Length - 1], Quaternion.identity, Vector3.one);
     }
 }

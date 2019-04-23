@@ -5,12 +5,12 @@ using JellyBitEngine;
 public class SteeringSeekData : SteeringAbstract
 {
     // Arrive
-    public float arriveMinDistance = 0.6f;
+    public float arriveMinDistance = 1.0f;
 }
 
 public static class SteeringSeek
 {
-    public static Vector3 GetSeek(Vector3 position, Agent agent)
+    public static Vector3 GetSeekPosition(Vector3 position, Agent agent)
     {
         if (agent == null)
             return Vector3.zero;
@@ -22,7 +22,17 @@ public static class SteeringSeek
         direction.Normalize();
         direction *= agent.agentData.maxAcceleration;
 
-        direction = new Vector3(direction.x, 0.0f, direction.z);
+        return direction;
+    }
+
+    public static Vector3 GetSeekDirection(Vector3 direction, Agent agent)
+    {
+        if (agent == null)
+            return Vector3.zero;
+
+        direction.Normalize();
+        direction *= agent.agentData.maxAcceleration;
+
         return direction;
     }
 

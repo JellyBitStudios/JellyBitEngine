@@ -103,12 +103,29 @@ update_status ModuleScene::Update()
 		else
 			OnGizmosList();
 	}
-	if(App->IsEditor() && !App->gui->WantTextInput())
+	if (App->IsEditor() && !App->gui->WantTextInput())
+	{
 		if (App->input->GetKey(SDL_SCANCODE_LCTRL) == KEY_REPEAT || App->input->GetKey(SDL_SCANCODE_RCTRL) == KEY_REPEAT)
 		{
 			if (App->input->GetKey(SDL_SCANCODE_Z) == KEY_DOWN)
 				GetPreviousTransform();
 		}
+	
+		else if (App->input->GetKey(SDL_SCANCODE_Y) == KEY_DOWN && !multipleSelection.empty())
+		{
+			GameObject* parent = App->GOs->CreateGameObject("Group objects", root);
+
+			for (std::list<uint>::const_iterator iter = App->scene->multipleSelection.begin(); iter != App->scene->multipleSelection.end(); ++iter)
+			{
+				GameObject* go = App->GOs->GetGameObjectByUID(*iter);
+				if (go && go->CheckAllParentsInSelection(App->scene->multipleSelection))
+				{
+					go->ChangeParent(parent);
+				}
+			}
+		}
+	}
+
 #endif
 
 	return UPDATE_CONTINUE;

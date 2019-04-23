@@ -16,6 +16,8 @@ enum KEY_STATE
 	KEY_UP
 };
 
+class ResourceTexture;
+
 class ModuleInput : public Module
 {
 public:
@@ -65,10 +67,14 @@ public:
 		return mouse_y_motion;
 	}
 
+	void SaveStatus(JSON_Object*) const;
+	void LoadStatus(const JSON_Object*);
+
 public:
 	std::string GetCursorTexture() const;
 	void SetCursorTexture(std::string& textureName);
-
+	void SetCursorTexture(uint textureUUID);
+	void SetDefaultCursorTexture(ResourceTexture* textureRes);
 private:
 
 	KEY_STATE* keyboard;

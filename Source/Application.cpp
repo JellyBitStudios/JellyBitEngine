@@ -441,7 +441,7 @@ void Application::Play()
 {
 	switch (engineState)
 	{
-	case engine_states::ENGINE_PLAY:
+	case engine_states::ENGINE_PLAY: case engine_states::ENGINE_PAUSE:
 	{
 		engineState = engine_states::ENGINE_EDITOR;
 
@@ -450,11 +450,6 @@ void Application::Play()
 		PushSystemEvent(event);
 		break;
 	}
-	case engine_states::ENGINE_PAUSE:
-		// Enter editor mode
-		engineState = engine_states::ENGINE_PLAY;
-		audio->Resume();
-		break;
 
 	case engine_states::ENGINE_EDITOR:
 	{
@@ -486,6 +481,12 @@ void Application::Pause()
 		event.type = System_Event_Type::Pause;
 		PushSystemEvent(event);
 		break;
+
+	case engine_states::ENGINE_PAUSE:
+		// Enter editor mode
+		engineState = engine_states::ENGINE_PLAY;
+		audio->Resume();
+		break;
 	}
 }
 
@@ -493,7 +494,7 @@ void Application::Step()
 {
 	switch (engineState)
 	{
-	case engine_states::ENGINE_PLAY:
+	case engine_states::ENGINE_PAUSE:
 
 		// Stop and tick (step 1 frame)
 		engineState = engine_states::ENGINE_STEP;

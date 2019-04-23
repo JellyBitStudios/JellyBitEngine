@@ -19,7 +19,6 @@ std::vector<std::string>ResourceScript::scriptNames;
 ResourceScript::ResourceScript(uint uuid, ResourceData data, ResourceScriptData scriptData) : Resource(ResourceTypes::ScriptResource, uuid, data), scriptData(scriptData) 
 {
 	scriptName = data.name;
-	scriptNames.push_back(scriptName);
 }
 
 ResourceScript::~ResourceScript()
@@ -215,6 +214,10 @@ bool ResourceScript::referenceMethods()
 	onDrawGizmos = mono_method_desc_search_in_image(desc, App->scripting->scriptsImage);
 	mono_method_desc_free(desc);
 
+	desc = mono_method_desc_new((scriptName + ":OnDrawGizmosSelected()").data(), false);
+	onDrawGizmosSelected = mono_method_desc_search_in_image(desc, App->scripting->scriptsImage);
+	mono_method_desc_free(desc);
+
 	desc = mono_method_desc_new((scriptName + ":OnCollisionEnter(Collision)").data(), false);
 	OnCollisionEnterMethod = mono_method_desc_search_in_image(desc, App->scripting->scriptsImage);
 	mono_method_desc_free(desc);
@@ -240,6 +243,25 @@ bool ResourceScript::referenceMethods()
 	mono_method_desc_free(desc);
 
 	return true;
+}
+
+void ResourceScript::IncludeName()
+{
+	MonoClass* JellyScriptClass = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "JellyScript");
+
+	MonoClass* thisClass = mono_class_from_name(App->scripting->scriptsImage, "", scriptName.data());
+	if (thisClass)
+	{		
+		MonoClass* parentClass = mono_class_get_parent(thisClass);
+		while (parentClass)
+		{
+			if (parentClass == JellyScriptClass)
+			{
+				scriptNames.push_back(scriptName);
+			}
+			parentClass = mono_class_get_parent(parentClass);
+		}	
+	}
 }
 
 std::string ResourceScript::pathToWindowsNotation(const std::string& path) const

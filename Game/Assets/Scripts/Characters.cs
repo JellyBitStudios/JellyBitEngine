@@ -1,39 +1,28 @@
-﻿public class Character
-{
-    public int life = 100;
-    public uint dmg = 0;
+﻿using JellyBitEngine;
+using System.Collections.Generic;
 
-    public enum CharacterType
+public class Entity
+{
+    public Entity()
     {
-        Alita,
-        CyborgMelee,
-        CyborgRanged
+        currentLife = (int)maxLife;
     }
-    public CharacterType characterType;
+
+    // --------------------------------------------------
+
+    public string name = "Entity";
+
+    public uint maxLife = 100;
+    public int currentLife = 0;
+
+    public enum Action { selected, hit, thirdHit, skillQ, skillW }
 }
 
-public class AlitaCharacter : Character
+// Every entity that Alita can select as current target should inherit from this (enemies, chests, etc)
+public class NPC_Entity : Entity
 {
-    public uint lvl = 1;
-    public const float expPerLvlModifier = 20.0f;
-    public float currentExp
-    {
-        get //get method for returning value
-        {
-            return currentExp;
-        }
-        set
-        {
-            if (value >= lvl * expPerLvlModifier)
-            {
-                lvl += 1;
-                currentExp = 0;
-            }
-            else
-                currentExp = value;
-        }
-    }
-
-    public const float ConstDashStrength = 8.0f;
-    public const float ConstMaxDistance = 4.0f;
+    // Alita uses this var as distance hit. Every entity, in function of its weight, should redefine it.
+    public float distanceToTarget = 2.0f;
+    public uint dmg = 10;
+    public bool isBoss = false;
 }
