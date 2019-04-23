@@ -277,7 +277,9 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 				{
 					IncludeCSFiles();
 				}
-			}			
+			}		
+
+			break;
 		}
 
 		case System_Event_Type::GameObjectDestroyed:
