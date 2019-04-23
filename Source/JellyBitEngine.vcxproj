@@ -292,6 +292,7 @@
     <ClInclude Include="ComponentDistanceJoint.h" />
     <ClInclude Include="ComponentFixedJoint.h" />
     <ClInclude Include="ComponentImage.h" />
+    <ClInclude Include="ComponentInterpolation.h" />
     <ClInclude Include="ComponentJoint.h" />
     <ClInclude Include="ComponentLabel.h" />
     <ClInclude Include="ComponentLight.h" />
@@ -804,6 +805,7 @@
     <ClCompile Include="ComponentDistanceJoint.cpp" />
     <ClCompile Include="ComponentFixedJoint.cpp" />
     <ClCompile Include="ComponentImage.cpp" />
+    <ClCompile Include="ComponentInterpolation.cpp" />
     <ClCompile Include="ComponentJoint.cpp" />
     <ClCompile Include="ComponentLabel.cpp" />
     <ClCompile Include="ComponentLight.cpp" />
