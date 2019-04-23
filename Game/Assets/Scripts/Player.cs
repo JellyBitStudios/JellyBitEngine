@@ -4,6 +4,8 @@ class Player : JellyScript
 {
     private static Player m_instance;
 
+    public static RaycastHit lastRaycastHit;
+
     public LayerMask raycastLayer = new LayerMask();
 
     public bool inputEnabled = true;
@@ -22,6 +24,7 @@ class Player : JellyScript
 
     public override void Awake()
     {
+        Debug.ClearConsole();
         EventsManager.Call.StartListening("Player", this, "EventsListener");
     }
 
@@ -36,10 +39,12 @@ class Player : JellyScript
             else
                 HandleMousePicking(false);
 
-            if (Input.GetKeyDown(KeyCode.KEY_Q))
+            if (Input.GetKeyUp(KeyCode.KEY_Q))
                 Alita.Call.ProcessInput(KeyCode.KEY_Q);
-            else if (Input.GetKeyDown(KeyCode.KEY_SPACE))
+            else if (Input.GetKeyUp(KeyCode.KEY_SPACE))
                 Alita.Call.ProcessInput(KeyCode.KEY_SPACE);
+            else if (Input.GetKeyUp(KeyCode.KEY_W))
+                Alita.Call.ProcessInput(KeyCode.KEY_W);
             // if n button pressed open inventory/options/etc 
         }
     }
@@ -85,6 +90,7 @@ class Player : JellyScript
         {
             if (process)
                 Alita.Call.ProcessRaycast(hit, leftClick);
+            lastRaycastHit = hit;
 
             //string layer = hit.gameObject.GetLayer();
         }

@@ -30,6 +30,8 @@ public:
 
 	template<typename Type>
 	void CollectIntersections(std::vector<GameObject*>& gameObjects, Type& primitive);
+	template<typename Type>
+	void CollectContains(std::vector<GameObject*>& gameObjects, Type& primitive);
 
 public:
 
@@ -65,11 +67,35 @@ public:
 
 	template<typename Type>
 	void CollectIntersections(std::vector<GameObject*>& gameObjects, Type& primitive);
+	template<typename Type>
+	void CollectContains(std::vector<GameObject*>& gameObjects, Type& primitive);
 
 public:
 
 	QuadtreeNode* root = nullptr;
 };
+
+template<typename Type>
+inline void QuadtreeNode::CollectContains(std::vector<GameObject*>& gameObjects, Type& primitive)
+{
+	if (primitive.Intersects(boundingBox))
+	{
+		for (std::list<GameObject*>::const_iterator it = objects.begin(); it != objects.end(); ++it)
+		{
+			if (primitive.Contains((*it)->boundingBox))
+			{
+				if (std::find(gameObjects.begin(), gameObjects.end(), *it) == gameObjects.end())
+					gameObjects.push_back(*it);
+			}
+		}
+
+		if (!IsLeaf())
+		{
+			for (uint i = 0; i < 4; ++i)
+				children[i]->CollectContains(gameObjects, primitive);
+		}
+	}
+}
 
 template<typename Type>
 inline void QuadtreeNode::CollectIntersections(std::vector<GameObject*>& gameObjects, Type& primitive)
@@ -95,6 +121,13 @@ inline void QuadtreeNode::CollectIntersections(std::vector<GameObject*>& gameObj
 
 template<typename Type>
 inline void Quadtree::CollectIntersections(std::vector<GameObject*>& gameObjects, Type& primitive)
+{
+	if (root != nullptr)
+		root->CollectIntersections(gameObjects, primitive);
+}
+
+template<typename Type>
+inline void Quadtree::CollectContains(std::vector<GameObject*>& gameObjects, Type& primitive)
 {
 	if (root != nullptr)
 		root->CollectIntersections(gameObjects, primitive);

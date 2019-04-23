@@ -34,14 +34,14 @@ public static class SteeringWander
 
         agent.wanderData.time -= Time.deltaTime;
 
-        Vector3 circlePos = agent.transform.position + agent.transform.forward * agent.wanderData.offset;
+        Vector3 circlePos = agent.transform.position + agent.transform.forward * (agent.wanderData.offset + agent.wanderData.radius + agent.seekData.arriveMinDistance);
         agent.wanderData.point = circlePos + agent.wanderData.dir * agent.wanderData.radius;
 
-        return SteeringSeek.GetSeek(agent.wanderData.point, agent);
+        return SteeringSeek.GetSeekPosition(agent.wanderData.point, agent);
     }
 
     public static void DrawGizmos(Agent agent)
     {
-        Debug.DrawSphere(agent.wanderData.radius, Color.Red, agent.transform.position + agent.transform.forward * agent.wanderData.offset, Quaternion.identity, Vector3.one);
+        Debug.DrawSphere(agent.wanderData.radius, Color.Green, agent.transform.position + agent.transform.forward * (agent.wanderData.offset + agent.wanderData.radius + agent.seekData.arriveMinDistance), Quaternion.identity, Vector3.one);
     }
 }

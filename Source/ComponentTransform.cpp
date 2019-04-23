@@ -11,6 +11,7 @@
 #include "ComponentProjector.h"
 #include "ComponentRigidActor.h"
 #include "ComponentCanvas.h"
+#include "ComponentEmitter.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -121,6 +122,10 @@ void ComponentTransform::OnUniqueEditor()
 			if (parent->cmp_projector != nullptr)
 				parent->cmp_projector->UpdateTransform();
 
+			// Transform updated: if the game object has a emitter, update its bounding box
+			if (parent->cmp_emitter != nullptr)
+				parent->cmp_emitter->UpdateTransform();
+
 			// Transform updated: if the game object has a canvas, Update the rectTransforms
 			if (parent->cmp_canvas != nullptr)
 			{
@@ -195,6 +200,10 @@ void ComponentTransform::SetMatrixFromGlobal(math::float4x4& globalMatrix, bool 
 		// Transform updated: if the game object has a projector, update its frustum
 		if (parent->cmp_projector != nullptr)
 			parent->cmp_projector->UpdateTransform();
+
+		// Transform updated: if the game object has a emitter, update its bounding box
+		if (parent->cmp_emitter != nullptr)
+			parent->cmp_emitter->UpdateTransform();
 
 		if (!fromUI)
 		{

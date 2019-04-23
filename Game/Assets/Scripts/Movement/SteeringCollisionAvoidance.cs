@@ -5,8 +5,8 @@ using JellyBitEngine;
 public class SteeringCollisionAvoidanceData : SteeringAbstract
 {
     public LayerMask mask = new LayerMask();
-    public float radius = 5.0f;
     public float coneHalfAngle = 45.0f;
+    //public float radius = 1.0f;
 }
 
 public static class SteeringCollisionAvoidance
@@ -17,7 +17,7 @@ public static class SteeringCollisionAvoidance
             return Vector3.zero;
 
         OverlapHit[] hitInfo;
-        if (Physics.OverlapSphere(agent.collisionAvoidanceData.radius, agent.transform.position, out hitInfo, agent.collisionAvoidanceData.mask, SceneQueryFlags.Dynamic))
+        if (Physics.OverlapSphere(AgentsManager.Call.Radius, agent.transform.position, out hitInfo, agent.collisionAvoidanceData.mask, SceneQueryFlags.Dynamic))
         {
             // 1. Find the target that's closest to collision
             float shortestTime = float.PositiveInfinity;
@@ -44,7 +44,7 @@ public static class SteeringCollisionAvoidance
 
                 Vector3 direction = (target.transform.position - agent.transform.position).normalized();
                 float coneThreshold = (float)Math.Cos(MathScript.Deg2Rad * agent.collisionAvoidanceData.coneHalfAngle);
-                if (MathScript.Dot(agent.transform.forward, direction) > coneThreshold)
+                if (MathScript.Dot(agent.invertSight ? Quaternion.Rotate(Vector3.up, 180.0f) * agent.transform.forward : agent.transform.forward, direction) > coneThreshold)
                 {
                     Vector3 relativePos = target.transform.position - agent.transform.position;
                     Vector3 relativeVel = targetAgent.velocity - agent.velocity;
@@ -55,7 +55,7 @@ public static class SteeringCollisionAvoidance
                     // Is it going to be a collision?
                     float distance = relativePos.magnitude;
                     float minSeparation = distance - relativeSpeed * timeToCollision;
-                    if (minSeparation > 2.0f * agent.collisionAvoidanceData.radius)
+                    if (minSeparation > 2.0f * AgentsManager.Call.Radius)
                         continue;
 
                     // Is it the shortest?
@@ -77,7 +77,7 @@ public static class SteeringCollisionAvoidance
 
             Vector3 outputAcceleration = Vector3.zero;
             // Are we going to hit exactly or are we already colliding?
-            if (firstMinSeparation <= 0.0f || firstDistance < 2.0f * agent.collisionAvoidanceData.radius)
+            if (firstMinSeparation <= 0.0f || firstDistance < 2.0f * AgentsManager.Call.Radius)
                 // Do the steering based on current position
                 outputAcceleration = firstTarget.transform.position - agent.transform.position;
             else
@@ -98,8 +98,18 @@ public static class SteeringCollisionAvoidance
 
     public static void DrawGizmos(Agent agent)
     {
-        Debug.DrawSphere(agent.collisionAvoidanceData.radius, Color.Green, agent.transform.position, Quaternion.identity, Vector3.one);
-        Debug.DrawLine(agent.transform.position, agent.transform.position + Quaternion.Rotate(Vector3.up, agent.collisionAvoidanceData.coneHalfAngle) * agent.transform.forward * 3.0f, Color.Green);
-        Debug.DrawLine(agent.transform.position, agent.transform.position + Quaternion.Rotate(Vector3.up, -agent.collisionAvoidanceData.coneHalfAngle) * agent.transform.forward * 3.0f, Color.Green);
+        Debug.DrawSphere(AgentsManager.Call.Radius, Color.Red, agent.transform.position, Quaternion.identity, Vector3.one);
+
+        Vector3 positiveDirection = Quaternion.Rotate(Vector3.up, agent.collisionAvoidanceData.coneHalfAngle) * agent.transform.forward * AgentsManager.Call.Radius;
+        Vector3 negativeDirection = Quaternion.Rotate(Vector3.up, -agent.collisionAvoidanceData.coneHalfAngle) * agent.transform.forward * AgentsManager.Call.Radius;
+
+        if (agent.invertSight)
+        {
+            positiveDirection = Quaternion.Rotate(Vector3.up, 180.0f) * positiveDirection;
+            negativeDirection = Quaternion.Rotate(Vector3.up, 180.0f) * negativeDirection;
+        }
+
+        Debug.DrawLine(agent.transform.position, agent.transform.position + positiveDirection, Color.Red);
+        Debug.DrawLine(agent.transform.position, agent.transform.position + negativeDirection, Color.Red);
     }
 }

@@ -251,12 +251,16 @@ void ResourceScript::IncludeName()
 
 	MonoClass* thisClass = mono_class_from_name(App->scripting->scriptsImage, "", scriptName.data());
 	if (thisClass)
-	{
+	{		
 		MonoClass* parentClass = mono_class_get_parent(thisClass);
-		if (parentClass == JellyScriptClass)
+		while (parentClass)
 		{
-			scriptNames.push_back(scriptName);
-		}
+			if (parentClass == JellyScriptClass)
+			{
+				scriptNames.push_back(scriptName);
+			}
+			parentClass = mono_class_get_parent(parentClass);
+		}	
 	}
 }
 

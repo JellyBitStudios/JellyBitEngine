@@ -17,6 +17,7 @@
 #include "ComponentRigidDynamic.h"
 #include "ComponentMaterial.h"
 #include "ComponentSphereCollider.h"
+#include "ComponentCapsuleCollider.h"
 #include "ComponentTrail.h"
 #include "ComponentProjector.h"
 
@@ -460,6 +461,12 @@ GameObject* ScriptingModule::GameObjectFrom(MonoObject* monoObject)
 	if (!monoObject)
 		return nullptr;
 
+	bool destroyed;
+	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "destroyed"), &destroyed);
+
+	if (destroyed)
+		return nullptr;
+
 	int address;
 	mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "cppAddress"), &address);
 
@@ -492,7 +499,6 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 			break;
 		}
 		case ComponentTypes::BoxColliderComponent:
-		case ComponentTypes::CapsuleColliderComponent:
 		case ComponentTypes::PlaneColliderComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Collider"));
@@ -502,6 +508,12 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 		case ComponentTypes::SphereColliderComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "SphereCollider"));
+			break;
+		}
+
+		case ComponentTypes::CapsuleColliderComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "CapsuleCollider"));
 			break;
 		}
 
@@ -594,6 +606,12 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 Component* ScriptingModule::ComponentFrom(MonoObject* monoComponent)
 {
 	if (!monoComponent)
+		return nullptr;
+
+	bool destroyed;
+	mono_field_get_value(monoComponent, mono_class_get_field_from_name(mono_object_get_class(monoComponent), "destroyed"), &destroyed);
+
+	if (destroyed)
 		return nullptr;
 
 	int componentAddress;
@@ -1847,9 +1865,8 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 	if (!monoObject || !type)
 		return nullptr;
 
-	MonoObject* monoComp = nullptr;
-
-	std::string className = mono_class_get_name(mono_type_get_class(mono_reflection_type_get_type(type)));
+	MonoClass* objectClass = mono_type_get_class(mono_reflection_type_get_type(type));
+	std::string className = mono_class_get_name(objectClass);
 
 	if (className == "NavMeshAgent")
 	{
@@ -1994,7 +2011,6 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 
 		return App->scripting->MonoComponentFrom(comp);
 	}
-
 	else if (className == "Material")
 	{
 		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
@@ -2046,6 +2062,19 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 
 		return App->scripting->MonoComponentFrom(comp);	
 	}
+	else if (className == "CapsuleCollider")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::CapsuleColliderComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
 	else if (className == "Trail")
 	{
 		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
@@ -2068,7 +2097,7 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 			return nullptr;
 
 		//Find a script named as this class
-
+		
 		for (int i = 0; i < gameObject->components.size(); ++i)
 		{
 			Component* comp = gameObject->components[i];
@@ -2081,9 +2110,27 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 				}
 			}
 		}
-	}
 
-	return monoComp;
+		//Find a script whose parent class is named as this class
+		for (int i = 0; i < gameObject->components.size(); ++i)
+		{
+			Component* comp = gameObject->components[i];
+			if (comp->GetType() == ComponentTypes::ScriptComponent)
+			{
+				ComponentScript* script = (ComponentScript*)comp;
+				
+				MonoClass* parentClass = mono_class_get_parent(mono_object_get_class(App->scripting->MonoComponentFrom(script)));
+				while (parentClass != nullptr)
+				{
+					if (className == mono_class_get_name(parentClass))
+						return script->GetMonoComponent();
+
+					parentClass = mono_class_get_parent(parentClass);
+				}
+			}
+		}
+	}
+	return nullptr;
 }
 
 MonoObject* GetGameCamera()
@@ -2369,6 +2416,54 @@ bool NavigationGetPath(MonoArray* origin, MonoArray* destination, MonoArray** ou
 		*out_path = nullptr;
 	}
 	
+	return false;
+}
+
+bool NavigationProjectPoint(MonoArray* original, MonoArray** projected, MonoArray* extents)
+{
+	if (!original || !extents)
+		return false;
+
+	math::float3 originalCPP = { mono_array_get(original, float, 0), mono_array_get(original, float, 1), mono_array_get(original, float, 2) };
+	math::float3 extentsCPP = math::float3(mono_array_get(extents, float, 0), mono_array_get(extents, float, 1), mono_array_get(extents, float, 2));
+
+	math::float3 projectedCPP;
+	if (App->navigation->ProjectPoint(originalCPP.ptr(), projectedCPP, extentsCPP))
+	{
+		*projected = mono_array_new(App->scripting->domain, mono_get_single_class(), 3);
+		mono_array_set(*projected, float, 0, projectedCPP.x);
+		mono_array_set(*projected, float, 1, projectedCPP.y);
+		mono_array_set(*projected, float, 2, projectedCPP.z);
+
+		return true;
+	}
+
+	*projected = nullptr;
+
+	return false;
+}
+
+bool NavigationProjectPointPolyBoundary(MonoArray* original, MonoArray** projected, MonoArray* extents)
+{
+	if (!original || !extents)
+		return false;
+
+	math::float3 originalCPP = { mono_array_get(original, float, 0), mono_array_get(original, float, 1), mono_array_get(original, float, 2) };
+	math::float3 extentsCPP = math::float3(mono_array_get(extents, float, 0), mono_array_get(extents, float, 1), mono_array_get(extents, float, 2));
+
+	math::float3 projectedCPP;
+	if (App->navigation->ProjectPointPolyBoundary(originalCPP.ptr(), projectedCPP, extentsCPP))
+	{
+		*projected = mono_array_new(App->scripting->domain, mono_get_single_class(), 3);
+		mono_array_set(*projected, float, 0, projectedCPP.x);
+		mono_array_set(*projected, float, 1, projectedCPP.y);
+		mono_array_set(*projected, float, 2, projectedCPP.z);
+
+		return true;
+	}
+
+	*projected = nullptr;
+
 	return false;
 }
 
@@ -3454,6 +3549,44 @@ float ColliderSphereGetRadius(MonoObject* monoSphere)
 	}
 }
 
+float ColliderCapsuleGetRadius(MonoObject* monoCapsule)
+{
+	ComponentCapsuleCollider* capsule = (ComponentCapsuleCollider*)App->scripting->ComponentFrom(monoCapsule);
+	if (capsule)
+	{
+		return capsule->GetRadius();
+	}
+	return -1.0f;
+}
+
+void ColliderCapsuleSetRadius(MonoObject* monoCapsule, float newRadius)
+{
+	ComponentCapsuleCollider* capsule = (ComponentCapsuleCollider*)App->scripting->ComponentFrom(monoCapsule);
+	if (capsule)
+	{
+		capsule->SetRadius(newRadius);
+	}
+}
+
+float ColliderCapsuleGetHalfHeight(MonoObject* monoCapsule)
+{
+	ComponentCapsuleCollider* capsule = (ComponentCapsuleCollider*)App->scripting->ComponentFrom(monoCapsule);
+	if (capsule)
+	{
+		return capsule->GetHalfHeight();
+	}
+	return -1.0f;
+}
+
+void ColliderCapsuleSetHalfHeight(MonoObject* monoCapsule, float newHalfHeight)
+{
+	ComponentCapsuleCollider* capsule = (ComponentCapsuleCollider*)App->scripting->ComponentFrom(monoCapsule);
+	if (capsule)
+	{
+		capsule->SetHalfHeight(newHalfHeight);
+	}
+}
+
 void MaterialSetResource(MonoObject* monoMaterial, MonoString* newMatName)
 {
 	if (!newMatName)
@@ -3660,7 +3793,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Animator::AnimationFinished", (const void*)&AnimatorAnimationFinished);
 	mono_add_internal_call("JellyBitEngine.Animator::UpdateAnimationSpeed", (const void*)&UpdateAnimationSpeed);
 	mono_add_internal_call("JellyBitEngine.Animator::SetAnimationLoop", (const void*)&SetAnimationLoop);
-	
+	mono_add_internal_call("JellyBitEngine.Animator::UpdateAnimationBlendTime", (const void*)&UpdateAnimationBlendTime);
+
 	//Particle Emitter
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Play", (const void*)&ParticleEmitterPlay);
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Stop", (const void*)&ParticleEmitterStop);
@@ -3686,6 +3820,10 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Physics::_OverlapSphere", (const void*)&OverlapSphere);
 	mono_add_internal_call("JellyBitEngine.Physics::_Raycast", (const void*)&Raycast);
 	mono_add_internal_call("JellyBitEngine.SphereCollider::GetRadius", (const void*)ColliderSphereGetRadius);
+	mono_add_internal_call("JellyBitEngine.CapsuleCollider::GetRadius", (const void*)ColliderCapsuleGetRadius);
+	mono_add_internal_call("JellyBitEngine.CapsuleCollider::SetRadius", (const void*)ColliderCapsuleSetRadius);
+	mono_add_internal_call("JellyBitEngine.CapsuleCollider::GetHalfHeight", (const void*)ColliderCapsuleGetHalfHeight);
+	mono_add_internal_call("JellyBitEngine.CapsuleCollider::SetHalfHeight", (const void*)ColliderCapsuleSetHalfHeight);
 
 	//UI
 	mono_add_internal_call("JellyBitEngine.UI.UI::UIHovered", (const void*)&UIHovered);
@@ -3743,6 +3881,8 @@ void ScriptingModule::CreateDomain()
 	//mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetPath", (const void*)&NavAgentGetPath);
 
 	mono_add_internal_call("JellyBitEngine.Navigation::_GetPath", (const void*)&NavigationGetPath);
+	mono_add_internal_call("JellyBitEngine.Navigation::_ProjectPoint", (const void*)&NavigationProjectPoint);
+	mono_add_internal_call("JellyBitEngine.Navigation::_ProjectPointPolyBoundary", (const void*)&NavigationProjectPointPolyBoundary);
 
 	//Audio
 	mono_add_internal_call("JellyBitEngine.AudioSource::GetAudio", (const void*)&AudioSourceGetAudio);

@@ -1,17 +1,21 @@
 #ifndef GAMEMODE
 #include "CurrentSelection.h"
 #include "Application.h"
+
 #include "ModuleScene.h"
 #include "ModuleCameraEditor.h"
-#include "GameObject.h"
-#include "ComponentTransform.h"
-#include "SceneImporter.h"
-#include "MaterialImporter.h"
-#include "ResourceMesh.h"
-#include "PanelInspector.h"
 #include "ModuleGui.h"
 #include "ModuleUI.h"
+#include "ModuleGOs.h"
+
+#include "GameObject.h"
+#include "ComponentTransform.h"
+#include "PanelInspector.h"
+
+#include "SceneImporter.h"
+#include "MaterialImporter.h"
 #include "Resource.h"
+#include "ResourceMesh.h"
 
 #include <assert.h>
 
@@ -84,6 +88,7 @@ CurrentSelection& CurrentSelection::operator+=(GameObject * newSelection)
 {
 	assert(newSelection != nullptr && "Non valid setter. Set to SelectedType::null instead");
 	type = SelectedType::gameObject;
+	cur = (void*)newSelection;
 
 	// New game object selected. Update the camera reference
 	if (newSelection->transform)
@@ -98,12 +103,18 @@ CurrentSelection& CurrentSelection::operator-=(GameObject * newSelection)
 	assert(newSelection != nullptr && "Non valid setter. Set to SelectedType::null instead");
 	type = SelectedType::gameObject;
 
-	// New game object selected. Update the camera reference
-	if (newSelection->transform)
-		App->camera->SetReference(newSelection->transform->GetPosition());
-
 	App->scene->multipleSelection.remove(newSelection->GetUUID());
 
+	if (cur == newSelection)
+	{
+		if (!App->scene->multipleSelection.empty())
+			cur = App->GOs->GetGameObjectByUID(App->scene->multipleSelection.back());
+		else
+		{
+			type = SelectedType::null;
+			cur = nullptr;
+		}
+	}
 	return *this;
 }
 bool CurrentSelection::operator==(const GameObject * rhs)
