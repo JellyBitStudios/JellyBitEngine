@@ -66,6 +66,10 @@ private:
 
 	GameObject* draggedGO = nullptr;
 
+	uint idleTexture = 0u;
+	uint hoveredTexture = 0u;
+	uint clickTexture = 0u;
+
 	//Physix plane for button when canvas is world
 	bool isWorld = false;
 	//physx::PxRigidActor* gActor = nullptr;
