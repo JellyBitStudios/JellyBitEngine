@@ -48,19 +48,6 @@ void ComponentCanvasRenderer::OnSystemEvent(System_Event event)
 
 void ComponentCanvasRenderer::Update()
 {
-	ComponentLabel* cmp_label = (ComponentLabel*)parent->GetComponent(ComponentTypes::LabelComponent);
-	if (cmp_label)
-		if (cmp_label->IsTreeActive())
-		{
-			for (ToUIRend* rend : rend_queue)
-			{
-				if (rend->isRendered())
-				{
-					rend->Set(RenderTypes::LABEL, cmp_label);
-					break;
-				}
-			}
-		}
 	ComponentImage* cmp_image = (ComponentImage*)parent->GetComponent(ComponentTypes::ImageComponent);
 	if (cmp_image)
 		if (cmp_image->IsTreeActive())
@@ -70,6 +57,19 @@ void ComponentCanvasRenderer::Update()
 				if (rend->isRendered())
 				{
 					rend->Set(RenderTypes::IMAGE, cmp_image);
+					break;
+				}
+			}
+		}
+	ComponentLabel* cmp_label = (ComponentLabel*)parent->GetComponent(ComponentTypes::LabelComponent);
+	if (cmp_label)
+		if (cmp_label->IsTreeActive())
+		{
+			for (ToUIRend* rend : rend_queue)
+			{
+				if (rend->isRendered())
+				{
+					rend->Set(RenderTypes::LABEL, cmp_label);
 					break;
 				}
 			}
