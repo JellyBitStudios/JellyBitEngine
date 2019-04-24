@@ -222,6 +222,11 @@ void ComponentEmitter::ClearEmitter()
 	isPlaying = false;
 }
 
+void ComponentEmitter::SetLifeTime(float life)
+{
+	startValues.life.x = startValues.life.y = life;
+}
+
 void ComponentEmitter::ConnectSubEmitter()
 {
 	if (uuidSubEmitter > 0)

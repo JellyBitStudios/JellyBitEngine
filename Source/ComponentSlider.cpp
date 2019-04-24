@@ -63,6 +63,8 @@ ComponentSlider::~ComponentSlider()
 	if (frontTexture > 0u) App->res->SetAsUnused(frontTexture);
 	if (indexB != -1) App->glCache->UnRegisterBufferIndex(offsetB, ComponentTypes::SliderComponent);
 	if (indexF != -1) App->glCache->UnRegisterBufferIndex(offsetF, ComponentTypes::SliderComponent);
+
+	parent->cmp_slider = nullptr;
 }
 
 void ComponentSlider::OnSystemEvent(System_Event event)
