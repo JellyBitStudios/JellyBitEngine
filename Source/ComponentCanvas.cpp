@@ -43,6 +43,7 @@ ComponentCanvas::ComponentCanvas(const ComponentCanvas & componentCanvas, GameOb
 	{
 		App->ui->canvas.push_back(parent);
 		needed_change = true;
+		Update();
 	}
 }
 
@@ -91,6 +92,34 @@ void ComponentCanvas::Update()
 			RELEASE(transform);
 		if (fakeGo)
 			RELEASE(fakeGo);
+
+
+		for (GameObject* go : App->ui->canvas_screen)
+		{
+			if (go == parent)
+			{
+				App->ui->canvas_screen.remove(parent);
+				break;
+			}
+		}
+
+		for (GameObject* go : App->ui->canvas_worldScreen)
+		{
+			if (go == parent)
+			{
+				App->ui->canvas_worldScreen.remove(parent);
+				break;
+			}
+		}
+
+		for (GameObject* go : App->ui->canvas_world)
+		{
+			if (go == parent)
+			{
+				App->ui->canvas_world.remove(parent);
+				break;
+			}
+		}
 
 		switch (type)
 		{
@@ -215,6 +244,7 @@ void ComponentCanvas::OnInternalLoad(char *& cursor)
 	cursor += bytes;
 
 	needed_change = true;
+	Update();
 }
 
 void ComponentCanvas::Change(CanvasType to)

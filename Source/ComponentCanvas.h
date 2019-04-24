@@ -10,9 +10,10 @@ class ComponentCanvas : public Component
 public:
 	enum CanvasType
 	{
+		CNULL = -1,
 		SCREEN,
 		WORLD_SCREEN,
-		WORLD
+		WORLD,
 	};
 
 public:
