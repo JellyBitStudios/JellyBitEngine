@@ -190,26 +190,32 @@ void ComponentRectTransform::InitRect()
 	{
 		int* rectParent = nullptr;
 		if (parent->cmp_canvas)
+		{
 #ifndef GAMEMODE
 			rectParent = (App->ui->ScreenOnWorld()) ? App->ui->GetWHRect() : App->ui->GetRectUI();
 #else
 			rectParent = App->ui->GetRectUI();
 #endif
+		}
 		else
-			rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+		{
+			if(parent->GetParent() != nullptr)
+				rectParent = parent->GetParent()->cmp_rectTransform->GetRect();
+		}
+		if (rectParent != nullptr)
+		{
+			rectTransform[Rect::X] = rectParent[Rect::X];
+			rectTransform[Rect::Y] = rectParent[Rect::Y];
 
-		rectTransform[Rect::X] = rectParent[Rect::X];
-		rectTransform[Rect::Y] = rectParent[Rect::Y];
+			if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
+				rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
+			if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
+				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
 
-		if (rectParent[Rect::XDIST] < rectTransform[Rect::XDIST])
-			rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
-		if (rectParent[Rect::YDIST] < rectTransform[Rect::YDIST])
-			rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
+			(App->ui->ScreenOnWorld()) ? CalculateCornersFromRect() : CalculateScreenCorners();
 
-		(App->ui->ScreenOnWorld()) ? CalculateCornersFromRect() : CalculateScreenCorners();
-
-		CalculateAnchors(true);
-
+			CalculateAnchors(true);
+		}
 		break;
 	}
 	case ComponentRectTransform::WORLD:
@@ -219,18 +225,21 @@ void ComponentRectTransform::InitRect()
 	}
 	case ComponentRectTransform::RECT_WORLD:
 	{
-		ComponentRectTransform* rTParent = parent->GetParent()->cmp_rectTransform;
-		int* rectParent = rTParent->GetRect();
-		
-		uint tmp;
-		z = ModuleUI::FindCanvas(parent, tmp)->cmp_canvas->GetZ(parent, GetType());
-		if (rectTransform[Rect::XDIST] > rectParent[Rect::XDIST])
-			rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
-		if (rectTransform[Rect::YDIST] > rectParent[Rect::YDIST])
-			rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
+		if (parent->GetParent() != nullptr)
+		{
+			ComponentRectTransform* rTParent = parent->GetParent()->cmp_rectTransform;
+			int* rectParent = rTParent->GetRect();
 
-		CalculateCornersFromRect();
-		CalculateAnchors(true);
+			uint tmp;
+			z = ModuleUI::FindCanvas(parent, tmp)->cmp_canvas->GetZ(parent, GetType());
+			if (rectTransform[Rect::XDIST] > rectParent[Rect::XDIST])
+				rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
+			if (rectTransform[Rect::YDIST] > rectParent[Rect::YDIST])
+				rectTransform[Rect::YDIST] = rectParent[Rect::YDIST];
+
+			CalculateCornersFromRect();
+			CalculateAnchors(true);
+		}
 		break;
 	}
 	}
@@ -308,37 +317,41 @@ void ComponentRectTransform::CanvasChanged()
 void ComponentRectTransform::CalculateRectFromWorld()
 {
 	math::float4x4 globalmatrix = math::float4x4::identity;
-	if (billboard)
+	if (parent->transform != nullptr)
 	{
-		globalmatrix = parent->transform->GetGlobalMatrix();
-		math::float3 zAxis = App->renderer3D->GetCurrentCamera()->frustum.front;
-		math::float3 yAxis = App->renderer3D->GetCurrentCamera()->frustum.up;
-		math::float3 xAxis = yAxis.Cross(zAxis).Normalized();
-
-		math::float3 pos = math::float3::zero;
-		math::Quat rot = math::Quat::identity;
-		math::float3 scale = math::float3::zero;
-		globalmatrix.Decompose(pos, rot, scale);
-
-		if (!scale.IsFinite())
+		if (billboard)
 		{
-			scale = math::float3::one;
-			CONSOLE_LOG(LogTypes::Warning, "If canvas use billboard, you can't set size of transform to 0. Reset scale..")
+			globalmatrix = parent->transform->GetGlobalMatrix();
+			math::float3 zAxis = App->renderer3D->GetCurrentCamera()->frustum.front;
+			math::float3 yAxis = App->renderer3D->GetCurrentCamera()->frustum.up;
+			math::float3 xAxis = yAxis.Cross(zAxis).Normalized();
+
+			math::float3 pos = math::float3::zero;
+			math::Quat rot = math::Quat::identity;
+			math::float3 scale = math::float3::zero;
+			globalmatrix.Decompose(pos, rot, scale);
+
+			if (!scale.IsFinite())
+			{
+				scale = math::float3::one;
+				CONSOLE_LOG(LogTypes::Warning, "If canvas use billboard, you can't set size of transform to 0. Reset scale..")
+			}
+
+			globalmatrix = math::float4x4::FromTRS(pos, math::Quat::identity * math::float3x3(xAxis, yAxis, zAxis).ToQuat(), scale);
+			parent->transform->SetMatrixFromGlobal(globalmatrix, true);
 		}
 
-		globalmatrix = math::float4x4::FromTRS(pos, math::Quat::identity * math::float3x3(xAxis, yAxis, zAxis).ToQuat(), scale);
-		parent->transform->SetMatrixFromGlobal(globalmatrix, true);
-	}
-	globalmatrix = parent->transform->GetGlobalMatrix();
-	corners[Rect::RTOPLEFT] = math::float4(globalmatrix * math::float4(-0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
-	corners[Rect::RTOPRIGHT] = math::float4(globalmatrix * math::float4(0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
-	corners[Rect::RBOTTOMLEFT] = math::float4(globalmatrix * math::float4(-0.5f, -0.5f, 0.0f, 1.0f)).Float3Part();
-	corners[Rect::RBOTTOMRIGHT] = math::float4(globalmatrix * math::float4(0.5f, -0.5f, 0.0f, 1.0f)).Float3Part();
+		globalmatrix = parent->transform->GetGlobalMatrix();
+		corners[Rect::RTOPLEFT] = math::float4(globalmatrix * math::float4(-0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
+		corners[Rect::RTOPRIGHT] = math::float4(globalmatrix * math::float4(0.5f, 0.5f, 0.0f, 1.0f)).Float3Part();
+		corners[Rect::RBOTTOMLEFT] = math::float4(globalmatrix * math::float4(-0.5f, -0.5f, 0.0f, 1.0f)).Float3Part();
+		corners[Rect::RBOTTOMRIGHT] = math::float4(globalmatrix * math::float4(0.5f, -0.5f, 0.0f, 1.0f)).Float3Part();
 
-	rectTransform[Rect::X] = 0;
-	rectTransform[Rect::Y] = 0;
-	rectTransform[Rect::XDIST] = abs(math::Distance(corners[Rect::RTOPRIGHT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
-	rectTransform[Rect::YDIST] = abs(math::Distance(corners[Rect::RBOTTOMLEFT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
+		rectTransform[Rect::X] = 0;
+		rectTransform[Rect::Y] = 0;
+		rectTransform[Rect::XDIST] = abs(math::Distance(corners[Rect::RTOPRIGHT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
+		rectTransform[Rect::YDIST] = abs(math::Distance(corners[Rect::RBOTTOMLEFT], corners[Rect::RTOPLEFT])) * WORLDTORECT;
+	}
 }
 // World Position
 void ComponentRectTransform::CalculateCornersFromRect()
