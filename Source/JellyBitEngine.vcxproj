@@ -390,6 +390,7 @@
     <ClInclude Include="ModuleFBOManager.h" />
     <ClInclude Include="ModuleAudio.h" />
     <ClInclude Include="ModuleInternalResHandler.h" />
+    <ClInclude Include="ModuleInterpolation.h" />
     <ClInclude Include="ModuleLayers.h" />
     <ClInclude Include="ModuleTrails.h" />
     <ClInclude Include="ModuleUI.h" />
@@ -821,6 +822,7 @@
     <ClCompile Include="ModuleFBOManager.cpp" />
     <ClCompile Include="ModuleAudio.cpp" />
     <ClCompile Include="ModuleInternalResHandler.cpp" />
+    <ClCompile Include="ModuleInterpolation.cpp" />
     <ClCompile Include="ModuleLayers.cpp" />
     <ClCompile Include="ModuleTrails.cpp" />
     <ClCompile Include="ModuleUI.cpp" />

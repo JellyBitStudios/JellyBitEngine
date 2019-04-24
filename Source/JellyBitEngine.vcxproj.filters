@@ -2124,6 +2124,9 @@
     <ClInclude Include="ComponentInterpolation.h">
       <Filter>Sources\Modules\GO&amp;Components\Components</Filter>
     </ClInclude>
+    <ClInclude Include="ModuleInterpolation.h">
+      <Filter>Sources\Modules</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ModuleInput.cpp">
@@ -2698,6 +2701,9 @@
     </ClCompile>
     <ClCompile Include="ComponentInterpolation.cpp">
       <Filter>Sources\Modules\GO&amp;Components\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleInterpolation.cpp">
+      <Filter>Sources\Modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
