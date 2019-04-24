@@ -5,6 +5,7 @@
 
 #include "ComponentImage.h"
 #include "ComponentLabel.h"
+#include "ComponentSlider.h"
 
 #include "glew/include/GL/glew.h"
 
@@ -64,7 +65,9 @@ void GLCache::RegisterBufferIndex(uint * offset, int * index, ComponentTypes cTy
 	if (!isNVIDIA)
 		return;
 
-	if (cType == ComponentTypes::ImageComponent)
+	switch (cType)
+	{
+	case ComponentTypes::ImageComponent:
 	{
 		if (countImages <= UI_MAX_COMPONENTS_IMAGE)
 		{
@@ -87,8 +90,34 @@ void GLCache::RegisterBufferIndex(uint * offset, int * index, ComponentTypes cTy
 			queueImageToBuffer.push((ComponentImage*)cmp);
 			CONSOLE_LOG(LogTypes::Warning, "Component Image range buffer is full, adding to queue. Total %i images.", queueImageToBuffer.size());
 		}
+		break;
 	}
-	else if (cType == ComponentTypes::LabelComponent)
+	case ComponentTypes::SliderComponent:
+	{
+		if (countImages <= UI_MAX_COMPONENTS_IMAGE)
+		{
+			if (!free_image_offsets.empty())
+			{
+				*offset = free_image_offsets.at(free_image_offsets.size() - 1);
+				free_image_offsets.pop_back();
+			}
+			else
+			{
+				*offset = offsetImage;
+				offsetImage += UI_BYTES_RECT;
+			}
+			*index = *offset / (sizeof(float) * 4);
+			countImages++;
+		}
+		else
+		{
+			*index = -1;
+			queueSliderToBuffer.push((ComponentSlider*)cmp);
+			CONSOLE_LOG(LogTypes::Warning, "Component Slider range buffer is full, adding to queue. Total %i images.", queueSliderToBuffer.size());
+		}
+		break;
+	}
+	case ComponentTypes::LabelComponent:
 	{
 		if (countLabels <= UI_MAX_COMPONENTS_LABEL)
 		{
@@ -111,6 +140,8 @@ void GLCache::RegisterBufferIndex(uint * offset, int * index, ComponentTypes cTy
 			queueLabelToBuffer.push((ComponentLabel*)cmp);
 			CONSOLE_LOG(LogTypes::Warning, "Component Label range buffer is full, adding to queue. Total %i labels.", queueLabelToBuffer.size());
 		}
+		break;
+	}
 	}
 }
 
@@ -119,7 +150,9 @@ void GLCache::UnRegisterBufferIndex(uint offset, ComponentTypes cType)
 	if (!isNVIDIA)
 		return;
 
-	if (cType == ComponentTypes::ImageComponent)
+	switch (cType)
+	{
+	case ComponentTypes::ImageComponent:
 	{
 		if (countImages != 0)
 		{
@@ -147,8 +180,39 @@ void GLCache::UnRegisterBufferIndex(uint offset, ComponentTypes cType)
 				countImages++;
 			}
 		}
+		break;
 	}
-	else if (cType == ComponentTypes::LabelComponent)
+	case ComponentTypes::SliderComponent:
+	{
+		if (countImages != 0)
+		{
+			countImages--;
+			if (offset == offsetImage - UI_BYTES_RECT)
+				offsetImage = offset;
+			else
+				free_image_offsets.push_back(offset);
+			if (!queueSliderToBuffer.empty())
+			{
+				ComponentSlider* slider = queueSliderToBuffer.front();
+				queueSliderToBuffer.pop();
+				uint offsetSend;
+				if (!free_image_offsets.empty())
+				{
+					offsetSend = free_image_offsets.at(free_image_offsets.size() - 1);
+					free_image_offsets.pop_back();
+				}
+				else
+				{
+					offsetSend = offsetImage;
+					offsetImage += UI_BYTES_RECT;
+				}
+				slider->SetBufferRangeAndFIll(offsetSend, offsetSend / sizeof(float) * 4);
+				countImages++;
+			}
+		}
+		break;
+	}
+	case ComponentTypes::LabelComponent:
 	{
 		if (countLabels != 0)
 		{
@@ -176,6 +240,8 @@ void GLCache::UnRegisterBufferIndex(uint offset, ComponentTypes cType)
 				countLabels++;
 			}
 		}
+		break;
+	}
 	}
 }
 

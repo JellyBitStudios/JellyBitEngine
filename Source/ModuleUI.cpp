@@ -21,6 +21,7 @@
 #include "ComponentImage.h"
 #include "ComponentLabel.h"
 #include "ComponentScript.h"
+#include "ComponentSlider.h"
 
 #include "ResourceMaterial.h"
 #include "Brofiler/Brofiler.h"
@@ -52,9 +53,18 @@ void ModuleUI::DrawUI()
 #endif
 	if (!uiMode)
 		return;
+	use(ui_shader);
+	math::float4x4 view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
+	math::float4x4 projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();
+	math::float4x4 mvp = view * projection;
+	setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
+	glBindVertexArray(reference_vertex);
+	glActiveTexture(GL_TEXTURE0);
 	UpdateRenderStates();
 	DrawWorldCanvas();
 	DrawScreenCanvas();
+	glBindVertexArray(0);
+	use(0);
 }
 
 bool ModuleUI::Init(JSON_Object * jObject)
@@ -78,14 +88,29 @@ bool ModuleUI::Start()
 	ui_size_draw[Screen::WIDTH] = App->window->GetWindowWidth();
 	ui_size_draw[Screen::HEIGHT] = App->window->GetWindowHeight();
 
-	uiWorkSpace[Screen::WIDTH] = 1280;
-	uiWorkSpace[Screen::HEIGHT] = 720;
-	uiWorkSpace[Screen::X] = (((int)ui_size_draw[Screen::WIDTH] - (int)uiWorkSpace[Screen::WIDTH]) < 0) ? 0 : (ui_size_draw[Screen::WIDTH] - uiWorkSpace[Screen::WIDTH]);
-	uiWorkSpace[Screen::Y] = 0;
-
-
 #ifdef GAMEMODE
 	uiMode = true;
+	screenInWorld = false;
+#else
+
+	WorldHolder = new GameObject("UIHolder", nullptr);
+	WorldHolder->AddComponent(ComponentTypes::TransformComponent);
+	WorldHolder->transform->SetPosition({ 8.0f, 4.5f, 0.0f });
+	WorldHolder->transform->SetScale({ 16.0f, 9.0f, 1.0f });
+
+	ComponentCanvas* c = (ComponentCanvas*)WorldHolder->AddComponent(ComponentTypes::CanvasComponent);
+	c->Update();
+	c->Change(ComponentCanvas::CanvasType::WORLD);
+	c->Update();
+	WorldHolder->AddComponent(ComponentTypes::RectTransformComponent);
+	((ComponentImage*)WorldHolder->AddComponent(ComponentTypes::ImageComponent))->SetResImageUuid(App->resHandler->screenInWorldTexture);
+
+	uiSizeEditor[Screen::X] = 0;
+	uiSizeEditor[Screen::Y] = 0;
+	uiSizeEditor[Screen::WIDTH] = 1600;
+	uiSizeEditor[Screen::HEIGHT] = 900;
+
+
 #endif // GAMEMODE
 
 	if (FT_Init_FreeType(&library))
@@ -121,6 +146,9 @@ update_status ModuleUI::PostUpdate()
 bool ModuleUI::CleanUp()
 {
 	FT_Done_FreeType(library);
+#ifndef GAMEMODE
+	RELEASE(WorldHolder);
+#endif // !GAMEMODE
 	return true;
 }
 
@@ -135,12 +163,59 @@ void ModuleUI::OnSystemEvent(System_Event event)
 		windowChanged.type = System_Event_Type::ScreenChanged;
 		for (GameObject* goScreenCanvas : canvas_screen)
 			goScreenCanvas->OnSystemEvent(windowChanged);
+#else //Chekear scene changes without gamemode
+		if (App->GetEngineState() == engine_states::ENGINE_EDITOR)
+		{
+			screenInWorld = true;
+			canvas.push_front(WorldHolder);
+			canvas_world.push_front(WorldHolder);
+
+			System_Event updateCornersToScreen;
+			updateCornersToScreen.type = System_Event_Type::RectTransformUpdated;
+			for (GameObject* goScreenCanvas : canvas_screen)
+			{
+				std::vector<GameObject*> childs;
+				goScreenCanvas->GetChildrenAndThisVectorFromLeaf(childs);
+				for (std::vector<GameObject*>::reverse_iterator go = childs.rbegin(); go != childs.rend(); ++go)
+					(*go)->OnSystemEvent(updateCornersToScreen);
+			}
+		}
 #endif // GAMEMODE
+	}
+	break;
+	case System_Event_Type::Play:
+	{
+#ifndef GAMEMODE
+		if (App->GetEngineState() == engine_states::ENGINE_EDITOR)
+		{
+			canvas_world.remove(WorldHolder);
+			canvas.remove(WorldHolder);
+		}
+#endif // GAMEMODE
+
+		screenInWorld = false;
+		System_Event updateCornersToScreen;
+		updateCornersToScreen.type = System_Event_Type::RectTransformUpdated;
+		for (GameObject* goScreenCanvas : canvas_screen)
+		{
+			std::vector<GameObject*> childs;
+			goScreenCanvas->GetChildrenAndThisVectorFromLeaf(childs);
+			for (std::vector<GameObject*>::reverse_iterator go = childs.rbegin(); go != childs.rend(); ++go)
+				(*go)->OnSystemEvent(updateCornersToScreen);
+		}
 		break;
 	}
 	case System_Event_Type::LoadScene:
 	{
 		App->glCache->ResetUIBufferValues();
+
+#ifndef GAMEMODE
+		if (App->GetEngineState() == engine_states::ENGINE_EDITOR)
+		{
+			uint temp; int tm;
+			App->glCache->RegisterBufferIndex(&temp, &tm, ComponentTypes::ImageComponent, WorldHolder->cmp_image);
+		}
+#endif
 	}
 	case System_Event_Type::Stop:
 	{
@@ -175,6 +250,12 @@ void ModuleUI::OnSystemEvent(System_Event event)
 			break;
 		}
 		}
+		break;
+	}
+	case System_Event_Type::UpdateBillboard:
+	{
+		for (GameObject* goWorldCanvas : canvas_world)
+			goWorldCanvas->OnSystemEvent(event);
 		break;
 	}
 	}
@@ -218,8 +299,7 @@ void ModuleUI::DrawScreenCanvas()
 
 	if (!canvas_screen.empty())
 	{
-		use(ui_shader);
-		setBool(ui_shader, "isScreen", 1);
+		setBool(ui_shader, "isScreen", !screenInWorld);
 
 		for (GameObject* canvas : canvas_screen)
 		{
@@ -241,6 +321,14 @@ void ModuleUI::DrawScreenCanvas()
 						case ComponentCanvasRenderer::RenderTypes::LABEL:
 							DrawUILabel(rend->GetIndex(), rend->GetWord(), rend->GetTexturesWord(), rend->GetColor());
 							break;
+						case ComponentCanvasRenderer::RenderTypes::SLIDER:
+						{
+							math::float3* corners = (*render)->cmp_slider->GetCorners();
+							math::float2 null(-1.0f, -1.0f);
+							DrawUIImage((*render)->cmp_slider->GetBackBufferIndex(), corners, rend->GetColor(), (*render)->cmp_slider->GetBackTexture(), null);
+							DrawUIImage((*render)->cmp_slider->GetFrontBufferIndex(), &corners[4], rend->GetColor(), (*render)->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
+							break;
+						}
 						}
 
 						rend = renderer->GetDrawAvaiable();
@@ -248,7 +336,6 @@ void ModuleUI::DrawScreenCanvas()
 				}
 			}
 		}
-		use(0);
 	}
 
 	if (depthTest) glEnable(GL_DEPTH_TEST);
@@ -264,13 +351,7 @@ void ModuleUI::DrawWorldCanvas()
 
 	if (!canvas_world.empty())
 	{
-		math::float4x4 view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
-		math::float4x4 projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();
-		math::float4x4 mvp = view * projection;
-		use(ui_shader);
 		setBool(ui_shader, "isScreen", 0);
-		setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
-
 		for (GameObject* canvas : canvas_world)
 		{
 			std::vector<GameObject*> renderers;
@@ -291,14 +372,20 @@ void ModuleUI::DrawWorldCanvas()
 						case ComponentCanvasRenderer::RenderTypes::LABEL:
 							DrawUILabel(rend->GetIndex(), rend->GetWord(), rend->GetTexturesWord(), rend->GetColor());
 							break;
+						case ComponentCanvasRenderer::RenderTypes::SLIDER:
+						{
+							math::float3* corners = (*render)->cmp_slider->GetCorners();
+							math::float2 null(-1.0f, -1.0f);
+							DrawUIImage((*render)->cmp_slider->GetBackBufferIndex(), corners, rend->GetColor(), (*render)->cmp_slider->GetBackTexture(), null);
+							DrawUIImage((*render)->cmp_slider->GetFrontBufferIndex(), &corners[4], rend->GetColor(), (*render)->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
+							break;
 						}
-
+					}
 						rend = renderer->GetDrawAvaiable();
 					}
 				}
 			}
 		}
-		use(0);
 	}
 
 	if (lighting) glEnable(GL_LIGHTING);
@@ -328,22 +415,17 @@ void ModuleUI::DrawUIImage(int index, math::float3 corners[4], math::float4& col
 	if (texture > 0)
 	{
 		setBool(ui_shader, "using_texture", true);
-		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
 	}
 	else
 		setBool(ui_shader, "using_texture", false);
 
-	glBindVertexArray(reference_vertex);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glBindVertexArray(0);
+	if (texture > 0) glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void ModuleUI::DrawUILabel(int index, std::vector<LabelLetter>* word, std::vector<uint>* GetTexturesWord, math::float4& color)
 {
-	use(ui_shader);
 	setBool(ui_shader, "isLabel", true);
 	setBool(ui_shader, "using_texture", true);
 	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
@@ -362,15 +444,10 @@ void ModuleUI::DrawUILabel(int index, std::vector<LabelLetter>* word, std::vecto
 			setFloat(ui_shader, "bottomLeft", word->at(i).corners[ComponentRectTransform::Rect::RBOTTOMLEFT]);
 			setFloat(ui_shader, "bottomRight", word->at(i).corners[ComponentRectTransform::Rect::RBOTTOMRIGHT]);
 		}
-		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, GetTexturesWord->at(i));
-
-		glBindVertexArray(reference_vertex);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-
-		glBindTexture(GL_TEXTURE_2D, 0);
-		glBindVertexArray(0);
 	}
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void ModuleUI::UpdateRenderStates()
@@ -395,24 +472,55 @@ bool ModuleUI::IsUIHovered()
 	return anyItemIsHovered;
 }
 
-GameObject * ModuleUI::FindCanvas(GameObject * from)
+GameObject * ModuleUI::FindCanvas(GameObject * from, uint& count)
 {
 	GameObject* ret = nullptr;
 	GameObject* temp = from;
-
+	count = 0;
 	while (ret == nullptr && temp != nullptr)
 	{
 		if (temp->cmp_canvas)
 			ret = temp;
-		temp = temp->GetParent();
+		if (!ret)
+		{
+			temp = temp->GetParent();
+			++count;
+		}
 	}
 	return (ret) ? ret : nullptr;
 }
 
-void ModuleUI::ReAssignButtonOnClicks()
+#ifndef GAMEMODE
+math::float4x4 ModuleUI::GetUIMatrix()
 {
-
+	return WorldHolder->transform->GetGlobalMatrix();
 }
+math::float3 * ModuleUI::GetWHCorners()
+{
+	return WorldHolder->cmp_rectTransform->GetCorners();
+}
+
+int * ModuleUI::GetWHRect()
+{
+	return WorldHolder->cmp_rectTransform->GetRect();
+}
+math::float3 ModuleUI::GetPositionWH()
+{
+	return WorldHolder->transform->GetPosition();
+}
+void ModuleUI::SetPositionWH(math::float3 pos)
+{
+	WorldHolder->transform->SetPosition(pos);
+	System_Event WHMoved;
+	WHMoved.type = System_Event_Type::RectTransformUpdated;
+	WorldHolder->cmp_rectTransform->OnSystemEvent(WHMoved);
+	WorldHolder->cmp_rectTransform->Update();
+	WorldHolder->cmp_image->OnSystemEvent(WHMoved);
+	WorldHolder->cmp_image->Update();
+	for (GameObject* goScreenCanvas : canvas_screen)
+		goScreenCanvas->OnSystemEvent(WHMoved);
+}
+#endif
 
 bool ModuleUI::GetUIMode() const
 {
@@ -422,6 +530,11 @@ bool ModuleUI::GetUIMode() const
 void ModuleUI::SetUIMode(bool stat)
 {
 	uiMode = stat;
+}
+
+bool ModuleUI::ScreenOnWorld() const
+{
+	return screenInWorld;
 }
 
 void ModuleUI::OnWindowResize(uint width, uint height)
@@ -437,30 +550,20 @@ void ModuleUI::OnWindowResize(uint width, uint height)
 		goScreenCanvas->OnSystemEvent(windowChanged);
 
 #else
-	int diff_x = uiWorkSpace[Screen::X];
-	uiWorkSpace[Screen::X] = (((int)ui_size_draw[Screen::WIDTH] - (int)uiWorkSpace[Screen::WIDTH]) < 0) ? 0 : (ui_size_draw[Screen::WIDTH] - uiWorkSpace[Screen::WIDTH]);
-	uiWorkSpace[Screen::Y] = 0;
 
-	diff_x = (int)uiWorkSpace[Screen::X] - (int)diff_x;
-
-	if (diff_x != 0)
-		for (GameObject* goScreenCanvas : canvas_screen)
-			if (goScreenCanvas->cmp_rectTransform)
-				goScreenCanvas->cmp_rectTransform->WorkSpaceChanged(diff_x);
 #endif // GAMEMODE
 }
 
-uint* ModuleUI::GetRectUI()
+int* ModuleUI::GetRectUI()
 {
 #ifdef GAMEMODE
 	return ui_size_draw;
 #else
-	return uiWorkSpace;
-#endif // GAMEMODE
-
+	return uiSizeEditor;
+#endif
 }
 
-uint * ModuleUI::GetScreen()
+int * ModuleUI::GetScreen()
 {
 	return ui_size_draw;
 }
@@ -473,7 +576,7 @@ bool ModuleUI::MouseInScreen()
 		{
 			if (goScreenCanvas->cmp_rectTransform)
 			{
-				uint* rect = goScreenCanvas->cmp_rectTransform->GetRect();
+				int* rect = goScreenCanvas->cmp_rectTransform->GetRect();
 
 				if (rect)
 				{
@@ -498,7 +601,7 @@ void ModuleUI::use(unsigned int ID)
 
 void ModuleUI::Delete(unsigned int ID)
 {
-	App->glCache->SwitchShader(ID);
+	glDeleteProgram(ID);
 }
 
 void ModuleUI::setBool(unsigned int ID, const char* name, bool value)

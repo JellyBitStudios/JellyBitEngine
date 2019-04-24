@@ -3,6 +3,7 @@
 
 #include "Module.h"
 
+#include "MathGeoLib/include/Math/float4x4.h"
 #include "MathGeoLib/include/Math/float4.h"
 #include "MathGeoLib/include/Math/float2.h"
 #include <list>
@@ -57,17 +58,24 @@ public:
 
 	bool GetUIMode() const;
 	void SetUIMode(bool stat);
+	bool ScreenOnWorld() const;
 
 	void OnWindowResize(uint width, uint height);
 
-	uint* GetRectUI();
-	uint* GetScreen();
+	int* GetRectUI();
+	int* GetScreen();
 
 	bool IsUIHovered();
+	static GameObject* FindCanvas(GameObject* from, uint& count);
 
-	static GameObject* FindCanvas(GameObject* from); //TODO J Check if I can make this static
-
-	void ReAssignButtonOnClicks();
+#ifndef GAMEMODE
+	//Engine world
+	math::float4x4 GetUIMatrix();
+	math::float3* GetWHCorners();
+	int* GetWHRect();
+	math::float3 GetPositionWH();
+	void SetPositionWH(math::float3 pos);
+#endif
 
 private:
 
@@ -97,18 +105,22 @@ public:
 	FT_Library library;
 
 private:
-	uint uiWorkSpace[4];
-	uint ui_size_draw[4];
-	//math::float4x4 orthonormalMatrix = math::float4x4::identity;
+	int ui_size_draw[4];
+	int uiSizeEditor[4];
 	uint reference_vertex;
 
 	uint ui_shader = 0;
 
 	bool uiMode = true;
-	
+	bool screenInWorld = true;
 	bool anyItemIsHovered = false;
 
 	bool depthTest, cullFace, lighting, blend;
+
+#ifndef GAMEMODE
+	//UI like Unity
+	GameObject* WorldHolder = nullptr;
+#endif
 
 private:
 	bool MouseInScreen();

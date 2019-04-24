@@ -28,8 +28,8 @@ ComponentEmitter::ComponentEmitter(GameObject* gameObject, bool include) : Compo
 
 		SetMaterialRes(App->resHandler->defaultMaterial);
 
-		App->res->SetAsUsed(App->resHandler->plane);
 	}
+	App->res->SetAsUsed(App->resHandler->plane);
 }
 
 ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, GameObject* parent, bool include) : Component(parent, EmitterComponent)
@@ -104,6 +104,9 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 		else
 			SetMaterialRes(App->resHandler->defaultMaterial);
 
+		SetMeshParticleRes(componentEmitter.shapeMesh.uuid);
+		SetBurstMeshParticleRes(componentEmitter.burstMesh.uuid);
+
 		App->res->SetAsUsed(App->resHandler->plane);
 	}
 }
@@ -111,6 +114,8 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 ComponentEmitter::~ComponentEmitter()
 {
 	SetMaterialRes(0);
+	SetMeshParticleRes(0);
+	SetBurstMeshParticleRes(0);
 
 	App->timeManager->RemoveGameTimer(&timer);
 	App->timeManager->RemoveGameTimer(&burstTime);
@@ -118,15 +123,9 @@ ComponentEmitter::~ComponentEmitter()
 	App->timeManager->RemoveGameTimer(&timeSimulating);
 
 	App->particle->RemoveEmitter(this);
-
 	ClearEmitter();
 
-
 	App->res->SetAsUnused(App->resHandler->plane);
-	if (burstMesh.uuid > 0)
-		App->res->SetAsUnused(burstMesh.uuid);
-	if (shapeMesh.uuid > 0)
-		App->res->SetAsUnused(shapeMesh.uuid);
 }
 
 void ComponentEmitter::StartEmitter()
@@ -876,13 +875,13 @@ void ComponentEmitter::SetMeshParticleRes(uint res_uuid)
 		App->res->SetAsUnused(shapeMesh.uuid);
 
 	if (res_uuid > 0)
+	{
 		App->res->SetAsUsed(res_uuid);
+		Resource* resource = App->res->GetResource(res_uuid);
 
-	Resource* resource = App->res->GetResource(res_uuid);
-
-	if (resource)
-		SetMeshInfo((ResourceMesh*)resource, shapeMesh);
-
+		if (resource)
+			SetMeshInfo((ResourceMesh*)resource, shapeMesh);
+	}
 	else
 		shapeMesh.uuid = 0u;
 }
@@ -893,13 +892,13 @@ void ComponentEmitter::SetBurstMeshParticleRes(uint res_uuid)
 		App->res->SetAsUnused(burstMesh.uuid);
 
 	if (res_uuid > 0)
+	{
 		App->res->SetAsUsed(res_uuid);
+		Resource* resource = App->res->GetResource(res_uuid);
 
-	Resource* resource = App->res->GetResource(res_uuid);
-
-	if (resource)
-		SetMeshInfo((ResourceMesh*)resource, burstMesh);
-
+		if (resource)
+			SetMeshInfo((ResourceMesh*)resource, burstMesh);
+	}
 	else
 		burstMesh.uuid = 0u;
 }

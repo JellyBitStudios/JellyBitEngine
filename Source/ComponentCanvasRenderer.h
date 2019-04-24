@@ -20,7 +20,8 @@ public:
 	{
 		RENDER_NULL,
 		IMAGE,
-		LABEL
+		LABEL,
+		SLIDER
 	};
 
 	struct ToUIRend

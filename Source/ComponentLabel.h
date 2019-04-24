@@ -40,7 +40,7 @@ enum HorizontalLabelAlign
 struct LabelLetter
 {
 	math::float4 corners[4] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } };
-	uint rect[4];
+	int rect[4];
 	uint textureID = 0;
 	math::float2 size;
 };
@@ -61,9 +61,9 @@ public:
 	void HorizontalAlignment(const uint parentWidth, const HorizontalLabelAlign alignFrom);
 	void RowAlignment(const uint firstLabelRow, const uint lastLabelRow, const uint diference, const HorizontalLabelAlign alignFrom);
 
-	void WorldDraw(math::float3 * parentCorners, math::float4 corners[4], uint * rectParent, uint rect[4]);
+	void WorldDraw(math::float3 * parentCorners, math::float4 corners[4], int * rectParent, int rect[4]);
 
-	void ScreenDraw(math::float4 corners[4], uint rect[4]);
+	void ScreenDraw(math::float4 corners[4], int rect[4]);
 
 	void SetFinalText(const char* newText);
 	const char* GetFinalText() const;

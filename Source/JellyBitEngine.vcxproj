@@ -299,6 +299,7 @@
     <ClInclude Include="ComponentProjector.h" />
     <ClInclude Include="ComponentRectTransform.h" />
     <ClInclude Include="ComponentRevoluteJoint.h" />
+    <ClInclude Include="ComponentSlider.h" />
     <ClInclude Include="ComponentSphericalJoint.h" />
     <ClInclude Include="ComponentTrail.h" />
     <ClInclude Include="Freetype\include\freetype\config\ftconfig.h" />
@@ -392,6 +393,7 @@
     <ClInclude Include="ModuleLayers.h" />
     <ClInclude Include="ModuleTrails.h" />
     <ClInclude Include="ModuleUI.h" />
+    <ClInclude Include="PanelUI.h" />
     <ClInclude Include="PhysicsConstants.h" />
     <ClInclude Include="ResourceAnimator.h" />
     <ClInclude Include="ResourceFont.h" />
@@ -811,6 +813,7 @@
     <ClCompile Include="ComponentProjector.cpp" />
     <ClCompile Include="ComponentRectTransform.cpp" />
     <ClCompile Include="ComponentRevoluteJoint.cpp" />
+    <ClCompile Include="ComponentSlider.cpp" />
     <ClCompile Include="ComponentSphericalJoint.cpp" />
     <ClCompile Include="ComponentTrail.cpp" />
     <ClCompile Include="CurrentSelection.cpp" />
@@ -822,6 +825,7 @@
     <ClCompile Include="ModuleLayers.cpp" />
     <ClCompile Include="ModuleTrails.cpp" />
     <ClCompile Include="ModuleUI.cpp" />
+    <ClCompile Include="PanelUI.cpp" />
     <ClCompile Include="ResourceAnimator.cpp" />
     <ClCompile Include="ResourceFont.cpp" />
     <ClCompile Include="ResourceAvatar.cpp" />
