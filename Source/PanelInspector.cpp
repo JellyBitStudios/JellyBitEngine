@@ -252,6 +252,11 @@ void PanelInspector::ShowGameObjectInspector() const
 					AddComponentInGroup(ComponentTypes::LabelComponent);
 					ImGui::CloseCurrentPopup();
 				}
+			if (CheckIsComponent(SliderComponent))
+				if (ImGui::Selectable("Slider UI")) {
+					AddComponentInGroup(ComponentTypes::SliderComponent);
+					ImGui::CloseCurrentPopup();
+				}
 		}
 		if (ImGui::Selectable("Script")) {
 			//Open new Popup, with input text and autocompletion to select scripts by name

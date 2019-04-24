@@ -221,8 +221,9 @@ void ComponentRectTransform::InitRect()
 	{
 		ComponentRectTransform* rTParent = parent->GetParent()->cmp_rectTransform;
 		int* rectParent = rTParent->GetRect();
-
-		z = parent->cmp_canvas->GetZ(parent, GetType());
+		
+		uint tmp;
+		z = ModuleUI::FindCanvas(parent, tmp)->cmp_canvas->GetZ(parent, GetType());
 		if (rectTransform[Rect::XDIST] > rectParent[Rect::XDIST])
 			rectTransform[Rect::XDIST] = rectParent[Rect::XDIST];
 		if (rectTransform[Rect::YDIST] > rectParent[Rect::YDIST])

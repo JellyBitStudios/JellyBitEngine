@@ -59,6 +59,7 @@ private:
 	std::vector<uint> free_label_offsets;
 	std::queue<class ComponentImage*> queueImageToBuffer;
 	std::queue<class ComponentLabel*> queueLabelToBuffer;
+	std::queue<class ComponentSlider*> queueSliderToBuffer;
 };
 
 #endif

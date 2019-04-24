@@ -106,6 +106,7 @@ public:
 	class ComponentImage*			cmp_image = nullptr;
 	class ComponentButton*			cmp_button = nullptr;
 	class ComponentLabel*			cmp_label = nullptr;
+	class ComponentSlider*			cmp_slider = nullptr;
 	class ComponentAnimator*		cmp_animator = nullptr;
 	class ComponentLight*			cmp_light = nullptr;
 	class ComponentProjector*		cmp_projector = nullptr;

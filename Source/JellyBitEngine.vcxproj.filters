@@ -2124,6 +2124,9 @@
     <ClInclude Include="GLCache.h">
       <Filter>Sources\Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="ComponentSlider.h">
+      <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ModuleInput.cpp">
@@ -2698,6 +2701,9 @@
     </ClCompile>
     <ClCompile Include="GLCache.cpp">
       <Filter>Sources\Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="ComponentSlider.cpp">
+      <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

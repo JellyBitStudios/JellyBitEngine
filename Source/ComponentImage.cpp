@@ -294,7 +294,8 @@ void ComponentImage::OnUniqueEditor()
 		{
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE_INSPECTOR_SELECTOR"))
 			{
-				App->res->SetAsUnused(res_image);
+				if(res_image > 0u)
+					App->res->SetAsUnused(res_image);
 				res_image = *(uint*)payload->Data;
 				App->res->SetAsUsed(res_image);
 			}

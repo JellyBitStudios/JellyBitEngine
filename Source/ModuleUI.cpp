@@ -21,6 +21,7 @@
 #include "ComponentImage.h"
 #include "ComponentLabel.h"
 #include "ComponentScript.h"
+#include "ComponentSlider.h"
 
 #include "ResourceMaterial.h"
 #include "Brofiler/Brofiler.h"
@@ -172,7 +173,12 @@ void ModuleUI::OnSystemEvent(System_Event event)
 			System_Event updateCornersToScreen;
 			updateCornersToScreen.type = System_Event_Type::RectTransformUpdated;
 			for (GameObject* goScreenCanvas : canvas_screen)
-				goScreenCanvas->OnSystemEvent(updateCornersToScreen);
+			{
+				std::vector<GameObject*> childs;
+				goScreenCanvas->GetChildrenAndThisVectorFromLeaf(childs);
+				for (std::vector<GameObject*>::reverse_iterator go = childs.rbegin(); go != childs.rend(); ++go)
+					(*go)->OnSystemEvent(updateCornersToScreen);
+			}
 		}
 #endif // GAMEMODE
 	}
@@ -191,9 +197,14 @@ void ModuleUI::OnSystemEvent(System_Event event)
 		System_Event updateCornersToScreen;
 		updateCornersToScreen.type = System_Event_Type::RectTransformUpdated;
 		for (GameObject* goScreenCanvas : canvas_screen)
-			goScreenCanvas->OnSystemEvent(updateCornersToScreen);
-	}
+		{
+			std::vector<GameObject*> childs;
+			goScreenCanvas->GetChildrenAndThisVectorFromLeaf(childs);
+			for (std::vector<GameObject*>::reverse_iterator go = childs.rbegin(); go != childs.rend(); ++go)
+				(*go)->OnSystemEvent(updateCornersToScreen);
+		}
 		break;
+	}
 	case System_Event_Type::LoadScene:
 	{
 		App->glCache->ResetUIBufferValues();
@@ -310,6 +321,14 @@ void ModuleUI::DrawScreenCanvas()
 						case ComponentCanvasRenderer::RenderTypes::LABEL:
 							DrawUILabel(rend->GetIndex(), rend->GetWord(), rend->GetTexturesWord(), rend->GetColor());
 							break;
+						case ComponentCanvasRenderer::RenderTypes::SLIDER:
+						{
+							math::float3* corners = (*render)->cmp_slider->GetCorners();
+							math::float2 null(-1.0f, -1.0f);
+							DrawUIImage((*render)->cmp_slider->GetBackBufferIndex(), corners, rend->GetColor(), (*render)->cmp_slider->GetBackTexture(), null);
+							DrawUIImage((*render)->cmp_slider->GetFrontBufferIndex(), &corners[4], rend->GetColor(), (*render)->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
+							break;
+						}
 						}
 
 						rend = renderer->GetDrawAvaiable();
@@ -353,8 +372,15 @@ void ModuleUI::DrawWorldCanvas()
 						case ComponentCanvasRenderer::RenderTypes::LABEL:
 							DrawUILabel(rend->GetIndex(), rend->GetWord(), rend->GetTexturesWord(), rend->GetColor());
 							break;
+						case ComponentCanvasRenderer::RenderTypes::SLIDER:
+						{
+							math::float3* corners = (*render)->cmp_slider->GetCorners();
+							math::float2 null(-1.0f, -1.0f);
+							DrawUIImage((*render)->cmp_slider->GetBackBufferIndex(), corners, rend->GetColor(), (*render)->cmp_slider->GetBackTexture(), null);
+							DrawUIImage((*render)->cmp_slider->GetFrontBufferIndex(), &corners[4], rend->GetColor(), (*render)->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
+							break;
 						}
-
+					}
 						rend = renderer->GetDrawAvaiable();
 					}
 				}
@@ -575,7 +601,7 @@ void ModuleUI::use(unsigned int ID)
 
 void ModuleUI::Delete(unsigned int ID)
 {
-	App->glCache->SwitchShader(ID);
+	glDeleteProgram(ID);
 }
 
 void ModuleUI::setBool(unsigned int ID, const char* name, bool value)

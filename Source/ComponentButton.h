@@ -31,6 +31,8 @@ public:
 
 	void LoadOnClickReference();
 
+	static bool MouseInScreen(const int* rect);
+
 private:
 	uint GetInternalSerializationBytes();
 	uint BytesToOnClick();
@@ -43,8 +45,6 @@ private:
 	void OnLoadOnClick(char*& cursor);
 
 	void OnUniqueEditor();
-
-	bool MouseInScreen(const int* rect) const;
 
 private:
 

@@ -80,7 +80,7 @@ private:
 	virtual uint GetInternalSerializationBytes();
 	virtual void OnInternalSave(char*& cursor);
 	virtual void OnInternalLoad(char*& cursor);
-	void OnUniqueEditor(); //Todo J Add the 7 pivots left
+	void OnUniqueEditor();
 
 public:
 	void SetRect(int x, int y, int x_dist, int y_dist);

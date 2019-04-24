@@ -28,6 +28,8 @@ enum ComponentTypes
 	ImageComponent,
 	ButtonComponent,
 	LabelComponent,
+	SliderComponent = 34,
+	UIAnimationComponent,
 
 	// Physics
 	/// Rigid Actors
@@ -51,7 +53,10 @@ enum ComponentTypes
 	AudioListenerComponent,
 	AudioSourceComponent //31
 
-	// 	TrailComponent = 33
+	// CanvasComponent = 32
+	// TrailComponent = 33
+	// SliderComponent = 34
+	// UIAnimatorComponent = 35
 };
 
 #endif

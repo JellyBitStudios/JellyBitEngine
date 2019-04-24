@@ -512,7 +512,7 @@ void ComponentButton::OnUniqueEditor()
 #endif
 }
 
-bool ComponentButton::MouseInScreen(const int* rect) const
+bool ComponentButton::MouseInScreen(const int* rect)
 {
 	uint mouseX = App->input->GetMouseX();
 	uint mouseY = App->input->GetMouseY();

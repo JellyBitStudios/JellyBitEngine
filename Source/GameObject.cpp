@@ -32,6 +32,7 @@
 #include "ComponentImage.h"
 #include "ComponentButton.h"
 #include "ComponentLabel.h"
+#include "ComponentSlider.h"
 #include "ComponentLight.h"
 #include "ComponentProjector.h"
 #include "ComponentAudioListener.h"
@@ -203,6 +204,11 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 		case ComponentTypes::LabelComponent:
 			cmp_label = new ComponentLabel(*(ComponentLabel*)gameObject.cmp_label, this, includeComponents);
 			cmp_label->SetParent(this);
+			components.push_back(cmp_label);
+			break;
+		case ComponentTypes::SliderComponent:
+			cmp_slider = new ComponentSlider(*(ComponentSlider*)gameObject.cmp_slider, this, includeComponents);
+			cmp_slider->SetParent(this);
 			components.push_back(cmp_label);
 			break;
 		case ComponentTypes::ScriptComponent:
@@ -663,6 +669,10 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 	case ComponentTypes::LabelComponent:
 		assert(cmp_label == nullptr);
 		newComponent = cmp_label = new ComponentLabel(this, ComponentTypes::LabelComponent, includeInModules);
+		break;
+	case ComponentTypes::SliderComponent:
+		assert(cmp_slider == nullptr);
+		newComponent = cmp_slider = new ComponentSlider(this, includeInModules);
 		break;
 	case ComponentTypes::BoneComponent:
 		assert(cmp_bone == NULL);
