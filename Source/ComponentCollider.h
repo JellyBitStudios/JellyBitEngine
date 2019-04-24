@@ -29,6 +29,9 @@ public:
 
 	virtual void OnUniqueEditor();
 
+	void OnEnable();
+	void OnDisable();
+
 	virtual void Update();
 
 	virtual uint GetInternalSerializationBytes();

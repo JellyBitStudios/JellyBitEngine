@@ -338,9 +338,11 @@ void GameObject::ToggleIsActive()
 
 void GameObject::SetIsActive(bool activeGO)
 {
-	isActive = activeGO;
-
-	isActive ? OnEnable() : OnDisable();
+	if (isActive != activeGO)
+	{
+		isActive = activeGO;
+		isActive ? OnEnable() : OnDisable();
+	}
 }
 
 void GameObject::ToggleIsStatic()
