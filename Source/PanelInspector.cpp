@@ -348,6 +348,14 @@ void PanelInspector::ShowGameObjectInspector() const
 					ImGui::CloseCurrentPopup();
 				}
 			}
+
+			if (CheckIsComponent(InterpolationComponent))
+			{
+				if (ImGui::Selectable("Interpolation")) {
+					AddComponentInGroup(ComponentTypes::InterpolationComponent);
+					ImGui::CloseCurrentPopup();
+				}
+			}
 		}
 		ImGui::EndPopup();
 	}
