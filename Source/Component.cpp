@@ -83,6 +83,8 @@ void Component::OnUniqueEditor() {}
 void Component::ToggleIsActive()
 {
 	isActive = !isActive;
+
+	isActive ? OnEnable() : OnDisable();
 }
 
 bool Component::IsActive() const
