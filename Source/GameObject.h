@@ -49,6 +49,7 @@ public:
 	void RecursiveRecalculateBoundingBoxes();
 	void RecalculateBoundingBox();
 	void CalculateBoundingBox();
+	void ResetBoundingBox();
 
 	void OnSystemEvent(System_Event event);
 
