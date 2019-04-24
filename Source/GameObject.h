@@ -112,6 +112,7 @@ public:
 	class ComponentAudioListener*	cmp_audioListener = nullptr;
 	class ComponentAudioSource*		cmp_audioSource = nullptr;
 	class ComponentTrail*			cmp_trail = nullptr;
+	class ComponentInterpolation*	cmp_interpolation = nullptr;
 
 	ResourcePrefab* prefab = nullptr;
 
