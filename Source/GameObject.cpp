@@ -55,10 +55,7 @@ GameObject::GameObject(const char* name, GameObject* parent, bool disableTransfo
 			AddComponent(ComponentTypes::TransformComponent);
 	}
 
-	originalBoundingBox.SetNegativeInfinity();
-	boundingBox.SetNegativeInfinity();
-	rotationBB = originalBoundingBox.ToOBB();
-
+	ResetBoundingBox();
 
 	uuid = App->GenerateRandomNumber();
 }
@@ -463,6 +460,12 @@ void GameObject::CalculateBoundingBox()
 		boundingBox.SetNegativeInfinity();
 }
 
+void GameObject::ResetBoundingBox()
+{
+	originalBoundingBox.SetNegativeInfinity();
+	boundingBox.SetNegativeInfinity();
+	rotationBB = originalBoundingBox.ToOBB();
+}
 
 void GameObject::OnSystemEvent(System_Event event)
 {
