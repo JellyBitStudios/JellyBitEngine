@@ -3,7 +3,7 @@ image: Visual Studio 2017
 platform: Win32
 configuration: Release
 skip_tags: true
-
+ 
 branches:
   only:
     - releases
