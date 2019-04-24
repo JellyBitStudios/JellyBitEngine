@@ -273,7 +273,7 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 	{
 	case ShapeType_BOX:
 		spawn = boxCreation.RandomPointInside(App->randomMathLCG);
-		startValues.particleDirection = (math::float3::unitY * parent->transform->GetRotation().ToFloat3x3().Transposed()).Normalized();
+		startValues.particleDirection = (math::float3::unitY * parent->transform->GetGlobalMatrix().RotatePart().Transposed()).Normalized();
 		break;
 
 	case ShapeType_SPHERE:
@@ -298,7 +298,7 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 		angle = (2 * PI) * (float)App->GenerateRandomNumber() / MAXUINT;
 		centerDist = (float)App->GenerateRandomNumber() / MAXUINT;
 
-		circleCreation.pos = (math::float3(0, coneHeight, 0) * parent->transform->GetRotation().ToFloat3x3().Transposed());
+		circleCreation.pos = (math::float3(0, coneHeight, 0) * parent->transform->GetGlobalMatrix().RotatePart().Transposed());
 		startValues.particleDirection = (circleCreation.GetPoint(angle, centerDist)).Normalized();
 		break;
 	}
@@ -323,8 +323,8 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 			spawn.y = shapeMesh.uniqueVertex[pos].y;
 			spawn.z = shapeMesh.uniqueVertex[pos].z;
 		}
-		startValues.particleDirection = (math::float3::unitY * parent->transform->GetRotation().ToFloat3x3().Transposed()).Normalized();
-		spawn = spawn * parent->transform->GetRotation().ToFloat3x3().Transposed();
+		startValues.particleDirection = (math::float3::unitY * parent->transform->GetGlobalMatrix().RotatePart().Transposed()).Normalized();
+		spawn = spawn * parent->transform->GetGlobalMatrix().RotatePart().Transposed();
 		break;
 	}
 	default:
