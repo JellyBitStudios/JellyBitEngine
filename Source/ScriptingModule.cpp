@@ -12,6 +12,7 @@
 #include "ComponentButton.h"
 #include "ComponentImage.h"
 #include "ComponentLabel.h"
+#include "ComponentSlider.h"
 #include "ComponentAudioSource.h"
 #include "ComponentAudioListener.h"
 #include "ComponentRigidDynamic.h"
@@ -553,6 +554,11 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 		case ComponentTypes::LabelComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine.UI", "Label"));
+			break;
+		}
+		case ComponentTypes::SliderComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine.UI", "Slider"));
 			break;
 		}
 		case ComponentTypes::RigidDynamicComponent:
@@ -1961,6 +1967,21 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 
 		return App->scripting->MonoComponentFrom(comp);
 	}
+
+	else if (className == "Slider")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::SliderComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
+
 	else if (className == "Rigidbody")
 	{
 		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
@@ -2974,6 +2995,18 @@ void LabelSetResource(MonoObject* monoLabel, MonoString* newFont)
 	mono_free(fontCPP);
 }
 
+float SliderGetValue(MonoObject* monoSlider)
+{
+	ComponentSlider* slider = (ComponentSlider*)App->scripting->ComponentFrom(monoSlider);
+
+	if (slider)
+	{
+		return slider->GetPercentage();
+	}
+
+	return -1.0f;
+}
+
 void PlayerPrefsSave()
 {
 	uint size = json_serialization_size(App->scripting->playerPrefs);
@@ -3847,6 +3880,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetColor", (const void*)&LabelGetColor);
 	mono_add_internal_call("JellyBitEngine.UI.Label::SetResource", (const void*)&LabelSetResource);
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetResource", (const void*)&LabelGetResource);
+	mono_add_internal_call("JellyBitEngine.UI.Slider::GetValue", (const void*)&SliderGetValue);
 
 	//PlayerPrefs
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);
