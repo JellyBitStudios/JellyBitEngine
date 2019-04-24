@@ -70,7 +70,7 @@ void ModuleParticle::DrawParticles()
 	math::Frustum camFrustum = App->renderer3D->GetCurrentCamera()->frustum;
 	for (int i = 0; i < partVec.size(); ++i)
 	{
-		if (partVec[i]->owner && camFrustum.Intersects(partVec[i]->owner->boundingBox))
+		if (partVec[i]->owner /*&& camFrustum.Intersects(partVec[i]->owner->boundingBox)*/)
 			partVec[i]->Draw();
 	}
 }
