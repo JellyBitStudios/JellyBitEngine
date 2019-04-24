@@ -14,6 +14,7 @@
 #include "ModuleInternalResHandler.h"
 #include "ModuleParticles.h"
 #include "ModuleTrails.h"
+#include "ModuleInterpolation.h"
 #include "MaterialImporter.h"
 #include "SceneImporter.h"
 #include "ShaderImporter.h"
@@ -55,6 +56,7 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 	navigation = new ModuleNavigation();
 	particle = new ModuleParticle();
 	trails = new ModuleTrails();
+	interpolation = new ModuleInterpolation();
 	scripting = new ScriptingModule();
 	events = new ModuleEvents();
 	physics = new ModulePhysics();
@@ -88,6 +90,7 @@ Application::Application() : fpsTrack(FPS_TRACK_SIZE), msTrack(MS_TRACK_SIZE)
 
 	AddModule(particle);
 	AddModule(trails);
+	AddModule(interpolation);
 	AddModule(physics);
 	AddModule(ui);
 	AddModule(audio);
