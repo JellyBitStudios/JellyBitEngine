@@ -137,6 +137,15 @@ float ComponentSlider::GetPercentage() const
 	return percentage;
 }
 
+void ComponentSlider::SetPercentage(float i)
+{
+	if (i > 1.0f) i = 1.0f;
+	if (i < 0.0f) i = 0.0f;
+	percentage = i;
+	CalculateFrontSizeByPercentage();
+	needed_fillBuffer = true;
+}
+
 int ComponentSlider::GetBackBufferIndex() const
 {
 	return indexB;

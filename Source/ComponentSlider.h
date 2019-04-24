@@ -43,6 +43,7 @@ public:
 
 	//Scripting
 	float GetPercentage()const;
+	void SetPercentage(float i);
 
 private:
 	virtual uint GetInternalSerializationBytes();
