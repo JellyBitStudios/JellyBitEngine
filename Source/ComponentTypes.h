@@ -49,9 +49,9 @@ enum ComponentTypes
 	D6JointComponent,
 	//Audio
 	AudioListenerComponent,
-	AudioSourceComponent //31
+	AudioSourceComponent, //31
 
-	// 	TrailComponent = 33
+	InterpolationComponent = 34
 };
 
 #endif
