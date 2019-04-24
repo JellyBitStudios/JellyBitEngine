@@ -21,6 +21,7 @@ public class areaHabDecal : JellyScript
 
     AreaHab currHab = AreaHab.None;
     Projector projector;
+    bool isActive = false;
     //Use this method for initialization
     public override void Awake()
     {
@@ -33,29 +34,42 @@ public class areaHabDecal : JellyScript
         if (Input.GetKeyDown(KeyCode.KEY_Q))
         {
             if (currHab != AreaHab.Q_area)
+                SetDecall(Q_pos, Q_FOV, Q_material, AreaHab.Q_area);
+
+            if (!isActive)
             {
-                transform.localPosition = Q_pos;
-                projector.FOV = Q_FOV;
-                projector.SetResource(Q_material);
-                currHab = AreaHab.Q_area;
+                projector.SetActive(true);
+                isActive = true;
             }
-            projector.SetActive(true);
         }
         else if (Input.GetKeyDown(KeyCode.KEY_W))
         {
             if (currHab != AreaHab.W_area)
-            {
-                transform.localPosition = W_pos;
-                projector.FOV = W_FOV;
-                projector.SetResource(W_material);
+                SetDecall(W_pos, W_FOV, W_material, AreaHab.W_area);
 
-                currHab = AreaHab.W_area;
+            Vector3 direction = (Player.lastRaycastHit.point - transform.position).normalized();
+            transform.rotation = Quaternion.LookAt(Vector3.forward, direction, Vector3.up, transform.up);
+
+            if (!isActive)
+            {
+                projector.SetActive(true);
+                isActive = true;
             }
-            projector.SetActive(true);
         }
 
         if (Input.GetKeyUp(KeyCode.KEY_Q) || Input.GetKeyUp(KeyCode.KEY_W))
+        {
             projector.SetActive(false);
+            isActive = false;
+        }
+    }
+
+    private void SetDecall(Vector3 pos, float fov, string mat, AreaHab type)
+    {
+        transform.localPosition = pos;
+        projector.FOV = fov;
+        projector.SetResource(mat);
+        currHab = type;
     }
 }
 

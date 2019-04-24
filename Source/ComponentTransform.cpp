@@ -269,6 +269,10 @@ void ComponentTransform::UpdateGlobal()
 			parent->cmp_canvas->OnSystemEvent(WTransformUpdated);
 		}
 
+		// Transform updated: if the game object has a emitter, update its bounding box
+		if (parent->cmp_emitter != nullptr)
+			parent->cmp_emitter->UpdateTransform();
+
 		for (std::vector<GameObject*>::iterator childs = parent->children.begin(); childs != parent->children.end(); ++childs)
 		{
 			if ((*childs)->transform)
