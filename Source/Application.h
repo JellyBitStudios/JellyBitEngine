@@ -97,6 +97,7 @@ public:
 	mutable class AnimationImporter*	animImporter;
 	class ModuleParticle*				particle;
 	class ModuleTrails*					trails;
+	class ModuleInterpolation*			interpolation;
 
 #ifndef GAMEMODE
 	class ModuleCameraEditor*			camera;
