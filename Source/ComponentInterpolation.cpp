@@ -49,7 +49,7 @@ void ComponentInterpolation::Update()
 
 	if (App->input->GetKey(SDL_SCANCODE_1) == KEY_DOWN)
 	{
-		StartInterpolation("1", true, 0);
+		StartInterpolation("1", true, 250);
 	}
 
 	if (move && !finished)
@@ -97,7 +97,7 @@ void ComponentInterpolation::Update()
 			finished = false;
 			goingBack = true;
 
-			currentNode.distance = startPoint.position.DistanceSq(currentNode.position);
+			currentNode.distance = startPoint.position.Distance(currentNode.position);
 		}
 	}
 }
@@ -212,7 +212,7 @@ void ComponentInterpolation::StartInterpolation(char* nodeName, bool goBack, flo
 			startPoint.rotation = parent->transform->GetRotation();
 			startPoint.scale = parent->transform->GetScale();
 
-			currentNode.distance = startPoint.position.DistanceSq(currentNode.position);
+			currentNode.distance = startPoint.position.Distance(currentNode.position);
 
 			return;
 		}
