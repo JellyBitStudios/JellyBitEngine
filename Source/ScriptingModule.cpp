@@ -2119,16 +2119,16 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 	}
 	else if (className == "Interpolation")
 	{
-	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
-	if (!gameObject)
-		return nullptr;
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
 
-	Component* comp = gameObject->GetComponent(ComponentTypes::InterpolationComponent);
+		Component* comp = gameObject->GetComponent(ComponentTypes::InterpolationComponent);
 
-	if (!comp)
-		return nullptr;
+		if (!comp)
+			return nullptr;
 
-	return App->scripting->MonoComponentFrom(comp);
+		return App->scripting->MonoComponentFrom(comp);
 	}
 	else
 	{
@@ -2786,16 +2786,22 @@ MonoArray* TrailGetColor(MonoObject* monoTrail)
 	return nullptr;
 }
 
-void* InterpolationStartInterpolation(MonoObject* monoInterpoaltion, char* name, bool goBack, float time)
+void InterpolationStartInterpolation(MonoObject* monoInterpoaltion, MonoString* name, bool goBack, float time)
 {
+	if (!name) return;
+
 	ComponentInterpolation* interpolation = (ComponentInterpolation*)App->scripting->ComponentFrom(monoInterpoaltion);
 	if (interpolation)
 	{
-		interpolation->StartInterpolation(name, goBack, time);
+		char* namecpp = mono_string_to_utf8(name);
+
+		interpolation->StartInterpolation(namecpp, goBack, time);
+
+		mono_free(namecpp);
 	}
 }
 
-void* InterpolationGoBack(MonoObject* monoInterpoaltion)
+void InterpolationGoBack(MonoObject* monoInterpoaltion)
 {
 	ComponentInterpolation* interpolation = (ComponentInterpolation*)App->scripting->ComponentFrom(monoInterpoaltion);
 	if (interpolation)

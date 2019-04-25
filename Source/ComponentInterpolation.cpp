@@ -47,11 +47,6 @@ void ComponentInterpolation::Update()
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 #endif // !GAMEMODE
 
-	if (App->input->GetKey(SDL_SCANCODE_1) == KEY_DOWN)
-	{
-		StartInterpolation("1", true, 250);
-	}
-
 	if (move && !finished)
 	{
 		float dt = 0.0f;
@@ -226,9 +221,17 @@ void ComponentInterpolation::StartInterpolation(char* nodeName, bool goBack, flo
 
 void ComponentInterpolation::GoBack()
 {
+	TransNode tmp = currentNode;
 	currentNode = startPoint;
+	startPoint = tmp;
+
+	currTime = 0;
 	move = true;
 	goBack = false;
+	finished = false;
+	goingBack = true;
+
+	currentNode.distance = startPoint.position.Distance(currentNode.position);
 }
 
 uint ComponentInterpolation::GetNodesBytes()
