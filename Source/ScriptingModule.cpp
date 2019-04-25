@@ -3050,6 +3050,15 @@ float SliderGetValue(MonoObject* monoSlider)
 	return -1.0f;
 }
 
+void SliderSetValue(MonoObject* monoSlider, float value)
+{
+	ComponentSlider* slider = (ComponentSlider*)App->scripting->ComponentFrom(monoSlider);
+	if (slider)
+	{
+		slider->SetPercentage(value);
+	}
+}
+
 void PlayerPrefsSave()
 {
 	uint size = json_serialization_size(App->scripting->playerPrefs);
@@ -3933,6 +3942,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Label::SetResource", (const void*)&LabelSetResource);
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetResource", (const void*)&LabelGetResource);
 	mono_add_internal_call("JellyBitEngine.UI.Slider::GetValue", (const void*)&SliderGetValue);
+	mono_add_internal_call("JellyBitEngine.UI.Slider::SetValue", (const void*)&SliderSetValue);
 
 	//PlayerPrefs
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);
