@@ -82,17 +82,7 @@ void ComponentInterpolation::Update()
 	{
 		if (goBackTime.Read() > waitTime)
 		{
-			TransNode tmp = currentNode;
-			currentNode = startPoint;
-			startPoint = tmp;
-
-			currTime = 0;
-			move = true;
-			goBack = false;
-			finished = false;
-			goingBack = true;
-
-			currentNode.distance = startPoint.position.Distance(currentNode.position);
+			GoBack();
 		}
 	}
 }
