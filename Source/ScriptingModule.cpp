@@ -2668,6 +2668,25 @@ void ParticleEmitterStop(MonoObject* particleComp)
 	}
 }
 
+float ParticleEmitterGetLife(MonoObject* particleComp)
+{
+	ComponentEmitter* emitter = (ComponentEmitter*)App->scripting->ComponentFrom(particleComp);
+	if (emitter)
+	{
+		return emitter->GetLifeTime();
+	}
+	return -1.0f;
+}
+
+void ParticleEmitterSetLife(MonoObject* particleComp, float life)
+{
+	ComponentEmitter* emitter = (ComponentEmitter*)App->scripting->ComponentFrom(particleComp);
+	if (emitter)
+	{
+		emitter->SetLifeTime(life);
+	}
+}
+
 void TrailStart(MonoObject* monoTrail)
 {
 	ComponentTrail* trail = (ComponentTrail*)App->scripting->ComponentFrom(monoTrail);
@@ -3885,6 +3904,8 @@ void ScriptingModule::CreateDomain()
 	//Particle Emitter
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Play", (const void*)&ParticleEmitterPlay);
 	mono_add_internal_call("JellyBitEngine.ParticleEmitter::Stop", (const void*)&ParticleEmitterStop);
+	mono_add_internal_call("JellyBitEngine.ParticleEmitter::SetLife", (const void*)&ParticleEmitterSetLife);
+	mono_add_internal_call("JellyBitEngine.ParticleEmitter::GetLife", (const void*)&ParticleEmitterGetLife);
 
 	//Trail
 	mono_add_internal_call("JellyBitEngine.Trail::Start", (const void*)&TrailStart);

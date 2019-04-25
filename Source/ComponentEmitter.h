@@ -148,6 +148,7 @@ public:
 	void CheckMinMax(math::float2 & value);
 	void ClearEmitter();
 	void SetLifeTime(float life);
+	inline float GetLifeTime() { return startValues.life.x; }
 	void ConnectSubEmitter();
 	void SoftClearEmitter();
 	bool EditColor(ColorTime & colorTime, uint pos = 0u);
