@@ -79,16 +79,22 @@ void ComponentCollider::OnEnable()
 {
 	if (gShape != nullptr)
 	{
-		gShape->setFlag(physx::PxShapeFlag::Enum::eSCENE_QUERY_SHAPE, true);
+		if(participateInSceneQueries)
+			gShape->setFlag(physx::PxShapeFlag::Enum::eSCENE_QUERY_SHAPE, true);
+
 		if (isTrigger)
-		{
-			gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, true);
+		{			
 			gShape->setFlag(physx::PxShapeFlag::Enum::eSIMULATION_SHAPE, false);
+			gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, true);
+			participateInContactTests = false;
 		}
-		else
+
+		if(participateInContactTests)
 		{
 			gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, false);
 			gShape->setFlag(physx::PxShapeFlag::Enum::eSIMULATION_SHAPE, true);
+
+			isTrigger = false;
 		}
 	}
 }
@@ -228,8 +234,16 @@ void ComponentCollider::SetIsTrigger(bool isTrigger)
 	{
 		if (gShape != nullptr)
 		{
-			gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, isTrigger);
-			gShape->setFlag(physx::PxShapeFlag::Enum::eSIMULATION_SHAPE, participateInContactTests);
+			if (isTrigger)
+			{
+				gShape->setFlag(physx::PxShapeFlag::Enum::eSIMULATION_SHAPE, participateInContactTests);
+				gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, isTrigger);			
+			}
+			else
+			{
+				gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, isTrigger);
+				gShape->setFlag(physx::PxShapeFlag::Enum::eSIMULATION_SHAPE, participateInContactTests);				
+			}		
 		}
 	}
 }
@@ -243,8 +257,16 @@ void ComponentCollider::SetParticipateInContactTests(bool participateInContactTe
 	{		
 		if (gShape != nullptr)
 		{
-			gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, isTrigger);
-			gShape->setFlag(physx::PxShapeFlag::Enum::eSIMULATION_SHAPE, participateInContactTests);
+			if (participateInContactTests)
+			{
+				gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, isTrigger);
+				gShape->setFlag(physx::PxShapeFlag::Enum::eSIMULATION_SHAPE, participateInContactTests);
+			}
+			else
+			{
+				gShape->setFlag(physx::PxShapeFlag::Enum::eSIMULATION_SHAPE, participateInContactTests);
+				gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, isTrigger);				
+			}			
 		}	
 	}
 }

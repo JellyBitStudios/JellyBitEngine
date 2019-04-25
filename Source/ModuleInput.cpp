@@ -208,7 +208,8 @@ void ModuleInput::DrawCursor()
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY && CursorTextureID != 0u)
 		ImGui::SetMouseCursor(ImGuiMouseCursor_::ImGuiMouseCursor_None);
 #else
-	SDL_ShowCursor(SDL_DISABLE);
+	if (App->GetEngineState() == engine_states::ENGINE_PLAY && CursorTextureID != 0u)
+		SDL_ShowCursor(SDL_DISABLE);
 #endif
 
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
