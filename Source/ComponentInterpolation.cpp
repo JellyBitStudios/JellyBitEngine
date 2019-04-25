@@ -65,6 +65,10 @@ void ComponentInterpolation::Update()
 
 			if (!goBack || goingBack)
 				finished = true;
+
+			parent->transform->SetPosition(currentNode.position);
+			parent->transform->SetRotation(currentNode.rotation);
+			parent->transform->SetScale(currentNode.scale);
 		}
 
 		else
