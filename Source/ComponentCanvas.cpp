@@ -243,8 +243,11 @@ void ComponentCanvas::OnInternalLoad(char *& cursor)
 	memcpy(&type, cursor, bytes);
 	cursor += bytes;
 
-	needed_change = true;
-	Update();
+	if (parent->includeModuleComponent)
+	{
+		needed_change = true;
+		Update();
+	}
 }
 
 void ComponentCanvas::Change(CanvasType to)
