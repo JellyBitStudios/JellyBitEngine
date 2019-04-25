@@ -3762,6 +3762,11 @@ void ProjectorSetFarDistance(MonoObject* monoProjector, float farDistance)
 	}
 }
 
+void ApplicationQuit()
+{
+	App->CloseApp();
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -4014,6 +4019,9 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Projector::GetFarDistance", (const void*)&ProjectorGetFarDistance);
 	mono_add_internal_call("JellyBitEngine.Projector::SetFarDistance", (const void*)&ProjectorSetFarDistance);
 	
+	//Application
+	mono_add_internal_call("JellyBitEngine.Application::Quit", (const void*)&ApplicationQuit);
+
 	firstDomain = false;
 }
 
