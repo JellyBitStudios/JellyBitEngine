@@ -20,6 +20,7 @@
 #include "ComponentSphereCollider.h"
 #include "ComponentCapsuleCollider.h"
 #include "ComponentTrail.h"
+#include "ComponentInterpolation.h"
 #include "ComponentProjector.h"
 
 #include "GameObject.h"
@@ -589,6 +590,11 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 		case ComponentTypes::TrailComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Trail"));
+			break;
+		}
+		case ComponentTypes::InterpolationComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Interpolation"));
 			break;
 		}
 	}
@@ -2111,6 +2117,19 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 
 		return App->scripting->MonoComponentFrom(comp);
 	}
+	else if (className == "Interpolation")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::InterpolationComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
 	else
 	{
 		//Check if this monoObject is destroyed
@@ -2767,6 +2786,30 @@ MonoArray* TrailGetColor(MonoObject* monoTrail)
 	return nullptr;
 }
 
+void InterpolationStartInterpolation(MonoObject* monoInterpoaltion, MonoString* name, bool goBack, float time)
+{
+	if (!name) return;
+
+	ComponentInterpolation* interpolation = (ComponentInterpolation*)App->scripting->ComponentFrom(monoInterpoaltion);
+	if (interpolation)
+	{
+		char* namecpp = mono_string_to_utf8(name);
+
+		interpolation->StartInterpolation(namecpp, goBack, time);
+
+		mono_free(namecpp);
+	}
+}
+
+void InterpolationGoBack(MonoObject* monoInterpoaltion)
+{
+	ComponentInterpolation* interpolation = (ComponentInterpolation*)App->scripting->ComponentFrom(monoInterpoaltion);
+	if (interpolation)
+	{
+		interpolation->GoBack();
+	}
+}
+
 bool UIHovered()
 {
 	return App->ui->IsUIHovered();
@@ -3005,6 +3048,15 @@ float SliderGetValue(MonoObject* monoSlider)
 	}
 
 	return -1.0f;
+}
+
+void SliderSetValue(MonoObject* monoSlider, float value)
+{
+	ComponentSlider* slider = (ComponentSlider*)App->scripting->ComponentFrom(monoSlider);
+	if (slider)
+	{
+		slider->SetPercentage(value);
+	}
 }
 
 void PlayerPrefsSave()
@@ -3719,6 +3771,11 @@ void ProjectorSetFarDistance(MonoObject* monoProjector, float farDistance)
 	}
 }
 
+void ApplicationQuit()
+{
+	App->CloseApp();
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -3847,6 +3904,10 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Trail::SetColor", (const void*)&TrailSetColor);
 	mono_add_internal_call("JellyBitEngine.Trail::GetColor", (const void*)&TrailGetColor);
 
+	//Interpolation
+	mono_add_internal_call("JellyBitEngine.Interpolation::StartInterpolation", (const void*)&InterpolationStartInterpolation);
+	mono_add_internal_call("JellyBitEngine.Interpolation::GoBack", (const void*)&InterpolationGoBack);
+
 	//Physics
 	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddForce", (const void*)&RigidbodyAddForce);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddTorque", (const void*)&RigidbodyAddTorque);
@@ -3881,6 +3942,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Label::SetResource", (const void*)&LabelSetResource);
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetResource", (const void*)&LabelGetResource);
 	mono_add_internal_call("JellyBitEngine.UI.Slider::GetValue", (const void*)&SliderGetValue);
+	mono_add_internal_call("JellyBitEngine.UI.Slider::SetValue", (const void*)&SliderSetValue);
 
 	//PlayerPrefs
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);
@@ -3967,6 +4029,9 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Projector::GetFarDistance", (const void*)&ProjectorGetFarDistance);
 	mono_add_internal_call("JellyBitEngine.Projector::SetFarDistance", (const void*)&ProjectorSetFarDistance);
 	
+	//Application
+	mono_add_internal_call("JellyBitEngine.Application::Quit", (const void*)&ApplicationQuit);
+
 	firstDomain = false;
 }
 

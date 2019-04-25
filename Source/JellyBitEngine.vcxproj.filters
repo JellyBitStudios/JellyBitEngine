@@ -2124,6 +2124,12 @@
     <ClInclude Include="GLCache.h">
       <Filter>Sources\Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="ComponentInterpolation.h">
+      <Filter>Sources\Modules\GO&amp;Components\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="ModuleInterpolation.h">
+      <Filter>Sources\Modules</Filter>
+    </ClInclude>
     <ClInclude Include="ComponentSlider.h">
       <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
     </ClInclude>
@@ -2701,6 +2707,12 @@
     </ClCompile>
     <ClCompile Include="GLCache.cpp">
       <Filter>Sources\Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="ComponentInterpolation.cpp">
+      <Filter>Sources\Modules\GO&amp;Components\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="ModuleInterpolation.cpp">
+      <Filter>Sources\Modules</Filter>
     </ClCompile>
     <ClCompile Include="ComponentSlider.cpp">
       <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>

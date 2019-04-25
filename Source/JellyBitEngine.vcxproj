@@ -292,6 +292,7 @@
     <ClInclude Include="ComponentDistanceJoint.h" />
     <ClInclude Include="ComponentFixedJoint.h" />
     <ClInclude Include="ComponentImage.h" />
+    <ClInclude Include="ComponentInterpolation.h" />
     <ClInclude Include="ComponentJoint.h" />
     <ClInclude Include="ComponentLabel.h" />
     <ClInclude Include="ComponentLight.h" />
@@ -390,6 +391,7 @@
     <ClInclude Include="ModuleFBOManager.h" />
     <ClInclude Include="ModuleAudio.h" />
     <ClInclude Include="ModuleInternalResHandler.h" />
+    <ClInclude Include="ModuleInterpolation.h" />
     <ClInclude Include="ModuleLayers.h" />
     <ClInclude Include="ModuleTrails.h" />
     <ClInclude Include="ModuleUI.h" />
@@ -806,6 +808,7 @@
     <ClCompile Include="ComponentDistanceJoint.cpp" />
     <ClCompile Include="ComponentFixedJoint.cpp" />
     <ClCompile Include="ComponentImage.cpp" />
+    <ClCompile Include="ComponentInterpolation.cpp" />
     <ClCompile Include="ComponentJoint.cpp" />
     <ClCompile Include="ComponentLabel.cpp" />
     <ClCompile Include="ComponentLight.cpp" />
@@ -822,6 +825,7 @@
     <ClCompile Include="ModuleFBOManager.cpp" />
     <ClCompile Include="ModuleAudio.cpp" />
     <ClCompile Include="ModuleInternalResHandler.cpp" />
+    <ClCompile Include="ModuleInterpolation.cpp" />
     <ClCompile Include="ModuleLayers.cpp" />
     <ClCompile Include="ModuleTrails.cpp" />
     <ClCompile Include="ModuleUI.cpp" />

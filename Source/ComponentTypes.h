@@ -51,12 +51,15 @@ enum ComponentTypes
 	D6JointComponent,
 	//Audio
 	AudioListenerComponent,
-	AudioSourceComponent //31
+	AudioSourceComponent, //31
 
 	// CanvasComponent = 32
 	// TrailComponent = 33
 	// SliderComponent = 34
 	// UIAnimatorComponent = 35
+
+
+	InterpolationComponent = 40 // I'm not sure if this can interfere with other components, so I've left a margin of safety
 };
 
 #endif
