@@ -32,6 +32,7 @@
 #include "ComponentImage.h"
 #include "ComponentButton.h"
 #include "ComponentLabel.h"
+#include "ComponentSlider.h"
 #include "ComponentLight.h"
 #include "ComponentProjector.h"
 #include "ComponentAudioListener.h"
@@ -55,10 +56,7 @@ GameObject::GameObject(const char* name, GameObject* parent, bool disableTransfo
 			AddComponent(ComponentTypes::TransformComponent);
 	}
 
-	originalBoundingBox.SetNegativeInfinity();
-	boundingBox.SetNegativeInfinity();
-	rotationBB = originalBoundingBox.ToOBB();
-
+	ResetBoundingBox();
 
 	uuid = App->GenerateRandomNumber();
 }
@@ -206,6 +204,11 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			cmp_label->SetParent(this);
 			components.push_back(cmp_label);
 			break;
+		case ComponentTypes::SliderComponent:
+			cmp_slider = new ComponentSlider(*(ComponentSlider*)gameObject.cmp_slider, this, includeComponents);
+			cmp_slider->SetParent(this);
+			components.push_back(cmp_label);
+			break;
 		case ComponentTypes::ScriptComponent:
 		{
 			ComponentScript* script = new ComponentScript(*(ComponentScript*)gameObject.components[i], this, includeComponents);
@@ -342,9 +345,11 @@ void GameObject::ToggleIsActive()
 
 void GameObject::SetIsActive(bool activeGO)
 {
-	isActive = activeGO;
-
-	isActive ? OnEnable() : OnDisable();
+	if (isActive != activeGO)
+	{
+		isActive = activeGO;
+		isActive ? OnEnable() : OnDisable();
+	}
 }
 
 void GameObject::ToggleIsStatic()
@@ -464,6 +469,12 @@ void GameObject::CalculateBoundingBox()
 		boundingBox.SetNegativeInfinity();
 }
 
+void GameObject::ResetBoundingBox()
+{
+	originalBoundingBox.SetNegativeInfinity();
+	boundingBox.SetNegativeInfinity();
+	rotationBB = originalBoundingBox.ToOBB();
+}
 
 void GameObject::OnSystemEvent(System_Event event)
 {
@@ -499,6 +510,7 @@ void GameObject::OnSystemEvent(System_Event event)
 	case System_Event_Type::ScreenChanged:
 	case System_Event_Type::RectTransformUpdated:
 	case System_Event_Type::CanvasChanged:
+	case System_Event_Type::UpdateBillboard:
 	{
 		for (auto component = components.begin(); component != components.end(); ++component)
 		{
@@ -669,6 +681,10 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 	case ComponentTypes::LabelComponent:
 		assert(cmp_label == nullptr);
 		newComponent = cmp_label = new ComponentLabel(this, ComponentTypes::LabelComponent, includeInModules);
+		break;
+	case ComponentTypes::SliderComponent:
+		assert(cmp_slider == nullptr);
+		newComponent = cmp_slider = new ComponentSlider(this, includeInModules);
 		break;
 	case ComponentTypes::BoneComponent:
 		assert(cmp_bone == NULL);
@@ -894,6 +910,8 @@ void GameObject::OnSave(char*& cursor) const
 
 void GameObject::OnLoad(char*& cursor, bool includeInModules)
 {
+	includeModuleComponent = includeInModules;
+
 	size_t bytes = sizeof(uint);
 	memcpy(&uuid, cursor, bytes);
 	cursor += bytes;
@@ -930,6 +948,7 @@ void GameObject::OnLoad(char*& cursor, bool includeInModules)
 		Component* cmp = AddComponent(componentType, false, includeInModules);
 		cmp->OnLoad(cursor);
 	}
+	includeModuleComponent = true;
 }
 
 // review this

@@ -10,9 +10,10 @@ class ComponentCanvas : public Component
 public:
 	enum CanvasType
 	{
+		CNULL = -1,
 		SCREEN,
 		WORLD_SCREEN,
-		WORLD
+		WORLD,
 	};
 
 public:
@@ -34,9 +35,10 @@ private:
 	virtual void OnEditor();
 
 public: //Custom
+	void Change(CanvasType to);
 	CanvasType GetType()const;
 	math::float4x4 GetGlobal() const;
-
+	float GetZ(GameObject* go, ComponentTypes type);
 private:
 	CanvasType type = CanvasType::SCREEN;
 	bool needed_change = false;

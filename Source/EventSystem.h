@@ -36,6 +36,7 @@ enum System_Event_Type
 	CanvasChanged,
 	RectTransformUpdated,
 	WRectTransformUpdated,
+	UpdateBillboard,
 	ScreenChanged
 };
 

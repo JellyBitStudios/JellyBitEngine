@@ -27,6 +27,8 @@ ComponentMesh::~ComponentMesh()
 {
 	App->renderer3D->EraseMeshComponent(this);
 	SetResource(0);
+
+	parent->ResetBoundingBox();
 }
 
 void ComponentMesh::Update() {}

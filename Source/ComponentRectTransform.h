@@ -8,7 +8,6 @@
 #include "MathGeoLib/include/Math/float3.h"
 
 #define WORLDTORECT 100.0f
-#define ZSEPARATOR 0.005f
 
 class ComponentTransform;
 
@@ -81,26 +80,20 @@ private:
 	virtual uint GetInternalSerializationBytes();
 	virtual void OnInternalSave(char*& cursor);
 	virtual void OnInternalLoad(char*& cursor);
-	void OnUniqueEditor(); //Todo J Add the 7 pivots left
+	void OnUniqueEditor();
 
 public:
-	void SetRect(uint x, uint y, uint x_dist, uint y_dist);
-	void SetRectPos(uint x, uint y);
-	void SetRectDim(uint x_dist, uint y_dist);
+	void SetRect(int x, int y, int x_dist, int y_dist);
+	void SetRect(int rect[4]);
 
-	uint* GetRect();
+	int* GetRect();
 	math::float3* GetCorners();
 	void InitRect(); // Done, TODO J call methods of calculate anchors and percentage
 
 	RectFrom GetFrom() const;
-
-	bool IsInRect(uint* rect);
 	
 	void ParentChanged();
 	void CanvasChanged();
-	void WorkSpaceChanged(int diff);
-
-	float GetZ() const;
 
 private:
 	//From Sreen
@@ -112,7 +105,7 @@ private:
 
 	void CalculateAnchors(bool needed_newPercentages = false); //TODO J Add the 7 pivots left
 	void RecaculateAnchors(); //TODO J Add the 7 pivots left
-	void RecaculatePercentage();
+	void CaculatePercentage();
 	void RecalculateRectByPercentage();
 
 private:
@@ -129,8 +122,8 @@ private:
 
 	//From Rect
 	//x, y, x_dist, y_dist
-	uint rectTransform[4] = { 0, 0, 100, 100 };
-	uint lastPositionChange[2] = { 0,0 };//save when canvas change
+	int rectTransform[4] = { 0, 0, 100, 100 };
+	int lastPositionChange[2] = { 0,0 };//save when canvas change
 
 	//FromWorld
 	math::float3 corners[4] = { math::float3::zero, math::float3::zero, math::float3::zero, math::float3::zero };
@@ -139,7 +132,7 @@ private:
 
 	//Pivot and anchor values
 	bool usePivot = false;
-	uint anchor[4] = {0,0,0,0};
+	int anchor[4] = {0,0,0,0};
 	RectPrivot pivot = RectPrivot::P_TOPLEFT;
 	float anchor_percenatges[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	int center = 0;

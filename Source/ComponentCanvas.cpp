@@ -13,6 +13,7 @@
 #include "ComponentButton.h"
 #include "ComponentImage.h"
 #include "ComponentLabel.h"
+#include "ComponentSlider.h"
 #include "Panel.h"
 
 #define CANVAS_TYPE_STR "Screen\0World Screen (Work In Progress)\0World"
@@ -23,12 +24,15 @@
 #include "MathGeoLib\include\Math\float4x4.h"
 #include "MathGeoLib/include/Geometry/Frustum.h"
 
+#define ZSEPARATOR 0.005f
+
 ComponentCanvas::ComponentCanvas(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::CanvasComponent)
 {
 	if (includeComponents)
 	{
 		App->ui->canvas.push_back(parent);
 		needed_change = true;
+		Update();
 	}
 }
 
@@ -39,6 +43,7 @@ ComponentCanvas::ComponentCanvas(const ComponentCanvas & componentCanvas, GameOb
 	{
 		App->ui->canvas.push_back(parent);
 		needed_change = true;
+		Update();
 	}
 }
 
@@ -87,6 +92,34 @@ void ComponentCanvas::Update()
 			RELEASE(transform);
 		if (fakeGo)
 			RELEASE(fakeGo);
+
+
+		for (GameObject* go : App->ui->canvas_screen)
+		{
+			if (go == parent)
+			{
+				App->ui->canvas_screen.remove(parent);
+				break;
+			}
+		}
+
+		for (GameObject* go : App->ui->canvas_worldScreen)
+		{
+			if (go == parent)
+			{
+				App->ui->canvas_worldScreen.remove(parent);
+				break;
+			}
+		}
+
+		for (GameObject* go : App->ui->canvas_world)
+		{
+			if (go == parent)
+			{
+				App->ui->canvas_world.remove(parent);
+				break;
+			}
+		}
 
 		switch (type)
 		{
@@ -143,6 +176,7 @@ void ComponentCanvas::Update()
 		if ((*go)->cmp_rectTransform) (*go)->cmp_rectTransform->Update();
 		if ((*go)->cmp_label) (*go)->cmp_label->Update();
 		if ((*go)->cmp_image) (*go)->cmp_image->Update();
+		if ((*go)->cmp_slider) (*go)->cmp_slider->Update();
 		if (App->GetEngineState() == engine_states::ENGINE_PLAY && (*go)->cmp_button) (*go)->cmp_button->Update();
 		if ((*go)->cmp_canvasRenderer) (*go)->cmp_canvasRenderer->Update();
 	}
@@ -209,7 +243,32 @@ void ComponentCanvas::OnInternalLoad(char *& cursor)
 	memcpy(&type, cursor, bytes);
 	cursor += bytes;
 
-	needed_change = true;
+	if (parent->includeModuleComponent)
+	{
+		needed_change = true;
+		Update();
+	}
+}
+
+void ComponentCanvas::Change(CanvasType to)
+{
+	if (to)
+	{
+		switch (type)
+		{
+		case ComponentCanvas::SCREEN:
+			App->ui->canvas_screen.remove(parent);
+			break;
+		case ComponentCanvas::WORLD_SCREEN:
+			App->ui->canvas_worldScreen.remove(parent);
+			break;
+		case ComponentCanvas::WORLD:
+			App->ui->canvas_world.remove(parent);
+			break;
+		}
+		type = to;
+		needed_change = true;
+	}
 }
 
 ComponentCanvas::CanvasType ComponentCanvas::GetType() const
@@ -232,4 +291,23 @@ math::float4x4 ComponentCanvas::GetGlobal() const
 	}
 
 	return ret;
+}
+
+float ComponentCanvas::GetZ(GameObject * go, ComponentTypes type)
+{
+	uint farGO;
+	ModuleUI::FindCanvas(go, farGO);
+	switch (type)
+	{
+	case RectTransformComponent:
+		return ZSEPARATOR * farGO;
+		break;
+	case LabelComponent:
+		return ZSEPARATOR * (farGO + 1);
+		break;
+	case SliderComponent:
+		return ZSEPARATOR * (farGO + 1);
+		break;
+	}
+	return 0.0f;
 }

@@ -51,6 +51,10 @@ void ComponentCamera::UpdateTransform()
 	frustum.pos = matrix.TranslatePart();
 	frustum.front = matrix.WorldZ();
 	frustum.up = matrix.WorldY();
+
+	System_Event billboard;
+	billboard.type = System_Event_Type::UpdateBillboard;
+	App->PushSystemEvent(billboard);
 }
 
 void ComponentCamera::OnUniqueEditor()

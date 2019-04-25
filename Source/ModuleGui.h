@@ -61,6 +61,7 @@ public:
 	class PanelSimulatedTime*	panelSimulatedTime = nullptr;
 	class PanelLayers*			panelLayers = nullptr;
 	class PanelPhysics*			panelPhysics = nullptr;
+	class PanelUI*				panelUI = nullptr;
 
 	ResourceTexture* atlas = nullptr;
 

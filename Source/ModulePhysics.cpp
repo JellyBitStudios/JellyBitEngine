@@ -456,7 +456,7 @@ void ModulePhysics::DrawColliders() const
 
 	for (uint i = 0; i < colliderComponents.size(); ++i)
 	{
-		if (colliderComponents[i]->GetParent()->cmp_rigidActor == nullptr)
+		if (colliderComponents[i]->GetParent()->cmp_rigidActor == nullptr || !colliderComponents[i]->IsTreeActive())
 			continue;
 
 		physx::PxShape* gShape = colliderComponents[i]->GetShape();
@@ -514,7 +514,7 @@ void ModulePhysics::DrawRigidActors() const
 	for (uint i = 0; i < rigidActorComponents.size(); ++i)
 	{
 		physx::PxRigidActor* gActor = rigidActorComponents[i]->GetActor();
-		if (gActor == nullptr)
+		if (gActor == nullptr || !rigidActorComponents[i]->IsTreeActive())
 			continue;
 
 		physx::PxShape* gShape = nullptr;

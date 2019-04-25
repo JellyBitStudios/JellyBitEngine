@@ -63,7 +63,7 @@ void ComponentImage::Update()
 	{
 		if (mask)
 		{
-			uint* rect = parent->cmp_rectTransform->GetRect();
+			int* rect = parent->cmp_rectTransform->GetRect();
 			mask_values[1] = ((rect_initValues[1] - (float)rect[ComponentRectTransform::Rect::YDIST]) / rect_initValues[1]);
 			mask_values[0] = 1.0f - ((rect_initValues[0] - (float)rect[ComponentRectTransform::Rect::XDIST]) / rect_initValues[0]);
 		}
@@ -166,7 +166,7 @@ void ComponentImage::OnSystemEvent(System_Event event)
 	{
 		mask_values[0] = 1;
 		mask_values[1] = 0;
-		uint* rect = parent->cmp_rectTransform->GetRect();
+		int* rect = parent->cmp_rectTransform->GetRect();
 		rect_initValues[0] = rect[ComponentRectTransform::Rect::XDIST];
 		rect_initValues[1] = rect[ComponentRectTransform::Rect::YDIST];
 		break;
@@ -195,7 +195,7 @@ void ComponentImage::SetMask()
 	{
 		mask_values[0] = 1;
 		mask_values[1] = 0;
-		uint* rect = parent->cmp_rectTransform->GetRect();
+		int* rect = parent->cmp_rectTransform->GetRect();
 		rect_initValues[0] = rect[ComponentRectTransform::Rect::XDIST];
 		rect_initValues[1] = rect[ComponentRectTransform::Rect::YDIST];
 	}
@@ -294,7 +294,8 @@ void ComponentImage::OnUniqueEditor()
 		{
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE_INSPECTOR_SELECTOR"))
 			{
-				App->res->SetAsUnused(res_image);
+				if(res_image > 0u)
+					App->res->SetAsUnused(res_image);
 				res_image = *(uint*)payload->Data;
 				App->res->SetAsUsed(res_image);
 			}

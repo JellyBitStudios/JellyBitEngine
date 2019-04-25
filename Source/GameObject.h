@@ -49,6 +49,7 @@ public:
 	void RecursiveRecalculateBoundingBoxes();
 	void RecalculateBoundingBox();
 	void CalculateBoundingBox();
+	void ResetBoundingBox();
 
 	void OnSystemEvent(System_Event event);
 
@@ -106,6 +107,7 @@ public:
 	class ComponentImage*			cmp_image = nullptr;
 	class ComponentButton*			cmp_button = nullptr;
 	class ComponentLabel*			cmp_label = nullptr;
+	class ComponentSlider*			cmp_slider = nullptr;
 	class ComponentAnimator*		cmp_animator = nullptr;
 	class ComponentLight*			cmp_light = nullptr;
 	class ComponentProjector*		cmp_projector = nullptr;
@@ -128,6 +130,8 @@ public:
 	// Open Hierarchy
 	bool openHierarchy = false;
 
+	//IncludeModulesForComponents
+	bool includeModuleComponent = true;
 private:
 
 	char name[DEFAULT_BUF_SIZE];

@@ -8,6 +8,7 @@
 #include "ComponentImage.h"
 #include "ComponentRectTransform.h"
 #include "ComponentLabel.h"
+#include "ComponentSlider.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -18,6 +19,7 @@ ComponentCanvasRenderer::ComponentCanvasRenderer(GameObject * parent, ComponentT
 	{
 		rend_queue.push_back(new ToUIRend());
 		rend_queue.push_back(new ToUIRend());
+		rend_queue.push_back(new ToUIRend());
 	}
 }
 
@@ -25,6 +27,7 @@ ComponentCanvasRenderer::ComponentCanvasRenderer(const ComponentCanvasRenderer &
 {
 	if (includeComponents)
 	{
+		rend_queue.push_back(new ToUIRend());
 		rend_queue.push_back(new ToUIRend());
 		rend_queue.push_back(new ToUIRend());
 	}
@@ -52,7 +55,10 @@ void ComponentCanvasRenderer::Update()
 			for (ToUIRend* rend : rend_queue)
 			{
 				if (rend->isRendered())
+				{
 					rend->Set(RenderTypes::IMAGE, cmp_image);
+					break;
+				}
 			}
 		}
 	ComponentLabel* cmp_label = (ComponentLabel*)parent->GetComponent(ComponentTypes::LabelComponent);
@@ -62,7 +68,23 @@ void ComponentCanvasRenderer::Update()
 			for (ToUIRend* rend : rend_queue)
 			{
 				if (rend->isRendered())
+				{
 					rend->Set(RenderTypes::LABEL, cmp_label);
+					break;
+				}
+			}
+		}
+	ComponentSlider* cmp_slider = (ComponentSlider*)parent->GetComponent(ComponentTypes::SliderComponent);
+	if (cmp_slider)
+		if (cmp_slider->IsTreeActive())
+		{
+			for (ToUIRend* rend : rend_queue)
+			{
+				if (rend->isRendered())
+				{
+					rend->Set(RenderTypes::SLIDER, cmp_slider);
+					break;
+				}
 			}
 		}
 }
@@ -114,14 +136,25 @@ void ComponentCanvasRenderer::OnUniqueEditor()
 math::float4 ComponentCanvasRenderer::ToUIRend::GetColor()
 {
 	isRendered_flag = true;
-	if(type == RenderTypes::IMAGE)
+
+	switch (type)
+	{
+	case ComponentCanvasRenderer::IMAGE:
 	{
 		const float* colors = ((ComponentImage*)cmp)->GetColor();
-		return { colors[ComponentImage::Color::R], colors[ComponentImage::Color::G], colors[ComponentImage::Color::B], colors[ComponentImage::Color::A] }; 
+		return { colors[ComponentImage::Color::R], colors[ComponentImage::Color::G], colors[ComponentImage::Color::B], colors[ComponentImage::Color::A] };
+		break;
 	}
-	else
+	case ComponentCanvasRenderer::SLIDER:
+	{
+		return { 1.0f, 1.0f, 1.0f, 1.0f };
+		break;
+	}
+	case ComponentCanvasRenderer::LABEL:
 	{
 		return ((ComponentLabel*)cmp)->GetColor();
+		break;
+	}
 	}
 }
 
@@ -133,13 +166,19 @@ uint ComponentCanvasRenderer::ToUIRend::GetTexture()
 
 math::float2 ComponentCanvasRenderer::ToUIRend::GetMaskValues()
 {
-	if (((ComponentImage*)cmp)->useMask())
-	{
-		float* mask = ((ComponentImage*)cmp)->GetMask();
-		return { mask[0], mask[1] };
-	}
+	isRendered_flag = true;
+	if (type == SLIDER)
+		return { ((ComponentSlider*)cmp)->GetPercentage(), 0.0f };
 	else
-		return { -1.0f, -1.0f };
+	{
+		if (((ComponentImage*)cmp)->useMask())
+		{
+			float* mask = ((ComponentImage*)cmp)->GetMask();
+			return { mask[0], mask[1] };
+		}
+		else
+			return { -1.0f, -1.0f };
+	}
 }
 
 std::vector<uint>* ComponentCanvasRenderer::ToUIRend::GetTexturesWord()

@@ -1,6 +1,7 @@
 #include "ComponentButton.h"
 
 #include "ComponentRectTransform.h"
+#include "ComponentImage.h"
 #include "ComponentScript.h"
 
 #include "ModuleUI.h"
@@ -11,6 +12,9 @@
 
 #include "GameObject.h"
 #include "Application.h"
+#include "ModuleResourceManager.h"
+
+#include "ResourceTexture.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -29,24 +33,10 @@ ComponentButton::ComponentButton(GameObject* parent, ComponentTypes componentTyp
 		if (parent->cmp_rectTransform == nullptr)
 			parent->AddComponent(ComponentTypes::RectTransformComponent);
 
+		if (!parent->cmp_image)
+			parent->AddComponent(ComponentTypes::ImageComponent);
+
 		App->ui->buttons_ui.push_back(this);
-		//if (parent->cmp_rectTransform)
-		//{
-		//	if (parent->cmp_rectTransform->GetFrom() != ComponentRectTransform::RectFrom::RECT)
-		//	{
-		//		math::float3* corners = parent->cmp_rectTransform->GetCorners();
-		//		physx::PxRigidActor* gActor = physx::PxCreatePlane(App->physics->GetgPhysics(), 
-		//			physx::PxPlane(physx::PxVec3(corners[ComponentRectTransform::Rect::RTOPLEFT].x, corners[ComponentRectTransform::Rect::RTOPLEFT].y, corners[ComponentRectTransform::Rect::RTOPLEFT].z), 
-		//				physx::PxVec3(corners[ComponentRectTransform::Rect::RTOPRIGHT].x, corners[ComponentRectTransform::Rect::RTOPRIGHT].y, corners[ComponentRectTransform::Rect::RTOPRIGHT].z),
-		//				physx::PxVec3(corners[ComponentRectTransform::Rect::RBOTTOMLEFT].x, corners[ComponentRectTransform::Rect::RBOTTOMLEFT].y, corners[ComponentRectTransform::Rect::RBOTTOMLEFT].z)), 
-		//			*App->physics->GetDefaultMaterial());
-		//		assert(gActor != nullptr);
-		//		App->physics->AddActor(*gActor);
-		//		gActor->setActorFlag(physx::PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
-		//
-		//		isWorld = true;
-		//	}
-		//}
 	}
 }
 
@@ -57,42 +47,18 @@ ComponentButton::ComponentButton(const ComponentButton & componentButton, GameOb
 	input = componentButton.input;
 	scriptInstance = componentButton.scriptInstance;
 	methodToCall = componentButton.methodToCall;
+	idleTexture = componentButton.idleTexture;
+	hoveredTexture = componentButton.hoveredTexture;
+	clickTexture = componentButton.clickTexture;
 
-	if(includeComponents)
+	if (includeComponents)
 		App->ui->buttons_ui.push_back(this);
-
-	//if (includeComponents)
-	//{
-	//	if (parent->cmp_rectTransform)
-	//	{
-	//		if (parent->cmp_rectTransform->GetFrom() != ComponentRectTransform::RectFrom::RECT)
-	//		{
-	//			math::float3* corners = parent->cmp_rectTransform->GetCorners();
-	//			gActor = physx::PxCreatePlane(App->physics->GetgPhysics(),
-	//				physx::PxPlane(physx::PxVec3(corners[ComponentRectTransform::Rect::RTOPLEFT].x, corners[ComponentRectTransform::Rect::RTOPLEFT].y, corners[ComponentRectTransform::Rect::RTOPLEFT].z),
-	//					physx::PxVec3(corners[ComponentRectTransform::Rect::RTOPRIGHT].x, corners[ComponentRectTransform::Rect::RTOPRIGHT].y, corners[ComponentRectTransform::Rect::RTOPRIGHT].z),
-	//					physx::PxVec3(corners[ComponentRectTransform::Rect::RBOTTOMLEFT].x, corners[ComponentRectTransform::Rect::RBOTTOMLEFT].y, corners[ComponentRectTransform::Rect::RBOTTOMLEFT].z)),
-	//				*App->physics->GetDefaultMaterial());
-	//			assert(gActor != nullptr);
-	//			App->physics->AddActor(*gActor);
-	//			gActor->setActorFlag(physx::PxActorFlag::eSEND_SLEEP_NOTIFIES, true);
-	//
-	//			isWorld = true;
-	//		}
-	//	}
-	//}
 }
 
 ComponentButton::~ComponentButton()
 {
 	parent->cmp_button = nullptr;
 	App->ui->buttons_ui.erase(std::remove(App->ui->buttons_ui.begin(), App->ui->buttons_ui.end(), this), App->ui->buttons_ui.end());
-
-	//if (isWorld)
-	//if (isWorld)
-	//{
-	//	App->physics->RemoveActor(*gActor);
-	//}
 }
 
 void ComponentButton::OnSystemEvent(System_Event event)
@@ -124,7 +90,7 @@ void ComponentButton::Update()
 {
 	if (IsTreeActive())
 	{
-		const uint* rect = parent->cmp_rectTransform->GetRect();
+		const int* rect = parent->cmp_rectTransform->GetRect();
 
 		if (App->input->GetKey(button_blinded) == KEY_DOWN)
 			KeyPressed();
@@ -135,12 +101,14 @@ void ComponentButton::Update()
 			if (MouseInScreen(rect))
 			{
 				state = HOVERED;
+				if (hoveredTexture > 0) parent->cmp_image->SetResImageUuid(hoveredTexture);
 			}
 			break;
 		case HOVERED:
 			if (!MouseInScreen(rect))
 			{
 				state = IDLE;
+				if (idleTexture > 0) parent->cmp_image->SetResImageUuid(idleTexture);
 			}
 			else if (App->input->GetMouseButton(SDL_BUTTON_RIGHT) == KEY_DOWN)
 			{
@@ -149,6 +117,7 @@ void ComponentButton::Update()
 			}
 			else if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_DOWN)
 			{
+				if (clickTexture > 0) parent->cmp_image->SetResImageUuid(clickTexture);
 				state = L_CLICK;
 				KeyPressed();
 			}
@@ -157,7 +126,11 @@ void ComponentButton::Update()
 			state = HOVERED;
 			break;
 		case L_CLICK:
-			state = HOVERED;
+			if (App->input->GetMouseButton(SDL_BUTTON_LEFT) != KEY_REPEAT)
+			{
+				state = HOVERED;
+				if (hoveredTexture > 0) parent->cmp_image->SetResImageUuid(hoveredTexture);
+			}
 			break;
 		default:
 			break;
@@ -167,7 +140,7 @@ void ComponentButton::Update()
 
 uint ComponentButton::GetInternalSerializationBytes()
 {
-	return sizeof(uint) + BytesToOnClick();
+	return sizeof(uint) * 4 + BytesToOnClick();
 }
 
 uint ComponentButton::BytesToOnClick()
@@ -224,6 +197,15 @@ void ComponentButton::OnInternalSave(char *& cursor)
 	memcpy(cursor, &button_blinded, bytes);
 	cursor += bytes;
 
+	memcpy(cursor, &idleTexture, bytes);
+	cursor += bytes;
+
+	memcpy(cursor, &hoveredTexture, bytes);
+	cursor += bytes;
+
+	memcpy(cursor, &clickTexture, bytes);
+	cursor += bytes;
+
 	OnSaveOnClick(cursor);
 }
 
@@ -270,6 +252,17 @@ void ComponentButton::OnInternalLoad(char *& cursor)
 	cursor += bytes;
 
 	SetNewKey(button_blinded);
+
+	memcpy(&idleTexture, cursor, bytes);
+	cursor += bytes;
+
+	memcpy(&hoveredTexture, cursor, bytes);
+	cursor += bytes;
+
+	memcpy(&clickTexture, cursor, bytes);
+	cursor += bytes;
+
+	if (idleTexture > 0) parent->cmp_image->SetResImageUuid(idleTexture);
 
 	uint bytesOnClick = BytesToOnClickFromBuffer(cursor);
 	tempBuffer = new char[bytesOnClick];
@@ -368,6 +361,74 @@ void ComponentButton::OnUniqueEditor()
 		}
 
 		ImGui::Text(SDL_GetKeyName(SDL_GetKeyFromScancode((SDL_Scancode)button_blinded)));
+
+		ResourceTexture* texture = nullptr;
+		if (idleTexture != 0)
+			texture = (ResourceTexture*)App->res->GetResource(idleTexture);
+		ImGui::Button(texture == nullptr ? "Empty Idle Texture" : texture->GetName(), ImVec2(100.0f, 0.0f));
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("%u", idleTexture);
+			ImGui::EndTooltip();
+		}
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE_INSPECTOR_SELECTOR"))
+			{
+				idleTexture = *(uint*)payload->Data;
+
+				parent->cmp_image->SetResImageUuid(idleTexture);
+			}
+			ImGui::EndDragDropTarget();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("RT Idle"))
+		{
+			idleTexture = 0;
+
+			parent->cmp_image->SetResImageUuid(idleTexture);
+		}
+
+		texture = nullptr;
+		if (hoveredTexture != 0)
+			texture = (ResourceTexture*)App->res->GetResource(hoveredTexture);
+		ImGui::Button(texture == nullptr ? "Empty Hovered Texture" : texture->GetName(), ImVec2(100.0f, 0.0f));
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("%u", hoveredTexture);
+			ImGui::EndTooltip();
+		}
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE_INSPECTOR_SELECTOR"))
+				hoveredTexture = *(uint*)payload->Data;
+			ImGui::EndDragDropTarget();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("RT Hovered"))
+			hoveredTexture = 0;
+
+		texture = nullptr;
+		if (clickTexture != 0)
+			texture = (ResourceTexture*)App->res->GetResource(clickTexture);
+		ImGui::Button(texture == nullptr ? "Empty Click Texture" : texture->GetName(), ImVec2(100.0f, 0.0f));
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("%u", clickTexture);
+			ImGui::EndTooltip();
+		}
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE_INSPECTOR_SELECTOR"))
+				clickTexture = *(uint*)payload->Data;
+			ImGui::EndDragDropTarget();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("RT Click"))
+			clickTexture = 0;
 
 		switch (state)
 		{
@@ -512,7 +573,7 @@ void ComponentButton::OnUniqueEditor()
 #endif
 }
 
-bool ComponentButton::MouseInScreen(const uint* rect) const
+bool ComponentButton::MouseInScreen(const int* rect)
 {
 	uint mouseX = App->input->GetMouseX();
 	uint mouseY = App->input->GetMouseY();

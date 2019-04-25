@@ -75,6 +75,34 @@ void ComponentCollider::OnUniqueEditor()
 #endif
 }
 
+void ComponentCollider::OnEnable()
+{
+	if (gShape != nullptr)
+	{
+		gShape->setFlag(physx::PxShapeFlag::Enum::eSCENE_QUERY_SHAPE, true);
+		if (isTrigger)
+		{
+			gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, true);
+			gShape->setFlag(physx::PxShapeFlag::Enum::eSIMULATION_SHAPE, false);
+		}
+		else
+		{
+			gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, false);
+			gShape->setFlag(physx::PxShapeFlag::Enum::eSIMULATION_SHAPE, true);
+		}
+	}
+}
+
+void ComponentCollider::OnDisable()
+{
+	if (gShape != nullptr)
+	{
+		gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, false);
+		gShape->setFlag(physx::PxShapeFlag::Enum::eSCENE_QUERY_SHAPE, false);
+		gShape->setFlag(physx::PxShapeFlag::Enum::eSIMULATION_SHAPE, false);
+	}
+}
+
 // ----------------------------------------------------------------------------------------------------
 
 void ComponentCollider::Update()
@@ -194,25 +222,38 @@ void ComponentCollider::SetFiltering(physx::PxU32 filterGroup, physx::PxU32 filt
 void ComponentCollider::SetIsTrigger(bool isTrigger)
 {
 	this->isTrigger = isTrigger;
-	if (isTrigger && participateInContactTests)
-		SetParticipateInContactTests(false); // shapes cannot simultaneously be trigger shapes and simulation shapes
-	if (gShape != nullptr)
-		gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, isTrigger);
+	this->participateInContactTests = !isTrigger;
+
+	if (IsTreeActive())
+	{
+		if (gShape != nullptr)
+		{
+			gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, isTrigger);
+			gShape->setFlag(physx::PxShapeFlag::Enum::eSIMULATION_SHAPE, participateInContactTests);
+		}
+	}
 }
 
 void ComponentCollider::SetParticipateInContactTests(bool participateInContactTests)
 {
 	this->participateInContactTests = participateInContactTests;
-	if (participateInContactTests && isTrigger)
-		SetIsTrigger(false); // shapes cannot simultaneously be trigger shapes and simulation shapes
-	if (gShape != nullptr)
-		gShape->setFlag(physx::PxShapeFlag::Enum::eSIMULATION_SHAPE, participateInContactTests);
+	this->isTrigger = !participateInContactTests;
+
+	if (IsTreeActive())
+	{		
+		if (gShape != nullptr)
+		{
+			gShape->setFlag(physx::PxShapeFlag::Enum::eTRIGGER_SHAPE, isTrigger);
+			gShape->setFlag(physx::PxShapeFlag::Enum::eSIMULATION_SHAPE, participateInContactTests);
+		}	
+	}
 }
 
 void ComponentCollider::SetParticipateInSceneQueries(bool participateInSceneQueries)
 {
 	this->participateInSceneQueries = participateInSceneQueries;
-	if (gShape != nullptr)
+
+	if (gShape != nullptr && IsTreeActive())
 		gShape->setFlag(physx::PxShapeFlag::Enum::eSCENE_QUERY_SHAPE, participateInSceneQueries);
 }
 

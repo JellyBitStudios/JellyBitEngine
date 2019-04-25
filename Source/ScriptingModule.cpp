@@ -12,6 +12,7 @@
 #include "ComponentButton.h"
 #include "ComponentImage.h"
 #include "ComponentLabel.h"
+#include "ComponentSlider.h"
 #include "ComponentAudioSource.h"
 #include "ComponentAudioListener.h"
 #include "ComponentRigidDynamic.h"
@@ -277,7 +278,9 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 				{
 					IncludeCSFiles();
 				}
-			}			
+			}		
+
+			break;
 		}
 
 		case System_Event_Type::GameObjectDestroyed:
@@ -551,6 +554,11 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 		case ComponentTypes::LabelComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine.UI", "Label"));
+			break;
+		}
+		case ComponentTypes::SliderComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine.UI", "Slider"));
 			break;
 		}
 		case ComponentTypes::RigidDynamicComponent:
@@ -1959,6 +1967,21 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 
 		return App->scripting->MonoComponentFrom(comp);
 	}
+
+	else if (className == "Slider")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::SliderComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
+
 	else if (className == "Rigidbody")
 	{
 		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
@@ -2755,13 +2778,13 @@ MonoArray* RectTransform_GetRect(MonoObject* rectComp)
 	if (!rectCpp)
 		return nullptr;
 
-	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_uint32_class(), 4);
+	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_int32_class(), 4);
 
-	uint* rectVector = rectCpp->GetRect();
-	mono_array_set(ret, uint, 0, rectVector[0]);
-	mono_array_set(ret, uint, 1, rectVector[1]);
-	mono_array_set(ret, uint, 2, rectVector[2]);
-	mono_array_set(ret, uint, 3, rectVector[3]);
+	int* rectVector = rectCpp->GetRect();
+	mono_array_set(ret, int, 0, rectVector[0]);
+	mono_array_set(ret, int, 1, rectVector[1]);
+	mono_array_set(ret, int, 2, rectVector[2]);
+	mono_array_set(ret, int, 3, rectVector[3]);
 
 	return ret;
 }
@@ -2775,11 +2798,11 @@ void RectTransform_SetRect(MonoObject* rectComp, MonoArray* newRect)
 	if (!rectCpp)
 		return;
 
-	uint rectVector[4];
-	rectVector[0] = mono_array_get(newRect, uint, 0);
-	rectVector[1] = mono_array_get(newRect, uint, 1);
-	rectVector[2] = mono_array_get(newRect, uint, 2);
-	rectVector[3] = mono_array_get(newRect, uint, 3);
+	int rectVector[4];
+	rectVector[0] = mono_array_get(newRect, int, 0);
+	rectVector[1] = mono_array_get(newRect, int, 1);
+	rectVector[2] = mono_array_get(newRect, int, 2);
+	rectVector[3] = mono_array_get(newRect, int, 3);
 	
 	rectCpp->SetRect(rectVector[0], rectVector[1], rectVector[2], rectVector[3]);
 }
@@ -2970,6 +2993,18 @@ void LabelSetResource(MonoObject* monoLabel, MonoString* newFont)
 	label->SetFontResource(fontCPP);
 
 	mono_free(fontCPP);
+}
+
+float SliderGetValue(MonoObject* monoSlider)
+{
+	ComponentSlider* slider = (ComponentSlider*)App->scripting->ComponentFrom(monoSlider);
+
+	if (slider)
+	{
+		return slider->GetPercentage();
+	}
+
+	return -1.0f;
 }
 
 void PlayerPrefsSave()
@@ -3845,6 +3880,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetColor", (const void*)&LabelGetColor);
 	mono_add_internal_call("JellyBitEngine.UI.Label::SetResource", (const void*)&LabelSetResource);
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetResource", (const void*)&LabelGetResource);
+	mono_add_internal_call("JellyBitEngine.UI.Slider::GetValue", (const void*)&SliderGetValue);
 
 	//PlayerPrefs
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);

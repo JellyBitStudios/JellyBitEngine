@@ -17,6 +17,7 @@
 #include "ComponentMesh.h"
 #include "ComponentImage.h"
 #include "ComponentRectTransform.h"
+#include "ComponentSlider.h"
 #include "ResourceShaderProgram.h"
 #include "ResourceAnimation.h"
 #include "ComponentTrail.h"
@@ -141,6 +142,9 @@ void ModuleGOs::OnSystemEvent(System_Event event)
 			break;
 		case ComponentTypes::LabelComponent:
 			go->cmp_label = nullptr;
+			break;
+		case ComponentTypes::SliderComponent:
+			go->cmp_slider = nullptr;
 			break;
 		case ComponentTypes::CanvasRendererComponent:
 			go->cmp_canvasRenderer = nullptr;
@@ -436,6 +440,9 @@ bool ModuleGOs::InvalidateResource(Resource* resource)
 			// UI component uses Texture resource
 			if (gameobjects[i]->cmp_image != nullptr && gameobjects[i]->cmp_image->GetResImageUuid() == resource->GetUuid())
 				gameobjects[i]->cmp_image->SetResImageUuid(App->resHandler->defaultTexture);
+			if (gameobjects[i]->cmp_slider != nullptr && 
+				(gameobjects[i]->cmp_slider->GetBackTexture() == resource->GetUuid() || gameobjects[i]->cmp_slider->GetFrontTexture() == resource->GetUuid()))
+				gameobjects[i]->cmp_slider->SetFromInvadilateResource(App->resHandler->defaultTexture);
 
 			break;
 

@@ -2118,6 +2118,9 @@
     <ClInclude Include="ModuleTrails.h">
       <Filter>Sources\Modules</Filter>
     </ClInclude>
+    <ClInclude Include="PanelUI.h">
+      <Filter>Sources\Modules\Panels</Filter>
+    </ClInclude>
     <ClInclude Include="GLCache.h">
       <Filter>Sources\Helpers</Filter>
     </ClInclude>
@@ -2126,6 +2129,9 @@
     </ClInclude>
     <ClInclude Include="ModuleInterpolation.h">
       <Filter>Sources\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="ComponentSlider.h">
+      <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2693,6 +2699,9 @@
     <ClCompile Include="ModuleTrails.cpp">
       <Filter>Sources\Modules</Filter>
     </ClCompile>
+    <ClCompile Include="PanelUI.cpp">
+      <Filter>Sources\Modules\Panels</Filter>
+    </ClCompile>
     <ClCompile Include="CurrentSelection.cpp">
       <Filter>Sources\Containers</Filter>
     </ClCompile>
@@ -2704,6 +2713,9 @@
     </ClCompile>
     <ClCompile Include="ModuleInterpolation.cpp">
       <Filter>Sources\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="ComponentSlider.cpp">
+      <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

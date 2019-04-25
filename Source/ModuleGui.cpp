@@ -29,6 +29,7 @@
 #include "PanelSimulatedTime.h"
 #include "PanelPhysics.h"
 #include "PanelLayers.h"
+#include "PanelUI.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_impl_sdl.h"
@@ -61,6 +62,7 @@ bool ModuleGui::Init(JSON_Object* jObject)
 	panelSimulatedTime = new PanelSimulatedTime("Simulated Time");
 	panelPhysics = new PanelPhysics("Physics");
 	panelLayers = new PanelLayers("Layers");
+	panelUI = new PanelUI("UI");
 
 	panels.push_back(panelInspector);
 	panels.push_back(panelAbout);
@@ -76,6 +78,7 @@ bool ModuleGui::Init(JSON_Object* jObject)
 	panels.push_back(panelSimulatedTime);
 	panels.push_back(panelPhysics);
 	panels.push_back(panelLayers);
+	panels.push_back(panelUI);
 
 	LoadStatus(jObject);
 
@@ -330,6 +333,7 @@ void ModuleGui::DockSpace() const
 				
 		ImGui::DockBuilderDockWindow(panelDebugDraw->GetName(), dock_id_up);
 		ImGui::DockBuilderDockWindow(panelEdit->GetName(), dock_id_up);
+		ImGui::DockBuilderDockWindow(panelUI->GetName(), dock_id_up);
 		ImGui::DockBuilderDockWindow(panelHierarchy->GetName(), dock_id_left);
 		ImGui::DockBuilderDockWindow(panelNavigation->GetName(), dock_id_right);
 		ImGui::DockBuilderDockWindow(panelInspector->GetName(), dock_id_right);

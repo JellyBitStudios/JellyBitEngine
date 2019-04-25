@@ -7,6 +7,7 @@
 
 #include "MathGeoLib\include\Geometry\Frustum.h"
 #include "MathGeoLib\include\Geometry\Ray.h"
+#include "MathGeoLib\include\Math\float3.h"
 #include "MathGeoLib\include\Math\float2.h"
 
 class ComponentCamera : public Component
