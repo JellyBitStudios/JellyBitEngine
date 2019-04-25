@@ -20,6 +20,7 @@
 #include "ComponentSphereCollider.h"
 #include "ComponentCapsuleCollider.h"
 #include "ComponentTrail.h"
+#include "ComponentInterpolation.h"
 #include "ComponentProjector.h"
 
 #include "GameObject.h"
@@ -589,6 +590,11 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 		case ComponentTypes::TrailComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Trail"));
+			break;
+		}
+		case ComponentTypes::InterpolationComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Interpolation"));
 			break;
 		}
 	}
@@ -2111,6 +2117,19 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 
 		return App->scripting->MonoComponentFrom(comp);
 	}
+	else if (className == "Interpolation")
+	{
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	if (!gameObject)
+		return nullptr;
+
+	Component* comp = gameObject->GetComponent(ComponentTypes::InterpolationComponent);
+
+	if (!comp)
+		return nullptr;
+
+	return App->scripting->MonoComponentFrom(comp);
+	}
 	else
 	{
 		//Check if this monoObject is destroyed
@@ -2765,6 +2784,24 @@ MonoArray* TrailGetColor(MonoObject* monoTrail)
 	}
 
 	return nullptr;
+}
+
+void* InterpolationStartInterpolation(MonoObject* monoInterpoaltion, char* name, bool goBack, float time)
+{
+	ComponentInterpolation* interpolation = (ComponentInterpolation*)App->scripting->ComponentFrom(monoInterpoaltion);
+	if (interpolation)
+	{
+		interpolation->StartInterpolation(name, goBack, time);
+	}
+}
+
+void* InterpolationGoBack(MonoObject* monoInterpoaltion)
+{
+	ComponentInterpolation* interpolation = (ComponentInterpolation*)App->scripting->ComponentFrom(monoInterpoaltion);
+	if (interpolation)
+	{
+		interpolation->GoBack();
+	}
 }
 
 bool UIHovered()
@@ -3846,6 +3883,10 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Trail::GetMinDistance", (const void*)&TrailGetMinDistance);
 	mono_add_internal_call("JellyBitEngine.Trail::SetColor", (const void*)&TrailSetColor);
 	mono_add_internal_call("JellyBitEngine.Trail::GetColor", (const void*)&TrailGetColor);
+
+	//Interpolation
+	mono_add_internal_call("JellyBitEngine.Interpolation::StartInterpolation", (const void*)&InterpolationStartInterpolation);
+	mono_add_internal_call("JellyBitEngine.Interpolation::GoBack", (const void*)&InterpolationGoBack);
 
 	//Physics
 	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddForce", (const void*)&RigidbodyAddForce);
