@@ -1389,15 +1389,10 @@ void DestroyObj(MonoObject* obj)
 	App->GOs->DeleteGameObject(toDelete);
 }
 
-MonoObject* Vector3RandomInsideSphere()
+math::float3 Vector3RandomInsideSphere()
 {
-	math::float3 randomPoint = math::float3::RandomSphere(App->randomMathLCG, math::float3(0, 0, 0), 1);
-
-	MonoClass* vector3class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
-	
-	MonoObject* ret = mono_value_box(App->scripting->domain, vector3class, &randomPoint);
-
-	return ret;
+	math::float3 randomPoint = math::float3::RandomSphere(App->randomMathLCG, math::float3(0, 0, 0), 1);	
+	return randomPoint;
 }
 
 MonoArray* QuatMult(MonoArray* q1, MonoArray* q2)
