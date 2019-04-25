@@ -572,20 +572,26 @@ bool ModuleUI::MouseInScreen()
 {
 	for (GameObject* goScreenCanvas : canvas_screen)
 	{
-		if (goScreenCanvas->IsActive())
+		if (goScreenCanvas != nullptr)
 		{
-			if (goScreenCanvas->cmp_rectTransform)
+			if (goScreenCanvas->IsActive())
 			{
-				int* rect = goScreenCanvas->cmp_rectTransform->GetRect();
-
-				if (rect)
+				if (goScreenCanvas->cmp_rectTransform)
 				{
-					uint mouseX = App->input->GetMouseX();
-					uint mouseY = App->input->GetMouseY();
+					if (goScreenCanvas->cmp_rectTransform != nullptr)
+					{
+						int* rect = goScreenCanvas->cmp_rectTransform->GetRect();
 
-					if (mouseX > rect[ComponentRectTransform::Rect::X] && mouseX < rect[ComponentRectTransform::Rect::X] + rect[ComponentRectTransform::Rect::XDIST]
-						&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST])
-						return true;
+						if (rect)
+						{
+							uint mouseX = App->input->GetMouseX();
+							uint mouseY = App->input->GetMouseY();
+
+							if (mouseX > rect[ComponentRectTransform::Rect::X] && mouseX < rect[ComponentRectTransform::Rect::X] + rect[ComponentRectTransform::Rect::XDIST]
+								&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST])
+								return true;
+						}
+					}
 				}
 			}
 		}
