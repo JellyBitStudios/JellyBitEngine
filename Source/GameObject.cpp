@@ -900,6 +900,8 @@ void GameObject::OnSave(char*& cursor) const
 
 void GameObject::OnLoad(char*& cursor, bool includeInModules)
 {
+	includeModuleComponent = includeInModules;
+
 	size_t bytes = sizeof(uint);
 	memcpy(&uuid, cursor, bytes);
 	cursor += bytes;
@@ -936,6 +938,7 @@ void GameObject::OnLoad(char*& cursor, bool includeInModules)
 		Component* cmp = AddComponent(componentType, false, includeInModules);
 		cmp->OnLoad(cursor);
 	}
+	includeModuleComponent = true;
 }
 
 // review this

@@ -129,6 +129,8 @@ public:
 	// Open Hierarchy
 	bool openHierarchy = false;
 
+	//IncludeModulesForComponents
+	bool includeModuleComponent = true;
 private:
 
 	char name[DEFAULT_BUF_SIZE];
