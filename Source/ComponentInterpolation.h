@@ -97,16 +97,15 @@ public:
 
 	void OnUniqueEditor();
 
-	void StartInterpolation(char * nodeName, bool goBack, float time = 0.0f);
+	void StartInterpolation(char* nodeName, bool goBack, float time = 0.0f);
 	void GoBack();
 
-	uint GetNodesBytes();
-
-	void SaveNodes(char *& cursor);
-
-	void LoadNodes(char *& cursor, int size);
 
 	//Serialization
+	uint GetNodesBytes();
+	void SaveNodes(char *& cursor);
+	void LoadNodes(char *& cursor, int size);
+
 	uint GetInternalSerializationBytes();
 	virtual void OnInternalSave(char*& cursor);
 	virtual void OnInternalLoad(char*& cursor);
