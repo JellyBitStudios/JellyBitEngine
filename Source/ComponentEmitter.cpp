@@ -9,6 +9,7 @@
 #include "ResourceMesh.h"
 #include "ModuleResourceManager.h"
 #include "ModuleInternalResHandler.h"
+#include "ModuleRenderer3D.h"
 
 #include "ComponentMaterial.h"
 #include "ComponentTransform.h"
@@ -205,6 +206,10 @@ void ComponentEmitter::Update()
 
 			newPositions.clear();
 		}
+		if (App->renderer3D->GetCurrentCamera()->frustum.Intersects(boundingBox))
+			isInFrustum = true;
+		else
+			isInFrustum = false;
 	}
 }
 
@@ -834,8 +839,6 @@ bool ComponentEmitter::EditColor(ColorTime &colorTime, uint pos)
 	bool ret = true;
 
 #ifndef GAMEMODE
-
-
 
 	ImVec4 color = EqualsFloat4(colorTime.color);
 	if (ImGui::ColorButton(colorTime.name.data(), color, ImGuiColorEditFlags_None, ImVec2(100, 20)))
