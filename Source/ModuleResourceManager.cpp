@@ -155,7 +155,7 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 				if (strcmp(shader->GetFile(), event.fileEvent.file) == 0)
 				{
 					// Update the existing material
-					material->SetResourceShader(shader->GetUuid());
+					material->UpdateResourceShader();
 
 					// Export the existing file
 					std::string outputFile;
@@ -380,8 +380,9 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 				prefab->Save();
 			}
 		}
-		break;
 	}
+	break;
+
 	case System_Event_Type::ScriptingDomainReloaded:
 	case System_Event_Type::Stop:
 	{
@@ -393,8 +394,9 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 				prefab->OnSystemEvent(event);
 			}
 		}
-		break;
 	}
+	break;
+
 	case System_Event_Type::Play:
 	{
 		for (auto res = resources.begin(); res != resources.end(); ++res)
@@ -405,8 +407,8 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 				prefab->Save();
 			}
 		}
-		break;
 	}
+	break;
 
 	case System_Event_Type::GenerateLibraryFiles:
 	{

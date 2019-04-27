@@ -117,8 +117,8 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 
 		// Initialize clear color
 		glClearColor(0.f, 0.f, 0.f, 1.0f);
-		//glEnable(GL_BLEND);
-		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		// Check for error
 		error = glGetError();
@@ -223,12 +223,19 @@ update_status ModuleRenderer3D::PostUpdate()
 			}
 
 			// Draw decals
+			bool blend = GetCapabilityState(GL_BLEND);
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 			for (uint i = 0; i < projectorComponents.size(); ++i)
 			{
 				if (projectorComponents[i]->GetParent()->IsActive()
 					&& projectorComponents[i]->IsTreeActive())
 					projectorComponents[i]->Draw();
 			}
+
+			if (!blend)
+				glDisable(GL_BLEND);
 
 			// Draw dynamic meshes
 			for (uint i = 0; i < dynamics.size(); ++i)

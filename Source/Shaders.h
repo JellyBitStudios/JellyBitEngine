@@ -175,7 +175,7 @@
 "	}\n" \
 "	if (FragPosA == 3) // outline\n" \
 "		lighting = Albedo;\n" \
-"	FragColor = vec4(lighting, 1.0);\n" \
+"	FragColor = vec4(lighting, AlbedoA);\n" \
 "}"
 
 #pragma endregion
@@ -786,7 +786,6 @@
 "layout(location = 1) out vec4 gNormal;\n"												\
 "layout(location = 2) out vec4 gAlbedoSpec;\n"											\
 "layout(location = 3) out uvec4 gInfo;\n"												\
-"uniform int lightCartoon;\n"															\
 "in GS_OUT\n"																			\
 "{\n"																					\
 "  vec3 fPosition;\n"																	\
@@ -804,6 +803,7 @@
 "\n"																					\
 "uniform vec3 viewPos;\n"																\
 "uniform Material material;\n"															\
+"uniform int lightCartoon;\n"															\
 "\n"																					\
 "//uniform vec3 lineColor; // the silhouette edge color\n"								\
 "//uniform int levels;\n"																\
@@ -827,7 +827,7 @@
 "	else\n"																				\
 "	{\n"																				\
 "		gNormal.a = levels;\n"															\
-"		gPosition.a = lightCartoon;\n"																\
+"		gPosition.a = lightCartoon;\n"													\
 "\n"																					\
 "		vec4 albedo = texture(material.albedo, fs_in.fTexCoord);\n"						\
 "		vec3 diffuse = vec3(albedo);\n"													\
@@ -966,6 +966,8 @@
 "uniform usampler2D gBufferInfo;\n" \
 "\n" \
 "uniform sampler2D projectorTex;\n" \
+"uniform float alphaMultiplier;\n" \
+"uniform int lightCartoon;\n" \
 "\n" \
 "uniform mat4 model_matrix;\n" \
 "uniform mat4 projectorMatrix;\n" \
@@ -1005,23 +1007,19 @@
 "	//vec4 color = texture(projectorTex, texCoord);\n" \
 "	vec4 texCoord = projectorMatrix * worldPos;\n" \
 "	vec4 color = textureProj(projectorTex, texCoord);\n" \
-"	if (color.a < 0.1)\n" \
+"	if (color.a == 0.0)\n" \
 "		discard;\n" \
 "\n" \
 "	//////////\n" \
 "\n" \
 "	gPosition.rgb = worldPos.rgb;\n" \
 "	gNormal.rgb = texture(gBufferNormal, screenPos).xyz;\n" \
-"	gAlbedoSpec = color;\n" \
-"	//gPosition.a = 1;\n" \
-"	//gNormal.a = 1;\n" \
+"	gAlbedoSpec = vec4(color.rgb, color.a * alphaMultiplier);\n" \
 "\n" \
-"	// ***Cartoon***\n" \
+"	gPosition.a = lightCartoon;\n" \
 "	int levels = 2;\n" \
-"	gPosition.a = 2;\n" \
 "	gNormal.a = levels;\n" \
 "}"
-
 #pragma endregion
 
 #endif

@@ -96,6 +96,10 @@ void ComponentProjector::OnUniqueEditor()
 #ifndef GAMEMODE
 	if (ImGui::CollapsingHeader("Projector", ImGuiTreeNodeFlags_DefaultOpen))
 	{
+		// Frustum
+		ImGui::Text("FRUSTUM");
+		ImGui::Spacing();
+
 		ImGui::Text("Field of view"); ImGui::SameLine(); ImGui::AlignTextToFramePadding();
 		float fov = frustum.verticalFov * RADTODEG;
 		if (ImGui::SliderFloat("##fov", &fov, 0.0f, 180.0f))
@@ -110,6 +114,9 @@ void ComponentProjector::OnUniqueEditor()
 		ImGui::PopItemWidth();
 
 		// Material
+		ImGui::Text("MATERIAL");
+		ImGui::Spacing();
+
 		const Resource* resource = App->res->GetResource(materialRes);
 		std::string materialName = resource->GetName();
 
@@ -145,7 +152,13 @@ void ComponentProjector::OnUniqueEditor()
 		if (ImGui::SmallButton("Use default material"))
 			SetMaterialRes(App->resHandler->defaultMaterial);
 
+		ImGui::Text("Alpha multiplier"); ImGui::PushItemWidth(50.0f);
+		ImGui::DragFloat("##alphaMultiplier", &alphaMultiplier, 0.01f, 0.0f, 1.0f, "%.2f", 1.0f);
+		ImGui::PopItemWidth();
+
 		// Ignore layers
+		ImGui::Spacing();
+
 		std::string title;
 		std::vector<Layer*> activeLayers;
 		uint enabledLayers = 0;
@@ -358,6 +371,10 @@ void ComponentProjector::Draw() const
 	if (location != -1)
 		glUniform2fv(location, 1, screenSize.ptr());
 
+	location = glGetUniformLocation(shaderProgram, "alphaMultiplier");
+	if (location != -1)
+		glUniform1f(location, alphaMultiplier);
+
 	location = glGetUniformLocation(shaderProgram, "filterMask");
 	if (location != -1)
 		glUniform1i(location, filterMask);
@@ -370,6 +387,7 @@ void ComponentProjector::Draw() const
 	ignore.push_back("gBufferInfo");
 	ignore.push_back("screenSize");
 	ignore.push_back("filterMask");
+	ignore.push_back("alphaMultiplier");
 	App->renderer3D->LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	glDepthMask(false);
@@ -412,37 +430,6 @@ void ComponentProjector::Draw() const
 
 // ----------------------------------------------------------------------------------------------------
 
-void ComponentProjector::SetFOV(float fov)
-{
-	frustum.verticalFov = fov * DEGTORAD;
-	frustum.horizontalFov = fov * DEGTORAD;
-}
-
-float ComponentProjector::GetFOV() const
-{
-	return frustum.verticalFov * RADTODEG;
-}
-
-float ComponentProjector::GetNearPlaneDistance()
-{
-	return frustum.nearPlaneDistance;
-}
-
-void ComponentProjector::SetNearPlaneDistance(float nearPlane)
-{
-	frustum.nearPlaneDistance = nearPlane;
-}
-
-float ComponentProjector::GetFarPlaneDistance()
-{
-	return frustum.farPlaneDistance;
-}
-
-void ComponentProjector::SetFarPlaneDistance(float farPlane)
-{
-	frustum.farPlaneDistance = farPlane;
-}
-
 void ComponentProjector::SetMaterialRes(uint materialUuid)
 {
 	if (materialRes > 0)
@@ -478,9 +465,24 @@ uint ComponentProjector::GetMaterialRes() const
 std::string ComponentProjector::GetMaterialResName() const
 {
 	Resource* res = App->res->GetResource(materialRes);
-	if(res)
+	if (res != nullptr)
 		return res->GetName();
 	return "";
+}
+
+void ComponentProjector::SetAlphaMultiplier(float alphaMultiplier)
+{
+	this->alphaMultiplier = alphaMultiplier;
+
+	if (this->alphaMultiplier < 0.0f)
+		this->alphaMultiplier = 0.0f;
+	else if (this->alphaMultiplier > 1.0f)
+		this->alphaMultiplier = 1.0f;
+}
+
+float ComponentProjector::GetAlphaMultiplier() const
+{
+	return alphaMultiplier;
 }
 
 void ComponentProjector::SetMeshRes(uint meshUuid)
@@ -507,6 +509,39 @@ void ComponentProjector::SetFilterMask(uint filterMask)
 uint ComponentProjector::GetFilterMask() const
 {
 	return filterMask;
+}
+
+// ----------------------------------------------------------------------------------------------------
+
+void ComponentProjector::SetFOV(float fov)
+{
+	frustum.verticalFov = fov * DEGTORAD;
+	frustum.horizontalFov = fov * DEGTORAD;
+}
+
+float ComponentProjector::GetFOV() const
+{
+	return frustum.verticalFov * RADTODEG;
+}
+
+float ComponentProjector::GetNearPlaneDistance()
+{
+	return frustum.nearPlaneDistance;
+}
+
+void ComponentProjector::SetNearPlaneDistance(float nearPlane)
+{
+	frustum.nearPlaneDistance = nearPlane;
+}
+
+float ComponentProjector::GetFarPlaneDistance()
+{
+	return frustum.farPlaneDistance;
+}
+
+void ComponentProjector::SetFarPlaneDistance(float farPlane)
+{
+	frustum.farPlaneDistance = farPlane;
 }
 
 math::Frustum ComponentProjector::GetFrustum() const

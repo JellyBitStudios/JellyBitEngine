@@ -432,15 +432,16 @@ void ResourceMaterial::SetResourceShader(uint shaderUuid)
 
 	materialData.shaderUuid = shaderUuid;
 
-	// Reset uniforms
-	ResetUniforms();
-
 	ResourceShaderProgram* shader = (ResourceShaderProgram*)App->res->GetResource(shaderUuid);
 	materialData.shaderProgram = shader->shaderProgram;
-	shader->GetUniforms(materialData.uniforms);
 
-	// Set as used (uniforms)
-	SetUniformsAsUsed();
+	ClearUniforms();
+	FillUniforms();
+}
+
+void ResourceMaterial::UpdateResourceShader()
+{
+	UpdateUniforms();
 }
 
 uint ResourceMaterial::GetShaderUuid() const
@@ -466,7 +467,15 @@ std::vector<Uniform>& ResourceMaterial::GetUniforms()
 	return materialData.uniforms;
 }
 
-void ResourceMaterial::ResetUniforms()
+void ResourceMaterial::FillUniforms()
+{
+	ResourceShaderProgram* shader = (ResourceShaderProgram*)App->res->GetResource(materialData.shaderUuid);
+	shader->GetUniforms(materialData.uniforms);
+	// Set as used (uniforms)
+	SetUniformsAsUsed();
+}
+
+void ResourceMaterial::ClearUniforms()
 {
 	// Set as unused (uniforms)
 	SetUniformsAsUnused();
@@ -543,21 +552,6 @@ void ResourceMaterial::SetUniformsAsUnused() const
 	}
 }
 
-void ResourceMaterial::EditTextureMatrix(uint textureUuid)
-{
-
-}
-
-bool ResourceMaterial::LoadInMemory()
-{
-	return true;
-}
-
-bool ResourceMaterial::UnloadFromMemory()
-{
-	return true;
-}
-
 void ResourceMaterial::UpdateUniformsLocations()
 {
 	std::vector<Uniform> uni;
@@ -572,4 +566,78 @@ void ResourceMaterial::UpdateUniformsLocations()
 				materialData.uniforms[j].common.location = uni[i].common.location;
 		}
 	}
+}
+
+void ResourceMaterial::UpdateUniforms()
+{
+	std::vector<Uniform> uni;
+	ResourceShaderProgram* shader = (ResourceShaderProgram*)App->res->GetResource(materialData.shaderUuid);
+	shader->GetUniforms(uni);
+
+	bool found = false;
+
+	// 1. Erase uniforms
+	/// Old uniforms
+	for (std::vector<Uniform>::iterator it = materialData.uniforms.begin(); it != materialData.uniforms.end();)
+	{
+		found = false;
+
+		/// New uniforms
+		for (uint i = 0; i < uni.size(); ++i)
+		{
+			if (strcmp((*it).common.name, uni[i].common.name) == 0)
+				found = true;
+		}
+
+		if (!found)
+		{
+			// If it is a texture, set as unused
+			if ((*it).sampler2DU.value.uuid > 0)
+				App->res->SetAsUnused((*it).sampler2DU.value.uuid);
+
+			// Erase the uniform 
+			it = materialData.uniforms.erase(it);
+		}
+		else
+			++it;
+	}
+
+	// 2. Add new uniforms
+	/// New uniforms
+	for (uint i = 0; i < uni.size(); ++i)
+	{
+		found = false;
+
+		/// Old uniforms
+		for (uint j = 0; j < materialData.uniforms.size(); ++j)
+		{
+			if (strcmp(uni[i].common.name, materialData.uniforms[j].common.name) == 0)
+				found = true;
+		}
+
+		if (!found)
+		{
+			// Add the uniform
+			materialData.uniforms.push_back(uni[i]);
+
+			// If it is a texture, there is no need to set it as used
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------------------------------
+
+void ResourceMaterial::EditTextureMatrix(uint textureUuid)
+{
+
+}
+
+bool ResourceMaterial::LoadInMemory()
+{
+	return true;
+}
+
+bool ResourceMaterial::UnloadFromMemory()
+{
+	return true;
 }
