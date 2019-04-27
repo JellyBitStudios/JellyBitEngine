@@ -244,7 +244,7 @@ void ComponentAnimator::Update()
 	if (res != 0) {
 		ResourceAnimator* anim_res = (ResourceAnimator*)App->res->GetResource(res);
 
-		if (anim_res && this->parent->seenLastFrame) {
+		if (anim_res) {
 			anim_res->Update();
 		}
 	}

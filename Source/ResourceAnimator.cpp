@@ -531,11 +531,13 @@ bool ResourceAnimator::Update()
 
 	if (current_anim->anim_timer >= current_anim->duration && current_anim->duration > 0.0f)
 	{
-		current_anim->anim_timer = 0.0f;
+		
 		current_anim->finished = true;
 
 		if (!current_anim->loop) 
 			anim_state = AnimationState::STOPPED;
+		else
+			current_anim->anim_timer = 0.0f;
 		
 	}
 	else {
@@ -557,11 +559,11 @@ bool ResourceAnimator::Update()
 		break;
 
 	case AnimationState::STOPPED: {
-		current_anim->anim_timer = 0.0f;
 		ResourceAvatar* tmp_avatar = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
 		if (tmp_avatar) {
 			tmp_avatar->StepBones(current_anim->animation_uuid, current_anim->anim_timer);
 		}
+		current_anim->anim_timer = 0.0f;
 		PauseAnimation();
 	}
 		break;
