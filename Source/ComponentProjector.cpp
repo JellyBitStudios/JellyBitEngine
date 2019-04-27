@@ -98,7 +98,6 @@ void ComponentProjector::OnUniqueEditor()
 	{
 		// Frustum
 		ImGui::Text("FRUSTUM");
-		ImGui::Spacing();
 
 		ImGui::Text("Field of view"); ImGui::SameLine(); ImGui::AlignTextToFramePadding();
 		float fov = frustum.verticalFov * RADTODEG;
@@ -114,8 +113,8 @@ void ComponentProjector::OnUniqueEditor()
 		ImGui::PopItemWidth();
 
 		// Material
-		ImGui::Text("MATERIAL");
 		ImGui::Spacing();
+		ImGui::Text("MATERIAL");
 
 		const Resource* resource = App->res->GetResource(materialRes);
 		std::string materialName = resource->GetName();
@@ -218,19 +217,17 @@ void ComponentProjector::OnUniqueEditor()
 
 uint ComponentProjector::GetInternalSerializationBytes()
 {
-	return sizeof(math::Frustum) +
+	return
 		sizeof(uint) +
 		sizeof(uint) +
-		sizeof(uint);
+		sizeof(float) +
+		sizeof(uint) +
+		sizeof(math::Frustum);
 }
 
 void ComponentProjector::OnInternalSave(char*& cursor)
 {
-	size_t bytes = sizeof(math::Frustum);
-	memcpy(cursor, &frustum, bytes);
-	cursor += bytes;
-
-	bytes = sizeof(uint);
+	size_t bytes = sizeof(uint);
 	memcpy(cursor, &materialRes, bytes);
 	cursor += bytes;
 
@@ -238,20 +235,24 @@ void ComponentProjector::OnInternalSave(char*& cursor)
 	memcpy(cursor, &meshRes, bytes);
 	cursor += bytes;
 
+	bytes = sizeof(float);
+	memcpy(cursor, &alphaMultiplier, bytes);
+	cursor += bytes;
+
 	bytes = sizeof(uint);
 	memcpy(cursor, &filterMask, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(math::Frustum);
+	memcpy(cursor, &frustum, bytes);
 	cursor += bytes;
 }
 
 void ComponentProjector::OnInternalLoad(char*& cursor)
 {
-	size_t bytes = sizeof(math::Frustum);
-	memcpy(&frustum, cursor, bytes);
-	cursor += bytes;
+	uint resource;
 
-	uint resource = 0;
-
-	bytes = sizeof(uint);
+	size_t bytes = sizeof(uint);
 	memcpy(&resource, cursor, bytes);
 	cursor += bytes;
 
@@ -269,8 +270,16 @@ void ComponentProjector::OnInternalLoad(char*& cursor)
 	else
 		SetMeshRes(App->resHandler->cube);
 
+	bytes = sizeof(float);
+	memcpy(&alphaMultiplier, cursor, bytes);
+	cursor += bytes;
+
 	bytes = sizeof(uint);
 	memcpy(&filterMask, cursor, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(math::Frustum);
+	memcpy(&frustum, cursor, bytes);
 	cursor += bytes;
 }
 

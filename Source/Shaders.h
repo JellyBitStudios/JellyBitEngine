@@ -1014,7 +1014,7 @@
 "\n" \
 "	gPosition.rgb = worldPos.rgb;\n" \
 "	gNormal.rgb = texture(gBufferNormal, screenPos).xyz;\n" \
-"	gAlbedoSpec = vec4(color.rgb, color.a * alphaMultiplier);\n" \
+"	gAlbedoSpec = vec4(color.rgb, color.a);\n" \
 "\n" \
 "	gPosition.a = lightCartoon;\n" \
 "	int levels = 2;\n" \
