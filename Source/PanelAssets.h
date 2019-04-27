@@ -1,8 +1,6 @@
 #ifndef __PANEL_ASSETS_H__
 #define __PANEL_ASSETS_H__
 
-
-
 #ifndef GAMEMODE
 
 #include "Panel.h"

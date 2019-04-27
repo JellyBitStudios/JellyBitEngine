@@ -34,8 +34,22 @@ ComponentAnimator::ComponentAnimator(const ComponentAnimator & component_anim, G
 {
 	if (include) 
 	{
+		// 1. Create and set new resource animator
 		this->SetResourceAnimator(component_anim.res);
-		this->SetResourceAvatar(component_anim.res_avatar);
+
+		// 2. Create and set new resource avatar
+		ResourceData genericAvatarData;
+
+		char avatarName[DEFAULT_BUF_SIZE];
+		sprintf_s(avatarName, DEFAULT_BUF_SIZE, "BuiltinAvatar%u", App->res->GetResourcesByType(ResourceTypes::AvatarResource).size());
+		genericAvatarData.name = avatarName;
+
+		ResourceAvatarData specificAvatarData;
+
+		std::string outputFile;
+		SetResourceAvatar(App->res->ExportFile(ResourceTypes::AvatarResource, genericAvatarData, &specificAvatarData, outputFile)->GetUuid());
+
+		// 3. Add animations
 		for (uint i = 0u; i < component_anim.res_animations.size(); i++)
 		{
 			this->SetResourceAnimation(component_anim.res_animations.at(i));
@@ -127,12 +141,19 @@ bool ComponentAnimator::SetResourceAvatar(uint resource)
 	if (res_avatar > 0)
 		App->res->SetAsUnused(res_avatar);
 
-	if (resource > 0) {
+	if (resource > 0) 
+	{
+		// 1. Initialize avatar
+		ResourceAvatar* avatar = (ResourceAvatar*)App->res->GetResource(resource);
+		avatar->Initalize(parent->GetUUID());
+
+		// 2. Set avatar as used
 		App->res->SetAsUsed(resource);
+
 		ResourceAnimator* animator = (ResourceAnimator*)App->res->GetResource(res);
 		animator->animator_data.avatar_uuid = resource; // TODO_G : this is ugly and needs to be improved >:(
-
 	}
+
 	res_avatar = resource;
 
 	return true;
