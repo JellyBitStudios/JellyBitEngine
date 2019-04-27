@@ -217,17 +217,19 @@ void ComponentProjector::OnUniqueEditor()
 
 uint ComponentProjector::GetInternalSerializationBytes()
 {
-	return
+	return sizeof(math::Frustum) +
 		sizeof(uint) +
 		sizeof(uint) +
-		sizeof(float) +
-		sizeof(uint) +
-		sizeof(math::Frustum);
+		sizeof(uint);
 }
 
 void ComponentProjector::OnInternalSave(char*& cursor)
 {
-	size_t bytes = sizeof(uint);
+	size_t bytes = sizeof(math::Frustum);
+	memcpy(cursor, &frustum, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(uint);
 	memcpy(cursor, &materialRes, bytes);
 	cursor += bytes;
 
@@ -235,24 +237,26 @@ void ComponentProjector::OnInternalSave(char*& cursor)
 	memcpy(cursor, &meshRes, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(float);
-	memcpy(cursor, &alphaMultiplier, bytes);
-	cursor += bytes;
-
 	bytes = sizeof(uint);
 	memcpy(cursor, &filterMask, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(math::Frustum);
-	memcpy(cursor, &frustum, bytes);
+	/*
+	bytes = sizeof(float);
+	memcpy(cursor, &alphaMultiplier, bytes);
 	cursor += bytes;
+	*/
 }
 
 void ComponentProjector::OnInternalLoad(char*& cursor)
 {
+	size_t bytes = sizeof(math::Frustum);
+	memcpy(&frustum, cursor, bytes);
+	cursor += bytes;
+
 	uint resource;
 
-	size_t bytes = sizeof(uint);
+	bytes = sizeof(uint);
 	memcpy(&resource, cursor, bytes);
 	cursor += bytes;
 
@@ -270,17 +274,15 @@ void ComponentProjector::OnInternalLoad(char*& cursor)
 	else
 		SetMeshRes(App->resHandler->cube);
 
-	bytes = sizeof(float);
-	memcpy(&alphaMultiplier, cursor, bytes);
-	cursor += bytes;
-
 	bytes = sizeof(uint);
 	memcpy(&filterMask, cursor, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(math::Frustum);
-	memcpy(&frustum, cursor, bytes);
+	/*
+	bytes = sizeof(float);
+	memcpy(&alphaMultiplier, cursor, bytes);
 	cursor += bytes;
+	*/
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -439,6 +441,54 @@ void ComponentProjector::Draw() const
 
 // ----------------------------------------------------------------------------------------------------
 
+void ComponentProjector::SetFOV(float fov)
+{
+	frustum.verticalFov = fov * DEGTORAD;
+	frustum.horizontalFov = fov * DEGTORAD;
+}
+
+float ComponentProjector::GetFOV() const
+{
+	return frustum.verticalFov * RADTODEG;
+}
+
+float ComponentProjector::GetNearPlaneDistance()
+{
+	return frustum.nearPlaneDistance;
+}
+
+void ComponentProjector::SetNearPlaneDistance(float nearPlane)
+{
+	frustum.nearPlaneDistance = nearPlane;
+}
+
+float ComponentProjector::GetFarPlaneDistance()
+{
+	return frustum.farPlaneDistance;
+}
+
+void ComponentProjector::SetFarPlaneDistance(float farPlane)
+{
+	frustum.farPlaneDistance = farPlane;
+}
+
+math::Frustum ComponentProjector::GetFrustum() const
+{
+	return frustum;
+}
+
+math::float4x4 ComponentProjector::GetOpenGLViewMatrix() const
+{
+	math::float4x4 matrix = frustum.ViewMatrix();
+	return matrix.Transposed();
+}
+
+math::float4x4 ComponentProjector::GetOpenGLProjectionMatrix() const
+{
+	math::float4x4 matrix = frustum.ProjectionMatrix();
+	return matrix.Transposed();
+}
+
 void ComponentProjector::SetMaterialRes(uint materialUuid)
 {
 	if (materialRes > 0)
@@ -518,54 +568,4 @@ void ComponentProjector::SetFilterMask(uint filterMask)
 uint ComponentProjector::GetFilterMask() const
 {
 	return filterMask;
-}
-
-// ----------------------------------------------------------------------------------------------------
-
-void ComponentProjector::SetFOV(float fov)
-{
-	frustum.verticalFov = fov * DEGTORAD;
-	frustum.horizontalFov = fov * DEGTORAD;
-}
-
-float ComponentProjector::GetFOV() const
-{
-	return frustum.verticalFov * RADTODEG;
-}
-
-float ComponentProjector::GetNearPlaneDistance()
-{
-	return frustum.nearPlaneDistance;
-}
-
-void ComponentProjector::SetNearPlaneDistance(float nearPlane)
-{
-	frustum.nearPlaneDistance = nearPlane;
-}
-
-float ComponentProjector::GetFarPlaneDistance()
-{
-	return frustum.farPlaneDistance;
-}
-
-void ComponentProjector::SetFarPlaneDistance(float farPlane)
-{
-	frustum.farPlaneDistance = farPlane;
-}
-
-math::Frustum ComponentProjector::GetFrustum() const
-{
-	return frustum;
-}
-
-math::float4x4 ComponentProjector::GetOpenGLViewMatrix() const
-{
-	math::float4x4 matrix = frustum.ViewMatrix();
-	return matrix.Transposed();
-}
-
-math::float4x4 ComponentProjector::GetOpenGLProjectionMatrix() const
-{
-	math::float4x4 matrix = frustum.ProjectionMatrix();
-	return matrix.Transposed();
 }

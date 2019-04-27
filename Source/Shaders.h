@@ -128,6 +128,9 @@
 "uniform float ambient;\n" \
 "uniform Light lights[NR_LIGHTS];\n" \
 "\n" \
+"uniform vec4 color;\n" \
+"uniform float pct;\n" \
+"\n" \
 "void main()\n" \
 "{\n" \
 "	// retrieve data from gbuffer\n" \
@@ -141,7 +144,13 @@
 "	vec3 Albedo = AlbedoTexture.rgb;\n" \
 "	float AlbedoA = AlbedoTexture.a;\n" \
 "	uvec4 InfoTexture = texture(gInfo, TexCoords);\n" \
-"	vec3 lighting = Albedo * ambient; // hard-coded ambient component\n" \
+"\n" \
+"	vec3 lighting = Albedo;\n" \
+"\n" \
+"	if (FragPosA == 0 || FragPosA == 1) // light\n" \
+"	{\n" \
+"		lighting *= ambient; // hard-coded ambient component\n" \
+"\n" \
 "	for (int i = 0; i < NR_LIGHTS; ++i)\n" \
 "	{\n" \
 "		vec3 diffuse = vec3(0.0, 0.0, 0.0);\n" \
@@ -173,9 +182,9 @@
 "		}\n" \
 "		lighting += diffuse;\n" \
 "	}\n" \
-"	if (FragPosA == 3) // outline\n" \
-"		lighting = Albedo;\n" \
-"	FragColor = vec4(lighting, AlbedoA);\n" \
+"	}\n" \
+"\n" \
+"	FragColor = mix(vec4(lighting, AlbedoA), color, pct);\n" \
 "}"
 
 #pragma endregion
@@ -967,7 +976,7 @@
 "\n" \
 "uniform sampler2D projectorTex;\n" \
 "uniform float alphaMultiplier;\n" \
-"uniform int lightCartoon;\n" \
+"uniform uint lightType;\n" \
 "\n" \
 "uniform mat4 model_matrix;\n" \
 "uniform mat4 projectorMatrix;\n" \
@@ -1016,7 +1025,7 @@
 "	gNormal.rgb = texture(gBufferNormal, screenPos).xyz;\n" \
 "	gAlbedoSpec = vec4(color.rgb, color.a);\n" \
 "\n" \
-"	gPosition.a = lightCartoon;\n" \
+"	gPosition.a = lightType;\n" \
 "	int levels = 2;\n" \
 "	gNormal.a = levels;\n" \
 "}"

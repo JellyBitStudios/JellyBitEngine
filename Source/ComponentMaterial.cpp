@@ -152,3 +152,52 @@ void ComponentMaterial::SetResourceByName(std::string materialName)
 	}
 	currentResource = 0;
 }
+
+void ComponentMaterial::SetColor(math::float4& color)
+{
+	this->color = color;
+
+	// r
+	if (this->color.x < 0.0f)
+		this->color.x = 0.0f;
+	else if (this->color.x > 1.0)
+		this->color.x = 1.0f;
+
+	// g
+	if (this->color.y < 0.0f)
+		this->color.y = 0.0f;
+	else if (this->color.y > 1.0)
+		this->color.y = 1.0f;
+
+	// b
+	if (this->color.z < 0.0f)
+		this->color.z = 0.0f;
+	else if (this->color.z > 1.0)
+		this->color.z = 1.0f;
+
+	// a
+	if (this->color.w < 0.0f)
+		this->color.w = 0.0f;
+	else if (this->color.w > 1.0)
+		this->color.w = 1.0f;
+}
+
+math::float4 ComponentMaterial::GetColor() const
+{
+	return color;
+}
+
+void ComponentMaterial::SetPct(float pct)
+{
+	this->pct = pct;
+
+	if (this->pct < 0.0f)
+		this->pct = 0.0f;
+	else if (this->pct > 1.0f)
+		this->pct = 1.0f;
+}
+
+float ComponentMaterial::GetPct() const
+{
+	return pct;
+}
