@@ -125,3 +125,29 @@ void Lights::DebugDrawLights() const
 	glEnable(GL_DEPTH_TEST);
 	App->glCache->SwitchShader(0);
 }
+
+// ----------------------------------------------------------------------------------------------------
+
+void Lights::UpdateFogMaxDistUniform()
+{
+	ResourceShaderProgram* shader = (ResourceShaderProgram*)App->res->GetResource(App->resHandler->deferredShaderProgram);
+	int location = glGetUniformLocation(shader->shaderProgram, "fog.maxDist");
+	if (location != -1)
+		glUniform1f(location, this->fogMaxDist);
+}
+
+void Lights::UpdateFogMinDistUniform()
+{
+	ResourceShaderProgram* shader = (ResourceShaderProgram*)App->res->GetResource(App->resHandler->deferredShaderProgram);
+	int location = glGetUniformLocation(shader->shaderProgram, "fog.minDist");
+	if (location != -1)
+		glUniform1f(location, this->fogMinDist);
+}
+
+void Lights::UpdateFogColorUniform()
+{	
+	ResourceShaderProgram* shader = (ResourceShaderProgram*)App->res->GetResource(App->resHandler->deferredShaderProgram);
+	int location = glGetUniformLocation(shader->shaderProgram, "fog.color");
+	if (location != -1)
+		glUniform3fv(location, 1, &this->fogColor[0]);
+}

@@ -1,8 +1,6 @@
 #ifndef __PANEL_SETTINGS_H__
 #define __PANEL_SETTINGS_H__
 
-
-
 #ifndef GAMEMODE
 
 #include "ImGui\imgui.h"

@@ -123,13 +123,18 @@
 "	float quadratic;\n" \
 "};\n" \
 "\n" \
+"struct Fog\n" \
+"{\n" \
+"	float maxDist;\n" \
+"	float minDist;\n" \
+"	vec3 color;\n" \
+"};\n" \
+"\n" \
 "const int NR_LIGHTS = 50;\n" \
 "\n" \
 "uniform float ambient;\n" \
 "uniform Light lights[NR_LIGHTS];\n" \
-"\n" \
-"uniform vec4 color;\n" \
-"uniform float pct;\n" \
+"uniform Fog fog;\n" \
 "\n" \
 "void main()\n" \
 "{\n" \
@@ -184,7 +189,15 @@
 "	}\n" \
 "	}\n" \
 "\n" \
-"	FragColor = mix(vec4(lighting, AlbedoA), color, pct);\n" \
+"	float dist = length(FragPos);\n" \
+"	float fogFactor = fog.maxDist - dist;\n" \
+"	float diff = fog.maxDist - fog.minDist;\n" \
+"	if (diff > 0.0)\n" \
+"		fogFactor /= diff;\n" \
+"	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
+"	vec3 result = mix(fog.color, lighting, fogFactor);\n" \
+"\n" \
+"	FragColor = vec4(lighting, AlbedoA);\n" \
 "}"
 
 #pragma endregion
@@ -795,6 +808,7 @@
 "layout(location = 1) out vec4 gNormal;\n"												\
 "layout(location = 2) out vec4 gAlbedoSpec;\n"											\
 "layout(location = 3) out uvec4 gInfo;\n"												\
+"\n"																					\
 "in GS_OUT\n"																			\
 "{\n"																					\
 "  vec3 fPosition;\n"																	\
@@ -812,6 +826,7 @@
 "\n"																					\
 "uniform vec3 viewPos;\n"																\
 "uniform Material material;\n"															\
+"uniform vec4 color;\n"																	\
 "uniform int lightCartoon;\n"															\
 "\n"																					\
 "//uniform vec3 lineColor; // the silhouette edge color\n"								\
@@ -838,9 +853,10 @@
 "		gNormal.a = levels;\n"															\
 "		gPosition.a = lightCartoon;\n"													\
 "\n"																					\
-"		vec4 albedo = texture(material.albedo, fs_in.fTexCoord);\n"						\
-"		vec3 diffuse = vec3(albedo);\n"													\
-"		gAlbedoSpec = vec4(diffuse, albedo.a);\n"										\
+"		if (lightCartoon == 3)\n"														\
+"			gAlbedoSpec = color;\n"														\
+"		else\n"																			\
+"			gAlbedoSpec = texture(material.albedo, fs_in.fTexCoord);\n"					\
 "	}\n"																				\
 "\n"																					\
 "	gPosition.rgb = fs_in.fPosition;\n"													\

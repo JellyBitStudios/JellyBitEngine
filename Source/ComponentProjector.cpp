@@ -151,10 +151,6 @@ void ComponentProjector::OnUniqueEditor()
 		if (ImGui::SmallButton("Use default material"))
 			SetMaterialRes(App->resHandler->defaultMaterial);
 
-		ImGui::Text("Alpha multiplier"); ImGui::PushItemWidth(50.0f);
-		ImGui::DragFloat("##alphaMultiplier", &alphaMultiplier, 0.01f, 0.0f, 1.0f, "%.2f", 1.0f);
-		ImGui::PopItemWidth();
-
 		// Ignore layers
 		ImGui::Spacing();
 

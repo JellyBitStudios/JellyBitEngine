@@ -70,6 +70,10 @@ void ComponentMaterial::OnUniqueEditor()
 
 		if (ImGui::SmallButton("Use default material"))
 			SetResource(App->resHandler->defaultMaterial);
+
+		ImGui::Spacing();
+
+
 	}
 #endif
 }
@@ -185,19 +189,4 @@ void ComponentMaterial::SetColor(math::float4& color)
 math::float4 ComponentMaterial::GetColor() const
 {
 	return color;
-}
-
-void ComponentMaterial::SetPct(float pct)
-{
-	this->pct = pct;
-
-	if (this->pct < 0.0f)
-		this->pct = 0.0f;
-	else if (this->pct > 1.0f)
-		this->pct = 1.0f;
-}
-
-float ComponentMaterial::GetPct() const
-{
-	return pct;
 }
