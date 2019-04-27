@@ -2594,6 +2594,16 @@ void GameObjectSetParent(MonoObject* monoObject, MonoObject* newParent)
 	gameObject->ChangeParent(newParentCPP);
 }
 
+bool GameObjectIsVisible(MonoObject* monoObject)
+{
+	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+	if (gameObject)
+	{
+		return gameObject->seenLastFrame;
+	}
+	return false;
+}
+
 bool PlayAnimation(MonoObject* animatorComp, MonoString* animUUID)
 {
 	if (!animUUID)
@@ -3902,6 +3912,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.GameObject::GetChilds", (const void*)&GameObjectGetChilds);
 	mono_add_internal_call("JellyBitEngine.GameObject::GetParent", (const void*)&GameObjectGetParent);
 	mono_add_internal_call("JellyBitEngine.GameObject::SetParent", (const void*)&GameObjectSetParent);
+	mono_add_internal_call("JellyBitEngine.GameObject::IsVisible", (const void*)&GameObjectIsVisible);
 
 	//Time
 	mono_add_internal_call("JellyBitEngine.Time::getDeltaTime", (const void*)&GetDeltaTime);
