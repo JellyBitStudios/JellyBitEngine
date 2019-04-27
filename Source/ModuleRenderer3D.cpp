@@ -857,6 +857,17 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
 	std::vector<const char*> ignore;
 	ignore.push_back("animate");
+	ignore.push_back("color");
+	if (materialRenderer->useColor)
+	{
+		ignore.push_back("lightCartoon");
+		location = glGetUniformLocation(shader, "lightCartoon");
+		glUniform1i(location, 3);
+
+		location = glGetUniformLocation(shader, "color");
+		math::float4 color = materialRenderer->GetColor();
+		glUniform4f(location, color.x, color.y, color.z, color.w);
+	}
 	LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	// Mesh
