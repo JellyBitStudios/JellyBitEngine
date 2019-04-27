@@ -3795,6 +3795,25 @@ void ProjectorSetFarDistance(MonoObject* monoProjector, float farDistance)
 	}
 }
 
+float ProjectorGetAlphaMultiplier(MonoObject* monoProjector)
+{
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		return projector->GetAlphaMultiplier();
+	}
+	return -1.0f;
+}
+
+void ProjectorSetAlphaMultiplier(MonoObject* monoProjector, float alphaMultiplier)
+{
+	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
+	if (projector)
+	{
+		projector->SetAlphaMultiplier(alphaMultiplier);
+	}
+}
+
 void ApplicationQuit()
 {
 #ifdef GAMEMODE
@@ -4062,6 +4081,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Projector::SetNearDistance", (const void*)&ProjectorSetNearDistance);
 	mono_add_internal_call("JellyBitEngine.Projector::GetFarDistance", (const void*)&ProjectorGetFarDistance);
 	mono_add_internal_call("JellyBitEngine.Projector::SetFarDistance", (const void*)&ProjectorSetFarDistance);
+	mono_add_internal_call("JellyBitEngine.Projector::GetAlphaMultiplier", (const void*)&ProjectorGetAlphaMultiplier);
+	mono_add_internal_call("JellyBitEngine.Projector::SetAlphaMultiplier", (const void*)&ProjectorSetAlphaMultiplier);
 	
 	//Application
 	mono_add_internal_call("JellyBitEngine.Application::Quit", (const void*)&ApplicationQuit);
