@@ -117,8 +117,8 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 
 		// Initialize clear color
 		glClearColor(0.f, 0.f, 0.f, 1.0f);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		//glEnable(GL_BLEND);
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		// Check for error
 		error = glGetError();
@@ -866,7 +866,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 
 		location = glGetUniformLocation(shader, "color");
 		math::float4 color = materialRenderer->GetColor();
-		glUniform4f(location, color.x, color.y, color.z, color.w);
+		glUniform4fv(location, 1, &color[0]);
 	}
 	LoadSpecificUniforms(textureUnit, uniforms, ignore);
 

@@ -123,10 +123,18 @@
 "	float quadratic;\n" \
 "};\n" \
 "\n" \
+"struct Fog\n" \
+"{\n" \
+"	float maxDist;\n" \
+"	float minDist;\n" \
+"	vec3 color;\n" \
+"};\n" \
+"\n" \
 "const int NR_LIGHTS = 50;\n" \
 "\n" \
 "uniform float ambient;\n" \
 "uniform Light lights[NR_LIGHTS];\n" \
+"uniform Fog fog;\n" \
 "\n" \
 "void main()\n" \
 "{\n" \
@@ -180,6 +188,14 @@
 "		lighting += diffuse;\n" \
 "	}\n" \
 "	}\n" \
+"\n" \
+"	float dist = length(FragPos);\n" \
+"	float fogFactor = fog.maxDist - dist;\n" \
+"	float diff = fog.maxDist - fog.minDist;\n" \
+"	if (diff > 0.0)\n" \
+"		fogFactor /= diff;\n" \
+"	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
+"	vec3 result = mix(fog.color, lighting, fogFactor);\n" \
 "\n" \
 "	FragColor = vec4(lighting, AlbedoA);\n" \
 "}"

@@ -114,7 +114,7 @@ void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 	glUseProgram(resProgram->shaderProgram);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
-	uint location = glGetUniformLocation(resProgram->shaderProgram, "gPosition");
+	int location = glGetUniformLocation(resProgram->shaderProgram, "gPosition");
 	glUniform1i(location, 0);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, gNormal);
@@ -132,6 +132,12 @@ void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 	glBindTexture(GL_TEXTURE_2D, gDepth);
 	location = glGetUniformLocation(resProgram->shaderProgram, "gDepth");
 	glUniform1i(location, 4);
+
+	// Fog
+	App->lights->UpdateFogMaxDistUniform();
+	App->lights->UpdateFogMinDistUniform();
+	App->lights->UpdateFogColorUniform();
+
 	glUseProgram(0);
 }
 
