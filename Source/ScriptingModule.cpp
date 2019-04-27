@@ -1558,6 +1558,16 @@ float GetRealTime()
 	return App->timeManager->GetRealTime();
 }
 
+float TimeGetTimeScale()
+{
+	return App->timeManager->GetTimeScale();
+}
+
+void TimeSetTimeScale(float timeScale)
+{
+	App->timeManager->SetTimeScale(timeScale);
+}
+
 MonoArray* GetLocalPosition(MonoObject* monoObject)
 {
 	if (!monoObject)
@@ -3870,11 +3880,15 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.GameObject::GetParent", (const void*)&GameObjectGetParent);
 	mono_add_internal_call("JellyBitEngine.GameObject::SetParent", (const void*)&GameObjectSetParent);
 
+	//Time
 	mono_add_internal_call("JellyBitEngine.Time::getDeltaTime", (const void*)&GetDeltaTime);
 	mono_add_internal_call("JellyBitEngine.Time::getRealDeltaTime", (const void*)&GetRealDeltaTime);
 	mono_add_internal_call("JellyBitEngine.Time::getTime", (const void*)&GetTime);
 	mono_add_internal_call("JellyBitEngine.Time::getRealTime", (const void*)&GetRealTime);
 	mono_add_internal_call("JellyBitEngine.Time::getFixedDT", (const void*)&GetFixedDeltaTime);
+	mono_add_internal_call("JellyBitEngine.Time::GetTimeScale", (const void*)&TimeGetTimeScale);
+	mono_add_internal_call("JellyBitEngine.Time::SetTimeScale", (const void*)&TimeSetTimeScale);
+
 	mono_add_internal_call("JellyBitEngine.Transform::getLocalPosition", (const void*)&GetLocalPosition);
 	mono_add_internal_call("JellyBitEngine.Transform::setLocalPosition", (const void*)&SetLocalPosition);
 	mono_add_internal_call("JellyBitEngine.Transform::getLocalRotation", (const void*)&GetLocalRotation);
