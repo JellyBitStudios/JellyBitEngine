@@ -45,7 +45,7 @@
         "About": false,
         "Settings": false,
         "Hierarchy": true,
-        "Console": true,
+        "Console": false,
         "Assets": true,
         "Edit": true,
         "Debug Draw": true,

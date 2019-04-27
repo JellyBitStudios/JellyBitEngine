@@ -205,7 +205,32 @@ void PanelSettings::WindowNode() const
 
 void PanelSettings::RendererNode() const
 {
-	ImGui::DragFloat("Ambient", &App->lights->ambientValue, 0.01f, 0.0f, 1.0f, "%.2f");
+	// Light
+	ImGui::Text("LIGHT");
+	ImGui::Text("Ambient"); ImGui::PushItemWidth(50.0f);
+	ImGui::DragFloat("##ambient", &App->lights->ambientValue, 0.01f, 0.0f, 1.0f, "%.2f");
+	ImGui::PopItemWidth();
+
+	// Fog
+	ImGui::Spacing();
+	ImGui::Text("FOG");
+
+	ImGui::Text("Max distance"); ImGui::PushItemWidth(50.0f);
+	if (ImGui::DragFloat("##maxDistance", &App->lights->fogMaxDist, 0.01f, 0.0f, FLT_MAX, "%.2f"))
+		App->lights->UpdateFogMaxDistUniform();
+	ImGui::PopItemWidth();
+
+	ImGui::Text("Min distance"); ImGui::PushItemWidth(50.0f);
+	if (ImGui::DragFloat("##minDistance", &App->lights->fogMinDist, 0.01f, 0.0f, FLT_MAX, "%.2f"))
+		App->lights->UpdateFogMinDistUniform();
+	ImGui::PopItemWidth();
+
+	if (ImGui::ColorEdit3("##Color", &App->lights->fogColor.x))
+		App->lights->UpdateFogColorUniform();
+
+	// --------------------------------------------------
+
+	ImGui::Spacing();
 
 	GLenum capability = 0;
 

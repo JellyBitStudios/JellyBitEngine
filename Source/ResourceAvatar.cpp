@@ -20,6 +20,8 @@
 
 #include <assert.h>
 
+#define AVATAR_ROOT_NAME "Meshes"
+
 ResourceAvatar::ResourceAvatar(ResourceTypes type, uint uuid, ResourceData data, ResourceAvatarData avatarData) : Resource(type, uuid, data), avatarData(avatarData) {}
 
 ResourceAvatar::~ResourceAvatar() {}
@@ -549,26 +551,62 @@ void ResourceAvatar::AddBones(GameObject* gameObject) const
 	}
 }
 
+void ResourceAvatar::Initalize(uint gameObjectUuid)
+{
+	GameObject* gameObject = App->GOs->GetGameObjectByUID(gameObjectUuid);
+	if (gameObject == nullptr)
+		return;
+
+	// 1. Set the skeleton
+	if (avatarData.hipsUuid > 0
+		&& App->GOs->GetGameObjectByUID(avatarData.hipsUuid) == nullptr)
+		avatarData.hipsUuid = 0;
+
+	// 2. Set the meshes
+	if (avatarData.rootUuid > 0
+		&& App->GOs->GetGameObjectByUID(avatarData.rootUuid) == nullptr)
+		avatarData.rootUuid = 0;
+
+	// Find the hips and/or the root
+	if (avatarData.hipsUuid == 0 || avatarData.rootUuid == 0)
+	{
+		std::vector<GameObject*> children;
+		gameObject->GetChildrenVector(children);
+		for (uint i = 0; i < children.size(); ++i)
+		{
+			// Auto hips
+			/// First game object that contains a bone
+			if (avatarData.hipsUuid == 0
+				&& children[i]->cmp_bone != nullptr)
+				avatarData.hipsUuid = children[i]->GetUUID();
+
+			// Auto root
+			/// First game object that is called 'Meshes'
+			if (avatarData.rootUuid == 0
+				&& strcmp(children[i]->GetName(), AVATAR_ROOT_NAME) == 0)
+				avatarData.rootUuid = children[i]->GetUUID();
+
+			if (avatarData.hipsUuid > 0 && avatarData.rootUuid > 0)
+				break;
+		}
+	}
+
+	if (avatarData.rootUuid == 0)
+		avatarData.rootUuid = gameObjectUuid;
+}
+
 void ResourceAvatar::CreateSkeletonAndAddBones()
 {
-	assert(avatarData.hipsUuid > 0 && avatarData.rootUuid > 0);
-
 	// 1. Create the skeleton
 	GameObject* skeleton = App->GOs->GetGameObjectByUID(avatarData.hipsUuid);
 	if (skeleton == nullptr)
-	{
-		//CONSOLE_LOG(LogTypes::Error, "The root bone does not exist...");
 		return;
-	}
 	CreateSkeleton(skeleton);
 
 	// 2. Add the skeleton bones to the meshes
 	GameObject* root = App->GOs->GetGameObjectByUID(avatarData.rootUuid);
 	if (root == nullptr)
-	{
-		//CONSOLE_LOG(LogTypes::Error, "The root game object does not exist...");
 		return;
-	}
 	AddBones(root);
 }
 

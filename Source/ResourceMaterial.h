@@ -46,11 +46,14 @@ public:
 	inline ResourceMaterialData& GetSpecificData() { return materialData; }
 
 	void SetResourceShader(uint shaderUuid);
+	void UpdateResourceShader();
 	uint GetShaderUuid() const;
 
 	void SetResourceTexture(uint textureUuid, uint& textureUuidUniform, uint& textureIdUniform);
+
 	std::vector<Uniform>& GetUniforms();
-	void ResetUniforms();
+	void FillUniforms();
+	void ClearUniforms();
 
 private:
 
@@ -60,12 +63,13 @@ private:
 	void SetUniformsAsUsed();
 	void SetUniformsAsUnused() const;
 
+	void UpdateUniformsLocations();
+	void UpdateUniforms();
+
 	void EditTextureMatrix(uint textureUuid);
 
 	bool LoadInMemory();
 	bool UnloadFromMemory();
-
-	void UpdateUniformsLocations();
 
 public:
 

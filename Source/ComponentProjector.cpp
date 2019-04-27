@@ -96,6 +96,9 @@ void ComponentProjector::OnUniqueEditor()
 #ifndef GAMEMODE
 	if (ImGui::CollapsingHeader("Projector", ImGuiTreeNodeFlags_DefaultOpen))
 	{
+		// Frustum
+		ImGui::Text("FRUSTUM");
+
 		ImGui::Text("Field of view"); ImGui::SameLine(); ImGui::AlignTextToFramePadding();
 		float fov = frustum.verticalFov * RADTODEG;
 		if (ImGui::SliderFloat("##fov", &fov, 0.0f, 180.0f))
@@ -110,6 +113,9 @@ void ComponentProjector::OnUniqueEditor()
 		ImGui::PopItemWidth();
 
 		// Material
+		ImGui::Spacing();
+		ImGui::Text("MATERIAL");
+
 		const Resource* resource = App->res->GetResource(materialRes);
 		std::string materialName = resource->GetName();
 
@@ -146,6 +152,8 @@ void ComponentProjector::OnUniqueEditor()
 			SetMaterialRes(App->resHandler->defaultMaterial);
 
 		// Ignore layers
+		ImGui::Spacing();
+
 		std::string title;
 		std::vector<Layer*> activeLayers;
 		uint enabledLayers = 0;
@@ -228,6 +236,12 @@ void ComponentProjector::OnInternalSave(char*& cursor)
 	bytes = sizeof(uint);
 	memcpy(cursor, &filterMask, bytes);
 	cursor += bytes;
+
+	/*
+	bytes = sizeof(float);
+	memcpy(cursor, &alphaMultiplier, bytes);
+	cursor += bytes;
+	*/
 }
 
 void ComponentProjector::OnInternalLoad(char*& cursor)
@@ -236,7 +250,7 @@ void ComponentProjector::OnInternalLoad(char*& cursor)
 	memcpy(&frustum, cursor, bytes);
 	cursor += bytes;
 
-	uint resource = 0;
+	uint resource;
 
 	bytes = sizeof(uint);
 	memcpy(&resource, cursor, bytes);
@@ -259,6 +273,12 @@ void ComponentProjector::OnInternalLoad(char*& cursor)
 	bytes = sizeof(uint);
 	memcpy(&filterMask, cursor, bytes);
 	cursor += bytes;
+
+	/*
+	bytes = sizeof(float);
+	memcpy(&alphaMultiplier, cursor, bytes);
+	cursor += bytes;
+	*/
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -358,6 +378,10 @@ void ComponentProjector::Draw() const
 	if (location != -1)
 		glUniform2fv(location, 1, screenSize.ptr());
 
+	location = glGetUniformLocation(shaderProgram, "alphaMultiplier");
+	if (location != -1)
+		glUniform1f(location, alphaMultiplier);
+
 	location = glGetUniformLocation(shaderProgram, "filterMask");
 	if (location != -1)
 		glUniform1i(location, filterMask);
@@ -370,6 +394,7 @@ void ComponentProjector::Draw() const
 	ignore.push_back("gBufferInfo");
 	ignore.push_back("screenSize");
 	ignore.push_back("filterMask");
+	ignore.push_back("alphaMultiplier");
 	App->renderer3D->LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	glDepthMask(false);
@@ -443,6 +468,23 @@ void ComponentProjector::SetFarPlaneDistance(float farPlane)
 	frustum.farPlaneDistance = farPlane;
 }
 
+math::Frustum ComponentProjector::GetFrustum() const
+{
+	return frustum;
+}
+
+math::float4x4 ComponentProjector::GetOpenGLViewMatrix() const
+{
+	math::float4x4 matrix = frustum.ViewMatrix();
+	return matrix.Transposed();
+}
+
+math::float4x4 ComponentProjector::GetOpenGLProjectionMatrix() const
+{
+	math::float4x4 matrix = frustum.ProjectionMatrix();
+	return matrix.Transposed();
+}
+
 void ComponentProjector::SetMaterialRes(uint materialUuid)
 {
 	if (materialRes > 0)
@@ -478,9 +520,24 @@ uint ComponentProjector::GetMaterialRes() const
 std::string ComponentProjector::GetMaterialResName() const
 {
 	Resource* res = App->res->GetResource(materialRes);
-	if(res)
+	if (res != nullptr)
 		return res->GetName();
 	return "";
+}
+
+void ComponentProjector::SetAlphaMultiplier(float alphaMultiplier)
+{
+	this->alphaMultiplier = alphaMultiplier;
+
+	if (this->alphaMultiplier < 0.0f)
+		this->alphaMultiplier = 0.0f;
+	else if (this->alphaMultiplier > 1.0f)
+		this->alphaMultiplier = 1.0f;
+}
+
+float ComponentProjector::GetAlphaMultiplier() const
+{
+	return alphaMultiplier;
 }
 
 void ComponentProjector::SetMeshRes(uint meshUuid)
@@ -507,21 +564,4 @@ void ComponentProjector::SetFilterMask(uint filterMask)
 uint ComponentProjector::GetFilterMask() const
 {
 	return filterMask;
-}
-
-math::Frustum ComponentProjector::GetFrustum() const
-{
-	return frustum;
-}
-
-math::float4x4 ComponentProjector::GetOpenGLViewMatrix() const
-{
-	math::float4x4 matrix = frustum.ViewMatrix();
-	return matrix.Transposed();
-}
-
-math::float4x4 ComponentProjector::GetOpenGLProjectionMatrix() const
-{
-	math::float4x4 matrix = frustum.ProjectionMatrix();
-	return matrix.Transposed();
 }

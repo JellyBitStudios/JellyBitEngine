@@ -215,6 +215,7 @@ public:
 	ShapeType burstType = ShapeType_BOX;
 
 	math::AABB boundingBox;
+	bool isInFrustum = false;
 private:
 	// General info
 	//---------------------------------------

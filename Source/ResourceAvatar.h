@@ -49,6 +49,8 @@ public:
 
 	// ----------------------------------------------------------------------------------------------------
 
+	void Initalize(uint gameObjectUuid);
+
 	void CreateSkeletonAndAddBones();
 	void ClearSkeletonAndBones();
 

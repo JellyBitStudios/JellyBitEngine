@@ -223,12 +223,19 @@ update_status ModuleRenderer3D::PostUpdate()
 			}
 
 			// Draw decals
+			bool blend = GetCapabilityState(GL_BLEND);
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 			for (uint i = 0; i < projectorComponents.size(); ++i)
 			{
 				if (projectorComponents[i]->GetParent()->IsActive()
 					&& projectorComponents[i]->IsTreeActive())
 					projectorComponents[i]->Draw();
 			}
+
+			if (!blend)
+				glDisable(GL_BLEND);
 
 			// Draw dynamic meshes
 			for (uint i = 0; i < dynamics.size(); ++i)
@@ -850,6 +857,17 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
 	std::vector<const char*> ignore;
 	ignore.push_back("animate");
+	ignore.push_back("color");
+	if (materialRenderer->useColor)
+	{
+		ignore.push_back("lightCartoon");
+		location = glGetUniformLocation(shader, "lightCartoon");
+		glUniform1i(location, 3);
+
+		location = glGetUniformLocation(shader, "color");
+		math::float4 color = materialRenderer->GetColor();
+		glUniform4fv(location, 1, &color[0]);
+	}
 	LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	// Mesh

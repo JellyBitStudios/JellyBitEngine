@@ -37,38 +37,44 @@ public:
 
 	// ----------------------------------------------------------------------------------------------------
 
-	// Sets
+	// Frustum
 	void SetFOV(float fov);
 	float GetFOV() const;
-
 	float GetNearPlaneDistance();
 	void SetNearPlaneDistance(float nearPlane);
-
 	float GetFarPlaneDistance();
 	void SetFarPlaneDistance(float farPlane);
 
-	void SetAspectRatio(float aspectRatio);
+	math::Frustum GetFrustum() const;
+	math::float4x4 GetOpenGLViewMatrix() const;
+	math::float4x4 GetOpenGLProjectionMatrix() const;
 
+	// Material
 	void SetMaterialRes(uint materialUuid);
 	void SetMaterialRes(std::string materialName);
 	uint GetMaterialRes() const;
 	std::string GetMaterialResName() const;
 
+	void SetAlphaMultiplier(float alphaMultiplier);
+	float GetAlphaMultiplier() const;
+
+	// Mesh
 	void SetMeshRes(uint meshUuid);
 	uint GetMeshRes() const;
+
+	// Filter mask
 	void SetFilterMask(uint filterMask);
 	uint GetFilterMask() const;
-
-	// Gets
-	math::Frustum GetFrustum() const;
-	math::float4x4 GetOpenGLViewMatrix() const;
-	math::float4x4 GetOpenGLProjectionMatrix() const;
 
 private:
 
 	math::Frustum frustum;
+
 	uint materialRes = 0;
 	uint meshRes = 0;
+
+	float alphaMultiplier = 1.0f; // not save&load
+
 	uint filterMask = 0;
 };
 
