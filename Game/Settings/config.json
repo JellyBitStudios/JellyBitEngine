@@ -1,6 +1,6 @@
 {
     "Application": {
-        "Title": "JellyBitEngine v0.4.8.8",
+        "Title": "JellyBitEngine v0.5.0.0",
         "Organization": "JellyBitStudios",
         "Cap Frames": true,
         "Max FPS": 101
@@ -83,4 +83,4 @@
         "drawQuadtree": false
     },
     "ModuleEvents": {}
-}
+} 
