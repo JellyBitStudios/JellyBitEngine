@@ -3797,7 +3797,11 @@ void ProjectorSetFarDistance(MonoObject* monoProjector, float farDistance)
 
 void ApplicationQuit()
 {
+#ifdef GAMEMODE
 	App->CloseApp();
+#else
+	CONSOLE_SCRIPTING_LOG(LogTypes::Normal, "APPLICATION QUIT");
+#endif
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------
