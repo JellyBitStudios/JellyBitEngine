@@ -1306,7 +1306,8 @@ void ModuleFileSystem::RecursiveBuild(const Directory& dir, char * toPath, bool 
 		std::string extension;
 		GetExtension(file.name.data(), extension);
 		if (extension == ".txt" || extension == ".log" || 
-			extension == ".sln" || extension == ".csproj")
+			extension == ".sln" || extension == ".csproj" ||
+			extension == ".bnk")
 			continue;
 		else
 		{
