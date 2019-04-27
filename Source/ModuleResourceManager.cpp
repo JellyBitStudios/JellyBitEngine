@@ -777,6 +777,13 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 				ResourceMaterial::LoadFile(file, materialData);
 
 				resource = CreateResource(ResourceTypes::MaterialResource, data, &materialData, uuid);
+				
+				// Update the existing material
+				((ResourceMaterial*)resource)->UpdateResourceShader();
+
+				// Export the existing file
+				std::string outputFile;
+				App->res->ExportFile(ResourceTypes::MaterialResource, data, &materialData, outputFile, true, false);
 			}
 			else
 				resource = GetResource(resourcesUuids.front());

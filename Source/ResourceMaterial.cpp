@@ -493,6 +493,7 @@ void ResourceMaterial::InitResources()
 		{
 			ResourceShaderProgram* program = (ResourceShaderProgram*)App->res->GetResource(materialData.shaderUuid);
 			materialData.shaderProgram = program->shaderProgram;
+
 			// Update locations
 			UpdateUniformsLocations();
 
