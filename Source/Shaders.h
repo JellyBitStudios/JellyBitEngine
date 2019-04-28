@@ -191,19 +191,17 @@
 "		}\n" \
 "		lighting += diffuse;\n" \
 "	}\n" \
-"	}\n" \
-"\n" \
 "	vec4 modelViewPos = view_matrix * vec4(FragPos, 1.0);\n" \
 "	float dist = length(modelViewPos.xyz);\n" \
 "	//float fogFactor = (fog.maxDist - dist) / (fog.maxDist - fog.minDist); // Linear\n" \
 "	//float fogFactor = exp(-fog.density * dist); // Exponential\n" \
 "	float fogFactor = exp(-pow(fog.density * dist, 2.0)); // Exponential Squared\n" \
 "	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
-"	vec3 result = mix(fog.color, lighting, fogFactor);\n" \
+"	lighting = mix(fog.color, lighting, fogFactor);\n" \
+"	}\n" \
 "\n" \
-"	FragColor = vec4(result, AlbedoA);\n" \
+"	FragColor = vec4(lighting, AlbedoA);\n" \
 "}"
-
 #pragma endregion
 
 #pragma region ShaderBillboard
@@ -709,6 +707,8 @@
 "layout(triangles_adjacency) in;\n"																	\
 "layout(triangle_strip, max_vertices = 15) out;\n"													\
 "\n"																								\
+"uniform mat4 model_matrix;\n"																		\
+"\n"																								\
 "in VS_OUT\n"																						\
 "{\n"																								\
 "  vec3 gPosition;\n"																				\
@@ -747,13 +747,21 @@
 "	// Emit the quad\n"																				\
 "	fIsEdge = 1; // this is part of an edge\n"														\
 "\n"																								\
-"	gl_Position = vec4(e0.xy - ext, e0.z, 1.0);\n"													\
+"	vec4 a = vec4(e0.xy - ext, e0.z, 1.0);\n"														\
+"	gs_out.fPosition = vec3(model_matrix * a);\n"													\
+"	gl_Position = a;\n"																				\
 "	EmitVertex();\n"																				\
-"	gl_Position = vec4(e0.xy - n - ext, e0.z, 1.0);\n"												\
+"	vec4 b = vec4(e0.xy - n - ext, e0.z, 1.0);\n"													\
+"	gs_out.fPosition = vec3(model_matrix * b);\n"													\
+"	gl_Position = b;\n"																				\
 "	EmitVertex();\n"																				\
-"	gl_Position = vec4(e1.xy + ext, e1.z, 1.0);\n"													\
+"	vec4 c = vec4(e1.xy + ext, e1.z, 1.0);\n"														\
+"	gs_out.fPosition = vec3(model_matrix * c);\n"													\
+"	gl_Position = c;\n"																				\
 "	EmitVertex();\n"																				\
-"	gl_Position = vec4(e1.xy - n + ext, e1.z, 1.0);\n"												\
+"	vec4 d = vec4(e1.xy - n + ext, e1.z, 1.0);\n"													\
+"	gs_out.fPosition = vec3(model_matrix * d);\n"													\
+"	gl_Position = d;\n"																				\
 "	EmitVertex();\n"																				\
 "\n"																								\
 "	EndPrimitive();\n"																				\
@@ -828,9 +836,9 @@
 "	sampler2D albedo;\n"																\
 "};\n"																					\
 "\n"																					\
-"uniform vec3 viewPos;\n"																\
 "uniform Material material;\n"															\
 "uniform vec4 color;\n"																	\
+"uniform float pct;\n"																	\
 "uniform int lightCartoon;\n"															\
 "\n"																					\
 "//uniform vec3 lineColor; // the silhouette edge color\n"								\
@@ -857,12 +865,10 @@
 "		gNormal.a = levels;\n"															\
 "		gPosition.a = lightCartoon;\n"													\
 "\n"																					\
-"		if (lightCartoon == 3)\n"														\
-"			gAlbedoSpec = color;\n"														\
-"		else\n"																			\
-"			gAlbedoSpec = texture(material.albedo, fs_in.fTexCoord);\n"					\
+"		gAlbedoSpec = texture(material.albedo, fs_in.fTexCoord);\n"						\
 "	}\n"																				\
 "\n"																					\
+"	gAlbedoSpec = mix(gAlbedoSpec, color, pct);\n"										\
 "	gPosition.rgb = fs_in.fPosition;\n"													\
 "	gNormal.rgb = normalize(fs_in.fNormal);\n"											\
 "	gInfo.r = layer;\n"																	\
@@ -996,7 +1002,7 @@
 "\n" \
 "uniform sampler2D projectorTex;\n" \
 "uniform float alphaMultiplier;\n" \
-"uniform uint lightType;\n" \
+"uniform int cartoonLight;\n" \
 "\n" \
 "uniform mat4 model_matrix;\n" \
 "uniform mat4 projectorMatrix;\n" \
@@ -1045,7 +1051,7 @@
 "	gNormal.rgb = texture(gBufferNormal, screenPos).xyz;\n" \
 "	gAlbedoSpec = vec4(color.rgb, color.a);\n" \
 "\n" \
-"	gPosition.a = lightType;\n" \
+"	gPosition.a = cartoonLight;\n" \
 "	int levels = 2;\n" \
 "	gNormal.a = levels;\n" \
 "}"
