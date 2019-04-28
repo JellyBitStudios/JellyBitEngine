@@ -3752,25 +3752,6 @@ void MaterialSetColor(MonoObject* monoMaterial, MonoArray* colorCS)
 	}
 }
 
-bool MaterialGetUseColor(MonoObject* monoMaterial)
-{
-	ComponentMaterial* material = (ComponentMaterial*)App->scripting->ComponentFrom(monoMaterial);
-	if (material)
-	{
-		return material->useColor;
-	}
-	return false;
-}
-
-void MaterialSetUseColor(MonoObject* monoMaterial, bool useColor)
-{
-	ComponentMaterial* material = (ComponentMaterial*)App->scripting->ComponentFrom(monoMaterial);
-	if (material)
-	{
-		material->useColor = useColor;
-	}
-}
-
 MonoString* ProjectorGetResource(MonoObject* monoProjector)
 {
 	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
@@ -4133,8 +4114,6 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Material::SetResource", (const void*)&MaterialSetResource);
 	mono_add_internal_call("JellyBitEngine.Material::GetColor", (const void*)&MaterialGetColor);
 	mono_add_internal_call("JellyBitEngine.Material::SetColor", (const void*)&MaterialSetColor);
-	mono_add_internal_call("JellyBitEngine.Material::GetUseColor", (const void*)&MaterialGetUseColor);
-	mono_add_internal_call("JellyBitEngine.Material::SetUseColor", (const void*)&MaterialSetUseColor);
 
 	//Projector
 	mono_add_internal_call("JellyBitEngine.Projector::SetResource", (const void*)&ProjectorSetResource);
