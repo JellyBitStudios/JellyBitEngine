@@ -107,6 +107,7 @@
 "#version 330 core\n" \
 "out vec4 FragColor;\n" \
 "in vec2 TexCoords;\n" \
+"\n" \
 "uniform sampler2D gPosition;\n" \
 "uniform sampler2D gNormal;\n" \
 "uniform sampler2D gAlbedoSpec;\n" \
@@ -125,12 +126,15 @@
 "\n" \
 "struct Fog\n" \
 "{\n" \
-"	float maxDist;\n" \
-"	float minDist;\n" \
 "	vec3 color;\n" \
+"	//float minDist;\n" \
+"	//float maxDist;\n" \
+"	float density;\n" \
 "};\n" \
 "\n" \
 "const int NR_LIGHTS = 50;\n" \
+"\n" \
+"uniform mat4 view_matrix;\n" \
 "\n" \
 "uniform float ambient;\n" \
 "uniform Light lights[NR_LIGHTS];\n" \
@@ -189,15 +193,15 @@
 "	}\n" \
 "	}\n" \
 "\n" \
-"	float dist = length(FragPos);\n" \
-"	float fogFactor = fog.maxDist - dist;\n" \
-"	float diff = fog.maxDist - fog.minDist;\n" \
-"	if (diff > 0.0)\n" \
-"		fogFactor /= diff;\n" \
+"	vec4 modelViewPos = view_matrix * vec4(FragPos, 1.0);\n" \
+"	float dist = length(modelViewPos.xyz);\n" \
+"	//float fogFactor = (fog.maxDist - dist) / (fog.maxDist - fog.minDist); // Linear\n" \
+"	//float fogFactor = exp(-fog.density * dist); // Exponential\n" \
+"	float fogFactor = exp(-pow(fog.density * dist, 2.0)); // Exponential Squared\n" \
 "	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
 "	vec3 result = mix(fog.color, lighting, fogFactor);\n" \
 "\n" \
-"	FragColor = vec4(lighting, AlbedoA);\n" \
+"	FragColor = vec4(result, AlbedoA);\n" \
 "}"
 
 #pragma endregion

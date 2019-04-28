@@ -326,6 +326,20 @@ bool ModuleGOs::SerializeFromNode(GameObject* node, char*& outStateBuffer, size_
 	memcpy(cursor, &App->lights->ambientValue, sizeof(float));
 	cursor += sizeof(float);
 
+	// Fog
+	sizeBuffer += sizeof(math::float3) + /*sizeof(float) + sizeof(float)*/ + sizeof(float);
+
+	memcpy(cursor, &App->lights->fog.color[0], sizeof(math::float3));
+	cursor += sizeof(math::float3);
+	/*
+	memcpy(cursor, &App->lights->fog.minDist, sizeof(float));
+	cursor += sizeof(float);
+	memcpy(cursor, &App->lights->fog.maxDist, sizeof(float));
+	cursor += sizeof(float);
+	*/
+	memcpy(cursor, &App->lights->fog.density, sizeof(float));
+	cursor += sizeof(float);
+
 	return true;
 }
 
@@ -406,6 +420,18 @@ bool ModuleGOs::LoadScene(char*& buffer, size_t sizeBuffer, bool navmesh)
 		App->navigation->LoadNavmesh(cursor);
 	
 	memcpy(&App->lights->ambientValue, cursor, sizeof(float));
+	cursor += sizeof(float);
+
+	// Fog
+	memcpy(&App->lights->fog.color[0], cursor, sizeof(math::float3));
+	cursor += sizeof(math::float3);
+	/*
+	memcpy(&App->lights->fog.minDist, cursor, sizeof(float));
+	cursor += sizeof(float);
+	memcpy(&App->lights->fog.maxDist, cursor, sizeof(float));
+	cursor += sizeof(float);
+	*/
+	memcpy(&App->lights->fog.density, cursor, sizeof(float));
 	cursor += sizeof(float);
 
 	//App->animation->SetUpAnimations();
