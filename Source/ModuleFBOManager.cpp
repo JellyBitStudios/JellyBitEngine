@@ -3,6 +3,7 @@
 #include "Application.h"
 #include "ModuleWindow.h"
 #include "ModuleResourceManager.h"
+#include "ModuleRenderer3D.h"
 #include "ResourceMesh.h"
 #include "ResourceShaderProgram.h"
 #include "ModuleInternalResHandler.h"
@@ -112,6 +113,7 @@ void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 	// BIND UNIFORMS
 	ResourceShaderProgram* resProgram = (ResourceShaderProgram*)App->res->GetResource(App->resHandler->deferredShaderProgram);
 	glUseProgram(resProgram->shaderProgram);
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
 	int location = glGetUniformLocation(resProgram->shaderProgram, "gPosition");
@@ -132,11 +134,6 @@ void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 	glBindTexture(GL_TEXTURE_2D, gDepth);
 	location = glGetUniformLocation(resProgram->shaderProgram, "gDepth");
 	glUniform1i(location, 4);
-
-	// Fog
-	App->lights->UpdateFogMaxDistUniform();
-	App->lights->UpdateFogMinDistUniform();
-	App->lights->UpdateFogColorUniform();
 
 	glUseProgram(0);
 }
@@ -173,6 +170,30 @@ void ModuleFBOManager::DrawGBufferToScreen() const
 
 	ResourceShaderProgram* resProgram = (ResourceShaderProgram*)App->res->GetResource(App->resHandler->deferredShaderProgram);
 	glUseProgram(resProgram->shaderProgram);
+
+	// Fog
+	int location = glGetUniformLocation(resProgram->shaderProgram, "view_matrix");
+	if (location != -1)
+	{
+		math::float4x4 view_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLViewMatrix();
+		glUniformMatrix4fv(location, 1, GL_FALSE, view_matrix.ptr());
+	}
+
+	location = glGetUniformLocation(resProgram->shaderProgram, "fog.color");
+	if (location != -1)
+		glUniform3fv(location, 1, &App->lights->fog.color[0]);
+	/*
+	location = glGetUniformLocation(resProgram->shaderProgram, "fog.minDist");
+	if (location != -1)
+		glUniform1f(location, App->lights->fog.minDist);
+	location = glGetUniformLocation(resProgram->shaderProgram, "fog.maxDist");
+	if (location != -1)
+		glUniform1f(location, App->lights->fog.maxDist);
+	*/
+	location = glGetUniformLocation(resProgram->shaderProgram, "fog.density");
+	if (location != -1)
+		glUniform1f(location, App->lights->fog.density);
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
 	glActiveTexture(GL_TEXTURE1);

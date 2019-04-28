@@ -215,18 +215,11 @@ void PanelSettings::RendererNode() const
 	ImGui::Spacing();
 	ImGui::Text("FOG");
 
-	ImGui::Text("Max distance"); ImGui::PushItemWidth(50.0f);
-	if (ImGui::DragFloat("##maxDistance", &App->lights->fogMaxDist, 0.01f, 0.0f, FLT_MAX, "%.2f"))
-		App->lights->UpdateFogMaxDistUniform();
-	ImGui::PopItemWidth();
+	ImGui::ColorEdit3("Color", &App->lights->fog.color[0]);
 
-	ImGui::Text("Min distance"); ImGui::PushItemWidth(50.0f);
-	if (ImGui::DragFloat("##minDistance", &App->lights->fogMinDist, 0.01f, 0.0f, FLT_MAX, "%.2f"))
-		App->lights->UpdateFogMinDistUniform();
+	ImGui::Text("Density"); ImGui::PushItemWidth(50.0f);
+	ImGui::DragFloat("##density", &App->lights->fog.density, 0.01f, 0.0f, FLT_MAX, "%.2f");
 	ImGui::PopItemWidth();
-
-	if (ImGui::ColorEdit3("##Color", &App->lights->fogColor.x))
-		App->lights->UpdateFogColorUniform();
 
 	// --------------------------------------------------
 
