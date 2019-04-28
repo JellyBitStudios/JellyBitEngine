@@ -210,6 +210,7 @@ update_status ModuleRenderer3D::PostUpdate()
 		std::vector<GameObject*> dynamics;
 		if (currentCamera->HasFrustumCulling())
 		{
+			SetMeshComponentsSeenLastFrame(false);
 			FrustumCulling(statics, dynamics);
 
 			Sort(statics);
@@ -217,6 +218,7 @@ update_status ModuleRenderer3D::PostUpdate()
 
 			for (uint i = 0; i < statics.size(); ++i)
 			{
+				statics[i]->seenLastFrame = true;
 				ComponentMesh* toDraw = statics[i]->cmp_mesh;
 				if (toDraw->IsTreeActive())
 					DrawMesh(toDraw);
@@ -240,6 +242,7 @@ update_status ModuleRenderer3D::PostUpdate()
 			// Draw dynamic meshes
 			for (uint i = 0; i < dynamics.size(); ++i)
 			{
+				dynamics[i]->seenLastFrame = true;
 				ComponentMesh* toDraw = dynamics[i]->cmp_mesh;
 				if (toDraw->IsTreeActive())
 					DrawMesh(toDraw);
