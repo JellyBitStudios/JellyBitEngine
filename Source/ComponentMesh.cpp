@@ -21,10 +21,19 @@ ComponentMesh::ComponentMesh(const ComponentMesh& componentMesh, GameObject* par
 	if (include)
 		App->renderer3D->AddMeshComponent(this);
 	SetResource(componentMesh.res);
+	rendererFlags = componentMesh.rendererFlags;
+	if (rendererFlags & RENDERER_FLAGS::DRAWLAST)
+		App->renderer3D->rendererLast.push_back(this);
 }
 
 ComponentMesh::~ComponentMesh()
 {
+	if (rendererFlags & RENDERER_FLAGS::DRAWLAST)
+	{
+		App->renderer3D->rendererLast.erase(std::remove(App->renderer3D->rendererLast.begin(),
+			App->renderer3D->rendererLast.end(), this),
+			App->renderer3D->rendererLast.end());
+	}
 	App->renderer3D->EraseMeshComponent(this);
 	SetResource(0);
 
