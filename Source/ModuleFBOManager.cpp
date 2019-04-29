@@ -71,7 +71,9 @@ void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 	// - additional info color buffer
 	glGenTextures(1, &gInfo);
 	glBindTexture(GL_TEXTURE_2D, gInfo);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, width, height, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gInfo, 0);
 
 	// - tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 

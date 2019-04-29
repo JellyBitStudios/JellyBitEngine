@@ -216,6 +216,12 @@ update_status ModuleRenderer3D::PostUpdate()
 			Sort(statics);
 			Sort(dynamics);
 
+			for each (ComponentMesh* mesh in rendererLast)
+			{
+				if (mesh->IsTreeActive())
+					DrawMesh(mesh, true);
+			}
+
 			for (uint i = 0; i < statics.size(); ++i)
 			{
 				statics[i]->seenLastFrame = true;
@@ -784,9 +790,9 @@ void ModuleRenderer3D::FrustumCulling(std::vector<GameObject*>& statics, std::ve
 	}
 }
 
-void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
+void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 {
-	if (toDraw->res == 0)
+	if (toDraw->res == 0 || (!drawLast && toDraw->rendererFlags & ComponentMesh::DRAWLAST))
 		return;
 
 	uint textureUnit = 0;
@@ -813,10 +819,8 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	location = glGetUniformLocation(shader, "normal_matrix");
 	glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
 
-	location = glGetUniformLocation(shader, "layer");
-	uint layerGroup = BIT_SHIFT(toDraw->GetParent()->GetLayer());
-	if (location != -1)
-		glUniform1i(location, layerGroup);
+	location = glGetUniformLocation(shader, "dot");
+	glUniform1i(location, drawLast ? 1 : 0);
 
 	// Animations
 	char boneName[DEFAULT_BUF_SIZE];

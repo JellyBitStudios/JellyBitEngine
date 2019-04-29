@@ -59,7 +59,7 @@
 "layout(location = 0) out vec4 gPosition;\n"									\
 "layout(location = 1) out vec4 gNormal;\n"										\
 "layout(location = 2) out vec4 gAlbedoSpec;\n"									\
-"layout(location = 3) out uvec4 gInfo;\n"										\
+"layout(location = 3) out vec4 gInfo;\n"										\
 "in VS_OUT\n"																	\
 "{\n"																			\
 "	vec3 gPosition;\n"															\
@@ -70,7 +70,7 @@
 "\n"																			\
 "uniform sampler2D diffuse;\n"													\
 "\n"																			\
-"uniform uint layer;\n"															\
+"uniform int dot;\n"															\
 "\n"																			\
 "void main()\n"																	\
 "{\n"																			\
@@ -80,10 +80,10 @@
 "	gPosition.a = 1;\n"															\
 "	gNormal.a = 1;\n"															\
 "	gAlbedoSpec.a = 1;\n"														\
-"	gInfo.r = layer;\n"															\
-"	gInfo.g = 0u;\n"															\
-"	gInfo.b = 0u;\n"															\
-"	gInfo.a = 0u;\n"															\
+"	gInfo.r = dot;\n"															\
+"	gInfo.g = 0;\n"															\
+"	gInfo.b = 0;\n"															\
+"	gInfo.a = 0;\n"															\
 "}"
 
 #pragma endregion
@@ -111,7 +111,7 @@
 "uniform sampler2D gPosition;\n" \
 "uniform sampler2D gNormal;\n" \
 "uniform sampler2D gAlbedoSpec;\n" \
-"uniform usampler2D gInfo;\n" \
+"uniform sampler2D gInfo;\n" \
 "uniform sampler2D gDepth;\n" \
 "\n" \
 "struct Light\n" \
@@ -152,7 +152,13 @@
 "	vec4 AlbedoTexture = texture(gAlbedoSpec, TexCoords);\n" \
 "	vec3 Albedo = AlbedoTexture.rgb;\n" \
 "	float AlbedoA = AlbedoTexture.a;\n" \
-"	uvec4 InfoTexture = texture(gInfo, TexCoords);\n" \
+"	vec4 InfoTexture = texture(gInfo, TexCoords);\n" \
+"if (InfoTexture.r == 1) { \n" \
+"FragColor = vec4(1.0,0.0,0.0,1.0);\n" \
+"return;\n" \
+"}\n" \
+"\n" \
+"\n" \
 "\n" \
 "	vec3 lighting = Albedo;\n" \
 "\n" \
