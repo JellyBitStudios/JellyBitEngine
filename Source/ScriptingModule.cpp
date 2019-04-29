@@ -3752,6 +3752,25 @@ void MaterialSetColor(MonoObject* monoMaterial, MonoArray* colorCS)
 	}
 }
 
+float MaterialGetPercent(MonoObject* monoMaterial)
+{
+	ComponentMaterial* material = (ComponentMaterial*)App->scripting->ComponentFrom(monoMaterial);
+	if (material)
+	{
+		return material->GetPct();
+	}
+	return -1.0f;
+}
+
+void MaterialSetPercent(MonoObject* monoMaterial, float percent)
+{
+	ComponentMaterial* material = (ComponentMaterial*)App->scripting->ComponentFrom(monoMaterial);
+	if (material)
+	{
+		material->SetPct(percent);
+	}
+}
+
 MonoString* ProjectorGetResource(MonoObject* monoProjector)
 {
 	ComponentProjector* projector = (ComponentProjector*)App->scripting->ComponentFrom(monoProjector);
@@ -4114,6 +4133,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Material::SetResource", (const void*)&MaterialSetResource);
 	mono_add_internal_call("JellyBitEngine.Material::GetColor", (const void*)&MaterialGetColor);
 	mono_add_internal_call("JellyBitEngine.Material::SetColor", (const void*)&MaterialSetColor);
+	mono_add_internal_call("JellyBitEngine.Material::GetPercent", (const void*)&MaterialGetPercent);
+	mono_add_internal_call("JellyBitEngine.Material::SetPercent", (const void*)&MaterialSetPercent);
 
 	//Projector
 	mono_add_internal_call("JellyBitEngine.Projector::SetResource", (const void*)&ProjectorSetResource);
