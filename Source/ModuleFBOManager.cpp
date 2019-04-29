@@ -80,22 +80,6 @@ void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 	uint attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
 	glDrawBuffers(4, attachments);
 
-	// - depth
-	glGenTextures(1, &gDepth);
-	glBindTexture(GL_TEXTURE_2D, gDepth);
-	if (depthBits == 16)
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
-	else if (depthBits == 24)
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
-	else if (depthBits == 32)
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gDepth, 0);
-
 	// then also add render buffer object as depth buffer and check for completeness
 	glGenRenderbuffers(1, &rboDepth);
 	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
@@ -132,10 +116,6 @@ void ModuleFBOManager::LoadGBuffer(uint width, uint height)
 	glBindTexture(GL_TEXTURE_2D, gInfo);
 	location = glGetUniformLocation(resProgram->shaderProgram, "gInfo");
 	glUniform1i(location, 3);
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, gDepth);
-	location = glGetUniformLocation(resProgram->shaderProgram, "gDepth");
-	glUniform1i(location, 4);
 
 	glUseProgram(0);
 }
@@ -148,7 +128,6 @@ void ModuleFBOManager::UnloadGBuffer()
 	glDeleteTextures(1, &gNormal);
 	glDeleteTextures(1, &gAlbedoSpec);
 	glDeleteTextures(1, &gInfo);
-	glDeleteTextures(1, &gDepth);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -204,8 +183,6 @@ void ModuleFBOManager::DrawGBufferToScreen() const
 	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, gInfo);
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, gDepth);
 	App->lights->UseLights(resProgram->shaderProgram);
 
 	const ResourceMesh* mesh = (const ResourceMesh*)App->res->GetResource(App->resHandler->plane);
@@ -222,8 +199,6 @@ void ModuleFBOManager::DrawGBufferToScreen() const
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glUseProgram(0);
 }

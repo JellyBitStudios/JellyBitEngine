@@ -819,6 +819,13 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 	location = glGetUniformLocation(shader, "normal_matrix");
 	glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
 
+	uint screenScale = App->window->GetScreenSize();
+	uint screenWidth = App->window->GetWindowWidth();
+	uint screenHeight = App->window->GetWindowHeight();
+	math::float2 screenSize = math::float2(screenWidth * screenScale, screenHeight * screenScale);
+
+	location = glGetUniformLocation(shader, "screenSize");
+	glUniform2fv(location, 1, screenSize.ptr());
 	location = glGetUniformLocation(shader, "dot");
 	glUniform1i(location, drawLast ? 1 : 0);
 
@@ -875,6 +882,11 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 		math::float4 color = materialRenderer->GetColor();
 		glUniform4fv(location, 1, &color[0]);
 	}
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, App->fbo->gInfo);
+	location = glGetUniformLocation(shader, "gInfoTexture");
+	glUniform1i(location, 0);
+	textureUnit += 1;
 	LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	// Mesh
