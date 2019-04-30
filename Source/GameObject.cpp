@@ -207,7 +207,7 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 		case ComponentTypes::SliderComponent:
 			cmp_slider = new ComponentSlider(*(ComponentSlider*)gameObject.cmp_slider, this, includeComponents);
 			cmp_slider->SetParent(this);
-			components.push_back(cmp_label);
+			components.push_back(cmp_slider);
 			break;
 		case ComponentTypes::ScriptComponent:
 		{

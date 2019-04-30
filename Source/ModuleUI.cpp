@@ -393,7 +393,7 @@ void ModuleUI::DrawWorldCanvas()
 
 void ModuleUI::DrawUIImage(int index, math::float3 corners[4], math::float4& color, uint texture, math::float2& mask)
 {
-	if (App->glCache->isNvidia())
+	if (App->glCache->isShaderStorage())
 	{
 		setFloat(ui_shader, "indexCorner", float(index));
 	}
@@ -433,7 +433,7 @@ void ModuleUI::DrawUILabel(int index, std::vector<LabelLetter>* word, std::vecto
 	uint wordSize = GetTexturesWord->size();
 	for (uint i = 0; i < wordSize; i++)
 	{
-		if (App->glCache->isNvidia())
+		if (App->glCache->isShaderStorage())
 		{
 			setFloat(ui_shader, "indexCorner", float(index + (4.0f * (float)i)));
 		}

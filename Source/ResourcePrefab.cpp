@@ -280,7 +280,6 @@ void ResourcePrefab::OnSystemEvent(System_Event event)
 			if (prefabData.root)
 			{
 				prefabData.root->OnSystemEvent(event);
-				int a = 2;
 			}
 			break;
 		}

@@ -34,17 +34,7 @@ update_status ModuleAudio::Update(/*float dt*/)
 	}
 #endif // GAMEMODE
 
-	std::list<ComponentAudioSource*>::const_iterator iterator;
-	for (iterator = App->audio->audio_sources.begin(); iterator != App->audio->audio_sources.end(); ++iterator)
-	{
-		iterator._Ptr->_Myval->Update();
-	}
-
-	//std::list<ComponentAudioListener*>::const_iterator iterator2;
-	//for (iterator2 = App->audio->audio_listeners.begin(); iterator2 != App->audio->audio_listeners.end(); ++iterator2)
-	//{
-	//	iterator2._Ptr->_Myval->Update();
-	//}
+	//This has been moved to the transform, in order to not be doing this every frame
 
 	return UPDATE_CONTINUE;
 }

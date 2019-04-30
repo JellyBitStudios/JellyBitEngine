@@ -32,7 +32,7 @@ public:
 	void RegisterBufferIndex(uint *offset, int* index, ComponentTypes cType, Component* cmp);
 	void UnRegisterBufferIndex(uint offset, ComponentTypes cType);
 
-	bool isNvidia()const;
+	bool isShaderStorage()const;
 
 	void ResetUIBufferValues();
 
@@ -44,7 +44,7 @@ private:
 
 
 	//
-	bool isNVIDIA = false;
+	bool isShaderStorage_variable = false;
 
 	uint ubo_viewProj;
 

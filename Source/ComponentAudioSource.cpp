@@ -55,17 +55,24 @@ void ComponentAudioSource::Update()
 
 void ComponentAudioSource::UpdateSourcePos()
 {
-	ComponentTransform* transformation = (ComponentTransform*)parent->GetComponent(ComponentTypes::TransformComponent);
-
-	if (transformation != nullptr)
+	if (parent->transform != nullptr)
 	{
-		math::Quat rot = transformation->GetRotation();
+		math::float3 vector_pos;
+		math::float3 vector_front;
+		math::float3 vector_up;
 
-		math::float3 vector_pos = transformation->GetPosition();
-		math::float3 vector_front = rot.Transform(math::float3(0, 0, 1));
-		math::float3 vector_up = rot.Transform(math::float3(0, 1, 0));
+		math::Quat rotation;
+		math::float3 scale;
 
-		source->SetSourcePos(vector_pos.x, vector_pos.y, vector_pos.z, vector_front.x, vector_front.y, vector_front.z, vector_up.x, vector_up.y, vector_up.z);
+		math::float4x4 global = parent->transform->GetGlobalMatrix();
+
+		global.Decompose(vector_pos, rotation, scale);
+
+		vector_front = rotation * math::float3{ 0,0,1 };
+		vector_up = rotation * math::float3{ 0,1,0 };
+
+		source->SetSourcePos(vector_pos.x, vector_pos.y, vector_pos.z, vector_front.x, vector_front.y, vector_front.z, 
+			vector_up.x, vector_up.y, vector_up.z);
 	}
 }
 

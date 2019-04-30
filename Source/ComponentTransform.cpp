@@ -12,6 +12,8 @@
 #include "ComponentRigidActor.h"
 #include "ComponentCanvas.h"
 #include "ComponentEmitter.h"
+#include "ComponentAudioListener.h"
+#include "ComponentAudioSource.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -129,9 +131,12 @@ void ComponentTransform::OnUniqueEditor()
 			// Transform updated: if the game object has a canvas, Update the rectTransforms
 			if (parent->cmp_canvas != nullptr)
 			{
-				System_Event WTransformUpdated;
-				WTransformUpdated.type = System_Event_Type::WRectTransformUpdated;
-				parent->cmp_canvas->OnSystemEvent(WTransformUpdated);
+				if(parent->cmp_canvas->GetType() != ComponentCanvas::CanvasType::SCREEN)
+				{
+					System_Event WTransformUpdated;
+					WTransformUpdated.type = System_Event_Type::WRectTransformUpdated;
+					parent->cmp_canvas->OnSystemEvent(WTransformUpdated);
+				}
 			}
 
 #ifndef GAMEMODE
@@ -210,9 +215,12 @@ void ComponentTransform::SetMatrixFromGlobal(math::float4x4& globalMatrix, bool 
 			// Transform updated: if the game object has a canvas, Update the rectTransforms
 			if (parent->cmp_canvas != nullptr)
 			{
-				System_Event WTransformUpdated;
-				WTransformUpdated.type = System_Event_Type::WRectTransformUpdated;
-				parent->cmp_canvas->OnSystemEvent(WTransformUpdated);
+				if (parent->cmp_canvas->GetType() != ComponentCanvas::CanvasType::SCREEN)
+				{
+					System_Event WTransformUpdated;
+					WTransformUpdated.type = System_Event_Type::WRectTransformUpdated;
+					parent->cmp_canvas->OnSystemEvent(WTransformUpdated);
+				}
 			}
 		}
 #ifndef GAMEMODE
@@ -264,14 +272,28 @@ void ComponentTransform::UpdateGlobal()
 		// Transform updated: if the game object has a canvas, Update the rectTransforms
 		if (parent->cmp_canvas != nullptr)
 		{
-			System_Event WTransformUpdated;
-			WTransformUpdated.type = System_Event_Type::WRectTransformUpdated;
-			parent->cmp_canvas->OnSystemEvent(WTransformUpdated);
+			if (parent->cmp_canvas->GetType() != ComponentCanvas::CanvasType::SCREEN)
+			{
+				System_Event WTransformUpdated;
+				WTransformUpdated.type = System_Event_Type::WRectTransformUpdated;
+				parent->cmp_canvas->OnSystemEvent(WTransformUpdated);
+			}
 		}
 
 		// Transform updated: if the game object has a emitter, update its bounding box
 		if (parent->cmp_emitter != nullptr)
 			parent->cmp_emitter->UpdateTransform();
+
+		//Update the audio source and audio listener position
+		if (parent->cmp_audioListener != nullptr)
+		{
+			parent->cmp_audioListener->UpdateListenerPos();
+		}
+
+		if (parent->cmp_audioSource != nullptr)
+		{
+			parent->cmp_audioSource->UpdateSourcePos();
+		}
 
 		for (std::vector<GameObject*>::iterator childs = parent->children.begin(); childs != parent->children.end(); ++childs)
 		{

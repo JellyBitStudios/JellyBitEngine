@@ -28,17 +28,18 @@ public:
 
 	void SetColor(math::float4& color);
 	math::float4 GetColor() const;
+	void SetPct(float pct);
+	float GetPct() const;
 
 public:
 
 	uint res = 0;
 	class ResourceMaterial* currentResource = 0;
 
-	bool useColor = false; // not save&load
-
 private:
 
 	math::float4 color = math::float4::zero; // not save&load
+	float pct = 0.0f; // not save&load
 };
 
 #endif

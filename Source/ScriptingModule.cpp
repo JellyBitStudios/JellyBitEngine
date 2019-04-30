@@ -84,6 +84,13 @@ bool exec(const char* cmd, std::string& error)
 	return result;
 }
 
+#pragma optimize("", off)
+void release_mode_breakpoint()
+{	
+	int put_breakpoint_here = 1;	
+}
+#pragma optimize("", on)
+
 bool ScriptingModule::Init(JSON_Object* data)
 {
 	//Locate the lib and etc folders in the mono installation
@@ -936,7 +943,7 @@ void ScriptingModule::RecompileScripts()
 		if (size > 0)
 		{
 			std::string outPut(buffer);
-			outPut.resize(size);
+			outPut.resize(size+1);
 
 			CONSOLE_LOG(LogTypes::Error, "Error compiling Scripting assembly. Error: %s", outPut.data());
 
@@ -1362,7 +1369,7 @@ MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, M
 
 		if (rotation)
 		{
-			math::Quat newRotation{ mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2), mono_array_get(position, float, 3) };
+			math::Quat newRotation{ mono_array_get(rotation, float, 0), mono_array_get(rotation, float, 1), mono_array_get(rotation, float, 2), mono_array_get(rotation, float, 3) };
 			newGameObject->transform->SetRotation(newRotation);
 		}
 
@@ -2518,6 +2525,12 @@ void SetCompActive(MonoObject* monoComponent, bool active)
 {
 	Component* component = App->scripting->ComponentFrom(monoComponent);
 	component->IsActive() != active ? component->ToggleIsActive() : void();
+}
+
+bool GetCompActive(MonoObject* monoComponent)
+{
+	Component* component = App->scripting->ComponentFrom(monoComponent);
+	return component->IsActive();
 }
 
 void SetGameObjectActive(MonoObject* monoObject, bool active)
@@ -3752,22 +3765,22 @@ void MaterialSetColor(MonoObject* monoMaterial, MonoArray* colorCS)
 	}
 }
 
-bool MaterialGetUseColor(MonoObject* monoMaterial)
+float MaterialGetPercent(MonoObject* monoMaterial)
 {
 	ComponentMaterial* material = (ComponentMaterial*)App->scripting->ComponentFrom(monoMaterial);
 	if (material)
 	{
-		return material->useColor;
+		return material->GetPct();
 	}
-	return false;
+	return -1.0f;
 }
 
-void MaterialSetUseColor(MonoObject* monoMaterial, bool useColor)
+void MaterialSetPercent(MonoObject* monoMaterial, float percent)
 {
 	ComponentMaterial* material = (ComponentMaterial*)App->scripting->ComponentFrom(monoMaterial);
 	if (material)
 	{
-		material->useColor = useColor;
+		material->SetPct(percent);
 	}
 }
 
@@ -3963,6 +3976,10 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.GameObject::SetParent", (const void*)&GameObjectSetParent);
 	mono_add_internal_call("JellyBitEngine.GameObject::IsVisible", (const void*)&GameObjectIsVisible);
 
+	//Component
+	mono_add_internal_call("JellyBitEngine.Component::SetActive", (const void*)&SetCompActive);
+	mono_add_internal_call("JellyBitEngine.Component::GetActive", (const void*)&GetCompActive);
+
 	//Time
 	mono_add_internal_call("JellyBitEngine.Time::getDeltaTime", (const void*)&GetDeltaTime);
 	mono_add_internal_call("JellyBitEngine.Time::getRealDeltaTime", (const void*)&GetRealDeltaTime);
@@ -3987,7 +4004,6 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Camera::getMainCamera", (const void*)&GetGameCamera);
 	mono_add_internal_call("JellyBitEngine.Physics::_ScreenToRay", (const void*)&ScreenToRay);
 	mono_add_internal_call("JellyBitEngine.LayerMask::GetMaskBit", (const void*)&LayerToBit);
-	mono_add_internal_call("JellyBitEngine.Component::SetActive", (const void*)&SetCompActive);
 
 	//Animator
 	mono_add_internal_call("JellyBitEngine.Animator::PlayAnimation", (const void*)&PlayAnimation);
@@ -4133,8 +4149,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Material::SetResource", (const void*)&MaterialSetResource);
 	mono_add_internal_call("JellyBitEngine.Material::GetColor", (const void*)&MaterialGetColor);
 	mono_add_internal_call("JellyBitEngine.Material::SetColor", (const void*)&MaterialSetColor);
-	mono_add_internal_call("JellyBitEngine.Material::GetUseColor", (const void*)&MaterialGetUseColor);
-	mono_add_internal_call("JellyBitEngine.Material::SetUseColor", (const void*)&MaterialSetUseColor);
+	mono_add_internal_call("JellyBitEngine.Material::GetPercent", (const void*)&MaterialGetPercent);
+	mono_add_internal_call("JellyBitEngine.Material::SetPercent", (const void*)&MaterialSetPercent);
 
 	//Projector
 	mono_add_internal_call("JellyBitEngine.Projector::SetResource", (const void*)&ProjectorSetResource);

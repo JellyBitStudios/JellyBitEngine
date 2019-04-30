@@ -82,8 +82,6 @@ private:
 	float rotation = 0.0f;
 	float angle = 0.0f;
 
-	//ParticleAnimation particleAnim;
-
 	bool isParticleAnimated = false;
 	int  textureRows = 1;
 	int  textureColumns = 1;

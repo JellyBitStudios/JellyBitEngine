@@ -216,6 +216,12 @@ update_status ModuleRenderer3D::PostUpdate()
 			Sort(statics);
 			Sort(dynamics);
 
+			for each (ComponentMesh* mesh in rendererLast)
+			{
+				if (mesh->IsTreeActive())
+					DrawMesh(mesh, true);
+			}
+
 			for (uint i = 0; i < statics.size(); ++i)
 			{
 				statics[i]->seenLastFrame = true;
@@ -784,9 +790,9 @@ void ModuleRenderer3D::FrustumCulling(std::vector<GameObject*>& statics, std::ve
 	}
 }
 
-void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
+void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 {
-	if (toDraw->res == 0)
+	if (toDraw->res == 0 || (!drawLast && toDraw->rendererFlags & ComponentMesh::DRAWLAST))
 		return;
 
 	uint textureUnit = 0;
@@ -812,11 +818,22 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	glUniformMatrix4fv(location, 1, GL_FALSE, mvp_matrix.ptr());
 	location = glGetUniformLocation(shader, "normal_matrix");
 	glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
-
-	location = glGetUniformLocation(shader, "layer");
-	uint layerGroup = BIT_SHIFT(toDraw->GetParent()->GetLayer());
+	location = glGetUniformLocation(shader, "view_matrix");
 	if (location != -1)
-		glUniform1i(location, layerGroup);
+	{
+		math::float4x4 view_matrix = currentCamera->GetOpenGLViewMatrix();
+		glUniformMatrix4fv(location, 1, GL_FALSE, view_matrix.ptr());
+	}
+
+	uint screenScale = App->window->GetScreenSize();
+	uint screenWidth = App->window->GetWindowWidth();
+	uint screenHeight = App->window->GetWindowHeight();
+	math::float2 screenSize = math::float2(screenWidth * screenScale, screenHeight * screenScale);
+
+	location = glGetUniformLocation(shader, "screenSize");
+	glUniform2fv(location, 1, screenSize.ptr());
+	location = glGetUniformLocation(shader, "dot");
+	glUniform1i(location, drawLast || !toDraw->GetParent()->IsStatic() ? 1 : 0);
 
 	// Animations
 	char boneName[DEFAULT_BUF_SIZE];
@@ -856,21 +873,29 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 		}
 	}
 
+	location = glGetUniformLocation(shader, "color");
+	if (location != -1)
+	{
+		math::float4 color = materialRenderer->GetColor();
+		glUniform4fv(location, 1, &color[0]);
+	}
+	location = glGetUniformLocation(shader, "pct");
+	if (location != -1)
+		glUniform1f(location, materialRenderer->GetPct());
+
 	// 3. Unknown mesh uniforms
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
 	std::vector<const char*> ignore;
 	ignore.push_back("animate");
 	ignore.push_back("color");
-	if (materialRenderer->useColor)
-	{
-		ignore.push_back("lightCartoon");
-		location = glGetUniformLocation(shader, "lightCartoon");
-		glUniform1i(location, 3);
 
-		location = glGetUniformLocation(shader, "color");
-		math::float4 color = materialRenderer->GetColor();
-		glUniform4fv(location, 1, &color[0]);
-	}
+	ignore.push_back("pct");
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, App->fbo->gInfo);
+	location = glGetUniformLocation(shader, "gInfoTexture");
+	glUniform1i(location, 0);
+	textureUnit += 1;
 	LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	// Mesh
