@@ -129,9 +129,12 @@ void ComponentTransform::OnUniqueEditor()
 			// Transform updated: if the game object has a canvas, Update the rectTransforms
 			if (parent->cmp_canvas != nullptr)
 			{
-				System_Event WTransformUpdated;
-				WTransformUpdated.type = System_Event_Type::WRectTransformUpdated;
-				parent->cmp_canvas->OnSystemEvent(WTransformUpdated);
+				if(parent->cmp_canvas->GetType() != ComponentCanvas::CanvasType::SCREEN)
+				{
+					System_Event WTransformUpdated;
+					WTransformUpdated.type = System_Event_Type::WRectTransformUpdated;
+					parent->cmp_canvas->OnSystemEvent(WTransformUpdated);
+				}
 			}
 
 #ifndef GAMEMODE
@@ -210,9 +213,12 @@ void ComponentTransform::SetMatrixFromGlobal(math::float4x4& globalMatrix, bool 
 			// Transform updated: if the game object has a canvas, Update the rectTransforms
 			if (parent->cmp_canvas != nullptr)
 			{
-				System_Event WTransformUpdated;
-				WTransformUpdated.type = System_Event_Type::WRectTransformUpdated;
-				parent->cmp_canvas->OnSystemEvent(WTransformUpdated);
+				if (parent->cmp_canvas->GetType() != ComponentCanvas::CanvasType::SCREEN)
+				{
+					System_Event WTransformUpdated;
+					WTransformUpdated.type = System_Event_Type::WRectTransformUpdated;
+					parent->cmp_canvas->OnSystemEvent(WTransformUpdated);
+				}
 			}
 		}
 #ifndef GAMEMODE
@@ -264,9 +270,12 @@ void ComponentTransform::UpdateGlobal()
 		// Transform updated: if the game object has a canvas, Update the rectTransforms
 		if (parent->cmp_canvas != nullptr)
 		{
-			System_Event WTransformUpdated;
-			WTransformUpdated.type = System_Event_Type::WRectTransformUpdated;
-			parent->cmp_canvas->OnSystemEvent(WTransformUpdated);
+			if (parent->cmp_canvas->GetType() != ComponentCanvas::CanvasType::SCREEN)
+			{
+				System_Event WTransformUpdated;
+				WTransformUpdated.type = System_Event_Type::WRectTransformUpdated;
+				parent->cmp_canvas->OnSystemEvent(WTransformUpdated);
+			}
 		}
 
 		// Transform updated: if the game object has a emitter, update its bounding box

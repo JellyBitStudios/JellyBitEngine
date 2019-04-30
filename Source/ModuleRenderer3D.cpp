@@ -210,6 +210,7 @@ update_status ModuleRenderer3D::PostUpdate()
 		std::vector<GameObject*> dynamics;
 		if (currentCamera->HasFrustumCulling())
 		{
+			SetMeshComponentsSeenLastFrame(false);
 			FrustumCulling(statics, dynamics);
 
 			Sort(statics);
@@ -217,6 +218,7 @@ update_status ModuleRenderer3D::PostUpdate()
 
 			for (uint i = 0; i < statics.size(); ++i)
 			{
+				statics[i]->seenLastFrame = true;
 				ComponentMesh* toDraw = statics[i]->cmp_mesh;
 				if (toDraw->IsTreeActive())
 					DrawMesh(toDraw);
@@ -240,6 +242,7 @@ update_status ModuleRenderer3D::PostUpdate()
 			// Draw dynamic meshes
 			for (uint i = 0; i < dynamics.size(); ++i)
 			{
+				dynamics[i]->seenLastFrame = true;
 				ComponentMesh* toDraw = dynamics[i]->cmp_mesh;
 				if (toDraw->IsTreeActive())
 					DrawMesh(toDraw);
@@ -809,6 +812,12 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	glUniformMatrix4fv(location, 1, GL_FALSE, mvp_matrix.ptr());
 	location = glGetUniformLocation(shader, "normal_matrix");
 	glUniformMatrix3fv(location, 1, GL_FALSE, normal_matrix.Float3x3Part().ptr());
+	location = glGetUniformLocation(shader, "view_matrix");
+	if (location != -1)
+	{
+		math::float4x4 view_matrix = currentCamera->GetOpenGLViewMatrix();
+		glUniformMatrix4fv(location, 1, GL_FALSE, view_matrix.ptr());
+	}
 
 	location = glGetUniformLocation(shader, "layer");
 	uint layerGroup = BIT_SHIFT(toDraw->GetParent()->GetLayer());
@@ -853,21 +862,22 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 		}
 	}
 
+	location = glGetUniformLocation(shader, "color");
+	if (location != -1)
+	{
+		math::float4 color = materialRenderer->GetColor();
+		glUniform4fv(location, 1, &color[0]);
+	}
+	location = glGetUniformLocation(shader, "pct");
+	if (location != -1)
+		glUniform1f(location, materialRenderer->GetPct());
+
 	// 3. Unknown mesh uniforms
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
 	std::vector<const char*> ignore;
 	ignore.push_back("animate");
 	ignore.push_back("color");
-	if (materialRenderer->useColor)
-	{
-		ignore.push_back("lightCartoon");
-		location = glGetUniformLocation(shader, "lightCartoon");
-		glUniform1i(location, 3);
-
-		location = glGetUniformLocation(shader, "color");
-		math::float4 color = materialRenderer->GetColor();
-		glUniform4fv(location, 1, &color[0]);
-	}
+	ignore.push_back("pct");
 	LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	// Mesh
