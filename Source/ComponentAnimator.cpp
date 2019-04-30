@@ -35,7 +35,16 @@ ComponentAnimator::ComponentAnimator(const ComponentAnimator & component_anim, G
 	if (include) 
 	{
 		// 1. Create and set new resource animator
-		this->SetResourceAnimator(component_anim.res);
+		ResourceData genericAnimatorData;
+
+		char animatorName[DEFAULT_BUF_SIZE];
+		sprintf_s(animatorName, DEFAULT_BUF_SIZE, "BuiltinAnimator%u", App->res->GetResourcesByType(ResourceTypes::AnimatorResource).size());
+		genericAnimatorData.name = animatorName;
+
+		ResourceAnimatorData specificAnimatorData;
+
+		std::string outputFileAnimator;
+		this->SetResourceAnimator(App->res->ExportFile(ResourceTypes::AnimatorResource, genericAnimatorData, &specificAnimatorData, outputFileAnimator)->GetUuid());
 
 		// 2. Create and set new resource avatar
 		ResourceData genericAvatarData;
