@@ -18,6 +18,10 @@ struct Directory;
 
 bool exec(const char* cmd, std::string& error = std::string());
 
+#pragma optimize("", off)
+void release_mode_breakpoint();
+#pragma optimize("", on)
+
 class ScriptingModule : public Module
 {
 	friend MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, MonoArray* rotation);

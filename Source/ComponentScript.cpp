@@ -3634,7 +3634,10 @@ void ComponentScript::TemporalSave()
 {
 	if (tempBuffer != nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "MEMORY LEAKS IN TEMPORAL SAVE OF SCRIPTS");
+		delete[] tempBuffer;
+		tempBuffer = nullptr;
+
+		//TODO: WHEN THIS HAPPENS AND WHY?
 	}
 
 	tempBufferBytes = GetPublicVarsSerializationBytes();
