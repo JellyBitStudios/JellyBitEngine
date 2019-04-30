@@ -1362,7 +1362,7 @@ MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, M
 
 		if (rotation)
 		{
-			math::Quat newRotation{ mono_array_get(position, float, 0), mono_array_get(position, float, 1), mono_array_get(position, float, 2), mono_array_get(position, float, 3) };
+			math::Quat newRotation{ mono_array_get(rotation, float, 0), mono_array_get(rotation, float, 1), mono_array_get(rotation, float, 2), mono_array_get(rotation, float, 3) };
 			newGameObject->transform->SetRotation(newRotation);
 		}
 
