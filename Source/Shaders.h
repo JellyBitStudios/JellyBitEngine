@@ -162,7 +162,13 @@
 "	float AlbedoA = AlbedoTexture.a;\n" \
 "	vec4 InfoTexture = texture(gInfo, TexCoords);\n" \
 "if (InfoTexture.r != 1 && InfoTexture.g != 0) { \n" \
-"FragColor = vec4(colorDot,1.0);\n" \
+"	vec4 modelViewPos = view_matrix * vec4(FragPos, 1.0);\n" \
+"	float dist = length(modelViewPos.xyz);\n" \
+"	//float fogFactor = (fog.maxDist - dist) / (fog.maxDist - fog.minDist); // Linear\n" \
+"	//float fogFactor = exp(-fog.density * dist); // Exponential\n" \
+"	float fogFactor = exp(-pow(fog.density * dist, 2.0)); // Exponential Squared\n" \
+"	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
+"	FragColor = vec4(mix(fog.color, colorDot, fogFactor),1.0);\n" \
 "return;\n" \
 "}\n" \
 "\n" \
