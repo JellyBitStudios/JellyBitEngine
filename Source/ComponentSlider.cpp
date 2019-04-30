@@ -102,7 +102,7 @@ void ComponentSlider::Update()
 	if (needed_fillBuffer)
 	{
 		CalculateCorners();
-		if(App->glCache->isNvidia())
+		if(App->glCache->isShaderStorage())
 			FillBuffers();
 		needed_fillBuffer = false;
 	}

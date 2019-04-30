@@ -67,7 +67,7 @@ void ComponentImage::Update()
 			mask_values[1] = ((rect_initValues[1] - (float)rect[ComponentRectTransform::Rect::YDIST]) / rect_initValues[1]);
 			mask_values[0] = 1.0f - ((rect_initValues[0] - (float)rect[ComponentRectTransform::Rect::XDIST]) / rect_initValues[0]);
 		}
-		if(App->glCache->isNvidia())
+		if(App->glCache->isShaderStorage())
 			if (index != -1)
 				FillBuffer();
 

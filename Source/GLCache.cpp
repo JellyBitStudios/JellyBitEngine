@@ -19,20 +19,18 @@ GLCache::~GLCache()
 
 void GLCache::Init()
 {
-	//Get Info Hardware - Fer-ho al module renderer amb flags? vendor i extensions
-	//std::string vendor = (char*)glGetString(GL_VENDOR);
-	//if (vendor == "NVIDIA Corporation")
-	isNVIDIA = true;
-	//GLint params;
-	//glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &params);
-	//glGetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &params);
-	//glGetIntegerv(GL_SHADER_STORAGE_BUFFER_SIZE, &params);
+	GLint n, i;
+	glGetIntegerv(GL_NUM_EXTENSIONS, &n);
+	for (i = 0; i < n; i++) {
+		const auto extension = (char *)glGetStringi(GL_EXTENSIONS, i);
+		if (strcmp(extension, "GL_ARB_shader_storage_buffer_object") == 0)
+		{
+			isShaderStorage = true;
+			break;
+		}
+	}
 
-	//glGenBuffers(1, &ubo_viewProj);
-	//glBindBufferBase(GL_UNIFORM_BUFFER, UBO_PROJVIEW_INDEX, ubo_viewProj);
-	//glBufferData(GL_UNIFORM_BUFFER, VIEWPROJ_SIZE, 0, GL_DYNAMIC_DRAW);
-
-	if (isNVIDIA)
+	if (isShaderStorage)
 	{
 		ui_shader = App->resHandler->UIShaderProgram;
 		//--- One Buffer UI - Shader Storage Buffer Object ----
@@ -49,7 +47,7 @@ void GLCache::Init()
 
 void GLCache::FillBufferRange(uint offset, uint size, char * buffer)
 {
-	if (!isNVIDIA)
+	if (!isShaderStorage)
 		return;
 
 	//-------- Shader Storage Buffer Object Update -------------
@@ -62,7 +60,7 @@ void GLCache::FillBufferRange(uint offset, uint size, char * buffer)
 
 void GLCache::RegisterBufferIndex(uint * offset, int * index, ComponentTypes cType, Component * cmp)
 {
-	if (!isNVIDIA)
+	if (!isShaderStorage)
 		return;
 
 	switch (cType)
@@ -147,7 +145,7 @@ void GLCache::RegisterBufferIndex(uint * offset, int * index, ComponentTypes cTy
 
 void GLCache::UnRegisterBufferIndex(uint offset, ComponentTypes cType)
 {
-	if (!isNVIDIA)
+	if (!isShaderStorage)
 		return;
 
 	switch (cType)
@@ -245,14 +243,14 @@ void GLCache::UnRegisterBufferIndex(uint offset, ComponentTypes cType)
 	}
 }
 
-bool GLCache::isNvidia() const
+bool GLCache::isShaderStorage() const
 {
-	return isNVIDIA;
+	return isShaderStorage;
 }
 
 void GLCache::ResetUIBufferValues()
 {
-	if (!isNVIDIA)
+	if (!isShaderStorage)
 		return;
 
 	countImages = 0;
