@@ -827,7 +827,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 	location = glGetUniformLocation(shader, "screenSize");
 	glUniform2fv(location, 1, screenSize.ptr());
 	location = glGetUniformLocation(shader, "dot");
-	glUniform1i(location, drawLast ? 1 : 0);
+	glUniform1i(location, drawLast || !toDraw->GetParent()->IsStatic() ? 1 : 0);
 
 	// Animations
 	char boneName[DEFAULT_BUF_SIZE];

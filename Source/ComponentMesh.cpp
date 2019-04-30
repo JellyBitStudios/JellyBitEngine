@@ -135,7 +135,7 @@ void ComponentMesh::OnUniqueEditor()
 // TODO SAVE AND LOAD AVATAR RESOURCE UUID
 uint ComponentMesh::GetInternalSerializationBytes()
 {
-	return sizeof(uint) + sizeof(bool);
+	return sizeof(uint) + sizeof(bool) + sizeof(uint);
 }
 
 void ComponentMesh::OnInternalSave(char*& cursor)
@@ -146,6 +146,10 @@ void ComponentMesh::OnInternalSave(char*& cursor)
 
 	bytes = sizeof(bool);
 	memcpy(cursor, &nv_walkable, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(uint);
+	memcpy(cursor, &rendererFlags, bytes);
 	cursor += bytes;
 }
 
@@ -166,4 +170,11 @@ void ComponentMesh::OnInternalLoad(char*& cursor)
 	bytes = sizeof(bool);
 	memcpy(&nv_walkable, cursor, bytes);
 	cursor += bytes;
+
+	bytes = sizeof(uint);
+	memcpy(&rendererFlags, cursor, bytes);
+	cursor += bytes;
+
+	if (rendererFlags & RENDERER_FLAGS::DRAWLAST)
+		App->renderer3D->rendererLast.push_back(this);
 }

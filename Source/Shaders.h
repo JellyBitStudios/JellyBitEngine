@@ -146,6 +146,7 @@
 "uniform float ambient;\n" \
 "uniform Light lights[NR_LIGHTS];\n" \
 "uniform Fog fog;\n" \
+"uniform vec3 colorDot;\n" \
 "\n" \
 "void main()\n" \
 "{\n" \
@@ -161,7 +162,7 @@
 "	float AlbedoA = AlbedoTexture.a;\n" \
 "	vec4 InfoTexture = texture(gInfo, TexCoords);\n" \
 "if (InfoTexture.r != 1 && InfoTexture.g != 0) { \n" \
-"FragColor = vec4(1.0,0.0,0.0,1.0);\n" \
+"FragColor = vec4(colorDot,1.0);\n" \
 "return;\n" \
 "}\n" \
 "\n" \

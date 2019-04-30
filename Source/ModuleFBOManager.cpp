@@ -175,6 +175,9 @@ void ModuleFBOManager::DrawGBufferToScreen() const
 	if (location != -1)
 		glUniform1f(location, App->lights->fog.density);
 
+	location = glGetUniformLocation(resProgram->shaderProgram, "colorDot");
+	glUniform3fv(location, 1, dotColor.ptr());
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
 	glActiveTexture(GL_TEXTURE1);

@@ -8,6 +8,7 @@
 #include "ModuleRenderer3D.h"
 #include "ModuleUI.h"
 #include "Lights.h"
+#include "ModuleFBOManager.h"
 
 #include "GameObject.h"
 #include "ComponentMaterial.h"
@@ -340,6 +341,11 @@ bool ModuleGOs::SerializeFromNode(GameObject* node, char*& outStateBuffer, size_
 	memcpy(cursor, &App->lights->fog.density, sizeof(float));
 	cursor += sizeof(float);
 
+	sizeBuffer += sizeof(math::float3);
+
+	memcpy(cursor, &App->fbo->dotColor[0], sizeof(math::float3));
+	cursor += sizeof(math::float3);
+
 	return true;
 }
 
@@ -433,6 +439,9 @@ bool ModuleGOs::LoadScene(char*& buffer, size_t sizeBuffer, bool navmesh)
 	*/
 	memcpy(&App->lights->fog.density, cursor, sizeof(float));
 	cursor += sizeof(float);
+
+	memcpy(&App->fbo->dotColor[0], cursor, sizeof(math::float3));
+	cursor += sizeof(math::float3);
 
 	//App->animation->SetUpAnimations();
 

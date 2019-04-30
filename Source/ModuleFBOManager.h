@@ -2,7 +2,7 @@
 #define __MODULE_FBO_MANAGER_H__
 
 #include "Module.h"
-
+#include "MathGeoLib/include/Math/float3.h"
 class ModuleFBOManager : public Module
 {
 public:
@@ -28,6 +28,8 @@ public:
 	uint gAlbedoSpec;
 	uint gInfo;
 	uint rboDepth;
+
+	math::float3 dotColor = math::float3(1.f, 0.f, 0.f);
 };
 
 #endif
