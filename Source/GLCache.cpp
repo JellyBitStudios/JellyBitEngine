@@ -25,12 +25,12 @@ void GLCache::Init()
 		const auto extension = (char *)glGetStringi(GL_EXTENSIONS, i);
 		if (strcmp(extension, "GL_ARB_shader_storage_buffer_object") == 0)
 		{
-			isShaderStorage = true;
+			isShaderStorage_variable = true;
 			break;
 		}
 	}
 
-	if (isShaderStorage)
+	if (isShaderStorage_variable)
 	{
 		ui_shader = App->resHandler->UIShaderProgram;
 		//--- One Buffer UI - Shader Storage Buffer Object ----
@@ -47,7 +47,7 @@ void GLCache::Init()
 
 void GLCache::FillBufferRange(uint offset, uint size, char * buffer)
 {
-	if (!isShaderStorage)
+	if (!isShaderStorage_variable)
 		return;
 
 	//-------- Shader Storage Buffer Object Update -------------
@@ -60,7 +60,7 @@ void GLCache::FillBufferRange(uint offset, uint size, char * buffer)
 
 void GLCache::RegisterBufferIndex(uint * offset, int * index, ComponentTypes cType, Component * cmp)
 {
-	if (!isShaderStorage)
+	if (!isShaderStorage_variable)
 		return;
 
 	switch (cType)
@@ -145,7 +145,7 @@ void GLCache::RegisterBufferIndex(uint * offset, int * index, ComponentTypes cTy
 
 void GLCache::UnRegisterBufferIndex(uint offset, ComponentTypes cType)
 {
-	if (!isShaderStorage)
+	if (!isShaderStorage_variable)
 		return;
 
 	switch (cType)
@@ -245,12 +245,12 @@ void GLCache::UnRegisterBufferIndex(uint offset, ComponentTypes cType)
 
 bool GLCache::isShaderStorage() const
 {
-	return isShaderStorage;
+	return isShaderStorage_variable;
 }
 
 void GLCache::ResetUIBufferValues()
 {
-	if (!isShaderStorage)
+	if (!isShaderStorage_variable)
 		return;
 
 	countImages = 0;

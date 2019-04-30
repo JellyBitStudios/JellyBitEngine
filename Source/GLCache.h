@@ -44,7 +44,7 @@ private:
 
 
 	//
-	bool isShaderStorage = false;
+	bool isShaderStorage_variable = false;
 
 	uint ubo_viewProj;
 
