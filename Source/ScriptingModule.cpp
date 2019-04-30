@@ -2520,6 +2520,12 @@ void SetCompActive(MonoObject* monoComponent, bool active)
 	component->IsActive() != active ? component->ToggleIsActive() : void();
 }
 
+bool GetCompActive(MonoObject* monoComponent)
+{
+	Component* component = App->scripting->ComponentFrom(monoComponent);
+	return component->IsActive();
+}
+
 void SetGameObjectActive(MonoObject* monoObject, bool active)
 {
 	GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
@@ -3963,6 +3969,10 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.GameObject::SetParent", (const void*)&GameObjectSetParent);
 	mono_add_internal_call("JellyBitEngine.GameObject::IsVisible", (const void*)&GameObjectIsVisible);
 
+	//Component
+	mono_add_internal_call("JellyBitEngine.Component::SetActive", (const void*)&SetCompActive);
+	mono_add_internal_call("JellyBitEngine.Component::GetActive", (const void*)&GetCompActive);
+
 	//Time
 	mono_add_internal_call("JellyBitEngine.Time::getDeltaTime", (const void*)&GetDeltaTime);
 	mono_add_internal_call("JellyBitEngine.Time::getRealDeltaTime", (const void*)&GetRealDeltaTime);
@@ -3987,7 +3997,6 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Camera::getMainCamera", (const void*)&GetGameCamera);
 	mono_add_internal_call("JellyBitEngine.Physics::_ScreenToRay", (const void*)&ScreenToRay);
 	mono_add_internal_call("JellyBitEngine.LayerMask::GetMaskBit", (const void*)&LayerToBit);
-	mono_add_internal_call("JellyBitEngine.Component::SetActive", (const void*)&SetCompActive);
 
 	//Animator
 	mono_add_internal_call("JellyBitEngine.Animator::PlayAnimation", (const void*)&PlayAnimation);
