@@ -484,7 +484,7 @@ bool ModuleGOs::InvalidateResource(Resource* resource)
 
 			// Emitter component uses Material resource
 			if (gameobjects[i]->cmp_emitter != nullptr && gameobjects[i]->cmp_emitter->GetMaterialRes() == resource->GetUuid())
-				gameobjects[i]->cmp_emitter->SetMaterialRes(App->resHandler->defaultMaterial);
+				gameobjects[i]->cmp_emitter->SetUuidRes(App->resHandler->defaultMaterial, gameobjects[i]->cmp_emitter->materialRes);
 
 			break;
 		}
