@@ -943,7 +943,7 @@ void ScriptingModule::RecompileScripts()
 		if (size > 0)
 		{
 			std::string outPut(buffer);
-			outPut.resize(size);
+			outPut.resize(size+1);
 
 			CONSOLE_LOG(LogTypes::Error, "Error compiling Scripting assembly. Error: %s", outPut.data());
 
