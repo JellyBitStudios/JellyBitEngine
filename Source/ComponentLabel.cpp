@@ -158,7 +158,7 @@ void ComponentLabel::Update()
 
 				FillCorners();
 
-				if(App->glCache->isNvidia())
+				if(App->glCache->isShaderStorage())
 					if (index != -1)
 						FIllBuffer();
 			}
