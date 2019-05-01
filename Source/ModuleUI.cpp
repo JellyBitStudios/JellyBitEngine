@@ -319,7 +319,7 @@ void ModuleUI::DrawScreenCanvas()
 							DrawUIImage(rend->GetIndex(), renderer->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 							break;
 						case ComponentCanvasRenderer::RenderTypes::LABEL:
-							DrawUILabel(rend->GetIndex(), rend->GetWord(), rend->GetTexturesWord(), rend->GetColor());
+							DrawUILabel(rend->GetIndex(), rend->GetWord(), rend->GetColor());
 							break;
 						case ComponentCanvasRenderer::RenderTypes::SLIDER:
 						{
@@ -370,7 +370,7 @@ void ModuleUI::DrawWorldCanvas()
 							DrawUIImage(rend->GetIndex(), renderer->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 							break;
 						case ComponentCanvasRenderer::RenderTypes::LABEL:
-							DrawUILabel(rend->GetIndex(), rend->GetWord(), rend->GetTexturesWord(), rend->GetColor());
+							DrawUILabel(rend->GetIndex(), rend->GetWord(), rend->GetColor());
 							break;
 						case ComponentCanvasRenderer::RenderTypes::SLIDER:
 						{
@@ -424,13 +424,13 @@ void ModuleUI::DrawUIImage(int index, math::float3 corners[4], math::float4& col
 	if (texture > 0) glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void ModuleUI::DrawUILabel(int index, std::vector<LabelLetter>* word, std::vector<uint>* GetTexturesWord, math::float4& color)
+void ModuleUI::DrawUILabel(int index, std::vector<LabelLetter*>* word, math::float4& color)
 {
 	setBool(ui_shader, "isLabel", true);
 	setBool(ui_shader, "using_texture", true);
 	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
 
-	uint wordSize = GetTexturesWord->size();
+	uint wordSize = word->size();
 	for (uint i = 0; i < wordSize; i++)
 	{
 		if (App->glCache->isShaderStorage())
@@ -439,12 +439,12 @@ void ModuleUI::DrawUILabel(int index, std::vector<LabelLetter>* word, std::vecto
 		}
 		else
 		{
-			setFloat(ui_shader, "topLeft", word->at(i).corners[ComponentRectTransform::Rect::RTOPLEFT]);
-			setFloat(ui_shader, "topRight", word->at(i).corners[ComponentRectTransform::Rect::RTOPRIGHT]);
-			setFloat(ui_shader, "bottomLeft", word->at(i).corners[ComponentRectTransform::Rect::RBOTTOMLEFT]);
-			setFloat(ui_shader, "bottomRight", word->at(i).corners[ComponentRectTransform::Rect::RBOTTOMRIGHT]);
+			setFloat(ui_shader, "topLeft",{ word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RTOPLEFT], 1.0f });
+			setFloat(ui_shader, "topRight",{ word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RTOPRIGHT], 1.0f });
+			setFloat(ui_shader, "bottomLeft",{ word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RBOTTOMLEFT], 1.0f });
+			setFloat(ui_shader, "bottomRight",{ word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RBOTTOMRIGHT], 1.0f });
 		}
-		glBindTexture(GL_TEXTURE_2D, GetTexturesWord->at(i));
+		glBindTexture(GL_TEXTURE_2D, word->at(i)->textureID);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 	}
 	glBindTexture(GL_TEXTURE_2D, 0);

@@ -145,28 +145,24 @@ math::float4 ComponentCanvasRenderer::ToUIRend::GetColor()
 		return { colors[ComponentImage::Color::R], colors[ComponentImage::Color::G], colors[ComponentImage::Color::B], colors[ComponentImage::Color::A] };
 		break;
 	}
-	case ComponentCanvasRenderer::SLIDER:
-	{
-		return { 1.0f, 1.0f, 1.0f, 1.0f };
-		break;
-	}
 	case ComponentCanvasRenderer::LABEL:
 	{
 		return ((ComponentLabel*)cmp)->GetColor();
 		break;
 	}
+	default:
+		return { 1.0f, 1.0f, 1.0f, 1.0f };
+		break;
 	}
 }
 
 uint ComponentCanvasRenderer::ToUIRend::GetTexture()
 {
-	isRendered_flag = true;
 	return ((ComponentImage*)cmp)->GetResImage();
 }
 
 math::float2 ComponentCanvasRenderer::ToUIRend::GetMaskValues()
 {
-	isRendered_flag = true;
 	if (type == SLIDER)
 		return { ((ComponentSlider*)cmp)->GetPercentage(), 0.0f };
 	else
@@ -181,13 +177,7 @@ math::float2 ComponentCanvasRenderer::ToUIRend::GetMaskValues()
 	}
 }
 
-std::vector<uint>* ComponentCanvasRenderer::ToUIRend::GetTexturesWord()
-{
-	isRendered_flag = true;
-	return ((ComponentLabel*)cmp)->GetWordTextureIDs();
-}
-
-std::vector<LabelLetter>* ComponentCanvasRenderer::ToUIRend::GetWord()
+std::vector<LabelLetter*>* ComponentCanvasRenderer::ToUIRend::GetWord()
 {
 	return ((ComponentLabel*)cmp)->GetWord();
 }

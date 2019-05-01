@@ -95,6 +95,8 @@ public:
 	void ParentChanged();
 	void CanvasChanged();
 
+	void FromLabel();
+
 private:
 	//From Sreen
 	void CalculateScreenCorners();
@@ -109,6 +111,7 @@ private:
 	void RecalculateRectByPercentage();
 
 private:
+	bool isFromLabel = false;
 	//Where get the info
 	RectFrom rFrom = RectFrom::RECT;
 
