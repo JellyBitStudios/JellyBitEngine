@@ -22,7 +22,7 @@ ComponentMesh::ComponentMesh(const ComponentMesh& componentMesh, GameObject* par
 		App->renderer3D->AddMeshComponent(this);
 	SetResource(componentMesh.res);
 	rendererFlags = componentMesh.rendererFlags;
-	if (rendererFlags & RENDERER_FLAGS::DRAWLAST)
+	if (include && rendererFlags & RENDERER_FLAGS::DRAWLAST)
 		App->renderer3D->rendererLast.push_back(this);
 }
 
