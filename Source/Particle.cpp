@@ -101,18 +101,10 @@ bool Particle::Update(float dt)
 		math::float3 movement = direction * (speed * dt);
 		_movement += movement + gravity * dt;
 
-		/*if (acceleration3.Equals(math::float3::zero))
-			_movement += movement;
-		else
-			_movement += (movement + acceleration3 * dt);
-
-		if (acceleration < 0)
-		else
-			_movement += movement;*/
-
 		transform.position = _movement + owner->GetPos();
 
-		LookAtCamera();
+		if (owner->isPlane)
+			LookAtCamera();
 
 		if (color.size() == 1 || !multicolor)
 			currentColor = color.front().color;
@@ -141,7 +133,10 @@ bool Particle::Update(float dt)
 
 		angularVelocity += angularAcceleration * dt;
 		angle += angularVelocity * dt;
-		transform.rotation = transform.rotation.Mul(math::Quat::RotateZ(angle));
+		if (owner->isPlane)
+			transform.rotation = transform.rotation.Mul(math::Quat::RotateZ(angle));
+		else
+			transform.rotation = transform.rotation.Mul(math::Quat::RotateAxisAngle(direction, angularVelocity * dt));
 
 		if (isParticleAnimated && (textureRows > 1 || textureColumns > 1))
 		{
@@ -272,7 +267,7 @@ void Particle::Draw()
 			}
 		}
 
-		ResourceMesh* plane = (ResourceMesh*)App->res->GetResource(App->resHandler->plane);
+		ResourceMesh* plane = (ResourceMesh*)App->res->GetResource(owner->uuidMeshPart);
 		glBindVertexArray(plane->GetVAO());
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, plane->GetIBO());
