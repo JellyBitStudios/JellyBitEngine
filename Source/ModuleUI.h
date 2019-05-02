@@ -92,7 +92,7 @@ private:
 	void DrawScreenCanvas();
 	void DrawWorldCanvas();
 	void DrawUIImage(int index, math::float3 corners[4], math::float4& color, uint texture, math::float2& mask);
-	void DrawUILabel(int index, std::vector<LabelLetter>* workd, std::vector<uint>* GetTexturesWord, math::float4& color);
+	void DrawUILabel(int index, std::vector<LabelLetter*>* workd, math::float4& color);
 
 	void UpdateRenderStates();
 

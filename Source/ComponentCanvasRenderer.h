@@ -43,8 +43,7 @@ public:
 		math::float4 GetColor();
 		uint GetTexture();
 		math::float2 GetMaskValues();
-		std::vector<uint>* GetTexturesWord();
-		std::vector<LabelLetter>* GetWord();
+		std::vector<LabelLetter*>* GetWord();
 		int GetIndex()const;
 
 		bool isRendered() {

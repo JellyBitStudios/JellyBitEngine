@@ -39,10 +39,13 @@ enum HorizontalLabelAlign
 };
 struct LabelLetter
 {
-	math::float4 corners[4] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } };
-	int rect[4];
+	char letter = NULL;
+	class ComponentRectTransform* rect = nullptr;
 	uint textureID = 0;
-	math::float2 size;
+
+	uint GetInternalSerializationBytes();
+	void OnInternalSave(char*& cursor);
+	void OnInternalLoad(char*& cursor);
 };
 class ComponentLabel : public Component
 {
@@ -57,9 +60,9 @@ public:
 
 	void Update();
 
-	void VerticalAlignment(const uint parentHeight, const VerticalLabelAlign alignFrom);
-	void HorizontalAlignment(const uint parentWidth, const HorizontalLabelAlign alignFrom);
-	void RowAlignment(const uint firstLabelRow, const uint lastLabelRow, const uint diference, const HorizontalLabelAlign alignFrom);
+	void VerticalAlignment(const int parentHeight, const VerticalLabelAlign alignFrom);
+	void HorizontalAlignment(const int parentWidth, const HorizontalLabelAlign alignFrom);
+	void RowAlignment(const uint firstLabelRow, const uint lastLabelRow, const int diference, const HorizontalLabelAlign alignFrom);
 
 	void WorldDraw(math::float3 * parentCorners, math::float4 corners[4], int * rectParent, int rect[4]);
 
@@ -73,8 +76,7 @@ public:
 	char* GetBuffer();
 	uint GetBufferSize()const;
 	uint GetWordSize()const;
-	std::vector<uint>* GetWordTextureIDs();
-	std::vector<LabelLetter>* GetWord();
+	std::vector<LabelLetter*>* GetWord();
 
 	int GetBufferIndex()const;
 	void SetBufferRangeAndFIll(uint offs, int index);
@@ -91,8 +93,8 @@ private:
 	void SetVerticalAligment(const VerticalLabelAlign nextAlignement);
 	void SetHorizontalAligment(const HorizontalLabelAlign nextAlignement);
 	void DragDropFont();
-	void FIllBuffer();
-	void FillCorners();
+	void FillBuffer();
+
 private:
 	uint fontUuid = 0u;
 
@@ -102,11 +104,14 @@ private:
 
 	math::float4 color = math::float4::one;
 
-	std::vector<LabelLetter> labelWord;
-	std::vector<uint> textureWord;
+	std::vector<LabelLetter*> labelWord;
 	uint last_word_size = 0;
 
-	bool needed_recalculate = false;
+	GameObject* internalGO = nullptr;
+
+	bool new_word = false;
+	bool needed_recalculateWord = false;
+	bool needed_findTextreID = false;
 	bool aligment = false;
 	bool hAligment = false;
 
