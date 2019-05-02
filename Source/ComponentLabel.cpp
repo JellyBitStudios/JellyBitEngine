@@ -64,7 +64,7 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 	{
 		App->glCache->RegisterBufferIndex(&offset, &index, ComponentTypes::LabelComponent, this);
 		if (App->glCache->isShaderStorage() && index != -1)
-			FIllBuffer();
+			FillBuffer();
 
 		internalGO = new GameObject("Label", nullptr, true);
 		internalGO->SetParent(parent);
@@ -163,7 +163,7 @@ void ComponentLabel::Update()
 
 					if (y + character.size.y * sizeNorm < rectParent[Y_UI_RECT] + rectParent[H_UI_RECT])
 					{
-						if (labelWord.size() <= UI_MAX_LABEL_LETTERS)
+						if (labelWord.size() < UI_MAX_LABEL_LETTERS)
 							labelWord.push_back(l);
 						else
 						{
@@ -198,7 +198,7 @@ void ComponentLabel::Update()
 					VerticalAlignment(rectParent[H_UI_RECT], V_Top);
 
 				if (App->glCache->isShaderStorage() && index != -1)
-					FIllBuffer();
+					FillBuffer();
 			}
 		}
 
@@ -229,7 +229,7 @@ void ComponentLabel::Update()
 			letter->rect->Update();
 	
 		if (App->glCache->isShaderStorage() && index != -1)
-			FIllBuffer();
+			FillBuffer();
 
 		needed_recalculateWord = false;
 	}
@@ -634,13 +634,14 @@ void ComponentLabel::DragDropFont()
 #endif
 }
 
-void ComponentLabel::FIllBuffer()
+void ComponentLabel::FillBuffer()
 {
-	buffer_size = labelWord.size() * sizeof(float) * 16;
+	uint slabelWord = (labelWord.size() <= UI_MAX_LABEL_LETTERS) ? labelWord.size() : UI_MAX_LABEL_LETTERS;
+	buffer_size = slabelWord * sizeof(float) * 16;
 	char* cursor = buffer;
 	float one = 1.0f;
 	size_t bytes = sizeof(float) * 3;
-	for (uint i = 0; i < labelWord.size(); i++)
+	for (uint i = 0; i < slabelWord; i++)
 	{
 		math::float3* rCorners = labelWord[i]->rect->GetCorners();
 		memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RTOPLEFT], bytes);
@@ -707,7 +708,7 @@ void ComponentLabel::SetBufferRangeAndFIll(uint offs, int index)
 	offset = offs;
 	this->index = index;
 	if(!labelWord.empty())
-		FIllBuffer();
+		FillBuffer();
 }
 
 void ComponentLabel::SetFontResource(uint uuid)
@@ -737,7 +738,7 @@ ResourceFont* ComponentLabel::GetFontResource()
 
 uint LabelLetter::GetInternalSerializationBytes()
 {
-	return sizeof(char) + rect->GetSerializationBytes();
+	return sizeof(char) + sizeof(int) * 4;
 }
 
 void LabelLetter::OnInternalSave(char *& cursor)
@@ -746,7 +747,9 @@ void LabelLetter::OnInternalSave(char *& cursor)
 	memcpy(cursor, &letter, bytes);
 	cursor += bytes;
 
-	rect->OnSave(cursor);
+	bytes = sizeof(int) * 4;
+	memcpy(cursor, rect->GetRect(), bytes);
+	cursor += bytes;
 }
 
 void LabelLetter::OnInternalLoad(char *& cursor)
@@ -755,5 +758,11 @@ void LabelLetter::OnInternalLoad(char *& cursor)
 	memcpy(&letter, cursor, bytes);
 	cursor += bytes;
 
-	rect->OnLoad(cursor);
+	bytes = sizeof(int) * 4;
+	int rectp[4];
+	memcpy(&rectp, cursor, bytes);
+	cursor += bytes;
+
+	rect->SetRect(rectp);
+	rect->Update();
 }
