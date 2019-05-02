@@ -21,19 +21,10 @@ ComponentMesh::ComponentMesh(const ComponentMesh& componentMesh, GameObject* par
 	if (include)
 		App->renderer3D->AddMeshComponent(this);
 	SetResource(componentMesh.res);
-	rendererFlags = componentMesh.rendererFlags;
-	if (include && rendererFlags & RENDERER_FLAGS::DRAWLAST)
-		App->renderer3D->rendererLast.push_back(this);
 }
 
 ComponentMesh::~ComponentMesh()
 {
-	if (rendererFlags & RENDERER_FLAGS::DRAWLAST)
-	{
-		App->renderer3D->rendererLast.erase(std::remove(App->renderer3D->rendererLast.begin(),
-			App->renderer3D->rendererLast.end(), this),
-			App->renderer3D->rendererLast.end());
-	}
 	App->renderer3D->EraseMeshComponent(this);
 	SetResource(0);
 
@@ -135,7 +126,7 @@ void ComponentMesh::OnUniqueEditor()
 // TODO SAVE AND LOAD AVATAR RESOURCE UUID
 uint ComponentMesh::GetInternalSerializationBytes()
 {
-	return sizeof(uint) + sizeof(bool) + sizeof(uint);
+	return sizeof(uint) + sizeof(bool);
 }
 
 void ComponentMesh::OnInternalSave(char*& cursor)
@@ -146,10 +137,6 @@ void ComponentMesh::OnInternalSave(char*& cursor)
 
 	bytes = sizeof(bool);
 	memcpy(cursor, &nv_walkable, bytes);
-	cursor += bytes;
-
-	bytes = sizeof(uint);
-	memcpy(cursor, &rendererFlags, bytes);
 	cursor += bytes;
 }
 
@@ -170,11 +157,4 @@ void ComponentMesh::OnInternalLoad(char*& cursor)
 	bytes = sizeof(bool);
 	memcpy(&nv_walkable, cursor, bytes);
 	cursor += bytes;
-
-	bytes = sizeof(uint);
-	memcpy(&rendererFlags, cursor, bytes);
-	cursor += bytes;
-
-	if (rendererFlags & RENDERER_FLAGS::DRAWLAST)
-		App->renderer3D->rendererLast.push_back(this);
 }

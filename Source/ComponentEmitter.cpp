@@ -27,10 +27,10 @@ ComponentEmitter::ComponentEmitter(GameObject* gameObject, bool include) : Compo
 		boundingBox.SetFromCenterAndSize(gameObject->transform->GetGlobalMatrix().TranslatePart(), math::float3::one);
 		App->particle->emitters.push_back(this);
 
-		SetUuidRes(App->resHandler->defaultMaterial, materialRes);
+		SetMaterialRes(App->resHandler->defaultMaterial);
 
 	}
-	SetUuidRes(App->resHandler->plane, uuidMeshPart);
+	App->res->SetAsUsed(App->resHandler->plane);
 }
 
 ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, GameObject* parent, bool include) : Component(parent, EmitterComponent)
@@ -101,23 +101,20 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 		App->particle->emitters.push_back(this);
 
 		if (App->res->GetResource(componentEmitter.materialRes) != nullptr)
-			SetUuidRes(componentEmitter.materialRes,materialRes);
+			SetMaterialRes(componentEmitter.materialRes);
 		else
-			SetUuidRes(App->resHandler->defaultMaterial, materialRes);
+			SetMaterialRes(App->resHandler->defaultMaterial);
 
 		SetMeshParticleRes(componentEmitter.shapeMesh.uuid);
 		SetBurstMeshParticleRes(componentEmitter.burstMesh.uuid);
 
-		if(componentEmitter.uuidMeshPart > 0)
-			SetUuidRes(componentEmitter.uuidMeshPart, uuidMeshPart);
-		else
-			SetUuidRes(App->resHandler->plane, uuidMeshPart);
+		App->res->SetAsUsed(App->resHandler->plane);
 	}
 }
 
 ComponentEmitter::~ComponentEmitter()
 {
-	SetUuidRes(0, materialRes);
+	SetMaterialRes(0);
 	SetMeshParticleRes(0);
 	SetBurstMeshParticleRes(0);
 
@@ -129,7 +126,7 @@ ComponentEmitter::~ComponentEmitter()
 	App->particle->RemoveEmitter(this);
 	ClearEmitter();
 
-	SetUuidRes(0, uuidMeshPart);
+	App->res->SetAsUnused(App->resHandler->plane);
 }
 
 void ComponentEmitter::StartEmitter()
@@ -424,28 +421,6 @@ void ComponentEmitter::ParticleValues()
 		ImGui::DragInt("Emition", &rateOverTime, 1.0f, 0.0f, 300.0f, "%.2f");
 
 		ImGui::Separator();
-		ImGui::Text("Particle Mesh");
-		ImGui::PushID("particleMesh");
-		ImGui::Button(std::to_string(uuidMeshPart).data(), ImVec2(150.0f, 0.0f));
-		ImGui::PopID();
-
-		if (ImGui::BeginDragDropTarget())
-		{
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MESH_INSPECTOR_SELECTOR"))
-			{
-				uint payload_n = *(uint*)payload->Data;
-				SetUuidRes(payload_n, uuidMeshPart);
-				isPlane = false;
-			}
-			ImGui::EndDragDropTarget();
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Set plane mesh", ImVec2(125.0f, 25.0f)))
-		{
-			SetUuidRes(App->resHandler->plane, uuidMeshPart);
-			isPlane = true;
-		}
-		ImGui::Separator();
 		if (ImGui::Checkbox("Loop", &loop))
 			loopTimer.Start();
 		ImGui::DragFloat("Duration", &duration, 0.5f, 0.5f, 20.0f, "%.2f");
@@ -727,13 +702,13 @@ void ComponentEmitter::ParticleTexture()
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("MATERIAL_INSPECTOR_SELECTOR"))
 			{
 				uint payload_n = *(uint*)payload->Data;
-				SetUuidRes(payload_n, materialRes);
+				SetMaterialRes(payload_n);
 			}
 			ImGui::EndDragDropTarget();
 		}
 
 		if (ImGui::SmallButton("Use default material"))
-			SetUuidRes(App->resHandler->defaultMaterial, materialRes);
+			SetMaterialRes(App->resHandler->defaultMaterial);
 		ImGui::Separator();
 
 		if (ImGui::Checkbox("Animated sprite", &particleAnim.isParticleAnimated))
@@ -891,15 +866,15 @@ bool ComponentEmitter::EditColor(ColorTime &colorTime, uint pos)
 	return ret;
 }
 
-void ComponentEmitter::SetUuidRes(uint newUuid, uint &oldUuid)
+void ComponentEmitter::SetMaterialRes(uint materialUuid)
 {
-	if (oldUuid > 0)
-		App->res->SetAsUnused(oldUuid);
+	if (materialRes > 0)
+		App->res->SetAsUnused(materialRes);
 
-	if (newUuid > 0)
-		App->res->SetAsUsed(newUuid);
+	if (materialUuid > 0)
+		App->res->SetAsUsed(materialUuid);
 
-	oldUuid = newUuid;
+	materialRes = materialUuid;
 }
 
 void ComponentEmitter::SetMeshParticleRes(uint res_uuid)
@@ -991,7 +966,7 @@ uint ComponentEmitter::GetInternalSerializationBytes()
 		sizeOfList += (*it).GetColorListSerializationBytes();
 	}
 
-	return sizeof(bool) * 18 + sizeof(int) * 3 + sizeof(float) * 5 + sizeof(uint) * 6
+	return sizeof(bool) * 18 + sizeof(int) * 3 + sizeof(float) * 5 + sizeof(uint) * 5
 		+ sizeof(ShapeType) * 2 + sizeof(math::AABB) * 2 + sizeof(math::float2) * 8 + sizeof(math::float3) * 2
 		+ particleAnim.GetPartAnimationSerializationBytes() + sizeOfList;//Bytes of all Start Values Struct
 }
@@ -1025,7 +1000,7 @@ void ComponentEmitter::OnInternalSave(char *& cursor)
 
 	memcpy(cursor, &checkAngularVelocity, bytes);
 	cursor += bytes;
-
+	//Coment this
 	memcpy(cursor, &checkAnimationSpeed, bytes);
 	cursor += bytes;
 
@@ -1091,9 +1066,6 @@ void ComponentEmitter::OnInternalSave(char *& cursor)
 	cursor += bytes;
 
 	memcpy(cursor, &shapeMesh.uuid, bytes);
-	cursor += bytes;
-
-	memcpy(cursor, &uuidMeshPart, bytes);
 	cursor += bytes;
 
 	particleAnim.OnInternalSave(cursor);
@@ -1196,10 +1168,10 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	memcpy(&uuidSubEmitter, cursor, bytes);
 	cursor += bytes;
 
-	uint uuidRes;
-	memcpy(&uuidRes, cursor, bytes);
+	uint uuidMaterial;
+	memcpy(&uuidMaterial, cursor, bytes);
 
-	App->res->GetResource(uuidRes) ? SetUuidRes(uuidRes,materialRes) : SetUuidRes(App->resHandler->defaultMaterial, materialRes);
+	App->res->GetResource(uuidMaterial) ? SetMaterialRes(uuidMaterial) : SetMaterialRes(App->resHandler->defaultMaterial);
 	cursor += bytes;
 
 	memcpy(&burstMesh.uuid, cursor, bytes);
@@ -1213,14 +1185,7 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	if (res)
 		SetMeshInfo((ResourceMesh*)res, shapeMesh);
 	cursor += bytes;
-	//Coment
-	memcpy(&uuidRes, cursor, bytes);
-	uuidRes > 0 ? SetUuidRes(uuidRes, uuidMeshPart) : SetUuidRes(App->resHandler->plane, uuidMeshPart);
-	if (uuidRes != App->resHandler->plane)
-		isPlane = false;
 
-	cursor += bytes;
-	//-----
 	particleAnim.OnInternalLoad(cursor);
 
 	bytes = sizeof(ShapeType);
@@ -1487,6 +1452,7 @@ void ParticleAnimation::OnInternalLoad(char *& cursor)
 	memcpy(&textureColumnsNorm, cursor, bytes);
 	cursor += bytes;
 
+	//Change float2 -> to -> float
 	bytes = sizeof(math::float2);
 	memcpy(&animationSpeed, cursor, bytes);
 	cursor += bytes;

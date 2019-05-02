@@ -155,7 +155,7 @@ public:
 
 	math::float3 GetPos();
 
-	void SetUuidRes(uint newUuid, uint &oldUuid);
+	void SetMaterialRes(uint materialUuid);
 	void SetMeshParticleRes(uint res_uuid);
 	void SetBurstMeshParticleRes(uint res_uuid);
 	void SetMeshInfo(ResourceMesh* resource, MeshShape& shape);
@@ -214,13 +214,8 @@ public:
 	bool burst = false;
 	ShapeType burstType = ShapeType_BOX;
 
-	//Internal AABB
 	math::AABB boundingBox;
 	bool isInFrustum = false;
-
-	//Particle mesh
-	uint uuidMeshPart = 0u;
-	bool isPlane = true;
 private:
 	// General info
 	//---------------------------------------

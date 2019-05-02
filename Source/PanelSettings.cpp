@@ -10,7 +10,6 @@
 #include "ModuleScene.h"
 #include "ModuleTimeManager.h"
 #include "GameObject.h"
-#include "ModuleFBOManager.h"
 #include "Quadtree.h"
 
 #include"Lights.h"
@@ -211,12 +210,6 @@ void PanelSettings::RendererNode() const
 	ImGui::Text("Ambient"); ImGui::PushItemWidth(50.0f);
 	ImGui::DragFloat("##ambient", &App->lights->ambientValue, 0.01f, 0.0f, 1.0f, "%.2f");
 	ImGui::PopItemWidth();
-
-	ImGui::Spacing();
-
-	// Dot
-	int misc_flags = ImGuiColorEditFlags_Float;
-	ImGui::ColorEdit3("Dot Color", &App->fbo->dotColor[0], misc_flags);
 
 	// Fog
 	ImGui::Spacing();

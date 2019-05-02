@@ -945,7 +945,12 @@ void ScriptingModule::RecompileScripts()
 			std::string outPut(buffer);
 			outPut.resize(size+1);
 
-			CONSOLE_LOG(LogTypes::Error, "Error compiling Scripting assembly. Error: %s", outPut.data());
+			if (size > MAX_BUF_SIZE)
+			{
+				CONSOLE_LOG(LogTypes::Error, "Error compiling Scripting assembly. There are too much errors to be shown.");
+			}
+			else
+				CONSOLE_LOG(LogTypes::Error, "Error compiling Scripting assembly. Error: %s", outPut.data());
 
 			delete[] buffer;
 		}		
