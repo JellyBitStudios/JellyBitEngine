@@ -32,6 +32,9 @@ ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType
 
 		App->glCache->RegisterBufferIndex(&offset, &index, ComponentTypes::LabelComponent, this);
 
+		internalGO = new GameObject("Label", nullptr, true);
+		internalGO->SetParent(parent);
+
 		new_word = true;
 	}
 }
@@ -62,6 +65,9 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 		App->glCache->RegisterBufferIndex(&offset, &index, ComponentTypes::LabelComponent, this);
 		if (App->glCache->isShaderStorage() && index != -1)
 			FIllBuffer();
+
+		internalGO = new GameObject("Label", nullptr, true);
+		internalGO->SetParent(parent);
 	}
 }
 
@@ -80,6 +86,8 @@ ComponentLabel::~ComponentLabel()
 		}
 		labelWord.clear();
 	}
+
+	if (internalGO) RELEASE(internalGO);
 
 	parent->cmp_label = nullptr;
 }
@@ -133,6 +141,7 @@ void ComponentLabel::Update()
 					Character character;
 					character = fontRes->fontData.charactersMap.find(*c)->second;
 
+					memcpy(&l->letter, c._Ptr, sizeof(char));
 					l->textureID = character.textureID;
 
 					int x = x_moving + character.bearing.x * sizeNorm;
@@ -147,7 +156,7 @@ void ComponentLabel::Update()
 						contRows++;
 					}
 
-					l->rect = new ComponentRectTransform(parent);
+					l->rect = new ComponentRectTransform(internalGO);
 					l->rect->FromLabel();
 					l->rect->SetRect(x,y, character.size.x * sizeNorm, character.size.y * sizeNorm);
 					l->rect->Update();
@@ -203,14 +212,13 @@ void ComponentLabel::Update()
 			ResourceFont* fontRes = fontUuid != 0 ? (ResourceFont*)App->res->GetResource(fontUuid) : nullptr;
 			if (fontRes && !fontRes->fontData.charactersMap.empty())
 			{
-				for (uint i = 0; i < labelWord.size(); i++)
+				for (LabelLetter* letter : labelWord)
 				{
 					Character character;
-					character = fontRes->fontData.charactersMap.find(finalText.at(i))->second;
-
-					labelWord[i]->textureID = character.textureID;
+					character = fontRes->fontData.charactersMap.find(letter->letter)->second;
+					letter->textureID = character.textureID;
 				}
-			}
+			}			
 		}
 		needed_findTextreID = false;
 	}
@@ -367,7 +375,8 @@ void ComponentLabel::ScreenDraw(math::float4 corners[4], int rect[4])
 
 uint ComponentLabel::GetInternalSerializationBytes()
 {
-	uint labelWorldSize = parent->cmp_rectTransform->GetSerializationBytes() * labelWord.size();
+	uint labelWorldSize = 0;
+	if(!labelWord.empty()) labelWorldSize = labelWord[0]->GetInternalSerializationBytes() * labelWord.size();
 	return sizeof(color) + sizeof(int) + sizeof(uint) * 3 + sizeof(char) * finalText.length() + sizeof(vAlign) + sizeof(hAlign) + labelWorldSize;
 }
 
@@ -409,7 +418,7 @@ void ComponentLabel::OnInternalSave(char *& cursor)
 	if (wordLenght > 0)
 	{
 		for (LabelLetter* letter : labelWord)
-			letter->rect->OnSave(cursor);
+			letter->OnInternalSave(cursor);
 	}
 }
 
@@ -456,12 +465,13 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 		for (uint i = 0; i < wordLenght; i++)
 		{
 			LabelLetter* l = new LabelLetter();
-			l->rect = new ComponentRectTransform(parent);
+			l->rect = new ComponentRectTransform(internalGO);
 			l->rect->FromLabel();
-			l->rect->OnLoad(cursor);
+			l->OnInternalLoad(cursor);
 		}
 	}
-	if(fontUuid > 0u) needed_findTextreID = true;
+
+	if (fontUuid > 0u) needed_findTextreID = true;
 	needed_recalculateWord = true;
 }
 
@@ -723,4 +733,27 @@ void ComponentLabel::SetFontResource(std::string fontName)
 ResourceFont* ComponentLabel::GetFontResource()
 {
 	return fontUuid != 0 ? (ResourceFont*)App->res->GetResource(fontUuid) : nullptr;
+}
+
+uint LabelLetter::GetInternalSerializationBytes()
+{
+	return sizeof(char) + rect->GetSerializationBytes();
+}
+
+void LabelLetter::OnInternalSave(char *& cursor)
+{
+	size_t bytes = sizeof(char);
+	memcpy(cursor, &letter, bytes);
+	cursor += bytes;
+
+	rect->OnSave(cursor);
+}
+
+void LabelLetter::OnInternalLoad(char *& cursor)
+{
+	size_t bytes = sizeof(char);
+	memcpy(&letter, cursor, bytes);
+	cursor += bytes;
+
+	rect->OnLoad(cursor);
 }

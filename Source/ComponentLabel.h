@@ -39,8 +39,13 @@ enum HorizontalLabelAlign
 };
 struct LabelLetter
 {
+	char letter = NULL;
 	class ComponentRectTransform* rect = nullptr;
 	uint textureID = 0;
+
+	uint GetInternalSerializationBytes();
+	void OnInternalSave(char*& cursor);
+	void OnInternalLoad(char*& cursor);
 };
 class ComponentLabel : public Component
 {
@@ -101,6 +106,8 @@ private:
 
 	std::vector<LabelLetter*> labelWord;
 	uint last_word_size = 0;
+
+	GameObject* internalGO = nullptr;
 
 	bool new_word = false;
 	bool needed_recalculateWord = false;
