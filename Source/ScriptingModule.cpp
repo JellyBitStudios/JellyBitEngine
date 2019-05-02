@@ -84,13 +84,6 @@ bool exec(const char* cmd, std::string& error)
 	return result;
 }
 
-#pragma optimize("", off)
-void release_mode_breakpoint()
-{	
-	int put_breakpoint_here = 1;	
-}
-#pragma optimize("", on)
-
 bool ScriptingModule::Init(JSON_Object* data)
 {
 	//Locate the lib and etc folders in the mono installation
