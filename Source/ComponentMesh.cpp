@@ -171,10 +171,10 @@ void ComponentMesh::OnInternalLoad(char*& cursor)
 	memcpy(&nv_walkable, cursor, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(uint);
+	/*bytes = sizeof(uint);
 	memcpy(&rendererFlags, cursor, bytes);
 	cursor += bytes;
 
 	if (rendererFlags & RENDERER_FLAGS::DRAWLAST)
-		App->renderer3D->rendererLast.push_back(this);
+		App->renderer3D->rendererLast.push_back(this);*/
 }

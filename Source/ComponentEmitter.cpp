@@ -1214,12 +1214,12 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 		SetMeshInfo((ResourceMesh*)res, shapeMesh);
 	cursor += bytes;
 	//Coment
-	memcpy(&uuidRes, cursor, bytes);
+	/*memcpy(&uuidRes, cursor, bytes);
 	uuidRes > 0 ? SetUuidRes(uuidRes, uuidMeshPart) : SetUuidRes(App->resHandler->plane, uuidMeshPart);
 	if (uuidRes != App->resHandler->plane)
 		isPlane = false;
 
-	cursor += bytes;
+	cursor += bytes;*/
 	//-----
 	particleAnim.OnInternalLoad(cursor);
 
