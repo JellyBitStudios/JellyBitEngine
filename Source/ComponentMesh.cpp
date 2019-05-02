@@ -22,18 +22,18 @@ ComponentMesh::ComponentMesh(const ComponentMesh& componentMesh, GameObject* par
 		App->renderer3D->AddMeshComponent(this);
 	SetResource(componentMesh.res);
 	rendererFlags = componentMesh.rendererFlags;
-	if (include && rendererFlags & RENDERER_FLAGS::DRAWLAST)
-		App->renderer3D->rendererLast.push_back(this);
+	//if (include && rendererFlags & RENDERER_FLAGS::DRAWLAST)
+	//	App->renderer3D->rendererLast.push_back(this);
 }
 
 ComponentMesh::~ComponentMesh()
 {
-	if (rendererFlags & RENDERER_FLAGS::DRAWLAST)
-	{
-		App->renderer3D->rendererLast.erase(std::remove(App->renderer3D->rendererLast.begin(),
-			App->renderer3D->rendererLast.end(), this),
-			App->renderer3D->rendererLast.end());
-	}
+	//if (rendererFlags & RENDERER_FLAGS::DRAWLAST)
+	//{
+	//	App->renderer3D->rendererLast.erase(std::remove(App->renderer3D->rendererLast.begin(),
+	//		App->renderer3D->rendererLast.end(), this),
+	//		App->renderer3D->rendererLast.end());
+	//}
 	App->renderer3D->EraseMeshComponent(this);
 	SetResource(0);
 
@@ -116,18 +116,18 @@ void ComponentMesh::OnUniqueEditor()
 			ImGui::EndDragDropTarget();
 		}
 
-		if (ImGui::CheckboxFlags("Render last", &rendererFlags, RENDERER_FLAGS::DRAWLAST))
-		{
-			if (rendererFlags & RENDERER_FLAGS::DRAWLAST)
-				App->renderer3D->rendererLast.push_back(this);
-			else
-			{
-				App->renderer3D->rendererLast.erase(std::remove(App->renderer3D->rendererLast.begin(),
-													App->renderer3D->rendererLast.end(), this),
-													App->renderer3D->rendererLast.end());
-				
-			}
-		}
+		//if (ImGui::CheckboxFlags("Render last", &rendererFlags, RENDERER_FLAGS::DRAWLAST))
+		//{
+		//	if (rendererFlags & RENDERER_FLAGS::DRAWLAST)
+		//		App->renderer3D->rendererLast.push_back(this);
+		//	else
+		//	{
+		//		App->renderer3D->rendererLast.erase(std::remove(App->renderer3D->rendererLast.begin(),
+		//											App->renderer3D->rendererLast.end(), this),
+		//											App->renderer3D->rendererLast.end());
+		//		
+		//	}
+		//}
 	}
 #endif
 }
@@ -171,10 +171,12 @@ void ComponentMesh::OnInternalLoad(char*& cursor)
 	memcpy(&nv_walkable, cursor, bytes);
 	cursor += bytes;
 
-	/*bytes = sizeof(uint);
+	/*
+	bytes = sizeof(uint);
 	memcpy(&rendererFlags, cursor, bytes);
 	cursor += bytes;
 
 	if (rendererFlags & RENDERER_FLAGS::DRAWLAST)
-		App->renderer3D->rendererLast.push_back(this);*/
+		App->renderer3D->rendererLast.push_back(this);
+		*/
 }

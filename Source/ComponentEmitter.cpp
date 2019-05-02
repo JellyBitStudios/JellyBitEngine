@@ -1219,7 +1219,8 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	if (uuidRes != App->resHandler->plane)
 		isPlane = false;
 
-	cursor += bytes;*/
+	cursor += bytes;
+	*/
 	//-----
 	particleAnim.OnInternalLoad(cursor);
 
