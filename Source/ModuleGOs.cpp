@@ -8,7 +8,6 @@
 #include "ModuleRenderer3D.h"
 #include "ModuleUI.h"
 #include "Lights.h"
-#include "ModuleFBOManager.h"
 
 #include "GameObject.h"
 #include "ComponentMaterial.h"
@@ -341,11 +340,6 @@ bool ModuleGOs::SerializeFromNode(GameObject* node, char*& outStateBuffer, size_
 	memcpy(cursor, &App->lights->fog.density, sizeof(float));
 	cursor += sizeof(float);
 
-	sizeBuffer += sizeof(math::float3);
-
-	memcpy(cursor, &App->fbo->dotColor[0], sizeof(math::float3));
-	cursor += sizeof(math::float3);
-
 	return true;
 }
 
@@ -440,9 +434,6 @@ bool ModuleGOs::LoadScene(char*& buffer, size_t sizeBuffer, bool navmesh)
 	memcpy(&App->lights->fog.density, cursor, sizeof(float));
 	cursor += sizeof(float);
 
-	memcpy(&App->fbo->dotColor[0], cursor, sizeof(math::float3));
-	cursor += sizeof(math::float3);
-
 	//App->animation->SetUpAnimations();
 
 	//StartAttachingBones(); SetUpAnimations();
@@ -493,7 +484,7 @@ bool ModuleGOs::InvalidateResource(Resource* resource)
 
 			// Emitter component uses Material resource
 			if (gameobjects[i]->cmp_emitter != nullptr && gameobjects[i]->cmp_emitter->GetMaterialRes() == resource->GetUuid())
-				gameobjects[i]->cmp_emitter->SetUuidRes(App->resHandler->defaultMaterial, gameobjects[i]->cmp_emitter->materialRes);
+				gameobjects[i]->cmp_emitter->SetMaterialRes(App->resHandler->defaultMaterial);
 
 			break;
 		}

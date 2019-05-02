@@ -72,7 +72,7 @@ public:
 	void SetMeshComponentsSeenLastFrame(bool seenLastFrame);
 	void FrustumCulling(std::vector<GameObject*>& statics, std::vector<GameObject*>& dynamics) const;
 
-	void DrawMesh(ComponentMesh* toDraw, bool drawLast = false) const;
+	void DrawMesh(ComponentMesh* toDraw) const;
 
 	void RecursiveDrawQuadtree(QuadtreeNode* node) const;
 
