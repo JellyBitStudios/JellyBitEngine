@@ -89,10 +89,3 @@ float RandomFloat(float a, float b) {
 	float r = random * diff;
 	return a + r;
 }
-
-#pragma optimize("", off)
-void release_mode_breakpoint()
-{
-	int put_breakpoint_here = 1;
-}
-#pragma optimize("", on)

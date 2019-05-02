@@ -59,7 +59,7 @@
 "layout(location = 0) out vec4 gPosition;\n"									\
 "layout(location = 1) out vec4 gNormal;\n"										\
 "layout(location = 2) out vec4 gAlbedoSpec;\n"									\
-"layout(location = 3) out vec4 gInfo;\n"										\
+"layout(location = 3) out uvec4 gInfo;\n"										\
 "in VS_OUT\n"																	\
 "{\n"																			\
 "	vec3 gPosition;\n"															\
@@ -69,10 +69,8 @@
 "} fs_in;\n"																	\
 "\n"																			\
 "uniform sampler2D diffuse;\n"													\
-"uniform sampler2D gInfoTexture;\n"	\
 "\n"																			\
-"uniform int dot;\n"															\
-"uniform vec2 screenSize;\n" \
+"uniform uint layer;\n"															\
 "\n"																			\
 "void main()\n"																	\
 "{\n"																			\
@@ -82,16 +80,10 @@
 "	gPosition.a = 1;\n"															\
 "	gNormal.a = 1;\n"															\
 "	gAlbedoSpec.a = 1;\n"														\
-"	vec2 screenPos = gl_FragCoord.xy;\n" \
-"	screenPos.x /= screenSize.x;\n" \
-"	screenPos.y /= screenSize.y;\n" \
-"	gInfo.r = dot;\n"															\
-"	if (dot != 1)\n"															\
-"	gInfo.g = texture(gInfoTexture,screenPos).g;\n"															\
-"	else\n"															\
-"	gInfo.g = 1;\n"															\
-"	gInfo.b = 0;\n"															\
-"	gInfo.a = 0;\n"															\
+"	gInfo.r = layer;\n"															\
+"	gInfo.g = 0u;\n"															\
+"	gInfo.b = 0u;\n"															\
+"	gInfo.a = 0u;\n"															\
 "}"
 
 #pragma endregion
@@ -119,7 +111,8 @@
 "uniform sampler2D gPosition;\n" \
 "uniform sampler2D gNormal;\n" \
 "uniform sampler2D gAlbedoSpec;\n" \
-"uniform sampler2D gInfo;\n" \
+"uniform usampler2D gInfo;\n" \
+"uniform sampler2D gDepth;\n" \
 "\n" \
 "struct Light\n" \
 "{\n" \
@@ -146,7 +139,6 @@
 "uniform float ambient;\n" \
 "uniform Light lights[NR_LIGHTS];\n" \
 "uniform Fog fog;\n" \
-"uniform vec3 colorDot;\n" \
 "\n" \
 "void main()\n" \
 "{\n" \
@@ -160,19 +152,7 @@
 "	vec4 AlbedoTexture = texture(gAlbedoSpec, TexCoords);\n" \
 "	vec3 Albedo = AlbedoTexture.rgb;\n" \
 "	float AlbedoA = AlbedoTexture.a;\n" \
-"	vec4 InfoTexture = texture(gInfo, TexCoords);\n" \
-"if (InfoTexture.r != 1 && InfoTexture.g != 0) { \n" \
-"	vec4 modelViewPos = view_matrix * vec4(FragPos, 1.0);\n" \
-"	float dist = length(modelViewPos.xyz);\n" \
-"	//float fogFactor = (fog.maxDist - dist) / (fog.maxDist - fog.minDist); // Linear\n" \
-"	//float fogFactor = exp(-fog.density * dist); // Exponential\n" \
-"	float fogFactor = exp(-pow(fog.density * dist, 2.0)); // Exponential Squared\n" \
-"	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
-"	FragColor = vec4(mix(fog.color, colorDot, fogFactor),1.0);\n" \
-"return;\n" \
-"}\n" \
-"\n" \
-"\n" \
+"	uvec4 InfoTexture = texture(gInfo, TexCoords);\n" \
 "\n" \
 "	vec3 lighting = Albedo;\n" \
 "\n" \
@@ -839,7 +819,7 @@
 "layout(location = 0) out vec4 gPosition;\n"											\
 "layout(location = 1) out vec4 gNormal;\n"												\
 "layout(location = 2) out vec4 gAlbedoSpec;\n"											\
-"layout(location = 3) out vec4 gInfo;\n"												\
+"layout(location = 3) out uvec4 gInfo;\n"												\
 "\n"																					\
 "in GS_OUT\n"																			\
 "{\n"																					\
@@ -860,10 +840,6 @@
 "uniform vec4 color;\n"																	\
 "uniform float pct;\n"																	\
 "uniform int lightCartoon;\n"															\
-"uniform sampler2D gInfoTexture;\n"	\
-"\n"																			\
-"uniform int dot;\n"															\
-"uniform vec2 screenSize;\n" \
 "\n"																					\
 "//uniform vec3 lineColor; // the silhouette edge color\n"								\
 "//uniform int levels;\n"																\
@@ -894,16 +870,10 @@
 "\n"																					\
 "	gPosition.rgb = fs_in.fPosition;\n"													\
 "	gNormal.rgb = normalize(fs_in.fNormal);\n"											\
-"	vec2 screenPos = gl_FragCoord.xy;\n" \
-"	screenPos.x /= screenSize.x;\n" \
-"	screenPos.y /= screenSize.y;\n" \
-"	gInfo.r = dot;\n"															\
-"	if (dot != 1)\n"															\
-"	gInfo.g = texture(gInfoTexture,screenPos).g;\n"															\
-"	else\n"															\
-"	gInfo.g = 1;\n"															\
-"	gInfo.b = 0;\n"															\
-"	gInfo.a = 0;\n"															\
+"	gInfo.r = layer;\n"																	\
+"	gInfo.g = 0u;\n"																	\
+"	gInfo.b = 0u;\n"																	\
+"	gInfo.a = 0u;\n"																	\
 "}"
 
 #define CartoonFloorFragment															\
@@ -912,7 +882,7 @@
 "layout(location = 0) out vec4 gPosition;\n"											\
 "layout(location = 1) out vec4 gNormal;\n"												\
 "layout(location = 2) out vec4 gAlbedoSpec;\n"											\
-"layout(location = 3) out vec4 gInfo;\n"												\
+"layout(location = 3) out uvec4 gInfo;\n"												\
 "\n"																					\
 "in GS_OUT\n"																			\
 "{\n"																					\
@@ -964,6 +934,10 @@
 "\n"																					\
 "	gPosition.rgb = fs_in.fPosition;\n"													\
 "	gNormal.rgb = normalize(fs_in.fNormal);\n"											\
+"	gInfo.r = layer;\n"																	\
+"	gInfo.g = 0u;\n"														  			\
+"	gInfo.b = 0u;\n"																	\
+"	gInfo.a = 0u;\n"																	\
 "}"
 
 #pragma endregion
@@ -1011,7 +985,7 @@
 "layout(location = 0) out vec4 gPosition;\n" \
 "layout(location = 1) out vec4 gNormal;\n" \
 "layout(location = 2) out vec4 gAlbedoSpec;\n" \
-"layout(location = 3) out vec4 gInfo;\n" \
+"layout(location = 3) out uvec4 gInfo;\n" \
 "\n" \
 "in VS_OUT\n" \
 "{\n" \
@@ -1023,6 +997,7 @@
 "\n" \
 "uniform sampler2D gBufferPosition;\n" \
 "uniform sampler2D gBufferNormal;\n" \
+"uniform usampler2D gBufferInfo;\n" \
 "\n" \
 "uniform sampler2D projectorTex;\n" \
 "uniform float alphaMultiplier;\n" \
@@ -1040,6 +1015,11 @@
 "	screenPos.x /= screenSize.x;\n" \
 "	screenPos.y /= screenSize.y;\n" \
 "\n" \
+"	// gBuffer fragment's info\n" \
+"	uvec4 info = texture(gBufferInfo, screenPos);\n" \
+"	//uint layer = 1u << info.r;\n" \
+"	//if ((filterMask & info.r) == 1u)\n" \
+"	//discard;\n" \
 "\n" \
 "	// gBuffer fragment's world pos\n" \
 "	vec4 worldPos = texture(gBufferPosition, screenPos);\n" \

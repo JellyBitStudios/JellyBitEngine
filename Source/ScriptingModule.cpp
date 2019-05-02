@@ -84,6 +84,13 @@ bool exec(const char* cmd, std::string& error)
 	return result;
 }
 
+#pragma optimize("", off)
+void release_mode_breakpoint()
+{	
+	int put_breakpoint_here = 1;	
+}
+#pragma optimize("", on)
+
 bool ScriptingModule::Init(JSON_Object* data)
 {
 	//Locate the lib and etc folders in the mono installation
@@ -936,17 +943,12 @@ void ScriptingModule::RecompileScripts()
 		if (size > 0)
 		{
 			std::string outPut(buffer);
-			outPut.resize(size + 1);
+			outPut.resize(size+1);
 
-			if (size > MAX_BUF_SIZE)
-			{
-				CONSOLE_LOG(LogTypes::Error, "Error compiling Scripting assembly. There are too much errors to be shown.");
-			}
-			else
-				CONSOLE_LOG(LogTypes::Error, "Error compiling Scripting assembly. Error: %s", outPut.data());
+			CONSOLE_LOG(LogTypes::Error, "Error compiling Scripting assembly. Error: %s", outPut.data());
 
 			delete[] buffer;
-		}
+		}		
 	}
 	else
 	{

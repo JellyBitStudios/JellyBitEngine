@@ -216,12 +216,6 @@ update_status ModuleRenderer3D::PostUpdate()
 			Sort(statics);
 			Sort(dynamics);
 
-			for each (ComponentMesh* mesh in rendererLast)
-			{
-				if (mesh->IsTreeActive())
-					DrawMesh(mesh, true);
-			}
-
 			for (uint i = 0; i < statics.size(); ++i)
 			{
 				statics[i]->seenLastFrame = true;
@@ -790,9 +784,9 @@ void ModuleRenderer3D::FrustumCulling(std::vector<GameObject*>& statics, std::ve
 	}
 }
 
-void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
+void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 {
-	if (toDraw->res == 0 || (!drawLast && toDraw->rendererFlags & ComponentMesh::DRAWLAST))
+	if (toDraw->res == 0)
 		return;
 
 	uint textureUnit = 0;
@@ -825,15 +819,10 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 		glUniformMatrix4fv(location, 1, GL_FALSE, view_matrix.ptr());
 	}
 
-	uint screenScale = App->window->GetScreenSize();
-	uint screenWidth = App->window->GetWindowWidth();
-	uint screenHeight = App->window->GetWindowHeight();
-	math::float2 screenSize = math::float2(screenWidth * screenScale, screenHeight * screenScale);
-
-	location = glGetUniformLocation(shader, "screenSize");
-	glUniform2fv(location, 1, screenSize.ptr());
-	location = glGetUniformLocation(shader, "dot");
-	glUniform1i(location, drawLast || !toDraw->GetParent()->IsStatic() ? 1 : 0);
+	location = glGetUniformLocation(shader, "layer");
+	uint layerGroup = BIT_SHIFT(toDraw->GetParent()->GetLayer());
+	if (location != -1)
+		glUniform1i(location, layerGroup);
 
 	// Animations
 	char boneName[DEFAULT_BUF_SIZE];
@@ -888,14 +877,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 	std::vector<const char*> ignore;
 	ignore.push_back("animate");
 	ignore.push_back("color");
-
 	ignore.push_back("pct");
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, App->fbo->gInfo);
-	location = glGetUniformLocation(shader, "gInfoTexture");
-	glUniform1i(location, 0);
-	textureUnit += 1;
 	LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	// Mesh
