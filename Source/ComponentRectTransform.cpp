@@ -70,7 +70,8 @@ ComponentRectTransform::ComponentRectTransform(const ComponentRectTransform & co
 
 ComponentRectTransform::~ComponentRectTransform()
 {
-	parent->cmp_rectTransform = nullptr;
+	if(!isFromLabel)
+		parent->cmp_rectTransform = nullptr;
 }
 
 void ComponentRectTransform::OnSystemEvent(System_Event event)
@@ -151,14 +152,19 @@ void ComponentRectTransform::SetRect(int x, int y, int x_dist, int y_dist)
 		rectTransform[Rect::XDIST] = x_dist;
 		rectTransform[Rect::YDIST] = y_dist;
 
-		System_Event rectChanged;
-		rectChanged.type = System_Event_Type::RectTransformUpdated;
+		if (!isFromLabel)
+		{
+			System_Event rectChanged;
+			rectChanged.type = System_Event_Type::RectTransformUpdated;
 
-		std::vector<GameObject*> rectChilds;
-		parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
+			std::vector<GameObject*> rectChilds;
+			parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
 
-		for (std::vector<GameObject*>::const_reverse_iterator go = rectChilds.crbegin(); go != rectChilds.crend(); go++)
-			(*go)->OnSystemEvent(rectChanged);
+			for (std::vector<GameObject*>::const_reverse_iterator go = rectChilds.crbegin(); go != rectChilds.crend(); go++)
+				(*go)->OnSystemEvent(rectChanged);
+		}
+		else
+			needed_recalculate = true;
 	}
 }
 void ComponentRectTransform::SetRect(int rect[4])
@@ -172,14 +178,19 @@ void ComponentRectTransform::SetRect(int rect[4])
 		rectTransform[Rect::XDIST] = rect[Rect::XDIST];
 		rectTransform[Rect::YDIST] = rect[Rect::YDIST];
 
-		System_Event rectChanged;
-		rectChanged.type = System_Event_Type::RectTransformUpdated;
+		if (!isFromLabel)
+		{
+			System_Event rectChanged;
+			rectChanged.type = System_Event_Type::RectTransformUpdated;
 
-		std::vector<GameObject*> rectChilds;
-		parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
+			std::vector<GameObject*> rectChilds;
+			parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
 
-		for (std::vector<GameObject*>::const_reverse_iterator go = rectChilds.crbegin(); go != rectChilds.crend(); go++)
-			(*go)->OnSystemEvent(rectChanged);
+			for (std::vector<GameObject*>::const_reverse_iterator go = rectChilds.crbegin(); go != rectChilds.crend(); go++)
+				(*go)->OnSystemEvent(rectChanged);
+		}
+		else
+			needed_recalculate = true;
 	}
 }
 void ComponentRectTransform::InitRect()
@@ -310,6 +321,10 @@ void ComponentRectTransform::CanvasChanged()
 
 		noUpdatefromCanvas = false;
 	}
+}
+void ComponentRectTransform::FromLabel()
+{
+	isFromLabel = true;
 }
 // ------------------------------------------------------------------------------
 // --------- Rect calcs ---------------------
