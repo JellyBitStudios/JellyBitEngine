@@ -3246,6 +3246,11 @@ void SMLoadScene(MonoString* sceneName)
 	mono_free(sceneNameCPP);
 }
 
+MonoString* SceneManagerGetActualScene()
+{
+	return mono_string_new(App->scripting->domain, App->scene->actualScene.data());
+}
+
 MonoString* AudioSourceGetAudio(MonoObject* monoComp)
 {
 	ComponentAudioSource* source = (ComponentAudioSource*)App->scripting->ComponentFrom(monoComp);
@@ -4092,6 +4097,7 @@ void ScriptingModule::CreateDomain()
 
 	//SceneManager
 	mono_add_internal_call("JellyBitEngine.SceneManager.SceneManager::LoadScene", (const void*)&SMLoadScene);
+	mono_add_internal_call("JellyBitEngine.SceneManager.SceneManager::GetActualScene", (const void*)&SceneManagerGetActualScene);
 
 	//NavMeshAgent && Navigation
 	mono_add_internal_call("JellyBitEngine.NavMeshAgent::GetRadius", (const void*)&NavAgentGetRadius);

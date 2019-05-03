@@ -163,6 +163,8 @@ void ModuleEvents::OnSystemEvent(System_Event event)
 				ResourceScene* scene = (ResourceScene*)App->res->GetResource(UID);
 				if (scene)
 				{
+					App->scene->actualScene = scene->GetName();
+
 #ifndef GAMEMODE
 					App->scene->selectedObject = 0;
 #endif
