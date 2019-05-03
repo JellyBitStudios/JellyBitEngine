@@ -83,28 +83,31 @@ void ComponentSlider::OnSystemEvent(System_Event event)
 
 void ComponentSlider::Update()
 {
-	if (App->GetEngineState() == engine_states::ENGINE_PLAY && parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
+	if (IsTreeActive())
 	{
-		int* rect = parent->cmp_rectTransform->GetRect();
-
-		if (ComponentButton::MouseInScreen(rect))
+		if (App->GetEngineState() == engine_states::ENGINE_PLAY && parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
 		{
-			if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_DOWN ||
-				App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_REPEAT)
+			int* rect = parent->cmp_rectTransform->GetRect();
+
+			if (ComponentButton::MouseInScreen(rect))
 			{
-				actualSize = App->input->GetMouseX() - rect[ComponentRectTransform::Rect::X];
-				CalculatePercentageByFrontSize();
-				needed_fillBuffer = true;
+				if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_DOWN ||
+					App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_REPEAT)
+				{
+					actualSize = App->input->GetMouseX() - rect[ComponentRectTransform::Rect::X];
+					CalculatePercentageByFrontSize();
+					needed_fillBuffer = true;
+				}
 			}
 		}
-	}
 
-	if (needed_fillBuffer)
-	{
-		CalculateCorners();
-		if(App->glCache->isShaderStorage())
-			FillBuffers();
-		needed_fillBuffer = false;
+		if (needed_fillBuffer)
+		{
+			CalculateCorners();
+			if (App->glCache->isShaderStorage())
+				FillBuffers();
+			needed_fillBuffer = false;
+		}
 	}
 }
 
