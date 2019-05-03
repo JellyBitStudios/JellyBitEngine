@@ -74,8 +74,6 @@ void ComponentMaterial::OnUniqueEditor()
 			SetResource(App->resHandler->defaultMaterial);
 
 		ImGui::Spacing();
-
-		ImGui::DragFloat("PCT", &pct, 1.0f, 0.0f, 1.0f);
 	}
 #endif
 }

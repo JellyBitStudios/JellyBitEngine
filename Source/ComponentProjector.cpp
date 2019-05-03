@@ -207,8 +207,6 @@ void ComponentProjector::OnUniqueEditor()
 			}
 			ImGui::EndCombo();
 		}
-
-		ImGui::DragFloat("ALPHA MULTIPLIER", &alphaMultiplier, 1.0f, 0.0f, 1.0f);
 	}
 #endif
 }
