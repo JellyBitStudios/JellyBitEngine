@@ -53,6 +53,7 @@ struct M_Mesh
 	int m_nverts;
 	int m_ntris;
 	bool walkable;
+	bool isValid;
 };
 
 class NMInputGeom
@@ -62,7 +63,7 @@ public:
 	M_Mesh* i_meshes;
 	int i_nmeshes;
 	int i_ntris;
-	float* bMin[3], bMax[3];
+	float bMin[3], bMax[3];
 };
 
 #endif

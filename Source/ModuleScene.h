@@ -96,6 +96,8 @@ public:
 	GameObject* root = nullptr;
 
 	Quadtree quadtree;
+
+	std::string currentScene = "default";
 };
 
 #endif

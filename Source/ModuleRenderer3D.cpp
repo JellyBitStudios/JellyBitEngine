@@ -801,6 +801,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 	ResourceMaterial* resourceMaterial = materialRenderer->currentResource;
 	GLuint shader = resourceMaterial->materialData.shaderProgram;
 	App->glCache->SwitchShader(shader);
+
 	// 1. Generic uniforms
 	LoadGenericUniforms(shader);
 
@@ -883,12 +884,38 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 	if (location != -1)
 		glUniform1f(location, materialRenderer->GetPct());
 
+	// Fog
+	location = glGetUniformLocation(shader, "view_matrix");
+	if (location != -1)
+	{
+		math::float4x4 view_matrix = currentCamera->GetOpenGLViewMatrix();
+		glUniformMatrix4fv(location, 1, GL_FALSE, view_matrix.ptr());
+	}
+
+	location = glGetUniformLocation(shader, "fog.color");
+	if (location != -1)
+		glUniform3fv(location, 1, &App->lights->fog.color[0]);
+	/*
+	location = glGetUniformLocation(resProgram->shaderProgram, "fog.minDist");
+	if (location != -1)
+	glUniform1f(location, App->lights->fog.minDist);
+	location = glGetUniformLocation(resProgram->shaderProgram, "fog.maxDist");
+	if (location != -1)
+	glUniform1f(location, App->lights->fog.maxDist);
+	*/
+	location = glGetUniformLocation(shader, "fog.density");
+	if (location != -1)
+		glUniform1f(location, App->lights->fog.density);
+
 	// 3. Unknown mesh uniforms
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
 	std::vector<const char*> ignore;
 	ignore.push_back("animate");
 	ignore.push_back("color");
 	ignore.push_back("pct");
+	ignore.push_back("view_matrix");
+	ignore.push_back("fog.color");
+	ignore.push_back("fog.density");
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, App->fbo->gInfo);
