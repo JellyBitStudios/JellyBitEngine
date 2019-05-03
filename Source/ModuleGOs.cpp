@@ -16,6 +16,7 @@
 #include "ComponentEmitter.h"
 #include "ComponentMesh.h"
 #include "ComponentImage.h"
+#include "ModuleFBOManager.h"
 #include "ComponentRectTransform.h"
 #include "ComponentSlider.h"
 #include "ResourceShaderProgram.h"
@@ -304,10 +305,14 @@ bool ModuleGOs::SerializeFromNode(GameObject* node, char*& outStateBuffer, size_
 
 	// Get size navmesh tiles data
 	if (navmesh)
+	{
 		sizeBuffer += App->navigation->GetNavMeshSerialitzationBytes();
-
-	// ambient light value
-	sizeBuffer += sizeof(float);
+		// ambient light value
+		sizeBuffer += sizeof(float);
+		// Fog
+		sizeBuffer += sizeof(math::float3) + /*sizeof(float) + sizeof(float)*/ +sizeof(float);
+		sizeBuffer += sizeof(math::float3); // dot
+	}
 
 	outStateBuffer = new char[sizeBuffer];
 	char* cursor = outStateBuffer;
@@ -321,24 +326,28 @@ bool ModuleGOs::SerializeFromNode(GameObject* node, char*& outStateBuffer, size_
 
 	// Discuss if this should be a resource
 	if (navmesh)
+	{
 		App->navigation->SaveNavmesh(cursor);
 
-	memcpy(cursor, &App->lights->ambientValue, sizeof(float));
-	cursor += sizeof(float);
+		memcpy(cursor, &App->lights->ambientValue, sizeof(float));
+		cursor += sizeof(float);
 
-	// Fog
-	sizeBuffer += sizeof(math::float3) + /*sizeof(float) + sizeof(float)*/ + sizeof(float);
+	
+		memcpy(cursor, &App->lights->fog.color[0], sizeof(math::float3));
+		cursor += sizeof(math::float3);
+		/*
+		memcpy(cursor, &App->lights->fog.minDist, sizeof(float));
+		cursor += sizeof(float);
+		memcpy(cursor, &App->lights->fog.maxDist, sizeof(float));
+		cursor += sizeof(float);
+		*/
+		memcpy(cursor, &App->lights->fog.density, sizeof(float));
+		cursor += sizeof(float);
 
-	memcpy(cursor, &App->lights->fog.color[0], sizeof(math::float3));
-	cursor += sizeof(math::float3);
-	/*
-	memcpy(cursor, &App->lights->fog.minDist, sizeof(float));
-	cursor += sizeof(float);
-	memcpy(cursor, &App->lights->fog.maxDist, sizeof(float));
-	cursor += sizeof(float);
-	*/
-	memcpy(cursor, &App->lights->fog.density, sizeof(float));
-	cursor += sizeof(float);
+	
+		memcpy(cursor, &App->fbo->dotColor[0], sizeof(math::float3));
+		cursor += sizeof(math::float3);
+	}
 
 	return true;
 }
@@ -417,27 +426,31 @@ bool ModuleGOs::LoadScene(char*& buffer, size_t sizeBuffer, bool navmesh)
 
 	// Discuss if this should be a resource
 	if (navmesh)
+	{
 		App->navigation->LoadNavmesh(cursor);
-	
-	memcpy(&App->lights->ambientValue, cursor, sizeof(float));
-	cursor += sizeof(float);
 
-	// Fog
-	memcpy(&App->lights->fog.color[0], cursor, sizeof(math::float3));
-	cursor += sizeof(math::float3);
-	/*
-	memcpy(&App->lights->fog.minDist, cursor, sizeof(float));
-	cursor += sizeof(float);
-	memcpy(&App->lights->fog.maxDist, cursor, sizeof(float));
-	cursor += sizeof(float);
-	*/
-	memcpy(&App->lights->fog.density, cursor, sizeof(float));
-	cursor += sizeof(float);
+		memcpy(&App->lights->ambientValue, cursor, sizeof(float));
+		cursor += sizeof(float);
 
-	//App->animation->SetUpAnimations();
+		// Fog
+		memcpy(&App->lights->fog.color[0], cursor, sizeof(math::float3));
+		cursor += sizeof(math::float3);
+		/*
+		memcpy(&App->lights->fog.minDist, cursor, sizeof(float));
+		cursor += sizeof(float);
+		memcpy(&App->lights->fog.maxDist, cursor, sizeof(float));
+		cursor += sizeof(float);
+		*/
+		memcpy(&App->lights->fog.density, cursor, sizeof(float));
+		cursor += sizeof(float);
 
-	//StartAttachingBones(); SetUpAnimations();
+		memcpy(&App->fbo->dotColor[0], cursor, sizeof(math::float3));
+		cursor += sizeof(math::float3);
 
+		//App->animation->SetUpAnimations();
+
+		//StartAttachingBones(); SetUpAnimations();
+	}
 	System_Event event;
 	event.type = System_Event_Type::LoadFinished;
 	App->PushSystemEvent(event);
