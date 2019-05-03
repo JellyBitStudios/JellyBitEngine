@@ -63,7 +63,7 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 {
 	bool ret = true;
 
-	CONSOLE_LOG(LogTypes::Normal,"Creating 3D Renderer context");
+	CONSOLE_LOG(LogTypes::Normal, "Creating 3D Renderer context");
 
 	// Create context
 	context = SDL_GL_CreateContext(App->window->window);
@@ -205,7 +205,7 @@ update_status ModuleRenderer3D::PostUpdate()
 		}
 
 		viewProj_matrix = currentCamera->GetOpenGLViewMatrix() *
-						  currentCamera->GetOpenGLProjectionMatrix();
+			currentCamera->GetOpenGLProjectionMatrix();
 		std::vector<GameObject*> statics;
 		std::vector<GameObject*> dynamics;
 		if (currentCamera->HasFrustumCulling())
@@ -215,6 +215,12 @@ update_status ModuleRenderer3D::PostUpdate()
 
 			Sort(statics);
 			Sort(dynamics);
+
+			for each (ComponentMesh* mesh in rendererLast)
+			{
+				if (mesh->IsTreeActive())
+					DrawMesh(mesh, true);
+			}
 
 			for (uint i = 0; i < statics.size(); ++i)
 			{
@@ -346,7 +352,7 @@ update_status ModuleRenderer3D::PostUpdate()
 				App->debugDrawer->DebugDraw(projectorComponents[i]->GetFrustum(), frustumsColor);
 				App->debugDrawer->DebugDraw(projectorComponents[i]->GetFrustum().MinimalEnclosingAABB());
 			}
-			if(App->raycaster->frustumSelection.MinimalEnclosingAABB().IsFinite())
+			if (App->raycaster->frustumSelection.MinimalEnclosingAABB().IsFinite())
 				App->debugDrawer->DebugDraw(App->raycaster->frustumSelection, frustumsColor);
 		}
 
@@ -416,31 +422,31 @@ void ModuleRenderer3D::OnSystemEvent(System_Event event)
 		CalculateProjectionMatrix();
 #endif // !GAMEMODE
 		break;
-		case System_Event_Type::LoadFinished:
-		{
-			// Update all GameObjects transforms
-			if (App->scene->root)
-				for each (GameObject* child in App->scene->root->children)
-				{
-					if (child->transform != nullptr)
-						child->transform->UpdateGlobal();
-				}
-
-			if (App->GetEngineState() == ENGINE_PLAY)
-				SetCurrentCamera();
-
-			for each (ComponentCamera* camera in cameraComponents)
+	case System_Event_Type::LoadFinished:
+	{
+		// Update all GameObjects transforms
+		if (App->scene->root)
+			for each (GameObject* child in App->scene->root->children)
 			{
-				camera->UpdateTransform();
+				if (child->transform != nullptr)
+					child->transform->UpdateGlobal();
 			}
 
+		if (App->GetEngineState() == ENGINE_PLAY)
+			SetCurrentCamera();
+
+		for each (ComponentCamera* camera in cameraComponents)
+		{
+			camera->UpdateTransform();
+		}
+
 #ifndef GAMEMODE
-			CalculateProjectionMatrix();
+		CalculateProjectionMatrix();
 #endif // !GAMEMODE
 
 
-			break;
-		}
+		break;
+	}
 	}
 }
 
@@ -784,9 +790,9 @@ void ModuleRenderer3D::FrustumCulling(std::vector<GameObject*>& statics, std::ve
 	}
 }
 
-void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
+void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 {
-	if (toDraw->res == 0)
+	if (toDraw->res == 0 || (!drawLast && toDraw->rendererFlags & ComponentMesh::DRAWLAST))
 		return;
 
 	uint textureUnit = 0;
@@ -819,10 +825,15 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 		glUniformMatrix4fv(location, 1, GL_FALSE, view_matrix.ptr());
 	}
 
-	location = glGetUniformLocation(shader, "layer");
-	uint layerGroup = BIT_SHIFT(toDraw->GetParent()->GetLayer());
-	if (location != -1)
-		glUniform1i(location, layerGroup);
+	uint screenScale = App->window->GetScreenSize();
+	uint screenWidth = App->window->GetWindowWidth();
+	uint screenHeight = App->window->GetWindowHeight();
+	math::float2 screenSize = math::float2(screenWidth * screenScale, screenHeight * screenScale);
+
+	location = glGetUniformLocation(shader, "screenSize");
+	glUniform2fv(location, 1, screenSize.ptr());
+	location = glGetUniformLocation(shader, "dot");
+	glUniform1i(location, drawLast || !toDraw->GetParent()->IsStatic() ? 1 : 0);
 
 	// Animations
 	char boneName[DEFAULT_BUF_SIZE];
@@ -878,6 +889,13 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw) const
 	ignore.push_back("animate");
 	ignore.push_back("color");
 	ignore.push_back("pct");
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, App->fbo->gInfo);
+	location = glGetUniformLocation(shader, "gInfoTexture");
+	glUniform1i(location, 0);
+	textureUnit += 1;
+
 	LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	// Mesh
@@ -987,17 +1005,16 @@ void ModuleRenderer3D::LoadGenericUniforms(uint shaderProgram) const
 	/*
 	switch (App->GetEngineState())
 	{
-		// Game
+	// Game
 	case ENGINE_PLAY:
 	case ENGINE_PAUSE:
 	case ENGINE_STEP:
-		glUniform1f(location, App->timeManager->GetTime());
-		break;
-
-		// Editor
+	glUniform1f(location, App->timeManager->GetTime());
+	break;
+	// Editor
 	case ENGINE_EDITOR:
-		glUniform1f(location, App->timeManager->GetRealTime());
-		break;
+	glUniform1f(location, App->timeManager->GetRealTime());
+	break;
 	}
 	*/
 }

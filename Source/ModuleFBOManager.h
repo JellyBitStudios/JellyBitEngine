@@ -2,6 +2,7 @@
 #define __MODULE_FBO_MANAGER_H__
 
 #include "Module.h"
+#include "MathGeoLib/include/Math/float3.h"
 
 class ModuleFBOManager : public Module
 {
@@ -16,7 +17,7 @@ public:
 	void LoadGBuffer(uint width, uint height);
 	void UnloadGBuffer();
 	void ResizeGBuffer(uint width, uint height);
-	void BindGBuffer(); 
+	void BindGBuffer();
 	void DrawGBufferToScreen() const;
 	void MergeDepthBuffer(uint width, uint height);
 
@@ -27,8 +28,9 @@ public:
 	uint gNormal;
 	uint gAlbedoSpec;
 	uint gInfo;
-	uint gDepth;
 	uint rboDepth;
+
+	math::float3 dotColor = math::float3(1.f, 0.f, 0.f);
 };
 
 #endif
