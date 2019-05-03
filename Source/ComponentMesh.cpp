@@ -19,10 +19,13 @@ ComponentMesh::ComponentMesh(GameObject* parent) : Component(parent, ComponentTy
 ComponentMesh::ComponentMesh(const ComponentMesh& componentMesh, GameObject* parent, bool include) : Component(parent, ComponentTypes::MeshComponent)
 {
 	if (include)
+	{
 		App->renderer3D->AddMeshComponent(this);
+
+	}
 	SetResource(componentMesh.res);
 	rendererFlags = componentMesh.rendererFlags;
-	if (rendererFlags & RENDERER_FLAGS::DRAWLAST)
+	if (include && rendererFlags & RENDERER_FLAGS::DRAWLAST)
 		App->renderer3D->rendererLast.push_back(this);
 }
 

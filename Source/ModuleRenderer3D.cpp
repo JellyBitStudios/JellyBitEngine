@@ -888,7 +888,6 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 	std::vector<const char*> ignore;
 	ignore.push_back("animate");
 	ignore.push_back("color");
-
 	ignore.push_back("pct");
 
 	glActiveTexture(GL_TEXTURE0);
@@ -896,6 +895,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 	location = glGetUniformLocation(shader, "gInfoTexture");
 	glUniform1i(location, 0);
 	textureUnit += 1;
+
 	LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	// Mesh

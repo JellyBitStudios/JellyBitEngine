@@ -161,7 +161,13 @@
 "	float AlbedoA = AlbedoTexture.a;\n" \
 "	vec4 InfoTexture = texture(gInfo, TexCoords);\n" \
 "if (InfoTexture.r != 1 && InfoTexture.g != 0) { \n" \
-"FragColor = vec4(colorDot,1.0);\n" \
+"	vec4 modelViewPos = view_matrix * vec4(FragPos, 1.0);\n" \
+"	float dist = length(modelViewPos.xyz);\n" \
+"	//float fogFactor = (fog.maxDist - dist) / (fog.maxDist - fog.minDist); // Linear\n" \
+"	//float fogFactor = exp(-fog.density * dist); // Exponential\n" \
+"	float fogFactor = exp(-pow(fog.density * dist, 2.0)); // Exponential Squared\n" \
+"	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
+"	FragColor = vec4(mix(fog.color, colorDot, fogFactor),1.0);\n" \
 "return;\n" \
 "}\n" \
 "\n" \
@@ -204,17 +210,16 @@
 "		}\n" \
 "		lighting += diffuse;\n" \
 "	}\n" \
-"	}\n" \
-"\n" \
 "	vec4 modelViewPos = view_matrix * vec4(FragPos, 1.0);\n" \
 "	float dist = length(modelViewPos.xyz);\n" \
 "	//float fogFactor = (fog.maxDist - dist) / (fog.maxDist - fog.minDist); // Linear\n" \
 "	//float fogFactor = exp(-fog.density * dist); // Exponential\n" \
 "	float fogFactor = exp(-pow(fog.density * dist, 2.0)); // Exponential Squared\n" \
 "	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
-"	vec3 result = mix(fog.color, lighting, fogFactor);\n" \
+"	lighting = mix(fog.color, lighting, fogFactor);\n" \
+"	}\n" \
 "\n" \
-"	FragColor = vec4(result, AlbedoA);\n" \
+"	FragColor = vec4(lighting, AlbedoA);\n" \
 "}"
 #pragma endregion
 
@@ -850,10 +855,10 @@
 "	sampler2D albedo;\n"																\
 "};\n"																					\
 "\n"																					\
-"uniform vec3 viewPos;\n"																\
 "uniform Material material;\n"															\
 "uniform vec4 color;\n"																	\
-"uniform int lightCartoon;\n"	\
+"uniform float pct;\n"																	\
+"uniform int lightCartoon;\n"															\
 "uniform sampler2D gInfoTexture;\n"	\
 "\n"																			\
 "uniform int dot;\n"															\
@@ -883,10 +888,7 @@
 "		gNormal.a = levels;\n"															\
 "		gPosition.a = lightCartoon;\n"													\
 "\n"																					\
-"		if (lightCartoon == 3)\n"														\
-"			gAlbedoSpec = color;\n"														\
-"		else\n"																			\
-"			gAlbedoSpec = texture(material.albedo, fs_in.fTexCoord);\n"					\
+"		gAlbedoSpec = mix(texture(material.albedo, fs_in.fTexCoord), color, pct);\n"	\
 "	}\n"																				\
 "\n"																					\
 "	gPosition.rgb = fs_in.fPosition;\n"													\
@@ -1075,7 +1077,7 @@
 "\n" \
 "	gPosition.rgb = worldPos.rgb;\n" \
 "	gNormal.rgb = texture(gBufferNormal, screenPos).xyz;\n" \
-"	gAlbedoSpec = vec4(color.rgb, color.a);\n" \
+"	gAlbedoSpec = vec4(color.rgb, color.a * alphaMultiplier);\n" \
 "\n" \
 "	gPosition.a = cartoonLight;\n" \
 "	int levels = 2;\n" \

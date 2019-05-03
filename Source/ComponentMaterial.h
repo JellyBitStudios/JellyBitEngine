@@ -38,7 +38,7 @@ public:
 
 private:
 
-	math::float4 color = math::float4::zero; // not save&load
+	math::float4 color = math::float4::one; // not save&load
 	float pct = 0.0f; // not save&load
 };
 

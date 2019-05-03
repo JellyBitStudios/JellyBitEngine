@@ -32,6 +32,8 @@ ComponentMaterial::~ComponentMaterial()
 	SetResource(0);
 }
 
+#include "Lights.h"
+
 void ComponentMaterial::OnUniqueEditor()
 {
 #ifndef GAMEMODE
@@ -73,7 +75,7 @@ void ComponentMaterial::OnUniqueEditor()
 
 		ImGui::Spacing();
 
-
+		ImGui::DragFloat("PCT", &pct, 1.0f, 0.0f, 1.0f);
 	}
 #endif
 }
