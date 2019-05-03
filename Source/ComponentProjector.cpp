@@ -8,6 +8,7 @@
 #include "ModuleLayers.h"
 #include "ModuleScene.h"
 #include "ModuleFBOManager.h"
+#include "Lights.h"
 #include "GLCache.h"
 
 #include "ResourceMaterial.h"
@@ -386,6 +387,29 @@ void ComponentProjector::Draw() const
 	if (location != -1)
 		glUniform1i(location, filterMask);
 
+	// Fog
+	location = glGetUniformLocation(shaderProgram, "view_matrix");
+	if (location != -1)
+	{
+		math::float4x4 view_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLViewMatrix();
+		glUniformMatrix4fv(location, 1, GL_FALSE, view_matrix.ptr());
+	}
+
+	location = glGetUniformLocation(shaderProgram, "fog.color");
+	if (location != -1)
+		glUniform3fv(location, 1, &App->lights->fog.color[0]);
+	/*
+	location = glGetUniformLocation(resProgram->shaderProgram, "fog.minDist");
+	if (location != -1)
+	glUniform1f(location, App->lights->fog.minDist);
+	location = glGetUniformLocation(resProgram->shaderProgram, "fog.maxDist");
+	if (location != -1)
+	glUniform1f(location, App->lights->fog.maxDist);
+	*/
+	location = glGetUniformLocation(shaderProgram, "fog.density");
+	if (location != -1)
+		glUniform1f(location, App->lights->fog.density);
+
 	// 3. Unknown uniforms
 	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
 	std::vector<const char*> ignore;
@@ -395,6 +419,10 @@ void ComponentProjector::Draw() const
 	ignore.push_back("screenSize");
 	ignore.push_back("filterMask");
 	ignore.push_back("alphaMultiplier");
+	ignore.push_back("view_matrix");
+	ignore.push_back("fog.color");
+	ignore.push_back("fog.density");
+
 	App->renderer3D->LoadSpecificUniforms(textureUnit, uniforms, ignore);
 
 	glDepthMask(false);

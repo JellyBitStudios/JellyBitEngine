@@ -22,6 +22,7 @@
 "	vec2 gTexCoord;\n"																		\
 "} vs_out;\n"																				\
 "\n"																						\
+"\n"																						\
 "const int MAX_BONES = 160;\n"																\
 "uniform mat4 bones[MAX_BONES];\n"															\
 "uniform int animate;\n"																	\
@@ -68,6 +69,19 @@
 "	vec2 gTexCoord;\n"															\
 "} fs_in;\n"																	\
 "\n"																			\
+"struct Fog\n" \
+"{\n" \
+"	vec3 color;\n" \
+"	//float minDist;\n" \
+"	//float maxDist;\n" \
+"	float density;\n" \
+"};\n" \
+"\n" \
+"uniform Fog fog;\n" \
+"uniform mat4 view_matrix;\n" \
+"\n" \
+"uniform int animate;\n"																\
+"\n" \
 "uniform sampler2D diffuse;\n"													\
 "uniform sampler2D gInfoTexture;\n"	\
 "\n"																			\
@@ -82,6 +96,18 @@
 "	gPosition.a = 1;\n"															\
 "	gNormal.a = 1;\n"															\
 "	gAlbedoSpec.a = 1;\n"														\
+"\n"																			\
+"	if (animate != 1)\n" \
+"	{\n" \
+"	vec4 modelViewPos = view_matrix * vec4(fs_in.gPosition, 1.0);\n" \
+"	float dist = length(modelViewPos.xyz);\n" \
+"	//float fogFactor = (fog.maxDist - dist) / (fog.maxDist - fog.minDist); // Linear\n" \
+"	//float fogFactor = exp(-fog.density * dist); // Exponential\n" \
+"	float fogFactor = exp(-pow(fog.density * dist, 2.0)); // Exponential Squared\n" \
+"	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
+"	gAlbedoSpec = mix(vec4(fog.color, 1.0), gAlbedoSpec, fogFactor);\n" \
+"	}\n" \
+"\n"																			\
 "	vec2 screenPos = gl_FragCoord.xy;\n" \
 "	screenPos.x /= screenSize.x;\n" \
 "	screenPos.y /= screenSize.y;\n" \
@@ -130,21 +156,10 @@
 "	float quadratic;\n" \
 "};\n" \
 "\n" \
-"struct Fog\n" \
-"{\n" \
-"	vec3 color;\n" \
-"	//float minDist;\n" \
-"	//float maxDist;\n" \
-"	float density;\n" \
-"};\n" \
-"\n" \
 "const int NR_LIGHTS = 50;\n" \
-"\n" \
-"uniform mat4 view_matrix;\n" \
 "\n" \
 "uniform float ambient;\n" \
 "uniform Light lights[NR_LIGHTS];\n" \
-"uniform Fog fog;\n" \
 "uniform vec3 colorDot;\n" \
 "\n" \
 "void main()\n" \
@@ -160,18 +175,6 @@
 "	vec3 Albedo = AlbedoTexture.rgb;\n" \
 "	float AlbedoA = AlbedoTexture.a;\n" \
 "	vec4 InfoTexture = texture(gInfo, TexCoords);\n" \
-"if (InfoTexture.r != 1 && InfoTexture.g != 0) { \n" \
-"	vec4 modelViewPos = view_matrix * vec4(FragPos, 1.0);\n" \
-"	float dist = length(modelViewPos.xyz);\n" \
-"	//float fogFactor = (fog.maxDist - dist) / (fog.maxDist - fog.minDist); // Linear\n" \
-"	//float fogFactor = exp(-fog.density * dist); // Exponential\n" \
-"	float fogFactor = exp(-pow(fog.density * dist, 2.0)); // Exponential Squared\n" \
-"	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
-"	FragColor = vec4(mix(fog.color, colorDot, fogFactor),1.0);\n" \
-"return;\n" \
-"}\n" \
-"\n" \
-"\n" \
 "\n" \
 "	vec3 lighting = Albedo;\n" \
 "\n" \
@@ -210,13 +213,6 @@
 "		}\n" \
 "		lighting += diffuse;\n" \
 "	}\n" \
-"	vec4 modelViewPos = view_matrix * vec4(FragPos, 1.0);\n" \
-"	float dist = length(modelViewPos.xyz);\n" \
-"	//float fogFactor = (fog.maxDist - dist) / (fog.maxDist - fog.minDist); // Linear\n" \
-"	//float fogFactor = exp(-fog.density * dist); // Exponential\n" \
-"	float fogFactor = exp(-pow(fog.density * dist, 2.0)); // Exponential Squared\n" \
-"	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
-"	lighting = mix(fog.color, lighting, fogFactor);\n" \
 "	}\n" \
 "\n" \
 "	FragColor = vec4(lighting, AlbedoA);\n" \
@@ -855,6 +851,19 @@
 "	sampler2D albedo;\n"																\
 "};\n"																					\
 "\n"																					\
+"struct Fog\n" \
+"{\n" \
+"	vec3 color;\n" \
+"	//float minDist;\n" \
+"	//float maxDist;\n" \
+"	float density;\n" \
+"};\n" \
+"\n" \
+"uniform Fog fog;\n" \
+"uniform mat4 view_matrix;\n" \
+"\n" \
+"uniform int animate;\n"																\
+"\n" \
 "uniform Material material;\n"															\
 "uniform vec4 color;\n"																	\
 "uniform float pct;\n"																	\
@@ -889,17 +898,28 @@
 "		gPosition.a = lightCartoon;\n"													\
 "\n"																					\
 "		gAlbedoSpec = mix(texture(material.albedo, fs_in.fTexCoord), color, pct);\n"	\
+"\n"																					\
+"	if (animate != 1)\n" \
+"	{\n" \
+"	vec4 modelViewPos = view_matrix * vec4(fs_in.fPosition, 1.0);\n" \
+"	float dist = length(modelViewPos.xyz);\n" \
+"	//float fogFactor = (fog.maxDist - dist) / (fog.maxDist - fog.minDist); // Linear\n" \
+"	//float fogFactor = exp(-fog.density * dist); // Exponential\n" \
+"	float fogFactor = exp(-pow(fog.density * dist, 2.0)); // Exponential Squared\n" \
+"	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
+"	gAlbedoSpec = mix(vec4(fog.color, 1.0), gAlbedoSpec, fogFactor);\n" \
+"	}\n" \
 "	}\n"																				\
 "\n"																					\
 "	gPosition.rgb = fs_in.fPosition;\n"													\
 "	gNormal.rgb = normalize(fs_in.fNormal);\n"											\
-"	vec2 screenPos = gl_FragCoord.xy;\n" \
-"	screenPos.x /= screenSize.x;\n" \
-"	screenPos.y /= screenSize.y;\n" \
-"	gInfo.r = dot;\n"															\
-"	if (dot != 1)\n"															\
-"	gInfo.g = texture(gInfoTexture,screenPos).g;\n"															\
-"	else\n"															\
+"	vec2 screenPos = gl_FragCoord.xy;\n"												\
+"	screenPos.x /= screenSize.x;\n"														\
+"	screenPos.y /= screenSize.y;\n"														\
+"	gInfo.r = dot;\n"																	\
+"	if (dot != 1)\n"																	\
+"	gInfo.g = texture(gInfoTexture, screenPos).g;\n"									\
+"	else\n"																				\
 "	gInfo.g = 1;\n"															\
 "	gInfo.b = 0;\n"															\
 "	gInfo.a = 0;\n"															\
@@ -928,6 +948,17 @@
 "	sampler2D albedo;\n"																\
 "};\n"																					\
 "\n"																					\
+"struct Fog\n" \
+"{\n" \
+"	vec3 color;\n" \
+"	//float minDist;\n" \
+"	//float maxDist;\n" \
+"	float density;\n" \
+"};\n" \
+"\n" \
+"uniform Fog fog;\n" \
+"uniform mat4 view_matrix;\n" \
+"\n" \
 "uniform vec3 viewPos;\n"																\
 "uniform Material material;\n"															\
 "uniform vec2 repeat = vec2(2, 2);\n"													\
@@ -960,6 +991,14 @@
 "		vec3 diffuse = vec3(albedo);\n"													\
 "		gAlbedoSpec = vec4(diffuse, albedo.a);\n"										\
 "	}\n"																				\
+"\n"																					\
+"	vec4 modelViewPos = view_matrix * vec4(fs_in.fPosition, 1.0);\n" \
+"	float dist = length(modelViewPos.xyz);\n" \
+"	//float fogFactor = (fog.maxDist - dist) / (fog.maxDist - fog.minDist); // Linear\n" \
+"	//float fogFactor = exp(-fog.density * dist); // Exponential\n" \
+"	float fogFactor = exp(-pow(fog.density * dist, 2.0)); // Exponential Squared\n" \
+"	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
+"	gAlbedoSpec = mix(vec4(fog.color, 1.0), gAlbedoSpec, fogFactor);\n" \
 "\n"																					\
 "	gPosition.rgb = fs_in.fPosition;\n"													\
 "	gNormal.rgb = normalize(fs_in.fNormal);\n"											\
@@ -1037,6 +1076,17 @@
 "uniform vec2 screenSize;\n" \
 "uniform uint filterMask;\n" \
 "\n" \
+"struct Fog\n" \
+"{\n" \
+"	vec3 color;\n" \
+"	//float minDist;\n" \
+"	//float maxDist;\n" \
+"	float density;\n" \
+"};\n" \
+"\n" \
+"uniform Fog fog;\n" \
+"uniform mat4 view_matrix;\n" \
+"\n" \
 "void main()\n" \
 "{\n" \
 "	// fragment's screen pos\n" \
@@ -1078,7 +1128,15 @@
 "	gPosition.rgb = worldPos.rgb;\n" \
 "	gNormal.rgb = texture(gBufferNormal, screenPos).xyz;\n" \
 "	gAlbedoSpec = vec4(color.rgb, color.a * alphaMultiplier);\n" \
-"\n" \
+"\n"																					\
+"	vec4 modelViewPos = view_matrix * vec4(fs_in.gPosition, 1.0);\n" \
+"	float dist = length(modelViewPos.xyz);\n" \
+"	//float fogFactor = (fog.maxDist - dist) / (fog.maxDist - fog.minDist); // Linear\n" \
+"	//float fogFactor = exp(-fog.density * dist); // Exponential\n" \
+"	float fogFactor = exp(-pow(fog.density * dist, 2.0)); // Exponential Squared\n" \
+"	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
+"	gAlbedoSpec = mix(vec4(fog.color, 1.0), gAlbedoSpec, fogFactor);\n" \
+"\n"																					\
 "	gPosition.a = cartoonLight;\n" \
 "	int levels = 2;\n" \
 "	gNormal.a = levels;\n" \
