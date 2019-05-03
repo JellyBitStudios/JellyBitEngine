@@ -32,6 +32,8 @@ ComponentMaterial::~ComponentMaterial()
 	SetResource(0);
 }
 
+#include "Lights.h"
+
 void ComponentMaterial::OnUniqueEditor()
 {
 #ifndef GAMEMODE
@@ -72,8 +74,6 @@ void ComponentMaterial::OnUniqueEditor()
 			SetResource(App->resHandler->defaultMaterial);
 
 		ImGui::Spacing();
-
-
 	}
 #endif
 }

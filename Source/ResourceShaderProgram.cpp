@@ -573,7 +573,7 @@ void ResourceShaderProgram::GetUniforms(std::vector<Uniform>& uniforms)
 		glGetActiveUniform(shaderProgram, (GLuint)i, DEFAULT_BUF_SIZE, &length, &size, &type, name);
 
 		if (strcmp(name, "model_matrix") == 0 || strcmp(name, "mvp_matrix") == 0 || strcmp(name, "normal_matrix") == 0
-			|| strcmp(name, "light.specular") == 0 || strcmp(name, "layer") == 0 || strcmp(name, "viewPos") == 0)
+			|| strcmp(name, "light.specular") == 0 || strcmp(name, "layer") == 0 || strcmp(name, "viewPos") == 0 || strcmp(name, "dot") == 0 || strcmp(name, "screenSize") == 0 || strcmp(name, "gInfoTexture") == 0)
 			continue;
 
 		Uniform uniform;
