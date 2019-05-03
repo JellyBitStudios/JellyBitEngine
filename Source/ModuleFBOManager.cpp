@@ -152,31 +152,9 @@ void ModuleFBOManager::DrawGBufferToScreen() const
 	ResourceShaderProgram* resProgram = (ResourceShaderProgram*)App->res->GetResource(App->resHandler->deferredShaderProgram);
 	glUseProgram(resProgram->shaderProgram);
 
-	// Fog
-	int location = glGetUniformLocation(resProgram->shaderProgram, "view_matrix");
+	int location = glGetUniformLocation(resProgram->shaderProgram, "colorDot");
 	if (location != -1)
-	{
-		math::float4x4 view_matrix = App->renderer3D->GetCurrentCamera()->GetOpenGLViewMatrix();
-		glUniformMatrix4fv(location, 1, GL_FALSE, view_matrix.ptr());
-	}
-
-	location = glGetUniformLocation(resProgram->shaderProgram, "fog.color");
-	if (location != -1)
-		glUniform3fv(location, 1, &App->lights->fog.color[0]);
-	/*
-	location = glGetUniformLocation(resProgram->shaderProgram, "fog.minDist");
-	if (location != -1)
-	glUniform1f(location, App->lights->fog.minDist);
-	location = glGetUniformLocation(resProgram->shaderProgram, "fog.maxDist");
-	if (location != -1)
-	glUniform1f(location, App->lights->fog.maxDist);
-	*/
-	location = glGetUniformLocation(resProgram->shaderProgram, "fog.density");
-	if (location != -1)
-		glUniform1f(location, App->lights->fog.density);
-
-	location = glGetUniformLocation(resProgram->shaderProgram, "colorDot");
-	glUniform3fv(location, 1, dotColor.ptr());
+		glUniform3fv(location, 1, dotColor.ptr());
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
