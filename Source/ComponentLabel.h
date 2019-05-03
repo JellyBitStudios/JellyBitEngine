@@ -45,7 +45,7 @@ struct LabelLetter
 
 	uint GetInternalSerializationBytes();
 	void OnInternalSave(char*& cursor);
-	void OnInternalLoad(char*& cursor);
+	void OnInternalLoad(char*& cursor, bool include);
 };
 class ComponentLabel : public Component
 {

@@ -45,13 +45,24 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 	size = componentLabel.size;
 	finalText = componentLabel.finalText;
 	fontUuid = componentLabel.fontUuid;
+
+	if (includeComponents)
+	{
+		internalGO = new GameObject("Label", nullptr, true);
+		internalGO->SetParent(parent);
+	}
+
 	if (!componentLabel.labelWord.empty())
 	{
 		for (LabelLetter* cLetter : componentLabel.labelWord)
 		{
 			LabelLetter* l = new LabelLetter();
-			l->rect = new ComponentRectTransform(*cLetter->rect, parent, includeComponents);
+			l->rect = new ComponentRectTransform(internalGO, ComponentTypes::RectTransformComponent, includeComponents);
 			l->rect->FromLabel();
+			l->rect->SetRect(cLetter->rect->GetRect());
+			if (includeComponents)
+				l->rect->Update();
+			l->letter = cLetter->letter;
 			l->textureID = cLetter->textureID;
 			labelWord.push_back(l);
 		}
@@ -66,8 +77,8 @@ ComponentLabel::ComponentLabel(const ComponentLabel & componentLabel, GameObject
 		if (App->glCache->isShaderStorage() && index != -1)
 			FillBuffer();
 
-		internalGO = new GameObject("Label", nullptr, true);
-		internalGO->SetParent(parent);
+		if (fontUuid > 0u) needed_findTextreID = true;
+		needed_recalculateWord = true;
 	}
 }
 
@@ -214,9 +225,12 @@ void ComponentLabel::Update()
 			{
 				for (LabelLetter* letter : labelWord)
 				{
-					Character character;
-					character = fontRes->fontData.charactersMap.find(letter->letter)->second;
-					letter->textureID = character.textureID;
+					if ((int)(letter->letter) >= 32 && (int)(letter->letter) < 128)//ASCII TABLE
+					{
+						Character character;
+						character = fontRes->fontData.charactersMap.find(letter->letter)->second;
+						letter->textureID = character.textureID;
+					}
 				}
 			}			
 		}
@@ -465,9 +479,10 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 		for (uint i = 0; i < wordLenght; i++)
 		{
 			LabelLetter* l = new LabelLetter();
-			l->rect = new ComponentRectTransform(internalGO);
+			l->rect = new ComponentRectTransform(internalGO, ComponentTypes::RectTransformComponent, parent->includeModuleComponent);
 			l->rect->FromLabel();
-			l->OnInternalLoad(cursor);
+			l->OnInternalLoad(cursor, parent->includeModuleComponent);
+			labelWord.push_back(l);
 		}
 	}
 
@@ -599,7 +614,6 @@ void ComponentLabel::DragDropFont()
 		ImGui::EndDragDropTarget();
 	}
 
-
 	//Text in quat
 	std::string name;
 	ResourceFont* font = nullptr;
@@ -641,17 +655,34 @@ void ComponentLabel::FillBuffer()
 	char* cursor = buffer;
 	float one = 1.0f;
 	size_t bytes = sizeof(float) * 3;
+	
+
 	for (uint i = 0; i < slabelWord; i++)
 	{
-		math::float3* rCorners = labelWord[i]->rect->GetCorners();
-		memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RTOPLEFT], bytes);
-		cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
-		memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RTOPRIGHT], bytes);
-		cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
-		memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RBOTTOMLEFT], bytes);
-		cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
-		memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RBOTTOMRIGHT], bytes);
-		cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
+		if (parent->cmp_rectTransform->GetFrom() != ComponentRectTransform::RectFrom::RECT || App->ui->ScreenOnWorld())
+		{
+			math::float3* rCorners = labelWord[i]->rect->GetCorners();
+			memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RTOPLEFT], bytes);
+			cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
+			memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RTOPRIGHT], bytes);
+			cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
+			memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RBOTTOMLEFT], bytes);
+			cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
+			memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RBOTTOMRIGHT], bytes);
+			cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
+		}
+		else
+		{
+			math::float3* rCorners = labelWord[i]->rect->GetCorners();
+			memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RBOTTOMLEFT], bytes);
+			cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
+			memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RBOTTOMRIGHT], bytes);
+			cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
+			memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RTOPLEFT], bytes);
+			cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
+			memcpy(cursor, &rCorners[ComponentRectTransform::Rect::RTOPRIGHT], bytes);
+			cursor += bytes; memcpy(cursor, &one, sizeof(float)); cursor += sizeof(float);
+		}
 	}
 
 	App->glCache->FillBufferRange(offset, buffer_size, buffer);
@@ -752,7 +783,7 @@ void LabelLetter::OnInternalSave(char *& cursor)
 	cursor += bytes;
 }
 
-void LabelLetter::OnInternalLoad(char *& cursor)
+void LabelLetter::OnInternalLoad(char *& cursor, bool include)
 {
 	size_t bytes = sizeof(char);
 	memcpy(&letter, cursor, bytes);
@@ -764,5 +795,6 @@ void LabelLetter::OnInternalLoad(char *& cursor)
 	cursor += bytes;
 
 	rect->SetRect(rectp);
-	rect->Update();
+	if(include)
+		rect->Update();
 }

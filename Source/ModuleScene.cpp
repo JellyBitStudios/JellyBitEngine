@@ -158,6 +158,8 @@ void ModuleScene::OnSystemEvent(System_Event event)
 		size_t size = App->fs->Load("Library/Scenes/Main Scene.scn", &buf);
 		if (size > 0)
 		{
+			App->scene->currentScene = "Main Scene.scn";
+
 			App->GOs->LoadScene(buf, size, true);
 			RELEASE_ARRAY(buf);
 
