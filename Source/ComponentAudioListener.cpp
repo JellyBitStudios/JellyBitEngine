@@ -33,7 +33,6 @@ ComponentAudioListener::~ComponentAudioListener()
 
 void ComponentAudioListener::Update()
 {
-	UpdateListenerPos();
 }
 
 void ComponentAudioListener::UpdateListenerPos()
