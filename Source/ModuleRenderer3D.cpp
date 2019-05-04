@@ -284,6 +284,7 @@ update_status ModuleRenderer3D::PostUpdate()
 
 	App->fbo->MergeDepthBuffer(App->window->GetWindowWidth(), App->window->GetWindowHeight());
 
+	App->glCache->SwitchShader(0);
 	bool blend = GetCapabilityState(GL_BLEND);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
