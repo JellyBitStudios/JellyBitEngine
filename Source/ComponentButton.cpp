@@ -616,6 +616,27 @@ void ComponentButton::SetOnClick(MonoObject* scriptInstance, std::string methodT
 	}
 }
 
+void ComponentButton::SetIdleTexture(uint uuid)
+{
+	idleTexture = uuid;
+	if(state == UIState::IDLE)
+		parent->cmp_image->SetResImageUuid(idleTexture);
+}
+
+void ComponentButton::SetHoverTexture(uint uuid)
+{
+	hoveredTexture = uuid;
+	if (state == UIState::HOVERED)
+		parent->cmp_image->SetResImageUuid(hoveredTexture);
+}
+
+void ComponentButton::SetClickTexture(uint uuid)
+{
+	clickTexture = uuid;
+	if (state == UIState::L_CLICK || state == UIState::R_CLICK)
+		parent->cmp_image->SetResImageUuid(clickTexture);
+}
+
 void ComponentButton::SetNewKey(const char * key)
 {
 	input = key;
