@@ -33,6 +33,8 @@ public:
 
 	static bool MouseInScreen(const int* rect);
 
+	void SetOnClick(MonoObject* scriptInstance, std::string methodToCall);
+
 private:
 	uint GetInternalSerializationBytes();
 	uint BytesToOnClick();
