@@ -28,7 +28,7 @@ bool ModuleInternalResHandler::Start()
 
 	// Shader resources
 	CreateDefaultShaderProgram(vShaderTemplate, fShaderTemplate, ShaderProgramTypes::Standard, "Default");
-	CreateDefaultShaderProgram(Particle_vShaderTemplate, Particle_fShaderTemplate, ShaderProgramTypes::Effects, "Default");
+	CreateDefaultShaderProgram(Particle_vShaderTemplate, Particle_fShaderTemplate, ShaderProgramTypes::Effects, "Particle");
 	CreateDefaultShaderProgram(vShaderTrail, fShaderTrail, ShaderProgramTypes::Effects, "Trail");
 
 	CreateDeferredShaderProgram();
