@@ -24,6 +24,9 @@ ResourceAudioBank::~ResourceAudioBank()
 
 bool ResourceAudioBank::GenerateLibraryFiles() const
 {
+	//TOO BIG FILE FOR MMGR.
+	return true;
+
 	assert(data.file.data() != nullptr);
 
 	// Search for the meta associated to the file
