@@ -97,7 +97,7 @@ void ComponentImage::ResetColor()
 	color[Color::A] = 1.0f;
 }
 
-void ComponentImage::SetResImageUuid(uint res_image_uuid)
+void ComponentImage::SetResImageUuid(uint res_image_uuid, bool isIdle)
 {
 	if (res_image != res_image_uuid)
 	{
@@ -109,7 +109,7 @@ void ComponentImage::SetResImageUuid(uint res_image_uuid)
 		if (res_image > 0)
 			App->res->SetAsUsed(res_image);
 
-		if (parent->cmp_button && res_image > 0)
+		if (parent->cmp_button && isIdle && res_image > 0)
 			parent->cmp_button->SetIdleTexture(res_image);
 	}
 }
@@ -147,7 +147,7 @@ std::string ComponentImage::GetResImageName() const
 	return "";
 }
 
-void ComponentImage::SetResImageName(const std::string& name)
+void ComponentImage::SetResImageName(const std::string& name, bool isIdle)
 {
 	std::vector<Resource*> textures = App->res->GetResourcesByType(ResourceTypes::TextureResource);
 	for (int i = 0; i < textures.size(); ++i)
@@ -161,7 +161,7 @@ void ComponentImage::SetResImageName(const std::string& name)
 			App->res->SetAsUsed(texture->GetUuid());
 			res_image = texture->GetUuid();
 
-			if (parent->cmp_button && res_image > 0)
+			if (parent->cmp_button && isIdle && res_image > 0)
 				parent->cmp_button->SetIdleTexture(res_image);
 			break;
 		}

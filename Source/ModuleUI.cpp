@@ -572,22 +572,28 @@ bool ModuleUI::MouseInScreen()
 {
 	for (GameObject* goScreenCanvas : canvas_screen)
 	{
-		if (goScreenCanvas != nullptr)
+		if (goScreenCanvas->IsActive())
 		{
-			if (goScreenCanvas->IsActive())
+			std::vector<GameObject*> childs;
+			goScreenCanvas->GetChildrenAndThisVectorFromLeaf(childs);
+
+			for (GameObject* child : childs)
 			{
-				if (goScreenCanvas->cmp_rectTransform && (goScreenCanvas->cmp_image || goScreenCanvas->cmp_button || goScreenCanvas->cmp_label || goScreenCanvas->cmp_slider))
+				if (child->IsActive())
 				{
-					int* rect = goScreenCanvas->cmp_rectTransform->GetRect();
-
-					if (rect)
+					if(child->cmp_rectTransform && (child->cmp_image || child->cmp_button || child->cmp_label || child->cmp_slider))
 					{
-						uint mouseX = App->input->GetMouseX();
-						uint mouseY = App->input->GetMouseY();
+						int* rect = goScreenCanvas->cmp_rectTransform->GetRect();
 
-						if (mouseX > rect[ComponentRectTransform::Rect::X] && mouseX < rect[ComponentRectTransform::Rect::X] + rect[ComponentRectTransform::Rect::XDIST]
-							&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST])
-							return true;
+						if (rect)
+						{
+							uint mouseX = App->input->GetMouseX();
+							uint mouseY = App->input->GetMouseY();
+
+							if (mouseX > rect[ComponentRectTransform::Rect::X] && mouseX < rect[ComponentRectTransform::Rect::X] + rect[ComponentRectTransform::Rect::XDIST]
+								&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST])
+								return true;
+						}
 					}
 				}
 			}

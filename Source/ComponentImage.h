@@ -33,7 +33,7 @@ public:
 	float* GetMask();
 
 	uint GetResImageUuid() const;
-	void SetResImageUuid(uint res_image_uuid);
+	void SetResImageUuid(uint res_image_uuid, bool isIdle = false);
 
 	int GetBufferIndex()const;
 	void SetBufferRangeAndFIll(uint offs, int index);
@@ -43,7 +43,7 @@ public:
 	void SetColor(float r, float g, float b, float a);
 	void ResetColor();
 	std::string GetResImageName() const;
-	void SetResImageName(const std::string& name);
+	void SetResImageName(const std::string& name, bool isIdle = false);
 	void SetMask();
 	void ResetTexture();
 
