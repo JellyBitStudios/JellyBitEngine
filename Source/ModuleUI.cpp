@@ -593,10 +593,7 @@ bool ModuleUI::MouseInScreen()
 
 							if (mouseX > rect[ComponentRectTransform::Rect::X] && mouseX < rect[ComponentRectTransform::Rect::X] + rect[ComponentRectTransform::Rect::XDIST]
 								&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST])
-							{
-								int hola = 0;
 								return true;
-							}
 						}
 					}
 				}
