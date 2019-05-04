@@ -212,10 +212,17 @@ update_status ModuleGui::Update()
 		ImGui::EndMainMenuBar();
 	}
 
-	for (uint i = 0; i < panels.size(); ++i)
+	try
 	{
-		if (panels[i]->IsEnabled())
-			panels[i]->Draw();
+		for (uint i = 0; i < panels.size(); ++i)
+		{
+			if (panels[i]->IsEnabled())
+				panels[i]->Draw();
+		}
+	}
+	catch(...)
+	{
+
 	}
 
 	if (showSaveScenePopUp)
