@@ -175,6 +175,10 @@
 "	vec3 Albedo = AlbedoTexture.rgb;\n" \
 "	float AlbedoA = AlbedoTexture.a;\n" \
 "	vec4 InfoTexture = texture(gInfo, TexCoords);\n" \
+"	if (InfoTexture.r != 1 && InfoTexture.g != 0) {\n" \
+"	FragColor = vec4(colorDot, 1.0);\n" \
+"	return;\n" \
+"	}\n" \
 "\n" \
 "	vec3 lighting = Albedo;\n" \
 "\n" \
