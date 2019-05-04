@@ -75,14 +75,10 @@ uint ComponentAudioListener::GetInternalSerializationBytes()
 
 void ComponentAudioListener::OnInternalSave(char*& cursor)
 {
-	size_t bytes = sizeof(WwiseT::AudioSource*);
-	memcpy(cursor, &listener, bytes);
-	cursor += bytes;
+	cursor += sizeof(WwiseT::AudioSource*);
 }
 
 void ComponentAudioListener::OnInternalLoad(char*& cursor)
 {
-	size_t bytes = sizeof(WwiseT::AudioSource*);
-	memcpy(&listener, cursor, bytes);
-	cursor += bytes;
+	cursor += sizeof(WwiseT::AudioSource*);
 }
