@@ -620,7 +620,7 @@ void ComponentButton::SetIdleTexture(uint uuid)
 {
 	idleTexture = uuid;
 	if(state == UIState::IDLE)
-		parent->cmp_image->SetResImageUuid(idleTexture);
+		parent->cmp_image->SetResImageUuid(idleTexture, true);
 }
 
 void ComponentButton::SetHoverTexture(uint uuid)
