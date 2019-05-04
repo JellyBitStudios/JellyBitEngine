@@ -125,6 +125,7 @@ update_status ModuleUI::PreUpdate()
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 #endif // !GAMEMODE
 	anyItemIsHovered = MouseInScreen();
+	CONSOLE_LOG(LogTypes::Normal, (anyItemIsHovered) ? "true hover" : "false hover");
 	return update_status::UPDATE_CONTINUE;
 }
 
@@ -579,11 +580,11 @@ bool ModuleUI::MouseInScreen()
 
 			for (GameObject* child : childs)
 			{
-				if (child->IsActive())
+				if(child->cmp_rectTransform && (child->cmp_image || child->cmp_button || child->cmp_label || child->cmp_slider))
 				{
-					if(child->cmp_rectTransform && (child->cmp_image || child->cmp_button || child->cmp_label || child->cmp_slider))
+					if (child->cmp_rectTransform->IsTreeActive())
 					{
-						int* rect = goScreenCanvas->cmp_rectTransform->GetRect();
+						int* rect = child->cmp_rectTransform->GetRect();
 
 						if (rect)
 						{
@@ -592,7 +593,10 @@ bool ModuleUI::MouseInScreen()
 
 							if (mouseX > rect[ComponentRectTransform::Rect::X] && mouseX < rect[ComponentRectTransform::Rect::X] + rect[ComponentRectTransform::Rect::XDIST]
 								&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST])
+							{
+								int hola = 0;
 								return true;
+							}
 						}
 					}
 				}
