@@ -522,12 +522,7 @@ bool ResourceAnimator::Update()
 	if (current_anim == nullptr)
 		return update_status::UPDATE_CONTINUE;
 
-	float dt = 0.0f;
-	dt = App->GetDt();
-#ifdef GAMEMODE
-	dt = App->timeManager->GetDt();
-#endif // GAMEMODE
-
+	float dt = App->timeManager->GetDt();
 
 	if (current_anim->anim_timer >= current_anim->duration && current_anim->duration > 0.0f)
 	{
