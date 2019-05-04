@@ -40,7 +40,7 @@ bool PanelAssets::Draw()
 
 	if (ImGui::Begin(name, &enabled, assetsFlags))
 	{
-		if (ImGui::Button("Re-Import"))
+		/*if (ImGui::Button("Re-Import"))
 		{
 			App->scripting->CreateDomain();
 
@@ -49,9 +49,9 @@ bool PanelAssets::Draw()
 			System_Event event;
 			event.type = System_Event_Type::DeleteUnusedFiles;
 			App->PushSystemEvent(event);
-		}
+		}*/
 
-		ImGui::SameLine();
+		//ImGui::SameLine();
 
 		if(ImGui::Button("Read Assets changes"))
 			App->fs->UpdateAssetsDir();

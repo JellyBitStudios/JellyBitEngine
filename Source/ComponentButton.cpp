@@ -582,6 +582,61 @@ bool ComponentButton::MouseInScreen(const int* rect)
 		&& mouseY > rect[ComponentRectTransform::Rect::Y] && mouseY < rect[ComponentRectTransform::Rect::Y] + rect[ComponentRectTransform::Rect::YDIST];
 }
 
+void ComponentButton::SetOnClick(MonoObject* scriptInstance, std::string methodToCall)
+{
+	Component* script = App->scripting->ComponentFrom(scriptInstance);
+	if (!script)
+		return;
+
+	//Set this method and instance to be called
+	void* iterator = 0;
+	MonoClass* scriptClass = mono_object_get_class(scriptInstance);
+	MonoMethod* method = mono_class_get_methods(scriptClass, &iterator);
+
+	while (method)
+	{
+		uint32_t flags = 0;
+		uint32_t another = mono_method_get_flags(method, &flags);
+		if (another & MONO_METHOD_ATTR_PUBLIC && !(another & MONO_METHOD_ATTR_STATIC))
+		{
+			std::string name = mono_method_get_name(method);
+			if (name == methodToCall)
+			{
+				//Set this method and instance to be called
+				this->methodToCall = method;
+				this->scriptInstance = scriptInstance;
+
+				methodToCallName = name;
+				onClickScriptUUID = script->UUID;
+				onClickGameObjectUUID = script->GetParent()->GetUUID();
+				break;
+			}
+		}
+		method = mono_class_get_methods(scriptClass, &iterator);
+	}
+}
+
+void ComponentButton::SetIdleTexture(uint uuid)
+{
+	idleTexture = uuid;
+	if(state == UIState::IDLE)
+		parent->cmp_image->SetResImageUuid(idleTexture);
+}
+
+void ComponentButton::SetHoverTexture(uint uuid)
+{
+	hoveredTexture = uuid;
+	if (state == UIState::HOVERED)
+		parent->cmp_image->SetResImageUuid(hoveredTexture);
+}
+
+void ComponentButton::SetClickTexture(uint uuid)
+{
+	clickTexture = uuid;
+	if (state == UIState::L_CLICK || state == UIState::R_CLICK)
+		parent->cmp_image->SetResImageUuid(clickTexture);
+}
+
 void ComponentButton::SetNewKey(const char * key)
 {
 	input = key;
@@ -593,7 +648,6 @@ void ComponentButton::SetNewKey(uint key)
 	input = SDL_GetKeyName(SDL_GetKeyFromScancode((SDL_Scancode)key));
 	button_blinded = key;
 }
-
 
 void ComponentButton::LoadOnClickReference()
 {

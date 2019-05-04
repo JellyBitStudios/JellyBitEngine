@@ -33,6 +33,12 @@ public:
 
 	static bool MouseInScreen(const int* rect);
 
+	void SetOnClick(MonoObject* scriptInstance, std::string methodToCall);
+
+	void SetIdleTexture(uint uuid);
+	void SetHoverTexture(uint uuid);
+	void SetClickTexture(uint uuid);
+
 private:
 	uint GetInternalSerializationBytes();
 	uint BytesToOnClick();

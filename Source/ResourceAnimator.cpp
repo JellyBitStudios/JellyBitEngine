@@ -522,25 +522,19 @@ bool ResourceAnimator::Update()
 	if (current_anim == nullptr)
 		return update_status::UPDATE_CONTINUE;
 
-	float dt = 0.0f;
-	dt = App->GetDt();
-#ifdef GAMEMODE
-	dt = App->timeManager->GetDt();
-#endif // GAMEMODE
-
+	float dt = App->timeManager->GetDt();
 
 	if (current_anim->anim_timer >= current_anim->duration && current_anim->duration > 0.0f)
 	{
-		
 		current_anim->finished = true;
 
 		if (!current_anim->loop) 
 			anim_state = AnimationState::STOPPED;
 		else
 			current_anim->anim_timer = 0.0f;
-		
 	}
-	else {
+	else 
+	{
 		current_anim->finished = false;
 	}
 

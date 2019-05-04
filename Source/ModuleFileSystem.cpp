@@ -1301,8 +1301,9 @@ void ModuleFileSystem::RecursiveBuild(const Directory& dir, char * toPath, bool 
 {
 	for (File file : dir.files)
 	{
-		if (file.name == "NekoEngine.exe")
+		if (file.name == "JellyBitEngine.exe")
 			continue;
+
 		std::string extension;
 		GetExtension(file.name.data(), extension);
 		if (extension == ".txt" || extension == ".log" || 

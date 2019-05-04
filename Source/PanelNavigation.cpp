@@ -152,7 +152,7 @@ void PanelNavigation::ResetCommonSettings()
 	cs.p_detailSampleDist = 6.0f;
 	cs.p_detailSampleMaxError = 1.0f;
 }
-
+#pragma optimize( "", off )
 void PanelNavigation::HandleInputMeshes() const
 {
 	std::vector<ComponentMesh*> staticsMeshComp;
@@ -197,12 +197,22 @@ void PanelNavigation::HandleInputMeshes() const
 
 	for (int i = 0; i < staticsMeshComp.size(); ++i)
 	{
+		if (i == 87)
+			int a = 0;
 		const ResourceMesh* res = (const ResourceMesh*)App->res->GetResource(staticsMeshComp[i]->res);
+		p_inputGeom.i_meshes[i].isValid = 0;
+		p_inputGeom.i_meshes[i].m_ntris = 0;
+		p_inputGeom.i_meshes[i].m_nverts = 0;
+		p_inputGeom.i_meshes[i].m_tris = 0;
+		p_inputGeom.i_meshes[i].m_verts = 0;
+		p_inputGeom.i_meshes[i].walkable = 0;
 		if (res)
 		{
+			p_inputGeom.i_meshes[i].isValid = true;
 			p_inputGeom.i_meshes[i].m_ntris = res->GetIndicesCount() / 3;
 			p_inputGeom.i_ntris += p_inputGeom.i_meshes[i].m_ntris;
 			p_inputGeom.i_meshes[i].m_nverts = res->GetVerticesCount();
+
 			p_inputGeom.i_meshes[i].m_tris = new int[p_inputGeom.i_meshes[i].m_ntris * 3];
 			p_inputGeom.i_meshes[i].m_verts = new float[p_inputGeom.i_meshes[i].m_nverts * 3];
 			res->GetIndices((uint*)p_inputGeom.i_meshes[i].m_tris);
@@ -214,27 +224,32 @@ void PanelNavigation::HandleInputMeshes() const
 			for (int j = 0; j < p_inputGeom.i_meshes[i].m_nverts * 3; j += 3)
 			{
 				math::float3 globalVert = (gMatrix * math::float4(p_inputGeom.i_meshes[i].m_verts[j],
-																  p_inputGeom.i_meshes[i].m_verts[j + 1],
-																  p_inputGeom.i_meshes[i].m_verts[j + 2],
-																  1)).xyz();
-
+					p_inputGeom.i_meshes[i].m_verts[j + 1],
+					p_inputGeom.i_meshes[i].m_verts[j + 2],
+					1)).xyz();
+				size_t a = sizeof(math::float3);
 				memcpy(&p_inputGeom.i_meshes[i].m_verts[j], globalVert.ptr(), sizeof(float) * 3);
 			}
 		}
 	}
 
 	memcpy(&p_inputGeom + offsetof(NMInputGeom, i_buildSettings), &cs, sizeof(CommonSettings));
-	memcpy(p_inputGeom.bMin, aabb.minPoint.ptr(), sizeof(math::float3));
-	memcpy(p_inputGeom.bMax, aabb.maxPoint.ptr(), sizeof(math::float3));
+	memcpy(&p_inputGeom.bMin, aabb.minPoint.ptr(), sizeof(math::float3));
+	memcpy(&p_inputGeom.bMax, aabb.maxPoint.ptr(), sizeof(math::float3));
 	App->navigation->SetInputGeom(p_inputGeom);
 	App->navigation->HandleBuild();
 
 	for (int i = 0; i < p_inputGeom.i_nmeshes; ++i)
 	{
-		delete[] p_inputGeom.i_meshes[i].m_tris;
-		delete[] p_inputGeom.i_meshes[i].m_verts;
+		if (i == 87)
+			int a = 0;
+		if (p_inputGeom.i_meshes[i].isValid)
+		{
+			delete[] p_inputGeom.i_meshes[i].m_tris;
+			delete[] p_inputGeom.i_meshes[i].m_verts;
+		}
 	}
 	delete[] p_inputGeom.i_meshes;
 }
-
+#pragma optimize( "", on )
 #endif

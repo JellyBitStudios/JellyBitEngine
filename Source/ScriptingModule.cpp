@@ -2920,6 +2920,47 @@ int ButtonGetState(MonoObject* buttonComp)
 	}
 }
 
+void ButtonSetOnClick(MonoObject* monoButton, MonoObject* monoScript, MonoString* monoMethod)
+{
+	if (!monoScript || !monoMethod)
+		return;
+
+	ComponentButton* button = (ComponentButton*)App->scripting->ComponentFrom(monoButton);
+	if (button)
+	{
+		char* method = mono_string_to_utf8(monoMethod);
+		button->SetOnClick(monoScript, std::string(method));
+		mono_free(method);
+	}
+}
+
+void ButtonSetIdleTexture(MonoObject* monoButton, uint textureUUID)
+{
+	ComponentButton* button = (ComponentButton*)App->scripting->ComponentFrom(monoButton);
+	if (button)
+	{
+		button->SetIdleTexture(textureUUID);
+	}
+}
+
+void ButtonSetHoverTexture(MonoObject* monoButton, uint textureUUID)
+{
+	ComponentButton* button = (ComponentButton*)App->scripting->ComponentFrom(monoButton);
+	if (button)
+	{
+		button->SetHoverTexture(textureUUID);
+	}
+}
+
+void ButtonSetClickTexture(MonoObject* monoButton, uint textureUUID)
+{
+	ComponentButton* button = (ComponentButton*)App->scripting->ComponentFrom(monoButton);
+	if (button)
+	{
+		button->SetClickTexture(textureUUID);
+	}
+}
+
 MonoArray* ImageGetColor(MonoObject* monoImage)
 {
 	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
@@ -2997,6 +3038,13 @@ void ImageSetResourceUUID(MonoObject* monoImage, uint imageUUID)
 }
 
 void ImageSetMask(MonoObject* monoImage)
+{
+	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
+	if (image)
+		image->SetMask();
+}
+
+void ImageResetTexture(MonoObject* monoImage)
 {
 	ComponentImage* image = (ComponentImage*)App->scripting->ComponentFrom(monoImage);
 	if (image)
@@ -4066,6 +4114,10 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.RectTransform::SetRect", (const void*)&RectTransform_SetRect);
 	mono_add_internal_call("JellyBitEngine.UI.Button::SetKey", (const void*)&ButtonSetKey);
 	mono_add_internal_call("JellyBitEngine.UI.Button::GetState", (const void*)&ButtonGetState);
+	mono_add_internal_call("JellyBitEngine.UI.Button::SetOnClick", (const void*)&ButtonSetOnClick);
+	mono_add_internal_call("JellyBitEngine.UI.Button::SetIdleTexture", (const void*)&ButtonSetIdleTexture);
+	mono_add_internal_call("JellyBitEngine.UI.Button::SetHoverTexture", (const void*)&ButtonSetHoverTexture);
+	mono_add_internal_call("JellyBitEngine.UI.Button::SetClickTexture", (const void*)&ButtonSetClickTexture);
 	mono_add_internal_call("JellyBitEngine.UI.Image::GetColor", (const void*)&ImageGetColor);
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetColor", (const void*)&ImageSetColor);
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetColor", (const void*)&ImageSetColor);
@@ -4074,6 +4126,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource(string)", (const void*)&ImageSetResourceName);
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetResource(uint)", (const void*)&ImageSetResourceUUID);
 	mono_add_internal_call("JellyBitEngine.UI.Image::SetMask", (const void*)&ImageSetMask);
+	mono_add_internal_call("JellyBitEngine.UI.Image::ResetTexture", (const void*)&ImageResetTexture);
 	mono_add_internal_call("JellyBitEngine.UI.Label::SetText", (const void*)&LabelSetText);
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetText", (const void*)&LabelGetText);
 	mono_add_internal_call("JellyBitEngine.UI.Label::SetColor", (const void*)&LabelSetColor);
