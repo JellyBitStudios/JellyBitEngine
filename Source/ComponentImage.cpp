@@ -9,6 +9,7 @@
 
 #include "ComponentRectTransform.h"
 #include "ComponentLabel.h"
+#include "ComponentButton.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -98,13 +99,19 @@ void ComponentImage::ResetColor()
 
 void ComponentImage::SetResImageUuid(uint res_image_uuid)
 {
-	if (res_image > 0)
-		App->res->SetAsUnused(res_image);
+	if (res_image != res_image_uuid)
+	{
+		if (res_image > 0)
+			App->res->SetAsUnused(res_image);
 
-	res_image = res_image_uuid;
+		res_image = res_image_uuid;
 
-	if (res_image > 0)
-		App->res->SetAsUsed(res_image);
+		if (res_image > 0)
+			App->res->SetAsUsed(res_image);
+
+		if (parent->cmp_button && res_image > 0)
+			parent->cmp_button->SetIdleTexture(res_image);
+	}
 }
 
 int ComponentImage::GetBufferIndex() const
@@ -153,6 +160,9 @@ void ComponentImage::SetResImageName(const std::string& name)
 
 			App->res->SetAsUsed(texture->GetUuid());
 			res_image = texture->GetUuid();
+
+			if (parent->cmp_button && res_image > 0)
+				parent->cmp_button->SetIdleTexture(res_image);
 			break;
 		}
 	}
