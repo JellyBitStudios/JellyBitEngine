@@ -119,7 +119,6 @@ void ComponentButton::Update()
 			{
 				if (clickTexture > 0) parent->cmp_image->SetResImageUuid(clickTexture);
 				state = L_CLICK;
-				KeyPressed();
 			}
 			break;
 		case R_CLICK:
@@ -130,6 +129,7 @@ void ComponentButton::Update()
 			{
 				state = HOVERED;
 				if (hoveredTexture > 0) parent->cmp_image->SetResImageUuid(hoveredTexture);
+				KeyPressed();
 			}
 			break;
 		default:
