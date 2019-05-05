@@ -1327,7 +1327,7 @@ void ModuleFileSystem::RecursiveBuild(const Directory& dir, char * toPath, bool 
 					//WriteFile(zip_path.data(), *file, buffer, size);
 
 				Save(temp, buffer, size);
-				if (meta)
+				if (meta && Exists(filePath + ".meta"))
 				{
 					RELEASE_ARRAY(buffer);
 
@@ -1341,7 +1341,6 @@ void ModuleFileSystem::RecursiveBuild(const Directory& dir, char * toPath, bool 
 				RELEASE_ARRAY(buffer);
 			}
 		}
-			
 	}
 
 	for (Directory toDir : dir.directories)
