@@ -100,6 +100,8 @@ void ModuleEvents::OnSystemEvent(System_Event event)
 		App->GOs->SerializeFromNode(App->scene->root, App->GOs->sceneStateBuffer, App->GOs->sceneStateSize);
 		App->SetEngineState(engine_states::ENGINE_PLAY);
 
+		App->scripting->Play();
+
 		break;
 	case System_Event_Type::SaveScene:
 	{

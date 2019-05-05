@@ -51,6 +51,8 @@ public:
 
 	void OnSystemEvent(System_Event event) override;
 
+	void Play();
+
 public:
 	ComponentScript* CreateScriptComponent(std::string scriptName, ResourceScript* scriptRes);
 	bool DestroyScript(ComponentScript* script);

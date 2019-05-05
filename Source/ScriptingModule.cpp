@@ -230,29 +230,6 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 			}
 			break;
 		}
-
-		case System_Event_Type::Play:
-		{
-			//TODO: Check if some files have compile errors and don't let the user hit the play.
-
-			for (int i = 0; i < scripts.size(); ++i)
-			{
-				scripts[i]->OnEnableMethod();
-			}
-
-			for (int i = 0; i < scripts.size(); ++i)
-			{
-				scripts[i]->Awake();
-			}
-
-			for (int i = 0; i < scripts.size(); ++i)
-			{
-				scripts[i]->Start();
-			}
-		
-			//Call the Awake and Start for all the Enabled script in the Play instant.
-			break;
-		}
 	
 		case System_Event_Type::Stop:
 		{
@@ -352,6 +329,28 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 			break;
 		}
 	}
+}
+
+void ScriptingModule::Play()
+{
+	//TODO: Check if some files have compile errors and don't let the user hit the play.
+
+	for (int i = 0; i < scripts.size(); ++i)
+	{
+		scripts[i]->OnEnableMethod();
+	}
+
+	for (int i = 0; i < scripts.size(); ++i)
+	{
+		scripts[i]->Awake();
+	}
+
+	for (int i = 0; i < scripts.size(); ++i)
+	{
+		scripts[i]->Start();
+	}
+
+	//Call the Awake and Start for all the Enabled script in the Play instant.
 }
 
 ComponentScript* ScriptingModule::CreateScriptComponent(std::string scriptName, ResourceScript* scriptRes)
