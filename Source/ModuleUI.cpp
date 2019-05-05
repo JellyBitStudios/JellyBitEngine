@@ -125,7 +125,6 @@ update_status ModuleUI::PreUpdate()
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 #endif // !GAMEMODE
 	anyItemIsHovered = MouseInScreen();
-	CONSOLE_LOG(LogTypes::Normal, (anyItemIsHovered) ? "true hover" : "false hover");
 	return update_status::UPDATE_CONTINUE;
 }
 
