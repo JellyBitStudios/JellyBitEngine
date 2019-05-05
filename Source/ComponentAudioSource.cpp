@@ -50,7 +50,6 @@ ComponentAudioSource::~ComponentAudioSource()
 
 void ComponentAudioSource::Update()
 {
-	UpdateSourcePos();
 }
 
 void ComponentAudioSource::UpdateSourcePos()
