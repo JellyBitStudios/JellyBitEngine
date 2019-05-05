@@ -264,6 +264,8 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 				}
 			}
 
+			scripts.clear();
+
 			break;
 		}
 
