@@ -1532,7 +1532,7 @@ void ModuleResourceManager::RecursiveDeleteUnusedEntries(const char* dir, std::s
 		{
 			std::string extension;
 			App->fs->GetExtension(*it, extension);
-			if (strcmp(extension.data(), EXTENSION_SCRIPT) == 0)
+			if (strcmp(extension.data(), EXTENSION_SCRIPT) == 0 || strcmp(extension.data(), ".dll") == 0)
 			{
 				uint found = path.rfind(*it);
 				if (found != std::string::npos)
