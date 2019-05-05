@@ -197,7 +197,6 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			newEvent.type = System_Event_Type::Build;
 			App->PushSystemEvent(newEvent);
 		}
-
 	}
 	break;
 

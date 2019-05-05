@@ -66,15 +66,22 @@ bool PanelAssets::Draw()
 			//4. Copy library, the readme, the dlls, (Settings?) and AudioFolder (temp) to a new Build folder and make a zip with it.
 
 			//Delete library
-			bool ret = App->fs->deleteFiles("Library", "");
+			//bool ret = App->fs->deleteFiles("Library", "");
 			/*if (ret == false)
 				return false;*/
 
 			//Export everything in Assets
-			App->fs->ImportMainDir(true);
+			//App->fs->ImportMainDir(true);
 
 			System_Event newEvent;
+
+			newEvent.type = System_Event_Type::DeleteUnusedFiles;
+			App->PushSystemEvent(newEvent);
+
 			newEvent.type = System_Event_Type::GenerateLibraryFiles;
+			App->PushSystemEvent(newEvent);
+
+			newEvent.type = System_Event_Type::Build;
 			App->PushSystemEvent(newEvent);
 
 			App->fs->build = true;
