@@ -15,13 +15,18 @@ ComponentAudioListener::ComponentAudioListener(GameObject* parent) : Component(p
 	listener = App->audio->CreateSoundEmitter("listener");
 	App->audio->audio_listeners.push_back(this);
 	App->audio->SetListener(listener);
+
+	UpdateListenerPos();
 }
 
-ComponentAudioListener::ComponentAudioListener(const ComponentAudioListener& componentAudioListener) : Component(componentAudioListener.parent, ComponentTypes::AudioListenerComponent)
+ComponentAudioListener::ComponentAudioListener(const ComponentAudioListener& componentAudioListener, GameObject* parent) : 
+	Component(parent, ComponentTypes::AudioListenerComponent)
 {
 	listener = App->audio->CreateSoundEmitter("listener");
 	App->audio->audio_listeners.push_back(this);
 	App->audio->SetListener(listener);
+
+	UpdateListenerPos();
 }
 
 ComponentAudioListener::~ComponentAudioListener()

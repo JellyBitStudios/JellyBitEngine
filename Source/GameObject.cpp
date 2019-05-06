@@ -217,12 +217,12 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			break;
 		}
 		case ComponentTypes::AudioListenerComponent:
-			cmp_audioListener = new ComponentAudioListener(*gameObject.cmp_audioListener);
+			cmp_audioListener = new ComponentAudioListener(*gameObject.cmp_audioListener, this);
 			cmp_audioListener->SetParent(this);
 			components.push_back(cmp_audioListener);
 			break;
 		case ComponentTypes::AudioSourceComponent:
-			cmp_audioSource = new ComponentAudioSource(*gameObject.cmp_audioSource);
+			cmp_audioSource = new ComponentAudioSource(*gameObject.cmp_audioSource, this);
 			cmp_audioSource->SetParent(this);
 			components.push_back(cmp_audioSource);
 			break;

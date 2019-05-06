@@ -11,7 +11,7 @@ class ComponentAudioSource : public Component
 
 public:
 	ComponentAudioSource(GameObject* parent);
-	ComponentAudioSource(const ComponentAudioSource& componentAudioSource);
+	ComponentAudioSource(const ComponentAudioSource& componentAudioSource, GameObject* parent);
 	~ComponentAudioSource();
 	void Update();
 

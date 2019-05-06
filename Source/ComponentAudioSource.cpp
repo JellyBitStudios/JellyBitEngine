@@ -15,9 +15,12 @@ ComponentAudioSource::ComponentAudioSource(GameObject* parent) : Component(paren
 	source = App->audio->CreateSoundEmitter("");
 	App->audio->audio_sources.push_back(this);
 	memset(audio_to_play, '\0', DEFAULT_BUF_SIZE);
+
+	UpdateSourcePos();
 }
 
-ComponentAudioSource::ComponentAudioSource(const ComponentAudioSource& componentAudioSource) : Component(componentAudioSource.parent, ComponentTypes::AudioSourceComponent)
+ComponentAudioSource::ComponentAudioSource(const ComponentAudioSource& componentAudioSource, GameObject* parent) : 
+	Component(parent, ComponentTypes::AudioSourceComponent)
 {
 	source = App->audio->CreateSoundEmitter("");
 	App->audio->audio_sources.push_back(this);
@@ -37,8 +40,8 @@ ComponentAudioSource::ComponentAudioSource(const ComponentAudioSource& component
 	max_distance = componentAudioSource.GetMaxDistance();
 	memcpy(&audio_to_play, &componentAudioSource.GetAudioToPlay(), sizeof(char) * DEFAULT_BUF_SIZE);
 	current_state = componentAudioSource.GetState();
-
-
+	
+	UpdateSourcePos();
 }
 
 ComponentAudioSource::~ComponentAudioSource()
