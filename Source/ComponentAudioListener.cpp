@@ -81,4 +81,6 @@ void ComponentAudioListener::OnInternalSave(char*& cursor)
 void ComponentAudioListener::OnInternalLoad(char*& cursor)
 {
 	cursor += sizeof(WwiseT::AudioSource*);
+
+	UpdateListenerPos();
 }

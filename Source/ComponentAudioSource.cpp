@@ -427,4 +427,6 @@ void ComponentAudioSource::OnInternalLoad(char*& cursor)
 	bytes = sizeof(int);
 	memcpy(&current_state, cursor, bytes);
 	cursor += bytes;
+
+	UpdateSourcePos();
 }
