@@ -88,6 +88,9 @@ void ComponentButton::OnSystemEvent(System_Event event)
 
 void ComponentButton::Update()
 {
+	//TODO: MAYBE MOVE THIS LOGIC TO THE POSTUPDATE IN ORDER TO LET THE OTHER COMPONENTS FINISH THE ITERATION
+	//BEFORE WE CHANGE BETWEEN SCENES
+
 	if (IsTreeActive())
 	{
 		const int* rect = parent->cmp_rectTransform->GetRect();
@@ -125,11 +128,19 @@ void ComponentButton::Update()
 			state = HOVERED;
 			break;
 		case L_CLICK:
-			if (App->input->GetMouseButton(SDL_BUTTON_LEFT) != KEY_REPEAT)
+			if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_UP)
 			{
-				state = HOVERED;
-				if (hoveredTexture > 0) parent->cmp_image->SetResImageUuid(hoveredTexture);
-				KeyPressed();
+				if (MouseInScreen(rect))
+				{
+					state = HOVERED;
+					if (hoveredTexture > 0) parent->cmp_image->SetResImageUuid(hoveredTexture);
+					KeyPressed();
+				}
+				else
+				{
+					state = IDLE;
+					if (idleTexture > 0) parent->cmp_image->SetResImageUuid(idleTexture);
+				}
 			}
 			break;
 		default:
