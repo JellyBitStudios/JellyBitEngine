@@ -540,6 +540,7 @@ void ComponentLabel::OnUniqueEditor()
 			//-----------------------------------------
 
 		DragDropFont();
+		ImGui::PopItemWidth();
 	}
 #endif
 }

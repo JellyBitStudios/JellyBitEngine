@@ -569,6 +569,7 @@ void ComponentButton::OnUniqueEditor()
 			ImGui::SetCursorScreenPos({ cursorPos.x, cursorPos.y + 4 });
 
 		}
+		ImGui::PopItemWidth();
 	}
 #endif
 }

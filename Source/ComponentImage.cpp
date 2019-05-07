@@ -342,6 +342,7 @@ void ComponentImage::OnUniqueEditor()
 			ImGui::Text("Clear Texture");
 			ImGui::EndTooltip();
 		}
+		ImGui::PopItemWidth();
 	}
 #endif
 }
