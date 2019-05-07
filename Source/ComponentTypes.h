@@ -58,7 +58,7 @@ enum ComponentTypes
 	// SliderComponent = 34
 	// UIAnimatorComponent = 35
 
-
+	//msg: the before elements registred is updated. It's fine this margin :ok_hand:
 	InterpolationComponent = 40 // I'm not sure if this can interfere with other components, so I've left a margin of safety
 };
 
