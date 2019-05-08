@@ -84,13 +84,6 @@ bool exec(const char* cmd, std::string& error)
 	return result;
 }
 
-#pragma optimize("", off)
-void release_mode_breakpoint()
-{	
-	int put_breakpoint_here = 1;	
-}
-#pragma optimize("", on)
-
 bool ScriptingModule::Init(JSON_Object* data)
 {
 	//Locate the lib and etc folders in the mono installation
@@ -140,6 +133,8 @@ update_status ScriptingModule::Update()
 #ifndef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 #endif
+
+	std::vector<Resource*> res = App->res->GetResourcesByType(ResourceTypes::NoResourceType);
 
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
 	{
@@ -220,6 +215,7 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 
 				for (int i = 0; i < scripts.size(); ++i)
 				{
+					CONSOLE_SCRIPTING_LOG(LogTypes::Normal, "i is %d", i);
 					scripts[i]->Awake();
 				}
 
@@ -326,6 +322,12 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 
 				engineOpened = false;
 			}		
+			break;
+		}
+
+		case System_Event_Type::LoadScene:
+		{
+			scripts.clear();
 			break;
 		}
 	}
