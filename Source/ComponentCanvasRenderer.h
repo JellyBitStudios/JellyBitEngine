@@ -79,6 +79,7 @@ private:
 	std::vector<ToUIRend* > rend_queue;
 
 	bool fromWorld = false;
+	bool destroyed = false;
 };
 
 #endif

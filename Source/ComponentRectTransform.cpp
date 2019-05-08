@@ -1040,6 +1040,7 @@ void ComponentRectTransform::OnUniqueEditor()
 				break;
 			}
 			}
+			ImGui::PopItemWidth();
 		}
 
 		if (!needed_recalculate && recalculate4Pivot)
