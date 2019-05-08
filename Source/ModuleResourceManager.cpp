@@ -491,8 +491,6 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 					App->fs->GetFileName(file, data.name);
 					meshData.meshImportSettings = meshImportSettings;
 					strcpy((char*)meshData.meshImportSettings.modelPath, file);
-					App->sceneImporter->Load(mesh_files[i].data(), data, meshData);
-					meshData.meshImportSettings.adjacency = true;
 
 					resource = CreateResource(ResourceTypes::MeshResource, data, &meshData, uuid);
 					if (resource != nullptr)
@@ -601,7 +599,6 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 				data.exportedFile = outputFile.data();
 				App->fs->GetFileName(file, data.name);
 				textureData.textureImportSettings = textureImportSettings;
-				App->materialImporter->Load(outputFile.data(), data, textureData);
 
 				resource = CreateResource(ResourceTypes::TextureResource, data, &textureData, uuid);
 			}
@@ -1367,7 +1364,7 @@ Resource* ModuleResourceManager::ExportFile(ResourceTypes type, ResourceData& da
 	return resource;
 }
 
-Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData& data, void* specificData, uint forcedUuid)
+Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData& data, void* specificData, uint forcedUuid, bool internalRes)
 {
 	assert(type != ResourceTypes::NoResourceType);
 
@@ -1377,7 +1374,7 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 	switch (type)
 	{
 		case ResourceTypes::MeshResource:
-			resource = new ResourceMesh(ResourceTypes::MeshResource, uuid, data, *(ResourceMeshData*)specificData);
+			resource = new ResourceMesh(ResourceTypes::MeshResource, uuid, data, *(ResourceMeshData*)specificData, internalRes);
 			break;
 		case ResourceTypes::TextureResource:
 			resource = new ResourceTexture(ResourceTypes::TextureResource, uuid, data, *(ResourceTextureData*)specificData);
@@ -1389,7 +1386,7 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 			resource = new ResourceShaderProgram(ResourceTypes::ShaderProgramResource, uuid, data, *(ResourceShaderProgramData*)specificData);
 			break;
 		case ResourceTypes::MaterialResource:
-			resource = new ResourceMaterial(ResourceTypes::MaterialResource, uuid, data, *(ResourceMaterialData*)specificData);
+			resource = new ResourceMaterial(ResourceTypes::MaterialResource, uuid, data, *(ResourceMaterialData*)specificData, internalRes);
 			break;
 		case ResourceTypes::ScriptResource:
 			resource = new ResourceScript(uuid, data, *(ResourceScriptData*)specificData);

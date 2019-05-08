@@ -61,7 +61,7 @@ class ResourceTexture : public Resource
 {
 public:
 
-	ResourceTexture(ResourceTypes type, uint uuid, ResourceData data, ResourceTextureData textureData);
+	ResourceTexture(ResourceTypes type, uint uuid, ResourceData data, ResourceTextureData textureData, bool internalRes = false);
 	~ResourceTexture();
 
 	void OnPanelAssets();

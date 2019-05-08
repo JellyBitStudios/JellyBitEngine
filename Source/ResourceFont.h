@@ -43,12 +43,12 @@ public:
 	static Resource* ImportFile(const char* file);
 	static uint SaveFile(ResourceData & data, ResourceFontData & fontData);
 	// File has to be a .fnt (binary)
-	static ResourceFont* LoadFile(const char * file);
-	static uint CreateMeta(const char * file, std::vector<uint> fontUuids, FontImportSettings importSettings);
-	static bool ReadMeta(const char * metaFile, int64_t & lastModTime, std::vector<uint>& fontUuids, FontImportSettings & importSettings);
-	static bool ReadMetaFromBuffer(char *& cursor, int64_t & lastModTime, std::vector<uint>& fontUuids, FontImportSettings & importSettings);
+	static ResourceFont* LoadFile(const char* file);
+	static uint CreateMeta(const char* file, std::vector<uint> fontUuids, FontImportSettings importSettings);
+	static bool ReadMeta(const char* metaFile, int64_t& lastModTime, std::vector<uint>& fontUuids, FontImportSettings& importSettings);
+	static bool ReadMetaFromBuffer(char*& cursor, int64_t& lastModTime, std::vector<uint>& fontUuids, FontImportSettings& importSettings);
 	static void UpdateImportSettings(FontImportSettings importSettings);
-	static ResourceFont * ImportFontBySize(const char * file, uint size, uint uuid = 0);
+	static ResourceFont* ImportFontBySize(const char* file, uint size, uint uuid = 0);
 
 	static uint LoadTextureCharacter(uint width, uint height, uchar * buffer);
 

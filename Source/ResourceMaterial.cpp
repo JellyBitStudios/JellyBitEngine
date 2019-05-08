@@ -13,14 +13,16 @@
 
 #include <assert.h>
 
-ResourceMaterial::ResourceMaterial(ResourceTypes type, uint uuid, ResourceData data, ResourceMaterialData materialData) : Resource(type, uuid, data), materialData(materialData) 
+ResourceMaterial::ResourceMaterial(ResourceTypes type, uint uuid, ResourceData data, ResourceMaterialData materialData, bool internalRes) : Resource(type, uuid, data, internalRes), materialData(materialData) 
 {
-	InitResources();
+	if (internalRes)
+		InitResources();
 }
 
 ResourceMaterial::~ResourceMaterial() 
 {
-	DeinitResources();
+	if (internalRes)
+		DeinitResources();
 }
 
 void ResourceMaterial::OnPanelAssets()
@@ -635,10 +637,14 @@ void ResourceMaterial::EditTextureMatrix(uint textureUuid)
 
 bool ResourceMaterial::LoadInMemory()
 {
+	if (!internalRes)
+		InitResources();
 	return true;
 }
 
 bool ResourceMaterial::UnloadFromMemory()
 {
+	if (!internalRes)
+		DeinitResources();
 	return true;
 }
