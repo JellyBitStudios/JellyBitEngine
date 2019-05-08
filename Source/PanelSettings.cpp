@@ -218,6 +218,9 @@ void PanelSettings::RendererNode() const
 	int misc_flags = ImGuiColorEditFlags_Float;
 	ImGui::ColorEdit3("Dot Color", &App->fbo->dotColor[0], misc_flags);
 
+	// Dot2
+	ImGui::ColorEdit3("Dot Color 2", &App->fbo->dotColor2[0], misc_flags);
+
 	// Fog
 	ImGui::Spacing();
 	ImGui::Text("FOG");
