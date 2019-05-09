@@ -529,7 +529,7 @@ void ComponentProjector::SetMaterialRes(std::string materialName)
 	std::vector<Resource*> materials = App->res->GetResourcesByType(ResourceTypes::MaterialResource);
 	for (Resource* material : materials)
 	{
-		if (material->GetData().name == materialName)
+		if (materialName == material->GetData().name.data())
 		{
 			if (materialRes > 0)
 				App->res->SetAsUnused(materialRes);

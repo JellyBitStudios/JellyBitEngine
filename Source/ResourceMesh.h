@@ -107,7 +107,7 @@ class ResourceMesh : public Resource
 {
 public:
 
-	ResourceMesh(ResourceTypes type, uint uuid, ResourceData data, ResourceMeshData meshData);
+	ResourceMesh(ResourceTypes type, uint uuid, ResourceData data, ResourceMeshData meshData, bool internalRes = false);
 	~ResourceMesh();
 
 	void OnPanelAssets();

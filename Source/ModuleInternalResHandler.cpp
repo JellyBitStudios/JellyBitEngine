@@ -110,7 +110,7 @@ void ModuleInternalResHandler::CreatePlane()
 	ResourceData data;
 	data.name = "Default Plane";
 
-	plane = App->res->CreateResource(ResourceTypes::MeshResource, data, &specificData, PLANE_UUID)->GetUuid();
+	plane = App->res->CreateResource(ResourceTypes::MeshResource, data, &specificData, PLANE_UUID, true)->GetUuid();
 
 	// need this for deferred shading
 	App->res->SetAsUsed(plane);
@@ -173,7 +173,7 @@ void ModuleInternalResHandler::CreateCube()
 	data.name = "Default Cube";
 	data.internal = true;
 	
-	cube = App->res->CreateResource(ResourceTypes::MeshResource, data, &specificData, CUBE_UUID)->GetUuid();
+	cube = App->res->CreateResource(ResourceTypes::MeshResource, data, &specificData, CUBE_UUID, true)->GetUuid();
 }
 
 void ModuleInternalResHandler::CreateCheckers()
@@ -208,7 +208,7 @@ void ModuleInternalResHandler::CreateCheckers()
 	textureData.textureImportSettings.minFilter = ResourceTextureImportSettings::TextureFilterMode::NEAREST;
 	textureData.textureImportSettings.magFilter = ResourceTextureImportSettings::TextureFilterMode::NEAREST;
 
-	checkers = (App->res->CreateResource(ResourceTypes::TextureResource, data, &textureData, CHECKERS_TEXTURE_UUID))->GetUuid();
+	checkers = (App->res->CreateResource(ResourceTypes::TextureResource, data, &textureData, CHECKERS_TEXTURE_UUID, true))->GetUuid();
 }
 
 void ModuleInternalResHandler::CreateDefaultTexture()
@@ -242,7 +242,7 @@ void ModuleInternalResHandler::CreateDefaultTexture()
 	textureData.textureImportSettings.minFilter = ResourceTextureImportSettings::TextureFilterMode::NEAREST;
 	textureData.textureImportSettings.magFilter = ResourceTextureImportSettings::TextureFilterMode::NEAREST;
 
-	defaultTexture = (App->res->CreateResource(ResourceTypes::TextureResource, data, &textureData, REPLACE_ME_TEXTURE_UUID))->GetUuid();
+	defaultTexture = (App->res->CreateResource(ResourceTypes::TextureResource, data, &textureData, REPLACE_ME_TEXTURE_UUID, true))->GetUuid();
 }
 
 void ModuleInternalResHandler::CreateLightIcon()
@@ -604,5 +604,5 @@ void ModuleInternalResHandler::CreateDefaultMaterial()
 		}
 	}
 
-	defaultMaterial = App->res->CreateResource(ResourceTypes::MaterialResource, data, &materialData, DEFAULT_MATERIAL_UUID)->GetUuid();
+	defaultMaterial = App->res->CreateResource(ResourceTypes::MaterialResource, data, &materialData, DEFAULT_MATERIAL_UUID, true)->GetUuid();
 }

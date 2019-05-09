@@ -5,6 +5,7 @@
 #include "ModuleResourceManager.h"
 #include "ModuleGOs.h"
 #include "ModuleScene.h"
+#include "SceneImporter.h"
 
 #include "SceneImporter.h"
 #include "GameObject.h"
@@ -16,7 +17,15 @@
 
 #include <assert.h>
 
-ResourceMesh::ResourceMesh(ResourceTypes type, uint uuid, ResourceData data, ResourceMeshData meshData) : Resource(type, uuid, data), meshData(meshData) {}
+ResourceMesh::ResourceMesh(ResourceTypes type, uint uuid, ResourceData data, ResourceMeshData meshData, bool internalRes) : Resource(type, uuid, data, internalRes)
+{
+	if (internalRes)
+	{
+		memcpy(&this->meshData, &meshData, sizeof(ResourceMeshData));
+	}
+	else
+		this->meshData.meshImportSettings = meshData.meshImportSettings;
+}
 
 ResourceMesh::~ResourceMesh() 
 {
@@ -771,8 +780,19 @@ uint ResourceMesh::GetVAO() const
 
 bool ResourceMesh::LoadInMemory()
 {
-	assert(meshData.vertices != nullptr && meshData.verticesSize > 0
-		&& meshData.indices != nullptr && meshData.indicesSize > 0);
+	if (!internalRes)
+	{
+		assert(meshData.vertices == 0 && meshData.verticesSize == 0
+			&& meshData.indices == 0 && meshData.indicesSize == 0);
+
+		App->sceneImporter->Load(data.exportedFile.data(), data, meshData);
+		meshData.meshImportSettings.adjacency = true;
+	}
+	else
+	{
+		assert(meshData.vertices != 0 && meshData.verticesSize >= 0
+			&& meshData.indices != 0 && meshData.indicesSize >= 0);
+	}
 
 	// Calculate adjacent indices
 	if (UseAdjacency())
@@ -785,6 +805,21 @@ bool ResourceMesh::LoadInMemory()
 
 bool ResourceMesh::UnloadFromMemory()
 {
+	if (!internalRes)
+	{
+		delete[] meshData.vertices;
+		meshData.vertices = 0;
+		meshData.verticesSize = 0;
+		delete[] meshData.indices;
+		meshData.indices = 0;
+		meshData.indicesSize = 0;
+		delete[] meshData.boneInfluences;
+		meshData.boneInfluences = 0;
+		meshData.boneInfluencesSize = 0;
+		//delete[] meshData.adjacentIndices; // TODO G: ask sandra about it...
+		meshData.adjacentIndices = 0;
+	}
+
 	DeleteVAO();
 
 	return true;

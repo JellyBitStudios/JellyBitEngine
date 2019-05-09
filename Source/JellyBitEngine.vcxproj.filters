@@ -2133,6 +2133,9 @@
     <ClInclude Include="ComponentSlider.h">
       <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
     </ClInclude>
+    <ClInclude Include="ComponentUIAnimation.h">
+      <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ModuleInput.cpp">
@@ -2715,6 +2718,9 @@
       <Filter>Sources\Modules</Filter>
     </ClCompile>
     <ClCompile Include="ComponentSlider.cpp">
+      <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ComponentUIAnimation.cpp">
       <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
     </ClCompile>
   </ItemGroup>

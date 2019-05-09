@@ -10,7 +10,13 @@
 
 #include <assert.h>
 
-ResourceTexture::ResourceTexture(ResourceTypes type, uint uuid, ResourceData data, ResourceTextureData textureData) : Resource(type, uuid, data), textureData(textureData) {}
+ResourceTexture::ResourceTexture(ResourceTypes type, uint uuid, ResourceData data, ResourceTextureData textureData, bool internalRes) : Resource(type, uuid, data, internalRes)
+{
+	if (internalRes)
+		memcpy(&this->textureData, &textureData, sizeof(ResourceTextureData));
+	else
+		this->textureData.textureImportSettings = textureData.textureImportSettings;
+}
 
 ResourceTexture::~ResourceTexture()
 {
@@ -344,8 +350,15 @@ uint ResourceTexture::GetHeight() const
 
 bool ResourceTexture::LoadInMemory()
 {
-	assert(textureData.data != nullptr && textureData.width > 0 && textureData.height > 0);
-
+	if (!internalRes)
+	{
+		assert(textureData.data == nullptr && textureData.width == 0 && textureData.height == 0);
+		App->materialImporter->Load(data.exportedFile.data(), data, textureData);
+	}
+	else
+	{
+		assert(textureData.data != nullptr && textureData.width != 0 && textureData.height != 0);
+	}
 	App->materialImporter->LoadInMemory(id, textureData);
 
 	return true;
@@ -353,6 +366,12 @@ bool ResourceTexture::LoadInMemory()
 
 bool ResourceTexture::UnloadFromMemory()
 {
+	if (!internalRes)
+	{
+		RELEASE_ARRAY(textureData.data);
+		textureData.height = 0;
+		textureData.width = 0;
+	}
 	App->materialImporter->DeleteTexture(id);
 
 	return true;
