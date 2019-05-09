@@ -219,6 +219,18 @@ void ComponentImage::ResetTexture()
 	res_image = 0;
 }
 
+void ComponentImage::SetAlpha(float alpha)
+{
+	if (alpha > 1.0f) alpha = 1.0;
+	if (alpha < 0.0f) alpha = 0.0;
+	color[Color::A] = alpha;
+}
+
+float ComponentImage::GetAlpha() const
+{
+	return color[Color::A];
+}
+
 bool ComponentImage::useMask() const
 {
 	return mask;
