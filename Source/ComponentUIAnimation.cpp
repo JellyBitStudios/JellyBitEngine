@@ -66,20 +66,17 @@ void ComponentUIAnimation::Update()
 		change_origin_rect = false;
 	}
 
-	if (calculate_keys_global_pos)
+	if (calculate_keys_global)
 	{
-		int rParent[4];
-		memcpy(rParent, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
-
 		for (std::list<Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
 		{
-			(*it)->globalRect[0] = (*it)->diffRect[0] + rParent[0];
-			(*it)->globalRect[1] = (*it)->diffRect[1] + rParent[1];
-			(*it)->globalRect[2] = (*it)->diffRect[2] + rParent[2];
-			(*it)->globalRect[3] = (*it)->diffRect[3] + rParent[3];
+			(*it)->globalRect[0] = (*it)->diffRect[0] + init_rect[0];
+			(*it)->globalRect[1] = (*it)->diffRect[1] + init_rect[1];
+			(*it)->globalRect[2] = (*it)->diffRect[2] + init_rect[2];
+			(*it)->globalRect[3] = (*it)->diffRect[3] + init_rect[3];
 		}
 
-		calculate_keys_global_pos = false;
+		calculate_keys_global = false;
 	}
 }
 
@@ -157,11 +154,29 @@ void ComponentUIAnimation::OnUniqueEditor()
 			//TODO SELECT ANY KEY with a dropdown or smth
 
 			if (current_key) {
-				ImGui::Text("Key rect X: %i Y: %i W: %i H:%i", 
+				ImGui::Separator();
+				ImGui::Text("Current Key");
+				ImGui::Text("DiffRect X: %i Y: %i W: %i H:%i", 
 					current_key->diffRect[0], current_key->diffRect[1], current_key->diffRect[2], current_key->diffRect[3]);
+				ImGui::Text("GlobalRect X: %i Y: %i W: %i H:%i",
+					current_key->globalRect[0], current_key->globalRect[1], current_key->globalRect[2], current_key->globalRect[3]);
+
 				ImGui::Text("Time to key: %f", current_key->time_to_key);
 			}
 
+			uint count = 1;
+			for (std::list<Key*>::iterator it = keys.begin(); it != keys.end(); ++it, ++count)
+			{
+				ImGui::Separator();
+				Key* k = *it;
+				ImGui::Text("Key %u", count);
+				ImGui::Text("DiffRect X: %i Y: %i W: %i H:%i",
+					k->diffRect[0], k->diffRect[1], k->diffRect[2], k->diffRect[3]);
+				ImGui::Text("GlobalRect X: %i Y: %i W: %i H:%i",
+					k->globalRect[0], k->globalRect[1], k->globalRect[2], k->globalRect[3]);
+				ImGui::Text("Time to key: %f", k->time_to_key);
+			}
+			ImGui::Separator();
 			if (ImGui::Button("Play"))
 				ImGui::Text("UI Animation");
 
@@ -184,6 +199,9 @@ void ComponentUIAnimation::OnUniqueEditor()
 
 			if (ImGui::Button("Previous Key"))
 				ImGui::Text("UI Animation");
+
+			if (ImGui::Button("Calculate Globals"))
+				calculate_keys_global = true;
 		}
 		else {
 			ImGui::Text("There is no key for this UI GO ...");

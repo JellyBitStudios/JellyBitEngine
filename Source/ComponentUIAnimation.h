@@ -78,7 +78,7 @@ private:
 	bool recording = false;
 
 	//calculate global pos of keys
-	bool calculate_keys_global_pos = false;
+	bool calculate_keys_global = false;
 };
 
 #endif
