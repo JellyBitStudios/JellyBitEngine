@@ -1473,6 +1473,24 @@ MonoArray* ToEuler(MonoArray* quat)
 	return ret;
 }
 
+MonoArray* QuaternionEuler(MonoArray* eulerCS)
+{
+	if (!eulerCS)
+		return nullptr;
+
+	math::float3 euler = { mono_array_get(eulerCS, float, 0), mono_array_get(eulerCS, float, 1), mono_array_get(eulerCS, float, 2) };
+
+	math::Quat retCPP = math::Quat::FromEulerZXY(euler.z, euler.x, euler.y);
+
+	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_single_class(), 4);
+	mono_array_set(ret, float, 0, retCPP.x);
+	mono_array_set(ret, float, 1, retCPP.y);
+	mono_array_set(ret, float, 2, retCPP.z);
+	mono_array_set(ret, float, 3, retCPP.w);
+
+	return ret;
+}
+
 MonoArray* RotateAxisAngle(MonoArray* axis, float deg)
 {
 	if (!axis)
@@ -4020,6 +4038,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Quaternion::quatMult", (const void*)&QuatMult);
 	mono_add_internal_call("JellyBitEngine.Quaternion::quatVec3", (const void*)&QuatVec3);
 	mono_add_internal_call("JellyBitEngine.Quaternion::toEuler", (const void*)&ToEuler);
+	mono_add_internal_call("JellyBitEngine.Quaternion::_Euler", (const void*)&QuaternionEuler);
 	mono_add_internal_call("JellyBitEngine.Quaternion::RotateAxisAngle", (const void*)&RotateAxisAngle);
 	mono_add_internal_call("JellyBitEngine.Quaternion::_LookAt", (const void*)&QuatLookAt);
 
