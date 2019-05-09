@@ -11,6 +11,11 @@ ComponentUIAnimation::ComponentUIAnimation(GameObject * parent, bool includeComp
 	Component(parent, ComponentTypes::UIAnimationComponent)
 {
 	memcpy(init_rect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
+
+	if (includeComponents)
+	{
+		change_origin_rect = true;
+	}
 }
 
 ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & component_ui_anim, GameObject * parent, bool includeComponents) :
@@ -19,9 +24,13 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 	memcpy(init_rect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
 
 	// TODO end this
-
-	if (!keys.empty() && includeComponents)
-		current_key = &keys.front();
+	if (includeComponents)
+	{
+		if (!keys.empty())
+			current_key = &keys.front();
+	
+		change_origin_rect = true;
+	}
 }
 
 ComponentUIAnimation::~ComponentUIAnimation()
@@ -31,6 +40,12 @@ ComponentUIAnimation::~ComponentUIAnimation()
 void ComponentUIAnimation::Update()
 {
 	//float dt = App->timeManager->GetDt();
+
+	if (change_origin_rect)
+	{
+		memcpy(init_rect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
+		change_origin_rect = false;
+	}
 }
 
 bool ComponentUIAnimation::IsRecording() const
@@ -40,7 +55,7 @@ bool ComponentUIAnimation::IsRecording() const
 
 uint ComponentUIAnimation::GetInternalSerializationBytes()
 {
-	return uint();
+	return 0;
 }
 
 void ComponentUIAnimation::OnInternalSave(char *& cursor)
@@ -49,6 +64,11 @@ void ComponentUIAnimation::OnInternalSave(char *& cursor)
 
 void ComponentUIAnimation::OnInternalLoad(char *& cursor)
 {
+
+	if (parent->includeModuleComponent)
+	{
+		change_origin_rect = true;
+	}
 }
 
 void ComponentUIAnimation::OnUniqueEditor()

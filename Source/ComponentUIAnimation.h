@@ -29,6 +29,7 @@ private:
 	void AddKey();
 
 private:
+	//keys
 	struct Key {
 		int rect[4];
 		float time_to_key;
@@ -46,11 +47,14 @@ private:
 
 	std::list<Key> keys;
 
-	int init_rect[4];
-
-	bool recording = false;
-	
 	Key* current_key = nullptr;
+
+	//rexct origin
+	int init_rect[4];
+	bool change_origin_rect = true;
+
+	//recording mode (for rectTransform)
+	bool recording = false;
 };
 
 #endif
