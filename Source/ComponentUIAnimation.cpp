@@ -1,4 +1,6 @@
 #include "ComponentUIAnimation.h"
+#include "ComponentRectTransform.h"
+#include "GameObject.h"
 
 #ifndef GAMEMODE
 #include "imgui\imgui.h"
@@ -8,11 +10,13 @@
 ComponentUIAnimation::ComponentUIAnimation(GameObject * parent, bool includeComponents) :
 	Component(parent, ComponentTypes::UIAnimationComponent)
 {
+	memcpy(init_rect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
 }
 
 ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & component_ui_anim, GameObject * parent, bool includeComponents) :
 	Component(parent, ComponentTypes::UIAnimationComponent)
 {
+	memcpy(init_rect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
 
 	// TODO end this
 
@@ -27,6 +31,11 @@ ComponentUIAnimation::~ComponentUIAnimation()
 void ComponentUIAnimation::Update()
 {
 	//float dt = App->timeManager->GetDt();
+}
+
+bool ComponentUIAnimation::IsRecording() const
+{
+	return recording;
 }
 
 uint ComponentUIAnimation::GetInternalSerializationBytes()
@@ -50,6 +59,8 @@ void ComponentUIAnimation::OnUniqueEditor()
 		ImGui::Text("UI Animation");
 
 		if (!keys.empty()) {
+
+			//TODO SELECT ANY KEY with a dropdown or smth
 
 			if (current_key) {
 				ImGui::Text("Key rect X: %i Y: %i W: %i H:%i", 
@@ -84,6 +95,19 @@ void ComponentUIAnimation::OnUniqueEditor()
 		else {
 			ImGui::Text("There is no key for this UI GO ...");
 		}
+
+		if (recording) {
+			if (ImGui::Button("STOP RECORD"))
+				this->AddKey();
+		}
+		else {
+			if (ImGui::Button("START RECORD"))
+				this->AddKey();
+		}
+		
+
+		if (ImGui::Button("Save Key"))
+			this->AddKey();
 	}
 #endif
 }
@@ -98,4 +122,25 @@ void ComponentUIAnimation::OnSystemEvent(System_Event event)
 	case System_Event_Type::RectTransformUpdated:
 		break;
 	}
+}
+
+void ComponentUIAnimation::SetupInitPosition()
+{
+	if (keys.empty()) {
+		Key tmp_key;
+		memcpy(tmp_key.rect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
+		tmp_key.time_to_key = 1000.0f;
+		keys.push_back(tmp_key);
+
+		current_key = &tmp_key;
+	}
+	else {
+
+	}
+	
+}
+
+void ComponentUIAnimation::AddKey()
+{
+
 }

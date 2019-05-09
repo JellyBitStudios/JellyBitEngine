@@ -14,6 +14,8 @@ public:
 
 	void Update();
 
+	bool IsRecording()const;
+
 private:
 	virtual uint GetInternalSerializationBytes();
 	virtual void OnInternalSave(char*& cursor);
@@ -22,6 +24,9 @@ private:
 
 	void OnSystemEvent(System_Event event);
 
+private:
+	void SetupInitPosition();
+	void AddKey();
 
 private:
 	struct Key {
@@ -41,6 +46,10 @@ private:
 
 	std::list<Key> keys;
 
+	int init_rect[4];
+
+	bool recording = false;
+	
 	Key* current_key = nullptr;
 };
 
