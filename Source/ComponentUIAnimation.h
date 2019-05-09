@@ -17,6 +17,10 @@ public:
 	bool IsRecording()const;
 
 private:
+	//versions
+	enum versionSerialization {
+		v1 = 0,
+	};
 	virtual uint GetInternalSerializationBytes();
 	virtual void OnInternalSave(char*& cursor);
 	virtual void OnInternalLoad(char*& cursor);
@@ -29,19 +33,33 @@ private:
 	void AddKey();
 
 private:
+	//version
+	versionSerialization version = v1;
 	//keys
 	struct Key {
-		int rect[4];
+		int diffRect[4];
 		float time_to_key;
 
 		uint GetInternalSerializationBytes() {
-
+			return sizeof(int) * 4 + sizeof(float);
 		}
 		void OnInternalSave(char*& cursor) {
+			size_t bytes = sizeof(int) * 4;
+			memcpy(cursor, diffRect, bytes);
+			cursor += bytes;
 
+			bytes = sizeof(float);
+			memcpy(cursor, &time_to_key, bytes);
+			cursor += bytes;
 		}
 		void OnInternalLoad(char*& cursor) {
+			size_t bytes = sizeof(int) * 4;
+			memcpy(diffRect, cursor, bytes);
+			cursor += bytes;
 
+			bytes = sizeof(float);
+			memcpy(&time_to_key, cursor, bytes);
+			cursor += bytes;
 		}
 	};
 

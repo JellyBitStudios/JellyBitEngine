@@ -10,8 +10,6 @@
 ComponentUIAnimation::ComponentUIAnimation(GameObject * parent, bool includeComponents) :
 	Component(parent, ComponentTypes::UIAnimationComponent)
 {
-	memcpy(init_rect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
-
 	if (includeComponents)
 	{
 		change_origin_rect = true;
@@ -21,7 +19,8 @@ ComponentUIAnimation::ComponentUIAnimation(GameObject * parent, bool includeComp
 ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & component_ui_anim, GameObject * parent, bool includeComponents) :
 	Component(parent, ComponentTypes::UIAnimationComponent)
 {
-	memcpy(init_rect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
+	version = component_ui_anim.version;
+	keys = component_ui_anim.keys;
 
 	// TODO end this
 	if (includeComponents)
@@ -35,6 +34,8 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 
 ComponentUIAnimation::~ComponentUIAnimation()
 {
+
+	parent->cmp_uiAnimation = nullptr;
 }
 
 void ComponentUIAnimation::Update()
@@ -55,15 +56,54 @@ bool ComponentUIAnimation::IsRecording() const
 
 uint ComponentUIAnimation::GetInternalSerializationBytes()
 {
-	return 0;
+	uint keys_size = (!keys.empty()) ? (*keys.begin()).GetInternalSerializationBytes() * keys.size() : 0;
+	return keys_size + sizeof(uint) + sizeof(versionSerialization);
 }
 
 void ComponentUIAnimation::OnInternalSave(char *& cursor)
 {
+	size_t bytes = sizeof(versionSerialization);
+	memcpy(cursor, &version, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(uint);
+	uint keys_size = (!keys.empty()) ? keys.size() : 0;
+	memcpy(cursor, &keys_size, bytes);
+	cursor += bytes;
+
+	if (keys_size > 0)
+	{
+		for (std::list<Key>::iterator it = keys.begin(); it != keys.end(); ++it)
+			(*it).OnInternalSave(cursor);
+	}
 }
 
 void ComponentUIAnimation::OnInternalLoad(char *& cursor)
 {
+	size_t bytes = sizeof(versionSerialization);
+	memcpy(&version, cursor, bytes);
+	cursor += bytes;
+
+	switch (version)
+	{
+	case ComponentUIAnimation::v1:
+
+		bytes = sizeof(uint);
+		uint keys_size;
+		memcpy(&keys_size, cursor, bytes);
+		cursor += bytes;
+		
+		if (keys_size > 0)
+		{
+			for (uint i = 0; i < keys_size; i++)
+			{
+				Key nkey;
+				nkey.OnInternalLoad(cursor);
+				keys.push_back(nkey);
+			}
+		}
+		break;
+	}
 
 	if (parent->includeModuleComponent)
 	{
@@ -84,7 +124,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 
 			if (current_key) {
 				ImGui::Text("Key rect X: %i Y: %i W: %i H:%i", 
-					current_key->rect[0], current_key->rect[1], current_key->rect[2], current_key->rect[3]);
+					current_key->diffRect[0], current_key->diffRect[1], current_key->diffRect[2], current_key->diffRect[3]);
 				ImGui::Text("Time to key: %f", current_key->time_to_key);
 			}
 			
@@ -132,9 +172,9 @@ void ComponentUIAnimation::OnSystemEvent(System_Event event)
 	switch (event.type)
 	{
 	case System_Event_Type::ScreenChanged:
-		break;
 	case System_Event_Type::CanvasChanged:
 	case System_Event_Type::RectTransformUpdated:
+		change_origin_rect = true;
 		break;
 	}
 }
@@ -143,7 +183,7 @@ void ComponentUIAnimation::SetupInitPosition()
 {
 	if (keys.empty()) {
 		Key tmp_key;
-		memcpy(tmp_key.rect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
+		memcpy(tmp_key.diffRect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
 		tmp_key.time_to_key = 1000.0f;
 		keys.push_back(tmp_key);
 
