@@ -165,7 +165,6 @@ void ComponentEmitter::ChangeGameState(SimulatedGame state)
 
 void ComponentEmitter::Update()
 {
-
 	if (isPlaying)
 	{
 		if (rateOverTime > 0)
@@ -695,13 +694,9 @@ void ComponentEmitter::ParticleAABB()
 
 void ComponentEmitter::UpdateTransform()
 {
-#ifndef GAMEMODE
-
 	math::float3 size = boundingBox.Size();
 	math::float3 pos = parent->transform->GetGlobalMatrix().TranslatePart();
 	boundingBox.SetFromCenterAndSize(pos, size);
-
-#endif
 }
 
 void ComponentEmitter::ParticleTexture()
@@ -1214,7 +1209,6 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 		SetMeshInfo((ResourceMesh*)res, shapeMesh);
 	cursor += bytes;
 
-	//Coment
 	uint uuidRes;
 	memcpy(&uuidRes, cursor, bytes);
 	uuidRes > 0 ? SetUuidRes(uuidRes, uuidMeshPart) : SetUuidRes(App->resHandler->plane, uuidMeshPart);
@@ -1222,7 +1216,6 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 		isPlane = false;
 
 	cursor += bytes;
-	//-----
 
 	particleAnim.OnInternalLoad(cursor);
 
