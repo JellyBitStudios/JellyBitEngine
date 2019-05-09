@@ -96,13 +96,8 @@ void ComponentUIAnimation::OnUniqueEditor()
 			ImGui::Text("There is no key for this UI GO ...");
 		}
 
-		if (recording) {
-			if (ImGui::Button("STOP RECORD"))
-				this->AddKey();
-		}
-		else {
-			if (ImGui::Button("START RECORD"))
-				this->AddKey();
+		if(ImGui::Button((recording) ? "Stop recording" : "Start recording")) {
+			recording = !recording;
 		}
 		
 
