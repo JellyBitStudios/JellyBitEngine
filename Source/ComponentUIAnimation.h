@@ -37,8 +37,9 @@ private:
 	//keys
 	struct Key {
 		Key() {}
-		int diffRect[4];
-		float time_to_key;
+		int diffRect[4] = { 0, 0, 0, 0};
+		int globalRect[4] = { 0, 0, 0, 0 };
+		float time_to_key = 0.0;
 
 		static uint GetInternalSerializationBytes() {
 			return sizeof(int) * 4 + sizeof(float);
@@ -65,14 +66,19 @@ private:
 
 	std::list<Key*> keys;
 
+	//curent
 	Key* current_key = nullptr;
+	float timer;
 
-	//rexct origin
+	//rect origin
 	int init_rect[4];
 	bool change_origin_rect = true;
 
 	//recording mode (for rectTransform)
 	bool recording = false;
+
+	//calculate global pos of keys
+	bool calculate_keys_global_pos = false;
 };
 
 #endif

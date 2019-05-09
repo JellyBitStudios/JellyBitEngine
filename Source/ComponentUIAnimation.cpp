@@ -65,6 +65,22 @@ void ComponentUIAnimation::Update()
 		memcpy(init_rect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
 		change_origin_rect = false;
 	}
+
+	if (calculate_keys_global_pos)
+	{
+		int rParent[4];
+		memcpy(rParent, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
+
+		for (std::list<Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
+		{
+			(*it)->globalRect[0] = (*it)->diffRect[0] + rParent[0];
+			(*it)->globalRect[1] = (*it)->diffRect[1] + rParent[1];
+			(*it)->globalRect[2] = (*it)->diffRect[2] + rParent[2];
+			(*it)->globalRect[3] = (*it)->diffRect[3] + rParent[3];
+		}
+
+		calculate_keys_global_pos = false;
+	}
 }
 
 bool ComponentUIAnimation::IsRecording() const
