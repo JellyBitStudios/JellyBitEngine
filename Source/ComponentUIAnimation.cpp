@@ -22,11 +22,29 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 	version = component_ui_anim.version;
 	keys = component_ui_anim.keys;
 
+	uint key_size = component_ui_anim.keys.size();
+	if (key_size > 0u) {
+		char buffer[sizeof(int) * 4 + sizeof(float)];
+		char* cursor = buffer;
+
+		std::list<Key*> tmp_list = component_ui_anim.keys;
+		for (std::list<Key*>::iterator it = tmp_list.begin(); it != tmp_list.end(); ++it) {
+			Key* tmp_key = new Key();
+			(*it)->OnInternalSave(cursor);
+			cursor = buffer;
+			tmp_key->OnInternalLoad(cursor);
+			cursor = buffer;
+
+			keys.push_back(tmp_key);
+		}
+	}
+	
+
 	// TODO end this
 	if (includeComponents)
 	{
 		if (!keys.empty())
-			current_key = &keys.front();
+			current_key = keys.front();
 	
 		change_origin_rect = true;
 	}
@@ -56,7 +74,7 @@ bool ComponentUIAnimation::IsRecording() const
 
 uint ComponentUIAnimation::GetInternalSerializationBytes()
 {
-	uint keys_size = (!keys.empty()) ? (*keys.begin()).GetInternalSerializationBytes() * keys.size() : 0;
+	uint keys_size = (!keys.empty()) ? (*keys.begin())->GetInternalSerializationBytes() * keys.size() : 0;
 	return keys_size + sizeof(uint) + sizeof(versionSerialization);
 }
 
@@ -73,8 +91,8 @@ void ComponentUIAnimation::OnInternalSave(char *& cursor)
 
 	if (keys_size > 0)
 	{
-		for (std::list<Key>::iterator it = keys.begin(); it != keys.end(); ++it)
-			(*it).OnInternalSave(cursor);
+		for (std::list<Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
+			(*it)->OnInternalSave(cursor);
 	}
 }
 
@@ -97,8 +115,8 @@ void ComponentUIAnimation::OnInternalLoad(char *& cursor)
 		{
 			for (uint i = 0; i < keys_size; i++)
 			{
-				Key nkey;
-				nkey.OnInternalLoad(cursor);
+				Key* nkey = new Key();
+				nkey->OnInternalLoad(cursor);
 				keys.push_back(nkey);
 			}
 		}
@@ -127,7 +145,6 @@ void ComponentUIAnimation::OnUniqueEditor()
 					current_key->diffRect[0], current_key->diffRect[1], current_key->diffRect[2], current_key->diffRect[3]);
 				ImGui::Text("Time to key: %f", current_key->time_to_key);
 			}
-			
 
 			if (ImGui::Button("Play"))
 				ImGui::Text("UI Animation");
@@ -158,11 +175,16 @@ void ComponentUIAnimation::OnUniqueEditor()
 
 		if(ImGui::Button((recording) ? "Stop recording" : "Start recording")) {
 			recording = !recording;
+
+			if (!recording) {
+				parent->cmp_rectTransform->SetRect(init_rect, true);
+			}
 		}
 		
-
-		if (ImGui::Button("Save Key"))
-			this->AddKey();
+		if (recording) {
+			if (ImGui::Button("Save Key"))
+				this->AddKey();
+		}
 	}
 #endif
 }
@@ -179,23 +201,19 @@ void ComponentUIAnimation::OnSystemEvent(System_Event event)
 	}
 }
 
-void ComponentUIAnimation::SetupInitPosition()
-{
-	if (keys.empty()) {
-		Key tmp_key;
-		memcpy(tmp_key.diffRect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
-		tmp_key.time_to_key = 1000.0f;
-		keys.push_back(tmp_key);
-
-		current_key = &tmp_key;
-	}
-	else {
-
-	}
-	
-}
-
 void ComponentUIAnimation::AddKey()
 {
+	Key* tmp_key = new Key();
 
+	memcpy((*tmp_key).diffRect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
+
+	tmp_key->diffRect[0] -= init_rect[0];
+	tmp_key->diffRect[1] -= init_rect[1];
+	tmp_key->diffRect[2] -= init_rect[2];
+	tmp_key->diffRect[3] -= init_rect[3];
+
+	tmp_key->time_to_key = 1000.0f;
+	keys.push_back(tmp_key);
+
+	current_key = keys.back();
 }

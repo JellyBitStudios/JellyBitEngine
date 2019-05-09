@@ -29,7 +29,6 @@ private:
 	void OnSystemEvent(System_Event event);
 
 private:
-	void SetupInitPosition();
 	void AddKey();
 
 private:
@@ -37,10 +36,11 @@ private:
 	versionSerialization version = v1;
 	//keys
 	struct Key {
+		Key() {}
 		int diffRect[4];
 		float time_to_key;
 
-		uint GetInternalSerializationBytes() {
+		static uint GetInternalSerializationBytes() {
 			return sizeof(int) * 4 + sizeof(float);
 		}
 		void OnInternalSave(char*& cursor) {
@@ -63,7 +63,7 @@ private:
 		}
 	};
 
-	std::list<Key> keys;
+	std::list<Key*> keys;
 
 	Key* current_key = nullptr;
 

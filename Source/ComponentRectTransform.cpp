@@ -827,7 +827,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			needed_recalculate = true;
 
 		if (needed_recalculate)
-			SetRect(rectToModify);
+			SetRect(rectToModify, (parent->cmp_uiAnimation && parent->cmp_uiAnimation->IsRecording()) ? true : false);
 
 		if(ImGui::Checkbox("Use Pivot", &usePivot))
 			if (!usePivot)
