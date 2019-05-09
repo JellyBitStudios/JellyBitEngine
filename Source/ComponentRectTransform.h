@@ -83,8 +83,8 @@ private:
 	void OnUniqueEditor();
 
 public:
-	void SetRect(int x, int y, int x_dist, int y_dist);
-	void SetRect(int rect[4]);
+	void SetRect(int x, int y, int x_dist, int y_dist, bool fromAnim = false);
+	void SetRect(int rect[4], bool fromAnim = false);
 
 	int* GetRect();
 	math::float3* GetCorners();

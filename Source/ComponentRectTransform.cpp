@@ -84,6 +84,7 @@ void ComponentRectTransform::OnSystemEvent(System_Event event)
 		CalculateScreenCorners();
 		break;
 	}
+	case System_Event_Type::RectTransformUpdatedFromAnimation:
 	case System_Event_Type::RectTransformUpdated:
 	{
 		needed_recalculate = true;
@@ -141,7 +142,7 @@ void ComponentRectTransform::Update()
 }
 // ------------------------------------------------------------------------------
 // --------- Base Rect Methods
-void ComponentRectTransform::SetRect(int x, int y, int x_dist, int y_dist)
+void ComponentRectTransform::SetRect(int x, int y, int x_dist, int y_dist, bool fromAnim)
 {
 	if (rFrom != ComponentRectTransform::WORLD)
 	{
@@ -155,7 +156,7 @@ void ComponentRectTransform::SetRect(int x, int y, int x_dist, int y_dist)
 		if (!isFromLabel)
 		{
 			System_Event rectChanged;
-			rectChanged.type = System_Event_Type::RectTransformUpdated;
+			rectChanged.type = (!fromAnim) ? System_Event_Type::RectTransformUpdated : System_Event_Type::RectTransformUpdatedFromAnimation;
 
 			std::vector<GameObject*> rectChilds;
 			parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
@@ -167,7 +168,7 @@ void ComponentRectTransform::SetRect(int x, int y, int x_dist, int y_dist)
 			needed_recalculate = true;
 	}
 }
-void ComponentRectTransform::SetRect(int rect[4])
+void ComponentRectTransform::SetRect(int rect[4], bool fromAnim)
 {
 	if (rFrom != ComponentRectTransform::WORLD)
 	{
@@ -181,7 +182,7 @@ void ComponentRectTransform::SetRect(int rect[4])
 		if (!isFromLabel)
 		{
 			System_Event rectChanged;
-			rectChanged.type = System_Event_Type::RectTransformUpdated;
+			rectChanged.type = (!fromAnim) ? System_Event_Type::RectTransformUpdated : System_Event_Type::RectTransformUpdatedFromAnimation;
 
 			std::vector<GameObject*> rectChilds;
 			parent->GetChildrenAndThisVectorFromLeaf(rectChilds);

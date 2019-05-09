@@ -114,6 +114,7 @@ void ComponentLabel::OnSystemEvent(System_Event event)
 		break;
 	case System_Event_Type::CanvasChanged:
 	case System_Event_Type::RectTransformUpdated:
+	case System_Event_Type::RectTransformUpdatedFromAnimation:
 		new_word = true;
 			break;
 	}
