@@ -516,7 +516,7 @@ bool ResourceAnimator::Update()
 
 	//if (App->GetEngineState() != engine_states::ENGINE_PLAY)
 		//return update_status::UPDATE_CONTINUE;
-
+	 
 	if (stop_all)
 		return update_status::UPDATE_CONTINUE;
 	if (current_anim == nullptr)

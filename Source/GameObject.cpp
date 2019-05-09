@@ -39,6 +39,7 @@
 #include "ComponentAudioSource.h"
 #include "ComponentTrail.h"
 #include "ComponentInterpolation.h"
+#include "ComponentUIAnimation.h"
 
 #include "MathGeoLib\include\Geometry\OBB.h"
 #include "Brofiler/Brofiler.h"
@@ -208,6 +209,11 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			cmp_slider = new ComponentSlider(*(ComponentSlider*)gameObject.cmp_slider, this, includeComponents);
 			cmp_slider->SetParent(this);
 			components.push_back(cmp_slider);
+			break;
+		case ComponentTypes::UIAnimationComponent:
+			cmp_uiAnimation = new ComponentUIAnimation(*(ComponentUIAnimation*)gameObject.cmp_uiAnimation, this, includeComponents);
+			cmp_uiAnimation->SetParent(this);
+			components.push_back(cmp_uiAnimation);
 			break;
 		case ComponentTypes::ScriptComponent:
 		{
@@ -685,6 +691,10 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 	case ComponentTypes::SliderComponent:
 		assert(cmp_slider == nullptr);
 		newComponent = cmp_slider = new ComponentSlider(this, includeInModules);
+		break;
+	case ComponentTypes::UIAnimationComponent:
+		assert(cmp_uiAnimation == nullptr);
+		newComponent = cmp_uiAnimation = new ComponentUIAnimation(this, includeInModules);
 		break;
 	case ComponentTypes::BoneComponent:
 		assert(cmp_bone == NULL);
