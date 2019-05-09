@@ -9,6 +9,7 @@
 #include "ComponentTransform.h"
 #include "ComponentCamera.h"
 #include "ComponentImage.h"
+#include "ComponentUIAnimation.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -1047,7 +1048,7 @@ void ComponentRectTransform::OnUniqueEditor()
 		if (!needed_recalculate && recalculate4Pivot)
 		{
 			System_Event rectChanged;
-			rectChanged.type = System_Event_Type::RectTransformUpdated;
+			rectChanged.type = (parent->cmp_uiAnimation && parent->cmp_uiAnimation->IsRecording()) ? System_Event_Type::RectTransformUpdatedFromAnimation : System_Event_Type::RectTransformUpdated;
 
 			std::vector<GameObject*> rectChilds;
 			parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
