@@ -128,6 +128,17 @@ void ComponentCanvasRenderer::OnUniqueEditor()
 {
 #ifndef GAMEMODE
 	ImGui::Text("Canvas Renderer");
+
+	for (ToUIRend* rend : rend_queue)
+	{
+		if (!destroyed && !parent->cmp_image && !parent->cmp_label && !parent->cmp_slider)
+		{
+			parent->DestroyComponent(this);
+			destroyed = true;
+		}
+	}
+	
+	ImGui::PopItemWidth();
 #endif
 }
 

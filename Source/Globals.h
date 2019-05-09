@@ -53,6 +53,10 @@ float RandomFloat(float a, float b);
 	x = nullptr; \
 	} \
 
+#pragma optimize("", off)
+void release_mode_breakpoint();
+#pragma optimize("", on)
+
 typedef unsigned int uint;
 typedef unsigned char uchar;
 

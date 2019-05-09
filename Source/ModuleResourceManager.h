@@ -69,7 +69,7 @@ public:
 	Resource* ImportFile(const char* file, bool buildEvent = false);
 	Resource* ImportLibraryFile(const char* file);
 	Resource* ExportFile(ResourceTypes type, ResourceData& data, void* specificData, std::string& outputFile, bool overwrite = false, bool resources = true);
-	Resource* CreateResource(ResourceTypes type, ResourceData& data, void* specificData, uint forcedUuid = 0);
+	Resource* CreateResource(ResourceTypes type, ResourceData& data, void* specificData, uint forcedUuid = 0, bool internalRes = false);
 
 	// ----------------------------------------------------------------------------------------------------
 

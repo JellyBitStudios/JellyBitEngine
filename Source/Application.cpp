@@ -231,10 +231,10 @@ update_status Application::Update()
 	return ret;
 }
 
+#include "Globals.h"
 bool Application::CleanUp()
 {
 	bool ret = true;
-
 	for (std::list<Module*>::const_reverse_iterator item = list_modules.rbegin(); item != list_modules.rend() && ret; ++item)
 		ret = (*item)->CleanUp();
 

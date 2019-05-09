@@ -339,6 +339,7 @@ void ComponentSlider::OnUniqueEditor()
 			}
 			ImGui::EndDragDropTarget();
 		}
+		ImGui::PopItemWidth();
 	}
 #endif
 }

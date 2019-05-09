@@ -20,7 +20,7 @@ class Resource
 {
 public:
 	
-	Resource(ResourceTypes type, uint uuid, ResourceData data);
+	Resource(ResourceTypes type, uint uuid, ResourceData data, bool internalRes = false);
 	virtual ~Resource();
 
 	virtual void OnPanelAssets() = 0;
@@ -63,6 +63,8 @@ protected:
 	ResourceTypes type = ResourceTypes::NoResourceType;
 	uint uuid = 0;
 	uint count = 0;
+
+	bool internalRes = false;
 
 	ResourceData data;
 };

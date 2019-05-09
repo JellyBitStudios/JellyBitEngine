@@ -31,6 +31,7 @@ public:
 	uint rboDepth;
 
 	math::float3 dotColor = math::float3(1.f, 0.f, 0.f);
+	math::float3 dotColor2 = math::float3(0.f, 1.f, 0.f);
 };
 
 #endif

@@ -84,13 +84,6 @@ bool exec(const char* cmd, std::string& error)
 	return result;
 }
 
-#pragma optimize("", off)
-void release_mode_breakpoint()
-{	
-	int put_breakpoint_here = 1;	
-}
-#pragma optimize("", on)
-
 bool ScriptingModule::Init(JSON_Object* data)
 {
 	//Locate the lib and etc folders in the mono installation
@@ -140,6 +133,8 @@ update_status ScriptingModule::Update()
 #ifndef GAMEMODE
 	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 #endif
+
+	std::vector<Resource*> res = App->res->GetResourcesByType(ResourceTypes::NoResourceType);
 
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
 	{
@@ -220,6 +215,7 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 
 				for (int i = 0; i < scripts.size(); ++i)
 				{
+					CONSOLE_SCRIPTING_LOG(LogTypes::Normal, "i is %d", i);
 					scripts[i]->Awake();
 				}
 
@@ -228,29 +224,6 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 					scripts[i]->Start();
 				}
 			}
-			break;
-		}
-
-		case System_Event_Type::Play:
-		{
-			//TODO: Check if some files have compile errors and don't let the user hit the play.
-
-			for (int i = 0; i < scripts.size(); ++i)
-			{
-				scripts[i]->OnEnableMethod();
-			}
-
-			for (int i = 0; i < scripts.size(); ++i)
-			{
-				scripts[i]->Awake();
-			}
-
-			for (int i = 0; i < scripts.size(); ++i)
-			{
-				scripts[i]->Start();
-			}
-		
-			//Call the Awake and Start for all the Enabled script in the Play instant.
 			break;
 		}
 	
@@ -263,6 +236,8 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 					scripts[i]->OnStop();
 				}
 			}
+
+			scripts.clear();
 
 			break;
 		}
@@ -349,7 +324,35 @@ void ScriptingModule::OnSystemEvent(System_Event event)
 			}		
 			break;
 		}
+
+		case System_Event_Type::LoadScene:
+		{
+			scripts.clear();
+			break;
+		}
 	}
+}
+
+void ScriptingModule::Play()
+{
+	//TODO: Check if some files have compile errors and don't let the user hit the play.
+
+	for (int i = 0; i < scripts.size(); ++i)
+	{
+		scripts[i]->OnEnableMethod();
+	}
+
+	for (int i = 0; i < scripts.size(); ++i)
+	{
+		scripts[i]->Awake();
+	}
+
+	for (int i = 0; i < scripts.size(); ++i)
+	{
+		scripts[i]->Start();
+	}
+
+	//Call the Awake and Start for all the Enabled script in the Play instant.
 }
 
 ComponentScript* ScriptingModule::CreateScriptComponent(std::string scriptName, ResourceScript* scriptRes)
@@ -1466,6 +1469,24 @@ MonoArray* ToEuler(MonoArray* quat)
 	mono_array_set(ret, float, 0, euler.x);
 	mono_array_set(ret, float, 1, euler.y);
 	mono_array_set(ret, float, 2, euler.z);
+
+	return ret;
+}
+
+MonoArray* QuaternionEuler(MonoArray* eulerCS)
+{
+	if (!eulerCS)
+		return nullptr;
+
+	math::float3 euler = { mono_array_get(eulerCS, float, 0), mono_array_get(eulerCS, float, 1), mono_array_get(eulerCS, float, 2) };
+
+	math::Quat retCPP = math::Quat::FromEulerZXY(euler.z, euler.x, euler.y);
+
+	MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_single_class(), 4);
+	mono_array_set(ret, float, 0, retCPP.x);
+	mono_array_set(ret, float, 1, retCPP.y);
+	mono_array_set(ret, float, 2, retCPP.z);
+	mono_array_set(ret, float, 3, retCPP.w);
 
 	return ret;
 }
@@ -4017,6 +4038,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Quaternion::quatMult", (const void*)&QuatMult);
 	mono_add_internal_call("JellyBitEngine.Quaternion::quatVec3", (const void*)&QuatVec3);
 	mono_add_internal_call("JellyBitEngine.Quaternion::toEuler", (const void*)&ToEuler);
+	mono_add_internal_call("JellyBitEngine.Quaternion::_Euler", (const void*)&QuaternionEuler);
 	mono_add_internal_call("JellyBitEngine.Quaternion::RotateAxisAngle", (const void*)&RotateAxisAngle);
 	mono_add_internal_call("JellyBitEngine.Quaternion::_LookAt", (const void*)&QuatLookAt);
 

@@ -23,7 +23,7 @@ class ResourceMaterial : public Resource
 {
 public:
 
-	ResourceMaterial(ResourceTypes type, uint uuid, ResourceData data, ResourceMaterialData materialData);
+	ResourceMaterial(ResourceTypes type, uint uuid, ResourceData data, ResourceMaterialData materialData, bool internalRes);
 	~ResourceMaterial();
 
 	void OnPanelAssets();

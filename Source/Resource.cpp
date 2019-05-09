@@ -5,7 +5,7 @@
 
 #include <assert.h> 
 
-Resource::Resource(ResourceTypes type, uint uuid, ResourceData data) : type(type), uuid(uuid), data(data) {}
+Resource::Resource(ResourceTypes type, uint uuid, ResourceData data, bool internalRes) : type(type), uuid(uuid), data(data), internalRes(internalRes) {}
 
 Resource::~Resource() {}
 

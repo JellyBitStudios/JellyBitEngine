@@ -18,10 +18,6 @@ struct Directory;
 
 bool exec(const char* cmd, std::string& error = std::string());
 
-#pragma optimize("", off)
-void release_mode_breakpoint();
-#pragma optimize("", on)
-
 class ScriptingModule : public Module
 {
 	friend MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, MonoArray* rotation);
@@ -50,6 +46,8 @@ public:
 	bool CleanUp();
 
 	void OnSystemEvent(System_Event event) override;
+
+	void Play();
 
 public:
 	ComponentScript* CreateScriptComponent(std::string scriptName, ResourceScript* scriptRes);
