@@ -36,6 +36,7 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 			cursor = buffer;
 
 			keys.push_back(tmp_key);
+			drop_down_keys.append("Key%i\0", keys.size());
 		}
 	}
 	
@@ -131,6 +132,7 @@ void ComponentUIAnimation::OnInternalLoad(char *& cursor)
 				Key* nkey = new Key();
 				nkey->OnInternalLoad(cursor);
 				keys.push_back(nkey);
+				drop_down_keys.append("Key%i\0", keys.size());
 			}
 		}
 		break;
@@ -151,7 +153,15 @@ void ComponentUIAnimation::OnUniqueEditor()
 
 		if (!keys.empty()) {
 
-			//TODO SELECT ANY KEY with a dropdown or smth
+			if (ImGui::Combo("Using", &current_type, drop_down_keys.c_str())) {
+				uint count = 0u;
+				for (std::list<Key*>::iterator it = keys.begin(); it != keys.end(); ++it, count++) {
+					if (count == current_type) {
+						current_key = (*it);
+						break;
+					}
+				}
+			}
 
 			if (current_key) {
 				ImGui::Separator();
@@ -250,4 +260,7 @@ void ComponentUIAnimation::AddKey()
 	keys.push_back(tmp_key);
 
 	current_key = keys.back();
+
+	drop_down_keys += "Key " + std::to_string(keys.size());
+	drop_down_keys += "\0";
 }
