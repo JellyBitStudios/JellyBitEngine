@@ -72,6 +72,7 @@ private:
 	
 
 	bool needed_recalculate = false;
+	bool neeeded_reset_mask = false;
 };
 
 #endif

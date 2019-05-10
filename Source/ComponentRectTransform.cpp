@@ -81,8 +81,7 @@ void ComponentRectTransform::OnSystemEvent(System_Event event)
 	{
 	case System_Event_Type::ScreenChanged:
 	{
-		RecalculateRectByPercentage();
-		CalculateScreenCorners();
+		recalculate_byPercentage = true;
 		break;
 	}
 	case System_Event_Type::RectTransformUpdatedFromAnimation:
@@ -139,6 +138,14 @@ void ComponentRectTransform::Update()
 
 		needed_recalculate = false;
 		rectTransform_modified = false;
+	}
+
+	if (recalculate_byPercentage)
+	{
+		RecalculateRectByPercentage();
+		CalculateScreenCorners();
+		
+		recalculate_byPercentage = false;
 	}
 }
 // ------------------------------------------------------------------------------

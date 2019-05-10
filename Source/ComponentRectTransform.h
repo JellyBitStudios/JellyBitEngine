@@ -122,6 +122,7 @@ private:
 	bool needed_recalculate = false;
 	bool rectTransform_modified = false;
 	bool noUpdatefromCanvas = false;
+	bool recalculate_byPercentage = false;
 
 	//From Rect
 	//x, y, x_dist, y_dist
