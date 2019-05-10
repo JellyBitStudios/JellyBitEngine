@@ -14,6 +14,7 @@
 #include "ComponentImage.h"
 #include "ComponentLabel.h"
 #include "ComponentSlider.h"
+#include "ComponentUIAnimation.h"
 #include "Panel.h"
 
 #define CANVAS_TYPE_STR "Screen\0World Screen (Work In Progress)\0World"
@@ -173,6 +174,7 @@ void ComponentCanvas::Update()
 
 	for (std::vector<GameObject*>::const_reverse_iterator go = childs.crbegin(); go != childs.crend(); go++)
 	{
+		if ((*go)->cmp_uiAnimation) (*go)->cmp_uiAnimation->Update();
 		if ((*go)->cmp_rectTransform) (*go)->cmp_rectTransform->Update();
 		if ((*go)->cmp_label) (*go)->cmp_label->Update();
 		if ((*go)->cmp_image) (*go)->cmp_image->Update();

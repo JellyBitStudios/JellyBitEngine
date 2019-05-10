@@ -46,6 +46,8 @@ public:
 	void SetResImageName(const std::string& name, bool isIdle = false);
 	void SetMask();
 	void ResetTexture();
+	void SetAlpha(float alpha);
+	float GetAlpha() const;
 
 private:
 	uint GetInternalSerializationBytes();
@@ -70,6 +72,7 @@ private:
 	
 
 	bool needed_recalculate = false;
+	bool neeeded_reset_mask = false;
 };
 
 #endif

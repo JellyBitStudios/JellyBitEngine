@@ -9,6 +9,7 @@
 #include "ComponentTransform.h"
 #include "ComponentCamera.h"
 #include "ComponentImage.h"
+#include "ComponentUIAnimation.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
@@ -80,10 +81,10 @@ void ComponentRectTransform::OnSystemEvent(System_Event event)
 	{
 	case System_Event_Type::ScreenChanged:
 	{
-		RecalculateRectByPercentage();
-		CalculateScreenCorners();
+		recalculate_byPercentage = true;
 		break;
 	}
+	case System_Event_Type::RectTransformUpdatedFromAnimation:
 	case System_Event_Type::RectTransformUpdated:
 	{
 		needed_recalculate = true;
@@ -138,10 +139,18 @@ void ComponentRectTransform::Update()
 		needed_recalculate = false;
 		rectTransform_modified = false;
 	}
+
+	if (recalculate_byPercentage)
+	{
+		RecalculateRectByPercentage();
+		CalculateScreenCorners();
+		
+		recalculate_byPercentage = false;
+	}
 }
 // ------------------------------------------------------------------------------
 // --------- Base Rect Methods
-void ComponentRectTransform::SetRect(int x, int y, int x_dist, int y_dist)
+void ComponentRectTransform::SetRect(int x, int y, int x_dist, int y_dist, bool fromAnim)
 {
 	if (rFrom != ComponentRectTransform::WORLD)
 	{
@@ -155,7 +164,7 @@ void ComponentRectTransform::SetRect(int x, int y, int x_dist, int y_dist)
 		if (!isFromLabel)
 		{
 			System_Event rectChanged;
-			rectChanged.type = System_Event_Type::RectTransformUpdated;
+			rectChanged.type = (!fromAnim) ? System_Event_Type::RectTransformUpdated : System_Event_Type::RectTransformUpdatedFromAnimation;
 
 			std::vector<GameObject*> rectChilds;
 			parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
@@ -167,7 +176,7 @@ void ComponentRectTransform::SetRect(int x, int y, int x_dist, int y_dist)
 			needed_recalculate = true;
 	}
 }
-void ComponentRectTransform::SetRect(int rect[4])
+void ComponentRectTransform::SetRect(int rect[4], bool fromAnim)
 {
 	if (rFrom != ComponentRectTransform::WORLD)
 	{
@@ -181,7 +190,7 @@ void ComponentRectTransform::SetRect(int rect[4])
 		if (!isFromLabel)
 		{
 			System_Event rectChanged;
-			rectChanged.type = System_Event_Type::RectTransformUpdated;
+			rectChanged.type = (!fromAnim) ? System_Event_Type::RectTransformUpdated : System_Event_Type::RectTransformUpdatedFromAnimation;
 
 			std::vector<GameObject*> rectChilds;
 			parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
@@ -825,7 +834,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			needed_recalculate = true;
 
 		if (needed_recalculate)
-			SetRect(rectToModify);
+			SetRect(rectToModify, (parent->cmp_uiAnimation && parent->cmp_uiAnimation->IsRecording()) ? true : false);
 
 		if(ImGui::Checkbox("Use Pivot", &usePivot))
 			if (!usePivot)
@@ -1046,7 +1055,7 @@ void ComponentRectTransform::OnUniqueEditor()
 		if (!needed_recalculate && recalculate4Pivot)
 		{
 			System_Event rectChanged;
-			rectChanged.type = System_Event_Type::RectTransformUpdated;
+			rectChanged.type = (parent->cmp_uiAnimation && parent->cmp_uiAnimation->IsRecording()) ? System_Event_Type::RectTransformUpdatedFromAnimation : System_Event_Type::RectTransformUpdated;
 
 			std::vector<GameObject*> rectChilds;
 			parent->GetChildrenAndThisVectorFromLeaf(rectChilds);

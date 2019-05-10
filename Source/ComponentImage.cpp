@@ -64,9 +64,21 @@ void ComponentImage::Update()
 	{
 		if (mask)
 		{
-			int* rect = parent->cmp_rectTransform->GetRect();
-			mask_values[1] = ((rect_initValues[1] - (float)rect[ComponentRectTransform::Rect::YDIST]) / rect_initValues[1]);
-			mask_values[0] = 1.0f - ((rect_initValues[0] - (float)rect[ComponentRectTransform::Rect::XDIST]) / rect_initValues[0]);
+			if (neeeded_reset_mask)
+			{
+				mask_values[0] = 1;
+				mask_values[1] = 0;
+				int* rect = parent->cmp_rectTransform->GetRect();
+				rect_initValues[0] = rect[ComponentRectTransform::Rect::XDIST];
+				rect_initValues[1] = rect[ComponentRectTransform::Rect::YDIST];
+				neeeded_reset_mask = false;
+			}
+			else
+			{
+				int* rect = parent->cmp_rectTransform->GetRect();
+				mask_values[0] = 1.0f - ((rect_initValues[0] - (float)rect[ComponentRectTransform::Rect::XDIST]) / rect_initValues[0]);
+				mask_values[1] = ((rect_initValues[1] - (float)rect[ComponentRectTransform::Rect::YDIST]) / rect_initValues[1]);
+			}
 		}
 		if(App->glCache->isShaderStorage())
 			if (index != -1)
@@ -174,14 +186,12 @@ void ComponentImage::OnSystemEvent(System_Event event)
 	{
 	case System_Event_Type::ScreenChanged:
 	{
-		mask_values[0] = 1;
-		mask_values[1] = 0;
-		int* rect = parent->cmp_rectTransform->GetRect();
-		rect_initValues[0] = rect[ComponentRectTransform::Rect::XDIST];
-		rect_initValues[1] = rect[ComponentRectTransform::Rect::YDIST];
+		neeeded_reset_mask = true;
+		needed_recalculate = true;
 		break;
 	}
 	case System_Event_Type::CanvasChanged:
+	case System_Event_Type::RectTransformUpdatedFromAnimation:
 	case System_Event_Type::RectTransformUpdated:
 	{
 		needed_recalculate = true;
@@ -216,6 +226,18 @@ void ComponentImage::ResetTexture()
 	if (res_image > 0)
 		App->res->SetAsUnused(res_image);
 	res_image = 0;
+}
+
+void ComponentImage::SetAlpha(float alpha)
+{
+	if (alpha > 1.0f) alpha = 1.0;
+	if (alpha < 0.0f) alpha = 0.0;
+	color[Color::A] = alpha;
+}
+
+float ComponentImage::GetAlpha() const
+{
+	return color[Color::A];
 }
 
 bool ComponentImage::useMask() const

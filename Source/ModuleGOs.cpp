@@ -147,6 +147,9 @@ void ModuleGOs::OnSystemEvent(System_Event event)
 		case ComponentTypes::SliderComponent:
 			go->cmp_slider = nullptr;
 			break;
+		case ComponentTypes::UIAnimationComponent:
+			go->cmp_uiAnimation = nullptr;
+			break;
 		case ComponentTypes::CanvasRendererComponent:
 			go->cmp_canvasRenderer = nullptr;
 		case ComponentTypes::AudioListenerComponent:

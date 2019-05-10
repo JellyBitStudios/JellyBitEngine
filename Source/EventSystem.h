@@ -35,6 +35,7 @@ enum System_Event_Type
 	//UI events
 	CanvasChanged,
 	RectTransformUpdated,
+	RectTransformUpdatedFromAnimation,
 	WRectTransformUpdated,
 	UpdateBillboard,
 	ScreenChanged
