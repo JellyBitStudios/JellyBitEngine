@@ -984,7 +984,7 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		ResourceMeshData meshData;
 		data.exportedFile = file;
 
-		App->sceneImporter->Load(file, data, meshData);
+		//App->sceneImporter->Load(file, data, meshData);
 
 		// Search for the meta associated to the file
 		char metaFile[DEFAULT_BUF_SIZE];
@@ -1057,7 +1057,7 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		ResourceTextureData textureData;
 		data.exportedFile = file;
 
-		App->materialImporter->Load(file, data, textureData);
+		//App->materialImporter->Load(file, data, textureData);
 
 		// Search for the meta associated to the file
 		char metaFile[DEFAULT_BUF_SIZE];
