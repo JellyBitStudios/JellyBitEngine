@@ -11,9 +11,12 @@
 
 #include "glew/include/GL/glew.h"
 #include "MathGeoLib/include/Geometry/Frustum.h"
+
+#ifndef GAMEMODE
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 #include "imgui/imgui_stl.h"
+#endif
 
 ComponentLabel::ComponentLabel(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::LabelComponent)
 {

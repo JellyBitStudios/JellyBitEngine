@@ -11,8 +11,10 @@
 #include "ComponentLabel.h"
 #include "ComponentButton.h"
 
+#ifndef GAMEMODE
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
+#endif
 
 ComponentImage::ComponentImage(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::ImageComponent)
 {

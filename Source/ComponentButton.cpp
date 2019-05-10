@@ -16,9 +16,12 @@
 
 #include "ResourceTexture.h"
 
+
+#ifndef GAMEMODE
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
 #include "imgui\imgui_stl.h"
+#endif
 
 #include <mono/metadata/attrdefs.h>
 

@@ -19,8 +19,10 @@
 
 #define CANVAS_TYPE_STR "Screen\0World Screen (Work In Progress)\0World"
 
+#ifndef GAMEMDOE
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
+#endif
 
 #include "MathGeoLib\include\Math\float4x4.h"
 #include "MathGeoLib/include/Geometry/Frustum.h"
