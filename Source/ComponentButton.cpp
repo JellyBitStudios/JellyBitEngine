@@ -91,9 +91,6 @@ void ComponentButton::OnSystemEvent(System_Event event)
 
 void ComponentButton::Update()
 {
-	//TODO: MAYBE MOVE THIS LOGIC TO THE POSTUPDATE IN ORDER TO LET THE OTHER COMPONENTS FINISH THE ITERATION
-	//BEFORE WE CHANGE BETWEEN SCENES
-
 	if (IsTreeActive())
 	{
 		const int* rect = parent->cmp_rectTransform->GetRect();
