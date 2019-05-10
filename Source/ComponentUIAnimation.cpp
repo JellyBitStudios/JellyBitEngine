@@ -69,6 +69,7 @@ void ComponentUIAnimation::Update()
 	if (change_origin_rect)
 	{
 		memcpy(init_rect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
+		calculate_keys_global = true;
 		change_origin_rect = false;
 	}
 
@@ -217,9 +218,6 @@ void ComponentUIAnimation::OnUniqueEditor()
 
 			if (ImGui::Button("Previous Key"))
 				ImGui::Text("UI Animation");
-
-			if (ImGui::Button("Calculate Globals"))
-				calculate_keys_global = true;
 		}
 		else {
 			ImGui::Text("There is no key for this UI GO ...");
@@ -257,17 +255,17 @@ void ComponentUIAnimation::AddKey()
 {
 	Key* tmp_key = new Key();
 
-	memcpy((*tmp_key).diffRect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
+	memcpy((*tmp_key).globalRect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
 
-	tmp_key->diffRect[0] -= init_rect[0];
-	tmp_key->diffRect[1] -= init_rect[1];
-	tmp_key->diffRect[2] -= init_rect[2];
-	tmp_key->diffRect[3] -= init_rect[3];
+	tmp_key->diffRect[0] = tmp_key->globalRect[0] - init_rect[0];
+	tmp_key->diffRect[1] = tmp_key->globalRect[1] - init_rect[1];
+	tmp_key->diffRect[2] = tmp_key->globalRect[2] - init_rect[2];
+	tmp_key->diffRect[3] = tmp_key->globalRect[3] - init_rect[3];
 
 	tmp_key->time_to_key = 1000.0f;
+
 	current_key_int = keys.size();
 	keys.push_back(tmp_key);
-
 	current_key = keys.back();
 
 	AddKeyOnCombo();
@@ -276,6 +274,7 @@ void ComponentUIAnimation::AddKey()
 void ComponentUIAnimation::AddKeyOnCombo()
 {
 	uint total_keys = keys.size();
+	std::string total_keys_str = std::to_string(total_keys);
 	uint number_size = (total_keys > 9) ? 2 : 1;
 
 	char* key_str = new char[SIZE_STR_KEY];
@@ -285,8 +284,7 @@ void ComponentUIAnimation::AddKeyOnCombo()
 	memcpy(cursorkey, KEY_STR, bytes);
 	cursorkey += bytes;
 	bytes = sizeof(char) * number_size;
-	std::string str = std::to_string(total_keys);
-	memcpy(cursorkey, str.c_str(), bytes);
+	memcpy(cursorkey, total_keys_str.c_str(), bytes);
 	cursorkey += bytes;
 	bytes = sizeof(char) * 2;
 	memcpy(cursorkey, NULL_STR, bytes);
