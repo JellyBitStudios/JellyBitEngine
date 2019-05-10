@@ -58,6 +58,11 @@ bool ModuleWindow::Init(JSON_Object* jObject)
 		if (fullDesktop)
 			flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 
+#ifdef GAMEMODE
+		width = 1600;
+		height = 900;
+#endif
+
 		window = SDL_CreateWindow(App->GetAppName(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
 
 		if (window == NULL)
