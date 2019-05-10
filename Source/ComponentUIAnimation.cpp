@@ -6,6 +6,9 @@
 #include "imgui\imgui.h"
 #endif
 
+#define KEY_STR "Key "
+#define NULL_STR "\0"
+#define SIZE_STR_KEY 10
 
 ComponentUIAnimation::ComponentUIAnimation(GameObject * parent, bool includeComponents) :
 	Component(parent, ComponentTypes::UIAnimationComponent)
@@ -26,7 +29,6 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 	if (key_size > 0u) {
 		char buffer[sizeof(int) * 4 + sizeof(float)];
 		char* cursor = buffer;
-
 		std::list<Key*> tmp_list = component_ui_anim.keys;
 		for (std::list<Key*>::iterator it = tmp_list.begin(); it != tmp_list.end(); ++it) {
 			Key* tmp_key = new Key();
@@ -36,7 +38,7 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 			cursor = buffer;
 
 			keys.push_back(tmp_key);
-			drop_down_keys.append("Key%i\0", keys.size());
+			AddKeyOnCombo();
 		}
 	}
 	
@@ -53,6 +55,9 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 
 ComponentUIAnimation::~ComponentUIAnimation()
 {
+	for (char* s : keys_strCombo)
+		RELEASE_ARRAY(s);
+	keys_strCombo.clear();
 
 	parent->cmp_uiAnimation = nullptr;
 }
@@ -132,7 +137,7 @@ void ComponentUIAnimation::OnInternalLoad(char *& cursor)
 				Key* nkey = new Key();
 				nkey->OnInternalLoad(cursor);
 				keys.push_back(nkey);
-				drop_down_keys.append("Key%i\0", keys.size());
+				AddKeyOnCombo();
 			}
 		}
 		break;
@@ -152,11 +157,14 @@ void ComponentUIAnimation::OnUniqueEditor()
 		ImGui::Text("UI Animation");
 
 		if (!keys.empty()) {
-
-			if (ImGui::Combo("Using", &current_type, drop_down_keys.c_str())) {
+			int selectable_key = current_key_int;
+			ImGui::PushItemWidth(75.0f);
+			if (ImGui::Combo("Select", &selectable_key, keys_strCombo.data(), keys.size()));
+			{
+				current_key_int = selectable_key;
 				uint count = 0u;
 				for (std::list<Key*>::iterator it = keys.begin(); it != keys.end(); ++it, count++) {
-					if (count == current_type) {
+					if (count == selectable_key) {
 						current_key = (*it);
 						break;
 					}
@@ -165,7 +173,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 
 			if (current_key) {
 				ImGui::Separator();
-				ImGui::Text("Current Key");
+				ImGui::Text("Current: "); ImGui::SameLine(); ImGui::Text(keys_strCombo[current_key_int]);
 				ImGui::Text("DiffRect X: %i Y: %i W: %i H:%i", 
 					current_key->diffRect[0], current_key->diffRect[1], current_key->diffRect[2], current_key->diffRect[3]);
 				ImGui::Text("GlobalRect X: %i Y: %i W: %i H:%i",
@@ -257,10 +265,32 @@ void ComponentUIAnimation::AddKey()
 	tmp_key->diffRect[3] -= init_rect[3];
 
 	tmp_key->time_to_key = 1000.0f;
+	current_key_int = keys.size();
 	keys.push_back(tmp_key);
 
 	current_key = keys.back();
 
-	drop_down_keys += "Key " + std::to_string(keys.size());
-	drop_down_keys += "\0";
+	AddKeyOnCombo();
+}
+
+void ComponentUIAnimation::AddKeyOnCombo()
+{
+	uint total_keys = keys.size();
+	uint number_size = (total_keys > 9) ? 2 : 1;
+
+	char* key_str = new char[SIZE_STR_KEY];
+	char* cursorkey = key_str;
+
+	size_t bytes = sizeof(char) * 4;
+	memcpy(cursorkey, KEY_STR, bytes);
+	cursorkey += bytes;
+	bytes = sizeof(char) * number_size;
+	std::string str = std::to_string(total_keys);
+	memcpy(cursorkey, str.c_str(), bytes);
+	cursorkey += bytes;
+	bytes = sizeof(char) * 2;
+	memcpy(cursorkey, NULL_STR, bytes);
+	cursorkey += bytes;
+
+	keys_strCombo.push_back(key_str);
 }

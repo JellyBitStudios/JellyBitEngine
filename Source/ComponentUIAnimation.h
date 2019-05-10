@@ -4,7 +4,7 @@
 #include "Component.h"
 
 #include <list>
-#include <string>
+#include <vector>
 
 class ComponentUIAnimation : public Component
 {
@@ -31,6 +31,8 @@ private:
 
 private:
 	void AddKey();
+
+	void AddKeyOnCombo();
 
 private:
 	//version
@@ -75,15 +77,15 @@ private:
 	int init_rect[4];
 	bool change_origin_rect = true;
 
-	int current_type = 0;
-
 	//recording mode (for rectTransform)
 	bool recording = false;
 
 	//calculate global pos of keys
 	bool calculate_keys_global = false;
 
-	std::string drop_down_keys;
+	//Combo values
+	std::vector<char*> keys_strCombo;
+	int current_key_int = 0;
 };
 
 #endif
