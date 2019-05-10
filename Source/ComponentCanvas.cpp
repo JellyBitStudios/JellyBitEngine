@@ -181,7 +181,6 @@ void ComponentCanvas::Update()
 		if ((*go)->cmp_label) (*go)->cmp_label->Update();
 		if ((*go)->cmp_image) (*go)->cmp_image->Update();
 		if ((*go)->cmp_slider) (*go)->cmp_slider->Update();
-		if (App->GetEngineState() == engine_states::ENGINE_PLAY && (*go)->cmp_button) (*go)->cmp_button->Update();
 		if ((*go)->cmp_canvasRenderer) (*go)->cmp_canvasRenderer->Update();
 	}
 }
