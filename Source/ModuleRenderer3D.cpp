@@ -826,7 +826,8 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 		math::float4x4 view_matrix = currentCamera->GetOpenGLViewMatrix();
 		glUniformMatrix4fv(location, 1, GL_FALSE, view_matrix.ptr());
 	}
-
+	location = glGetUniformLocation(shader, "Time");
+	glUniform1f(location, App->timeManager->GetRealTime());
 	uint screenScale = App->window->GetScreenSize();
 	uint screenWidth = App->window->GetWindowWidth();
 	uint screenHeight = App->window->GetWindowHeight();
@@ -896,14 +897,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 	location = glGetUniformLocation(shader, "fog.color");
 	if (location != -1)
 		glUniform3fv(location, 1, &App->lights->fog.color[0]);
-	/*
-	location = glGetUniformLocation(resProgram->shaderProgram, "fog.minDist");
-	if (location != -1)
-	glUniform1f(location, App->lights->fog.minDist);
-	location = glGetUniformLocation(resProgram->shaderProgram, "fog.maxDist");
-	if (location != -1)
-	glUniform1f(location, App->lights->fog.maxDist);
-	*/
+
 	location = glGetUniformLocation(shader, "fog.density");
 	if (location != -1)
 		glUniform1f(location, App->lights->fog.density);
