@@ -1377,7 +1377,7 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 			resource = new ResourceMesh(ResourceTypes::MeshResource, uuid, data, *(ResourceMeshData*)specificData, internalRes);
 			break;
 		case ResourceTypes::TextureResource:
-			resource = new ResourceTexture(ResourceTypes::TextureResource, uuid, data, *(ResourceTextureData*)specificData);
+			resource = new ResourceTexture(ResourceTypes::TextureResource, uuid, data, *(ResourceTextureData*)specificData, internalRes);
 			break;
 		case ResourceTypes::ShaderObjectResource:
 			resource = new ResourceShaderObject(ResourceTypes::ShaderObjectResource, uuid, data, *(ResourceShaderObjectData*)specificData);
