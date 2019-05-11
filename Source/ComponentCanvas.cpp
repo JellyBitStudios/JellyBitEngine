@@ -19,8 +19,10 @@
 
 #define CANVAS_TYPE_STR "Screen\0World Screen (Work In Progress)\0World"
 
+#ifndef GAMEMDOE
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
+#endif
 
 #include "MathGeoLib\include\Math\float4x4.h"
 #include "MathGeoLib/include/Geometry/Frustum.h"
@@ -179,7 +181,6 @@ void ComponentCanvas::Update()
 		if ((*go)->cmp_label) (*go)->cmp_label->Update();
 		if ((*go)->cmp_image) (*go)->cmp_image->Update();
 		if ((*go)->cmp_slider) (*go)->cmp_slider->Update();
-		if (App->GetEngineState() == engine_states::ENGINE_PLAY && (*go)->cmp_button) (*go)->cmp_button->Update();
 		if ((*go)->cmp_canvasRenderer) (*go)->cmp_canvasRenderer->Update();
 	}
 }

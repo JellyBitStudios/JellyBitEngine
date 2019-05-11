@@ -107,9 +107,9 @@ public:
 
 	bool debugDraw = false;
 	bool drawBoundingBoxes = true;
-	bool drawFrustums = true;
+	bool drawBones = true;
 	bool drawColliders = true;
-	bool drawRigidActors = true;
+	bool drawFrustums = true;
 	bool drawCurrentGO = true;
 	bool drawQuadtree = false;
 };

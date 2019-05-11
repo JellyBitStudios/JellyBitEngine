@@ -10,8 +10,10 @@
 #include "ComponentLabel.h"
 #include "ComponentSlider.h"
 
+#ifndef GAMEMODE
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
+#endif
 
 ComponentCanvasRenderer::ComponentCanvasRenderer(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::CanvasRendererComponent)
 {
