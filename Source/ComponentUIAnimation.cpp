@@ -29,8 +29,8 @@ ComponentUIAnimation::ComponentUIAnimation(GameObject * parent, bool includeComp
 ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & component_ui_anim, GameObject * parent, bool includeComponents) :
 	Component(parent, ComponentTypes::UIAnimationComponent)
 {
-	version = component_ui_anim.version;
-	keys = component_ui_anim.keys;
+	animation_time = component_ui_anim.animation_time;
+	repeat = component_ui_anim.repeat;
 
 	uint key_size = component_ui_anim.keys.size();
 	if (key_size > 0u) {
@@ -44,6 +44,8 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 			cursor = buffer;
 			tmp_key->OnInternalLoad(cursor);
 			cursor = buffer;
+
+			tmp_key->id = keys.size();
 
 			if (last_key)
 			{
@@ -65,6 +67,7 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 			current_key = keys.front();
 	
 		change_origin_rect = true;
+		recalculate_times = true;
 	}
 }
 
@@ -114,7 +117,7 @@ void ComponentUIAnimation::Update()
 	if (keys.empty() || keys.size() == 1)
 		return;
 
-	float dt = App->timeManager->GetDt();
+	float dt = (App->GetEngineState() == engine_states::ENGINE_PLAY) ? App->timeManager->GetDt() : App->GetDt();
 
 	switch (animation_state)
 	{
@@ -163,13 +166,21 @@ bool ComponentUIAnimation::IsRecording() const
 uint ComponentUIAnimation::GetInternalSerializationBytes()
 {
 	uint keys_size = (!keys.empty()) ? (*keys.begin())->GetInternalSerializationBytes() * keys.size() : 0;
-	return keys_size + sizeof(uint) + sizeof(versionSerialization);
+	return keys_size + sizeof(float) + sizeof(bool) + sizeof(uint) + sizeof(versionSerialization);
 }
 
 void ComponentUIAnimation::OnInternalSave(char *& cursor)
 {
 	size_t bytes = sizeof(versionSerialization);
 	memcpy(cursor, &version, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(float);
+	memcpy(cursor, &animation_time, bytes);
+	cursor += bytes;
+
+	bytes = sizeof(bool);
+	memcpy(cursor, &repeat, bytes);
 	cursor += bytes;
 
 	bytes = sizeof(uint);
@@ -187,12 +198,21 @@ void ComponentUIAnimation::OnInternalSave(char *& cursor)
 void ComponentUIAnimation::OnInternalLoad(char *& cursor)
 {
 	size_t bytes = sizeof(versionSerialization);
-	memcpy(&version, cursor, bytes);
+	versionSerialization loadVersion;
+	memcpy(&loadVersion, cursor, bytes);
 	cursor += bytes;
 
-	switch (version)
+	switch (loadVersion)
 	{
 	case ComponentUIAnimation::v1:
+
+		bytes = sizeof(float);
+		memcpy(&animation_time, cursor, bytes);
+		cursor += bytes;
+
+		bytes = sizeof(bool);
+		memcpy(&repeat, cursor, bytes);
+		cursor += bytes;
 
 		bytes = sizeof(uint);
 		uint keys_size;
@@ -207,12 +227,14 @@ void ComponentUIAnimation::OnInternalLoad(char *& cursor)
 				Key* nkey = new Key();
 				nkey->OnInternalLoad(cursor);
 
+				nkey->id = keys.size();
+
 				if (last_key)
 				{
 					last_key->next_key = nkey;
 					nkey->back_key = last_key;
 				}
-
+				
 				keys.push_back(nkey);
 				AddKeyOnCombo();
 			}
@@ -223,6 +245,7 @@ void ComponentUIAnimation::OnInternalLoad(char *& cursor)
 	if (parent->includeModuleComponent)
 	{
 		change_origin_rect = true;
+		recalculate_times = true;
 	}
 }
 
@@ -463,7 +486,7 @@ void ComponentUIAnimation::Key::OnEditor(float anim_time)
 		diffRect[0], diffRect[1], diffRect[2], diffRect[3]);
 	ImGui::Text("GlobalRect X: %i Y: %i W: %i H:%i",
 		globalRect[0], globalRect[1], globalRect[2], globalRect[3]);
-	std::string t = "Time key "; t += std::to_string(id);
+	std::string t = "Time key"; t += std::to_string(id);
 	if (ImGui::SliderFloat(t.c_str(), &time_key, 0.0f, 1.0f)) {
 		global_time = anim_time * time_key;
 	}

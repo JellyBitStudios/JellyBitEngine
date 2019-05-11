@@ -90,9 +90,9 @@ private:
 
 private:
 	//version
-	versionSerialization version = v1;
-	// ----- Animation component -----
+	versionSerialization version = v1; //always defined as last.
 
+	// ----- Animation component -----
 	UIAnimationState animation_state = UIAnimationState::STOPPED;
 
 	std::list<Key*> keys;
@@ -102,9 +102,10 @@ private:
 	//curent
 	Key* current_key = nullptr;
 
+	//Animation values
 	float animation_time = 0.0f;
-
 	float animation_timer = 0.0f;
+	bool repeat = false;
 
 	//rect origin
 	int init_rect[4];
@@ -113,9 +114,7 @@ private:
 	//recording mode (for rectTransform)
 	bool recording = false;
 
-
 	// ----- Key stuff -----
-
 	bool recalculate_times = false;
 
 	//calculate global pos of keys
