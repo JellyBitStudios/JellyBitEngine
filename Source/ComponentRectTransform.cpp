@@ -11,8 +11,10 @@
 #include "ComponentImage.h"
 #include "ComponentUIAnimation.h"
 
+#ifndef GAMEMODE
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
+#endif
 
 #define PIVOT_POINTS_STR "Top Left\0Top Right\0Bottom Left\0Bottom Right\0Center\0Top\0Left\0Right\0Bottom"
 

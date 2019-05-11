@@ -16,9 +16,12 @@
 
 #include "ResourceTexture.h"
 
+
+#ifndef GAMEMODE
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
 #include "imgui\imgui_stl.h"
+#endif
 
 #include <mono/metadata/attrdefs.h>
 
@@ -88,9 +91,6 @@ void ComponentButton::OnSystemEvent(System_Event event)
 
 void ComponentButton::Update()
 {
-	//TODO: MAYBE MOVE THIS LOGIC TO THE POSTUPDATE IN ORDER TO LET THE OTHER COMPONENTS FINISH THE ITERATION
-	//BEFORE WE CHANGE BETWEEN SCENES
-
 	if (IsTreeActive())
 	{
 		const int* rect = parent->cmp_rectTransform->GetRect();

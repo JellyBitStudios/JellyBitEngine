@@ -12,7 +12,9 @@
 
 #include "ResourceTexture.h"
 
+#ifndef GAMEMODE
 #include "imgui\imgui.h"
+#endif
 
 #include "MathGeoLib/include/Geometry/Frustum.h"
 

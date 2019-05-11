@@ -984,7 +984,7 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		ResourceMeshData meshData;
 		data.exportedFile = file;
 
-		App->sceneImporter->Load(file, data, meshData);
+		//App->sceneImporter->Load(file, data, meshData);
 
 		// Search for the meta associated to the file
 		char metaFile[DEFAULT_BUF_SIZE];
@@ -1057,7 +1057,7 @@ Resource* ModuleResourceManager::ImportLibraryFile(const char* file)
 		ResourceTextureData textureData;
 		data.exportedFile = file;
 
-		App->materialImporter->Load(file, data, textureData);
+		//App->materialImporter->Load(file, data, textureData);
 
 		// Search for the meta associated to the file
 		char metaFile[DEFAULT_BUF_SIZE];
@@ -1377,7 +1377,7 @@ Resource* ModuleResourceManager::CreateResource(ResourceTypes type, ResourceData
 			resource = new ResourceMesh(ResourceTypes::MeshResource, uuid, data, *(ResourceMeshData*)specificData, internalRes);
 			break;
 		case ResourceTypes::TextureResource:
-			resource = new ResourceTexture(ResourceTypes::TextureResource, uuid, data, *(ResourceTextureData*)specificData);
+			resource = new ResourceTexture(ResourceTypes::TextureResource, uuid, data, *(ResourceTextureData*)specificData, internalRes);
 			break;
 		case ResourceTypes::ShaderObjectResource:
 			resource = new ResourceShaderObject(ResourceTypes::ShaderObjectResource, uuid, data, *(ResourceShaderObjectData*)specificData);
