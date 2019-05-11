@@ -11,12 +11,15 @@
 
 #include <list>
 
-PanelUIAnimation::PanelUIAnimation(const char* name) : Panel(name) {  }
+PanelUIAnimation::PanelUIAnimation(const char* name) : Panel(name) { }
 
 PanelUIAnimation::~PanelUIAnimation() { }
 
 bool PanelUIAnimation::Draw()
 {
+	if (IsEnabled() && !current_cmp)
+		OnOff();
+
 	ImGuiWindowFlags editFlags = 0;
 	editFlags |= ImGuiWindowFlags_NoFocusOnAppearing;
 
