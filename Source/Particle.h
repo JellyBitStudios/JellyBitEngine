@@ -18,6 +18,7 @@ struct ParticleTrans
 	math::float3 scale = math::float3::one;
 
 	math::float4x4 GetMatrix() const;
+	math::float4x4 GetSpaceMatrix() const;
 };
 
 class Particle
