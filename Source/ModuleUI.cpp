@@ -140,11 +140,6 @@ update_status ModuleUI::Update()
 
 update_status ModuleUI::PostUpdate()
 {
-	for (ComponentButton* cmp_button : buttons_ui)
-	{
-		if (App->GetEngineState() == engine_states::ENGINE_PLAY) 
-			cmp_button->Update();
-	}
 	return update_status::UPDATE_CONTINUE;
 }
 
