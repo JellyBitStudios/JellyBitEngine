@@ -136,6 +136,13 @@
 "	gl_Position = vec4(position, 1.0);\n"		\
 "}"
 
+/*
+0: Blinn-Phong light
+1: cartoon light
+2: no light
+3: outline (no light)
+*/
+
 #define fDEFERREDSHADING \
 "#version 330 core\n" \
 "out vec4 FragColor;\n" \
@@ -191,7 +198,7 @@
 "		vec3 diffuse = vec3(0.0, 0.0, 0.0);\n" \
 "		if (lights[i].type == 1)\n" \
 "		{\n" \
-"			if (FragPosA == 2) // cartoon\n" \
+"			if (FragPosA == 1) // cartoon\n" \
 "			{\n" \
 "				float cosine = max(0.0, dot(Normal, lights[i].dir));\n" \
 "				float scaleFactor = 1.0 / NormalA;\n" \
@@ -203,7 +210,7 @@
 "		else if (lights[i].type == 2)\n" \
 "		{\n" \
 "			vec3 lightDir = normalize(lights[i].position - FragPos);\n" \
-"			if (FragPosA == 2) // cartoon\n" \
+"			if (FragPosA == 1) // cartoon\n" \
 "			{\n" \
 "				float cosine = max(0.0, dot(Normal, lightDir));\n" \
 "				float scaleFactor = 1.0 / NormalA;\n" \
@@ -873,8 +880,8 @@
 "uniform float pct;\n"																	\
 "uniform int lightCartoon;\n"															\
 "uniform sampler2D gInfoTexture;\n"	\
-"\n"																			\
-"uniform int dot;\n"															\
+"\n" \
+"uniform int dot;\n" \
 "uniform vec2 screenSize;\n" \
 "\n"																					\
 "//uniform vec3 lineColor; // the silhouette edge color\n"								\
@@ -989,7 +996,7 @@
 "	else\n"																				\
 "	{\n"																				\
 "		gNormal.a = levels;\n"															\
-"		gPosition.a = 2;\n"																\
+"		gPosition.a = 0;\n"																\
 "\n"																					\
 "		vec4 albedo = texture2D(material.albedo, vec2(mod(fs_in.fTexCoord.x * repeat.x, 1), mod(fs_in.fTexCoord.y * repeat.y, 1)));\n"						\
 "		vec3 diffuse = vec3(albedo);\n"													\
@@ -1069,7 +1076,7 @@
 "\n" \
 "uniform sampler2D gBufferPosition;\n" \
 "uniform sampler2D gBufferNormal;\n" \
-"uniform usampler2D gBufferInfo;\n" \
+"uniform sampler2D gBufferInfo;\n" \
 "\n" \
 "uniform sampler2D projectorTex;\n" \
 "uniform float alphaMultiplier;\n" \
@@ -1098,15 +1105,17 @@
 "	screenPos.x /= screenSize.x;\n" \
 "	screenPos.y /= screenSize.y;\n" \
 "\n" \
-"	// gBuffer fragment's info\n" \
-"	uvec4 info = texture(gBufferInfo, screenPos);\n" \
-"	//uint layer = 1u << info.r;\n" \
-"	//if ((filterMask & info.r) == 1u)\n" \
-"	//discard;\n" \
+"	// Dot shader\n" \
+"	vec4 dotInfo = texture(gBufferInfo, screenPos);\n" \
+"	if (dotInfo.g == 1)\n" \
+"		discard;\n" \
 "\n" \
 "	// gBuffer fragment's world pos\n" \
 "	vec4 worldPos = texture(gBufferPosition, screenPos);\n" \
-"	worldPos.w = 1;\n" \
+"	if (worldPos.w == 3)\n" \
+"		discard;\n" \
+"	worldPos.w = 1.0;\n" \
+"\n" \
 "	if (worldPos.z == 0.0)\n" \
 "		discard;\n" \
 "	// gBuffer fragment's object pos\n" \
@@ -1132,7 +1141,7 @@
 "	gPosition.rgb = worldPos.rgb;\n" \
 "	gNormal.rgb = texture(gBufferNormal, screenPos).xyz;\n" \
 "	gAlbedoSpec = vec4(color.rgb, color.a * alphaMultiplier);\n" \
-"\n"																					\
+"\n" \
 "	vec4 modelViewPos = view_matrix * vec4(fs_in.gPosition, 1.0);\n" \
 "	float dist = length(modelViewPos.xyz);\n" \
 "	//float fogFactor = (fog.maxDist - dist) / (fog.maxDist - fog.minDist); // Linear\n" \
@@ -1140,7 +1149,7 @@
 "	float fogFactor = exp(-pow(fog.density * dist, 2.0)); // Exponential Squared\n" \
 "	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
 "	gAlbedoSpec = mix(vec4(fog.color, 1.0), gAlbedoSpec, fogFactor);\n" \
-"\n"																					\
+"\n" \
 "	gPosition.a = cartoonLight;\n" \
 "	int levels = 2;\n" \
 "	gNormal.a = levels;\n" \

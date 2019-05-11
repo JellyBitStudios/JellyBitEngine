@@ -41,15 +41,15 @@ bool PanelDebugDraw::Draw()
 			ImGui::SameLine();
 			ImGui::Checkbox("Bounding Boxes", &App->renderer3D->drawBoundingBoxes);
 			ImGui::SameLine();
-			ImGui::Checkbox("Frustums", &App->renderer3D->drawFrustums);
+			ImGui::Checkbox("Bones", &App->renderer3D->drawBones);
 			ImGui::SameLine();
 			ImGui::Checkbox("Colliders", &App->renderer3D->drawColliders);
 			ImGui::SameLine();
-			ImGui::Checkbox("Rigid Actors", &App->renderer3D->drawRigidActors);
+			ImGui::Checkbox("Frustums", &App->renderer3D->drawFrustums);
 			ImGui::SameLine();
 			ImGui::Checkbox("Quadtree", &App->renderer3D->drawQuadtree);
 			ImGui::SameLine();
-			ImGui::Checkbox("Draw Selected", &App->renderer3D->drawCurrentGO);
+			ImGui::Checkbox("Selected", &App->renderer3D->drawCurrentGO);
 		}
 	}
 	ImGui::End();
