@@ -13,6 +13,10 @@ public:
 	//keys
 	struct Key {
 		Key() {}
+		Key(const Key& fromKey) {
+			memcpy(diffRect, fromKey.diffRect, sizeof(int) * 4);
+			time_key = fromKey.time_key;
+		}
 		uint id = 0;
 		int diffRect[4] = { 0, 0, 0, 0 };
 		int globalRect[4] = { 0, 0, 0, 0 };

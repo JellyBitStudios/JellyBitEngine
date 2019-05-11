@@ -34,19 +34,13 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 
 	uint key_size = component_ui_anim.keys.size();
 	if (key_size > 0u) {
-		char buffer[sizeof(int) * 4 + sizeof(float)];
-		char* cursor = buffer;
 		std::map<uint, Key*> tmp_list = component_ui_anim.keys;
 		Key* last_key = nullptr;
 		for (std::map<uint, Key*>::iterator it = tmp_list.begin(); it != tmp_list.end(); ++it) {
-			Key* tmp_key = new Key();
-			it->second->OnInternalSave(cursor);
-			cursor = buffer;
-			tmp_key->OnInternalLoad(cursor);
-			cursor = buffer;
+
+			Key* tmp_key = new Key(*it->second);
 
 			tmp_key->id = keys.size();
-
 			if (last_key)
 			{
 				last_key->next_key = tmp_key;
@@ -76,6 +70,10 @@ ComponentUIAnimation::~ComponentUIAnimation()
 	for (char* s : keys_strCombo)
 		RELEASE_ARRAY(s);
 	keys_strCombo.clear();
+
+	for (std::map<uint, Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
+		RELEASE(it->second);
+	keys.clear();
 
 	parent->cmp_uiAnimation = nullptr;
 }
