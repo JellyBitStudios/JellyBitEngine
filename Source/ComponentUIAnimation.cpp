@@ -36,11 +36,11 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 	if (key_size > 0u) {
 		char buffer[sizeof(int) * 4 + sizeof(float)];
 		char* cursor = buffer;
-		std::list<Key*> tmp_list = component_ui_anim.keys;
+		std::map<uint, Key*> tmp_list = component_ui_anim.keys;
 		Key* last_key = nullptr;
-		for (std::list<Key*>::iterator it = tmp_list.begin(); it != tmp_list.end(); ++it) {
+		for (std::map<uint, Key*>::iterator it = tmp_list.begin(); it != tmp_list.end(); ++it) {
 			Key* tmp_key = new Key();
-			(*it)->OnInternalSave(cursor);
+			it->second->OnInternalSave(cursor);
 			cursor = buffer;
 			tmp_key->OnInternalLoad(cursor);
 			cursor = buffer;
@@ -54,7 +54,7 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 			}
 
 			last_key = tmp_key;
-			keys.push_back(tmp_key);
+			keys.insert(std::pair<uint, Key*>(tmp_key->id, tmp_key));
 			AddKeyOnCombo();
 		}
 	}
@@ -64,7 +64,7 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 	if (includeComponents)
 	{
 		if (!keys.empty())
-			current_key = keys.front();
+			current_key = keys.at(0);
 	
 		change_origin_rect = true;
 		recalculate_times = true;
@@ -91,12 +91,13 @@ void ComponentUIAnimation::Update()
 
 	if (calculate_keys_global)
 	{
-		for (std::list<Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
+		for (std::map<uint, Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
 		{
-			(*it)->globalRect[0] = (*it)->diffRect[0] + init_rect[0];
-			(*it)->globalRect[1] = (*it)->diffRect[1] + init_rect[1];
-			(*it)->globalRect[2] = (*it)->diffRect[2] + init_rect[2];
-			(*it)->globalRect[3] = (*it)->diffRect[3] + init_rect[3];
+			Key* k = it->second;
+			k->globalRect[0] = k->diffRect[0] + init_rect[0];
+			k->globalRect[1] = k->diffRect[1] + init_rect[1];
+			k->globalRect[2] = k->diffRect[2] + init_rect[2];
+			k->globalRect[3] = k->diffRect[3] + init_rect[3];
 		}
 
 		calculate_keys_global = false;
@@ -105,9 +106,9 @@ void ComponentUIAnimation::Update()
 	if (recalculate_times) 
 	{
 
-		for (std::list<Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
+		for (std::map<uint, Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
 		{
-			(*it)->global_time = animation_time * (*it)->time_key;
+			it->second->global_time = animation_time * it->second->time_key;
 		}
 
 		recalculate_times = false;
@@ -165,7 +166,7 @@ bool ComponentUIAnimation::IsRecording() const
 
 uint ComponentUIAnimation::GetInternalSerializationBytes()
 {
-	uint keys_size = (!keys.empty()) ? (*keys.begin())->GetInternalSerializationBytes() * keys.size() : 0;
+	uint keys_size = (!keys.empty()) ? keys.at(0)->GetInternalSerializationBytes() * keys.size() : 0;
 	return keys_size + sizeof(float) + sizeof(bool) + sizeof(uint) + sizeof(versionSerialization);
 }
 
@@ -190,8 +191,8 @@ void ComponentUIAnimation::OnInternalSave(char *& cursor)
 
 	if (keys_size > 0)
 	{
-		for (std::list<Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
-			(*it)->OnInternalSave(cursor);
+		for (std::map<uint, Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
+			it->second->OnInternalSave(cursor);
 	}
 }
 
@@ -235,7 +236,7 @@ void ComponentUIAnimation::OnInternalLoad(char *& cursor)
 					nkey->back_key = last_key;
 				}
 				
-				keys.push_back(nkey);
+				keys.insert(std::pair<uint, Key*>(nkey->id, nkey));
 				AddKeyOnCombo();
 			}
 		}
@@ -280,13 +281,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 			ImGui::PushItemWidth(75.0f);
 			if (ImGui::Combo("Select", &selectable_key, keys_strCombo.data(), keys.size()));
 			{
-				uint count = 0u;
-				for (std::list<Key*>::iterator it = keys.begin(); it != keys.end(); ++it, count++) {
-					if (count == selectable_key) {
-						current_key = (*it);
-						break;
-					}
-				}
+				current_key = keys.at(selectable_key);
 			}
 
 			if (current_key) {
@@ -299,7 +294,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 				if (keys.size() > 1)
 				{
 					animation_state = UIAnimationState::PLAYING;
-					current_key = keys.front();
+					current_key = keys.at(0);
 					animation_timer = 0;
 					parent->cmp_rectTransform->SetRect(init_rect, true);
 				}
@@ -317,7 +312,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 
 			if (ImGui::Button("Stop")) {//TODO PREPARE FOR SCRIPTING
 				animation_state = UIAnimationState::STOPPED;
-				current_key = keys.front();
+				current_key = keys.at(0);
 				parent->cmp_rectTransform->SetRect(init_rect, true);
 			}
 
@@ -394,11 +389,6 @@ void ComponentUIAnimation::OnSystemEvent(System_Event event)
 	}
 }
 
-std::list<ComponentUIAnimation::Key*>* ComponentUIAnimation::GetKeys()
-{
-	return &keys;
-}
-
 float ComponentUIAnimation::GetAnimationTime() const
 {
 	return animation_time;
@@ -414,13 +404,13 @@ void ComponentUIAnimation::ImGuiKeys()
 #ifndef GAMEMODE
 	if (!keys.empty())
 	{
-		for (std::list<ComponentUIAnimation::Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
+		for (std::map<uint, Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
 		{
-			std::string t = "Set key "; t += std::to_string((*it)->id); t += " to current";
+			std::string t = "Set key "; t += std::to_string(it->first + 1); t += " to current";
 			if (ImGui::Button(t.c_str()))
-				current_key = *it;
+				current_key = it->second;
 			ImGui::SameLine();
-			(*it)->OnEditor(animation_time);
+			it->second->OnEditor(animation_time);
 		}
 	}
 	else
@@ -444,12 +434,12 @@ void ComponentUIAnimation::AddKey()
 	tmp_key->time_key = 0.0f;
 
 	if (!keys.empty()) {
-		tmp_key->back_key = keys.back();
-		keys.back()->next_key = tmp_key;
+		tmp_key->back_key = keys.at(tmp_key->id - 1);
+		tmp_key->back_key->next_key = tmp_key;
 	}
 
-	keys.push_back(tmp_key);
-	current_key = keys.back();
+	keys.insert(std::pair<uint, Key*>(tmp_key->id, tmp_key));
+	current_key = tmp_key;
 
 	AddKeyOnCombo();
 }
@@ -486,7 +476,7 @@ void ComponentUIAnimation::Key::OnEditor(float anim_time)
 		diffRect[0], diffRect[1], diffRect[2], diffRect[3]);
 	ImGui::Text("GlobalRect X: %i Y: %i W: %i H:%i",
 		globalRect[0], globalRect[1], globalRect[2], globalRect[3]);
-	std::string t = "Time key"; t += std::to_string(id);
+	std::string t = "Time key"; t += std::to_string(id + 1);
 	if (ImGui::SliderFloat(t.c_str(), &time_key, 0.0f, 1.0f)) {
 		global_time = anim_time * time_key;
 	}

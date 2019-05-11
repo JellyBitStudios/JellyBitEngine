@@ -5,6 +5,7 @@
 
 #include <list>
 #include <vector>
+#include <map>
 
 class ComponentUIAnimation : public Component
 {
@@ -64,7 +65,6 @@ public:
 
 	bool IsRecording()const;
 
-	std::list<Key*>* GetKeys();
 	float GetAnimationTime()const;
 	bool HasKeys()const;
 	
@@ -85,7 +85,6 @@ private:
 
 private:
 	void AddKey();
-
 	void AddKeyOnCombo();
 
 private:
@@ -95,7 +94,7 @@ private:
 	// ----- Animation component -----
 	UIAnimationState animation_state = UIAnimationState::STOPPED;
 
-	std::list<Key*> keys;
+	std::map<uint, Key*> keys;
 
 	bool usePanel = false;
 
