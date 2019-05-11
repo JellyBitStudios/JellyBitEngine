@@ -257,11 +257,11 @@ void PanelInspector::ShowGameObjectInspector() const
 					AddComponentInGroup(ComponentTypes::SliderComponent);
 					ImGui::CloseCurrentPopup();
 				}
-			if (CheckIsComponent(UIAnimationComponent))
+			/*if (CheckIsComponent(UIAnimationComponent))
 				if (ImGui::Selectable("Animation UI")) {
 					AddComponentInGroup(ComponentTypes::UIAnimationComponent);
 					ImGui::CloseCurrentPopup();
-				}
+				}*/
 		}
 		if (ImGui::Selectable("Script")) {
 			//Open new Popup, with input text and autocompletion to select scripts by name
