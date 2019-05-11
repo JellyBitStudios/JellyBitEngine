@@ -30,6 +30,7 @@
 #include "PanelPhysics.h"
 #include "PanelLayers.h"
 #include "PanelUI.h"
+#include "PanelUIAnimation.h"
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_impl_sdl.h"
@@ -63,6 +64,7 @@ bool ModuleGui::Init(JSON_Object* jObject)
 	panelPhysics = new PanelPhysics("Physics");
 	panelLayers = new PanelLayers("Layers");
 	panelUI = new PanelUI("UI");
+	panelUIAnimation = new PanelUIAnimation("UI Animation");
 
 	panels.push_back(panelInspector);
 	panels.push_back(panelAbout);
@@ -79,6 +81,7 @@ bool ModuleGui::Init(JSON_Object* jObject)
 	panels.push_back(panelPhysics);
 	panels.push_back(panelLayers);
 	panels.push_back(panelUI);
+	panels.push_back(panelUIAnimation);
 
 	LoadStatus(jObject);
 
@@ -270,6 +273,8 @@ bool ModuleGui::CleanUp()
 	panelSimulatedTime = nullptr;
 	panelPhysics = nullptr;
 	panelLayers = nullptr;
+	panelUI = nullptr;
+	panelUIAnimation = nullptr;
 	
 	App->res->SetAsUnused(atlas->GetUuid());
 

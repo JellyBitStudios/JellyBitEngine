@@ -2136,6 +2136,9 @@
     <ClInclude Include="ComponentUIAnimation.h">
       <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
     </ClInclude>
+    <ClInclude Include="PanelUIAnimation.h">
+      <Filter>Sources\Modules\Panels</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ModuleInput.cpp">
@@ -2722,6 +2725,9 @@
     </ClCompile>
     <ClCompile Include="ComponentUIAnimation.cpp">
       <Filter>Sources\Modules\GO&amp;Components\Components\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="PanelUIAnimation.cpp">
+      <Filter>Sources\Modules\Panels</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

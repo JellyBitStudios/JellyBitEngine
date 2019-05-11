@@ -1,8 +1,13 @@
 #include "ComponentUIAnimation.h"
-#include "ComponentRectTransform.h"
-#include "GameObject.h"
+
 #include "Application.h"
 #include "ModuleTimeManager.h"
+#include "ModuleGui.h"
+
+#include "PanelUIAnimation.h"
+
+#include "GameObject.h"
+#include "ComponentRectTransform.h"
 
 #ifndef GAMEMODE
 #include "imgui\imgui.h"
@@ -262,34 +267,10 @@ void ComponentUIAnimation::OnUniqueEditor()
 			}
 
 			if (current_key) {
-				ImGui::Separator();
-				ImGui::Text("Current: "); ImGui::SameLine(); ImGui::Text(keys_strCombo[current_key->id]);
-				ImGui::Text("DiffRect X: %i Y: %i W: %i H:%i", 
-					current_key->diffRect[0], current_key->diffRect[1], current_key->diffRect[2], current_key->diffRect[3]);
-				ImGui::Text("GlobalRect X: %i Y: %i W: %i H:%i",
-					current_key->globalRect[0], current_key->globalRect[1], current_key->globalRect[2], current_key->globalRect[3]);
-
-				if (ImGui::SliderFloat("Time", &current_key->time_key, 0.0f, 1.0f)) {
-					current_key->global_time = this->animation_time * current_key->time_key;
-				}
-
-				ImGui::SameLine();
-
-				ImGui::Text("| Global time: %f", current_key->global_time);
+				ImGui::Text("Current"); ImGui::SameLine();
+				current_key->OnEditor(animation_time);
 			}
 
-			/*uint count = 1;
-			for (std::list<Key*>::iterator it = keys.begin(); it != keys.end(); ++it, ++count)
-			{
-				ImGui::Separator();
-				Key* k = *it;
-				ImGui::Text("Key %u", count);
-				ImGui::Text("DiffRect X: %i Y: %i W: %i H:%i",
-					k->diffRect[0], k->diffRect[1], k->diffRect[2], k->diffRect[3]);
-				ImGui::Text("GlobalRect X: %i Y: %i W: %i H:%i",
-					k->globalRect[0], k->globalRect[1], k->globalRect[2], k->globalRect[3]);
-				ImGui::Text("Time to key: %f", k->time_key);
-			}*/
 			ImGui::Separator();
 			if (ImGui::Button("Play")) {//TODO PREPARE FOR SCRIPTING
 				if (keys.size() > 1)
@@ -346,14 +327,33 @@ void ComponentUIAnimation::OnUniqueEditor()
 		if(ImGui::Button((recording) ? "Stop recording" : "Start recording")) {
 			recording = !recording;
 
+			if (recording)
+			{
+				usePanel = true;
+				App->gui->panelUIAnimation->SetCmp(this);
+			}
+
 			if (!recording) {
+				usePanel = false;
 				parent->cmp_rectTransform->SetRect(init_rect, true);
+				App->gui->panelUIAnimation->ClearCmp();
 			}
 		}
 		
 		if (recording) {
+			ImGui::SameLine();
 			if (ImGui::Button("Save Key"))
 				this->AddKey();
+		}
+
+		if (ImGui::Button((usePanel) ? "Hide panel" : "Show Panel"))
+		{
+			usePanel = !usePanel;
+
+			if (usePanel)
+				App->gui->panelUIAnimation->SetCmp(this);
+			else
+				App->gui->panelUIAnimation->ClearCmp();
 		}
 	}
 #endif
@@ -369,6 +369,40 @@ void ComponentUIAnimation::OnSystemEvent(System_Event event)
 		change_origin_rect = true;
 		break;
 	}
+}
+
+std::list<ComponentUIAnimation::Key*>* ComponentUIAnimation::GetKeys()
+{
+	return &keys;
+}
+
+float ComponentUIAnimation::GetAnimationTime() const
+{
+	return animation_time;
+}
+
+bool ComponentUIAnimation::HasKeys() const
+{
+	return !keys.empty();
+}
+
+void ComponentUIAnimation::ImGuiKeys()
+{
+#ifndef GAMEMODE
+	if (!keys.empty())
+	{
+		for (std::list<ComponentUIAnimation::Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
+		{
+			std::string t = "Set key "; t += std::to_string((*it)->id); t += " to current";
+			if (ImGui::Button(t.c_str()))
+				current_key = *it;
+			ImGui::SameLine();
+			(*it)->OnEditor(animation_time);
+		}
+	}
+	else
+		ImGui::Text("Empty Keys");
+#endif
 }
 
 void ComponentUIAnimation::AddKey()
@@ -417,4 +451,25 @@ void ComponentUIAnimation::AddKeyOnCombo()
 	cursorkey += bytes;
 
 	keys_strCombo.push_back(key_str);
+}
+
+//OnEditor Key
+void ComponentUIAnimation::Key::OnEditor(float anim_time)
+{
+#ifndef GAMEMODE
+	ImGui::Separator();
+	ImGui::Text("Key: "); ImGui::SameLine(); ImGui::Text("%i", id);
+	ImGui::Text("DiffRect X: %i Y: %i W: %i H:%i",
+		diffRect[0], diffRect[1], diffRect[2], diffRect[3]);
+	ImGui::Text("GlobalRect X: %i Y: %i W: %i H:%i",
+		globalRect[0], globalRect[1], globalRect[2], globalRect[3]);
+	std::string t = "Time key "; t += std::to_string(id);
+	if (ImGui::SliderFloat(t.c_str(), &time_key, 0.0f, 1.0f)) {
+		global_time = anim_time * time_key;
+	}
+
+	ImGui::SameLine();
+
+	ImGui::Text("| Global time: %f", global_time);
+#endif
 }
