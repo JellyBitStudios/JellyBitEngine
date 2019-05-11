@@ -1,6 +1,8 @@
 #include "ComponentUIAnimation.h"
 #include "ComponentRectTransform.h"
 #include "GameObject.h"
+#include "Application.h"
+#include "ModuleTimeManager.h"
 
 #ifndef GAMEMODE
 #include "imgui\imgui.h"
@@ -64,7 +66,7 @@ ComponentUIAnimation::~ComponentUIAnimation()
 
 void ComponentUIAnimation::Update()
 {
-	//float dt = App->timeManager->GetDt();
+	float dt = App->timeManager->GetDt();
 
 	if (change_origin_rect)
 	{
@@ -85,6 +87,72 @@ void ComponentUIAnimation::Update()
 
 		calculate_keys_global = false;
 	}
+
+	if (recalculate_times) 
+	{
+
+		for (std::list<Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
+		{
+			(*it)->global_time = animation_time * (*it)->time_key;
+		}
+
+		recalculate_times = false;
+	}
+
+	// Interpolate
+	if (!current_key)
+		return;
+
+	if (animation_timer > current_key->global_time) {
+		std::list<Key*>::iterator it = std::find(keys.begin(), keys.end(), current_key);
+		if (it++ != keys.end())
+			current_key = (*it);
+		else
+			animation_state = UIAnimationState::PAUSED;
+	}
+
+	switch (animation_state)
+	{
+		case UIAnimationState::PLAYING: {
+			animation_timer += dt;
+			Interpolate(animation_timer);
+		}
+		break;
+
+		case UIAnimationState::PAUSED:
+		break;
+
+		case UIAnimationState::STOPPED: {
+			animation_timer = 0.0f;
+		}
+		break;
+	}
+}
+
+void ComponentUIAnimation::Interpolate(float time)
+{
+	std::list<Key*>::iterator it = std::find(keys.begin(), keys.end(), current_key);
+
+	if (it != keys.end()) {
+
+		it++;
+		if (it == keys.end()) {
+			animation_state = UIAnimationState::PAUSED;
+			return;
+		}
+
+		Key* next_key = (*it);
+
+		int tmp_rect[4] = {
+			time * next_key->globalRect[0] / next_key->time_key,
+			time * next_key->globalRect[1] / next_key->time_key,
+			time * next_key->globalRect[2] / next_key->time_key,
+			time * next_key->globalRect[3] / next_key->time_key };
+
+		parent->cmp_rectTransform->SetRect(tmp_rect, true);
+
+	}
+
 }
 
 bool ComponentUIAnimation::IsRecording() const
@@ -158,6 +226,13 @@ void ComponentUIAnimation::OnUniqueEditor()
 		ImGui::Text("UI Animation");
 
 		if (!keys.empty()) {
+
+			ImGui::PushItemWidth(100.0f);
+			if (ImGui::DragFloat("Total time", &animation_time))
+				recalculate_times = true;
+
+			ImGui::Text("Current timer: %f", animation_timer);
+
 			int selectable_key = current_key_int;
 			ImGui::PushItemWidth(75.0f);
 			if (ImGui::Combo("Select", &selectable_key, keys_strCombo.data(), keys.size()));
@@ -180,10 +255,16 @@ void ComponentUIAnimation::OnUniqueEditor()
 				ImGui::Text("GlobalRect X: %i Y: %i W: %i H:%i",
 					current_key->globalRect[0], current_key->globalRect[1], current_key->globalRect[2], current_key->globalRect[3]);
 
-				ImGui::Text("Time to key: %f", current_key->time_to_key);
+				if (ImGui::SliderFloat("Time", &current_key->time_key, 0.0f, 1.0f)) {
+					current_key->global_time = this->animation_time * current_key->time_key;
+				}
+
+				ImGui::SameLine();
+
+				ImGui::Text("| Global time: %f", current_key->global_time);
 			}
 
-			uint count = 1;
+			/*uint count = 1;
 			for (std::list<Key*>::iterator it = keys.begin(); it != keys.end(); ++it, ++count)
 			{
 				ImGui::Separator();
@@ -193,21 +274,24 @@ void ComponentUIAnimation::OnUniqueEditor()
 					k->diffRect[0], k->diffRect[1], k->diffRect[2], k->diffRect[3]);
 				ImGui::Text("GlobalRect X: %i Y: %i W: %i H:%i",
 					k->globalRect[0], k->globalRect[1], k->globalRect[2], k->globalRect[3]);
-				ImGui::Text("Time to key: %f", k->time_to_key);
-			}
+				ImGui::Text("Time to key: %f", k->time_key);
+			}*/
 			ImGui::Separator();
-			if (ImGui::Button("Play"))
-				ImGui::Text("UI Animation");
-
+			if (ImGui::Button("Play")) {//TODO PREPARE FOR SCRIPTING
+				animation_state = UIAnimationState::PLAYING;
+				current_key = keys.front();
+			}
 			ImGui::SameLine();
 
 			if (ImGui::Button("Pause"))
-				ImGui::Text("UI Animation");
+				animation_state = UIAnimationState::PAUSED;
 
 			ImGui::SameLine();
 
-			if (ImGui::Button("Stop"))
-				ImGui::Text("UI Animation");
+			if (ImGui::Button("Stop")) {//TODO PREPARE FOR SCRIPTING
+				animation_state = UIAnimationState::STOPPED;
+				parent->cmp_rectTransform->SetRect(init_rect, true);
+			}
 
 			ImGui::SameLine();
 
@@ -262,7 +346,7 @@ void ComponentUIAnimation::AddKey()
 	tmp_key->diffRect[2] = tmp_key->globalRect[2] - init_rect[2];
 	tmp_key->diffRect[3] = tmp_key->globalRect[3] - init_rect[3];
 
-	tmp_key->time_to_key = 1000.0f;
+	tmp_key->time_key = 0.0f;
 
 	current_key_int = keys.size();
 	keys.push_back(tmp_key);
