@@ -51,10 +51,14 @@ private:
 	//keys
 	struct Key {
 		Key() {}
+		uint id = 0;
 		int diffRect[4] = { 0, 0, 0, 0};
 		int globalRect[4] = { 0, 0, 0, 0 };
 		float time_key = 0.0f;
 		float global_time = 0.0f;
+
+		Key* back_key = nullptr;
+		Key* next_key = nullptr;
 
 		static uint GetInternalSerializationBytes() {
 			return sizeof(int) * 4 + sizeof(float);
@@ -110,10 +114,7 @@ private:
 	bool calculate_keys_global = false;
 	
 	//Combo values
-	std::vector<char*> keys_strCombo;
-
-	int current_key_int = 0;
-	
+	std::vector<char*> keys_strCombo;	
 };
 
 #endif

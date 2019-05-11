@@ -32,6 +32,7 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 		char buffer[sizeof(int) * 4 + sizeof(float)];
 		char* cursor = buffer;
 		std::list<Key*> tmp_list = component_ui_anim.keys;
+		Key* last_key = nullptr;
 		for (std::list<Key*>::iterator it = tmp_list.begin(); it != tmp_list.end(); ++it) {
 			Key* tmp_key = new Key();
 			(*it)->OnInternalSave(cursor);
@@ -39,6 +40,13 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 			tmp_key->OnInternalLoad(cursor);
 			cursor = buffer;
 
+			if (last_key)
+			{
+				last_key->next_key = tmp_key;
+				tmp_key->back_key = last_key;
+			}
+
+			last_key = tmp_key;
 			keys.push_back(tmp_key);
 			AddKeyOnCombo();
 		}
@@ -66,8 +74,6 @@ ComponentUIAnimation::~ComponentUIAnimation()
 
 void ComponentUIAnimation::Update()
 {
-	float dt = App->timeManager->GetDt();
-
 	if (change_origin_rect)
 	{
 		memcpy(init_rect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
@@ -100,20 +106,25 @@ void ComponentUIAnimation::Update()
 	}
 
 	// Interpolate
-	if (!current_key)
+	if (keys.empty() || keys.size() == 1)
 		return;
 
-	if (animation_timer > current_key->global_time) {
-		std::list<Key*>::iterator it = std::find(keys.begin(), keys.end(), current_key);
-		if (it++ != keys.end())
-			current_key = (*it);
-		else
-			animation_state = UIAnimationState::PAUSED;
-	}
+	float dt = App->timeManager->GetDt();
 
 	switch (animation_state)
 	{
 		case UIAnimationState::PLAYING: {
+
+			if (animation_timer >= current_key->global_time) {
+				if (current_key->next_key != nullptr)
+					current_key = current_key->next_key;
+				else
+				{
+					animation_state = UIAnimationState::PAUSED;
+					break;
+				}
+			}
+
 			animation_timer += dt;
 			Interpolate(animation_timer);
 		}
@@ -131,28 +142,12 @@ void ComponentUIAnimation::Update()
 
 void ComponentUIAnimation::Interpolate(float time)
 {
-	std::list<Key*>::iterator it = std::find(keys.begin(), keys.end(), current_key);
-
-	if (it != keys.end()) {
-
-		it++;
-		if (it == keys.end()) {
-			animation_state = UIAnimationState::PAUSED;
-			return;
-		}
-
-		Key* next_key = (*it);
-
-		int tmp_rect[4] = {
-			time * next_key->globalRect[0] / next_key->time_key,
-			time * next_key->globalRect[1] / next_key->time_key,
-			time * next_key->globalRect[2] / next_key->time_key,
-			time * next_key->globalRect[3] / next_key->time_key };
-
-		parent->cmp_rectTransform->SetRect(tmp_rect, true);
-
-	}
-
+	int tmp_rect[4] = {
+		time * current_key->globalRect[0] / current_key->time_key,
+		time * current_key->globalRect[1] / current_key->time_key,
+		time * current_key->globalRect[2] / current_key->time_key,
+		time * current_key->globalRect[3] / current_key->time_key };
+	parent->cmp_rectTransform->SetRect(tmp_rect, true);
 }
 
 bool ComponentUIAnimation::IsRecording() const
@@ -201,10 +196,18 @@ void ComponentUIAnimation::OnInternalLoad(char *& cursor)
 		
 		if (keys_size > 0)
 		{
+			Key* last_key = nullptr;
 			for (uint i = 0; i < keys_size; i++)
 			{
 				Key* nkey = new Key();
 				nkey->OnInternalLoad(cursor);
+
+				if (last_key)
+				{
+					last_key->next_key = nkey;
+					nkey->back_key = last_key;
+				}
+
 				keys.push_back(nkey);
 				AddKeyOnCombo();
 			}
@@ -231,13 +234,24 @@ void ComponentUIAnimation::OnUniqueEditor()
 			if (ImGui::DragFloat("Total time", &animation_time))
 				recalculate_times = true;
 
+			switch (animation_state)
+			{
+			case UIAnimationState::PAUSED:
+					ImGui::Text("Paused");
+				break;
+				case UIAnimationState::PLAYING:
+					ImGui::Text("Playing");
+				break;
+				case UIAnimationState::STOPPED:
+					ImGui::Text("Stopped");
+				break;
+			}
 			ImGui::Text("Current timer: %f", animation_timer);
 
-			int selectable_key = current_key_int;
+			int selectable_key = (current_key) ? current_key->id : 0;
 			ImGui::PushItemWidth(75.0f);
 			if (ImGui::Combo("Select", &selectable_key, keys_strCombo.data(), keys.size()));
 			{
-				current_key_int = selectable_key;
 				uint count = 0u;
 				for (std::list<Key*>::iterator it = keys.begin(); it != keys.end(); ++it, count++) {
 					if (count == selectable_key) {
@@ -249,7 +263,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 
 			if (current_key) {
 				ImGui::Separator();
-				ImGui::Text("Current: "); ImGui::SameLine(); ImGui::Text(keys_strCombo[current_key_int]);
+				ImGui::Text("Current: "); ImGui::SameLine(); ImGui::Text(keys_strCombo[current_key->id]);
 				ImGui::Text("DiffRect X: %i Y: %i W: %i H:%i", 
 					current_key->diffRect[0], current_key->diffRect[1], current_key->diffRect[2], current_key->diffRect[3]);
 				ImGui::Text("GlobalRect X: %i Y: %i W: %i H:%i",
@@ -278,8 +292,17 @@ void ComponentUIAnimation::OnUniqueEditor()
 			}*/
 			ImGui::Separator();
 			if (ImGui::Button("Play")) {//TODO PREPARE FOR SCRIPTING
-				animation_state = UIAnimationState::PLAYING;
-				current_key = keys.front();
+				if (keys.size() > 1)
+				{
+					animation_state = UIAnimationState::PLAYING;
+					current_key = keys.front();
+					animation_timer = 0;
+					parent->cmp_rectTransform->SetRect(init_rect, true);
+				}
+				else
+				{
+					CONSOLE_LOG(LogTypes::Warning, "You can't play with one key.");
+				}
 			}
 			ImGui::SameLine();
 
@@ -290,18 +313,31 @@ void ComponentUIAnimation::OnUniqueEditor()
 
 			if (ImGui::Button("Stop")) {//TODO PREPARE FOR SCRIPTING
 				animation_state = UIAnimationState::STOPPED;
+				current_key = keys.front();
 				parent->cmp_rectTransform->SetRect(init_rect, true);
 			}
 
 			ImGui::SameLine();
 
-			if (ImGui::Button("Next Key"))
-				ImGui::Text("UI Animation");
+			if (ImGui::Button("Next Key")) {
+				if (current_key->next_key != nullptr)
+				{
+					current_key = current_key->next_key;
+					animation_timer = current_key->global_time;
+					parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
+				}
+			}
 
 			ImGui::SameLine();
 
-			if (ImGui::Button("Previous Key"))
-				ImGui::Text("UI Animation");
+			if (ImGui::Button("Previous Key")) {
+				if (current_key->back_key != nullptr)
+				{
+					current_key = current_key->back_key;
+					animation_timer = current_key->global_time;
+					parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
+				}
+			}
 		}
 		else {
 			ImGui::Text("There is no key for this UI GO ...");
@@ -339,6 +375,8 @@ void ComponentUIAnimation::AddKey()
 {
 	Key* tmp_key = new Key();
 
+	tmp_key->id = keys.size();
+
 	memcpy((*tmp_key).globalRect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
 
 	tmp_key->diffRect[0] = tmp_key->globalRect[0] - init_rect[0];
@@ -348,7 +386,11 @@ void ComponentUIAnimation::AddKey()
 
 	tmp_key->time_key = 0.0f;
 
-	current_key_int = keys.size();
+	if (!keys.empty()) {
+		tmp_key->back_key = keys.back();
+		keys.back()->next_key = tmp_key;
+	}
+
 	keys.push_back(tmp_key);
 	current_key = keys.back();
 
