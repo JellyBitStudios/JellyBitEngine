@@ -4,6 +4,7 @@
 #include "Component.h"
 
 #include <list>
+#include <vector>
 
 class ComponentUIAnimation : public Component
 {
@@ -30,6 +31,8 @@ private:
 
 private:
 	void AddKey();
+
+	void AddKeyOnCombo();
 
 private:
 	//version
@@ -79,6 +82,10 @@ private:
 
 	//calculate global pos of keys
 	bool calculate_keys_global = false;
+
+	//Combo values
+	std::vector<char*> keys_strCombo;
+	int current_key_int = 0;
 };
 
 #endif

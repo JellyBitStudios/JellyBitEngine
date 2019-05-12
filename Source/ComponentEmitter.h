@@ -116,6 +116,8 @@ struct StartValues
 	void OnInternalLoad(char *& cursor);
 };
 
+class ParticleTrans;
+
 class ComponentEmitter : public Component
 {
 public:
@@ -153,7 +155,7 @@ public:
 	void SoftClearEmitter();
 	bool EditColor(ColorTime & colorTime, uint pos = 0u);
 
-	math::float3 GetPos();
+	void UpdateParticleTrans(ParticleTrans& trans);
 
 	void SetUuidRes(uint newUuid, uint &oldUuid);
 	void SetMeshParticleRes(uint res_uuid);

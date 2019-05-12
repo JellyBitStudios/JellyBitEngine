@@ -415,7 +415,7 @@ void ComponentProjector::Draw() const
 	std::vector<const char*> ignore;
 	ignore.push_back("gBufferPosition");
 	ignore.push_back("gBufferNormal");
-	ignore.push_back("gBufferInfo");
+	ignore.push_back("gInfo");
 	ignore.push_back("screenSize");
 	ignore.push_back("filterMask");
 	ignore.push_back("alphaMultiplier");
