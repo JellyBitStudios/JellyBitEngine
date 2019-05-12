@@ -415,6 +415,42 @@ void ComponentUIAnimation::OnUniqueEditor()
 		}
 		else {
 			ImGui::Text("There is no key for this UI GO ...");
+			ImGui::Button("Copy keys from dragged GameObject", ImVec2(250.0f, 0.0f));
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY"))
+				{
+					GameObject* fromCopy = *(GameObject**)payload->Data;
+					if (fromCopy && fromCopy->cmp_uiAnimation)
+					{
+						uint key_size = fromCopy->cmp_uiAnimation->keys.size();
+						if (key_size > 0u) {
+							animation_time = fromCopy->cmp_uiAnimation->animation_time;
+							std::map<uint, Key*> tmp_list = fromCopy->cmp_uiAnimation->keys;
+							Key* last_key = nullptr;
+							for (std::map<uint, Key*>::iterator it = tmp_list.begin(); it != tmp_list.end(); ++it) {
+
+								Key* tmp_key = new Key(*it->second);
+
+								tmp_key->id = keys.size();
+								if (last_key)
+								{
+									last_key->next_key = tmp_key;
+									tmp_key->back_key = last_key;
+								}
+
+								last_key = tmp_key;
+								keys.insert(std::pair<uint, Key*>(tmp_key->id, tmp_key));
+								AddKeyOnCombo();
+							}
+						}
+						if (!keys.empty()) current_key = keys.at(0);
+						change_origin_rect = true;
+						recalculate_times = true;
+					}
+				}
+				ImGui::EndDragDropTarget();
+			}
 		}
 
 		if (popStyle = recording)
