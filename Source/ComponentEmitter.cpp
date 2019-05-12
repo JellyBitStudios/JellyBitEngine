@@ -93,8 +93,6 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 
 	rateOverTime = componentEmitter.rateOverTime;
 
-	startOnPlay = componentEmitter.startOnPlay;
-
 	if (include)
 	{
 		App->particle->emitters.push_back(this);
@@ -112,6 +110,10 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 		else
 			SetUuidRes(App->resHandler->plane, uuidMeshPart);
 	}
+
+	startOnPlay = componentEmitter.startOnPlay;
+	if (startOnPlay && App->IsPlay())
+		StartEmitter();
 }
 
 ComponentEmitter::~ComponentEmitter()
