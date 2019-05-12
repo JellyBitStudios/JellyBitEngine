@@ -5,7 +5,7 @@
 
 namespace PhysicsConstants
 {
-	constexpr float FIXED_DT(1.0f / 60.0f);
+	constexpr float FIXED_DT(1.0f / 30.0f);
 	constexpr float GRAVITY_X(0.0f);
 	constexpr float GRAVITY_Y(-9.8f);
 	constexpr float GRAVITY_Z(0.0f);

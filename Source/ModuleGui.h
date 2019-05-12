@@ -62,6 +62,7 @@ public:
 	class PanelLayers*			panelLayers = nullptr;
 	class PanelPhysics*			panelPhysics = nullptr;
 	class PanelUI*				panelUI = nullptr;
+	class PanelUIAnimation*		panelUIAnimation = nullptr;
 
 	ResourceTexture* atlas = nullptr;
 

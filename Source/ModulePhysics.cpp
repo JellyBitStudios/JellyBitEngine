@@ -214,7 +214,7 @@ update_status ModulePhysics::Update()
 		//gAccumulator += App->timeManager->GetRealDt();
 		if (gAccumulator >= PhysicsConstants::FIXED_DT)
 		{
-			gAccumulator = 0.0f;
+			gAccumulator -= PhysicsConstants::FIXED_DT;
 
 			updateStatus = FixedUpdate();
 
