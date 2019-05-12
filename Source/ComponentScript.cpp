@@ -67,10 +67,13 @@ void ComponentScript::OnSystemEvent(System_Event event)
 	{
 		case System_Event_Type::LoadFinished:
 		{
-			LoadPublicVars(tempBuffer);
+			if (tempBuffer != nullptr)
+			{
+				LoadPublicVars(tempBuffer);
 
-			delete[] tempBuffer;
-			tempBuffer = nullptr;
+				delete[] tempBuffer;
+				tempBuffer = nullptr;
+			}
 			tempBufferBytes = 0u;
 
 			break;

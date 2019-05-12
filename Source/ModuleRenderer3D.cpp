@@ -308,15 +308,17 @@ update_status ModuleRenderer3D::PostUpdate()
 
 		App->debugDrawer->StartDebugDraw();
 
-		// Bones debug draw
-		std::vector<GameObject*> gameObjects;
-		App->GOs->GetGameobjects(gameObjects);
-		for (uint i = 0; i < gameObjects.size(); ++i)
+		if (drawBones)
 		{
-			if (gameObjects[i]->cmp_bone != nullptr)
+			std::vector<GameObject*> gameObjects;
+			App->GOs->GetGameobjects(gameObjects);
+			for (uint i = 0; i < gameObjects.size(); ++i)
 			{
-				math::float4x4 globalMatrix = gameObjects[i]->transform->GetGlobalMatrix();
-				App->debugDrawer->DebugDrawSphere(1.0f, Yellow, globalMatrix);
+				if (gameObjects[i]->cmp_bone != nullptr)
+				{
+					math::float4x4 globalMatrix = gameObjects[i]->transform->GetGlobalMatrix();
+					App->debugDrawer->DebugDrawSphere(1.0f, Yellow, globalMatrix);
+				}
 			}
 		}
 
@@ -359,9 +361,6 @@ update_status ModuleRenderer3D::PostUpdate()
 
 		if (drawColliders)
 			App->physics->DrawColliders();
-
-		if (drawRigidActors)
-			App->physics->DrawRigidActors();
 
 		if (drawQuadtree) // quadtreeColor = Blue, DarkBlue
 			RecursiveDrawQuadtree(App->scene->quadtree.root);
@@ -445,7 +444,6 @@ void ModuleRenderer3D::OnSystemEvent(System_Event event)
 		CalculateProjectionMatrix();
 #endif // !GAMEMODE
 
-
 		break;
 	}
 	}
@@ -456,15 +454,22 @@ void ModuleRenderer3D::SaveStatus(JSON_Object* jObject) const
 	json_object_set_boolean(jObject, "vSync", vsync);
 	json_object_set_boolean(jObject, "debugDraw", debugDraw);
 	json_object_set_boolean(jObject, "drawBoundingBoxes", drawBoundingBoxes);
+	json_object_set_boolean(jObject, "drawBones", drawBones);
+	json_object_set_boolean(jObject, "drawColliders", drawColliders);
 	json_object_set_boolean(jObject, "drawCamerasFrustum", drawFrustums);
+	json_object_set_boolean(jObject, "drawCurrentGO", drawCurrentGO);
 	json_object_set_boolean(jObject, "drawQuadtree", drawQuadtree);
 }
+
 void ModuleRenderer3D::LoadStatus(const JSON_Object* jObject)
 {
 	SetVSync(json_object_get_boolean(jObject, "vSync"));
 	debugDraw = json_object_get_boolean(jObject, "debugDraw");
 	drawBoundingBoxes = json_object_get_boolean(jObject, "drawBoundingBoxes");
+	drawBones = json_object_get_boolean(jObject, "drawBones");
+	drawColliders = json_object_get_boolean(jObject, "drawColliders");
 	drawFrustums = json_object_get_boolean(jObject, "drawCamerasFrustum");
+	drawCurrentGO = json_object_get_boolean(jObject, "drawCurrentGO");
 	drawQuadtree = json_object_get_boolean(jObject, "drawQuadtree");
 }
 
@@ -826,7 +831,8 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 		math::float4x4 view_matrix = currentCamera->GetOpenGLViewMatrix();
 		glUniformMatrix4fv(location, 1, GL_FALSE, view_matrix.ptr());
 	}
-
+	location = glGetUniformLocation(shader, "Time");
+	glUniform1f(location, App->timeManager->GetRealTime());
 	uint screenScale = App->window->GetScreenSize();
 	uint screenWidth = App->window->GetWindowWidth();
 	uint screenHeight = App->window->GetWindowHeight();
@@ -896,14 +902,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 	location = glGetUniformLocation(shader, "fog.color");
 	if (location != -1)
 		glUniform3fv(location, 1, &App->lights->fog.color[0]);
-	/*
-	location = glGetUniformLocation(resProgram->shaderProgram, "fog.minDist");
-	if (location != -1)
-	glUniform1f(location, App->lights->fog.minDist);
-	location = glGetUniformLocation(resProgram->shaderProgram, "fog.maxDist");
-	if (location != -1)
-	glUniform1f(location, App->lights->fog.maxDist);
-	*/
+
 	location = glGetUniformLocation(shader, "fog.density");
 	if (location != -1)
 		glUniform1f(location, App->lights->fog.density);
