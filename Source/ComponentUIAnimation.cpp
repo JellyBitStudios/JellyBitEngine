@@ -156,11 +156,18 @@ void ComponentUIAnimation::Update()
 void ComponentUIAnimation::Interpolate(float time)
 {
 	int tmp_rect[4] = {
-		time * current_key->globalRect[0] / current_key->time_key,
-		time * current_key->globalRect[1] / current_key->time_key,
-		time * current_key->globalRect[2] / current_key->time_key,
-		time * current_key->globalRect[3] / current_key->time_key };
-	parent->cmp_rectTransform->SetRect(tmp_rect, true);
+		time * current_key->diffRect[0] / current_key->global_time,
+		time * current_key->diffRect[1] / current_key->global_time,
+		time * current_key->diffRect[2] / current_key->global_time,
+		time * current_key->diffRect[3] / current_key->global_time };
+
+	int test[4] = { 
+		(current_key->back_key) ? current_key->back_key->globalRect[0] + tmp_rect[0] : init_rect[0] + tmp_rect[0], 
+		(current_key->back_key) ? current_key->back_key->globalRect[1] + tmp_rect[1] : init_rect[1] + tmp_rect[1],
+		(current_key->back_key) ? current_key->back_key->globalRect[2] + tmp_rect[2] : init_rect[2] + tmp_rect[2],
+		(current_key->back_key) ? current_key->back_key->globalRect[3] + tmp_rect[3] : init_rect[3] + tmp_rect[3] };
+
+	parent->cmp_rectTransform->SetRect(test, true);
 }
 
 bool ComponentUIAnimation::IsRecording() const
@@ -460,10 +467,10 @@ void ComponentUIAnimation::OnSystemEvent(System_Event event)
 		{
 			memcpy(current_key->globalRect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
 
-			current_key->diffRect[0] = current_key->globalRect[0] - init_rect[0];
-			current_key->diffRect[1] = current_key->globalRect[1] - init_rect[1];
-			current_key->diffRect[2] = current_key->globalRect[2] - init_rect[2];
-			current_key->diffRect[3] = current_key->globalRect[3] - init_rect[3];
+			current_key->diffRect[0] = current_key->globalRect[0] - ((current_key->back_key) ? current_key->back_key->globalRect[0] : init_rect[0]);
+			current_key->diffRect[1] = current_key->globalRect[1] - ((current_key->back_key) ? current_key->back_key->globalRect[1] : init_rect[1]);
+			current_key->diffRect[2] = current_key->globalRect[2] - ((current_key->back_key) ? current_key->back_key->globalRect[2] : init_rect[2]);
+			current_key->diffRect[3] = current_key->globalRect[3] - ((current_key->back_key) ? current_key->back_key->globalRect[3] : init_rect[3]);
 		}
 		else
 			change_origin_rect = true;
