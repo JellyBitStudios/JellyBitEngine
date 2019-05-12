@@ -25,8 +25,10 @@ ComponentUIAnimation::ComponentUIAnimation(GameObject * parent, bool includeComp
 	{
 		if (!parent->cmp_image) parent->AddComponent(ComponentTypes::ImageComponent);
 
+#ifndef GAMEMODE
 		if (App->gui->panelUIAnimation->IsEnabled())
 			usePanel = true;
+#endif
 
 		change_origin_rect = true;
 	}
@@ -68,8 +70,10 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 		if (!keys.empty())
 			current_key = keys.at(0);
 
+#ifndef GAMEMODE
 		if (App->gui->panelUIAnimation->IsEnabled())
 			usePanel = true;
+#endif
 	
 		change_origin_rect = true;
 		recalculate_times = true;
