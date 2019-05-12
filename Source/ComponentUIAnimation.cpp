@@ -98,10 +98,10 @@ void ComponentUIAnimation::Update()
 		for (std::map<uint, Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
 		{
 			Key* k = it->second;
-			k->globalRect[0] = k->diffRect[0] + init_rect[0];
-			k->globalRect[1] = k->diffRect[1] + init_rect[1];
-			k->globalRect[2] = k->diffRect[2] + init_rect[2];
-			k->globalRect[3] = k->diffRect[3] + init_rect[3];
+			k->globalRect[0] = k->diffRect[0] + ((k->back_key) ? k->back_key->globalRect[0] : init_rect[0]);
+			k->globalRect[1] = k->diffRect[1] + ((k->back_key) ? k->back_key->globalRect[1] : init_rect[1]);
+			k->globalRect[2] = k->diffRect[2] + ((k->back_key) ? k->back_key->globalRect[2] : init_rect[2]);
+			k->globalRect[3] = k->diffRect[3] + ((k->back_key) ? k->back_key->globalRect[3] : init_rect[3]);
 		}
 
 		calculate_keys_global = false;
@@ -129,8 +129,9 @@ void ComponentUIAnimation::Update()
 		case UIAnimationState::PLAYING: {
 
 			if (animation_timer >= current_key->global_time) {
-				if (current_key->next_key != nullptr)
+				if (current_key->next_key != nullptr) {
 					current_key = current_key->next_key;
+				}
 				else
 				{
 					animation_state = UIAnimationState::PAUSED;
@@ -155,19 +156,21 @@ void ComponentUIAnimation::Update()
 
 void ComponentUIAnimation::Interpolate(float time)
 {
-	int tmp_rect[4] = {
-		time * current_key->diffRect[0] / current_key->global_time,
-		time * current_key->diffRect[1] / current_key->global_time,
-		time * current_key->diffRect[2] / current_key->global_time,
-		time * current_key->diffRect[3] / current_key->global_time };
+	float diff_time = (current_key->back_key) ? current_key->back_key->global_time : 0.0f;
 
-	int test[4] = { 
-		(current_key->back_key) ? current_key->back_key->globalRect[0] + tmp_rect[0] : init_rect[0] + tmp_rect[0], 
-		(current_key->back_key) ? current_key->back_key->globalRect[1] + tmp_rect[1] : init_rect[1] + tmp_rect[1],
-		(current_key->back_key) ? current_key->back_key->globalRect[2] + tmp_rect[2] : init_rect[2] + tmp_rect[2],
-		(current_key->back_key) ? current_key->back_key->globalRect[3] + tmp_rect[3] : init_rect[3] + tmp_rect[3] };
+	int rect_increment[4] = {
+		(time - diff_time) * current_key->diffRect[0] / (current_key->global_time - diff_time),
+		(time - diff_time) * current_key->diffRect[1] / (current_key->global_time - diff_time),
+		(time - diff_time) * current_key->diffRect[2] / (current_key->global_time - diff_time),
+		(time - diff_time) * current_key->diffRect[3] / (current_key->global_time - diff_time) };
 
-	parent->cmp_rectTransform->SetRect(test, true);
+	int next_rect[4] = { 
+		(current_key->back_key) ? current_key->back_key->globalRect[0] + rect_increment[0] : init_rect[0] + rect_increment[0], 
+		(current_key->back_key) ? current_key->back_key->globalRect[1] + rect_increment[1] : init_rect[1] + rect_increment[1],
+		(current_key->back_key) ? current_key->back_key->globalRect[2] + rect_increment[2] : init_rect[2] + rect_increment[2],
+		(current_key->back_key) ? current_key->back_key->globalRect[3] + rect_increment[3] : init_rect[3] + rect_increment[3] };
+
+	parent->cmp_rectTransform->SetRect(next_rect, true);
 }
 
 bool ComponentUIAnimation::IsRecording() const
@@ -564,17 +567,17 @@ void ComponentUIAnimation::AddKey()
 
 	memcpy((*tmp_key).globalRect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
 
-	tmp_key->diffRect[0] = tmp_key->globalRect[0] - init_rect[0];
-	tmp_key->diffRect[1] = tmp_key->globalRect[1] - init_rect[1];
-	tmp_key->diffRect[2] = tmp_key->globalRect[2] - init_rect[2];
-	tmp_key->diffRect[3] = tmp_key->globalRect[3] - init_rect[3];
-
 	tmp_key->time_key = 0.0f;
 
 	if (!keys.empty()) {
 		tmp_key->back_key = keys.at(tmp_key->id - 1);
 		tmp_key->back_key->next_key = tmp_key;
 	}
+
+	tmp_key->diffRect[0] = tmp_key->globalRect[0] - ((tmp_key->back_key) ? tmp_key->back_key->globalRect[0] : init_rect[0]);
+	tmp_key->diffRect[1] = tmp_key->globalRect[1] - ((tmp_key->back_key) ? tmp_key->back_key->globalRect[1] : init_rect[1]);
+	tmp_key->diffRect[2] = tmp_key->globalRect[2] - ((tmp_key->back_key) ? tmp_key->back_key->globalRect[2] : init_rect[2]);
+	tmp_key->diffRect[3] = tmp_key->globalRect[3] - ((tmp_key->back_key) ? tmp_key->back_key->globalRect[3] : init_rect[3]);
 
 	keys.insert(std::pair<uint, Key*>(tmp_key->id, tmp_key));
 	current_key = tmp_key;
