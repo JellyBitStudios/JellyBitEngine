@@ -34,7 +34,7 @@ bool PanelUIAnimation::Draw()
 	else
 		current_cmp = nullptr;
 
-	if (ImGui::Begin(name, &enabled, editFlags))
+	if (ImGui::Begin(name, &enabled, ImVec2(300,400), -1.0f, editFlags))
 	{
 		if (current_cmp)
 			current_cmp->ImGuiKeys();

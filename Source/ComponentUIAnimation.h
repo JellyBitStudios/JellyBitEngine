@@ -13,7 +13,8 @@ public:
 	enum key_editor {
 		NONE,
 		SwapedUp,
-		SwapedDown
+		SwapedDown,
+		Deleted
 	};
 	//keys
 	struct Key {
@@ -63,6 +64,11 @@ public:
 			float tmp_time = time_key;
 			time_key = to->time_key;
 			to->time_key = tmp_time;
+		}
+
+		void Delete() {
+			if(back_key) back_key->next_key = next_key;
+			if (next_key) next_key->back_key = back_key;
 		}
 
 		void CheckNextKeyTime() {

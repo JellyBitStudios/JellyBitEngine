@@ -259,6 +259,8 @@ void ComponentUIAnimation::OnUniqueEditor()
 #ifndef GAMEMODE
 	if (ImGui::CollapsingHeader("UI Animation", ImGuiTreeNodeFlags_DefaultOpen))
 	{
+		bool popStyle = false;
+
 		if (!keys.empty()) {
 
 			ImGui::PushItemWidth(100.0f);
@@ -320,12 +322,24 @@ void ComponentUIAnimation::OnUniqueEditor()
 				if (!recording)
 				{
 					ImGui::SameLine();
-
+					if (popStyle = modifying_key)
+					{
+						ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(1.0, 0.0, 0.0, 0.5));
+						ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ButtonHovered, ImVec4(1.0, 0.0, 0.0, 0.7));
+						ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ButtonActive, ImVec4(1.0, 0.0, 0.0, 1.0));
+					}
 					if (ImGui::Button((modifying_key) ? "Disable edition" : "Enable edition"))
 					{
 						modifying_key = !modifying_key;
 						parent->cmp_rectTransform->SetRect((modifying_key) ? current_key->globalRect : init_rect, true);
 					}
+					if (ImGui::IsItemHovered())
+					{
+						ImGui::BeginTooltip();
+						ImGui::Text("REMEMBER DISABLE EDITION\nBEFORE EDIT OTHER ELEMENTS!");
+						ImGui::EndTooltip();
+					}
+					if (popStyle) ImGui::PopStyleColor(3);
 				}
 				current_key->OnEditor(animation_time, true);
 			}
@@ -362,9 +376,10 @@ void ComponentUIAnimation::OnUniqueEditor()
 			if (ImGui::Button("Next Key")) {
 				if (current_key->next_key != nullptr)
 				{
+					modifying_key = false;
 					current_key = current_key->next_key;
 					animation_timer = current_key->global_time;
-					parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
+					if (recording) parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
 				}
 			}
 
@@ -373,9 +388,10 @@ void ComponentUIAnimation::OnUniqueEditor()
 			if (ImGui::Button("Previous Key")) {
 				if (current_key->back_key != nullptr)
 				{
+					modifying_key = false;
 					current_key = current_key->back_key;
 					animation_timer = current_key->global_time;
-					parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
+					if (recording) parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
 				}
 			}
 		}
@@ -383,8 +399,12 @@ void ComponentUIAnimation::OnUniqueEditor()
 			ImGui::Text("There is no key for this UI GO ...");
 		}
 
-		bool popStyle = false;
-		if (popStyle = recording) ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(1.0, 0.0, 0.0, 0.8));
+		if (popStyle = recording)
+		{
+			ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(1.0, 0.0, 0.0, 0.5));
+			ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ButtonHovered, ImVec4(1.0, 0.0, 0.0, 0.7));
+			ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ButtonActive, ImVec4(1.0, 0.0, 0.0, 1.0));
+		}
 		if(ImGui::Button((recording) ? "Stop recording" : "Start recording")) {
 			recording = !recording;
 
@@ -412,7 +432,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 			ImGui::EndTooltip();
 		}
 
-		if (popStyle) ImGui::PopStyleColor();
+		if (popStyle) ImGui::PopStyleColor(3);
 		
 		if (recording) {
 			ImGui::SameLine();
@@ -421,7 +441,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 		}
 
 		usePanel = (App->gui->panelUIAnimation->CheckItsMe(this) && App->gui->panelUIAnimation->IsEnabled()) ? true : false;
-		if (ImGui::Button((usePanel) ? "Hide panel" : "Show Panel"))
+		if (ImGui::Button((usePanel) ? "Hide Panel" : "Show Panel"))
 			App->gui->panelUIAnimation->SetOnOff(usePanel = !usePanel);
 
 		ImGui::PopItemWidth();
@@ -471,8 +491,8 @@ void ComponentUIAnimation::ImGuiKeys()
 			std::string t = "Set key "; t += std::to_string(i + 1); t += " to current";
 			if (ImGui::Button(t.c_str()))
 			{
+				modifying_key = false;
 				current_key = keys.at(i);
-			
 				if (recording) parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
 			}
 			ImGui::SameLine();
@@ -505,7 +525,22 @@ void ComponentUIAnimation::ImGuiKeys()
 
 				break;
 			}
+			case key_editor::Deleted:
+			{
+				if (current_key == keys.at(i))
+				{
+					current_key = (keys.size() > 1) ? keys.at(0) : nullptr;
 
+					if (modifying_key)
+					{
+						modifying_key = false;
+						parent->cmp_rectTransform->SetRect(init_rect, true);
+					}
+				}
+				RELEASE(keys.at(i));
+				keys.erase(i);
+				break;
+			}
 			}
 		}
 	}
@@ -570,7 +605,6 @@ ComponentUIAnimation::key_editor ComponentUIAnimation::Key::OnEditor(float anim_
 	ImGui::Separator();
 	std::string id_str = std::to_string(id + 1);
 	std::string tmp;
-	ImGui::Text("Key: %i", id + 1); 
 	if (!isCurrent)
 	{
 		if (back_key != nullptr)
@@ -594,6 +628,17 @@ ComponentUIAnimation::key_editor ComponentUIAnimation::Key::OnEditor(float anim_
 				global_time = anim_time * time_key;
 				ret = key_editor::SwapedDown;
 			}
+		}
+	}
+	ImGui::Text("Key: %i", id + 1); 
+	if (!isCurrent)
+	{
+		ImGui::SameLine();
+		tmp = "Delete Key "; tmp += id_str;
+		if (ImGui::Button(tmp.c_str()))
+		{
+			Delete();
+			ret = key_editor::Deleted;
 		}
 	}
 	ImGui::Text("DiffRect X: %i Y: %i W: %i H:%i",
