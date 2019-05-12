@@ -101,7 +101,7 @@ bool Particle::Update(float dt)
 		math::float3 movement = direction * (speed * dt);
 		_movement += movement + gravity * dt;
 
-		transform.position = _movement + owner->GetPos();
+		transform.position = _movement;
 
 		if (owner->isPlane)
 			LookAtCamera();
@@ -130,6 +130,8 @@ bool Particle::Update(float dt)
 		transform.scale.x += sizeOverTime * dt;
 		transform.scale.y += sizeOverTime * dt;
 		transform.scale.z += sizeOverTime * dt;
+		
+		owner->UpdateParticleTrans(transform);
 
 		angularVelocity += angularAcceleration * dt;
 		angle += angularVelocity * dt;
@@ -137,6 +139,7 @@ bool Particle::Update(float dt)
 			transform.rotation = transform.rotation.Mul(math::Quat::RotateZ(angle));
 		else
 			transform.rotation = transform.rotation.Mul(math::Quat::RotateAxisAngle(direction, angularVelocity * dt));
+
 
 		if (isParticleAnimated && (textureRows > 1 || textureColumns > 1))
 		{
@@ -310,4 +313,10 @@ void Particle::ChangeAnim(ParticleAnimation partAnim)
 math::float4x4 ParticleTrans::GetMatrix() const
 {
 	return  math::float4x4::FromTRS(position, rotation, scale);
+}
+
+//Particle transform
+math::float4x4 ParticleTrans::GetSpaceMatrix() const
+{
+	return  math::float4x4::FromTRS(position, math::Quat::identity, scale);
 }

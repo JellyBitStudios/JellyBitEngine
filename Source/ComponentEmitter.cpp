@@ -279,7 +279,10 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 	{
 	case ShapeType_BOX:
 		spawn = boxCreation.RandomPointInside(App->randomMathLCG);
-		startValues.particleDirection = (math::float3::unitY * parent->transform->GetGlobalMatrix().RotatePart().Transposed()).Normalized();
+		if (localSpace)
+			startValues.particleDirection = math::float3::unitY;
+		else
+			startValues.particleDirection = (math::float3::unitY * parent->transform->GetGlobalMatrix().RotatePart().Transposed()).Normalized();
 		break;
 
 	case ShapeType_SPHERE:
@@ -304,7 +307,10 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 		angle = (2 * PI) * (float)App->GenerateRandomNumber() / MAXUINT;
 		centerDist = (float)App->GenerateRandomNumber() / MAXUINT;
 
-		circleCreation.pos = (math::float3(0, coneHeight, 0) * parent->transform->GetGlobalMatrix().RotatePart().Transposed());
+		circleCreation.pos = math::float3(0, coneHeight, 0);
+		if (!localSpace)
+			circleCreation.pos = circleCreation.pos * parent->transform->GetGlobalMatrix().RotatePart().Transposed();
+
 		startValues.particleDirection = (circleCreation.GetPoint(angle, centerDist)).Normalized();
 		break;
 	}
@@ -330,7 +336,9 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 			spawn.z = shapeMesh.uniqueVertex[pos].z;
 		}
 		startValues.particleDirection = (math::float3::unitY * parent->transform->GetGlobalMatrix().RotatePart().Transposed()).Normalized();
-		spawn = spawn * parent->transform->GetGlobalMatrix().RotatePart().Transposed();
+
+		if (!localSpace)
+			spawn = spawn * parent->transform->GetGlobalMatrix().RotatePart().Transposed();
 		break;
 	}
 	default:
@@ -345,8 +353,10 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 		math::float3 zero = math::float3::zero;
 
 		trans.Decompose(global, identity, zero);
+
+		spawn = trans.Mul(math::float4(spawn, 0)).xyz();
 	}
-	return spawn + global;
+	return spawn;
 }
 
 void ComponentEmitter::OnUniqueEditor()
@@ -963,19 +973,15 @@ int ComponentEmitter::GetEmition() const
 	return rateOverTime;
 }
 
-math::float3 ComponentEmitter::GetPos()
+void ComponentEmitter::UpdateParticleTrans(ParticleTrans& trans)
 {
-	math::float3 pos = math::float3::zero;
-
 	if (localSpace)
 	{
-		math::Quat rot = math::Quat::identity;
-		math::float3 scale = math::float3::zero;
+		math::Quat tempRot;
+		math::float3 tempScale;
 
-		parent->transform->GetGlobalMatrix().Decompose(pos, rot, scale);
+		parent->transform->GetGlobalMatrix().Mul(trans.GetSpaceMatrix()).Decompose(trans.position, tempRot, tempScale);
 	}
-
-	return pos;
 }
 
 uint ComponentEmitter::GetInternalSerializationBytes()
