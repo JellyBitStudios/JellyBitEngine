@@ -23,7 +23,7 @@ ComponentUIAnimation::ComponentUIAnimation(GameObject * parent, bool includeComp
 	if (includeComponents)
 	{
 		if (App->gui->panelUIAnimation->IsEnabled())
-			App->gui->panelUIAnimation->SetCmp(this);
+			usePanel = true;
 
 		change_origin_rect = true;
 	}
@@ -62,6 +62,9 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 	{
 		if (!keys.empty())
 			current_key = keys.at(0);
+
+		if (App->gui->panelUIAnimation->IsEnabled())
+			usePanel = true;
 	
 		change_origin_rect = true;
 		recalculate_times = true;
@@ -77,9 +80,6 @@ ComponentUIAnimation::~ComponentUIAnimation()
 	for (std::map<uint, Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
 		RELEASE(it->second);
 	keys.clear();
-
-	if (App->gui->panelUIAnimation->IsEnabled() && App->gui->panelUIAnimation->CheckItsMe(this))
-		App->gui->panelUIAnimation->ClearCmp();
 
 	parent->cmp_uiAnimation = nullptr;
 }
@@ -259,8 +259,6 @@ void ComponentUIAnimation::OnUniqueEditor()
 #ifndef GAMEMODE
 	if (ImGui::CollapsingHeader("UI Animation", ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		ImGui::Text("UI Animation");
-
 		if (!keys.empty()) {
 
 			ImGui::PushItemWidth(100.0f);
@@ -281,6 +279,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 			}
 			ImGui::Text("Current timer: %f", animation_timer);
 
+			bool change_rect_pos = false;
 			int selectable_key = (current_key) ? current_key->id : 0;
 			ImGui::PushItemWidth(75.0f);
 			if (ImGui::Combo("Current", &selectable_key, keys_strCombo.data(), keys.size()))
@@ -288,6 +287,33 @@ void ComponentUIAnimation::OnUniqueEditor()
 				modifying_key = false;
 				parent->cmp_rectTransform->SetRect(init_rect, true);
 				current_key = keys.at(selectable_key);
+				change_rect_pos = true;
+			}
+
+			if (current_key->back_key != nullptr)
+			{
+				ImGui::SameLine();
+				if (ImGui::ArrowButton("ToLeft", ImGuiDir_::ImGuiDir_Left))
+				{
+					modifying_key = false;
+					current_key = current_key->back_key;
+					parent->cmp_rectTransform->SetRect(init_rect, true);
+					change_rect_pos = true;
+				}
+			}
+
+			if (current_key->next_key != nullptr)
+			{
+				ImGui::SameLine();
+				if (ImGui::ArrowButton("ToRight", ImGuiDir_::ImGuiDir_Right))
+				{
+					modifying_key = false;
+					current_key = current_key->next_key;
+					parent->cmp_rectTransform->SetRect(init_rect, true);
+					change_rect_pos = true;
+				}
+
+				if (recording && change_rect_pos) parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
 			}
 
 			if (current_key) {
@@ -301,7 +327,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 						parent->cmp_rectTransform->SetRect((modifying_key) ? current_key->globalRect : init_rect, true);
 					}
 				}
-				current_key->OnEditor(animation_time);
+				current_key->OnEditor(animation_time, true);
 			}
 
 			ImGui::Separator();
@@ -310,8 +336,8 @@ void ComponentUIAnimation::OnUniqueEditor()
 				{
 					animation_state = UIAnimationState::PLAYING;
 					current_key = keys.at(0);
-					animation_timer = 0;
-					parent->cmp_rectTransform->SetRect(init_rect, true);
+					animation_timer = keys.at(0)->global_time;
+					parent->cmp_rectTransform->SetRect(keys.at(0)->globalRect, true);
 				}
 				else
 				{
@@ -357,24 +383,36 @@ void ComponentUIAnimation::OnUniqueEditor()
 			ImGui::Text("There is no key for this UI GO ...");
 		}
 
+		bool popStyle = false;
+		if (popStyle = recording) ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(1.0, 0.0, 0.0, 0.8));
 		if(ImGui::Button((recording) ? "Stop recording" : "Start recording")) {
 			recording = !recording;
 
-			if (recording)
+			if(recording)
+				App->gui->panelUIAnimation->SetOnOff(usePanel = true);
+
+			if (!keys.empty())
 			{
-				modifying_key = false;
-				current_key = keys.at(keys.size() - 1);
-				parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
+				if (recording){
+					modifying_key = false;
+					current_key = keys.at(keys.size() - 1);
+					parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
+				}
 
-				if (App->gui->panelUIAnimation->IsEnabled())
-					App->gui->panelUIAnimation->SetCmp(this);
-			}
-
-			if (!recording) {
-				current_key = keys.at(0);
-				parent->cmp_rectTransform->SetRect(init_rect, true);
+				if (!recording) {
+					current_key = keys.at(0);
+					parent->cmp_rectTransform->SetRect(init_rect, true);
+				}
 			}
 		}
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("REMEMBER STOP RECORDING\nBEFORE EDIT OTHER ELEMENTS!");
+			ImGui::EndTooltip();
+		}
+
+		if (popStyle) ImGui::PopStyleColor();
 		
 		if (recording) {
 			ImGui::SameLine();
@@ -382,15 +420,11 @@ void ComponentUIAnimation::OnUniqueEditor()
 				this->AddKey();
 		}
 
+		usePanel = (App->gui->panelUIAnimation->CheckItsMe(this) && App->gui->panelUIAnimation->IsEnabled()) ? true : false;
 		if (ImGui::Button((usePanel) ? "Hide panel" : "Show Panel"))
-		{
-			usePanel = !usePanel;
+			App->gui->panelUIAnimation->SetOnOff(usePanel = !usePanel);
 
-			if (usePanel)
-				App->gui->panelUIAnimation->SetCmp(this);
-			else
-				App->gui->panelUIAnimation->ClearCmp();
-		}
+		ImGui::PopItemWidth();
 	}
 #endif
 }
@@ -432,13 +466,47 @@ void ComponentUIAnimation::ImGuiKeys()
 #ifndef GAMEMODE
 	if (!keys.empty())
 	{
-		for (std::map<uint, Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
+		for (uint i = 0; i < keys.size(); i++)
 		{
-			std::string t = "Set key "; t += std::to_string(it->first + 1); t += " to current";
+			std::string t = "Set key "; t += std::to_string(i + 1); t += " to current";
 			if (ImGui::Button(t.c_str()))
-				current_key = it->second;
+			{
+				current_key = keys.at(i);
+			
+				if (recording) parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
+			}
 			ImGui::SameLine();
-			it->second->OnEditor(animation_time);
+			ComponentUIAnimation::key_editor returned = keys.at(i)->OnEditor(animation_time);
+			switch (returned)
+			{
+			case key_editor::SwapedUp:
+			{
+				Key* k1 = keys.at(i);
+				Key* k2 = k1->next_key;
+
+				keys.erase(i);
+				keys.erase(i - 1);
+
+				keys.insert(std::pair<uint, Key*>(k1->id, k1));
+				keys.insert(std::pair<uint, Key*>(k2->id, k2));
+
+				break;
+			}
+			case key_editor::SwapedDown:
+			{
+				Key* k1 = keys.at(i);
+				Key* k2 = k1->back_key;
+
+				keys.erase(i);
+				keys.erase(i + 1);
+
+				keys.insert(std::pair<uint, Key*>(k1->id, k1));
+				keys.insert(std::pair<uint, Key*>(k2->id, k2));
+
+				break;
+			}
+
+			}
 		}
 	}
 	else
@@ -495,20 +563,50 @@ void ComponentUIAnimation::AddKeyOnCombo()
 }
 
 //OnEditor Key
-void ComponentUIAnimation::Key::OnEditor(float anim_time)
+ComponentUIAnimation::key_editor ComponentUIAnimation::Key::OnEditor(float anim_time, bool isCurrent)
 {
+	key_editor ret = key_editor::NONE;
 #ifndef GAMEMODE
 	ImGui::Separator();
-	ImGui::Text("Key: "); ImGui::SameLine(); ImGui::Text("%i", id + 1);
+	std::string id_str = std::to_string(id + 1);
+	std::string tmp;
+	ImGui::Text("Key: %i", id + 1); 
+	if (!isCurrent)
+	{
+		if (back_key != nullptr)
+		{
+			ImGui::SameLine();
+			tmp = "AU"; tmp += id_str;
+			if (ImGui::ArrowButton(tmp.c_str(), ImGuiDir_::ImGuiDir_Up))
+			{
+				Swap(back_key);
+				global_time = anim_time * time_key;
+				ret = key_editor::SwapedUp;
+			}
+		}
+		if (next_key != nullptr)
+		{
+			ImGui::SameLine();
+			tmp = "AD"; tmp += id_str;
+			if (ImGui::ArrowButton(tmp.c_str(), ImGuiDir_::ImGuiDir_Down))
+			{
+				Swap(next_key);
+				global_time = anim_time * time_key;
+				ret = key_editor::SwapedDown;
+			}
+		}
+	}
 	ImGui::Text("DiffRect X: %i Y: %i W: %i H:%i",
 		diffRect[0], diffRect[1], diffRect[2], diffRect[3]);
 	ImGui::Text("GlobalRect X: %i Y: %i W: %i H:%i",
 		globalRect[0], globalRect[1], globalRect[2], globalRect[3]);
-	std::string t = "Time key "; t += std::to_string(id + 1);
-	if (ImGui::SliderFloat(t.c_str(), &time_key, 0.0f, 1.0f)) {
+	tmp = "Time key "; tmp += id_str;
+	if (ImGui::SliderFloat(tmp.c_str(), &time_key, 0.0f, 1.0f)) {
 		(back_key != nullptr && time_key < back_key->time_key) ? time_key = back_key->time_key : time_key;
 		global_time = anim_time * time_key;
+		CheckNextKeyTime();
 	}
 	ImGui::Text("Global time: %f", global_time);
 #endif
+	return ret;
 }

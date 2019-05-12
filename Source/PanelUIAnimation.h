@@ -15,9 +15,6 @@ public:
 
 	bool Draw();
 
-	void SetCmp(ComponentUIAnimation* cmp);
-	void ClearCmp();
-
 	bool CheckItsMe(ComponentUIAnimation* cmp);
 
 private:

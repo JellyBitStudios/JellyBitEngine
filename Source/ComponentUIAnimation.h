@@ -10,6 +10,11 @@
 class ComponentUIAnimation : public Component
 {
 public:
+	enum key_editor {
+		NONE,
+		SwapedUp,
+		SwapedDown
+	};
 	//keys
 	struct Key {
 		Key() {}
@@ -26,7 +31,48 @@ public:
 		Key* back_key = nullptr;
 		Key* next_key = nullptr;
 
-		void OnEditor(float anim_time);
+		key_editor OnEditor(float anim_time, bool isCurrent = false);
+		void Swap(Key* to)
+		{
+			if (to == back_key)
+			{
+				id -= 1;
+				to->id += 1;
+				if (to->back_key != nullptr)
+					to->back_key->next_key = this;
+				if (next_key != nullptr)
+					next_key->back_key = to;
+				to->next_key = next_key;
+				back_key = to->back_key;
+				to->back_key = this;
+				next_key = to;
+			}
+			else if (to == next_key)
+			{
+				id += 1;
+				to->id -= 1;
+				if (to->next_key != nullptr)
+					to->next_key->back_key = this;
+				if (back_key != nullptr)
+					back_key->next_key = to;
+				to->back_key = back_key;
+				next_key = to->next_key;
+				to->next_key = this;
+				back_key = to;
+			}
+			float tmp_time = time_key;
+			time_key = to->time_key;
+			to->time_key = tmp_time;
+		}
+
+		void CheckNextKeyTime() {
+			if (next_key)
+			{
+				if (next_key->time_key < time_key)
+					next_key->time_key = time_key;
+				next_key->CheckNextKeyTime();
+			}
+		}
 
 		static uint GetInternalSerializationBytes() {
 			return sizeof(int) * 4 + sizeof(float);
