@@ -252,6 +252,7 @@ void ComponentUIAnimation::OnInternalLoad(char *& cursor)
 				
 				keys.insert(std::pair<uint, Key*>(nkey->id, nkey));
 				AddKeyOnCombo();
+				last_key = nkey;
 			}
 		}
 		break;
@@ -259,6 +260,8 @@ void ComponentUIAnimation::OnInternalLoad(char *& cursor)
 
 	if (parent->includeModuleComponent)
 	{
+		if (!keys.empty())
+			current_key = keys.at(0);
 		change_origin_rect = true;
 		recalculate_times = true;
 	}
