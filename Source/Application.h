@@ -129,6 +129,8 @@ public:
 	bool firstFrame = true;
 	math::LCG randomMathLCG; //Cant be private with const Get
 
+	char version[DEFAULT_BUF_SIZE] = "";
+
 private:
 
 	// Framerate

@@ -151,7 +151,8 @@ bool Application::Init()
 		JSON_Object* modulejObject = json_object_get_object(data, "Application");
 		SetCapFrames(json_object_get_boolean(modulejObject, "Cap Frames"));
 		SetMaxFramerate(json_object_get_number(modulejObject, "Max FPS"));
-		SetAppName(json_object_get_string(modulejObject, "Title"));
+		strcpy(version, (char*)json_object_get_string(modulejObject, "Version"));
+		SetAppName((std::string(json_object_get_string(modulejObject, "Title") + std::string(" ") + version)).data());
 		SetOrganizationName(json_object_get_string(modulejObject, "Organization"));
 
 		// Call Init() in all modules
