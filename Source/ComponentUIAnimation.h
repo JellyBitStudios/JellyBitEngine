@@ -22,12 +22,15 @@ public:
 		Key(const Key& fromKey) {
 			memcpy(diffRect, fromKey.diffRect, sizeof(int) * 4);
 			time_key = fromKey.time_key;
+			alpha = fromKey.alpha;
 		}
 		uint id = 0;
 		int diffRect[4] = { 0, 0, 0, 0 };
 		int globalRect[4] = { 0, 0, 0, 0 };
 		float time_key = 0.0f;
 		float global_time = 0.0f;
+
+		float alpha = 1.0f;
 
 		Key* back_key = nullptr;
 		Key* next_key = nullptr;
@@ -81,7 +84,7 @@ public:
 		}
 
 		static uint GetInternalSerializationBytes() {
-			return sizeof(int) * 4 + sizeof(float);
+			return sizeof(int) * 4 + sizeof(float) * 2;
 		}
 		void OnInternalSave(char*& cursor) {
 			size_t bytes = sizeof(int) * 4;
@@ -91,6 +94,10 @@ public:
 			bytes = sizeof(float);
 			memcpy(cursor, &time_key, bytes);
 			cursor += bytes;
+
+			bytes = sizeof(float);
+			memcpy(cursor, &alpha, bytes);
+			cursor += bytes;
 		}
 		void OnInternalLoad(char*& cursor) {
 			size_t bytes = sizeof(int) * 4;
@@ -99,6 +106,10 @@ public:
 
 			bytes = sizeof(float);
 			memcpy(&time_key, cursor, bytes);
+			cursor += bytes;
+
+			bytes = sizeof(float);
+			memcpy(&alpha, cursor, bytes);
 			cursor += bytes;
 		}
 	};
@@ -115,6 +126,8 @@ public:
 	ComponentUIAnimation(const ComponentUIAnimation& component_ui_anim, GameObject* parent, bool includeComponents = true);
 	~ComponentUIAnimation();
 
+	void OnSystemEvent(System_Event event);
+
 	void Update();
 
 	void Interpolate(float time);
@@ -125,6 +138,9 @@ public:
 	bool HasKeys()const;
 	
 	void ImGuiKeys();
+
+	void Play();
+	void Stop();
 	
 private:
 	//versions
@@ -135,9 +151,6 @@ private:
 	virtual void OnInternalSave(char*& cursor);
 	virtual void OnInternalLoad(char*& cursor);
 	void OnUniqueEditor();
-
-	void OnSystemEvent(System_Event event);
-
 
 private:
 	void AddKey();
@@ -163,8 +176,9 @@ private:
 	bool repeat = false;
 
 	//rect origin
-	int init_rect[4];
+	int init_rect[4] = {0,0,100,100};
 	bool change_origin_rect = true;
+	float init_alpha = 1.0f;
 
 	//recording mode (for rectTransform)
 	bool recording = false;

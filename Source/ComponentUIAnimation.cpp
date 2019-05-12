@@ -8,6 +8,7 @@
 
 #include "GameObject.h"
 #include "ComponentRectTransform.h"
+#include "ComponentImage.h"
 
 #ifndef GAMEMODE
 #include "imgui\imgui.h"
@@ -22,6 +23,8 @@ ComponentUIAnimation::ComponentUIAnimation(GameObject * parent, bool includeComp
 {
 	if (includeComponents)
 	{
+		if (!parent->cmp_image) parent->AddComponent(ComponentTypes::ImageComponent);
+
 		if (App->gui->panelUIAnimation->IsEnabled())
 			usePanel = true;
 
@@ -60,6 +63,8 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 	// TODO end this
 	if (includeComponents)
 	{
+		if (!parent->cmp_image) parent->AddComponent(ComponentTypes::ImageComponent);
+
 		if (!keys.empty())
 			current_key = keys.at(0);
 
@@ -91,6 +96,8 @@ void ComponentUIAnimation::Update()
 		memcpy(init_rect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
 		calculate_keys_global = true;
 		change_origin_rect = false;
+
+		if (parent->cmp_image) init_alpha = parent->cmp_image->GetAlpha();
 	}
 
 	if (calculate_keys_global)
@@ -135,6 +142,9 @@ void ComponentUIAnimation::Update()
 				else
 				{
 					animation_state = UIAnimationState::PAUSED;
+
+					if (App->GetEngineState() == engine_states::ENGINE_EDITOR && !repeat)
+						Stop();
 					break;
 				}
 			}
@@ -163,14 +173,17 @@ void ComponentUIAnimation::Interpolate(float time)
 		(time - diff_time) * current_key->diffRect[1] / (current_key->global_time - diff_time),
 		(time - diff_time) * current_key->diffRect[2] / (current_key->global_time - diff_time),
 		(time - diff_time) * current_key->diffRect[3] / (current_key->global_time - diff_time) };
+	float alpha_increment = (time - diff_time) * (current_key->alpha - ((current_key->back_key) ? current_key->back_key->alpha : init_alpha)) / (current_key->global_time - diff_time);
 
 	int next_rect[4] = { 
 		(current_key->back_key) ? current_key->back_key->globalRect[0] + rect_increment[0] : init_rect[0] + rect_increment[0], 
 		(current_key->back_key) ? current_key->back_key->globalRect[1] + rect_increment[1] : init_rect[1] + rect_increment[1],
 		(current_key->back_key) ? current_key->back_key->globalRect[2] + rect_increment[2] : init_rect[2] + rect_increment[2],
 		(current_key->back_key) ? current_key->back_key->globalRect[3] + rect_increment[3] : init_rect[3] + rect_increment[3] };
-
+	float next_alpha = (current_key->back_key) ? current_key->back_key->alpha + alpha_increment : init_alpha + alpha_increment;
+	
 	parent->cmp_rectTransform->SetRect(next_rect, true);
+	if (parent->cmp_image) parent->cmp_image->SetAlpha(next_alpha);
 }
 
 bool ComponentUIAnimation::IsRecording() const
@@ -277,7 +290,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 		if (!keys.empty()) {
 
 			ImGui::PushItemWidth(100.0f);
-			if (ImGui::DragFloat("Total time", &animation_time))
+			if (ImGui::DragFloat("Total time", &animation_time, 0.5f, 0.0f))
 				recalculate_times = true;
 
 			switch (animation_state)
@@ -300,7 +313,6 @@ void ComponentUIAnimation::OnUniqueEditor()
 			if (ImGui::Combo("Current", &selectable_key, keys_strCombo.data(), keys.size()))
 			{
 				modifying_key = false;
-				parent->cmp_rectTransform->SetRect(init_rect, true);
 				current_key = keys.at(selectable_key);
 				change_rect_pos = true;
 			}
@@ -312,7 +324,6 @@ void ComponentUIAnimation::OnUniqueEditor()
 				{
 					modifying_key = false;
 					current_key = current_key->back_key;
-					parent->cmp_rectTransform->SetRect(init_rect, true);
 					change_rect_pos = true;
 				}
 			}
@@ -324,11 +335,14 @@ void ComponentUIAnimation::OnUniqueEditor()
 				{
 					modifying_key = false;
 					current_key = current_key->next_key;
-					parent->cmp_rectTransform->SetRect(init_rect, true);
 					change_rect_pos = true;
 				}
 
-				if (recording && change_rect_pos) parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
+				if (change_rect_pos)
+				{
+					parent->cmp_rectTransform->SetRect((recording) ? current_key->globalRect : init_rect, true);
+					if (parent->cmp_image) parent->cmp_image->SetAlpha((recording) ? current_key->alpha : init_alpha);
+				}
 			}
 
 			if (current_key) {
@@ -345,6 +359,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 					{
 						modifying_key = !modifying_key;
 						parent->cmp_rectTransform->SetRect((modifying_key) ? current_key->globalRect : init_rect, true);
+						if(parent->cmp_image) parent->cmp_image->SetAlpha((modifying_key) ? current_key->alpha : init_alpha);
 					}
 					if (ImGui::IsItemHovered())
 					{
@@ -359,17 +374,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 
 			ImGui::Separator();
 			if (ImGui::Button("Play")) {//TODO PREPARE FOR SCRIPTING
-				if (keys.size() > 1)
-				{
-					animation_state = UIAnimationState::PLAYING;
-					current_key = keys.at(0);
-					animation_timer = keys.at(0)->global_time;
-					parent->cmp_rectTransform->SetRect(keys.at(0)->globalRect, true);
-				}
-				else
-				{
-					CONSOLE_LOG(LogTypes::Warning, "You can't play with one key.");
-				}
+				Play();
 			}
 			ImGui::SameLine();
 
@@ -379,9 +384,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 			ImGui::SameLine();
 
 			if (ImGui::Button("Stop")) {//TODO PREPARE FOR SCRIPTING
-				animation_state = UIAnimationState::STOPPED;
-				current_key = keys.at(0);
-				parent->cmp_rectTransform->SetRect(init_rect, true);
+				Stop();
 			}
 
 			ImGui::SameLine();
@@ -393,6 +396,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 					current_key = current_key->next_key;
 					animation_timer = current_key->global_time;
 					if (recording) parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
+					if (recording && parent->cmp_image) parent->cmp_image->SetAlpha(current_key->alpha);
 				}
 			}
 
@@ -405,6 +409,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 					current_key = current_key->back_key;
 					animation_timer = current_key->global_time;
 					if (recording) parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
+					if (recording && parent->cmp_image) parent->cmp_image->SetAlpha(current_key->alpha);
 				}
 			}
 		}
@@ -430,6 +435,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 					modifying_key = false;
 					current_key = keys.at(keys.size() - 1);
 					parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
+					if (parent->cmp_image) parent->cmp_image->SetAlpha(current_key->alpha);
 				}
 
 				if (!recording) {
@@ -507,6 +513,7 @@ void ComponentUIAnimation::ImGuiKeys()
 				modifying_key = false;
 				current_key = keys.at(i);
 				if (recording) parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
+				if (recording && parent->cmp_image) parent->cmp_image->SetAlpha(current_key->alpha);
 			}
 			ImGui::SameLine();
 			ComponentUIAnimation::key_editor returned = keys.at(i)->OnEditor(animation_time);
@@ -560,6 +567,31 @@ void ComponentUIAnimation::ImGuiKeys()
 	else
 		ImGui::Text("Empty Keys");
 #endif
+}
+
+void ComponentUIAnimation::Play()
+{
+	if (keys.size() > 1)
+	{
+		animation_state = UIAnimationState::PLAYING;
+		current_key = keys.at(0);
+		animation_timer = keys.at(0)->global_time;
+		parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
+		if (parent->cmp_image) parent->cmp_image->SetAlpha(current_key->alpha);
+	}
+	else
+	{
+		CONSOLE_LOG(LogTypes::Warning, "You can't play with one key.");
+	}
+}
+
+void ComponentUIAnimation::Stop()
+{
+	animation_state = UIAnimationState::STOPPED;
+	current_key = keys.at(0);
+	parent->cmp_rectTransform->SetRect(init_rect, true);
+	if (parent->cmp_image) parent->cmp_image->SetAlpha(init_alpha);
+
 }
 
 void ComponentUIAnimation::AddKey()
@@ -658,6 +690,8 @@ ComponentUIAnimation::key_editor ComponentUIAnimation::Key::OnEditor(float anim_
 		diffRect[0], diffRect[1], diffRect[2], diffRect[3]);
 	ImGui::Text("GlobalRect X: %i Y: %i W: %i H:%i",
 		globalRect[0], globalRect[1], globalRect[2], globalRect[3]);
+	tmp = "Alpha key "; tmp += id_str;
+	ImGui::SliderFloat(tmp.c_str(), &alpha, 0.0f, 1.0f);
 	tmp = "Time key "; tmp += id_str;
 	if (ImGui::SliderFloat(tmp.c_str(), &time_key, 0.0f, 1.0f)) {
 		(back_key != nullptr && time_key < back_key->time_key) ? time_key = back_key->time_key : time_key;
