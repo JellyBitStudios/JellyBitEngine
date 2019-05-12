@@ -3974,6 +3974,11 @@ void ApplicationQuit()
 #endif
 }
 
+MonoString* ApplicationGetVersion()
+{
+	return mono_string_new(App->scripting->domain, App->version);
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -4252,6 +4257,7 @@ void ScriptingModule::CreateDomain()
 	
 	//Application
 	mono_add_internal_call("JellyBitEngine.Application::Quit", (const void*)&ApplicationQuit);
+	mono_add_internal_call("JellyBitEngine.Application::GetVersion", (const void*)&ApplicationGetVersion);
 
 	firstDomain = false;
 }
