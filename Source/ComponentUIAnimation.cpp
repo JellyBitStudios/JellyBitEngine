@@ -343,10 +343,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 				}
 
 				if (change_rect_pos)
-				{
-					parent->cmp_rectTransform->SetRect((recording) ? current_key->globalRect : init_rect, true);
-					if (parent->cmp_image) parent->cmp_image->SetAlpha((recording) ? current_key->alpha : init_alpha);
-				}
+					(recording) ? DrawCurrent() : DrawInit();
 			}
 
 			if (current_key) {
@@ -362,8 +359,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 					if (ImGui::Button((modifying_key) ? "Disable edition" : "Enable edition"))
 					{
 						modifying_key = !modifying_key;
-						parent->cmp_rectTransform->SetRect((modifying_key) ? current_key->globalRect : init_rect, true);
-						if(parent->cmp_image) parent->cmp_image->SetAlpha((modifying_key) ? current_key->alpha : init_alpha);
+						(modifying_key) ? DrawCurrent() : DrawInit();
 					}
 					if (ImGui::IsItemHovered())
 					{
@@ -399,8 +395,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 					modifying_key = false;
 					current_key = current_key->next_key;
 					animation_timer = current_key->global_time;
-					if (recording) parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
-					if (recording && parent->cmp_image) parent->cmp_image->SetAlpha(current_key->alpha);
+					if (recording) DrawCurrent();
 				}
 			}
 
@@ -412,49 +407,13 @@ void ComponentUIAnimation::OnUniqueEditor()
 					modifying_key = false;
 					current_key = current_key->back_key;
 					animation_timer = current_key->global_time;
-					if (recording) parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
-					if (recording && parent->cmp_image) parent->cmp_image->SetAlpha(current_key->alpha);
+					if (recording) DrawCurrent();
 				}
 			}
 		}
 		else {
 			ImGui::Text("There is no key for this UI GO ...");
-			ImGui::Button("Copy keys from dragged GameObject", ImVec2(250.0f, 0.0f));
-			if (ImGui::BeginDragDropTarget())
-			{
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY"))
-				{
-					GameObject* fromCopy = *(GameObject**)payload->Data;
-					if (fromCopy && fromCopy->cmp_uiAnimation)
-					{
-						uint key_size = fromCopy->cmp_uiAnimation->keys.size();
-						if (key_size > 0u) {
-							animation_time = fromCopy->cmp_uiAnimation->animation_time;
-							std::map<uint, Key*> tmp_list = fromCopy->cmp_uiAnimation->keys;
-							Key* last_key = nullptr;
-							for (std::map<uint, Key*>::iterator it = tmp_list.begin(); it != tmp_list.end(); ++it) {
-
-								Key* tmp_key = new Key(*it->second);
-
-								tmp_key->id = keys.size();
-								if (last_key)
-								{
-									last_key->next_key = tmp_key;
-									tmp_key->back_key = last_key;
-								}
-
-								last_key = tmp_key;
-								keys.insert(std::pair<uint, Key*>(tmp_key->id, tmp_key));
-								AddKeyOnCombo();
-							}
-						}
-						if (!keys.empty()) current_key = keys.at(0);
-						change_origin_rect = true;
-						recalculate_times = true;
-					}
-				}
-				ImGui::EndDragDropTarget();
-			}
+			ImGuiDradDropCopyKeys();
 		}
 
 		if (popStyle = recording)
@@ -474,14 +433,12 @@ void ComponentUIAnimation::OnUniqueEditor()
 				if (recording){
 					modifying_key = false;
 					current_key = keys.at(keys.size() - 1);
-					parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
-					if (parent->cmp_image) parent->cmp_image->SetAlpha(current_key->alpha);
+					DrawCurrent();
 				}
-
-				if (!recording) {
-					current_key = keys.at(0);
-					parent->cmp_rectTransform->SetRect(init_rect, true);
-				}
+			}
+			if (!recording) {
+				current_key = (!keys.empty()) ? keys.at(0) : nullptr;
+				DrawInit();
 			}
 		}
 		if (ImGui::IsItemHovered())
@@ -552,8 +509,7 @@ void ComponentUIAnimation::ImGuiKeys()
 			{
 				modifying_key = false;
 				current_key = keys.at(i);
-				if (recording) parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
-				if (recording && parent->cmp_image) parent->cmp_image->SetAlpha(current_key->alpha);
+				if (recording) DrawCurrent();
 			}
 			ImGui::SameLine();
 			ComponentUIAnimation::key_editor returned = keys.at(i)->OnEditor(animation_time);
@@ -594,11 +550,20 @@ void ComponentUIAnimation::ImGuiKeys()
 					if (modifying_key)
 					{
 						modifying_key = false;
-						parent->cmp_rectTransform->SetRect(init_rect, true);
+						DrawInit();
 					}
 				}
 				RELEASE(keys.at(i));
 				keys.erase(i);
+				for (uint next_i = i + 1; next_i < keys.size() + 1; next_i++)
+				{
+					Key* next = keys.at(next_i);
+					keys.erase(next_i);
+					keys.insert(std::pair<uint, Key*>(next->id, next));
+				}
+				--i;
+				RELEASE_ARRAY(keys_strCombo.back());
+				keys_strCombo.pop_back();
 				break;
 			}
 			}
@@ -616,8 +581,7 @@ void ComponentUIAnimation::Play()
 		animation_state = UIAnimationState::PLAYING;
 		current_key = keys.at(0);
 		animation_timer = keys.at(0)->global_time;
-		parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
-		if (parent->cmp_image) parent->cmp_image->SetAlpha(current_key->alpha);
+		DrawCurrent();
 	}
 	else
 	{
@@ -629,9 +593,12 @@ void ComponentUIAnimation::Stop()
 {
 	animation_state = UIAnimationState::STOPPED;
 	current_key = keys.at(0);
-	parent->cmp_rectTransform->SetRect(init_rect, true);
-	if (parent->cmp_image) parent->cmp_image->SetAlpha(init_alpha);
+	DrawInit();
+}
 
+void ComponentUIAnimation::SetInitAlpha(float alpha)
+{
+	init_alpha = alpha;
 }
 
 void ComponentUIAnimation::AddKey()
@@ -680,6 +647,60 @@ void ComponentUIAnimation::AddKeyOnCombo()
 	cursorkey += bytes;
 
 	keys_strCombo.push_back(key_str);
+}
+
+void ComponentUIAnimation::DrawInit()
+{
+	parent->cmp_rectTransform->SetRect(init_rect, true);
+	if (parent->cmp_image) parent->cmp_image->SetAlpha(init_alpha, true);
+}
+
+void ComponentUIAnimation::DrawCurrent()
+{
+	parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
+	if (parent->cmp_image) parent->cmp_image->SetAlpha(current_key->alpha, true);
+}
+
+void ComponentUIAnimation::ImGuiDradDropCopyKeys()
+{
+#ifndef GAMEMODE
+	ImGui::Button("Copy keys from dragged GameObject", ImVec2(250.0f, 0.0f));
+	if (ImGui::BeginDragDropTarget())
+	{
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAMEOBJECTS_HIERARCHY"))
+		{
+			GameObject* fromCopy = *(GameObject**)payload->Data;
+			if (fromCopy && fromCopy->cmp_uiAnimation)
+			{
+				uint key_size = fromCopy->cmp_uiAnimation->keys.size();
+				if (key_size > 0u) {
+					animation_time = fromCopy->cmp_uiAnimation->animation_time;
+					std::map<uint, Key*> tmp_list = fromCopy->cmp_uiAnimation->keys;
+					Key* last_key = nullptr;
+					for (std::map<uint, Key*>::iterator it = tmp_list.begin(); it != tmp_list.end(); ++it) {
+
+						Key* tmp_key = new Key(*it->second);
+
+						tmp_key->id = keys.size();
+						if (last_key)
+						{
+							last_key->next_key = tmp_key;
+							tmp_key->back_key = last_key;
+						}
+
+						last_key = tmp_key;
+						keys.insert(std::pair<uint, Key*>(tmp_key->id, tmp_key));
+						AddKeyOnCombo();
+					}
+				}
+				if (!keys.empty()) current_key = keys.at(0);
+				change_origin_rect = true;
+				recalculate_times = true;
+			}
+		}
+		ImGui::EndDragDropTarget();
+	}
+#endif // !GAMEMODE
 }
 
 //OnEditor Key

@@ -70,6 +70,7 @@ public:
 		}
 
 		void Delete() {
+			CheckIDFromDeleted(id);
 			if(back_key) back_key->next_key = next_key;
 			if (next_key) next_key->back_key = back_key;
 		}
@@ -80,6 +81,15 @@ public:
 				if (next_key->time_key < time_key)
 					next_key->time_key = time_key;
 				next_key->CheckNextKeyTime();
+			}
+		}
+
+		void CheckIDFromDeleted(uint tmp_id) {
+			if (next_key)
+			{
+				uint tmp = next_key->id;
+				next_key->id = tmp_id;
+				next_key->CheckIDFromDeleted(tmp);
 			}
 		}
 
@@ -141,6 +151,8 @@ public:
 
 	void Play();
 	void Stop();
+
+	void SetInitAlpha(float alpha);
 	
 private:
 	//versions
@@ -155,6 +167,11 @@ private:
 private:
 	void AddKey();
 	void AddKeyOnCombo();
+
+	void DrawInit();
+	void DrawCurrent();
+
+	void ImGuiDradDropCopyKeys();
 
 private:
 	//version

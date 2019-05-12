@@ -40,13 +40,13 @@ public:
 
 	//Scripting
 	float* GetColor();
-	void SetColor(float r, float g, float b, float a);
+	void SetColor(float r, float g, float b, float a, bool from_cmpUIAnimation = false);
 	void ResetColor();
 	std::string GetResImageName() const;
 	void SetResImageName(const std::string& name, bool isIdle = false);
 	void SetMask();
 	void ResetTexture();
-	void SetAlpha(float alpha);
+	void SetAlpha(float alpha, bool from_cmpUIAnimation = false);
 	float GetAlpha() const;
 
 private:
