@@ -18,6 +18,8 @@ public:
 	void SetCmp(ComponentUIAnimation* cmp);
 	void ClearCmp();
 
+	bool CheckItsMe(ComponentUIAnimation* cmp);
+
 private:
 	ComponentUIAnimation* current_cmp = nullptr;
 	

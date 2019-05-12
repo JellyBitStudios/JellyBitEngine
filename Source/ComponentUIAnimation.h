@@ -116,6 +116,7 @@ private:
 
 	//recording mode (for rectTransform)
 	bool recording = false;
+	bool modifying_key = false;
 
 	// ----- Key stuff -----
 	bool recalculate_times = false;

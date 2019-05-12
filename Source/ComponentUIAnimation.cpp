@@ -22,6 +22,9 @@ ComponentUIAnimation::ComponentUIAnimation(GameObject * parent, bool includeComp
 {
 	if (includeComponents)
 	{
+		if (App->gui->panelUIAnimation->IsEnabled())
+			App->gui->panelUIAnimation->SetCmp(this);
+
 		change_origin_rect = true;
 	}
 }
@@ -74,6 +77,9 @@ ComponentUIAnimation::~ComponentUIAnimation()
 	for (std::map<uint, Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
 		RELEASE(it->second);
 	keys.clear();
+
+	if (App->gui->panelUIAnimation->IsEnabled() && App->gui->panelUIAnimation->CheckItsMe(this))
+		App->gui->panelUIAnimation->ClearCmp();
 
 	parent->cmp_uiAnimation = nullptr;
 }
@@ -277,13 +283,24 @@ void ComponentUIAnimation::OnUniqueEditor()
 
 			int selectable_key = (current_key) ? current_key->id : 0;
 			ImGui::PushItemWidth(75.0f);
-			if (ImGui::Combo("Select", &selectable_key, keys_strCombo.data(), keys.size()));
+			if (ImGui::Combo("Current", &selectable_key, keys_strCombo.data(), keys.size()))
 			{
+				modifying_key = false;
+				parent->cmp_rectTransform->SetRect(init_rect, true);
 				current_key = keys.at(selectable_key);
 			}
 
 			if (current_key) {
-				ImGui::Text("Current"); ImGui::SameLine();
+				if (!recording)
+				{
+					ImGui::SameLine();
+
+					if (ImGui::Button((modifying_key) ? "Disable edition" : "Enable edition"))
+					{
+						modifying_key = !modifying_key;
+						parent->cmp_rectTransform->SetRect((modifying_key) ? current_key->globalRect : init_rect, true);
+					}
+				}
 				current_key->OnEditor(animation_time);
 			}
 
@@ -345,14 +362,17 @@ void ComponentUIAnimation::OnUniqueEditor()
 
 			if (recording)
 			{
-				usePanel = true;
-				App->gui->panelUIAnimation->SetCmp(this);
+				modifying_key = false;
+				current_key = keys.at(keys.size() - 1);
+				parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
+
+				if (App->gui->panelUIAnimation->IsEnabled())
+					App->gui->panelUIAnimation->SetCmp(this);
 			}
 
 			if (!recording) {
-				usePanel = false;
+				current_key = keys.at(0);
 				parent->cmp_rectTransform->SetRect(init_rect, true);
-				App->gui->panelUIAnimation->ClearCmp();
 			}
 		}
 		
@@ -382,7 +402,17 @@ void ComponentUIAnimation::OnSystemEvent(System_Event event)
 	case System_Event_Type::ScreenChanged:
 	case System_Event_Type::CanvasChanged:
 	case System_Event_Type::RectTransformUpdated:
-		change_origin_rect = true;
+		if (modifying_key)
+		{
+			memcpy(current_key->globalRect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
+
+			current_key->diffRect[0] = current_key->globalRect[0] - init_rect[0];
+			current_key->diffRect[1] = current_key->globalRect[1] - init_rect[1];
+			current_key->diffRect[2] = current_key->globalRect[2] - init_rect[2];
+			current_key->diffRect[3] = current_key->globalRect[3] - init_rect[3];
+		}
+		else
+			change_origin_rect = true;
 		break;
 	}
 }
@@ -469,18 +499,16 @@ void ComponentUIAnimation::Key::OnEditor(float anim_time)
 {
 #ifndef GAMEMODE
 	ImGui::Separator();
-	ImGui::Text("Key: "); ImGui::SameLine(); ImGui::Text("%i", id);
+	ImGui::Text("Key: "); ImGui::SameLine(); ImGui::Text("%i", id + 1);
 	ImGui::Text("DiffRect X: %i Y: %i W: %i H:%i",
 		diffRect[0], diffRect[1], diffRect[2], diffRect[3]);
 	ImGui::Text("GlobalRect X: %i Y: %i W: %i H:%i",
 		globalRect[0], globalRect[1], globalRect[2], globalRect[3]);
-	std::string t = "Time key"; t += std::to_string(id + 1);
+	std::string t = "Time key "; t += std::to_string(id + 1);
 	if (ImGui::SliderFloat(t.c_str(), &time_key, 0.0f, 1.0f)) {
+		(back_key != nullptr && time_key < back_key->time_key) ? time_key = back_key->time_key : time_key;
 		global_time = anim_time * time_key;
 	}
-
-	ImGui::SameLine();
-
-	ImGui::Text("| Global time: %f", global_time);
+	ImGui::Text("Global time: %f", global_time);
 #endif
 }

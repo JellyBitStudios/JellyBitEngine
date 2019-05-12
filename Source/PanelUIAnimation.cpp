@@ -17,9 +17,6 @@ PanelUIAnimation::~PanelUIAnimation() { }
 
 bool PanelUIAnimation::Draw()
 {
-	if (IsEnabled() && !current_cmp)
-		OnOff();
-
 	ImGuiWindowFlags editFlags = 0;
 	editFlags |= ImGuiWindowFlags_NoFocusOnAppearing;
 
@@ -47,6 +44,11 @@ void PanelUIAnimation::ClearCmp()
 	current_cmp = nullptr;
 	if (IsEnabled())
 		OnOff();
+}
+
+bool PanelUIAnimation::CheckItsMe(ComponentUIAnimation * cmp)
+{
+	return (cmp == current_cmp);
 }
 
 #endif
