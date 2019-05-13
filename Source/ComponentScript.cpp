@@ -50,12 +50,6 @@ ComponentScript::~ComponentScript()
 		scriptResUUID = 0;
 	}
 
-	if (monoCompHandle != 0)
-	{
-		mono_gchandle_free(monoCompHandle);
-		monoCompHandle = 0;
-	}
-
 	App->scripting->ClearScriptComponent(this);
 }
 

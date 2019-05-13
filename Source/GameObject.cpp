@@ -258,6 +258,14 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 
 GameObject::~GameObject()
 {
+	if (monoObjectHandle != 0)
+	{
+		//Mark as destroyed the mono object
+		App->scripting->MarkAsDestroyed(this);
+		mono_gchandle_free(monoObjectHandle);
+		monoObjectHandle = 0;
+	}
+
 	// Components could not be destroyed by event at fbx exportation, for example.
 	for (int i = 0; i < components.size(); ++i)
 		delete components[i];

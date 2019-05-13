@@ -442,7 +442,7 @@ void ScriptingModule::ClearScriptComponent(ComponentScript* script)
 	}
 }
 
-MonoObject* ScriptingModule::MonoObjectFrom(GameObject* gameObject)
+MonoObject* ScriptingModule::MonoObjectFrom(GameObject* gameObject, bool create)
 {
 	if (!gameObject)
 		return nullptr;
@@ -455,6 +455,9 @@ MonoObject* ScriptingModule::MonoObjectFrom(GameObject* gameObject)
 		if(storedGO == gameObject)
 			return monoObject;
 	}
+
+	if (!create)
+		return nullptr;
 
 	MonoClass* gameObjectClass = mono_class_from_name(internalImage, "JellyBitEngine", "GameObject");
 	monoObject = mono_object_new(domain, gameObjectClass);
@@ -495,7 +498,7 @@ GameObject* ScriptingModule::GameObjectFrom(MonoObject* monoObject)
 	//We only can create MonoObjects though a GameObject*, not viceversa.
 }
 
-MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
+MonoObject* ScriptingModule::MonoComponentFrom(Component* component, bool create)
 {
 	if (!component)
 		return nullptr;
@@ -504,6 +507,9 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 	monoComponent = component->GetMonoComponent();
 	if (monoComponent)
 		return monoComponent;
+
+	if (!create)
+		return nullptr;
 
 	switch (component->GetType())
 	{
@@ -642,6 +648,32 @@ Component* ScriptingModule::ComponentFrom(MonoObject* monoComponent)
 	mono_field_get_value(monoComponent, mono_class_get_field_from_name(mono_object_get_class(monoComponent), "componentAddress"), &componentAddress);	
 
 	return (Component*)componentAddress;
+}
+
+void ScriptingModule::MarkAsDestroyed(GameObject* toDestroy)
+{
+	if (!toDestroy)
+		return;
+
+	MonoObject* monoObject = MonoObjectFrom(toDestroy, false);	
+	if (!monoObject)
+		return;
+
+	bool destroyed = true;
+	mono_field_set_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "destroyed"), &destroyed);
+}
+
+void ScriptingModule::MarkAsDestroyed(Component* toDestroy)
+{
+	if (!toDestroy)
+		return;
+
+	MonoObject* monoComponent = MonoComponentFrom(toDestroy, false);
+	if (!monoComponent)
+		return;
+
+	bool destroyed = true;
+	mono_field_set_value(monoComponent, mono_class_get_field_from_name(mono_object_get_class(monoComponent), "destroyed"), &destroyed);
 }
 
 bool ScriptingModule::alreadyCreated(std::string scriptName)
