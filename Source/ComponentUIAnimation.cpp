@@ -142,7 +142,7 @@ void ComponentUIAnimation::Update()
 				}
 				else
 				{
-					//if no net next, pause the animation. And if engine editor return to the init position (Stop)
+					//if not next, pause the animation. And if engine editor return to the init position (Stop)
 					animation_state = UIAnimationState::PAUSED;
 
 					if (App->GetEngineState() == engine_states::ENGINE_EDITOR && !repeat)
