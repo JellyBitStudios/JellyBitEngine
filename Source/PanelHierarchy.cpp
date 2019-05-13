@@ -337,7 +337,7 @@ void PanelHierarchy::SetGameObjectDragAndDropTarget(GameObject* target) const
 				if(payload_n->transform) globalMatrix = payload_n->transform->GetGlobalMatrix();
 
 				payload_n->GetParent()->EraseChild(payload_n);
-				target->AddChild(payload_n);
+				target->children.insert(target->children.begin(), payload_n);
 				payload_n->SetParent(target);
 
 				if (payload_n->transform) payload_n->transform->SetMatrixFromGlobal(globalMatrix);
