@@ -93,8 +93,6 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 
 	rateOverTime = componentEmitter.rateOverTime;
 
-	startOnPlay = componentEmitter.startOnPlay;
-
 	if (include)
 	{
 		App->particle->emitters.push_back(this);
@@ -112,6 +110,11 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 		else
 			SetUuidRes(App->resHandler->plane, uuidMeshPart);
 	}
+
+	startOnPlay = componentEmitter.startOnPlay;
+
+	if (startOnPlay && App->IsPlay())
+		StartEmitter();
 }
 
 ComponentEmitter::~ComponentEmitter()
@@ -1206,13 +1209,13 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	memcpy(&burstMesh.uuid, cursor, bytes);
 	Resource* res = App->res->GetResource(burstMesh.uuid);
 	if (res)
-		SetMeshInfo((ResourceMesh*)res, burstMesh);
+		SetBurstMeshParticleRes(burstMesh.uuid);
 	cursor += bytes;
 
 	memcpy(&shapeMesh.uuid, cursor, bytes);
 	res = App->res->GetResource(shapeMesh.uuid);
 	if (res)
-		SetMeshInfo((ResourceMesh*)res, shapeMesh);
+		SetMeshParticleRes(shapeMesh.uuid);
 	cursor += bytes;
 
 	uint uuidRes;
