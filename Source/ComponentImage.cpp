@@ -10,6 +10,7 @@
 #include "ComponentRectTransform.h"
 #include "ComponentLabel.h"
 #include "ComponentButton.h"
+#include "ComponentUIAnimation.h"
 
 #ifndef GAMEMODE
 #include "imgui\imgui.h"
@@ -95,12 +96,15 @@ float * ComponentImage::GetColor()
 	return color;
 }
 
-void ComponentImage::SetColor(float r, float g, float b, float a)
+void ComponentImage::SetColor(float r, float g, float b, float a, bool from_cmpUIAnimation)
 {
 	color[Color::R] = r;
 	color[Color::G] = g;
 	color[Color::B] = b;
 	color[Color::A] = a;
+
+	if (!from_cmpUIAnimation && parent->cmp_uiAnimation)
+		parent->cmp_uiAnimation->SetInitAlpha(a);
 }
 
 void ComponentImage::ResetColor()
@@ -230,11 +234,14 @@ void ComponentImage::ResetTexture()
 	res_image = 0;
 }
 
-void ComponentImage::SetAlpha(float alpha)
+void ComponentImage::SetAlpha(float alpha, bool from_cmpUIAnimation)
 {
 	if (alpha > 1.0f) alpha = 1.0;
 	if (alpha < 0.0f) alpha = 0.0;
 	color[Color::A] = alpha;
+
+	if (!from_cmpUIAnimation && parent->cmp_uiAnimation)
+		parent->cmp_uiAnimation->SetInitAlpha(alpha);
 }
 
 float ComponentImage::GetAlpha() const

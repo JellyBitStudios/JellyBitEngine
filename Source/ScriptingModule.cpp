@@ -3762,6 +3762,15 @@ float ColliderSphereGetRadius(MonoObject* monoSphere)
 	}
 }
 
+void ColliderSphereSetRadius(MonoObject* monoSphere, float radius)
+{
+	ComponentSphereCollider* sphere = (ComponentSphereCollider*)App->scripting->ComponentFrom(monoSphere);
+	if (sphere)
+	{
+		sphere->SetRadius(radius);
+	}
+}
+
 float ColliderCapsuleGetRadius(MonoObject* monoCapsule)
 {
 	ComponentCapsuleCollider* capsule = (ComponentCapsuleCollider*)App->scripting->ComponentFrom(monoCapsule);
@@ -3974,6 +3983,11 @@ void ApplicationQuit()
 #endif
 }
 
+MonoString* ApplicationGetVersion()
+{
+	return mono_string_new(App->scripting->domain, App->version);
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -4125,6 +4139,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Physics::_OverlapSphere", (const void*)&OverlapSphere);
 	mono_add_internal_call("JellyBitEngine.Physics::_Raycast", (const void*)&Raycast);
 	mono_add_internal_call("JellyBitEngine.SphereCollider::GetRadius", (const void*)ColliderSphereGetRadius);
+	mono_add_internal_call("JellyBitEngine.SphereCollider::SetRadius", (const void*)ColliderSphereSetRadius);
 	mono_add_internal_call("JellyBitEngine.CapsuleCollider::GetRadius", (const void*)ColliderCapsuleGetRadius);
 	mono_add_internal_call("JellyBitEngine.CapsuleCollider::SetRadius", (const void*)ColliderCapsuleSetRadius);
 	mono_add_internal_call("JellyBitEngine.CapsuleCollider::GetHalfHeight", (const void*)ColliderCapsuleGetHalfHeight);
@@ -4252,6 +4267,7 @@ void ScriptingModule::CreateDomain()
 	
 	//Application
 	mono_add_internal_call("JellyBitEngine.Application::Quit", (const void*)&ApplicationQuit);
+	mono_add_internal_call("JellyBitEngine.Application::GetVersion", (const void*)&ApplicationGetVersion);
 
 	firstDomain = false;
 }
