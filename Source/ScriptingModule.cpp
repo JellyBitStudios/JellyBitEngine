@@ -95,8 +95,8 @@ bool ScriptingModule::Init(JSON_Object* data)
 	mono_config_parse(NULL);
 
 	//Initialize the mono domain
-	domain = mono_jit_init("Scripting");
-	if (!domain)
+	runtimeDomain = mono_jit_init("Scripting");
+	if (!runtimeDomain)
 		return false;
 
 	CreateDomain();
@@ -971,6 +971,7 @@ void ScriptingModule::RecompileScripts()
 
 	std::string error;
 	std::string finalcommand = std::string(goRoot + "&" + goMonoBin + "&" + compileCommand + path + " " + outputFile + App->scripting->getReferencePath() + redirectOutput);
+
 	if (!exec(std::string(goRoot + "&" + goMonoBin + "&" + compileCommand + path + " " + outputFile + App->scripting->getReferencePath() + redirectOutput).data(), error))
 	{
 		char* buffer;
@@ -996,6 +997,7 @@ void ScriptingModule::RecompileScripts()
 		System_Event event;
 		event.type = System_Event_Type::ScriptingDomainReloaded;
 		App->PushSystemEvent(event);
+		
 		TemporalSave();
 	}
 }
@@ -4043,22 +4045,25 @@ MonoString* ApplicationGetVersion()
 
 void ScriptingModule::CreateDomain()
 {
-	static bool firstDomain = true;
+	MonoDomain* domainToUnload = domain;
 
-	MonoDomain* nextDom = mono_domain_create_appdomain("The reloaded domain", NULL);
-	if (!nextDom)
-		return;
+	CONSOLE_LOG(LogTypes::Error, "mono create appdomain");
 
-	if (!mono_domain_set(nextDom, false))
-		return;
+	domain = mono_domain_create_appdomain("The reloaded domain", NULL);
+	//domain = mono_domain_create();
 	
-	//Make sure we do not delete the main domain
-	if (!firstDomain)
+	CONSOLE_LOG(LogTypes::Error, "mono domain set");
+
+	if (!mono_domain_set(domain, false))
+		return;
+		
+	if (domainToUnload != nullptr)
 	{
-		mono_domain_unload(domain);		
+		CONSOLE_LOG(LogTypes::Error, "mono unload previous domain");
+		mono_domain_unload(domainToUnload);
 	}
 
-	domain = nextDom;
+	CONSOLE_LOG(LogTypes::Error, "mono other stuff");
 
 	char* buffer;
 	int size = App->fs->Load("JellyBitCS.dll", &buffer);
@@ -4321,8 +4326,6 @@ void ScriptingModule::CreateDomain()
 	//Application
 	mono_add_internal_call("JellyBitEngine.Application::Quit", (const void*)&ApplicationQuit);
 	mono_add_internal_call("JellyBitEngine.Application::GetVersion", (const void*)&ApplicationGetVersion);
-
-	firstDomain = false;
 }
 
 void ScriptingModule::UpdateScriptingReferences()

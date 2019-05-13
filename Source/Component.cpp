@@ -77,7 +77,12 @@ void Component::OnSystemEvent(System_Event event)
 		case System_Event_Type::Stop:
 		case System_Event_Type::ScriptingDomainReloaded:
 		{
-			this->monoCompHandle = 0;
+			if (monoCompHandle != 0)
+			{
+				mono_gchandle_free(monoCompHandle);
+				monoCompHandle = 0;
+			}
+				
 			break;
 		}
 	}

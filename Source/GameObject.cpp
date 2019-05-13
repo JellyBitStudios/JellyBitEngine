@@ -505,7 +505,11 @@ void GameObject::OnSystemEvent(System_Event event)
 	case System_Event_Type::ScriptingDomainReloaded:
 	case System_Event_Type::Stop:
 	{
-		monoObjectHandle = 0;
+		if (monoObjectHandle != 0)
+		{
+			mono_gchandle_free(monoObjectHandle);
+			monoObjectHandle = 0;
+		}
 
 		for (auto component = components.begin(); component != components.end(); ++component)
 		{

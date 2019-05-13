@@ -102,6 +102,7 @@ private:
 	void InitPlayerPrefs();
 
 public:
+	_MonoDomain*			runtimeDomain		= nullptr;
 	_MonoDomain*			domain				= nullptr;
 	_MonoAssembly*			internalAssembly	= nullptr;
 	_MonoImage*				internalImage		= nullptr;
