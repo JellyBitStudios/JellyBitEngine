@@ -25,7 +25,7 @@ ComponentUIAnimation::ComponentUIAnimation(GameObject * parent, bool includeComp
 	{
 		if (!parent->cmp_image) parent->AddComponent(ComponentTypes::ImageComponent);
 
-#ifndef GAMEMODE
+#ifndef GAMEMODE //checks if panel is active
 		if (App->gui->panelUIAnimation->IsEnabled())
 			usePanel = true;
 #endif
@@ -46,7 +46,7 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 		Key* last_key = nullptr;
 		for (std::map<uint, Key*>::iterator it = tmp_list.begin(); it != tmp_list.end(); ++it) {
 
-			Key* tmp_key = new Key(*it->second);
+			Key* tmp_key = new Key(*it->second); //copy constructor of key
 
 			tmp_key->id = keys.size();
 			if (last_key)
@@ -61,8 +61,6 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 		}
 	}
 	
-
-	// TODO end this
 	if (includeComponents)
 	{
 		if (!parent->cmp_image) parent->AddComponent(ComponentTypes::ImageComponent);
@@ -70,7 +68,7 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 		if (!keys.empty())
 			current_key = keys.at(0);
 
-#ifndef GAMEMODE
+#ifndef GAMEMODE //checks if panel is active
 		if (App->gui->panelUIAnimation->IsEnabled())
 			usePanel = true;
 #endif
@@ -95,7 +93,7 @@ ComponentUIAnimation::~ComponentUIAnimation()
 
 void ComponentUIAnimation::Update()
 {
-	if (change_origin_rect)
+	if (change_origin_rect) // catch init info of transform when it's no editing with animation
 	{
 		memcpy(init_rect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
 		calculate_keys_global = true;
@@ -104,11 +102,12 @@ void ComponentUIAnimation::Update()
 		if (parent->cmp_image) init_alpha = parent->cmp_image->GetAlpha();
 	}
 
-	if (calculate_keys_global)
+	if (calculate_keys_global) //calculate global keys
 	{
 		for (std::map<uint, Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
 		{
 			Key* k = it->second;
+			//know the global position by the key diff and the globalrect of back key
 			k->globalRect[0] = k->diffRect[0] + ((k->back_key) ? k->back_key->globalRect[0] : init_rect[0]);
 			k->globalRect[1] = k->diffRect[1] + ((k->back_key) ? k->back_key->globalRect[1] : init_rect[1]);
 			k->globalRect[2] = k->diffRect[2] + ((k->back_key) ? k->back_key->globalRect[2] : init_rect[2]);
@@ -118,33 +117,32 @@ void ComponentUIAnimation::Update()
 		calculate_keys_global = false;
 	}
 
-	if (recalculate_times) 
+	if (recalculate_times) //calculate global times
 	{
-
 		for (std::map<uint, Key*>::iterator it = keys.begin(); it != keys.end(); ++it)
-		{
-			it->second->global_time = animation_time * it->second->time_key;
-		}
+			it->second->global_time = animation_time * it->second->time_key; //global time =  animation time * key percentage time
 
 		recalculate_times = false;
 	}
 
 	// Interpolate
-	if (keys.empty() || keys.size() == 1)
-		return;
+	if (keys.size() >= 1)
+		return; //exits when keys is 1 or empty
 
+	//when is in engine mode use app dt on gamemode of time mamager
 	float dt = (App->GetEngineState() == engine_states::ENGINE_PLAY) ? App->timeManager->GetDt() : App->GetDt();
 
 	switch (animation_state)
 	{
 		case UIAnimationState::PLAYING: {
 
-			if (animation_timer >= current_key->global_time) {
+			if (animation_timer >= current_key->global_time) { //if time surpass the time of key, chenge to the next
 				if (current_key->next_key != nullptr) {
 					current_key = current_key->next_key;
 				}
 				else
 				{
+					//if no net next, pause the animation. And if engine editor return to the init position (Stop)
 					animation_state = UIAnimationState::PAUSED;
 
 					if (App->GetEngineState() == engine_states::ENGINE_EDITOR && !repeat)
@@ -187,9 +185,10 @@ void ComponentUIAnimation::Interpolate(float time)
 	float next_alpha = (current_key->back_key) ? current_key->back_key->alpha + alpha_increment : init_alpha + alpha_increment;
 	
 	parent->cmp_rectTransform->SetRect(next_rect, true);
-	if (parent->cmp_image) parent->cmp_image->SetAlpha(next_alpha);
+	if (parent->cmp_image) parent->cmp_image->SetAlpha(next_alpha, true);
 }
 
+//cheks if recording for rectTransform
 bool ComponentUIAnimation::IsRecording() const
 {
 	return recording;
@@ -199,6 +198,7 @@ uint ComponentUIAnimation::GetInternalSerializationBytes()
 {
 	uint keys_size = (!keys.empty()) ? keys.at(0)->GetInternalSerializationBytes() * keys.size() : 0;
 	return keys_size + sizeof(float) + sizeof(bool) + sizeof(uint) + sizeof(versionSerialization);
+	//	total keys size				||animation repeat||size keys || version of serialization
 }
 
 void ComponentUIAnimation::OnInternalSave(char *& cursor)
@@ -312,15 +312,16 @@ void ComponentUIAnimation::OnUniqueEditor()
 			ImGui::Text("Current timer: %f", animation_timer);
 
 			bool change_rect_pos = false;
-			int selectable_key = (current_key) ? current_key->id : 0;
+			int selectable_key = (current_key) ? current_key->id : 0; //ImGui combo knows position by key id.
 			ImGui::PushItemWidth(75.0f);
-			if (ImGui::Combo("Current", &selectable_key, keys_strCombo.data(), keys.size()))
+			if (ImGui::Combo("Current", &selectable_key, keys_strCombo.data(), keys.size())) //Drop list of keys
 			{
 				modifying_key = false;
 				current_key = keys.at(selectable_key);
 				change_rect_pos = true;
 			}
 
+			//Move left or right of currents
 			if (current_key->back_key != nullptr)
 			{
 				ImGui::SameLine();
@@ -331,7 +332,6 @@ void ComponentUIAnimation::OnUniqueEditor()
 					change_rect_pos = true;
 				}
 			}
-
 			if (current_key->next_key != nullptr)
 			{
 				ImGui::SameLine();
@@ -341,16 +341,18 @@ void ComponentUIAnimation::OnUniqueEditor()
 					current_key = current_key->next_key;
 					change_rect_pos = true;
 				}
-
-				if (change_rect_pos)
-					(recording) ? DrawCurrent() : DrawInit();
 			}
+			// -----
 
+			if (change_rect_pos) //sets draw of current or init if recording
+				(recording) ? DrawCurrent() : DrawInit();
+
+			// if not recording and exists current key, appears a button that enables individual modification of rect from key
 			if (current_key) {
 				if (!recording)
 				{
 					ImGui::SameLine();
-					if (popStyle = modifying_key)
+					if (popStyle = modifying_key) //red button when is enabled
 					{
 						ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(1.0, 0.0, 0.0, 0.5));
 						ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ButtonHovered, ImVec4(1.0, 0.0, 0.0, 0.7));
@@ -373,7 +375,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 			}
 
 			ImGui::Separator();
-			if (ImGui::Button("Play")) {//TODO PREPARE FOR SCRIPTING
+			if (ImGui::Button("Play")) {
 				Play();
 			}
 			ImGui::SameLine();
@@ -383,12 +385,12 @@ void ComponentUIAnimation::OnUniqueEditor()
 
 			ImGui::SameLine();
 
-			if (ImGui::Button("Stop")) {//TODO PREPARE FOR SCRIPTING
+			if (ImGui::Button("Stop")) {
 				Stop();
 			}
 
 			ImGui::SameLine();
-
+			//change keys when on play or current
 			if (ImGui::Button("Next Key")) {
 				if (current_key->next_key != nullptr)
 				{
@@ -398,9 +400,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 					if (recording) DrawCurrent();
 				}
 			}
-
 			ImGui::SameLine();
-
 			if (ImGui::Button("Previous Key")) {
 				if (current_key->back_key != nullptr)
 				{
@@ -410,18 +410,20 @@ void ComponentUIAnimation::OnUniqueEditor()
 					if (recording) DrawCurrent();
 				}
 			}
+			// -----
 		}
 		else {
 			ImGui::Text("There is no key for this UI GO ...");
 			ImGuiDradDropCopyKeys();
 		}
 
-		if (popStyle = recording)
+		if (popStyle = recording) //red button when is enabled
 		{
 			ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Button, ImVec4(1.0, 0.0, 0.0, 0.5));
 			ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ButtonHovered, ImVec4(1.0, 0.0, 0.0, 0.7));
 			ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_ButtonActive, ImVec4(1.0, 0.0, 0.0, 1.0));
 		}
+		//Enables recording, appears a panel that shows all info os keys, and you can move the rect and save positions
 		if(ImGui::Button((recording) ? "Stop recording" : "Start recording")) {
 			recording = !recording;
 
@@ -430,13 +432,13 @@ void ComponentUIAnimation::OnUniqueEditor()
 
 			if (!keys.empty())
 			{
-				if (recording){
+				if (recording){ //if jeys and recording, ser current key at last and draw
 					modifying_key = false;
 					current_key = keys.at(keys.size() - 1);
 					DrawCurrent();
 				}
 			}
-			if (!recording) {
+			if (!recording) { //if stop recording, return at init position
 				current_key = (!keys.empty()) ? keys.at(0) : nullptr;
 				DrawInit();
 			}
@@ -456,6 +458,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 				this->AddKey();
 		}
 
+		//bool know if is showing this component at panel
 		usePanel = (App->gui->panelUIAnimation->CheckItsMe(this) && App->gui->panelUIAnimation->IsEnabled()) ? true : false;
 		if (ImGui::Button((usePanel) ? "Hide Panel" : "Show Panel"))
 			App->gui->panelUIAnimation->SetOnOff(usePanel = !usePanel);
@@ -472,7 +475,7 @@ void ComponentUIAnimation::OnSystemEvent(System_Event event)
 	case System_Event_Type::ScreenChanged:
 	case System_Event_Type::CanvasChanged:
 	case System_Event_Type::RectTransformUpdated:
-		if (modifying_key)
+		if (modifying_key) // cheks event of rect for modify current key if not change init rect and recalculate all elements
 		{
 			memcpy(current_key->globalRect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
 
@@ -497,14 +500,15 @@ bool ComponentUIAnimation::HasKeys() const
 	return !keys.empty();
 }
 
-void ComponentUIAnimation::ImGuiKeys()
+void ComponentUIAnimation::ImGuiKeys() //Call from panel for draw all  keys
 {
 #ifndef GAMEMODE
 	if (!keys.empty())
 	{
 		for (uint i = 0; i < keys.size(); i++)
 		{
-			std::string t = "Set key "; t += std::to_string(i + 1); t += " to current";
+			// needs differents sttrings for imgui, detects as id
+			std::string t = "Set key "; t += std::to_string(i + 1); t += " to current"; 
 			if (ImGui::Button(t.c_str()))
 			{
 				modifying_key = false;
@@ -513,7 +517,7 @@ void ComponentUIAnimation::ImGuiKeys()
 			}
 			ImGui::SameLine();
 			ComponentUIAnimation::key_editor returned = keys.at(i)->OnEditor(animation_time);
-			switch (returned)
+			switch (returned) //Editor of key returns a value for know if something happened and apply to main map of animation
 			{
 			case key_editor::SwapedUp:
 			{
@@ -541,7 +545,7 @@ void ComponentUIAnimation::ImGuiKeys()
 
 				break;
 			}
-			case key_editor::Deleted:
+			case key_editor::Deleted: //when delecting all map needed to be realocated of after elements
 			{
 				if (current_key == keys.at(i))
 				{
@@ -576,7 +580,7 @@ void ComponentUIAnimation::ImGuiKeys()
 
 void ComponentUIAnimation::Play()
 {
-	if (keys.size() > 1)
+	if (keys.size() > 1) //needed to be more than one key to play
 	{
 		animation_state = UIAnimationState::PLAYING;
 		current_key = keys.at(0);
@@ -596,11 +600,12 @@ void ComponentUIAnimation::Stop()
 	DrawInit();
 }
 
-void ComponentUIAnimation::SetInitAlpha(float alpha)
+void ComponentUIAnimation::SetInitAlpha(float alpha) //called from cmp image
 {
 	init_alpha = alpha;
 }
 
+//from OnEditor adds a default key on current position of rect when recording
 void ComponentUIAnimation::AddKey()
 {
 	Key* tmp_key = new Key();
@@ -616,6 +621,7 @@ void ComponentUIAnimation::AddKey()
 		tmp_key->back_key->next_key = tmp_key;
 	}
 
+	//Save the difference from last
 	tmp_key->diffRect[0] = tmp_key->globalRect[0] - ((tmp_key->back_key) ? tmp_key->back_key->globalRect[0] : init_rect[0]);
 	tmp_key->diffRect[1] = tmp_key->globalRect[1] - ((tmp_key->back_key) ? tmp_key->back_key->globalRect[1] : init_rect[1]);
 	tmp_key->diffRect[2] = tmp_key->globalRect[2] - ((tmp_key->back_key) ? tmp_key->back_key->globalRect[2] : init_rect[2]);
@@ -627,6 +633,7 @@ void ComponentUIAnimation::AddKey()
 	AddKeyOnCombo();
 }
 
+//When add key, a string of name as id, needs to be added to another vector. For ImGui combo
 void ComponentUIAnimation::AddKeyOnCombo()
 {
 	uint total_keys = keys.size();
@@ -648,19 +655,19 @@ void ComponentUIAnimation::AddKeyOnCombo()
 
 	keys_strCombo.push_back(key_str);
 }
-
+ //Draws to init (original go values) or current key.
 void ComponentUIAnimation::DrawInit()
 {
 	parent->cmp_rectTransform->SetRect(init_rect, true);
 	if (parent->cmp_image) parent->cmp_image->SetAlpha(init_alpha, true);
 }
-
 void ComponentUIAnimation::DrawCurrent()
 {
 	parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
 	if (parent->cmp_image) parent->cmp_image->SetAlpha(current_key->alpha, true);
 }
-
+// -----
+// -- Copy all keys from another game object that contains keys
 void ComponentUIAnimation::ImGuiDradDropCopyKeys()
 {
 #ifndef GAMEMODE
@@ -703,7 +710,8 @@ void ComponentUIAnimation::ImGuiDradDropCopyKeys()
 #endif // !GAMEMODE
 }
 
-//OnEditor Key
+// ------ OnEditor Key
+// value isCurrent - if call is from OnEditor of Component, is the current key and it isn't interactuable to other keys or map. 
 ComponentUIAnimation::key_editor ComponentUIAnimation::Key::OnEditor(float anim_time, bool isCurrent)
 {
 	key_editor ret = key_editor::NONE;
@@ -711,8 +719,9 @@ ComponentUIAnimation::key_editor ComponentUIAnimation::Key::OnEditor(float anim_
 	ImGui::Separator();
 	std::string id_str = std::to_string(id + 1);
 	std::string tmp;
-	if (!isCurrent)
+	if (!isCurrent) 
 	{
+		// Move key of map (of keys pointers, after at map by event from this method), change ids and mantain time.
 		if (back_key != nullptr)
 		{
 			ImGui::SameLine();
@@ -735,6 +744,7 @@ ComponentUIAnimation::key_editor ComponentUIAnimation::Key::OnEditor(float anim_
 				ret = key_editor::SwapedDown;
 			}
 		}
+		// ------
 	}
 	ImGui::Text("Key: %i", id + 1); 
 	if (!isCurrent)
@@ -747,18 +757,23 @@ ComponentUIAnimation::key_editor ComponentUIAnimation::Key::OnEditor(float anim_
 			ret = key_editor::Deleted;
 		}
 	}
+	//Show rects values
 	ImGui::Text("DiffRect X: %i Y: %i W: %i H:%i",
 		diffRect[0], diffRect[1], diffRect[2], diffRect[3]);
 	ImGui::Text("GlobalRect X: %i Y: %i W: %i H:%i",
 		globalRect[0], globalRect[1], globalRect[2], globalRect[3]);
+
+	//Modifiable values, alpha and time(for time cheks the befor key time and the next key times)
+	// One key time can't be lower than the back key.
 	tmp = "Alpha key "; tmp += id_str;
 	ImGui::SliderFloat(tmp.c_str(), &alpha, 0.0f, 1.0f);
-	tmp = "Time key "; tmp += id_str;
+	tmp = "Time key "; tmp += id_str; // Modifiable time by slider
 	if (ImGui::SliderFloat(tmp.c_str(), &time_key, 0.0f, 1.0f)) {
 		(back_key != nullptr && time_key < back_key->time_key) ? time_key = back_key->time_key : time_key;
 		global_time = anim_time * time_key;
 		CheckNextKeyTime();
 	}
+	//Show global time
 	ImGui::Text("Global time: %f", global_time);
 #endif
 	return ret;

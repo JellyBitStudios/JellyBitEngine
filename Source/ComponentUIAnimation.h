@@ -10,6 +10,7 @@
 class ComponentUIAnimation : public Component
 {
 public:
+	//enum for return of key OnEditor (know what happened and apply changes)
 	enum key_editor {
 		NONE,
 		SwapedUp,
@@ -19,16 +20,16 @@ public:
 	//keys
 	struct Key {
 		Key() {}
-		Key(const Key& fromKey) {
+		Key(const Key& fromKey) { //copy contructor
 			memcpy(diffRect, fromKey.diffRect, sizeof(int) * 4);
 			time_key = fromKey.time_key;
 			alpha = fromKey.alpha;
 		}
-		uint id = 0;
-		int diffRect[4] = { 0, 0, 0, 0 };
-		int globalRect[4] = { 0, 0, 0, 0 };
-		float time_key = 0.0f;
-		float global_time = 0.0f;
+		uint id = 0; //key id, position, order of play
+		int diffRect[4] = { 0, 0, 0, 0 }; // difference from last key
+		int globalRect[4] = { 0, 0, 0, 0 }; // global rect
+		float time_key = 0.0f; // percentage time, 0 to 1
+		float global_time = 0.0f; // global time, animation time * oercentage
 
 		float alpha = 1.0f;
 
@@ -36,7 +37,7 @@ public:
 		Key* next_key = nullptr;
 
 		key_editor OnEditor(float anim_time, bool isCurrent = false);
-		void Swap(Key* to)
+		void Swap(Key* to) //swap keys positions, mantain time and change pointers
 		{
 			if (to == back_key)
 			{
@@ -69,13 +70,13 @@ public:
 			to->time_key = tmp_time;
 		}
 
-		void Delete() {
+		void Delete() { //delete key and modify if from nexts keys 
 			CheckIDFromDeleted(id);
 			if(back_key) back_key->next_key = next_key;
 			if (next_key) next_key->back_key = back_key;
 		}
 
-		void CheckNextKeyTime() {
+		void CheckNextKeyTime() { // checks of nexts keys for not be lowered time
 			if (next_key)
 			{
 				if (next_key->time_key < time_key)
@@ -84,7 +85,7 @@ public:
 			}
 		}
 
-		void CheckIDFromDeleted(uint tmp_id) {
+		void CheckIDFromDeleted(uint tmp_id) { //when delecting
 			if (next_key)
 			{
 				uint tmp = next_key->id;
@@ -95,6 +96,7 @@ public:
 
 		static uint GetInternalSerializationBytes() {
 			return sizeof(int) * 4 + sizeof(float) * 2;
+			//diff rect			| percent time | alpha
 		}
 		void OnInternalSave(char*& cursor) {
 			size_t bytes = sizeof(int) * 4;
@@ -142,18 +144,21 @@ public:
 
 	void Interpolate(float time);
 
-	bool IsRecording()const;
-
+	//Getters info
+	bool IsRecording()const; //cheker from rect transform, will be deleted. TODO. It's possible. same as modifying_key
 	float GetAnimationTime()const;
 	bool HasKeys()const;
 	
-	void ImGuiKeys();
+	//Cal from comopnent image
+	void SetInitAlpha(float alpha);
 
+	//Call from panel
+	void ImGuiKeys();
+	
+	//For scripting, needed to discurss to add more options. Needed.
 	void Play();
 	void Stop();
 
-	void SetInitAlpha(float alpha);
-	
 private:
 	//versions
 	enum versionSerialization {
@@ -165,49 +170,50 @@ private:
 	void OnUniqueEditor();
 
 private:
-	void AddKey();
-	void AddKeyOnCombo();
+	//Imgui OnEitor
+	void AddKey(); //When recording
+	void AddKeyOnCombo(); //for imguiCombo
+	void ImGuiDradDropCopyKeys(); //called OnEditor if keys is empty
 
+	//calls to rect trnasform and image for set init or current values
 	void DrawInit();
 	void DrawCurrent();
-
-	void ImGuiDradDropCopyKeys();
 
 private:
 	//version
 	versionSerialization version = v1; //always defined as last.
 
 	// ----- Animation component -----
-	UIAnimationState animation_state = UIAnimationState::STOPPED;
+	UIAnimationState animation_state = UIAnimationState::STOPPED; //state
 
-	std::map<uint, Key*> keys;
+	std::map<uint, Key*> keys; //keys as map, id map == id keys and order reproduction
 
-	bool usePanel = false;
+	bool usePanel = false; //value that cheks is observed by panel
 
 	//curent
-	Key* current_key = nullptr;
+	Key* current_key = nullptr; // Playing to this key, then change to the next.
 
 	//Animation values
-	float animation_time = 0.0f;
-	float animation_timer = 0.0f;
-	bool repeat = false;
+	float animation_time = 0.0f; // Total time of animation
+	float animation_timer = 0.0f; //Internal timer
+	bool repeat = false; //TODO
 
-	//rect origin
+	//Origin values
 	int init_rect[4] = {0,0,100,100};
-	bool change_origin_rect = true;
 	float init_alpha = 1.0f;
+	bool change_origin_rect = true; //for reset values. at update
 
 	//recording mode (for rectTransform)
-	bool recording = false;
-	bool modifying_key = false;
+	bool recording = false; //recording, save keys
+	bool modifying_key = false; // modify a selected key
 
 	// ----- Key stuff -----
+	//Calculate global time of keys
 	bool recalculate_times = false;
-
 	//calculate global pos of keys
 	bool calculate_keys_global = false;
 	
-	//Combo values
+	//Combo values array position.
 	std::vector<char*> keys_strCombo;	
 };
 
