@@ -273,6 +273,7 @@ void ModuleInput::DrawCursor()
 void ModuleInput::SaveStatus(JSON_Object* node) const
 {
 	json_object_set_number(node, "DefCursor", CursorTextureUUID);
+	json_object_set_number(node, "CursorSize", cursorSize);
 }
 
 void ModuleInput::LoadStatus(const JSON_Object* node)
@@ -293,6 +294,8 @@ void ModuleInput::LoadStatus(const JSON_Object* node)
 			CursorTextureID = ((ResourceTexture*)res)->GetId();
 		}
 	}
+
+	cursorSize = (uint)json_object_get_number(node, "CursorSize");
 }
 
 std::string ModuleInput::GetCursorTexture() const
