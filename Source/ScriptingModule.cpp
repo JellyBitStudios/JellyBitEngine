@@ -3694,6 +3694,25 @@ void RigidbodyClearTorque(MonoObject* monoComp)
 	rigidbody->ClearTorque();
 }
 
+bool RigidbodyGetIsKinematic(MonoObject* monoRigidbody)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoRigidbody);
+	if (rigidbody)
+	{
+		return rigidbody->GetIsKinematic();
+	}
+	return false;
+}
+
+void RigidbodySetIsKinematic(MonoObject* monoRigidbody, bool isKinematic)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoRigidbody);
+	if (rigidbody)
+	{
+		rigidbody->SetIsKinematic(isKinematic);
+	}
+}
+
 bool OverlapSphere(float radius, MonoArray* center, MonoArray** overlapHit, uint filterMask, SceneQueryFlags sceneQueryFlags)
 {
 	if (!center)
@@ -4168,6 +4187,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddTorque", (const void*)&RigidbodyAddTorque);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearForce", (const void*)&RigidbodyClearForce);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearTorque", (const void*)&RigidbodyClearTorque);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::GetIsKinematic", (const void*)&RigidbodyGetIsKinematic);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::SetIsKinematic", (const void*)&RigidbodySetIsKinematic);
 	mono_add_internal_call("JellyBitEngine.Physics::_OverlapSphere", (const void*)&OverlapSphere);
 	mono_add_internal_call("JellyBitEngine.Physics::_Raycast", (const void*)&Raycast);
 	mono_add_internal_call("JellyBitEngine.SphereCollider::GetRadius", (const void*)ColliderSphereGetRadius);
