@@ -290,6 +290,8 @@ void PanelSettings::FileSystemNode() const
 
 void PanelSettings::InputNode() const
 {
+	ImGui::Text("Cursor Size:"); ImGui::SameLine(); ImGui::DragFloat("##Cursor Size", &App->input->cursorSize);
+
 	ImGui::Text("Mouse Position:");
 	ImGui::SameLine(); ImGui::TextColored(BLUE, "%i, %i", App->input->GetMouseX(), App->input->GetMouseY());
 

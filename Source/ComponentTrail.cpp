@@ -395,6 +395,9 @@ void ComponentTrail::OnInternalLoad(char *& cursor)
 	memcpy(&materialRes, cursor, bytes);
 	cursor += bytes;
 
+	if (materialRes != 0)
+		App->res->SetAsUsed(materialRes);
+
 	bytes = sizeof(minDistance);
 	memcpy(&minDistance, cursor, bytes);
 	cursor += bytes;

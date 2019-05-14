@@ -34,6 +34,8 @@ public:
 	void SetMaxAngularVelocity(float maxAngularVelocity);
 	void FreezePosition(bool x, bool y, bool z);
 	void FreezeRotation(bool x, bool y, bool z);
+
+	inline bool GetIsKinematic() { return isKinematic; }
 	void SetIsKinematic(bool isKinematic);
 
 	void SetLinearVelocity(math::float3& linearVelocity);

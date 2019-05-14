@@ -75,6 +75,10 @@ public:
 	void SetCursorTexture(std::string& textureName);
 	void SetCursorTexture(uint textureUUID);
 	void SetDefaultCursorTexture(ResourceTexture* textureRes);
+
+public:
+	float cursorSize = 17.5f;
+
 private:
 
 	KEY_STATE* keyboard;
@@ -89,7 +93,6 @@ private:
 	//Cursor Settings
 	uint CursorTextureID = 0u;
 	uint CursorTextureUUID = 0u;
-	float cursorSize = 17.5f;
 };
 
 #endif

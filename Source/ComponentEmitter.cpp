@@ -112,6 +112,7 @@ ComponentEmitter::ComponentEmitter(const ComponentEmitter& componentEmitter, Gam
 	}
 
 	startOnPlay = componentEmitter.startOnPlay;
+
 	if (startOnPlay && App->IsPlay())
 		StartEmitter();
 }
@@ -285,6 +286,7 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 			startValues.particleDirection = math::float3::unitY;
 		else
 			startValues.particleDirection = (math::float3::unitY * parent->transform->GetGlobalMatrix().RotatePart().Transposed()).Normalized();
+
 		break;
 
 	case ShapeType_SPHERE:
@@ -347,17 +349,13 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 		break;
 	}
 
-	math::float3 global = math::float3::zero;
 	if (!localSpace && parent)
 	{
 		math::float4x4 trans = parent->transform->GetGlobalMatrix();
-		math::Quat identity = math::Quat::identity;
-		math::float3 zero = math::float3::zero;
 
-		trans.Decompose(global, identity, zero);
-
-		spawn = trans.Mul(math::float4(spawn, 0)).xyz();
+		spawn = trans.MulPos(spawn);
 	}
+
 	return spawn;
 }
 
@@ -911,14 +909,9 @@ void ComponentEmitter::SetUuidRes(uint newUuid, uint &oldUuid)
 
 void ComponentEmitter::SetMeshParticleRes(uint res_uuid)
 {
-	if (shapeMesh.uuid > 0)
-		App->res->SetAsUnused(shapeMesh.uuid);
-
 	if (res_uuid > 0)
 	{
-		App->res->SetAsUsed(res_uuid);
 		Resource* resource = App->res->GetResource(res_uuid);
-
 		if (resource)
 			SetMeshInfo((ResourceMesh*)resource, shapeMesh);
 	}
@@ -928,14 +921,9 @@ void ComponentEmitter::SetMeshParticleRes(uint res_uuid)
 
 void ComponentEmitter::SetBurstMeshParticleRes(uint res_uuid)
 {
-	if (burstMesh.uuid > 0)
-		App->res->SetAsUnused(burstMesh.uuid);
-
 	if (res_uuid > 0)
 	{
-		App->res->SetAsUsed(res_uuid);
 		Resource* resource = App->res->GetResource(res_uuid);
-
 		if (resource)
 			SetMeshInfo((ResourceMesh*)resource, burstMesh);
 	}
@@ -1202,19 +1190,22 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	uint uuidMaterial;
 	memcpy(&uuidMaterial, cursor, bytes);
 
-	App->res->GetResource(uuidMaterial) ? SetUuidRes(uuidMaterial, materialRes) : SetUuidRes(App->resHandler->defaultMaterial, materialRes);
+	if (uuidMaterial != 0)
+		App->res->SetAsUsed(uuidMaterial);
+
 	cursor += bytes;
 
 	memcpy(&burstMesh.uuid, cursor, bytes);
-	Resource* res = App->res->GetResource(burstMesh.uuid);
-	if (res)
-		SetMeshInfo((ResourceMesh*)res, burstMesh);
+	if (burstMesh.uuid != 0)
+		App->res->SetAsUsed(burstMesh.uuid);
+	SetBurstMeshParticleRes(burstMesh.uuid);
 	cursor += bytes;
 
 	memcpy(&shapeMesh.uuid, cursor, bytes);
-	res = App->res->GetResource(shapeMesh.uuid);
-	if (res)
-		SetMeshInfo((ResourceMesh*)res, shapeMesh);
+
+	if (shapeMesh.uuid != 0)
+		App->res->SetAsUsed(shapeMesh.uuid);
+	SetMeshParticleRes(shapeMesh.uuid);
 	cursor += bytes;
 
 	uint uuidRes;

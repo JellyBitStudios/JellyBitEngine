@@ -95,8 +95,8 @@ bool ScriptingModule::Init(JSON_Object* data)
 	mono_config_parse(NULL);
 
 	//Initialize the mono domain
-	domain = mono_jit_init("Scripting");
-	if (!domain)
+	runtimeDomain = mono_jit_init("Scripting");
+	if (!runtimeDomain)
 		return false;
 
 	CreateDomain();
@@ -442,7 +442,7 @@ void ScriptingModule::ClearScriptComponent(ComponentScript* script)
 	}
 }
 
-MonoObject* ScriptingModule::MonoObjectFrom(GameObject* gameObject)
+MonoObject* ScriptingModule::MonoObjectFrom(GameObject* gameObject, bool create)
 {
 	if (!gameObject)
 		return nullptr;
@@ -455,6 +455,9 @@ MonoObject* ScriptingModule::MonoObjectFrom(GameObject* gameObject)
 		if(storedGO == gameObject)
 			return monoObject;
 	}
+
+	if (!create)
+		return nullptr;
 
 	MonoClass* gameObjectClass = mono_class_from_name(internalImage, "JellyBitEngine", "GameObject");
 	monoObject = mono_object_new(domain, gameObjectClass);
@@ -495,7 +498,7 @@ GameObject* ScriptingModule::GameObjectFrom(MonoObject* monoObject)
 	//We only can create MonoObjects though a GameObject*, not viceversa.
 }
 
-MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
+MonoObject* ScriptingModule::MonoComponentFrom(Component* component, bool create)
 {
 	if (!component)
 		return nullptr;
@@ -504,6 +507,9 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component)
 	monoComponent = component->GetMonoComponent();
 	if (monoComponent)
 		return monoComponent;
+
+	if (!create)
+		return nullptr;
 
 	switch (component->GetType())
 	{
@@ -642,6 +648,32 @@ Component* ScriptingModule::ComponentFrom(MonoObject* monoComponent)
 	mono_field_get_value(monoComponent, mono_class_get_field_from_name(mono_object_get_class(monoComponent), "componentAddress"), &componentAddress);	
 
 	return (Component*)componentAddress;
+}
+
+void ScriptingModule::MarkAsDestroyed(GameObject* toDestroy)
+{
+	if (!toDestroy)
+		return;
+
+	MonoObject* monoObject = MonoObjectFrom(toDestroy, false);	
+	if (!monoObject)
+		return;
+
+	bool destroyed = true;
+	mono_field_set_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "destroyed"), &destroyed);
+}
+
+void ScriptingModule::MarkAsDestroyed(Component* toDestroy)
+{
+	if (!toDestroy)
+		return;
+
+	MonoObject* monoComponent = MonoComponentFrom(toDestroy, false);
+	if (!monoComponent)
+		return;
+
+	bool destroyed = true;
+	mono_field_set_value(monoComponent, mono_class_get_field_from_name(mono_object_get_class(monoComponent), "destroyed"), &destroyed);
 }
 
 bool ScriptingModule::alreadyCreated(std::string scriptName)
@@ -939,6 +971,7 @@ void ScriptingModule::RecompileScripts()
 
 	std::string error;
 	std::string finalcommand = std::string(goRoot + "&" + goMonoBin + "&" + compileCommand + path + " " + outputFile + App->scripting->getReferencePath() + redirectOutput);
+
 	if (!exec(std::string(goRoot + "&" + goMonoBin + "&" + compileCommand + path + " " + outputFile + App->scripting->getReferencePath() + redirectOutput).data(), error))
 	{
 		char* buffer;
@@ -964,6 +997,7 @@ void ScriptingModule::RecompileScripts()
 		System_Event event;
 		event.type = System_Event_Type::ScriptingDomainReloaded;
 		App->PushSystemEvent(event);
+		
 		TemporalSave();
 	}
 }
@@ -3662,6 +3696,25 @@ void RigidbodyClearTorque(MonoObject* monoComp)
 	rigidbody->ClearTorque();
 }
 
+bool RigidbodyGetIsKinematic(MonoObject* monoRigidbody)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoRigidbody);
+	if (rigidbody)
+	{
+		return rigidbody->GetIsKinematic();
+	}
+	return false;
+}
+
+void RigidbodySetIsKinematic(MonoObject* monoRigidbody, bool isKinematic)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoRigidbody);
+	if (rigidbody)
+	{
+		rigidbody->SetIsKinematic(isKinematic);
+	}
+}
+
 bool OverlapSphere(float radius, MonoArray* center, MonoArray** overlapHit, uint filterMask, SceneQueryFlags sceneQueryFlags)
 {
 	if (!center)
@@ -3992,22 +4045,25 @@ MonoString* ApplicationGetVersion()
 
 void ScriptingModule::CreateDomain()
 {
-	static bool firstDomain = true;
+	MonoDomain* domainToUnload = domain;
 
-	MonoDomain* nextDom = mono_domain_create_appdomain("The reloaded domain", NULL);
-	if (!nextDom)
-		return;
+	CONSOLE_LOG(LogTypes::Error, "mono create appdomain");
 
-	if (!mono_domain_set(nextDom, false))
-		return;
+	domain = mono_domain_create_appdomain("The reloaded domain", NULL);
+	//domain = mono_domain_create();
 	
-	//Make sure we do not delete the main domain
-	if (!firstDomain)
+	CONSOLE_LOG(LogTypes::Error, "mono domain set");
+
+	if (!mono_domain_set(domain, false))
+		return;
+		
+	if (domainToUnload != nullptr)
 	{
-		mono_domain_unload(domain);		
+		CONSOLE_LOG(LogTypes::Error, "mono unload previous domain");
+		mono_domain_unload(domainToUnload);
 	}
 
-	domain = nextDom;
+	CONSOLE_LOG(LogTypes::Error, "mono other stuff");
 
 	char* buffer;
 	int size = App->fs->Load("JellyBitCS.dll", &buffer);
@@ -4136,6 +4192,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddTorque", (const void*)&RigidbodyAddTorque);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearForce", (const void*)&RigidbodyClearForce);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearTorque", (const void*)&RigidbodyClearTorque);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::GetIsKinematic", (const void*)&RigidbodyGetIsKinematic);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::SetIsKinematic", (const void*)&RigidbodySetIsKinematic);
 	mono_add_internal_call("JellyBitEngine.Physics::_OverlapSphere", (const void*)&OverlapSphere);
 	mono_add_internal_call("JellyBitEngine.Physics::_Raycast", (const void*)&Raycast);
 	mono_add_internal_call("JellyBitEngine.SphereCollider::GetRadius", (const void*)ColliderSphereGetRadius);
@@ -4268,8 +4326,6 @@ void ScriptingModule::CreateDomain()
 	//Application
 	mono_add_internal_call("JellyBitEngine.Application::Quit", (const void*)&ApplicationQuit);
 	mono_add_internal_call("JellyBitEngine.Application::GetVersion", (const void*)&ApplicationGetVersion);
-
-	firstDomain = false;
 }
 
 void ScriptingModule::UpdateScriptingReferences()

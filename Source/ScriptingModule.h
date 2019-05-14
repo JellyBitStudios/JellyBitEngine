@@ -55,11 +55,14 @@ public:
 	inline void AddScriptComponent(ComponentScript* script){scripts.push_back(script);}
 	void ClearScriptComponent(ComponentScript* script);
 
-	MonoObject* MonoObjectFrom(GameObject* gameObject);
+	MonoObject* MonoObjectFrom(GameObject* gameObject, bool create = true);
 	GameObject* GameObjectFrom(MonoObject* monoObject);
 
-	MonoObject* MonoComponentFrom(Component* component);
+	MonoObject* MonoComponentFrom(Component* component, bool create = true);
 	Component* ComponentFrom(MonoObject* monoComponent);
+
+	void MarkAsDestroyed(GameObject* toDestroy);
+	void MarkAsDestroyed(Component* toDestroy);
 
 	bool alreadyCreated(std::string scriptName);
 
@@ -99,6 +102,7 @@ private:
 	void InitPlayerPrefs();
 
 public:
+	_MonoDomain*			runtimeDomain		= nullptr;
 	_MonoDomain*			domain				= nullptr;
 	_MonoAssembly*			internalAssembly	= nullptr;
 	_MonoImage*				internalImage		= nullptr;

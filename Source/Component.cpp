@@ -4,13 +4,24 @@
 #include "Application.h"
 #include "imgui\imgui.h"
 
+#include "ScriptingModule.h"
+
 Component::Component(GameObject* parent, ComponentTypes componentType) : parent(parent), componentType(componentType)
 {
 	if (parent != nullptr)
 		UUID = App->GenerateRandomNumber();
 }
 
-Component::~Component() {}
+Component::~Component() 
+{
+	if (monoCompHandle != 0)
+	{
+		//Mark as destroyed the mono component
+		App->scripting->MarkAsDestroyed(this);
+		mono_gchandle_free(monoCompHandle);
+		monoCompHandle = 0;
+	}
+}
 
 void Component::Update() {}
 
@@ -66,7 +77,12 @@ void Component::OnSystemEvent(System_Event event)
 		case System_Event_Type::Stop:
 		case System_Event_Type::ScriptingDomainReloaded:
 		{
-			this->monoCompHandle = 0;
+			if (monoCompHandle != 0)
+			{
+				mono_gchandle_free(monoCompHandle);
+				monoCompHandle = 0;
+			}
+				
 			break;
 		}
 	}

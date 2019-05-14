@@ -324,7 +324,8 @@ void Application::Save() const
 	JSON_Object* objModule = json_value_get_object(newValue);
 	json_object_set_value(rootObject, "Application", newValue);
 
-	json_object_set_string(objModule, "Title", GetAppName());
+	json_object_set_string(objModule, "Title", "JellyBitEngine");
+	json_object_set_string(objModule, "Version", version);
 	json_object_set_string(objModule, "Organization", GetOrganizationName());
 	json_object_set_boolean(objModule, "Cap Frames", GetCapFrames());
 	json_object_set_number(objModule, "Max FPS", GetMaxFramerate());

@@ -1,6 +1,7 @@
 {
     "Application": {
-        "Title": "JellyBitEngine v0.5.0",
+        "Title": "JellyBitEngine",
+	"Version": "v0.6.0",
         "Organization": "JellyBitStudios",
         "Cap Frames": true,
         "Max FPS": 101
@@ -28,6 +29,14 @@
         },
         "Layer 7": {
             "Name": "Block",
+            "Filter mask": 4294967295
+        },
+        "Layer 8": {
+            "Name": "Item",
+            "Filter mask": 4294967295
+        },
+        "Layer 9": {
+            "Name": "NPC",
             "Filter mask": 4294967295
         }
     },
@@ -69,7 +78,8 @@
         "fullDesktop": false
     },
     "Input": {
-        "DefCursor": 1951597649
+        "DefCursor": 1019100357,
+        "CursorSize": 50
     },
     "Scene": {
         "showGrid": false
@@ -79,7 +89,10 @@
         "vSync": false,
         "debugDraw": true,
         "drawBoundingBoxes": false,
+        "drawBones": true,
+        "drawColliders": true,
         "drawCamerasFrustum": true,
+        "drawCurrentGO": true,
         "drawQuadtree": false
     },
     "ModuleEvents": {}
