@@ -286,6 +286,7 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 			startValues.particleDirection = math::float3::unitY;
 		else
 			startValues.particleDirection = (math::float3::unitY * parent->transform->GetGlobalMatrix().RotatePart().Transposed()).Normalized();
+
 		break;
 
 	case ShapeType_SPHERE:
@@ -348,17 +349,13 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 		break;
 	}
 
-	math::float3 global = math::float3::zero;
 	if (!localSpace && parent)
 	{
 		math::float4x4 trans = parent->transform->GetGlobalMatrix();
-		math::Quat identity = math::Quat::identity;
-		math::float3 zero = math::float3::zero;
 
-		trans.Decompose(global, identity, zero);
-
-		spawn = trans.Mul(math::float4(spawn, 0)).xyz();
+		spawn = trans.MulPos(spawn);
 	}
+
 	return spawn;
 }
 
