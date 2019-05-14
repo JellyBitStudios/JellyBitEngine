@@ -95,19 +95,8 @@ Resource* ResourceFont::ImportFile(const char * file)
 			}
 			else
 			{
-				//Make sure that resource is in memory
-				std::vector<Resource*> fonts = App->res->GetResourcesByType(ResourceTypes::FontResource);
-				bool found = false;
-				for (uint j = 0; j < fonts.size(); ++j)
-				{
-					ResourceFont* font = (ResourceFont*)fonts[j];
-					if (font->fontData.fontSize == importerSettings.sizes[i])
-					{
-						found = true;
-					}
-				}
-				if (!found)
-					resFont = ResourceFont::LoadFile(exportedFile);
+				// Thanks Sito for solving the bug :) 
+				resFont = ResourceFont::LoadFile(exportedFile);
 			}
 			if (resFont)
 			{

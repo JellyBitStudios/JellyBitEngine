@@ -490,7 +490,7 @@ void ComponentLabel::OnInternalLoad(char *& cursor)
 		}
 	}
 
-	if (fontUuid > 0u) needed_findTextreID = true;
+	if (fontUuid > 0u && parent->includeModuleComponent) needed_findTextreID = true;
 	needed_recalculateWord = true;
 }
 
