@@ -13,6 +13,15 @@
 struct TransNode
 {
 	TransNode() {}
+	TransNode(TransNode* node)
+	{
+		name = node->name;
+		position = node->position;
+		rotation = node->rotation;
+		scale = node->scale;
+		distance = node->distance;
+	}
+
 	TransNode(char*& cursor)
 	{
 		size_t bytes = sizeof(uint);
