@@ -4138,6 +4138,30 @@ void ApplicationSetFullscreen(bool value)
 	App->window->SetFullscreenWindow(value);
 }
 
+uint ApplicationGetScreenWidth()
+{
+	SDL_DisplayMode dm;
+
+	if (SDL_GetDesktopDisplayMode(0, &dm) != 0)
+	{
+		return 0;
+	}
+	
+	return dm.w;
+}
+
+uint ApplicationGetScreenHeight()
+{
+	SDL_DisplayMode dm;
+
+	if (SDL_GetDesktopDisplayMode(0, &dm) != 0)
+	{
+		return 0;
+	}
+
+	return dm.h;
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -4436,6 +4460,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Application::GetGameMode", (const void*)&ApplicationGetGameMode);
 	mono_add_internal_call("JellyBitEngine.Application::GetFullscreen", (const void*)&ApplicationGetFullscreen);
 	mono_add_internal_call("JellyBitEngine.Application::SetFullscreen", (const void*)&ApplicationSetFullscreen);
+	mono_add_internal_call("JellyBitEngine.Application::GetScreenWidth", (const void*)&ApplicationGetScreenWidth);
+	mono_add_internal_call("JellyBitEngine.Application::GetScreenHeight", (const void*)&ApplicationGetScreenHeight);
 }
 
 void ScriptingModule::UpdateScriptingReferences()
