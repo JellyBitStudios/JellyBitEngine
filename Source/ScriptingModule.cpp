@@ -48,6 +48,7 @@
 #include "ModuleUI.h"
 #include "DebugDrawer.h"
 #include "ModuleNavigation.h"
+#include "ModuleWindow.h"
 
 #include "MathGeoLib/include/MathGeoLib.h"
 #include "Brofiler/Brofiler.h"
@@ -4127,6 +4128,16 @@ bool ApplicationGetGameMode()
 	return App->gameMode;
 }
 
+bool ApplicationGetFullscreen()
+{
+	return App->window->GetFullscreenWindow();
+}
+
+void ApplicationSetFullscreen(bool value)
+{
+	App->window->SetFullscreenWindow(value);
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -4423,6 +4434,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Application::Quit", (const void*)&ApplicationQuit);
 	mono_add_internal_call("JellyBitEngine.Application::GetVersion", (const void*)&ApplicationGetVersion);
 	mono_add_internal_call("JellyBitEngine.Application::GetGameMode", (const void*)&ApplicationGetGameMode);
+	mono_add_internal_call("JellyBitEngine.Application::GetFullscreen", (const void*)&ApplicationGetFullscreen);
+	mono_add_internal_call("JellyBitEngine.Application::SetFullscreen", (const void*)&ApplicationSetFullscreen);
 }
 
 void ScriptingModule::UpdateScriptingReferences()
