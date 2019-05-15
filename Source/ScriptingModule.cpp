@@ -48,6 +48,7 @@
 #include "ModuleUI.h"
 #include "DebugDrawer.h"
 #include "ModuleNavigation.h"
+#include "ModuleWindow.h"
 
 #include "MathGeoLib/include/MathGeoLib.h"
 #include "Brofiler/Brofiler.h"
@@ -3715,6 +3716,87 @@ void RigidbodySetIsKinematic(MonoObject* monoRigidbody, bool isKinematic)
 	}
 }
 
+MonoArray* RigidbodyGetPositionConstraints(MonoObject* monoRigidbody)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoRigidbody);
+	if (rigidbody)
+	{
+		bool* posConstr = rigidbody->GetFreezePosition();
+
+		MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_boolean_class(), 3);
+		mono_array_set(ret, bool, 0, posConstr[0]);
+		mono_array_set(ret, bool, 1, posConstr[1]);
+		mono_array_set(ret, bool, 2, posConstr[2]);
+
+		return ret;
+	}
+
+	return nullptr;
+}
+
+void RigidbodySetPositionConstraints(MonoObject* monoRigidbody, MonoArray* posConstrCS)
+{
+	if (!posConstrCS)
+		return;
+
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoRigidbody);
+	if (rigidbody)
+	{
+		bool posConstr[3] = { mono_array_get(posConstrCS, bool, 0), mono_array_get(posConstrCS, bool, 1), mono_array_get(posConstrCS, bool, 2) };
+		rigidbody->FreezePosition(posConstr[0], posConstr[1], posConstr[2]);
+	}
+}
+
+MonoArray* RigidbodyGetRotationConstraints(MonoObject* monoRigidbody)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoRigidbody);
+	if (rigidbody)
+	{
+		bool* rotConstr = rigidbody->GetFreezeRotation();
+
+		MonoArray* ret = mono_array_new(App->scripting->domain, mono_get_boolean_class(), 3);
+		mono_array_set(ret, bool, 0, rotConstr[0]);
+		mono_array_set(ret, bool, 1, rotConstr[1]);
+		mono_array_set(ret, bool, 2, rotConstr[2]);
+
+		return ret;
+	}
+
+	return nullptr;
+}
+
+void RigidbodySetRotationConstraints(MonoObject* monoRigidbody, MonoArray* rotConstrCS)
+{
+	if (!rotConstrCS)
+		return;
+
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoRigidbody);
+	if (rigidbody)
+	{
+		bool rotConstr[3] = { mono_array_get(rotConstrCS, bool, 0), mono_array_get(rotConstrCS, bool, 1), mono_array_get(rotConstrCS, bool, 2) };
+		rigidbody->FreezeRotation(rotConstr[0], rotConstr[1], rotConstr[2]);
+	}
+}
+
+bool RigidbodyGetUseGravity(MonoObject* monoRigidbody)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoRigidbody);
+	if (rigidbody)
+	{
+		return rigidbody->GetUseGravity();
+	}
+	return false;
+}
+
+void RigidbodySetUseGravity(MonoObject* monoRigidbody, bool useGravity)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoRigidbody);
+	if (rigidbody)
+	{
+		rigidbody->SetUseGravity(useGravity);
+	}
+}
+
 bool OverlapSphere(float radius, MonoArray* center, MonoArray** overlapHit, uint filterMask, SceneQueryFlags sceneQueryFlags)
 {
 	if (!center)
@@ -4041,29 +4123,44 @@ MonoString* ApplicationGetVersion()
 	return mono_string_new(App->scripting->domain, App->version);
 }
 
+bool ApplicationGetGameMode()
+{
+	return App->gameMode;
+}
+
+bool ApplicationGetFullscreen()
+{
+	return App->window->GetFullscreenWindow();
+}
+
+void ApplicationSetFullscreen(bool value)
+{
+	App->window->SetFullscreenWindow(value);
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
 {
 	MonoDomain* domainToUnload = domain;
 
-	CONSOLE_LOG(LogTypes::Error, "mono create appdomain");
+	//CONSOLE_LOG(LogTypes::Error, "mono create appdomain");
 
 	domain = mono_domain_create_appdomain("The reloaded domain", NULL);
 	//domain = mono_domain_create();
 	
-	CONSOLE_LOG(LogTypes::Error, "mono domain set");
+	//CONSOLE_LOG(LogTypes::Error, "mono domain set");
 
 	if (!mono_domain_set(domain, false))
 		return;
 		
 	if (domainToUnload != nullptr)
 	{
-		CONSOLE_LOG(LogTypes::Error, "mono unload previous domain");
+		//CONSOLE_LOG(LogTypes::Error, "mono unload previous domain");
 		mono_domain_unload(domainToUnload);
 	}
 
-	CONSOLE_LOG(LogTypes::Error, "mono other stuff");
+	//CONSOLE_LOG(LogTypes::Error, "mono other stuff");
 
 	char* buffer;
 	int size = App->fs->Load("JellyBitCS.dll", &buffer);
@@ -4188,14 +4285,24 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Interpolation::GoBack", (const void*)&InterpolationGoBack);
 
 	//Physics
+	mono_add_internal_call("JellyBitEngine.Physics::_OverlapSphere", (const void*)&OverlapSphere);
+	mono_add_internal_call("JellyBitEngine.Physics::_Raycast", (const void*)&Raycast);
+
+	//Rigidbody
 	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddForce", (const void*)&RigidbodyAddForce);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddTorque", (const void*)&RigidbodyAddTorque);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearForce", (const void*)&RigidbodyClearForce);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::ClearTorque", (const void*)&RigidbodyClearTorque);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::GetIsKinematic", (const void*)&RigidbodyGetIsKinematic);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::SetIsKinematic", (const void*)&RigidbodySetIsKinematic);
-	mono_add_internal_call("JellyBitEngine.Physics::_OverlapSphere", (const void*)&OverlapSphere);
-	mono_add_internal_call("JellyBitEngine.Physics::_Raycast", (const void*)&Raycast);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::GetPositionConstraints", (const void*)&RigidbodyGetPositionConstraints);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::SetPositionConstraints", (const void*)&RigidbodySetPositionConstraints);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::GetRotationConstraints", (const void*)&RigidbodyGetRotationConstraints);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::SetRotationConstraints", (const void*)&RigidbodySetRotationConstraints);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::GetUseGravity", (const void*)&RigidbodyGetUseGravity);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::SetUseGravity", (const void*)&RigidbodySetUseGravity);
+
+	//Colliders
 	mono_add_internal_call("JellyBitEngine.SphereCollider::GetRadius", (const void*)ColliderSphereGetRadius);
 	mono_add_internal_call("JellyBitEngine.SphereCollider::SetRadius", (const void*)ColliderSphereSetRadius);
 	mono_add_internal_call("JellyBitEngine.CapsuleCollider::GetRadius", (const void*)ColliderCapsuleGetRadius);
@@ -4326,6 +4433,9 @@ void ScriptingModule::CreateDomain()
 	//Application
 	mono_add_internal_call("JellyBitEngine.Application::Quit", (const void*)&ApplicationQuit);
 	mono_add_internal_call("JellyBitEngine.Application::GetVersion", (const void*)&ApplicationGetVersion);
+	mono_add_internal_call("JellyBitEngine.Application::GetGameMode", (const void*)&ApplicationGetGameMode);
+	mono_add_internal_call("JellyBitEngine.Application::GetFullscreen", (const void*)&ApplicationGetFullscreen);
+	mono_add_internal_call("JellyBitEngine.Application::SetFullscreen", (const void*)&ApplicationSetFullscreen);
 }
 
 void ScriptingModule::UpdateScriptingReferences()

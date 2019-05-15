@@ -131,6 +131,12 @@ public:
 
 	char version[DEFAULT_BUF_SIZE] = "";
 
+#ifdef GAMEMODE
+	const bool gameMode = true;
+#else
+	const bool gameMode = false;
+#endif
+
 private:
 
 	// Framerate

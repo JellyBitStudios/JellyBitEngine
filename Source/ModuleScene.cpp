@@ -149,59 +149,71 @@ void ModuleScene::OnSystemEvent(System_Event event)
 {
 	switch (event.type)
 	{
-	case System_Event_Type::LoadGMScene:
-	{
-		char* buf;
-		if (!App->fs->Exists("Library/Scenes/Main Scene.scn"))
-			return;
-
-		size_t size = App->fs->Load("Library/Scenes/Main Scene.scn", &buf);
-		if (size > 0)
+		case System_Event_Type::Play:
 		{
-			App->scene->currentScene = "Main Scene.scn";
-
-			App->GOs->LoadScene(buf, size, true);
-			RELEASE_ARRAY(buf);
-
-			App->renderer3D->SetCurrentCamera();
-			App->renderer3D->OnResize(App->window->GetWindowWidth(), App->window->GetWindowHeight());
-
-			// Initialize detour with the previous loaded navmesh
-			App->navigation->InitDetour();
-			
-			System_Event newEvent;
-			newEvent.type = System_Event_Type::RecreateQuadtree;
-			App->PushSystemEvent(newEvent);
+			playScene = currentScene;
+			break;
 		}
-	}
-	break;
 
-	case System_Event_Type::RecreateQuadtree:
-	{
-		RecreateQuadtree();
-	}
-	break;
-
-#ifndef GAMEMODE
-	case System_Event_Type::GameObjectDestroyed:
-	{
-		// Remove GO in list if its deleted
-		if (selectedObject == event.goEvent.gameObject)
-			SELECT(NULL);
-		std::list<LastTransform>::iterator iterator = prevTransforms.begin();
-
-		while (!prevTransforms.empty() && iterator != prevTransforms.end())
+		case System_Event_Type::Stop:
 		{
-			if ((*iterator).uuidGO == event.goEvent.gameObject->GetUUID())
+			currentScene = playScene;
+			break;
+		}
+
+		case System_Event_Type::LoadGMScene:
+		{
+			char* buf;
+			if (!App->fs->Exists("Library/Scenes/Main Scene.scn"))
+				return;
+
+			size_t size = App->fs->Load("Library/Scenes/Main Scene.scn", &buf);
+			if (size > 0)
 			{
-				prevTransforms.erase(iterator);
-				iterator = prevTransforms.begin();
+				App->scene->currentScene = "Main Scene.scn";
+
+				App->GOs->LoadScene(buf, size, true);
+				RELEASE_ARRAY(buf);
+
+				App->renderer3D->SetCurrentCamera();
+				App->renderer3D->OnResize(App->window->GetWindowWidth(), App->window->GetWindowHeight());
+
+				// Initialize detour with the previous loaded navmesh
+				App->navigation->InitDetour();
+			
+				System_Event newEvent;
+				newEvent.type = System_Event_Type::RecreateQuadtree;
+				App->PushSystemEvent(newEvent);
 			}
-			else
-				++iterator;
 		}
 		break;
-	}
+
+		case System_Event_Type::RecreateQuadtree:
+		{
+			RecreateQuadtree();
+		}
+		break;
+
+#ifndef GAMEMODE
+		case System_Event_Type::GameObjectDestroyed:
+		{
+			// Remove GO in list if its deleted
+			if (selectedObject == event.goEvent.gameObject)
+				SELECT(NULL);
+			std::list<LastTransform>::iterator iterator = prevTransforms.begin();
+
+			while (!prevTransforms.empty() && iterator != prevTransforms.end())
+			{
+				if ((*iterator).uuidGO == event.goEvent.gameObject->GetUUID())
+				{
+					prevTransforms.erase(iterator);
+					iterator = prevTransforms.begin();
+				}
+				else
+					++iterator;
+			}
+			break;
+		}
 #endif
 	}
 }

@@ -32,8 +32,12 @@ public:
 	void SetAngularDamping(float angularDamping);
 	void SetMaxLinearVelocity(float maxLinearVelocity);
 	void SetMaxAngularVelocity(float maxAngularVelocity);
+
+	inline bool* GetFreezePosition() { return freezePosition; };
 	void FreezePosition(bool x, bool y, bool z);
-	void FreezeRotation(bool x, bool y, bool z);
+
+	bool* GetFreezeRotation() { return freezeRotation; };
+	inline void FreezeRotation(bool x, bool y, bool z);
 
 	inline bool GetIsKinematic() { return isKinematic; }
 	void SetIsKinematic(bool isKinematic);

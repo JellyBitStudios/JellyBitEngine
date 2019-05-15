@@ -41,6 +41,7 @@ public:
 	void SetUseGravity(bool useGravity);
 
 	// Gets
+	inline bool GetUseGravity() { return useGravity; }
 	physx::PxRigidActor* GetActor() const;
 	RigidActorTypes GetRigidActorType() const;
 
