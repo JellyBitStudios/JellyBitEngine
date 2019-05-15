@@ -256,6 +256,8 @@ GameObject* ModuleGOs::GetGameObjectByUID(uint UID) const
 {
 	for (int i = 0; i < gameobjects.size(); ++i)
 	{
+		if (gameobjects[i] == nullptr)
+			continue;
 		if (gameobjects[i]->GetUUID() == UID)
 		{
 			return gameobjects[i];
