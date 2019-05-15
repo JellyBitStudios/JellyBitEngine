@@ -70,7 +70,9 @@ ComponentAnimator::ComponentAnimator(const ComponentAnimator & component_anim, G
 
 ComponentAnimator::~ComponentAnimator()
 {
-
+	SetResourceAnimator(0);
+	SetResourceAvatar(0);
+	SetResourceAnimation(0);
 }
 
 uint ComponentAnimator::GetInternalSerializationBytes()
