@@ -97,6 +97,7 @@ public:
 
 	Quadtree quadtree;
 
+	std::string playScene = "default";
 	std::string currentScene = "default";
 };
 
