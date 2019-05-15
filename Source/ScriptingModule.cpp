@@ -4122,6 +4122,11 @@ MonoString* ApplicationGetVersion()
 	return mono_string_new(App->scripting->domain, App->version);
 }
 
+bool ApplicationGetGameMode()
+{
+	return App->gameMode;
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -4417,6 +4422,7 @@ void ScriptingModule::CreateDomain()
 	//Application
 	mono_add_internal_call("JellyBitEngine.Application::Quit", (const void*)&ApplicationQuit);
 	mono_add_internal_call("JellyBitEngine.Application::GetVersion", (const void*)&ApplicationGetVersion);
+	mono_add_internal_call("JellyBitEngine.Application::GetGameMode", (const void*)&ApplicationGetGameMode);
 }
 
 void ScriptingModule::UpdateScriptingReferences()
