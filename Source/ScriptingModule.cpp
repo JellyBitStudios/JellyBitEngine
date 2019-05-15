@@ -3777,6 +3777,25 @@ void RigidbodySetRotationConstraints(MonoObject* monoRigidbody, MonoArray* rotCo
 	}
 }
 
+bool RigidbodyGetUseGravity(MonoObject* monoRigidbody)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoRigidbody);
+	if (rigidbody)
+	{
+		return rigidbody->GetUseGravity();
+	}
+	return false;
+}
+
+void RigidbodySetUseGravity(MonoObject* monoRigidbody, bool useGravity)
+{
+	ComponentRigidDynamic* rigidbody = (ComponentRigidDynamic*)App->scripting->ComponentFrom(monoRigidbody);
+	if (rigidbody)
+	{
+		rigidbody->SetUseGravity(useGravity);
+	}
+}
+
 bool OverlapSphere(float radius, MonoArray* center, MonoArray** overlapHit, uint filterMask, SceneQueryFlags sceneQueryFlags)
 {
 	if (!center)
@@ -4264,6 +4283,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Rigidbody::SetPositionConstraints", (const void*)&RigidbodySetPositionConstraints);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::GetRotationConstraints", (const void*)&RigidbodyGetRotationConstraints);
 	mono_add_internal_call("JellyBitEngine.Rigidbody::SetRotationConstraints", (const void*)&RigidbodySetRotationConstraints);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::GetUseGravity", (const void*)&RigidbodyGetUseGravity);
+	mono_add_internal_call("JellyBitEngine.Rigidbody::SetUseGravity", (const void*)&RigidbodySetUseGravity);
 
 	//Colliders
 	mono_add_internal_call("JellyBitEngine.SphereCollider::GetRadius", (const void*)ColliderSphereGetRadius);
