@@ -909,9 +909,14 @@ void ComponentEmitter::SetUuidRes(uint newUuid, uint &oldUuid)
 
 void ComponentEmitter::SetMeshParticleRes(uint res_uuid)
 {
+	if (shapeMesh.uuid > 0)
+		App->res->SetAsUnused(shapeMesh.uuid);
+
 	if (res_uuid > 0)
 	{
+		App->res->SetAsUsed(res_uuid);
 		Resource* resource = App->res->GetResource(res_uuid);
+
 		if (resource)
 			SetMeshInfo((ResourceMesh*)resource, shapeMesh);
 	}
@@ -921,11 +926,17 @@ void ComponentEmitter::SetMeshParticleRes(uint res_uuid)
 
 void ComponentEmitter::SetBurstMeshParticleRes(uint res_uuid)
 {
+	if (burstMesh.uuid > 0)
+		App->res->SetAsUnused(burstMesh.uuid);
+
 	if (res_uuid > 0)
 	{
+		App->res->SetAsUsed(res_uuid);
 		Resource* resource = App->res->GetResource(res_uuid);
+
 		if (resource)
 			SetMeshInfo((ResourceMesh*)resource, burstMesh);
+
 	}
 	else
 		burstMesh.uuid = 0u;
@@ -1187,25 +1198,18 @@ void ComponentEmitter::OnInternalLoad(char *& cursor)
 	memcpy(&uuidSubEmitter, cursor, bytes);
 	cursor += bytes;
 
-	uint uuidMaterial;
-	memcpy(&uuidMaterial, cursor, bytes);
-
-	if (uuidMaterial != 0)
-		App->res->SetAsUsed(uuidMaterial);
-
+	memcpy(&materialRes, cursor, bytes);
+	if (materialRes != 0)
+		App->res->SetAsUsed(materialRes);
 	cursor += bytes;
 
-	memcpy(&burstMesh.uuid, cursor, bytes);
-	if (burstMesh.uuid != 0)
-		App->res->SetAsUsed(burstMesh.uuid);
-	SetBurstMeshParticleRes(burstMesh.uuid);
+	uint uuidMesh;
+	memcpy(&uuidMesh, cursor, bytes);
+	SetBurstMeshParticleRes(uuidMesh);
 	cursor += bytes;
 
-	memcpy(&shapeMesh.uuid, cursor, bytes);
-
-	if (shapeMesh.uuid != 0)
-		App->res->SetAsUsed(shapeMesh.uuid);
-	SetMeshParticleRes(shapeMesh.uuid);
+	memcpy(&uuidMesh, cursor, bytes);
+	SetMeshParticleRes(uuidMesh);
 	cursor += bytes;
 
 	uint uuidRes;
