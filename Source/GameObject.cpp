@@ -238,7 +238,7 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			components.push_back(cmp_trail);
 			break;
 		case ComponentTypes::InterpolationComponent:
-			cmp_interpolation = new ComponentInterpolation(*gameObject.cmp_interpolation, this);
+			cmp_interpolation = new ComponentInterpolation(*gameObject.cmp_interpolation, this, includeComponents);
 			cmp_interpolation->SetParent(this);
 			components.push_back(cmp_interpolation);
 			break;
