@@ -10,23 +10,29 @@
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
 
-ComponentAudioListener::ComponentAudioListener(GameObject* parent) : Component(parent, ComponentTypes::AudioListenerComponent) 
+ComponentAudioListener::ComponentAudioListener(GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::AudioListenerComponent) 
 {
-	listener = App->audio->CreateSoundEmitter("listener");
-	App->audio->audio_listeners.push_back(this);
-	App->audio->SetListener(listener);
+	if (includeComponents)
+	{
+		listener = App->audio->CreateSoundEmitter("listener");
+		App->audio->audio_listeners.push_back(this);
+		App->audio->SetListener(listener);
 
-	UpdateListenerPos();
+		UpdateListenerPos();
+	}
 }
 
-ComponentAudioListener::ComponentAudioListener(const ComponentAudioListener& componentAudioListener, GameObject* parent) : 
+ComponentAudioListener::ComponentAudioListener(const ComponentAudioListener& componentAudioListener, GameObject* parent, bool includeComponents) : 
 	Component(parent, ComponentTypes::AudioListenerComponent)
 {
-	listener = App->audio->CreateSoundEmitter("listener");
-	App->audio->audio_listeners.push_back(this);
-	App->audio->SetListener(listener);
+	if (includeComponents)
+	{
+		listener = App->audio->CreateSoundEmitter("listener");
+		App->audio->audio_listeners.push_back(this);
+		App->audio->SetListener(listener);
 
-	UpdateListenerPos();
+		UpdateListenerPos();
+	}
 }
 
 ComponentAudioListener::~ComponentAudioListener()

@@ -10,20 +10,30 @@
 #include "imgui\imgui.h"
 #include "imgui\imgui_internal.h"
 
-ComponentAudioSource::ComponentAudioSource(GameObject* parent) : Component(parent, ComponentTypes::AudioSourceComponent)
+ComponentAudioSource::ComponentAudioSource(GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::AudioSourceComponent)
 {
-	source = App->audio->CreateSoundEmitter("");
-	App->audio->audio_sources.push_back(this);
-	memset(audio_to_play, '\0', DEFAULT_BUF_SIZE);
+	if (includeComponents)
+	{
+		source = App->audio->CreateSoundEmitter("");
+		App->audio->audio_sources.push_back(this);
 
-	UpdateSourcePos();
+		UpdateSourcePos();
+	}
+
+	memset(audio_to_play, '\0', DEFAULT_BUF_SIZE);
 }
 
-ComponentAudioSource::ComponentAudioSource(const ComponentAudioSource& componentAudioSource, GameObject* parent) : 
+ComponentAudioSource::ComponentAudioSource(const ComponentAudioSource& componentAudioSource, GameObject* parent, bool includeComponents) : 
 	Component(parent, ComponentTypes::AudioSourceComponent)
 {
-	source = App->audio->CreateSoundEmitter("");
-	App->audio->audio_sources.push_back(this);
+	if (includeComponents)
+	{
+		source = App->audio->CreateSoundEmitter("");
+		App->audio->audio_sources.push_back(this);
+
+		UpdateSourcePos();
+	}
+
 	memset(audio_to_play, '\0', DEFAULT_BUF_SIZE);
 	
 	mute = componentAudioSource.isMuted();
@@ -40,8 +50,6 @@ ComponentAudioSource::ComponentAudioSource(const ComponentAudioSource& component
 	max_distance = componentAudioSource.GetMaxDistance();
 	memcpy(&audio_to_play, &componentAudioSource.GetAudioToPlay(), sizeof(char) * DEFAULT_BUF_SIZE);
 	current_state = componentAudioSource.GetState();
-	
-	UpdateSourcePos();
 }
 
 ComponentAudioSource::~ComponentAudioSource()

@@ -9,8 +9,8 @@ class ComponentAudioListener : public Component
 {
 
 public:
-	ComponentAudioListener(GameObject* parent);
-	ComponentAudioListener(const ComponentAudioListener& componentAudioListener, GameObject* parent);
+	ComponentAudioListener(GameObject* parent, bool includeComponents);
+	ComponentAudioListener(const ComponentAudioListener& componentAudioListener, GameObject* parent, bool includeComponents);
 	~ComponentAudioListener();
 	void Update();
 

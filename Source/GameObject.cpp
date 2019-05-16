@@ -223,12 +223,12 @@ GameObject::GameObject(GameObject& gameObject, bool includeComponents)
 			break;
 		}
 		case ComponentTypes::AudioListenerComponent:
-			cmp_audioListener = new ComponentAudioListener(*gameObject.cmp_audioListener, this);
+			cmp_audioListener = new ComponentAudioListener(*gameObject.cmp_audioListener, this, includeComponents);
 			cmp_audioListener->SetParent(this);
 			components.push_back(cmp_audioListener);
 			break;
 		case ComponentTypes::AudioSourceComponent:
-			cmp_audioSource = new ComponentAudioSource(*gameObject.cmp_audioSource, this);
+			cmp_audioSource = new ComponentAudioSource(*gameObject.cmp_audioSource, this, includeComponents);
 			cmp_audioSource->SetParent(this);
 			components.push_back(cmp_audioSource);
 			break;
@@ -757,10 +757,10 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		break;
 	}
 	case ComponentTypes::AudioListenerComponent:
-		newComponent = cmp_audioListener = new ComponentAudioListener(this);
+		newComponent = cmp_audioListener = new ComponentAudioListener(this, includeInModules);
 		break;
 	case ComponentTypes::AudioSourceComponent:
-		newComponent = cmp_audioSource = new ComponentAudioSource(this);
+		newComponent = cmp_audioSource = new ComponentAudioSource(this, includeInModules);
 		break;
 	case ComponentTypes::TrailComponent:
 		newComponent = cmp_trail = new ComponentTrail(this);
@@ -770,9 +770,6 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		break;
 	}
 
-
-	if (!newComponent)
-		int a = 2;
 	components.push_back(newComponent);
 
 	if (newMaterial)
