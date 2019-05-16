@@ -511,7 +511,10 @@ void ComponentRigidDynamic::SetIsKinematic(bool isKinematic)
 {
 	this->isKinematic = isKinematic;
 	if (gActor != nullptr)
+	{
 		gActor->is<physx::PxRigidBody>()->setRigidBodyFlag(physx::PxRigidBodyFlag::Enum::eKINEMATIC, isKinematic);
+		UpdateTransform(parent->transform->GetGlobalMatrix());
+	}	
 }
 
 // ----------------------------------------------------------------------------------------------------
