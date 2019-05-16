@@ -30,18 +30,22 @@ ComponentTrail::ComponentTrail(GameObject * parent) : Component(parent, Componen
 	spawnBox = _spawnBox = originalSpawnBox;
 }
 
-ComponentTrail::ComponentTrail(const ComponentTrail& componentTrail, GameObject* parent) : Component(parent, ComponentTypes::TrailComponent)
+ComponentTrail::ComponentTrail(const ComponentTrail& componentTrail, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::TrailComponent)
 {
-	App->trails->trails.push_back(this);
-	timer.Start();
+	if (includeComponents)
+	{
+		App->trails->trails.push_back(this);
+		timer.Start();
 
-	App->res->SetAsUsed(App->resHandler->plane);
+		App->res->SetAsUsed(App->resHandler->plane);
+	
+		SetMaterialRes(componentTrail.materialRes);
+	}
 
 	originalSpawnBox = componentTrail.originalSpawnBox;
 	spawnBox = componentTrail.spawnBox;
 	_spawnBox = componentTrail._spawnBox;
 
-	SetMaterialRes(componentTrail.materialRes);
 
 	color = componentTrail.color;
 	vector = componentTrail.vector;

@@ -99,7 +99,7 @@ class ComponentInterpolation : public Component
 public:
 
 	ComponentInterpolation(GameObject* parent);
-	ComponentInterpolation(const ComponentInterpolation& componentTransform, GameObject* parent);
+	ComponentInterpolation(const ComponentInterpolation& componentTransform, GameObject* parent, bool includeComponents);
 	~ComponentInterpolation();
 
 	void Update();

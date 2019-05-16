@@ -22,8 +22,11 @@ ComponentInterpolation::ComponentInterpolation(GameObject * parent) : Component(
 	App->interpolation->interpolations.push_back(this);
 }
 
-ComponentInterpolation::ComponentInterpolation(const ComponentInterpolation& componentInterpolation, GameObject* parent) : Component(parent, ComponentTypes::InterpolationComponent)
+ComponentInterpolation::ComponentInterpolation(const ComponentInterpolation& componentInterpolation, GameObject* parent, bool includeComponents) : Component(parent, ComponentTypes::InterpolationComponent)
 {
+	if (includeComponents)
+		App->interpolation->interpolations.push_back(this);
+
 	startPoint.name = "_startPoint";
 
 	speed = componentInterpolation.speed;
@@ -36,8 +39,6 @@ ComponentInterpolation::ComponentInterpolation(const ComponentInterpolation& com
 	{
 		nodes.push_back(new TransNode(*it));
 	}
-
-	App->interpolation->interpolations.push_back(this);
 }
 
 ComponentInterpolation::~ComponentInterpolation()
