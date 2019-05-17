@@ -1,7 +1,7 @@
 {
     "Application": {
         "Title": "JellyBitEngine",
-	"Version": "v0.6.7",
+	"Version": "v0.6.9",
         "Organization": "JellyBitStudios",
         "Cap Frames": true,
         "Max FPS": 101
