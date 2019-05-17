@@ -40,7 +40,7 @@ class ComponentTrail : public Component
 public:
 
 	ComponentTrail(GameObject* parent);
-	ComponentTrail(const ComponentTrail& componentTransform, GameObject* parent);
+	ComponentTrail(const ComponentTrail& componentTransform, GameObject* parent, bool includeComponents);
 	~ComponentTrail();
 
 	void Update();

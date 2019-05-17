@@ -4138,6 +4138,52 @@ void ApplicationSetFullscreen(bool value)
 	App->window->SetFullscreenWindow(value);
 }
 
+uint ApplicationGetScreenWidth()
+{
+	SDL_DisplayMode dm;
+
+	if (SDL_GetDesktopDisplayMode(0, &dm) != 0)
+	{
+		return 0;
+	}
+	
+	return dm.w;
+}
+
+uint ApplicationGetScreenHeight()
+{
+	SDL_DisplayMode dm;
+
+	if (SDL_GetDesktopDisplayMode(0, &dm) != 0)
+	{
+		return 0;
+	}
+
+	return dm.h;
+}
+
+uint ApplicationGetWindowWidth()
+{
+	return App->window->GetWindowWidth();
+}
+
+void ApplicationSetWindowWidth(uint width)
+{
+	App->window->SetWindowWidth(width);
+	App->window->UpdateWindowSize();
+}
+
+uint ApplicationGetWindowHeight()
+{
+	return App->window->GetWindowHeight();
+}
+
+void ApplicationSetWindowHeight(uint height)
+{
+	App->window->SetWindowHeight(height);
+	App->window->UpdateWindowSize();
+}
+
 //-----------------------------------------------------------------------------------------------------------------------------
 
 void ScriptingModule::CreateDomain()
@@ -4436,6 +4482,12 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Application::GetGameMode", (const void*)&ApplicationGetGameMode);
 	mono_add_internal_call("JellyBitEngine.Application::GetFullscreen", (const void*)&ApplicationGetFullscreen);
 	mono_add_internal_call("JellyBitEngine.Application::SetFullscreen", (const void*)&ApplicationSetFullscreen);
+	mono_add_internal_call("JellyBitEngine.Application::GetScreenWidth", (const void*)&ApplicationGetScreenWidth);
+	mono_add_internal_call("JellyBitEngine.Application::GetScreenHeight", (const void*)&ApplicationGetScreenHeight);
+	mono_add_internal_call("JellyBitEngine.Application::GetWindowWidth", (const void*)&ApplicationGetWindowWidth);
+	mono_add_internal_call("JellyBitEngine.Application::SetWindowWidth", (const void*)&ApplicationSetWindowWidth);
+	mono_add_internal_call("JellyBitEngine.Application::GetWindowHeight", (const void*)&ApplicationGetWindowHeight);
+	mono_add_internal_call("JellyBitEngine.Application::SetWindowHeight", (const void*)&ApplicationSetWindowHeight);
 }
 
 void ScriptingModule::UpdateScriptingReferences()

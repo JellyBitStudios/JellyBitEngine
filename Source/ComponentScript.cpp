@@ -738,7 +738,10 @@ void ComponentScript::OnTriggerExit(Collision& collision)
 void ComponentScript::OnEnable()
 {
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
+	{
 		OnEnableMethod();
+		Awake();
+	}
 }
 
 void ComponentScript::OnDisable()

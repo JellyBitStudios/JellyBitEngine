@@ -10,8 +10,8 @@ class ComponentAudioSource : public Component
 {
 
 public:
-	ComponentAudioSource(GameObject* parent);
-	ComponentAudioSource(const ComponentAudioSource& componentAudioSource, GameObject* parent);
+	ComponentAudioSource(GameObject* parent, bool includeComponents);
+	ComponentAudioSource(const ComponentAudioSource& componentAudioSource, GameObject* parent, bool includeComponents);
 	~ComponentAudioSource();
 	void Update();
 

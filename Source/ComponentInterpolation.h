@@ -13,6 +13,15 @@
 struct TransNode
 {
 	TransNode() {}
+	TransNode(TransNode* node)
+	{
+		name = node->name;
+		position = node->position;
+		rotation = node->rotation;
+		scale = node->scale;
+		distance = node->distance;
+	}
+
 	TransNode(char*& cursor)
 	{
 		size_t bytes = sizeof(uint);
@@ -90,7 +99,7 @@ class ComponentInterpolation : public Component
 public:
 
 	ComponentInterpolation(GameObject* parent);
-	ComponentInterpolation(const ComponentInterpolation& componentTransform, GameObject* parent);
+	ComponentInterpolation(const ComponentInterpolation& componentTransform, GameObject* parent, bool includeComponents);
 	~ComponentInterpolation();
 
 	void Update();
