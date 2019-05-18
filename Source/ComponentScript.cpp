@@ -3690,6 +3690,12 @@ void ComponentScript::InstanceClass()
 		return;
 
 	MonoObject* compInstance = mono_object_new(App->scripting->domain, klass);
+	if (compInstance == nullptr)
+	{
+		CONSOLE_LOG(LogTypes::Error, "A ComponentScript could not create its monoInstance. Name: %s", scriptName.data());
+		return;
+	}
+
 	mono_runtime_object_init(compInstance);
 
 	int gameObjectAddress = (int)GetParent();
