@@ -1445,6 +1445,12 @@ math::float3 Vector3RandomInsideSphere()
 	return randomPoint;
 }
 
+math::float3 Vector3Slerp(math::float3 a, math::float3 b, float t)
+{
+	math::float3 copy = math::Quat::SlerpVector(a, b, t);
+	return copy;
+}
+
 MonoArray* QuatMult(MonoArray* q1, MonoArray* q2)
 {
 	if (!q1 || !q2)
@@ -4246,6 +4252,7 @@ void ScriptingModule::CreateDomain()
 
 	//Vector3
 	mono_add_internal_call("JellyBitEngine.Vector3::RandomPointInsideUnitSphere", (const void*)&Vector3RandomInsideSphere);
+	mono_add_internal_call("JellyBitEngine.Vector3::Slerp", (const void*)&Vector3Slerp);
 
 	//Quaternion
 	mono_add_internal_call("JellyBitEngine.Quaternion::quatMult", (const void*)&QuatMult);
@@ -4509,6 +4516,8 @@ void ScriptingModule::UpdateScriptingReferences()
 	{
 		((ResourceScript*)res)->IncludeName();
 	}
+
+	ResourceScript::SortScriptNames();
 
 	delete[] buffer;
 }

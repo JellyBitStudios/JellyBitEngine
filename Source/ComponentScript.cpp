@@ -738,7 +738,10 @@ void ComponentScript::OnTriggerExit(Collision& collision)
 void ComponentScript::OnEnable()
 {
 	if (App->GetEngineState() == engine_states::ENGINE_PLAY)
+	{
 		OnEnableMethod();
+		Awake();
+	}
 }
 
 void ComponentScript::OnDisable()
@@ -2424,7 +2427,7 @@ uint ComponentScript::GetPublicVarsSerializationBytesFromBuffer(char* buffer) co
 	return totalSize;
 }
 
-void ComponentScript::SavePublicVars(char*& cursor) const
+void ComponentScript::SavePublicVars(char*& cursor)
 {
 	uint numVars = 0;
 
@@ -2437,33 +2440,50 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 	while (field != nullptr)
 	{
 		uint32_t flags = mono_field_get_flags(field);
-		if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
+		
+		MonoType* type = mono_field_get_type(field);
+		std::string typeName = mono_type_full_name(type);
+
+		MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+		MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
+
+		bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+
+		if (!hidden)
 		{
-			MonoType* type = mono_field_get_type(field);
-			std::string typeName = mono_type_full_name(type);
+			uint32_t flags = mono_field_get_flags(field);
+			if (!(flags & MONO_FIELD_ATTR_STATIC))
+			{
+				bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+				if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+				{
+					if (typeName == "bool" ||
+						typeName == "single" ||
+						typeName == "double" ||
+						typeName == "sbyte" ||
+						typeName == "byte" ||
+						typeName == "int16" ||
+						typeName == "uint16" ||
+						typeName == "int" ||
+						typeName == "uint" ||
+						typeName == "long" ||
+						typeName == "ulong" ||
+						typeName == "char" ||
+						typeName == "string" ||
+						typeName == "JellyBitEngine.GameObject" ||
+						typeName == "JellyBitEngine.Transform" ||
+						typeName == "JellyBitEngine.LayerMask" ||
+						mono_class_is_enum(mono_type_get_class(type)) ||
+						mono_type_is_struct(type))
 
-			if(	typeName == "bool"								||
-				typeName == "single"							||
-				typeName == "double"							||
-				typeName == "sbyte"								||
-				typeName == "byte"								||
-				typeName == "int16"								||
-				typeName == "uint16"							||
-				typeName == "int"								||
-				typeName == "uint"								||
-				typeName == "long"								||
-				typeName == "ulong"								||
-				typeName == "char"								||
-				typeName == "string"							||
-				typeName == "JellyBitEngine.GameObject"			||
-				typeName == "JellyBitEngine.Transform"			||
-				typeName == "JellyBitEngine.LayerMask"			||
-				mono_class_is_enum(mono_type_get_class(type))	||
-				mono_type_is_struct(type))
-
-			//Only count the serializable ones
-			numVars++;
+					{
+						//Only count the serializable ones
+						numVars++;
+					}
+				}
+			}
 		}
+		
 		field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 	}
 
@@ -2475,522 +2495,535 @@ void ComponentScript::SavePublicVars(char*& cursor) const
 	field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), &iterator);
 	while (field != nullptr)
 	{
+		MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+		MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
+
 		uint32_t flags = mono_field_get_flags(field);
-		if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
+
+		bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+		if (!hidden)
 		{
-			MonoType* type = mono_field_get_type(field);
-			std::string typeName = mono_type_full_name(type);
-			std::string fieldName = mono_field_get_name(field);
-
-			VarType varType;
-
-			if (typeName == "bool")
+			uint32_t flags = mono_field_get_flags(field);
+			if (!(flags & MONO_FIELD_ATTR_STATIC))
 			{
-				varType = VarType::BOOL;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (lenght + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Serialize the var value
-				bytes = sizeof(bool);
-				bool varState; mono_field_get_value(GetMonoComponent(), field, &varState);
-				memcpy(cursor, &varState, bytes);
-				cursor += bytes;
-			}
-			else if (typeName == "single")
-			{
-				varType = VarType::FLOAT;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (lenght + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Serialize the var value
-				bytes = sizeof(float);
-				float varState; mono_field_get_value(GetMonoComponent(), field, &varState);
-				memcpy(cursor, &varState, bytes);
-				cursor += bytes;
-			}
-			else if (typeName == "double")
-			{
-				varType = VarType::DOUBLE;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (lenght + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Serialize the var value
-				bytes = sizeof(double);
-				double varState; mono_field_get_value(GetMonoComponent(), field, &varState);
-				memcpy(cursor, &varState, bytes);
-				cursor += bytes;
-			}
-			else if (typeName == "sbyte")
-			{
-				varType = VarType::INT8;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (lenght + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Serialize the var value
-				bytes = sizeof(int8_t);
-				int8_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
-				memcpy(cursor, &varState, bytes);
-				cursor += bytes;
-			}
-			else if (typeName == "byte")
-			{
-				varType = VarType::UINT8;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (lenght + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Serialize the var value
-				bytes = sizeof(uint8_t);
-				uint8_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
-				memcpy(cursor, &varState, bytes);
-				cursor += bytes;
-			}
-			else if (typeName == "int16")
-			{
-				varType = VarType::INT16;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (lenght + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Serialize the var value
-				bytes = sizeof(int16_t);
-				int16_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
-				memcpy(cursor, &varState, bytes);
-				cursor += bytes;
-			}
-			else if (typeName == "uint16")
-			{
-				varType = VarType::UINT16;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (lenght + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Serialize the var value
-				bytes = sizeof(uint16_t);
-				uint16_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
-				memcpy(cursor, &varState, bytes);
-				cursor += bytes;
-			}
-			else if (typeName == "int")
-			{
-				varType = VarType::INT;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (lenght + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Serialize the var value
-				bytes = sizeof(int32_t);
-				int32_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
-				memcpy(cursor, &varState, bytes);
-				cursor += bytes;
-			}
-			else if (typeName == "uint")
-			{
-				varType = VarType::UINT;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (lenght + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Serialize the var value
-				bytes = sizeof(uint32_t);
-				uint32_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
-				memcpy(cursor, &varState, bytes);
-				cursor += bytes;
-			}
-			else if (typeName == "long")
-			{
-				varType = VarType::INT64;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (lenght + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Serialize the var value
-				bytes = sizeof(int64_t);
-				int64_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
-				memcpy(cursor, &varState, bytes);
-				cursor += bytes;
-			}
-			else if (typeName == "ulong")
-			{
-				varType = VarType::UINT64;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (lenght + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Serialize the var value
-				bytes = sizeof(uint64_t);
-				uint64_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
-				memcpy(cursor, &varState, bytes);
-				cursor += bytes;
-			}
-			else if (typeName == "char")
-			{
-				varType = VarType::CHAR;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (lenght + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Serialize the var value
-				bytes = sizeof(char);
-				char varState; mono_field_get_value(GetMonoComponent(), field, &varState);
-				memcpy(cursor, &varState, bytes);
-				cursor += bytes;
-			}
-			else if (typeName == "string")
-			{
-				varType = VarType::STRING;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (lenght + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Serialize the var value				
-				MonoString* varState; mono_field_get_value(GetMonoComponent(), field, &varState);
-				char* cString = mono_string_to_utf8(varState);
-
-				std::string defString(cString);
-
-				bytes = sizeof(uint);
-
-				uint stringLenght = defString.size();
-				memcpy(cursor, &stringLenght, bytes);
-				cursor += bytes;
-
-				bytes = stringLenght;
-				memcpy(cursor, defString.c_str(), bytes);
-				cursor += bytes;
-
-				mono_free(cString);
-			}
-			else if (typeName == "JellyBitEngine.GameObject")
-			{
-				varType = VarType::GAMEOBJECT;
-
-				MonoObject* monoObject; mono_field_get_value(GetMonoComponent(), field, &monoObject);
-
-				GameObject* serializableGO = monoObject ? App->scripting->GameObjectFrom(monoObject) : nullptr;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (lenght + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Here save the UID of the gameObject you have referenced
-				uint32_t uid = serializableGO ? serializableGO->GetUUID() : 0;
-				bytes = sizeof(uint32_t);
-				memcpy(cursor, &uid, bytes);
-				cursor += bytes;
-
-			}
-			else if (typeName == "JellyBitEngine.Transform")
-			{
-				varType = VarType::TRANSFORM;
-
-				MonoObject* transformObj; mono_field_get_value(GetMonoComponent(), field, &transformObj);
-
-				MonoObject* monoObject;
-
-				transformObj ? mono_field_get_value(transformObj, mono_class_get_field_from_name(mono_object_get_class(transformObj), "gameObject"), &monoObject) : monoObject = nullptr;
-
-				GameObject* serializableGO = monoObject ? App->scripting->GameObjectFrom(monoObject) : nullptr;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (lenght + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Here save the UID of the transform->gameObject you have referenced
-				uint32_t uid = serializableGO ? serializableGO->GetUUID() : 0;
-				bytes = sizeof(uint32_t);
-				memcpy(cursor, &uid, bytes);
-				cursor += bytes;
-			}
-			else if (typeName == "JellyBitEngine.LayerMask")
-			{
-				varType = VarType::LAYERMASK;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (length + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Serialize the var value
-
-				uint32_t varState = 0;
-				mono_field_get_value(GetMonoComponent(), field, &varState);
-			
-				bytes = sizeof(uint32_t);
-				memcpy(cursor, &varState, bytes);
-				cursor += bytes;
-			}
-			else if (mono_class_is_enum(mono_type_get_class(type)))
-			{
-				varType = VarType::ENUM;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (length + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Serialize the var value
-
-				int32_t value;
-				mono_field_get_value(GetMonoComponent(), field, &value);
-
-				bytes = sizeof(uint32_t);
-				memcpy(cursor, &value, bytes);
-				cursor += bytes;
-			}
-			else if (mono_type_is_struct(type))
-			{
-				varType = VarType::STRUCT;
-
-				//Serialize the varType
-				bytes = sizeof(varType);
-				memcpy(cursor, &varType, bytes);
-				cursor += bytes;
-
-				//Serialize the varName (length + string)
-
-				bytes = sizeof(uint);
-				uint nameLenght = fieldName.length();
-				memcpy(cursor, &nameLenght, bytes);
-				cursor += bytes;
-
-				bytes = nameLenght;
-				memcpy(cursor, fieldName.c_str(), bytes);
-				cursor += bytes;
-
-				//Serialize the var value
-				int alignment = 0;
-				uint size = mono_type_size(type, &alignment);	
-
-				bytes = sizeof(uint);
-				memcpy(cursor, &size, bytes);
-				cursor += bytes;
-
-				char* value = new char[size];
-				mono_field_get_value(GetMonoComponent(), field, value);
-
-				bytes = size;
-				memcpy(cursor, value, bytes);
-				cursor += bytes;
+				bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+				if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+				{
+					MonoType* type = mono_field_get_type(field);
+					std::string typeName = mono_type_full_name(type);
+					std::string fieldName = mono_field_get_name(field);
+
+					VarType varType;
+
+					if (typeName == "bool")
+					{
+						varType = VarType::BOOL;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (lenght + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Serialize the var value
+						bytes = sizeof(bool);
+						bool varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+						memcpy(cursor, &varState, bytes);
+						cursor += bytes;
+					}
+					else if (typeName == "single")
+					{
+						varType = VarType::FLOAT;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (lenght + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Serialize the var value
+						bytes = sizeof(float);
+						float varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+						memcpy(cursor, &varState, bytes);
+						cursor += bytes;
+					}
+					else if (typeName == "double")
+					{
+						varType = VarType::DOUBLE;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (lenght + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Serialize the var value
+						bytes = sizeof(double);
+						double varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+						memcpy(cursor, &varState, bytes);
+						cursor += bytes;
+					}
+					else if (typeName == "sbyte")
+					{
+						varType = VarType::INT8;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (lenght + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Serialize the var value
+						bytes = sizeof(int8_t);
+						int8_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+						memcpy(cursor, &varState, bytes);
+						cursor += bytes;
+					}
+					else if (typeName == "byte")
+					{
+						varType = VarType::UINT8;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (lenght + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Serialize the var value
+						bytes = sizeof(uint8_t);
+						uint8_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+						memcpy(cursor, &varState, bytes);
+						cursor += bytes;
+					}
+					else if (typeName == "int16")
+					{
+						varType = VarType::INT16;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (lenght + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Serialize the var value
+						bytes = sizeof(int16_t);
+						int16_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+						memcpy(cursor, &varState, bytes);
+						cursor += bytes;
+					}
+					else if (typeName == "uint16")
+					{
+						varType = VarType::UINT16;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (lenght + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Serialize the var value
+						bytes = sizeof(uint16_t);
+						uint16_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+						memcpy(cursor, &varState, bytes);
+						cursor += bytes;
+					}
+					else if (typeName == "int")
+					{
+						varType = VarType::INT;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (lenght + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Serialize the var value
+						bytes = sizeof(int32_t);
+						int32_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+						memcpy(cursor, &varState, bytes);
+						cursor += bytes;
+					}
+					else if (typeName == "uint")
+					{
+						varType = VarType::UINT;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (lenght + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Serialize the var value
+						bytes = sizeof(uint32_t);
+						uint32_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+						memcpy(cursor, &varState, bytes);
+						cursor += bytes;
+					}
+					else if (typeName == "long")
+					{
+						varType = VarType::INT64;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (lenght + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Serialize the var value
+						bytes = sizeof(int64_t);
+						int64_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+						memcpy(cursor, &varState, bytes);
+						cursor += bytes;
+					}
+					else if (typeName == "ulong")
+					{
+						varType = VarType::UINT64;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (lenght + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Serialize the var value
+						bytes = sizeof(uint64_t);
+						uint64_t varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+						memcpy(cursor, &varState, bytes);
+						cursor += bytes;
+					}
+					else if (typeName == "char")
+					{
+						varType = VarType::CHAR;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (lenght + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Serialize the var value
+						bytes = sizeof(char);
+						char varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+						memcpy(cursor, &varState, bytes);
+						cursor += bytes;
+					}
+					else if (typeName == "string")
+					{
+						varType = VarType::STRING;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (lenght + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Serialize the var value				
+						MonoString* varState; mono_field_get_value(GetMonoComponent(), field, &varState);
+						char* cString = mono_string_to_utf8(varState);
+
+						std::string defString(cString);
+
+						bytes = sizeof(uint);
+
+						uint stringLenght = defString.size();
+						memcpy(cursor, &stringLenght, bytes);
+						cursor += bytes;
+
+						bytes = stringLenght;
+						memcpy(cursor, defString.c_str(), bytes);
+						cursor += bytes;
+
+						mono_free(cString);
+					}
+					else if (typeName == "JellyBitEngine.GameObject")
+					{
+						varType = VarType::GAMEOBJECT;
+
+						MonoObject* monoObject; mono_field_get_value(GetMonoComponent(), field, &monoObject);
+
+						GameObject* serializableGO = monoObject ? App->scripting->GameObjectFrom(monoObject) : nullptr;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (lenght + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Here save the UID of the gameObject you have referenced
+						uint32_t uid = serializableGO ? serializableGO->GetUUID() : 0;
+						bytes = sizeof(uint32_t);
+						memcpy(cursor, &uid, bytes);
+						cursor += bytes;
+
+					}
+					else if (typeName == "JellyBitEngine.Transform")
+					{
+						varType = VarType::TRANSFORM;
+
+						MonoObject* transformObj; mono_field_get_value(GetMonoComponent(), field, &transformObj);
+
+						MonoObject* monoObject;
+
+						transformObj ? mono_field_get_value(transformObj, mono_class_get_field_from_name(mono_object_get_class(transformObj), "gameObject"), &monoObject) : monoObject = nullptr;
+
+						GameObject* serializableGO = monoObject ? App->scripting->GameObjectFrom(monoObject) : nullptr;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (lenght + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Here save the UID of the transform->gameObject you have referenced
+						uint32_t uid = serializableGO ? serializableGO->GetUUID() : 0;
+						bytes = sizeof(uint32_t);
+						memcpy(cursor, &uid, bytes);
+						cursor += bytes;
+					}
+					else if (typeName == "JellyBitEngine.LayerMask")
+					{
+						varType = VarType::LAYERMASK;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (length + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Serialize the var value
+
+						uint32_t varState = 0;
+						mono_field_get_value(GetMonoComponent(), field, &varState);
+
+						bytes = sizeof(uint32_t);
+						memcpy(cursor, &varState, bytes);
+						cursor += bytes;
+					}
+					else if (mono_class_is_enum(mono_type_get_class(type)))
+					{
+						varType = VarType::ENUM;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (length + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Serialize the var value
+
+						int32_t value;
+						mono_field_get_value(GetMonoComponent(), field, &value);
+
+						bytes = sizeof(uint32_t);
+						memcpy(cursor, &value, bytes);
+						cursor += bytes;
+					}
+					else if (mono_type_is_struct(type))
+					{
+						varType = VarType::STRUCT;
+
+						//Serialize the varType
+						bytes = sizeof(varType);
+						memcpy(cursor, &varType, bytes);
+						cursor += bytes;
+
+						//Serialize the varName (length + string)
+
+						bytes = sizeof(uint);
+						uint nameLenght = fieldName.length();
+						memcpy(cursor, &nameLenght, bytes);
+						cursor += bytes;
+
+						bytes = nameLenght;
+						memcpy(cursor, fieldName.c_str(), bytes);
+						cursor += bytes;
+
+						//Serialize the var value
+						int alignment = 0;
+						uint size = mono_type_size(type, &alignment);
+
+						bytes = sizeof(uint);
+						memcpy(cursor, &size, bytes);
+						cursor += bytes;
+
+						char* value = new char[size];
+						mono_field_get_value(GetMonoComponent(), field, value);
+
+						bytes = size;
+						memcpy(cursor, value, bytes);
+						cursor += bytes;
+					}
+				}
 			}
 		}
 		field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3046,16 +3079,29 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					std::string typeName = mono_type_full_name(type);
-					std::string fieldName = mono_field_get_name(field);
 
-					if (typeName == "bool" && fieldName == varName)
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
+
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
 					{
-						mono_field_set_value(GetMonoComponent(), field, &var);
-						break;
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							MonoType* type = mono_field_get_type(field);
+							std::string typeName = mono_type_full_name(type);
+							std::string fieldName = mono_field_get_name(field);
+
+							if (typeName == "bool" && fieldName == varName)
+							{
+								mono_field_set_value(GetMonoComponent(), field, &var);
+								break;
+							}
+						}
 					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3074,16 +3120,28 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					std::string typeName = mono_type_full_name(type);
-					std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-					if (typeName == "single" && fieldName == varName)
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
 					{
-						mono_field_set_value(GetMonoComponent(), field, &var);
-						break;
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							MonoType* type = mono_field_get_type(field);
+							std::string typeName = mono_type_full_name(type);
+							std::string fieldName = mono_field_get_name(field);
+
+							if (typeName == "single" && fieldName == varName)
+							{
+								mono_field_set_value(GetMonoComponent(), field, &var);
+								break;
+							}
+						}
 					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3102,16 +3160,28 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					std::string typeName = mono_type_full_name(type);
-					std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-					if (typeName == "double" && fieldName == varName)
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
 					{
-						mono_field_set_value(GetMonoComponent(), field, &var);
-						break;
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							MonoType* type = mono_field_get_type(field);
+							std::string typeName = mono_type_full_name(type);
+							std::string fieldName = mono_field_get_name(field);
+
+							if (typeName == "double" && fieldName == varName)
+							{
+								mono_field_set_value(GetMonoComponent(), field, &var);
+								break;
+							}
+						}
 					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3130,16 +3200,28 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					std::string typeName = mono_type_full_name(type);
-					std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-					if (typeName == "sbyte" && fieldName == varName)
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
 					{
-						mono_field_set_value(GetMonoComponent(), field, &var);
-						break;
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							MonoType* type = mono_field_get_type(field);
+							std::string typeName = mono_type_full_name(type);
+							std::string fieldName = mono_field_get_name(field);
+
+							if (typeName == "sbyte" && fieldName == varName)
+							{
+								mono_field_set_value(GetMonoComponent(), field, &var);
+								break;
+							}
+						}
 					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3158,16 +3240,28 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					std::string typeName = mono_type_full_name(type);
-					std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-					if (typeName == "byte" && fieldName == varName)
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
 					{
-						mono_field_set_value(GetMonoComponent(), field, &var);
-						break;
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							MonoType* type = mono_field_get_type(field);
+							std::string typeName = mono_type_full_name(type);
+							std::string fieldName = mono_field_get_name(field);
+
+							if (typeName == "byte" && fieldName == varName)
+							{
+								mono_field_set_value(GetMonoComponent(), field, &var);
+								break;
+							}
+						}
 					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3186,16 +3280,28 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					std::string typeName = mono_type_full_name(type);
-					std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-					if (typeName == "int16" && fieldName == varName)
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
 					{
-						mono_field_set_value(GetMonoComponent(), field, &var);
-						break;
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							MonoType* type = mono_field_get_type(field);
+							std::string typeName = mono_type_full_name(type);
+							std::string fieldName = mono_field_get_name(field);
+
+							if (typeName == "int16" && fieldName == varName)
+							{
+								mono_field_set_value(GetMonoComponent(), field, &var);
+								break;
+							}
+						}
 					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3214,16 +3320,28 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					std::string typeName = mono_type_full_name(type);
-					std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-					if (typeName == "uint16" && fieldName == varName)
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
 					{
-						mono_field_set_value(GetMonoComponent(), field, &var);
-						break;
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							MonoType* type = mono_field_get_type(field);
+							std::string typeName = mono_type_full_name(type);
+							std::string fieldName = mono_field_get_name(field);
+
+							if (typeName == "uint16" && fieldName == varName)
+							{
+								mono_field_set_value(GetMonoComponent(), field, &var);
+								break;
+							}
+						}
 					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3242,16 +3360,28 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					std::string typeName = mono_type_full_name(type);
-					std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-					if (typeName == "int" && fieldName == varName)
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
 					{
-						mono_field_set_value(GetMonoComponent(), field, &var);
-						break;
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							MonoType* type = mono_field_get_type(field);
+							std::string typeName = mono_type_full_name(type);
+							std::string fieldName = mono_field_get_name(field);
+
+							if (typeName == "int" && fieldName == varName)
+							{
+								mono_field_set_value(GetMonoComponent(), field, &var);
+								break;
+							}
+						}
 					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3270,16 +3400,28 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					std::string typeName = mono_type_full_name(type);
-					std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-					if (typeName == "uint" && fieldName == varName)
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
 					{
-						mono_field_set_value(GetMonoComponent(), field, &var);
-						break;
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							MonoType* type = mono_field_get_type(field);
+							std::string typeName = mono_type_full_name(type);
+							std::string fieldName = mono_field_get_name(field);
+
+							if (typeName == "uint" && fieldName == varName)
+							{
+								mono_field_set_value(GetMonoComponent(), field, &var);
+								break;
+							}
+						}
 					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3298,16 +3440,28 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					std::string typeName = mono_type_full_name(type);
-					std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-					if (typeName == "long" && fieldName == varName)
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
 					{
-						mono_field_set_value(GetMonoComponent(), field, &var);
-						break;
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							MonoType* type = mono_field_get_type(field);
+							std::string typeName = mono_type_full_name(type);
+							std::string fieldName = mono_field_get_name(field);
+
+							if (typeName == "long" && fieldName == varName)
+							{
+								mono_field_set_value(GetMonoComponent(), field, &var);
+								break;
+							}
+						}
 					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3326,16 +3480,28 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					std::string typeName = mono_type_full_name(type);
-					std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-					if (typeName == "ulong" && fieldName == varName)
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
 					{
-						mono_field_set_value(GetMonoComponent(), field, &var);
-						break;
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							MonoType* type = mono_field_get_type(field);
+							std::string typeName = mono_type_full_name(type);
+							std::string fieldName = mono_field_get_name(field);
+
+							if (typeName == "ulong" && fieldName == varName)
+							{
+								mono_field_set_value(GetMonoComponent(), field, &var);
+								break;
+							}
+						}
 					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3354,16 +3520,28 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					std::string typeName = mono_type_full_name(type);
-					std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-					if (typeName == "char" && fieldName == varName)
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
 					{
-						mono_field_set_value(GetMonoComponent(), field, &var);
-						break;
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							MonoType* type = mono_field_get_type(field);
+							std::string typeName = mono_type_full_name(type);
+							std::string fieldName = mono_field_get_name(field);
+
+							if (typeName == "char" && fieldName == varName)
+							{
+								mono_field_set_value(GetMonoComponent(), field, &var);
+								break;
+							}
+						}
 					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3390,17 +3568,29 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					std::string typeName = mono_type_full_name(type);
-					std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-					if (typeName == "string" && fieldName == varName)
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
 					{
-						MonoString* monoString = mono_string_new(App->scripting->domain, string.c_str());
-						mono_field_set_value(GetMonoComponent(), field, monoString);
-						break;
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							MonoType* type = mono_field_get_type(field);
+							std::string typeName = mono_type_full_name(type);
+							std::string fieldName = mono_field_get_name(field);
+
+							if (typeName == "string" && fieldName == varName)
+							{
+								MonoString* monoString = mono_string_new(App->scripting->domain, string.c_str());
+								mono_field_set_value(GetMonoComponent(), field, monoString);
+								break;
+							}
+						}
 					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3443,16 +3633,28 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					std::string typeName = mono_type_full_name(type);
-					std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-					if (typeName == "JellyBitEngine.GameObject" && fieldName == varName)
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
 					{
-						mono_field_set_value(GetMonoComponent(), field, monoObject);
-						break;
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							MonoType* type = mono_field_get_type(field);
+							std::string typeName = mono_type_full_name(type);
+							std::string fieldName = mono_field_get_name(field);
+
+							if (typeName == "JellyBitEngine.GameObject" && fieldName == varName)
+							{
+								mono_field_set_value(GetMonoComponent(), field, monoObject);
+								break;
+							}
+						}
 					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3495,25 +3697,37 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					std::string typeName = mono_type_full_name(type);
-					std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-					if (typeName == "JellyBitEngine.Transform" && fieldName == varName)
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
 					{
-						if (monoObject)
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
 						{
-							MonoObject* monoTransform;
-							mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "transform"), &monoTransform);
-							mono_field_set_value(GetMonoComponent(), field, monoTransform);
+							MonoType* type = mono_field_get_type(field);
+							std::string typeName = mono_type_full_name(type);
+							std::string fieldName = mono_field_get_name(field);
+
+							if (typeName == "JellyBitEngine.Transform" && fieldName == varName)
+							{
+								if (monoObject)
+								{
+									MonoObject* monoTransform;
+									mono_field_get_value(monoObject, mono_class_get_field_from_name(mono_object_get_class(monoObject), "transform"), &monoTransform);
+									mono_field_set_value(GetMonoComponent(), field, monoTransform);
+								}
+								else
+								{
+									mono_field_set_value(GetMonoComponent(), field, nullptr);
+								}
+								break;
+							}
 						}
-						else
-						{
-							mono_field_set_value(GetMonoComponent(), field, nullptr);
-						}
-						break;
 					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3535,16 +3749,28 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					std::string typeName = mono_type_full_name(type);
-					std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-					if (typeName == "JellyBitEngine.LayerMask" && fieldName == varName)
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
 					{
-						mono_field_set_value(GetMonoComponent(), field, &var);
-						break;
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							MonoType* type = mono_field_get_type(field);
+							std::string typeName = mono_type_full_name(type);
+							std::string fieldName = mono_field_get_name(field);
+
+							if (typeName == "JellyBitEngine.LayerMask" && fieldName == varName)
+							{
+								mono_field_set_value(GetMonoComponent(), field, &var);
+								break;
+							}
+						}
 					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
@@ -3565,21 +3791,33 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					MonoClass* classCSharp = mono_type_get_class(type);
-					if (classCSharp && mono_class_is_enum(classCSharp))
-					{	
-						std::string typeName = mono_type_full_name(type);
-						std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-						if (fieldName == varName)
-						{						
-							mono_field_set_value(GetMonoComponent(), field, &var);
-							break;
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
+					{
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
+						{
+							MonoType* type = mono_field_get_type(field);
+							MonoClass* classCSharp = mono_type_get_class(type);
+							if (classCSharp && mono_class_is_enum(classCSharp))
+							{
+								std::string typeName = mono_type_full_name(type);
+								std::string fieldName = mono_field_get_name(field);
+
+								if (fieldName == varName)
+								{
+									mono_field_set_value(GetMonoComponent(), field, &var);
+									break;
+								}
+							}
 						}
-					}				
+					}
 				}
 				field = mono_class_get_fields(mono_object_get_class(GetMonoComponent()), (void**)&iterator);
 			}
@@ -3603,17 +3841,29 @@ void ComponentScript::LoadPublicVars(char*& buffer)
 			while (field != nullptr)
 			{
 				uint32_t flags = mono_field_get_flags(field);
-				if (flags & MONO_FIELD_ATTR_PUBLIC && !(flags & MONO_FIELD_ATTR_STATIC))
-				{
-					MonoType* type = mono_field_get_type(field);
-					if (mono_type_is_struct(type))
-					{
-						std::string fieldName = mono_field_get_name(field);
+				MonoString* fieldNameCS = mono_string_new(App->scripting->domain, mono_field_get_name(field));
+				MonoReflectionType* myClassType = mono_type_get_object(App->scripting->domain, mono_class_get_type(mono_object_get_class(GetMonoComponent())));
 
-						if (fieldName == varName)
+				bool hidden = FieldHasHideInInspector(myClassType, fieldNameCS);
+				if (!hidden)
+				{
+					uint32_t flags = mono_field_get_flags(field);
+					if (!(flags & MONO_FIELD_ATTR_STATIC))
+					{
+						bool serialized = FieldHasSerializeField(myClassType, fieldNameCS);
+						if ((flags & MONO_FIELD_ATTR_PUBLIC) || serialized)
 						{
-							mono_field_set_value(GetMonoComponent(), field, structContent);
-							break;
+							MonoType* type = mono_field_get_type(field);
+							if (mono_type_is_struct(type))
+							{
+								std::string fieldName = mono_field_get_name(field);
+
+								if (fieldName == varName)
+								{
+									mono_field_set_value(GetMonoComponent(), field, structContent);
+									break;
+								}
+							}
 						}
 					}
 				}
@@ -3687,6 +3937,12 @@ void ComponentScript::InstanceClass()
 		return;
 
 	MonoObject* compInstance = mono_object_new(App->scripting->domain, klass);
+	if (compInstance == nullptr)
+	{
+		CONSOLE_LOG(LogTypes::Error, "A ComponentScript could not create its monoInstance. Name: %s", scriptName.data());
+		return;
+	}
+
 	mono_runtime_object_init(compInstance);
 
 	int gameObjectAddress = (int)GetParent();
