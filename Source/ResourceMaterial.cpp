@@ -15,12 +15,14 @@
 
 ResourceMaterial::ResourceMaterial(ResourceTypes type, uint uuid, ResourceData data, ResourceMaterialData materialData, bool internalRes) : Resource(type, uuid, data, internalRes), materialData(materialData) 
 {
-	InitResources();
+	if (internalRes)
+		InitResources();
 }
 
 ResourceMaterial::~ResourceMaterial() 
 {
-	DeinitResources();
+	if (internalRes)
+		DeinitResources();
 }
 
 void ResourceMaterial::OnPanelAssets()
