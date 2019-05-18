@@ -264,6 +264,11 @@ void ResourceScript::IncludeName()
 	}
 }
 
+void ResourceScript::SortScriptNames()
+{
+	std::sort(scriptNames.begin(), scriptNames.end());
+}
+
 std::string ResourceScript::pathToWindowsNotation(const std::string& path) const
 {
 	std::string ret = path;

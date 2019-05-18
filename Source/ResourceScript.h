@@ -61,6 +61,7 @@ public:
 
 	static std::vector<std::string> getScriptNames() { return scriptNames; }
 	static void ClearScriptNames() { scriptNames.clear(); };
+	static void SortScriptNames();
 
 private:
 	std::string pathToWindowsNotation(const std::string& path) const;
