@@ -4517,5 +4517,7 @@ void ScriptingModule::UpdateScriptingReferences()
 		((ResourceScript*)res)->IncludeName();
 	}
 
+	ResourceScript::SortScriptNames();
+
 	delete[] buffer;
 }

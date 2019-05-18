@@ -523,8 +523,8 @@ bool ResourceAnimator::Update()
 		return update_status::UPDATE_CONTINUE;
 
 	float dt = App->timeManager->GetDt();
-
-	if (current_anim->anim_timer >= current_anim->duration && current_anim->duration > 0.0f)
+	float thing = dt + current_anim->anim_timer;
+	if (thing >= current_anim->duration && current_anim->duration > 0.0f)
 	{
 		current_anim->finished = true;
 

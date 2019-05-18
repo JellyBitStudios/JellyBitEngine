@@ -255,7 +255,7 @@ void ComponentAnimator::Update()
 	if (res != 0) {
 		ResourceAnimator* anim_res = (ResourceAnimator*)App->res->GetResource(res);
 
-		if (anim_res && this->GetParent()->seenLastFrame) { 
+		if (anim_res /*&& this->GetParent()->seenLastFrame*/) { //TODO WAIT
 			anim_res->Update();
 		}
 	}

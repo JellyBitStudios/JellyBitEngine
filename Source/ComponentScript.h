@@ -46,7 +46,7 @@ public:
 	uint GetPublicVarsSerializationBytes() const;
 	uint GetPublicVarsSerializationBytesFromBuffer(char* buffer) const;
 
-	void SavePublicVars(char*& cursor) const;
+	void SavePublicVars(char*& cursor);
 	void LoadPublicVars(char*& cursor);
 	void TemporalSave();
 	void TemporalLoad();
