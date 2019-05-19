@@ -63,7 +63,7 @@ public:
 	virtual void OnInternalLoad(char*& cursor);
 
 public:
-	WwiseT::AudioSource* source;
+	WwiseT::AudioSource* source = nullptr;
 
 private:
 	bool mute = false;

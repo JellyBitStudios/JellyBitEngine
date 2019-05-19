@@ -65,7 +65,7 @@ void ComponentAudioSource::Update()
 
 void ComponentAudioSource::UpdateSourcePos()
 {
-	if (parent->transform != nullptr)
+	if (parent->transform != nullptr && source)
 	{
 		math::float3 vector_pos;
 		math::float3 vector_front;
