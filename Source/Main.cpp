@@ -3,12 +3,16 @@
 #include "Globals.h"
 
 #include "SDL\include\SDL.h"
-#include "Brofiler\Brofiler.h"
+#include "Optick\include\optick.h"
 
 #pragma comment(lib, "SDL\\libx86\\SDL2.lib")
 #pragma comment(lib, "SDL\\libx86\\SDL2main.lib")
-#pragma comment (lib, "Brofiler\\ProfilerCore32.lib")
 
+#ifdef _DEBUG
+#pragma comment(lib, "Optick/lib/x86/debug/OptickCore.lib")
+#else
+#pragma comment(lib, "Optick/lib/x86/release/OptickCore.lib")
+#endif
 enum main_states
 {
 	MAIN_CREATION,
@@ -56,7 +60,7 @@ int main(int argc, char ** argv)
 
 		case MAIN_UPDATE:
 		{
-			BROFILER_FRAME("Main Loop");
+			OPTICK_FRAME("Main Loop");
 			int update_return = App->Update();
 
 			if (update_return == UPDATE_ERROR)

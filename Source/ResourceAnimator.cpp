@@ -3,7 +3,7 @@
 #include "ModuleScene.h"
 #include "ModuleFileSystem.h"
 #include "Application.h"
-#include "Brofiler/Brofiler.h"
+#include "Optick/include/optick.h"
 #include "ModuleTimeManager.h"
 #include "Application.h"
 #include "ResourceAvatar.h"
@@ -511,7 +511,7 @@ void ResourceAnimator::InitAnimator()
 bool ResourceAnimator::Update()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ResourceAnimator_Update", Optick::Category::Animation);
 #endif // GAMEMODE
 
 	//if (App->GetEngineState() != engine_states::ENGINE_PLAY)

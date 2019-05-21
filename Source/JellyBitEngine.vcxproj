@@ -400,6 +400,8 @@
     <ClInclude Include="ModuleLayers.h" />
     <ClInclude Include="ModuleTrails.h" />
     <ClInclude Include="ModuleUI.h" />
+    <ClInclude Include="Optick\include\optick.config.h" />
+    <ClInclude Include="Optick\include\optick.h" />
     <ClInclude Include="PanelUI.h" />
     <ClInclude Include="PanelUIAnimation.h" />
     <ClInclude Include="PhysicsConstants.h" />

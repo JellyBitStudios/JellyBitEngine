@@ -42,7 +42,7 @@
 #include "ComponentUIAnimation.h"
 
 #include "MathGeoLib\include\Geometry\OBB.h"
-#include "Brofiler/Brofiler.h"
+#include "Optick/include/optick.h"
 
 GameObject::GameObject(const char* name, GameObject* parent, bool disableTransform) : parent(parent)
 {
@@ -436,7 +436,7 @@ void GameObject::OnDisable()
 
 void GameObject::RecursiveRecalculateBoundingBoxes()
 {
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("GameObject_RecursiveRecalculateBoundingBoxes", Optick::Category::Debug);
 
 	RecalculateBoundingBox();
 
@@ -446,7 +446,7 @@ void GameObject::RecursiveRecalculateBoundingBoxes()
 
 void GameObject::RecalculateBoundingBox()
 {
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("GameObject_RecalculateBoundingBox", Optick::Category::Debug);
 
 	// Get the OBB from the mesh original AABB (no translation, rotation or scale)
 	if (originalBoundingBox.IsFinite())

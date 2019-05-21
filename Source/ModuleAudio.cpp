@@ -3,7 +3,7 @@
 #include "ModuleAudio.h"
 #include "ComponentAudioSource.h"
 #include "ComponentAudioListener.h"
-#include "Brofiler/Brofiler.h"
+#include "Optick/include/optick.h"
 
 #include "ModuleResourceManager.h"
 #include "ResourceTypes.h"
@@ -27,7 +27,7 @@ bool ModuleAudio::Start()
 update_status ModuleAudio::Update(/*float dt*/)
 {
 #ifdef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleAudio_Update", Optick::Category::Audio);
 	if (audioisplayed == false) {
 		PlayOnAwake();
 		audioisplayed = true;
@@ -41,7 +41,7 @@ update_status ModuleAudio::Update(/*float dt*/)
 
 update_status ModuleAudio::PostUpdate(/*float dt*/)
 {
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleAudio_PostUpdate", Optick::Category::Audio);
 	WwiseT::ProcessAudio();
 	return UPDATE_CONTINUE;
 }

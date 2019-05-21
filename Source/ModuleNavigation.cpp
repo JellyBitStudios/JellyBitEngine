@@ -21,7 +21,7 @@
 
 #include "Globals.h"
 
-#include "Brofiler/Brofiler.h"
+#include "Optick/include/optick.h"
 
 #include "MathGeoLib/include/Math/MathAll.h"
 #include <math.h>
@@ -50,7 +50,7 @@ bool ModuleNavigation::Init(JSON_Object* jObject)
 update_status ModuleNavigation::Update()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleNavigation_Update", Optick::Category::Navigation);
 #endif // !GAMEMODE
 	return UPDATE_CONTINUE;
 	if (m_navMesh && m_crowd)

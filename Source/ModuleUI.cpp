@@ -24,7 +24,7 @@
 #include "ComponentSlider.h"
 
 #include "ResourceMaterial.h"
-#include "Brofiler/Brofiler.h"
+#include "Optick/include/optick.h"
 
 #include "MathGeoLib/include/Geometry/Frustum.h"
 
@@ -49,7 +49,7 @@ ModuleUI::~ModuleUI()
 void ModuleUI::DrawUI()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::Orchid);
+	OPTICK_CATEGORY("ModuleUI_DrawUI", Optick::Category::UI);
 #endif
 	if (!uiMode)
 		return;
@@ -122,7 +122,7 @@ bool ModuleUI::Start()
 update_status ModuleUI::PreUpdate()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleUI_PreUpdate", Optick::Category::UI);
 #endif // !GAMEMODE
 	anyItemIsHovered = MouseInScreen();
 	return update_status::UPDATE_CONTINUE;
@@ -131,7 +131,7 @@ update_status ModuleUI::PreUpdate()
 update_status ModuleUI::Update()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleUI_Update", Optick::Category::UI);
 #endif // !GAMEMODE
 	for (std::list<GameObject*>::iterator iteratorUI = canvas.begin(); iteratorUI != canvas.end(); ++iteratorUI)
 		(*iteratorUI)->cmp_canvas->Update();

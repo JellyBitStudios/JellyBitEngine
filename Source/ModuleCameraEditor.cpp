@@ -19,7 +19,7 @@
 #include "SDL\include\SDL_mouse.h"
 
 #include "MathGeoLib\include\Math\MathAll.h"
-#include "Brofiler\Brofiler.h"
+#include "Optick/include/optick.h"
 
 // Reference: https://learnopengl.com/Getting-started/Camera
 
@@ -55,7 +55,7 @@ bool ModuleCameraEditor::Start()
 update_status ModuleCameraEditor::Update()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleCameraEditor_Update", Optick::Category::Camera);
 #endif // !GAMEMODE
 
 	if (!App->IsEditor() || App->gui->WantTextInput() || App->gui->IsMouseHoveringAnyWindow())

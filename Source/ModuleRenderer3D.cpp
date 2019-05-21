@@ -43,7 +43,7 @@
 
 #include "ModuleNavigation.h"
 
-#include "Brofiler\Brofiler.h"
+#include "Optick/include/optick.h"
 
 #pragma comment(lib, "opengl32.lib") /* link Microsoft OpenGL lib   */
 #pragma comment(lib, "glu32.lib")    /* link OpenGL Utility lib     */
@@ -171,7 +171,7 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 update_status ModuleRenderer3D::PreUpdate()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleRenderer3D_PreUpdate", Optick::Category::Rendering);
 #endif // !GAMEMODE
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
@@ -186,7 +186,7 @@ update_status ModuleRenderer3D::PreUpdate()
 update_status ModuleRenderer3D::PostUpdate()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::Orchid);
+	OPTICK_CATEGORY("ModuleRenderer3D_PostUpdate", Optick::Category::Rendering);
 #endif
 	App->fbo->BindGBuffer();
 

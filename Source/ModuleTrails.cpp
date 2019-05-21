@@ -11,7 +11,7 @@
 #include "ResourceShaderProgram.h"
 #include "ResourceMesh.h"
 
-#include "Brofiler/Brofiler.h"
+#include "Optick/include/optick.h"
 #include <algorithm>
 #include "MathGeoLib/include/Math/float4x4.h"
 #include "Application.h"
@@ -32,7 +32,7 @@ ModuleTrails::~ModuleTrails()
 update_status ModuleTrails::PostUpdate()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleTrails_PostUpdate", Optick::Category::VFX);
 #endif // !GAMEMODE
 
 	for (std::list<ComponentTrail*>::iterator trail = trails.begin(); trail != trails.end(); ++trail)
@@ -46,7 +46,7 @@ update_status ModuleTrails::PostUpdate()
 void ModuleTrails::Draw()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleTrails_Draw", Optick::Category::VFX);
 #endif // !GAMEMODE
 
 	for (std::list<ComponentTrail*>::iterator trail = trails.begin(); trail != trails.end(); ++trail)

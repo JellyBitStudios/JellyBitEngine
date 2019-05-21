@@ -1,6 +1,6 @@
 #include "ModuleTimeManager.h"
 #include "GameTimer.h"
-#include "Brofiler/Brofiler.h"
+#include "Optick/include/optick.h"
 
 #include "Application.h"
 
@@ -21,7 +21,7 @@ bool ModuleTimeManager::CleanUp()
 void ModuleTimeManager::PrepareUpdate()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleTimeManager_PrepareUpdate", Optick::Category::Debug);
 #endif // !GAMEMODE
 	// Frames
 	frameCount++;

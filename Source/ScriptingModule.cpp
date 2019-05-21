@@ -51,8 +51,7 @@
 #include "ModuleWindow.h"
 
 #include "MathGeoLib/include/MathGeoLib.h"
-#include "Brofiler/Brofiler.h"
-
+#include "Optick/include/optick.h"
 #include "parson/parson.h"
 
 bool exec(const char* cmd, std::string& error)
@@ -132,7 +131,7 @@ update_status ScriptingModule::PreUpdate()
 update_status ScriptingModule::Update()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ScriptingModule_Update", Optick::Category::Script);
 #endif
 
 	std::vector<Resource*> res = App->res->GetResourcesByType(ResourceTypes::NoResourceType);
@@ -148,7 +147,7 @@ update_status ScriptingModule::Update()
 update_status ScriptingModule::PostUpdate()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ScriptingModule_PostUpdate", Optick::Category::Script);
 #endif // !GAMEMODE
 	if (someScriptModified || engineOpened)
 	{

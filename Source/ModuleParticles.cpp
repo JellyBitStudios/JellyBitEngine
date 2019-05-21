@@ -2,7 +2,7 @@
 #include "ModuleTimeManager.h"
 #include "ModuleInput.h"
 
-#include "Brofiler/Brofiler.h"
+#include "Optick/include/optick.h"
 #include <algorithm>
 #include "MathGeoLib/include/Math/float4x4.h"
 #include "Application.h"
@@ -19,7 +19,7 @@ ModuleParticle::~ModuleParticle()
 update_status ModuleParticle::Update()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleParticle_Update", Optick::Category::VFX);
 #endif // !GAMEMODE
 
 	for (std::list<ComponentEmitter*>::iterator emitter = emitters.begin(); emitter != emitters.end(); ++emitter)
@@ -57,7 +57,7 @@ update_status ModuleParticle::Update()
 
 void ModuleParticle::Draw()
 {
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleParticle_Draw", Optick::Category::VFX);
 
 	SortParticles();
 	DrawParticles();
@@ -65,7 +65,7 @@ void ModuleParticle::Draw()
 
 void ModuleParticle::DrawParticles()
 {
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleParticle_DrawParticles", Optick::Category::VFX);
 	for (int i = 0; i < partVec.size(); ++i)
 	{
 		if (partVec[i]->owner && partVec[i]->owner->isInFrustum)
@@ -119,7 +119,7 @@ void ModuleParticle::DebugDraw() const
 
 void ModuleParticle::SortParticles()
 {
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleParticle_SoftParticles", Optick::Category::VFX);
 
 	std::sort(partVec.begin(), partVec.end(), particleCompare());
 }

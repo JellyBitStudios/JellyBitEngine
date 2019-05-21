@@ -178,7 +178,6 @@ bool Particle::Update(float dt)
 
 void Particle::EndParticle()
 {
-	//BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
 	active = false;
 	owner->particles.remove(this);
 	App->particle->activeParticles--;

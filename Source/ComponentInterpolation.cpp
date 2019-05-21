@@ -9,7 +9,7 @@
 #include "GameObject.h"
 #include "ComponentTransform.h"
 
-#include "Brofiler/Brofiler.h"
+#include "Optick/include/optick.h"
 
 #include "imgui\imgui.h"
 
@@ -58,7 +58,7 @@ ComponentInterpolation::~ComponentInterpolation()
 void ComponentInterpolation::Update()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("InterpolationUpdate", Optick::Category::Animation);
 #endif // !GAMEMODE
 
 	if (move && !finished)
