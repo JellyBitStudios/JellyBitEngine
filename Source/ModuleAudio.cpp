@@ -119,6 +119,7 @@ void ModuleAudio::OnSystemEvent(System_Event event)
 		Pause();
 		break;
 	case System_Event_Type::Stop:
+	case System_Event_Type::LoadScene:
 		Stop();
 		break;
 	}
