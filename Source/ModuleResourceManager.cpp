@@ -155,11 +155,12 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 				if (strcmp(shader->GetFile(), event.fileEvent.file) == 0)
 				{
 					// Update the existing material
-					material->UpdateResourceShader();
-
-					// Export the existing file
-					std::string outputFile;
-					App->res->ExportFile(ResourceTypes::MaterialResource, material->GetData(), &material->GetSpecificData(), outputFile, true, false);
+					if (material->UpdateResourceShader())
+					{
+						// Export the existing file
+						std::string outputFile;
+						App->res->ExportFile(ResourceTypes::MaterialResource, material->GetData(), &material->GetSpecificData(), outputFile, true, false);
+					}
 				}
 			}
 		}
@@ -775,11 +776,13 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 				resource = CreateResource(ResourceTypes::MaterialResource, data, &materialData, uuid);
 				
 				// Update the existing material
-				((ResourceMaterial*)resource)->UpdateResourceShader();
-
-				// Export the existing file
-				std::string outputFile;
-				App->res->ExportFile(ResourceTypes::MaterialResource, data, &materialData, outputFile, true, false);
+				ResourceMaterial* material = (ResourceMaterial*)resource;
+				if (material->UpdateResourceShader())
+				{
+					// Export the existing file
+					std::string outputFile;
+					App->res->ExportFile(ResourceTypes::MaterialResource, material->GetData(), &material->GetSpecificData(), outputFile, true, false);
+				}
 			}
 			else
 				resource = GetResource(resourcesUuids.front());

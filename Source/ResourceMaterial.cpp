@@ -435,15 +435,18 @@ void ResourceMaterial::SetResourceShader(uint shaderUuid)
 	materialData.shaderUuid = shaderUuid;
 
 	ResourceShaderProgram* shader = (ResourceShaderProgram*)App->res->GetResource(shaderUuid);
-	materialData.shaderProgram = shader->shaderProgram;
+	materialData.shader = shader->shaderProgram;
 
 	ClearUniforms();
 	FillUniforms();
 }
 
-void ResourceMaterial::UpdateResourceShader()
+bool ResourceMaterial::UpdateResourceShader()
 {
-	UpdateUniforms();
+	bool updateUniforms = UpdateUniforms();
+	bool updateUniformsLocations = UpdateUniformsLocations();
+
+	return updateUniforms || updateUniformsLocations;
 }
 
 uint ResourceMaterial::GetShaderUuid() const
@@ -471,8 +474,8 @@ std::vector<Uniform>& ResourceMaterial::GetUniforms()
 
 void ResourceMaterial::FillUniforms()
 {
-	ResourceShaderProgram* shader = (ResourceShaderProgram*)App->res->GetResource(materialData.shaderUuid);
-	shader->GetUniforms(materialData.uniforms);
+	ResourceShaderProgram* shaderProgram = (ResourceShaderProgram*)App->res->GetResource(materialData.shaderUuid);
+	shaderProgram->GetUniforms(materialData.uniforms);
 	// Set as used (uniforms)
 	SetUniformsAsUsed();
 }
@@ -482,6 +485,12 @@ void ResourceMaterial::ClearUniforms()
 	// Set as unused (uniforms)
 	SetUniformsAsUnused();
 	materialData.uniforms.clear();
+}
+
+void ResourceMaterial::GetIgnoreUniforms(std::vector<const char*>& ignoreUniforms)
+{
+	ResourceShaderProgram* shaderProgram = (ResourceShaderProgram*)App->res->GetResource(materialData.shaderUuid);
+	shaderProgram->GetIgnoreUniforms(ignoreUniforms);
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -494,10 +503,7 @@ void ResourceMaterial::InitResources()
 		if (App->res->SetAsUsed(materialData.shaderUuid) > 0)
 		{
 			ResourceShaderProgram* program = (ResourceShaderProgram*)App->res->GetResource(materialData.shaderUuid);
-			materialData.shaderProgram = program->shaderProgram;
-
-			// Update locations
-			UpdateUniformsLocations();
+			materialData.shader = program->shaderProgram;
 
 			// Set as used (uniforms)
 			SetUniformsAsUsed();
@@ -507,12 +513,13 @@ void ResourceMaterial::InitResources()
 	}
 }
 
-void ResourceMaterial::DeinitResources() const
+void ResourceMaterial::DeinitResources()
 {
-	// Set as unused (shader)
 	if (materialData.shaderUuid > 0)
 	{
+		// Set as unused (shader)
 		App->res->SetAsUnused(materialData.shaderUuid);
+		materialData.shader = 0;
 
 		// Set as unused (uniforms)
 		SetUniformsAsUnused();
@@ -555,26 +562,36 @@ void ResourceMaterial::SetUniformsAsUnused() const
 	}
 }
 
-void ResourceMaterial::UpdateUniformsLocations()
+bool ResourceMaterial::UpdateUniformsLocations()
 {
-	std::vector<Uniform> uni;
+	bool ret = false;
+
 	ResourceShaderProgram* shader = (ResourceShaderProgram*)App->res->GetResource(materialData.shaderUuid);
+	std::vector<Uniform> uni;
 	shader->GetUniforms(uni);
 
 	for (uint i = 0; i < uni.size(); ++i)
 	{
 		for (uint j = 0; j < materialData.uniforms.size(); ++j)
 		{
-			if (strcmp(uni[i].common.name, materialData.uniforms[j].common.name) == 0)
+			if (strcmp(uni[i].common.name, materialData.uniforms[j].common.name) == 0
+				&& uni[i].common.location != materialData.uniforms[j].common.location)
+			{
 				materialData.uniforms[j].common.location = uni[i].common.location;
+				ret = true;
+			}
 		}
 	}
+
+	return ret;
 }
 
-void ResourceMaterial::UpdateUniforms()
+bool ResourceMaterial::UpdateUniforms()
 {
-	std::vector<Uniform> uni;
+	bool ret = false;
+
 	ResourceShaderProgram* shader = (ResourceShaderProgram*)App->res->GetResource(materialData.shaderUuid);
+	std::vector<Uniform> uni;
 	shader->GetUniforms(uni);
 
 	bool found = false;
@@ -600,6 +617,8 @@ void ResourceMaterial::UpdateUniforms()
 
 			// Erase the uniform 
 			it = materialData.uniforms.erase(it);
+
+			ret = true;
 		}
 		else
 			++it;
@@ -624,8 +643,12 @@ void ResourceMaterial::UpdateUniforms()
 			materialData.uniforms.push_back(uni[i]);
 
 			// If it is a texture, there is no need to set it as used
+
+			ret = true;
 		}
 	}
+
+	return ret;
 }
 
 // ----------------------------------------------------------------------------------------------------

@@ -36,7 +36,6 @@ bool ModuleInternalResHandler::Start()
 	CreateUIShaderProgram();
 	decalShaderProgram = CreateDecalShaderProgram();
 	cartoonShaderProgram = CreateCartoonShaderProgram();
-	cartoonFloorProgram = CreateFloorCartoonShaderProgram();
 
 	// Material resources
 	CreateDefaultMaterial();
@@ -286,23 +285,36 @@ void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, c
 	programShaderData.shaderObjectsUuids.push_back(vObj->GetUuid());
 	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
 	programShaderData.shaderProgramType = type;
+
 	ResourceShaderProgram* prog = nullptr;
 
 	switch (type)
 	{
 	case Standard:
+
+		// Ignore uniforms
+		programShaderData.ignoreUniforms.push_back("animate");
+
+		programShaderData.ignoreUniforms.push_back("fog.color");
+		programShaderData.ignoreUniforms.push_back("fog.density");
+
+		programShaderData.ignoreUniforms.push_back("gInfoTexture");
+
+		programShaderData.ignoreUniforms.push_back("dot");
+		programShaderData.ignoreUniforms.push_back("screenSize");
+
+		// -----
+
 		prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DEFAULT_SHADER_PROGRAM_UUID);
-		
+
 		if (!prog->Link())
 			prog->isValid = false;
 
 		defaultShaderProgram = prog->GetUuid();
-		break;
-	case Projector:
-		break;
-	case Effects:
-	
 
+		break;
+
+	case Effects:
 		if (name.compare("Trail") == 0)
 		{
 			prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DEFAULT_SHADER_PROGRAM_TRAIL_UUID);
@@ -325,14 +337,6 @@ void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, c
 			particleShaderProgram = prog->GetUuid();
 		}
 
-		break;
-	case UI:
-		break;
-	case Source:
-		break;
-	case Custom:
-		break;
-	default:
 		break;
 	}
 }
@@ -435,7 +439,22 @@ uint ModuleInternalResHandler::CreateDecalShaderProgram() const
 	shaderData.internal = true;
 	programShaderData.shaderObjectsUuids.push_back(vObj->GetUuid());
 	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
-	programShaderData.shaderProgramType = ShaderProgramTypes::Standard;
+	programShaderData.shaderProgramType = ShaderProgramTypes::Projector;
+
+	// Ignore uniforms
+	programShaderData.ignoreUniforms.push_back("fog.color");
+	programShaderData.ignoreUniforms.push_back("fog.density");
+
+	programShaderData.ignoreUniforms.push_back("gBufferPosition");
+	programShaderData.ignoreUniforms.push_back("gBufferNormal");
+	programShaderData.ignoreUniforms.push_back("gBufferInfo");
+
+	programShaderData.ignoreUniforms.push_back("screenSize");
+
+	programShaderData.ignoreUniforms.push_back("alphaMultiplier");
+
+	// -----
+
 	ResourceShaderProgram* prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DECAL_SHADER_PROGRAM_UUID);
 	if (!prog->Link())
 		prog->isValid = false;
@@ -483,54 +502,24 @@ uint ModuleInternalResHandler::CreateCartoonShaderProgram() const
 	programShaderData.shaderObjectsUuids.push_back(gObj->GetUuid());
 	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
 	programShaderData.shaderProgramType = ShaderProgramTypes::Standard;
+	
+	// Ignore uniforms
+	programShaderData.ignoreUniforms.push_back("animate");
+
+	programShaderData.ignoreUniforms.push_back("fog.color");
+	programShaderData.ignoreUniforms.push_back("fog.density");
+
+	programShaderData.ignoreUniforms.push_back("gInfoTexture");
+
+	programShaderData.ignoreUniforms.push_back("dot");
+	programShaderData.ignoreUniforms.push_back("screenSize");
+
+	programShaderData.ignoreUniforms.push_back("color");
+	programShaderData.ignoreUniforms.push_back("pct");
+	
+	// -----
+
 	ResourceShaderProgram* prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, CARTOON_SHADER_PROGRAM_UUID);
-	if (!prog->Link())
-		prog->isValid = false;
-
-	return prog->GetUuid();
-}
-
-uint ModuleInternalResHandler::CreateFloorCartoonShaderProgram() const
-{
-	ResourceData vertexData;
-	ResourceShaderObjectData vertexShaderData;
-	vertexData.name = "Cartoon Vertex";
-	vertexData.internal = true;
-	vertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
-	vertexShaderData.SetSource(vShaderTemplate, strlen(vShaderTemplate));
-	ResourceShaderObject* vObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, vertexData, &vertexShaderData);
-	if (!vObj->Compile())
-		vObj->isValid = false;
-
-	ResourceData geometryData;
-	ResourceShaderObjectData geometryShaderData;
-	geometryData.name = "Cartoon Geometry";
-	geometryData.internal = true;
-	geometryShaderData.shaderObjectType = ShaderObjectTypes::GeometryType;
-	geometryShaderData.SetSource(CartoonGeometry, strlen(CartoonGeometry));
-	ResourceShaderObject* gObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, geometryData, &geometryShaderData);
-	if (!gObj->Compile())
-		gObj->isValid = false;
-
-	ResourceData fragmentData;
-	ResourceShaderObjectData fragmentShaderData;
-	fragmentData.name = "Cartoon Floor Fragment";
-	fragmentData.internal = true;
-	fragmentShaderData.shaderObjectType = ShaderObjectTypes::FragmentType;
-	fragmentShaderData.SetSource(CartoonFloorFragment, strlen(CartoonFloorFragment));
-	ResourceShaderObject* fObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, fragmentData, &fragmentShaderData);
-	if (!fObj->Compile())
-		fObj->isValid = false;
-
-	ResourceData shaderData;
-	ResourceShaderProgramData programShaderData;
-	shaderData.name = "Cartoon Floor Shader";
-	shaderData.internal = true;
-	programShaderData.shaderObjectsUuids.push_back(vObj->GetUuid());
-	programShaderData.shaderObjectsUuids.push_back(gObj->GetUuid());
-	programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
-	programShaderData.shaderProgramType = ShaderProgramTypes::Standard;
-	ResourceShaderProgram* prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, CARTOON_FLOOR_SHADER_PROGRAM_UUID);
 	if (!prog->Link())
 		prog->isValid = false;
 

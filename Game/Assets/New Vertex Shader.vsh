@@ -16,35 +16,34 @@ out VS_OUT
 	vec2 gTexCoord;
 } vs_out;
 
+const int MAX_BONES = 160;
+uniform mat4 bones[MAX_BONES];
+uniform int animate;
+
 uniform mat4 model_matrix;
 uniform mat4 mvp_matrix;
 uniform mat3 normal_matrix;
-
-struct Wave 
-{
-float speed;
-float amplitude;
-float frequency;
-};
-
-uniform float Time;
-uniform Wave wave;
 
 void main()
 {
 	vec4 pos = vec4(position, 1.0);
 	vec4 norm = vec4(normal, 0.0);
-	
-	
-	vs_out.gTexCoord = texCoord;
-	
-	// Wave
-    pos.z += sin((Time * wave.speed) + (pos.x * pos.y * wave.frequency)) * wave.amplitude;
-    vs_out.gTexCoord.xy += sin((Time * 0.2) + (pos.x * pos.z * 0.0001)) * 0.2;
+
+	if (animate == 1)
+	{
+		mat4 boneTransform = bones[ids[0]] * weights[0];
+		boneTransform += bones[ids[1]] * weights[1];
+		boneTransform += bones[ids[2]] * weights[2];
+		boneTransform += bones[ids[3]] * weights[3];
+
+		pos = boneTransform * pos;
+		norm = boneTransform * norm;
+	}
 
 	vs_out.gPosition = vec3(model_matrix * pos);
 	vs_out.gNormal = normalize(normal_matrix * norm.xyz);
 	vs_out.gColor = color;
+	vs_out.gTexCoord = texCoord;
 
 	gl_Position = mvp_matrix * pos;
 }

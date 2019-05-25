@@ -235,11 +235,20 @@ update_status ModuleRenderer3D::PostUpdate()
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-			for (uint i = 0; i < projectorComponents.size(); ++i)
+			uint currentLayer = MAX_NUM_PROJECTOR_LAYERS;
+			for (int i = 0; i < projectorComponents.size(); ++i)
 			{
 				if (projectorComponents[i]->GetParent()->IsActive()
-					&& projectorComponents[i]->IsTreeActive())
+					&& projectorComponents[i]->IsTreeActive()
+					&& projectorComponents[i]->layer == currentLayer)
 					projectorComponents[i]->Draw();
+
+				if (i == projectorComponents.size() - 1
+					&& currentLayer > 0)
+				{
+					--currentLayer;
+					i = -1;
+				}
 			}
 
 			if (!blend)
@@ -805,7 +814,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 
 	const ComponentMaterial* materialRenderer = toDraw->GetParent()->cmp_material;
 	ResourceMaterial* resourceMaterial = materialRenderer->currentResource;
-	GLuint shader = resourceMaterial->materialData.shaderProgram;
+	GLuint shader = resourceMaterial->materialData.shader;
 	App->glCache->SwitchShader(shader);
 
 	// 1. Generic uniforms
@@ -831,6 +840,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 		math::float4x4 view_matrix = currentCamera->GetOpenGLViewMatrix();
 		glUniformMatrix4fv(location, 1, GL_FALSE, view_matrix.ptr());
 	}
+
 	location = glGetUniformLocation(shader, "Time");
 	glUniform1f(location, App->timeManager->GetRealTime());
 	uint screenScale = App->window->GetScreenSize();
@@ -846,7 +856,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 	// Animations
 	char boneName[DEFAULT_BUF_SIZE];
 	ResourceAvatar* avatarResource = (ResourceAvatar*)App->res->GetResource(toDraw->avatarResource);
-	bool animate = avatarResource != nullptr /*&& avatarResource->GetIsAnimated()*/;
+	bool animate = avatarResource != nullptr && avatarResource->GetIsAnimated();
 
 	location = glGetUniformLocation(shader, "animate");
 	glUniform1i(location, animate);
@@ -907,23 +917,31 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 	if (location != -1)
 		glUniform1f(location, App->lights->fog.density);
 
-	// 3. Unknown mesh uniforms
-	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
-	std::vector<const char*> ignore;
-	ignore.push_back("animate");
-	ignore.push_back("color");
-	ignore.push_back("pct");
-	ignore.push_back("view_matrix");
-	ignore.push_back("fog.color");
-	ignore.push_back("fog.density");
-
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, App->fbo->gInfo);
 	location = glGetUniformLocation(shader, "gInfoTexture");
 	glUniform1i(location, 0);
 	textureUnit += 1;
 
-	LoadSpecificUniforms(textureUnit, uniforms, ignore);
+	// 3. Unknown mesh uniforms
+	std::vector<const char*> ignoreUniforms;
+	ResourceShaderProgram* shaderProgram = (ResourceShaderProgram*)App->res->GetResource(resourceMaterial->materialData.shaderUuid);
+	if (shaderProgram->GetShaderProgramType() == ShaderProgramTypes::Custom)
+	{
+		// Standard ignore uniforms
+		ignoreUniforms.push_back("animate");
+
+		ignoreUniforms.push_back("fog.color");
+		ignoreUniforms.push_back("fog.density");
+
+		ignoreUniforms.push_back("gInfoTexture");
+
+		ignoreUniforms.push_back("dot");
+		ignoreUniforms.push_back("screenSize");
+	}
+	else
+		resourceMaterial->GetIgnoreUniforms(ignoreUniforms);
+	LoadSpecificUniforms(textureUnit, resourceMaterial->GetUniforms(), ignoreUniforms);
 
 	// Mesh
 	const ResourceMesh* mesh = toDraw->currentResource;
@@ -1048,7 +1066,7 @@ void ModuleRenderer3D::LoadGenericUniforms(uint shaderProgram) const
 
 bool renderSortDeferred(const GameObject* a, const GameObject* b)
 {
-	return a->cmp_material->currentResource->materialData.shaderProgram < b->cmp_material->currentResource->materialData.shaderProgram;
+	return a->cmp_material->currentResource->materialData.shader < b->cmp_material->currentResource->materialData.shader;
 }
 
 void ModuleRenderer3D::Sort(std::vector<GameObject*> toSort) const
