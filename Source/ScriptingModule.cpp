@@ -2539,16 +2539,17 @@ bool NavAgentGetPath(MonoObject* monoAgent, MonoArray* position, MonoArray* dest
 	return false;
 }
 
-bool NavigationGetPath(MonoArray* origin, MonoArray* destination, MonoArray** out_path)
+bool NavigationGetPath(MonoArray* origin, MonoArray* destination, MonoArray** out_path, MonoArray* extents)
 {
-	if (!origin || !destination)
+	if (!origin || !destination || !extents)
 		return false;
 
 	math::float3 originCPP(mono_array_get(origin, float, 0), mono_array_get(origin, float, 1), mono_array_get(origin, float, 2));
 	math::float3 destinationCPP(mono_array_get(destination, float, 0), mono_array_get(destination, float, 1), mono_array_get(destination, float, 2));
+	math::float3 extentsCPP(mono_array_get(extents, float, 0), mono_array_get(extents, float, 1), mono_array_get(extents, float, 2));
 
 	std::vector<math::float3> finalPath;
-	if (App->navigation->FindPath(originCPP.ptr(), destinationCPP.ptr(), finalPath))
+	if (App->navigation->FindPath(originCPP.ptr(), destinationCPP.ptr(), finalPath, extentsCPP))
 	{
 		MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
 		*out_path = mono_array_new(App->scripting->domain, vector3Class, finalPath.size());
