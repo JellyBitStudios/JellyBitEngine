@@ -266,12 +266,11 @@ void ModuleNavigation::SetInputGeom(NMInputGeom& inputGeom)
 	memcpy(m_geom, &inputGeom, sizeof(NMInputGeom));
 }
 
-bool ModuleNavigation::FindPath(float* start, float* end, std::vector<math::float3>& finalPath) const
+bool ModuleNavigation::FindPath(float* start, float* end, std::vector<math::float3>& finalPath, const math::float3& extents) const
 {
 	const int MAX_POLYS = 256;
 	float startpos[3];
 	float endpos[3];
-	float extents[3];
 	dtPolyRef startRef;
 	dtPolyRef endRef;
 	int pathcount;
@@ -290,17 +289,14 @@ bool ModuleNavigation::FindPath(float* start, float* end, std::vector<math::floa
 	endpos[0] = end[0];
 	endpos[1] = end[1];
 	endpos[2] = end[2];
-	extents[0] = 1.2f;
-	extents[1] = 0.9f;
-	extents[2] = 1.2f;
 
 	//Find start position poly
-	status = m_navQuery->findNearestPoly(startpos, extents, &filter, &startRef, NULL);
+	status = m_navQuery->findNearestPoly(startpos, extents.ptr(), &filter, &startRef, NULL);
 	if (!dtStatusSucceed(status))
 		return false;
 
 	//Find end position poly
-	status = m_navQuery->findNearestPoly(endpos, extents, &filter, &endRef, NULL);
+	status = m_navQuery->findNearestPoly(endpos, extents.ptr(), &filter, &endRef, NULL);
 	if (!dtStatusSucceed(status))
 		return false;
 
@@ -322,7 +318,7 @@ bool ModuleNavigation::FindPath(float* start, float* end, std::vector<math::floa
 	return true;
 }
 
-bool ModuleNavigation::ProjectPoint(float* point, math::float3& projectedPoint, math::float3 extents) const
+bool ModuleNavigation::ProjectPoint(float* point, math::float3& projectedPoint, const math::float3& extents) const
 {
 	dtPolyRef startRef;
 	dtQueryFilter filter;
@@ -341,7 +337,7 @@ bool ModuleNavigation::ProjectPoint(float* point, math::float3& projectedPoint, 
 	return true;
 }
 
-bool ModuleNavigation::ProjectPointPolyBoundary(float* point, math::float3 & projectedPoint, math::float3 extents) const
+bool ModuleNavigation::ProjectPointPolyBoundary(float* point, math::float3& projectedPoint, const math::float3& extents) const
 {
 	dtPolyRef startRef;
 	dtQueryFilter filter;
