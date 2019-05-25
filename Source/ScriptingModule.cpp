@@ -54,6 +54,8 @@
 #include "Optick/include/optick.h"
 #include "parson/parson.h"
 
+#include <mono/metadata/mono-gc.h>
+
 bool exec(const char* cmd, std::string& error)
 {
 	std::array<char, 128> buffer;
@@ -4213,12 +4215,13 @@ void ScriptingModule::CreateDomain()
 	//CONSOLE_LOG(LogTypes::Error, "mono domain set");
 
 	if (!mono_domain_set(domain, false))
-		return;
+		CONSOLE_LOG(LogTypes::Error, "Domain couldn't be set");
 		
 	if (domainToUnload != nullptr)
 	{
 		//CONSOLE_LOG(LogTypes::Error, "mono unload previous domain");
 		mono_domain_unload(domainToUnload);
+		mono_gc_collect(mono_gc_max_generation());
 	}
 
 	//CONSOLE_LOG(LogTypes::Error, "mono other stuff");
