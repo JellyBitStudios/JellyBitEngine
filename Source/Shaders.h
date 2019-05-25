@@ -328,7 +328,6 @@
 "	vec3 specular;\n" \
 "};\n" \
 "\n" \
-"uniform vec3 viewPos;\n" \
 "uniform Material material;\n" \
 "uniform float averageColor;\n" \
 "\n" \
@@ -426,7 +425,6 @@
 "	vec3 specular;\n" \
 "};\n" \
 "\n" \
-"uniform vec3 viewPos;\n" \
 "uniform Material material;\n" \
 "uniform float averageColor;\n" \
 "\n" \

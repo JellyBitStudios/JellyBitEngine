@@ -817,10 +817,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 	GLuint shader = resourceMaterial->materialData.shader;
 	App->glCache->SwitchShader(shader);
 
-	// 1. Generic uniforms
-	LoadGenericUniforms(shader);
-
-	// 2. Known mesh uniforms
+	// 1. Known mesh uniforms
 	math::float4x4 model_matrix = toDraw->GetParent()->transform->GetGlobalMatrix();
 	model_matrix = model_matrix.Transposed();
 	math::float4x4 mvp_matrix = model_matrix * viewProj_matrix;
@@ -923,7 +920,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 	glUniform1i(location, 0);
 	textureUnit += 1;
 
-	// 3. Unknown mesh uniforms
+	// 2. Unknown mesh uniforms
 	std::vector<const char*> ignoreUniforms;
 	ResourceShaderProgram* shaderProgram = (ResourceShaderProgram*)App->res->GetResource(resourceMaterial->materialData.shaderUuid);
 	if (shaderProgram->GetShaderProgramType() == ShaderProgramTypes::Custom)
@@ -1039,29 +1036,6 @@ void ModuleRenderer3D::LoadSpecificUniforms(uint& textureUnit, const std::vector
 
 	hereWeGo:;
 	}
-}
-
-void ModuleRenderer3D::LoadGenericUniforms(uint shaderProgram) const
-{
-	int location = glGetUniformLocation(shaderProgram, "viewPos");
-	if (location != -1)
-		glUniform3fv(location, 1, currentCamera->frustum.pos.ptr());
-
-	/*
-	switch (App->GetEngineState())
-	{
-	// Game
-	case ENGINE_PLAY:
-	case ENGINE_PAUSE:
-	case ENGINE_STEP:
-	glUniform1f(location, App->timeManager->GetTime());
-	break;
-	// Editor
-	case ENGINE_EDITOR:
-	glUniform1f(location, App->timeManager->GetRealTime());
-	break;
-	}
-	*/
 }
 
 bool renderSortDeferred(const GameObject* a, const GameObject* b)

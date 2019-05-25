@@ -320,10 +320,7 @@ void ComponentProjector::Draw() const
 	uint shaderProgram = resourceShader->shaderProgram;
 	App->glCache->SwitchShader(shaderProgram);
 
-	// 1. Generic uniforms
-	App->renderer3D->LoadGenericUniforms(shaderProgram);
-
-	// 2. Known projector uniforms
+	// 1. Known projector uniforms
 	math::float4x4 bias_matrix = math::float4x4(
 		0.5f, 0.0f, 0.0f, 0.5f,
 		0.0f, 0.5f, 0.0f, 0.5f,
@@ -420,7 +417,7 @@ void ComponentProjector::Draw() const
 	if (location != -1)
 		glUniform1f(location, App->lights->fog.density);
 
-	// 3. Unknown uniforms
+	// 2. Unknown uniforms
 	std::vector<const char*> ignoreUniforms;
 	resourceMaterial->GetIgnoreUniforms(ignoreUniforms);
 	App->renderer3D->LoadSpecificUniforms(textureUnit, resourceMaterial->GetUniforms(), ignoreUniforms);
