@@ -342,7 +342,7 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 		}
 		startValues.particleDirection = (parent->transform->GetGlobalMatrix().RotatePart() * math::float3::unitY).Normalized();
 
-		//if (!localSpace)
+		if (!localSpace)
 			spawn = parent->transform->GetGlobalMatrix().RotatePart() * spawn;
 		break;
 	}
