@@ -35,7 +35,7 @@ public:
 	// Pathfinding
 	bool nv_walkable = true;
 	
-	enum RENDERER_FLAGS { DRAWLAST = 1 << 0 };
+	enum RENDERER_FLAGS { DRAWLAST = 1 << 0, DRAWLAST2 = 2 << 0};
 	uint rendererFlags = 0;
 };
 

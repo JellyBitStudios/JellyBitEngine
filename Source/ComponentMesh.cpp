@@ -119,8 +119,15 @@ void ComponentMesh::OnUniqueEditor()
 			ImGui::EndDragDropTarget();
 		}
 
-		if (ImGui::CheckboxFlags("Render last", &rendererFlags, RENDERER_FLAGS::DRAWLAST))
+		if (ImGui::CheckboxFlags("Render Last Alita", &rendererFlags, RENDERER_FLAGS::DRAWLAST))
 		{
+			if (rendererFlags & RENDERER_FLAGS::DRAWLAST2)
+			{
+				App->renderer3D->rendererLast2.erase(std::remove(App->renderer3D->rendererLast2.begin(),
+					App->renderer3D->rendererLast2.end(), this),
+					App->renderer3D->rendererLast2.end());
+			}
+
 			if (rendererFlags & RENDERER_FLAGS::DRAWLAST)
 				App->renderer3D->rendererLast.push_back(this);
 			else
@@ -128,6 +135,26 @@ void ComponentMesh::OnUniqueEditor()
 				App->renderer3D->rendererLast.erase(std::remove(App->renderer3D->rendererLast.begin(),
 					App->renderer3D->rendererLast.end(), this),
 					App->renderer3D->rendererLast.end());
+
+			}
+		}
+
+		if (ImGui::CheckboxFlags("Render last Enemies", &rendererFlags, RENDERER_FLAGS::DRAWLAST2))
+		{
+			if (rendererFlags & RENDERER_FLAGS::DRAWLAST)
+			{
+				App->renderer3D->rendererLast.erase(std::remove(App->renderer3D->rendererLast.begin(),
+					App->renderer3D->rendererLast.end(), this),
+					App->renderer3D->rendererLast.end());
+			}
+
+			if (rendererFlags & RENDERER_FLAGS::DRAWLAST2)
+				App->renderer3D->rendererLast2.push_back(this);
+			else
+			{
+				App->renderer3D->rendererLast2.erase(std::remove(App->renderer3D->rendererLast2.begin(),
+					App->renderer3D->rendererLast2.end(), this),
+					App->renderer3D->rendererLast2.end());
 
 			}
 		}

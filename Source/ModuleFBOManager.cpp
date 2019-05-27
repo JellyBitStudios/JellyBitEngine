@@ -156,6 +156,10 @@ void ModuleFBOManager::DrawGBufferToScreen() const
 	if (location != -1)
 		glUniform3fv(location, 1, dotColor.ptr());
 
+	location = glGetUniformLocation(resProgram->shaderProgram, "colorDot2");
+	if (location != -1)
+		glUniform3fv(location, 1, dotColor2.ptr());
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
 	glActiveTexture(GL_TEXTURE1);

@@ -96,6 +96,7 @@ private:
 public:
 
 	std::vector<ComponentMesh*> rendererLast;
+	std::vector<ComponentMesh*> rendererLast2;
 
 	SDL_GLContext context;
 	math::float3x3 NormalMatrix;

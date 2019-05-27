@@ -222,6 +222,12 @@ update_status ModuleRenderer3D::PostUpdate()
 					DrawMesh(mesh, true);
 			}
 
+			for each (ComponentMesh* mesh in rendererLast2)
+			{
+				if (mesh->IsTreeActive())
+					DrawMesh(mesh, true);
+			}
+
 			for (uint i = 0; i < statics.size(); ++i)
 			{
 				statics[i]->seenLastFrame = true;
@@ -807,7 +813,7 @@ void ModuleRenderer3D::FrustumCulling(std::vector<GameObject*>& statics, std::ve
 
 void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 {
-	if (toDraw->res == 0 || (!drawLast && toDraw->rendererFlags & ComponentMesh::DRAWLAST))
+	if (toDraw->res == 0 || (!drawLast && (toDraw->rendererFlags & ComponentMesh::DRAWLAST || toDraw->rendererFlags & ComponentMesh::DRAWLAST2)))
 		return;
 
 	uint textureUnit = 0;
@@ -848,8 +854,12 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 	location = glGetUniformLocation(shader, "screenSize");
 	glUniform2fv(location, 1, screenSize.ptr());
 	location = glGetUniformLocation(shader, "dot");
-	glUniform1i(location, drawLast || !toDraw->GetParent()->IsStatic() ? 1 : 0);
-
+	if (toDraw->rendererFlags & ComponentMesh::DRAWLAST)
+		glUniform1i(location, drawLast || !toDraw->GetParent()->IsStatic() ? 1 : 0);
+	else if (toDraw->rendererFlags & ComponentMesh::DRAWLAST2)
+		glUniform1i(location, drawLast || !toDraw->GetParent()->IsStatic() ? 2 : 0);
+	else
+		glUniform1i(location, 0);
 	// Animations
 	char boneName[DEFAULT_BUF_SIZE];
 	ResourceAvatar* avatarResource = (ResourceAvatar*)App->res->GetResource(toDraw->avatarResource);

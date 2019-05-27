@@ -111,10 +111,17 @@
 "	screenPos.x /= screenSize.x;\n" \
 "	screenPos.y /= screenSize.y;\n" \
 "	gInfo.r = dot;\n" \
-"	if (dot != 1)\n" \
-"	gInfo.g = texture(gInfoTexture,screenPos).g;\n" \
+"	if (dot == 0)\n" \
+"	{\n"\
+"		gInfo.g = texture(gInfoTexture,screenPos).g;\n" \
+"	}\n"\
 "	else\n" \
-"	gInfo.g = 1;\n"	\
+"	{\n"\
+"		if (dot == 1)\n"	\
+"			gInfo.g = 1;\n"	\
+"		else\n"	\
+"			gInfo.g = 2;\n"	\
+"	}\n"\
 "	gInfo.b = 0;\n"	\
 "	gInfo.a = 0;\n"	\
 "}"
@@ -167,6 +174,7 @@
 "uniform float ambient;\n" \
 "uniform Light lights[NR_LIGHTS];\n" \
 "uniform vec3 colorDot;\n" \
+"uniform vec3 colorDot2;\n" \
 "\n" \
 "void main()\n" \
 "{\n" \
@@ -182,7 +190,10 @@
 "	float AlbedoA = AlbedoTexture.a;\n" \
 "	vec4 InfoTexture = texture(gInfo, TexCoords);\n" \
 "	if (InfoTexture.r != 1 && InfoTexture.g != 0) {\n" \
-"	FragColor = vec4(colorDot, 1.0);\n" \
+"	if (InfoTexture.g == 1)\n" \
+"		FragColor = vec4(colorDot, 1.0);\n" \
+"	else if (InfoTexture.g == 2)\n" \
+"		FragColor = vec4(colorDot2, 1.0);\n" \
 "	return;\n" \
 "	}\n" \
 "\n" \
@@ -926,12 +937,19 @@
 "	screenPos.x /= screenSize.x;\n" \
 "	screenPos.y /= screenSize.y;\n" \
 "	gInfo.r = dot;\n" \
-"	if (dot != 1)\n" \
-"	gInfo.g = texture(gInfoTexture, screenPos).g;\n"\
+"	if (dot == 0)\n" \
+"	{\n"\
+"	gInfo.g = texture(gInfoTexture,screenPos).g;\n" \
+"	}\n"\
+"	else\n" \
+"	{\n"\
+"	if (dot == 1)\n"	\
+"		gInfo.g = 1;\n"	\
 "	else\n"	\
-"	gInfo.g = 1;\n" \
-"	gInfo.b = 0;\n" \
-"	gInfo.a = 0;\n" \
+"		gInfo.g = 2;\n"	\
+"}\n"\
+"	gInfo.b = 0;\n"	\
+"	gInfo.a = 0;\n"	\
 "}"
 #pragma endregion
 
