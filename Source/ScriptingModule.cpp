@@ -13,6 +13,7 @@
 #include "ComponentImage.h"
 #include "ComponentLabel.h"
 #include "ComponentSlider.h"
+#include "ComponentUIAnimation.h"
 #include "ComponentAudioSource.h"
 #include "ComponentAudioListener.h"
 #include "ComponentRigidDynamic.h"
@@ -3252,6 +3253,62 @@ void SliderSetValue(MonoObject* monoSlider, float value)
 	}
 }
 
+void AnimationUIPlay(MonoObject* monoAnimationUI)
+{
+	ComponentUIAnimation* animation = (ComponentUIAnimation*)App->scripting->ComponentFrom(monoAnimationUI);
+	if (animation)
+	{
+		animation->Play();
+	}
+}
+
+void AnimationUIStop(MonoObject* monoAnimationUI)
+{
+	ComponentUIAnimation* animation = (ComponentUIAnimation*)App->scripting->ComponentFrom(monoAnimationUI);
+	if (animation)
+	{
+		animation->Stop();
+	}
+}
+
+bool AnimationUIIsFinished(MonoObject* monoAnimationUI)
+{
+	ComponentUIAnimation* animation = (ComponentUIAnimation*)App->scripting->ComponentFrom(monoAnimationUI);
+	if (animation)
+	{
+		return animation->IsFinished();
+	}
+	return false;
+}
+
+bool AnimationUIGetLoop(MonoObject* monoAnimationUI)
+{
+	ComponentUIAnimation* animation = (ComponentUIAnimation*)App->scripting->ComponentFrom(monoAnimationUI);
+	if (animation)
+	{
+		return animation->GetLoop();
+	}
+	return false;
+}
+
+void AnimationUISetLoop(MonoObject* monoAnimationUI, bool loop)
+{
+	ComponentUIAnimation* animation = (ComponentUIAnimation*)App->scripting->ComponentFrom(monoAnimationUI);
+	if (animation)
+	{
+		animation->SetLoop(loop);
+	}
+}
+
+void AnimationUIRewind(MonoObject* monoAnimationUI)
+{
+	ComponentUIAnimation* animation = (ComponentUIAnimation*)App->scripting->ComponentFrom(monoAnimationUI);
+	if (animation)
+	{
+		animation->Rewind();
+	}
+}
+
 void PlayerPrefsSave()
 {
 	uint size = json_serialization_size(App->scripting->playerPrefs);
@@ -4323,6 +4380,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Time::GetTimeScale", (const void*)&TimeGetTimeScale);
 	mono_add_internal_call("JellyBitEngine.Time::SetTimeScale", (const void*)&TimeSetTimeScale);
 
+	//Transform
 	mono_add_internal_call("JellyBitEngine.Transform::getLocalPosition", (const void*)&GetLocalPosition);
 	mono_add_internal_call("JellyBitEngine.Transform::setLocalPosition", (const void*)&SetLocalPosition);
 	mono_add_internal_call("JellyBitEngine.Transform::getLocalRotation", (const void*)&GetLocalRotation);
@@ -4335,8 +4393,11 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Transform::setGlobalPos", (const void*)&SetGlobalPos);
 	mono_add_internal_call("JellyBitEngine.Transform::setGlobalRotation", (const void*)&SetGlobalRot);
 	mono_add_internal_call("JellyBitEngine.Transform::setGlobalScale", (const void*)&SetGlobalScale);
+
+	//Camera
 	mono_add_internal_call("JellyBitEngine.Camera::getMainCamera", (const void*)&GetGameCamera);
-	mono_add_internal_call("JellyBitEngine.Physics::_ScreenToRay", (const void*)&ScreenToRay);
+
+	//LayerMask
 	mono_add_internal_call("JellyBitEngine.LayerMask::GetMaskBit", (const void*)&LayerToBit);
 
 	//Animator
@@ -4374,6 +4435,7 @@ void ScriptingModule::CreateDomain()
 	//Physics
 	mono_add_internal_call("JellyBitEngine.Physics::_OverlapSphere", (const void*)&OverlapSphere);
 	mono_add_internal_call("JellyBitEngine.Physics::_Raycast", (const void*)&Raycast);
+	mono_add_internal_call("JellyBitEngine.Physics::_ScreenToRay", (const void*)&ScreenToRay);
 
 	//Rigidbody
 	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddForce", (const void*)&RigidbodyAddForce);
@@ -4424,6 +4486,12 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetResource", (const void*)&LabelGetResource);
 	mono_add_internal_call("JellyBitEngine.UI.Slider::GetValue", (const void*)&SliderGetValue);
 	mono_add_internal_call("JellyBitEngine.UI.Slider::SetValue", (const void*)&SliderSetValue);
+	mono_add_internal_call("JellyBitEngine.UI.AnimationUI::Play", (const void*)&AnimationUIPlay);
+	mono_add_internal_call("JellyBitEngine.UI.AnimationUI::Stop", (const void*)&AnimationUIStop);
+	mono_add_internal_call("JellyBitEngine.UI.AnimationUI::IsFinished", (const void*)&AnimationUIIsFinished);
+	mono_add_internal_call("JellyBitEngine.UI.AnimationUI::GetLoop", (const void*)&AnimationUIGetLoop);
+	mono_add_internal_call("JellyBitEngine.UI.AnimationUI::SetLoop", (const void*)&AnimationUISetLoop);
+	mono_add_internal_call("JellyBitEngine.UI.AnimationUI::Rewind", (const void*)&AnimationUIRewind);
 
 	//PlayerPrefs
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);

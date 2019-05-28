@@ -159,6 +159,7 @@ public:
 	void Play();
 	void Stop();
 	bool IsFinished()const;
+	inline bool GetLoop() const { return loop; }
 	void SetLoop(bool loopable);
 	void Rewind();
 
