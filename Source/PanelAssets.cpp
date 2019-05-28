@@ -14,7 +14,8 @@
 
 #include "imgui\imgui.h"
 #include "imgui\imgui_stl.h"
-#include "Brofiler\Brofiler.h"
+
+#include "Optick/include/optick.h"
 
 #include "Resource.h"
 #include "ResourceMesh.h"
@@ -163,7 +164,7 @@ bool PanelAssets::Draw()
 void PanelAssets::RecursiveDrawAssetsDir(const Directory& directory)
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("PanelAssets_RecursiveDrawAssetsDir", Optick::Category::Debug);
 #endif
 
 	//TODO: ORGANIZE THIS LOGIC INTO THE OWN ONPANELASSETS METHOD:

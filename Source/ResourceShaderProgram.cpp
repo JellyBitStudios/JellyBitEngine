@@ -559,6 +559,7 @@ void ResourceShaderProgram::GetUniforms(std::vector<Uniform>& uniforms)
 	if (count == 0)
 		return;
 
+	uniforms.clear();
 	uniforms.reserve(count);
 
 	GLuint program;
@@ -568,13 +569,15 @@ void ResourceShaderProgram::GetUniforms(std::vector<Uniform>& uniforms)
 	GLenum type;
 	GLchar name[DEFAULT_BUF_SIZE];
 
-	for (int i = 0; i < count; ++i)
+	for (uint i = 0; i < count; ++i)
 	{
-		glGetActiveUniform(shaderProgram, (GLuint)i, DEFAULT_BUF_SIZE, &length, &size, &type, name);
+		glGetActiveUniform(shaderProgram, i, DEFAULT_BUF_SIZE, &length, &size, &type, name);
 
-		if (strcmp(name, "model_matrix") == 0 || strcmp(name, "mvp_matrix") == 0 || strcmp(name, "normal_matrix") == 0
-			|| strcmp(name, "light.specular") == 0 || strcmp(name, "layer") == 0 || strcmp(name, "viewPos") == 0 || strcmp(name, "dot") == 0 || strcmp(name, "screenSize") == 0 || strcmp(name, "gInfoTexture") == 0 || strcmp(name, "Time") == 0)
-			continue;
+		for (uint j = 0; j < shaderProgramData.ignoreUniforms.size(); ++j)
+		{
+			if (strcmp(name, shaderProgramData.ignoreUniforms[j]) == 0)
+				goto hereWeGo;
+		}
 
 		Uniform uniform;
 		memset(&uniform, 0, sizeof(Uniform));
@@ -584,54 +587,67 @@ void ResourceShaderProgram::GetUniforms(std::vector<Uniform>& uniforms)
 			strcpy_s(uniform.floatU.name, name);
 			uniform.floatU.type = type;
 			uniform.floatU.location = glGetUniformLocation(shaderProgram, uniform.common.name);
+			uniforms.push_back(uniform);
 			break;
 		case Uniforms_Values::IntU_value:
 			strcpy_s(uniform.intU.name, name);
 			uniform.intU.type = type;
 			uniform.intU.location = glGetUniformLocation(shaderProgram, uniform.common.name);
+			uniforms.push_back(uniform);
 			break;
 		case Uniforms_Values::Vec2FU_value:
 			strcpy_s(uniform.vec2FU.name, name);
 			uniform.vec2FU.type = type;
 			uniform.vec2FU.location = glGetUniformLocation(shaderProgram, uniform.common.name);
+			uniforms.push_back(uniform);
 			break;
 		case Uniforms_Values::Vec3FU_value:
 			strcpy_s(uniform.vec3FU.name, name);
 			uniform.vec3FU.type = type;
 			uniform.vec3FU.location = glGetUniformLocation(shaderProgram, uniform.common.name);
+			uniforms.push_back(uniform);
 			break;
 		case Uniforms_Values::Vec4FU_value:
 			strcpy_s(uniform.vec4FU.name, name);
 			uniform.vec4FU.type = type;
 			uniform.vec4FU.location = glGetUniformLocation(shaderProgram, uniform.common.name);
+			uniforms.push_back(uniform);
 			break;
 		case Uniforms_Values::Vec2IU_value:
 			strcpy_s(uniform.vec2IU.name, name);
 			uniform.vec2IU.type = type;
 			uniform.vec2IU.location = glGetUniformLocation(shaderProgram, uniform.common.name);
+			uniforms.push_back(uniform);
 			break;
 		case Uniforms_Values::Vec3IU_value:
 			strcpy_s(uniform.vec3IU.name, name);
 			uniform.vec3IU.type = type;
 			uniform.vec3IU.location = glGetUniformLocation(shaderProgram, uniform.common.name);
+			uniforms.push_back(uniform);
 			break;
 		case Uniforms_Values::Vec4IU_value:
 			strcpy_s(uniform.vec4IU.name, name);
 			uniform.vec4IU.type = type;
 			uniform.vec4IU.location = glGetUniformLocation(shaderProgram, uniform.common.name);
+			uniforms.push_back(uniform);
 			break;
 		case Uniforms_Values::Sampler2U_value:
 			strcpy_s(uniform.sampler2DU.name, name);
 			uniform.sampler2DU.type = type;
 			uniform.sampler2DU.location = glGetUniformLocation(shaderProgram, uniform.common.name);
-			break;
-		default:
-			continue;
+			uniforms.push_back(uniform);
 			break;
 		}
-		uniforms.push_back(uniform);
+
+	hereWeGo:;
 	}
+
 	uniforms.shrink_to_fit();
+}
+
+void ResourceShaderProgram::GetIgnoreUniforms(std::vector<const char*>& ignoreUniforms)
+{
+	ignoreUniforms = shaderProgramData.ignoreUniforms;
 }
 
 // ----------------------------------------------------------------------------------------------------

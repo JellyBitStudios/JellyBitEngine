@@ -43,7 +43,7 @@
 
 #include "ModuleNavigation.h"
 
-#include "Brofiler\Brofiler.h"
+#include "Optick/include/optick.h"
 
 #pragma comment(lib, "opengl32.lib") /* link Microsoft OpenGL lib   */
 #pragma comment(lib, "glu32.lib")    /* link OpenGL Utility lib     */
@@ -171,7 +171,7 @@ bool ModuleRenderer3D::Init(JSON_Object* jObject)
 update_status ModuleRenderer3D::PreUpdate()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleRenderer3D_PreUpdate", Optick::Category::Rendering);
 #endif // !GAMEMODE
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
@@ -186,7 +186,7 @@ update_status ModuleRenderer3D::PreUpdate()
 update_status ModuleRenderer3D::PostUpdate()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::Orchid);
+	OPTICK_CATEGORY("ModuleRenderer3D_PostUpdate", Optick::Category::Rendering);
 #endif
 	App->fbo->BindGBuffer();
 
@@ -235,11 +235,20 @@ update_status ModuleRenderer3D::PostUpdate()
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-			for (uint i = 0; i < projectorComponents.size(); ++i)
+			uint currentLayer = MAX_NUM_PROJECTOR_LAYERS;
+			for (int i = 0; i < projectorComponents.size(); ++i)
 			{
 				if (projectorComponents[i]->GetParent()->IsActive()
-					&& projectorComponents[i]->IsTreeActive())
+					&& projectorComponents[i]->IsTreeActive()
+					&& projectorComponents[i]->layer == currentLayer)
 					projectorComponents[i]->Draw();
+
+				if (i == projectorComponents.size() - 1
+					&& currentLayer > 0)
+				{
+					--currentLayer;
+					i = -1;
+				}
 			}
 
 			if (!blend)
@@ -805,13 +814,10 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 
 	const ComponentMaterial* materialRenderer = toDraw->GetParent()->cmp_material;
 	ResourceMaterial* resourceMaterial = materialRenderer->currentResource;
-	GLuint shader = resourceMaterial->materialData.shaderProgram;
+	GLuint shader = resourceMaterial->materialData.shader;
 	App->glCache->SwitchShader(shader);
 
-	// 1. Generic uniforms
-	LoadGenericUniforms(shader);
-
-	// 2. Known mesh uniforms
+	// 1. Known mesh uniforms
 	math::float4x4 model_matrix = toDraw->GetParent()->transform->GetGlobalMatrix();
 	model_matrix = model_matrix.Transposed();
 	math::float4x4 mvp_matrix = model_matrix * viewProj_matrix;
@@ -831,6 +837,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 		math::float4x4 view_matrix = currentCamera->GetOpenGLViewMatrix();
 		glUniformMatrix4fv(location, 1, GL_FALSE, view_matrix.ptr());
 	}
+
 	location = glGetUniformLocation(shader, "Time");
 	glUniform1f(location, App->timeManager->GetRealTime());
 	uint screenScale = App->window->GetScreenSize();
@@ -846,7 +853,7 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 	// Animations
 	char boneName[DEFAULT_BUF_SIZE];
 	ResourceAvatar* avatarResource = (ResourceAvatar*)App->res->GetResource(toDraw->avatarResource);
-	bool animate = avatarResource != nullptr /*&& avatarResource->GetIsAnimated()*/;
+	bool animate = avatarResource != nullptr && avatarResource->GetIsAnimated();
 
 	location = glGetUniformLocation(shader, "animate");
 	glUniform1i(location, animate);
@@ -907,23 +914,31 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 	if (location != -1)
 		glUniform1f(location, App->lights->fog.density);
 
-	// 3. Unknown mesh uniforms
-	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
-	std::vector<const char*> ignore;
-	ignore.push_back("animate");
-	ignore.push_back("color");
-	ignore.push_back("pct");
-	ignore.push_back("view_matrix");
-	ignore.push_back("fog.color");
-	ignore.push_back("fog.density");
-
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, App->fbo->gInfo);
 	location = glGetUniformLocation(shader, "gInfoTexture");
 	glUniform1i(location, 0);
 	textureUnit += 1;
 
-	LoadSpecificUniforms(textureUnit, uniforms, ignore);
+	// 2. Unknown mesh uniforms
+	std::vector<const char*> ignoreUniforms;
+	ResourceShaderProgram* shaderProgram = (ResourceShaderProgram*)App->res->GetResource(resourceMaterial->materialData.shaderUuid);
+	if (shaderProgram->GetShaderProgramType() == ShaderProgramTypes::Custom)
+	{
+		// Standard ignore uniforms
+		ignoreUniforms.push_back("animate");
+
+		ignoreUniforms.push_back("fog.color");
+		ignoreUniforms.push_back("fog.density");
+
+		ignoreUniforms.push_back("gInfoTexture");
+
+		ignoreUniforms.push_back("dot");
+		ignoreUniforms.push_back("screenSize");
+	}
+	else
+		resourceMaterial->GetIgnoreUniforms(ignoreUniforms);
+	LoadSpecificUniforms(textureUnit, resourceMaterial->GetUniforms(), ignoreUniforms);
 
 	// Mesh
 	const ResourceMesh* mesh = toDraw->currentResource;
@@ -1023,32 +1038,9 @@ void ModuleRenderer3D::LoadSpecificUniforms(uint& textureUnit, const std::vector
 	}
 }
 
-void ModuleRenderer3D::LoadGenericUniforms(uint shaderProgram) const
-{
-	int location = glGetUniformLocation(shaderProgram, "viewPos");
-	if (location != -1)
-		glUniform3fv(location, 1, currentCamera->frustum.pos.ptr());
-
-	/*
-	switch (App->GetEngineState())
-	{
-	// Game
-	case ENGINE_PLAY:
-	case ENGINE_PAUSE:
-	case ENGINE_STEP:
-	glUniform1f(location, App->timeManager->GetTime());
-	break;
-	// Editor
-	case ENGINE_EDITOR:
-	glUniform1f(location, App->timeManager->GetRealTime());
-	break;
-	}
-	*/
-}
-
 bool renderSortDeferred(const GameObject* a, const GameObject* b)
 {
-	return a->cmp_material->currentResource->materialData.shaderProgram < b->cmp_material->currentResource->materialData.shaderProgram;
+	return a->cmp_material->currentResource->materialData.shader < b->cmp_material->currentResource->materialData.shader;
 }
 
 void ModuleRenderer3D::Sort(std::vector<GameObject*> toSort) const

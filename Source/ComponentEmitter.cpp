@@ -320,6 +320,7 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 	}
 	case ShapeType_MESH:
 	{
+		math::float4x4 globalMat = GetParent()->transform->GetGlobalMatrix();
 		if (isBurst)
 		{
 			if (!burstMesh.uniqueVertex.empty())
@@ -339,10 +340,12 @@ math::float3 ComponentEmitter::RandPos(ShapeType shapeType, bool isBurst)
 			spawn.y = shapeMesh.uniqueVertex[pos].y;
 			spawn.z = shapeMesh.uniqueVertex[pos].z;
 		}
-		startValues.particleDirection = (math::float3::unitY * parent->transform->GetGlobalMatrix().RotatePart().Transposed()).Normalized();
 
 		if (!localSpace)
-			spawn = spawn * parent->transform->GetGlobalMatrix().RotatePart().Transposed();
+			startValues.particleDirection = (parent->transform->GetGlobalMatrix().RotatePart() * math::float3::unitY).Normalized();
+		else
+			startValues.particleDirection = math::float3::unitY;
+
 		break;
 	}
 	default:

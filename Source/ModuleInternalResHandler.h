@@ -47,7 +47,6 @@ public:
 	void CreateBillboardShaderProgram();
 	uint CreateDecalShaderProgram() const;
 	uint CreateCartoonShaderProgram() const;
-	uint CreateFloorCartoonShaderProgram() const;
 
 	void CreateUIShaderProgram();
 

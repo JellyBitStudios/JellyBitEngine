@@ -48,7 +48,7 @@ void ComponentAudioListener::Update()
 
 void ComponentAudioListener::UpdateListenerPos()
 {
-	if (parent->transform != nullptr)
+	if (parent->transform != nullptr && listener)
 	{
 		math::float3 vector_pos;
 		math::float3 vector_front;

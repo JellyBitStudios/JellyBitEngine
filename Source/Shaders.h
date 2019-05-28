@@ -22,7 +22,6 @@
 "	vec2 gTexCoord;\n"																		\
 "} vs_out;\n"																				\
 "\n"																						\
-"\n"																						\
 "const int MAX_BONES = 160;\n"																\
 "uniform mat4 bones[MAX_BONES];\n"															\
 "uniform int animate;\n"																	\
@@ -55,20 +54,20 @@
 "	gl_Position = mvp_matrix * pos;\n"														\
 "}"
 
-#define fShaderTemplate															\
-"#version 330 core\n"															\
-"layout(location = 0) out vec4 gPosition;\n"									\
-"layout(location = 1) out vec4 gNormal;\n"										\
-"layout(location = 2) out vec4 gAlbedoSpec;\n"									\
-"layout(location = 3) out vec4 gInfo;\n"										\
-"in VS_OUT\n"																	\
-"{\n"																			\
-"	vec3 gPosition;\n"															\
-"	vec3 gNormal;\n"															\
-"	vec4 gColor;\n"																\
-"	vec2 gTexCoord;\n"															\
-"} fs_in;\n"																	\
-"\n"																			\
+#define fShaderTemplate	\
+"#version 330 core\n" \
+"layout(location = 0) out vec4 gPosition;\n" \
+"layout(location = 1) out vec4 gNormal;\n" \
+"layout(location = 2) out vec4 gAlbedoSpec;\n" \
+"layout(location = 3) out vec4 gInfo;\n" \
+"in VS_OUT\n" \
+"{\n" \
+"	vec3 gPosition;\n" \
+"	vec3 gNormal;\n" \
+"	vec4 gColor;\n" \
+"	vec2 gTexCoord;\n" \
+"} fs_in;\n" \
+"\n" \
 "struct Fog\n" \
 "{\n" \
 "	vec3 color;\n" \
@@ -80,23 +79,23 @@
 "uniform Fog fog;\n" \
 "uniform mat4 view_matrix;\n" \
 "\n" \
-"uniform int animate;\n"																\
+"uniform int animate;\n" \
 "\n" \
-"uniform sampler2D diffuse;\n"													\
+"uniform sampler2D diffuse;\n" \
 "uniform sampler2D gInfoTexture;\n"	\
-"\n"																			\
-"uniform int dot;\n"															\
+"\n" \
+"uniform int dot;\n" \
 "uniform vec2 screenSize;\n" \
-"\n"																			\
-"void main()\n"																	\
-"{\n"																			\
-"	gPosition.rgb = fs_in.gPosition;\n"											\
-"	gNormal.rgb = normalize(fs_in.gNormal);\n"									\
-"	gAlbedoSpec.rgb = texture(diffuse, fs_in.gTexCoord).rgb;\n"					\
-"	gPosition.a = 1;\n"															\
-"	gNormal.a = 1;\n"															\
-"	gAlbedoSpec.a = 1;\n"														\
-"\n"																			\
+"\n" \
+"void main()\n" \
+"{\n" \
+"	gPosition.rgb = fs_in.gPosition;\n" \
+"	gNormal.rgb = normalize(fs_in.gNormal);\n" \
+"	gAlbedoSpec.rgb = texture(diffuse, fs_in.gTexCoord).rgb;\n" \
+"	gPosition.a = 1;\n" \
+"	gNormal.a = 1;\n" \
+"	gAlbedoSpec.a = 1;\n" \
+"\n" \
 "	if (animate != 1)\n" \
 "	{\n" \
 "	vec4 modelViewPos = view_matrix * vec4(fs_in.gPosition, 1.0);\n" \
@@ -107,17 +106,17 @@
 "	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
 "	gAlbedoSpec = mix(vec4(fog.color, 1.0), gAlbedoSpec, fogFactor);\n" \
 "	}\n" \
-"\n"																			\
+"\n" \
 "	vec2 screenPos = gl_FragCoord.xy;\n" \
 "	screenPos.x /= screenSize.x;\n" \
 "	screenPos.y /= screenSize.y;\n" \
-"	gInfo.r = dot;\n"															\
-"	if (dot != 1)\n"															\
-"	gInfo.g = texture(gInfoTexture,screenPos).g;\n"															\
-"	else\n"															\
-"	gInfo.g = 1;\n"															\
-"	gInfo.b = 0;\n"															\
-"	gInfo.a = 0;\n"															\
+"	gInfo.r = dot;\n" \
+"	if (dot != 1)\n" \
+"	gInfo.g = texture(gInfoTexture,screenPos).g;\n" \
+"	else\n" \
+"	gInfo.g = 1;\n"	\
+"	gInfo.b = 0;\n"	\
+"	gInfo.a = 0;\n"	\
 "}"
 #pragma endregion
 
@@ -329,7 +328,6 @@
 "	vec3 specular;\n" \
 "};\n" \
 "\n" \
-"uniform vec3 viewPos;\n" \
 "uniform Material material;\n" \
 "uniform float averageColor;\n" \
 "\n" \
@@ -427,7 +425,6 @@
 "	vec3 specular;\n" \
 "};\n" \
 "\n" \
-"uniform vec3 viewPos;\n" \
 "uniform Material material;\n" \
 "uniform float averageColor;\n" \
 "\n" \
@@ -727,141 +724,142 @@
 
 #pragma region CartoonShader
 
-#define CartoonGeometry																				\
-"#version 330 core\n"																				\
-"\n"																								\
-"layout(triangles_adjacency) in;\n"																	\
-"layout(triangle_strip, max_vertices = 15) out;\n"													\
-"\n"																								\
-"uniform mat4 model_matrix;\n"																		\
-"\n"																								\
-"in VS_OUT\n"																						\
-"{\n"																								\
-"  vec3 gPosition;\n"																				\
-"  vec3 gNormal;\n"																					\
-"  vec4 gColor;\n"																					\
-"  vec2 gTexCoord;\n"																				\
-"} gs_in[];\n"																						\
-"\n"																								\
-"out GS_OUT\n"																						\
-"{\n"																								\
-"  vec3 fPosition;\n"																				\
-"  vec3 fNormal;\n"																					\
-"  vec4 fColor;\n"																					\
-"  vec2 fTexCoord;\n"																				\
-"} gs_out;\n"																						\
-"\n"																								\
-"flat out int fIsEdge; // which output primitives are silhouette edges\n"							\
-"\n"																								\
-"uniform float edgeWidth; // width of silhouette edge in clip\n"									\
-"//uniform float pctExtend; // percentage to extend quad\n"											\
-"\n"																								\
-"bool isFrontFacing(vec3 a, vec3 b, vec3 c) // is a triangle front facing?\n"						\
-"{\n"																								\
-"	// Compute the triangle's z coordinate of the normal vector (cross product)\n"					\
-"	return ((a.x * b.y - b.x * a.y) + (b.x * c.y - c.x * b.y) + (c.x * a.y - a.x * c.y)) > 0.0;\n"	\
-"}\n"																								\
-"\n"																								\
-"void emitEdgeQuad(vec3 e0, vec3 e1)\n"																\
-"{\n"																								\
-"	float pctExtend = 0.0;\n"																		\
-"\n"																								\
-"	vec2 ext = pctExtend * (e1.xy - e0.xy);\n"														\
-"	vec2 v = normalize(e1.xy - e0.xy);\n"															\
-"	vec2 n = vec2(-v.y, v.x) * edgeWidth;\n"														\
-"\n"																								\
-"	// Emit the quad\n"																				\
-"	fIsEdge = 1; // this is part of an edge\n"														\
-"\n"																								\
-"	vec4 a = vec4(e0.xy - ext, e0.z, 1.0);\n"														\
-"	gs_out.fPosition = vec3(model_matrix * a);\n"													\
-"	gl_Position = a;\n"																				\
-"	EmitVertex();\n"																				\
-"	vec4 b = vec4(e0.xy - n - ext, e0.z, 1.0);\n"													\
-"	gs_out.fPosition = vec3(model_matrix * b);\n"													\
-"	gl_Position = b;\n"																				\
-"	EmitVertex();\n"																				\
-"	vec4 c = vec4(e1.xy + ext, e1.z, 1.0);\n"														\
-"	gs_out.fPosition = vec3(model_matrix * c);\n"													\
-"	gl_Position = c;\n"																				\
-"	EmitVertex();\n"																				\
-"	vec4 d = vec4(e1.xy - n + ext, e1.z, 1.0);\n"													\
-"	gs_out.fPosition = vec3(model_matrix * d);\n"													\
-"	gl_Position = d;\n"																				\
-"	EmitVertex();\n"																				\
-"\n"																								\
-"	EndPrimitive();\n"																				\
-"}\n"																								\
-"\n"																								\
-"void main()\n"																						\
-"{\n"																								\
-"	vec3 p0 = gl_in[0].gl_Position.xyz / gl_in[0].gl_Position.w;\n"									\
-"	vec3 p1 = gl_in[1].gl_Position.xyz / gl_in[1].gl_Position.w;\n"									\
-"	vec3 p2 = gl_in[2].gl_Position.xyz / gl_in[2].gl_Position.w;\n"									\
-"	vec3 p3 = gl_in[3].gl_Position.xyz / gl_in[3].gl_Position.w;\n"									\
-"	vec3 p4 = gl_in[4].gl_Position.xyz / gl_in[4].gl_Position.w;\n"									\
-"	vec3 p5 = gl_in[5].gl_Position.xyz / gl_in[5].gl_Position.w;\n"									\
-"\n"																								\
-"	if (gl_in[0].gl_Position.w > 0.0 && gl_in[1].gl_Position.w > 0.0 && gl_in[2].gl_Position.w > 0.0 && gl_in[3].gl_Position.w > 0.0 && gl_in[4].gl_Position.w > 0.0 && gl_in[5].gl_Position.w > 0.0 && isFrontFacing(p0, p2, p4))\n" \
-"	{\n"																							\
-"		if (!isFrontFacing(p0, p1, p2))\n"															\
-"			emitEdgeQuad(p0, p2);\n"																\
-"		if (!isFrontFacing(p2, p3, p4))\n"															\
-"			emitEdgeQuad(p2, p4);\n"																\
-"		if (!isFrontFacing(p4, p5, p0))\n"															\
-"			emitEdgeQuad(p4, p0);\n"																\
-"	}\n"																							\
-"\n"																								\
-"	// Output the original triangle\n"																\
-"	fIsEdge = 0; // this is not part of an edge\n"													\
-"\n"																								\
-"	gs_out.fPosition = gs_in[0].gPosition;\n"														\
-"	gs_out.fNormal = gs_in[0].gNormal;\n"															\
-"	gs_out.fColor = gs_in[0].gColor;\n"																\
-"	gs_out.fTexCoord = gs_in[0].gTexCoord;\n"														\
-"	gl_Position = gl_in[0].gl_Position;\n"															\
-"	EmitVertex();\n"																				\
-"\n"																								\
-"	gs_out.fPosition = gs_in[2].gPosition;\n"														\
-"	gs_out.fNormal = gs_in[2].gNormal;\n"															\
-"	gs_out.fColor = gs_in[2].gColor;\n"																\
-"	gs_out.fTexCoord = gs_in[2].gTexCoord;\n"														\
-"	gl_Position = gl_in[2].gl_Position;\n"															\
-"	EmitVertex();\n"																				\
-"\n"																								\
-"	gs_out.fPosition = gs_in[4].gPosition;\n"														\
-"	gs_out.fNormal = gs_in[4].gNormal;\n"															\
-"	gs_out.fColor = gs_in[4].gColor;\n"																\
-"	gs_out.fTexCoord = gs_in[4].gTexCoord;\n"														\
-"	gl_Position = gl_in[4].gl_Position;\n"															\
-"	EmitVertex();\n"																				\
-"\n"																								\
-"	EndPrimitive();\n"																				\
+#define CartoonGeometry \
+"#version 330 core\n" \
+"\n" \
+"layout(triangles_adjacency) in;\n" \
+"layout(triangle_strip, max_vertices = 15) out;\n" \
+"\n" \
+"uniform mat4 model_matrix;\n" \
+"\n" \
+"in VS_OUT\n" \
+"{\n" \
+"  vec3 gPosition;\n" \
+"  vec3 gNormal;\n" \
+"  vec4 gColor;\n" \
+"  vec2 gTexCoord;\n" \
+"} gs_in[];\n" \
+"\n" \
+"out GS_OUT\n" \
+"{\n" \
+"  vec3 fPosition;\n" \
+"  vec3 fNormal;\n" \
+"  vec4 fColor;\n" \
+"  vec2 fTexCoord;\n" \
+"} gs_out;\n" \
+"\n" \
+"flat out int fIsEdge; // which output primitives are silhouette edges\n" \
+"\n" \
+"uniform float edgeWidth; // width of silhouette edge in clip\n" \
+"//uniform float pctExtend; // percentage to extend quad\n" \
+"\n" \
+"bool isFrontFacing(vec3 a, vec3 b, vec3 c) // is a triangle front facing?\n" \
+"{\n" \
+"	// Compute the triangle's z coordinate of the normal vector (cross product)\n" \
+"	return ((a.x * b.y - b.x * a.y) + (b.x * c.y - c.x * b.y) + (c.x * a.y - a.x * c.y)) > 0.0;\n" \
+"}\n" \
+"\n" \
+"void emitEdgeQuad(vec3 e0, vec3 e1)\n" \
+"{\n" \
+"	float pctExtend = 0.0;\n" \
+"\n" \
+"	vec2 ext = pctExtend * (e1.xy - e0.xy);\n" \
+"	vec2 v = normalize(e1.xy - e0.xy);\n" \
+"	vec2 n = vec2(-v.y, v.x) * edgeWidth;\n" \
+"\n" \
+"	// Emit the quad\n" \
+"	fIsEdge = 1; // this is part of an edge\n" \
+"\n" \
+"	vec4 a = vec4(e0.xy - ext, e0.z, 1.0);\n" \
+"	gs_out.fPosition = vec3(model_matrix * a);\n" \
+"	gl_Position = a;\n" \
+"	EmitVertex();\n" \
+"	vec4 b = vec4(e0.xy - n - ext, e0.z, 1.0);\n" \
+"	gs_out.fPosition = vec3(model_matrix * b);\n" \
+"	gl_Position = b;\n" \
+"	EmitVertex();\n" \
+"	vec4 c = vec4(e1.xy + ext, e1.z, 1.0);\n" \
+"	gs_out.fPosition = vec3(model_matrix * c);\n" \
+"	gl_Position = c;\n" \
+"	EmitVertex();\n" \
+"	vec4 d = vec4(e1.xy - n + ext, e1.z, 1.0);\n" \
+"	gs_out.fPosition = vec3(model_matrix * d);\n" \
+"	gl_Position = d;\n" \
+"	EmitVertex();\n" \
+"\n" \
+"	EndPrimitive();\n" \
+"}\n" \
+"\n" \
+"void main()\n" \
+"{\n" \
+"	vec3 p0 = gl_in[0].gl_Position.xyz / gl_in[0].gl_Position.w;\n" \
+"	vec3 p1 = gl_in[1].gl_Position.xyz / gl_in[1].gl_Position.w;\n" \
+"	vec3 p2 = gl_in[2].gl_Position.xyz / gl_in[2].gl_Position.w;\n" \
+"	vec3 p3 = gl_in[3].gl_Position.xyz / gl_in[3].gl_Position.w;\n" \
+"	vec3 p4 = gl_in[4].gl_Position.xyz / gl_in[4].gl_Position.w;\n" \
+"	vec3 p5 = gl_in[5].gl_Position.xyz / gl_in[5].gl_Position.w;\n" \
+"\n" \
+"	if (gl_in[0].gl_Position.w > 0.0 && gl_in[1].gl_Position.w > 0.0 && gl_in[2].gl_Position.w > 0.0\n" \
+"   && gl_in[3].gl_Position.w > 0.0 && gl_in[4].gl_Position.w > 0.0 && gl_in[5].gl_Position.w > 0.0 && isFrontFacing(p0, p2, p4))\n" \
+"	{\n" \
+"		if (!isFrontFacing(p0, p1, p2))\n" \
+"			emitEdgeQuad(p0, p2);\n" \
+"		if (!isFrontFacing(p2, p3, p4))\n" \
+"			emitEdgeQuad(p2, p4);\n" \
+"		if (!isFrontFacing(p4, p5, p0))\n" \
+"			emitEdgeQuad(p4, p0);\n" \
+"	}\n" \
+"\n" \
+"	// Output the original triangle\n" \
+"	fIsEdge = 0; // this is not part of an edge\n" \
+"\n" \
+"	gs_out.fPosition = gs_in[0].gPosition;\n" \
+"	gs_out.fNormal = gs_in[0].gNormal;\n" \
+"	gs_out.fColor = gs_in[0].gColor;\n" \
+"	gs_out.fTexCoord = gs_in[0].gTexCoord;\n" \
+"	gl_Position = gl_in[0].gl_Position;\n" \
+"	EmitVertex();\n" \
+"\n" \
+"	gs_out.fPosition = gs_in[2].gPosition;\n" \
+"	gs_out.fNormal = gs_in[2].gNormal;\n" \
+"	gs_out.fColor = gs_in[2].gColor;\n" \
+"	gs_out.fTexCoord = gs_in[2].gTexCoord;\n" \
+"	gl_Position = gl_in[2].gl_Position;\n" \
+"	EmitVertex();\n" \
+"\n" \
+"	gs_out.fPosition = gs_in[4].gPosition;\n" \
+"	gs_out.fNormal = gs_in[4].gNormal;\n" \
+"	gs_out.fColor = gs_in[4].gColor;\n" \
+"	gs_out.fTexCoord = gs_in[4].gTexCoord;\n" \
+"	gl_Position = gl_in[4].gl_Position;\n" \
+"	EmitVertex();\n" \
+"\n" \
+"	EndPrimitive();\n" \
 "}"
 
-#define CartoonFragment																	\
-"#version 330 core\n"																	\
-"\n"																					\
-"layout(location = 0) out vec4 gPosition;\n"											\
-"layout(location = 1) out vec4 gNormal;\n"												\
-"layout(location = 2) out vec4 gAlbedoSpec;\n"											\
-"layout(location = 3) out vec4 gInfo;\n"												\
-"\n"																					\
-"in GS_OUT\n"																			\
-"{\n"																					\
-"  vec3 fPosition;\n"																	\
-"  vec3 fNormal;\n"																		\
-"  vec4 fColor;\n"																		\
-"  vec2 fTexCoord;\n"																	\
-"} fs_in;\n"																			\
-"\n"																					\
-"flat in int fIsEdge; // whether or not we're drawing an edge\n"						\
-"\n"																					\
-"struct Material\n"																		\
-"{\n"																					\
-"	sampler2D albedo;\n"																\
-"};\n"																					\
-"\n"																					\
+#define CartoonFragment \
+"#version 330 core\n" \
+"\n" \
+"layout(location = 0) out vec4 gPosition;\n" \
+"layout(location = 1) out vec4 gNormal;\n" \
+"layout(location = 2) out vec4 gAlbedoSpec;\n" \
+"layout(location = 3) out vec4 gInfo;\n" \
+"\n" \
+"in GS_OUT\n" \
+"{\n" \
+"  vec3 fPosition;\n" \
+"  vec3 fNormal;\n" \
+"  vec4 fColor;\n" \
+"  vec2 fTexCoord;\n" \
+"} fs_in;\n" \
+"\n" \
+"flat in int fIsEdge; // whether or not we're drawing an edge\n" \
+"\n" \
+"struct Material\n" \
+"{\n" \
+"	sampler2D albedo;\n" \
+"};\n" \
+"\n" \
 "struct Fog\n" \
 "{\n" \
 "	vec3 color;\n" \
@@ -873,43 +871,43 @@
 "uniform Fog fog;\n" \
 "uniform mat4 view_matrix;\n" \
 "\n" \
-"uniform int animate;\n"																\
+"uniform int animate;\n" \
 "\n" \
-"uniform Material material;\n"															\
-"uniform vec4 color;\n"																	\
-"uniform float pct;\n"																	\
-"uniform int lightCartoon;\n"															\
 "uniform sampler2D gInfoTexture;\n"	\
+"\n" \
+"uniform Material material;\n" \
+"\n" \
+"uniform vec4 color;\n" \
+"uniform float pct;\n" \
+"uniform int lightCartoon;\n" \
 "\n" \
 "uniform int dot;\n" \
 "uniform vec2 screenSize;\n" \
-"\n"																					\
-"//uniform vec3 lineColor; // the silhouette edge color\n"								\
-"//uniform int levels;\n"																\
-"\n"																					\
-"uniform uint layer;\n"																	\
-"\n"																					\
-"void main()\n"																			\
-"{\n"																					\
-"	vec3 lineColor = vec3(0.0, 0.0, 0.0);\n"											\
-"	int levels = 2;\n"																	\
-"\n"																					\
-"	// If we're drawing an edge, use constant color\n"									\
-"	if (fIsEdge == 1)\n"																\
-"	{\n"																				\
-"		gNormal.a = 1;\n"																\
-"		gPosition.a = 3;\n"																\
-"\n"																					\
-"		gAlbedoSpec = vec4(lineColor, 1.0);\n"											\
-"	}\n"																				\
-"	// Otherwise, shade the poly\n"														\
-"	else\n"																				\
-"	{\n"																				\
-"		gNormal.a = levels;\n"															\
-"		gPosition.a = lightCartoon;\n"													\
-"\n"																					\
-"		gAlbedoSpec = mix(texture(material.albedo, fs_in.fTexCoord), color, pct);\n"	\
-"\n"																					\
+"\n" \
+"//uniform vec3 lineColor; // the silhouette edge color\n" \
+"//uniform int levels;\n" \
+"\n" \
+"void main()\n"	\
+"{\n" \
+"	vec3 lineColor = vec3(0.0, 0.0, 0.0);\n" \
+"	int levels = 2;\n" \
+"\n" \
+"	// If we're drawing an edge, use constant color\n" \
+"	if (fIsEdge == 1)\n" \
+"	{\n" \
+"		gNormal.a = 1;\n" \
+"		gPosition.a = 3;\n" \
+"\n" \
+"		gAlbedoSpec = vec4(lineColor, 1.0);\n" \
+"	}\n" \
+"	// Otherwise, shade the poly\n" \
+"	else\n" \
+"	{\n" \
+"		gNormal.a = levels;\n" \
+"		gPosition.a = lightCartoon;\n" \
+"\n" \
+"		gAlbedoSpec = mix(texture(material.albedo, fs_in.fTexCoord), color, pct);\n" \
+"\n" \
 "	if (animate != 1)\n" \
 "	{\n" \
 "	vec4 modelViewPos = view_matrix * vec4(fs_in.fPosition, 1.0);\n" \
@@ -920,105 +918,21 @@
 "	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
 "	gAlbedoSpec = mix(vec4(fog.color, 1.0), gAlbedoSpec, fogFactor);\n" \
 "	}\n" \
-"	}\n"																				\
-"\n"																					\
-"	gPosition.rgb = fs_in.fPosition;\n"													\
-"	gNormal.rgb = normalize(fs_in.fNormal);\n"											\
-"	vec2 screenPos = gl_FragCoord.xy;\n"												\
-"	screenPos.x /= screenSize.x;\n"														\
-"	screenPos.y /= screenSize.y;\n"														\
-"	gInfo.r = dot;\n"																	\
-"	if (dot != 1)\n"																	\
-"	gInfo.g = texture(gInfoTexture, screenPos).g;\n"									\
-"	else\n"																				\
-"	gInfo.g = 1;\n"															\
-"	gInfo.b = 0;\n"															\
-"	gInfo.a = 0;\n"															\
-"}"
-
-#define CartoonFloorFragment															\
-"#version 330 core\n"																	\
-"\n"																					\
-"layout(location = 0) out vec4 gPosition;\n"											\
-"layout(location = 1) out vec4 gNormal;\n"												\
-"layout(location = 2) out vec4 gAlbedoSpec;\n"											\
-"layout(location = 3) out uvec4 gInfo;\n"												\
-"\n"																					\
-"in GS_OUT\n"																			\
-"{\n"																					\
-"  vec3 fPosition;\n"																	\
-"  vec3 fNormal;\n"																		\
-"  vec4 fColor;\n"																		\
-"  vec2 fTexCoord;\n"																	\
-"} fs_in;\n"																			\
-"\n"																					\
-"flat in int fIsEdge; // whether or not we're drawing an edge\n"						\
-"\n"																					\
-"struct Material\n"																		\
-"{\n"																					\
-"	sampler2D albedo;\n"																\
-"};\n"																					\
-"\n"																					\
-"struct Fog\n" \
-"{\n" \
-"	vec3 color;\n" \
-"	//float minDist;\n" \
-"	//float maxDist;\n" \
-"	float density;\n" \
-"};\n" \
+"	}\n" \
 "\n" \
-"uniform Fog fog;\n" \
-"uniform mat4 view_matrix;\n" \
-"\n" \
-"uniform vec3 viewPos;\n"																\
-"uniform Material material;\n"															\
-"uniform vec2 repeat = vec2(2, 2);\n"													\
-"\n"																					\
-"//uniform vec3 lineColor; // the silhouette edge color\n"								\
-"//uniform int levels;\n"																\
-"\n"																					\
-"uniform uint layer;\n"																	\
-"\n"																					\
-"void main()\n"																			\
-"{\n"																					\
-"	vec3 lineColor = vec3(0.0, 0.0, 0.0);\n"											\
-"	int levels = 2;\n"																	\
-"\n"																					\
-"	// If we're drawing an edge, use constant color\n"									\
-"	if (fIsEdge == 1)\n"																\
-"	{\n"																				\
-"		gNormal.a = 1;\n"																\
-"		gPosition.a = 3;\n"																\
-"\n"																					\
-"		gAlbedoSpec = vec4(lineColor, 1.0);\n"											\
-"	}\n"																				\
-"	// Otherwise, shade the poly\n"														\
-"	else\n"																				\
-"	{\n"																				\
-"		gNormal.a = levels;\n"															\
-"		gPosition.a = 0;\n"																\
-"\n"																					\
-"		vec4 albedo = texture2D(material.albedo, vec2(mod(fs_in.fTexCoord.x * repeat.x, 1), mod(fs_in.fTexCoord.y * repeat.y, 1)));\n"						\
-"		vec3 diffuse = vec3(albedo);\n"													\
-"		gAlbedoSpec = vec4(diffuse, albedo.a);\n"										\
-"	}\n"																				\
-"\n"																					\
-"	vec4 modelViewPos = view_matrix * vec4(fs_in.fPosition, 1.0);\n" \
-"	float dist = length(modelViewPos.xyz);\n" \
-"	//float fogFactor = (fog.maxDist - dist) / (fog.maxDist - fog.minDist); // Linear\n" \
-"	//float fogFactor = exp(-fog.density * dist); // Exponential\n" \
-"	float fogFactor = exp(-pow(fog.density * dist, 2.0)); // Exponential Squared\n" \
-"	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
-"	gAlbedoSpec = mix(vec4(fog.color, 1.0), gAlbedoSpec, fogFactor);\n" \
-"\n"																					\
-"	gPosition.rgb = fs_in.fPosition;\n"													\
-"	gNormal.rgb = normalize(fs_in.fNormal);\n"											\
-"	gInfo.r = layer;\n"																	\
-"	gInfo.g = 0u;\n"														  			\
-"	gInfo.b = 0u;\n"																	\
-"	gInfo.a = 0u;\n"																	\
+"	gPosition.rgb = fs_in.fPosition;\n" \
+"	gNormal.rgb = normalize(fs_in.fNormal);\n" \
+"	vec2 screenPos = gl_FragCoord.xy;\n" \
+"	screenPos.x /= screenSize.x;\n" \
+"	screenPos.y /= screenSize.y;\n" \
+"	gInfo.r = dot;\n" \
+"	if (dot != 1)\n" \
+"	gInfo.g = texture(gInfoTexture, screenPos).g;\n"\
+"	else\n"	\
+"	gInfo.g = 1;\n" \
+"	gInfo.b = 0;\n" \
+"	gInfo.a = 0;\n" \
 "}"
-
 #pragma endregion
 
 #pragma region DecalShader
@@ -1079,13 +993,15 @@
 "uniform sampler2D gBufferInfo;\n" \
 "\n" \
 "uniform sampler2D projectorTex;\n" \
-"uniform float alphaMultiplier;\n" \
-"uniform int cartoonLight;\n" \
+"\n" \
+"uniform int lightCartoon;\n" \
 "\n" \
 "uniform mat4 model_matrix;\n" \
 "uniform mat4 projectorMatrix;\n" \
+"\n" \
 "uniform vec2 screenSize;\n" \
-"uniform uint filterMask;\n" \
+"\n" \
+"uniform float alphaMultiplier;\n" \
 "\n" \
 "struct Fog\n" \
 "{\n" \
@@ -1150,7 +1066,7 @@
 "	fogFactor = clamp(fogFactor, 0.0, 1.0);\n" \
 "	gAlbedoSpec = mix(vec4(fog.color, 1.0), gAlbedoSpec, fogFactor);\n" \
 "\n" \
-"	gPosition.a = cartoonLight;\n" \
+"	gPosition.a = lightCartoon;\n" \
 "	int levels = 2;\n" \
 "	gNormal.a = levels;\n" \
 "}"

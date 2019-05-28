@@ -7,6 +7,8 @@
 
 #include "MathGeoLib\include\Geometry\Frustum.h"
 
+constexpr uint MAX_NUM_PROJECTOR_LAYERS(2);
+
 /*
 Texture:
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -55,16 +57,24 @@ public:
 	uint GetMaterialRes() const;
 	std::string GetMaterialResName() const;
 
-	void SetAlphaMultiplier(float alphaMultiplier);
-	float GetAlphaMultiplier() const;
-
 	// Mesh
 	void SetMeshRes(uint meshUuid);
 	uint GetMeshRes() const;
 
+	// ----------------------------------------------------------------------------------------------------
+
+	void SetAlphaMultiplier(float alphaMultiplier);
+	float GetAlphaMultiplier() const;
+
 	// Filter mask
+	/*
 	void SetFilterMask(uint filterMask);
 	uint GetFilterMask() const;
+	*/
+
+public:
+
+	uint layer = 0;
 
 private:
 
@@ -75,7 +85,7 @@ private:
 
 	float alphaMultiplier = 1.0f; // not save&load
 
-	uint filterMask = 0;
+	//uint filterMask = 0;
 };
 
 #endif

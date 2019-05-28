@@ -23,7 +23,7 @@ public:
 	virtual void OnInternalLoad(char*& cursor);
 
 public:
-	WwiseT::AudioSource* listener;
+	WwiseT::AudioSource* listener = nullptr;
 };
 
 #endif // !__COMPONENT_AUDIO_LISTENER_H__

@@ -44,6 +44,8 @@ public:
 	uint res_avatar = 0;
 	std::vector<uint> res_animations;
 
+	GameObject* go_with_mesh = nullptr;
+
 };
 
 #endif // __COMPONENT_ANIMATOR_H__

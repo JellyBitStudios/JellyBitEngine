@@ -129,6 +129,7 @@ public:
 	{
 		NOT_DEF_STATE = -1,
 		PLAYING,
+		REWIND,
 		PAUSED,
 		STOPPED
 	};
@@ -158,6 +159,10 @@ public:
 	//For scripting, needed to discurss to add more options. Needed.
 	void Play();
 	void Stop();
+	bool IsFinished()const;
+	inline bool GetLoop() const { return loop; }
+	void SetLoop(bool loopable);
+	void Rewind();
 
 private:
 	//versions
@@ -196,7 +201,8 @@ private:
 	//Animation values
 	float animation_time = 0.0f; // Total time of animation
 	float animation_timer = 0.0f; //Internal timer
-	bool repeat = false; //TODO
+	bool loop = false;
+	bool is_finished = false;
 
 	//Origin values
 	int init_rect[4] = {0,0,100,100};

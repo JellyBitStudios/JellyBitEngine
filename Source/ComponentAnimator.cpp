@@ -13,6 +13,7 @@
 #include "ResourceAnimation.h"
 #include "AnimationImporter.h"
 #include "ResourceAvatar.h"
+#include "ModuleGOs.h"
 
 #ifndef GAMEMODE
 #include "imgui\imgui.h"
@@ -21,13 +22,14 @@
 ComponentAnimator::ComponentAnimator(GameObject* embedded_game_object) :
 	Component(embedded_game_object, ComponentTypes::AnimatorComponent)
 { 
-
+	go_with_mesh = nullptr;
 }
 
 ComponentAnimator::ComponentAnimator(GameObject* embedded_game_object, uint resource) :
 	Component(embedded_game_object, ComponentTypes::AnimatorComponent)
 {
 	SetResourceAnimator(resource);
+	go_with_mesh = nullptr;
 }
 
 ComponentAnimator::ComponentAnimator(const ComponentAnimator & component_anim, GameObject * parent, bool include) : Component(parent, ComponentTypes::AnimatorComponent)
@@ -64,7 +66,7 @@ ComponentAnimator::ComponentAnimator(const ComponentAnimator & component_anim, G
 			this->SetResourceAnimation(component_anim.res_animations.at(i));
 		}
 	}
-	
+	go_with_mesh = nullptr;
 	//App->animation->SetAnimationGos((ResourceAnimation*)App->res->GetResource(res));
 }
 
@@ -102,6 +104,7 @@ void ComponentAnimator::OnInternalSave(char*& cursor)
 		memcpy(cursor, &res_animations[i], bytes); // resource animation
 		cursor += bytes;
 	}
+	go_with_mesh = nullptr;
 }
 
 void ComponentAnimator::OnInternalLoad(char*& cursor)
@@ -128,6 +131,7 @@ void ComponentAnimator::OnInternalLoad(char*& cursor)
 		cursor += bytes;
 		SetResourceAnimation(loadedAni);
 	}
+	go_with_mesh = nullptr;
 }
 
 bool ComponentAnimator::SetResourceAnimator(uint resource)
@@ -254,9 +258,31 @@ void ComponentAnimator::Update()
 {
 	if (res != 0) {
 		ResourceAnimator* anim_res = (ResourceAnimator*)App->res->GetResource(res);
+		ResourceAvatar* avatar_res = (ResourceAvatar*)App->res->GetResource(res_avatar);
+		if (!avatar_res)
+			return;
+		uint rootUuid = avatar_res->GetRootUuid();
+		GameObject* rootGameObject = App->GOs->GetGameObjectByUID(rootUuid);
+		if (!rootGameObject)
+			return;
 
-		if (anim_res /*&& this->GetParent()->seenLastFrame*/) { //TODO WAIT
+		if (!go_with_mesh) {
+			std::vector<GameObject*>children;
+			rootGameObject->GetChildrenVector(children, false);
+
+			for (uint i = 0u; i < children.size(); i++)
+			{
+				if (children[i]->cmp_mesh != nullptr)
+					go_with_mesh = children[i];
+			}
+		}
+
+		if (go_with_mesh  && go_with_mesh->seenLastFrame) {
+			avatar_res->SetIsAnimated(true);
 			anim_res->Update();
+		}
+		else {
+			avatar_res->SetIsAnimated(false);
 		}
 	}
 }

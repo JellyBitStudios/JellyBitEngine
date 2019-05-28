@@ -97,6 +97,13 @@ void ComponentProjector::OnUniqueEditor()
 #ifndef GAMEMODE
 	if (ImGui::CollapsingHeader("Projector", ImGuiTreeNodeFlags_DefaultOpen))
 	{
+		// Layer
+		ImGui::Text("Layer"); ImGui::PushItemWidth(50.0f);
+		int newLayer = layer;
+		if (ImGui::DragInt("##layer", &newLayer, 1, 0, MAX_NUM_PROJECTOR_LAYERS))
+			layer = newLayer;
+		ImGui::PopItemWidth();
+
 		// Frustum
 		ImGui::Text("FRUSTUM");
 
@@ -153,6 +160,7 @@ void ComponentProjector::OnUniqueEditor()
 			SetMaterialRes(App->resHandler->defaultMaterial);
 
 		// Ignore layers
+		/*
 		ImGui::Spacing();
 
 		std::string title;
@@ -208,6 +216,7 @@ void ComponentProjector::OnUniqueEditor()
 			}
 			ImGui::EndCombo();
 		}
+		*/
 	}
 #endif
 }
@@ -235,8 +244,14 @@ void ComponentProjector::OnInternalSave(char*& cursor)
 	cursor += bytes;
 
 	bytes = sizeof(uint);
+	memcpy(cursor, &layer, bytes);
+	cursor += bytes;
+
+	/*
+	bytes = sizeof(uint);
 	memcpy(cursor, &filterMask, bytes);
 	cursor += bytes;
+	*/
 
 	/*
 	bytes = sizeof(float);
@@ -272,8 +287,14 @@ void ComponentProjector::OnInternalLoad(char*& cursor)
 		SetMeshRes(App->resHandler->cube);
 
 	bytes = sizeof(uint);
+	memcpy(&layer, cursor, bytes);
+	cursor += bytes;
+
+	/*
+	bytes = sizeof(uint);
 	memcpy(&filterMask, cursor, bytes);
 	cursor += bytes;
+	*/
 
 	/*
 	bytes = sizeof(float);
@@ -291,18 +312,15 @@ void ComponentProjector::Draw() const
 	if (resourceMaterial == nullptr)
 		return;
 
-	const ResourceShaderProgram* resourceShaderProgram = (ResourceShaderProgram*)App->res->GetResource(resourceMaterial->GetShaderUuid());
-	if (resourceShaderProgram == nullptr)
+	const ResourceShaderProgram* resourceShader = (ResourceShaderProgram*)App->res->GetResource(resourceMaterial->GetShaderUuid());
+	if (resourceShader == nullptr)
 		return;
 
 	/// Projective texture mapping shader
-	uint shaderProgram = resourceShaderProgram->shaderProgram;
+	uint shaderProgram = resourceShader->shaderProgram;
 	App->glCache->SwitchShader(shaderProgram);
 
-	// 1. Generic uniforms
-	App->renderer3D->LoadGenericUniforms(shaderProgram);
-
-	// 2. Known projector uniforms
+	// 1. Known projector uniforms
 	math::float4x4 bias_matrix = math::float4x4(
 		0.5f, 0.0f, 0.0f, 0.5f,
 		0.0f, 0.5f, 0.0f, 0.5f,
@@ -383,10 +401,6 @@ void ComponentProjector::Draw() const
 	if (location != -1)
 		glUniform1f(location, alphaMultiplier);
 
-	location = glGetUniformLocation(shaderProgram, "filterMask");
-	if (location != -1)
-		glUniform1i(location, filterMask);
-
 	// Fog
 	location = glGetUniformLocation(shaderProgram, "view_matrix");
 	if (location != -1)
@@ -398,32 +412,15 @@ void ComponentProjector::Draw() const
 	location = glGetUniformLocation(shaderProgram, "fog.color");
 	if (location != -1)
 		glUniform3fv(location, 1, &App->lights->fog.color[0]);
-	/*
-	location = glGetUniformLocation(resProgram->shaderProgram, "fog.minDist");
-	if (location != -1)
-	glUniform1f(location, App->lights->fog.minDist);
-	location = glGetUniformLocation(resProgram->shaderProgram, "fog.maxDist");
-	if (location != -1)
-	glUniform1f(location, App->lights->fog.maxDist);
-	*/
+
 	location = glGetUniformLocation(shaderProgram, "fog.density");
 	if (location != -1)
 		glUniform1f(location, App->lights->fog.density);
 
-	// 3. Unknown uniforms
-	std::vector<Uniform> uniforms = resourceMaterial->GetUniforms();
-	std::vector<const char*> ignore;
-	ignore.push_back("gBufferPosition");
-	ignore.push_back("gBufferNormal");
-	ignore.push_back("gInfo");
-	ignore.push_back("screenSize");
-	ignore.push_back("filterMask");
-	ignore.push_back("alphaMultiplier");
-	ignore.push_back("view_matrix");
-	ignore.push_back("fog.color");
-	ignore.push_back("fog.density");
-
-	App->renderer3D->LoadSpecificUniforms(textureUnit, uniforms, ignore);
+	// 2. Unknown uniforms
+	std::vector<const char*> ignoreUniforms;
+	resourceMaterial->GetIgnoreUniforms(ignoreUniforms);
+	App->renderer3D->LoadSpecificUniforms(textureUnit, resourceMaterial->GetUniforms(), ignoreUniforms);
 
 	glDepthMask(false);
 
@@ -553,21 +550,6 @@ std::string ComponentProjector::GetMaterialResName() const
 	return "";
 }
 
-void ComponentProjector::SetAlphaMultiplier(float alphaMultiplier)
-{
-	this->alphaMultiplier = alphaMultiplier;
-
-	if (this->alphaMultiplier < 0.0f)
-		this->alphaMultiplier = 0.0f;
-	else if (this->alphaMultiplier > 1.0f)
-		this->alphaMultiplier = 1.0f;
-}
-
-float ComponentProjector::GetAlphaMultiplier() const
-{
-	return alphaMultiplier;
-}
-
 void ComponentProjector::SetMeshRes(uint meshUuid)
 {
 	if (meshRes > 0)
@@ -584,6 +566,24 @@ uint ComponentProjector::GetMeshRes() const
 	return meshRes;
 }
 
+// ----------------------------------------------------------------------------------------------------
+
+void ComponentProjector::SetAlphaMultiplier(float alphaMultiplier)
+{
+	this->alphaMultiplier = alphaMultiplier;
+
+	if (this->alphaMultiplier < 0.0f)
+		this->alphaMultiplier = 0.0f;
+	else if (this->alphaMultiplier > 1.0f)
+		this->alphaMultiplier = 1.0f;
+}
+
+float ComponentProjector::GetAlphaMultiplier() const
+{
+	return alphaMultiplier;
+}
+
+/*
 void ComponentProjector::SetFilterMask(uint filterMask)
 {
 	this->filterMask = filterMask;
@@ -593,3 +593,4 @@ uint ComponentProjector::GetFilterMask() const
 {
 	return filterMask;
 }
+*/

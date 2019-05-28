@@ -150,16 +150,17 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			std::vector<Resource*> materials = GetResourcesByType(ResourceTypes::MaterialResource);
 			for (uint i = 0; i < materials.size(); ++i)
 			{
-				ResourceMaterial* material = (ResourceMaterial*)materials[i];
-				ResourceShaderProgram* shader = (ResourceShaderProgram*)GetResource(material->GetShaderUuid());
-				if (strcmp(shader->GetFile(), event.fileEvent.file) == 0)
+				ResourceMaterial* resourceMaterial = (ResourceMaterial*)materials[i];
+				ResourceShaderProgram* resourceShader = (ResourceShaderProgram*)GetResource(resourceMaterial->GetShaderUuid());
+				if (strcmp(resourceShader->GetFile(), event.fileEvent.file) == 0)
 				{
 					// Update the existing material
-					material->UpdateResourceShader();
-
-					// Export the existing file
-					std::string outputFile;
-					App->res->ExportFile(ResourceTypes::MaterialResource, material->GetData(), &material->GetSpecificData(), outputFile, true, false);
+					if (resourceMaterial->UpdateResourceShader())
+					{
+						// Export the existing file
+						std::string outputFile;
+						App->res->ExportFile(ResourceTypes::MaterialResource, resourceMaterial->GetData(), &resourceMaterial->GetSpecificData(), outputFile, true, false);
+					}
 				}
 			}
 		}
@@ -309,9 +310,9 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			std::vector<Resource*> materials = GetResourcesByType(ResourceTypes::MaterialResource);
 			for (uint i = 0; i < materials.size(); ++i)
 			{
-				ResourceMaterial* material = (ResourceMaterial*)materials[i];
+				ResourceMaterial* resourceMaterial = (ResourceMaterial*)materials[i];
 
-				std::vector<Uniform>& uniforms = material->GetUniforms();
+				std::vector<Uniform>& uniforms = resourceMaterial->GetUniforms();
 				for (uint i = 0; i < uniforms.size(); ++i)
 				{
 					switch (uniforms[i].common.type)
@@ -319,7 +320,7 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 					case Uniforms_Values::Sampler2U_value:
 					{
 						if (uniforms[i].sampler2DU.value.uuid == uuid)
-							material->SetResourceTexture(App->resHandler->defaultTexture, uniforms[i].sampler2DU.value.uuid, uniforms[i].sampler2DU.value.id);
+							resourceMaterial->SetResourceTexture(App->resHandler->defaultTexture, uniforms[i].sampler2DU.value.uuid, uniforms[i].sampler2DU.value.id);
 					}
 					break;
 					}
@@ -358,9 +359,9 @@ void ModuleResourceManager::OnSystemEvent(System_Event event)
 			std::vector<Resource*> materials = GetResourcesByType(ResourceTypes::MaterialResource);
 			for (uint i = 0; i < materials.size(); ++i)
 			{
-				ResourceMaterial* material = (ResourceMaterial*)materials[i];
-				if (material->materialData.shaderUuid == uuid)
-					material->SetResourceShader(App->resHandler->defaultShaderProgram);
+				ResourceMaterial* resourceMaterial = (ResourceMaterial*)materials[i];
+				if (resourceMaterial->materialData.shaderUuid == uuid)
+					resourceMaterial->SetResourceShader(App->resHandler->defaultShaderProgram);
 			}
 		}
 		break;
@@ -775,11 +776,13 @@ Resource* ModuleResourceManager::ImportFile(const char* file, bool buildEvent)
 				resource = CreateResource(ResourceTypes::MaterialResource, data, &materialData, uuid);
 				
 				// Update the existing material
-				((ResourceMaterial*)resource)->UpdateResourceShader();
-
-				// Export the existing file
-				std::string outputFile;
-				App->res->ExportFile(ResourceTypes::MaterialResource, data, &materialData, outputFile, true, false);
+				ResourceMaterial* material = (ResourceMaterial*)resource;
+				if (material->UpdateResourceShader())
+				{
+					// Export the existing file
+					std::string outputFile;
+					App->res->ExportFile(ResourceTypes::MaterialResource, material->GetData(), &material->GetSpecificData(), outputFile, true, false);
+				}
 			}
 			else
 				resource = GetResource(resourcesUuids.front());

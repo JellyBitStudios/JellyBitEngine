@@ -988,6 +988,9 @@ void PanelInspector::ShowMaterialInspector() const
 
 		for (uint i = 0; i < IM_ARRAYSIZE(shaderTypes); ++i)
 		{
+			if (strcmp(shaderTypes[i], "Source") == 0)
+				continue;
+
 			for (uint j = 0; j < shaderResources.size(); ++j)
 			{
 				ResourceShaderProgram* shaderResource = (ResourceShaderProgram*)shaderResources[j];
@@ -1027,148 +1030,175 @@ void PanelInspector::ShowMaterialInspector() const
 	if (ImGui::Button("EDIT"))
 		App->gui->panelShaderEditor->OpenShaderInShaderEditor(shader->GetUuid());
 
-	ImGui::Spacing();
-
 	// Uniforms
 	std::vector<Uniform>& uniforms = material->GetUniforms();
-	for (uint i = 0; i < uniforms.size(); ++i)
+	if (!uniforms.empty())
 	{
-		if (i == 0)
-			ImGui::Text("Uniforms");
-
-		Uniform& uniform = uniforms[i];
-		ImGui::Text(uniform.common.name);
-		ImGui::SameLine();
-
-		bool exportFile = false;
-		sprintf(id, "##uniform%u", i);
-		ImGui::PushItemWidth(100.0f);
-		switch (uniform.common.type)
+		std::vector<const char*> ignoreUniforms;
+		if (shader->GetShaderProgramType() == ShaderProgramTypes::Custom)
 		{
-		case Uniforms_Values::FloatU_value:
-			if (ImGui::InputFloat(id, &uniform.floatU.value))
-				exportFile = true;
-			break;
-		case Uniforms_Values::IntU_value:
-			if (ImGui::InputInt(id, (int*)&uniform.intU.value))
-				exportFile = true;
-			break;
-		case Uniforms_Values::Vec2FU_value:
-		{
-			float v[] = { uniform.vec2FU.value.x, uniform.vec2FU.value.y };
-			if (ImGui::InputFloat2(id, v))
-			{
-				uniform.vec2FU.value.x = v[0];
-				uniform.vec2FU.value.y = v[1];
+			// Standard ignore uniforms
+			ignoreUniforms.push_back("animate");
 
-				exportFile = true;
-			}
-			break;
+			ignoreUniforms.push_back("fog.color");
+			ignoreUniforms.push_back("fog.density");
+
+			ignoreUniforms.push_back("gInfoTexture");
+
+			ignoreUniforms.push_back("dot");
+			ignoreUniforms.push_back("screenSize");
 		}
-		case Uniforms_Values::Vec3FU_value:
-		{
-			float v[] = { uniform.vec3FU.value.x, uniform.vec3FU.value.y , uniform.vec3FU.value.z };
-			if (ImGui::InputFloat3(id, v))
-			{
-				uniform.vec3FU.value.x = v[0];
-				uniform.vec3FU.value.y = v[1];
-				uniform.vec3FU.value.z = v[2];
+		else
+			material->GetIgnoreUniforms(ignoreUniforms);
 
-				exportFile = true;
-			}
-			break;
-		}
-		case Uniforms_Values::Vec4FU_value:
-		{
-			float v[] = { uniform.vec4FU.value.x, uniform.vec4FU.value.y , uniform.vec4FU.value.z, uniform.vec4FU.value.w };
-			if (ImGui::InputFloat4(id, v))
-			{
-				uniform.vec4FU.value.x = v[0];
-				uniform.vec4FU.value.y = v[1];
-				uniform.vec4FU.value.z = v[2];
-				uniform.vec4FU.value.w = v[3];
+		ImGui::Spacing();
+		ImGui::Text("UNIFORMS");
 
-				exportFile = true;
-			}
-			break;
-		}
-		case Uniforms_Values::Vec2IU_value:
+		for (uint i = 0; i < uniforms.size(); ++i)
 		{
-			int v[] = { uniform.vec2IU.value.x, uniform.vec2IU.value.y };
-			if (ImGui::InputInt2(id, v))
-			{
-				uniform.vec2IU.value.x = v[0];
-				uniform.vec2IU.value.y = v[1];
+			Uniform& uniform = uniforms[i];
 
-				exportFile = true;
-			}
-			break;
-		}
-		case Uniforms_Values::Vec3IU_value:
-		{
-			int v[] = { uniform.vec3IU.value.x, uniform.vec3IU.value.y , uniform.vec3IU.value.z };
-			if (ImGui::InputInt3(id, v))
+			for (uint j = 0; j < ignoreUniforms.size(); ++j)
 			{
-				uniform.vec3IU.value.x = v[0];
-				uniform.vec3IU.value.y = v[1];
-				uniform.vec3IU.value.z = v[2];
-
-				exportFile = true;
-			}
-			break;
-		}
-		case Uniforms_Values::Vec4IU_value:
-		{
-			int v[] = { uniform.vec4IU.value.x, uniform.vec4IU.value.y , uniform.vec4IU.value.z, uniform.vec4IU.value.w };
-			if (ImGui::InputInt4(id, v))
-			{
-				uniform.vec4IU.value.x = v[0];
-				uniform.vec4IU.value.y = v[1];
-				uniform.vec4IU.value.z = v[2];
-				uniform.vec4IU.value.w = v[3];
-
-				exportFile = true;
-			}
-			break;
-		}
-		case Uniforms_Values::Sampler2U_value:
-		{
-			ImGui::PushID("texture");
-			ResourceTexture* texture = (ResourceTexture*)App->res->GetResource(uniform.sampler2DU.value.uuid);
-			ImGui::Button(texture == nullptr ? "Empty texture" : texture->GetName(), ImVec2(150.0f, 0.0f));
-			ImGui::PopID();
-
-			if (ImGui::IsItemHovered())
-			{
-				ImGui::BeginTooltip();
-				ImGui::Text("%u", uniform.sampler2DU.value.id);
-				ImGui::EndTooltip();
+				if (strcmp(uniform.common.name, ignoreUniforms[j]) == 0)
+					goto hereWeGo;
 			}
 
-			if (ImGui::BeginDragDropTarget())
+			ImGui::Text(uniform.common.name);
+			ImGui::SameLine();
+
+			bool exportFile = false;
+			sprintf(id, "##uniform%u", i);
+			ImGui::PushItemWidth(100.0f);
+			switch (uniform.common.type)
 			{
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE_INSPECTOR_SELECTOR"))
+			case Uniforms_Values::FloatU_value:
+				if (ImGui::InputFloat(id, &uniform.floatU.value))
+					exportFile = true;
+				break;
+			case Uniforms_Values::IntU_value:
+				if (ImGui::InputInt(id, (int*)&uniform.intU.value))
+					exportFile = true;
+				break;
+			case Uniforms_Values::Vec2FU_value:
+			{
+				float v[] = { uniform.vec2FU.value.x, uniform.vec2FU.value.y };
+				if (ImGui::InputFloat2(id, v))
 				{
-					uint payload_n = *(uint*)payload->Data;
-
-					// Update the existing material
-					material->SetResourceTexture(payload_n, uniform.sampler2DU.value.uuid, uniform.sampler2DU.value.id);
+					uniform.vec2FU.value.x = v[0];
+					uniform.vec2FU.value.y = v[1];
 
 					exportFile = true;
 				}
-				ImGui::EndDragDropTarget();
+				break;
+			}
+			case Uniforms_Values::Vec3FU_value:
+			{
+				float v[] = { uniform.vec3FU.value.x, uniform.vec3FU.value.y , uniform.vec3FU.value.z };
+				if (ImGui::InputFloat3(id, v))
+				{
+					uniform.vec3FU.value.x = v[0];
+					uniform.vec3FU.value.y = v[1];
+					uniform.vec3FU.value.z = v[2];
+
+					exportFile = true;
+				}
+				break;
+			}
+			case Uniforms_Values::Vec4FU_value:
+			{
+				float v[] = { uniform.vec4FU.value.x, uniform.vec4FU.value.y , uniform.vec4FU.value.z, uniform.vec4FU.value.w };
+				if (ImGui::InputFloat4(id, v))
+				{
+					uniform.vec4FU.value.x = v[0];
+					uniform.vec4FU.value.y = v[1];
+					uniform.vec4FU.value.z = v[2];
+					uniform.vec4FU.value.w = v[3];
+
+					exportFile = true;
+				}
+				break;
+			}
+			case Uniforms_Values::Vec2IU_value:
+			{
+				int v[] = { uniform.vec2IU.value.x, uniform.vec2IU.value.y };
+				if (ImGui::InputInt2(id, v))
+				{
+					uniform.vec2IU.value.x = v[0];
+					uniform.vec2IU.value.y = v[1];
+
+					exportFile = true;
+				}
+				break;
+			}
+			case Uniforms_Values::Vec3IU_value:
+			{
+				int v[] = { uniform.vec3IU.value.x, uniform.vec3IU.value.y , uniform.vec3IU.value.z };
+				if (ImGui::InputInt3(id, v))
+				{
+					uniform.vec3IU.value.x = v[0];
+					uniform.vec3IU.value.y = v[1];
+					uniform.vec3IU.value.z = v[2];
+
+					exportFile = true;
+				}
+				break;
+			}
+			case Uniforms_Values::Vec4IU_value:
+			{
+				int v[] = { uniform.vec4IU.value.x, uniform.vec4IU.value.y , uniform.vec4IU.value.z, uniform.vec4IU.value.w };
+				if (ImGui::InputInt4(id, v))
+				{
+					uniform.vec4IU.value.x = v[0];
+					uniform.vec4IU.value.y = v[1];
+					uniform.vec4IU.value.z = v[2];
+					uniform.vec4IU.value.w = v[3];
+
+					exportFile = true;
+				}
+				break;
+			}
+			case Uniforms_Values::Sampler2U_value:
+			{
+				ImGui::PushID("texture");
+				ResourceTexture* texture = (ResourceTexture*)App->res->GetResource(uniform.sampler2DU.value.uuid);
+				ImGui::Button(texture == nullptr ? "Empty texture" : texture->GetName(), ImVec2(150.0f, 0.0f));
+				ImGui::PopID();
+
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("%u", uniform.sampler2DU.value.id);
+					ImGui::EndTooltip();
+				}
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TEXTURE_INSPECTOR_SELECTOR"))
+					{
+						uint payload_n = *(uint*)payload->Data;
+
+						// Update the existing material
+						material->SetResourceTexture(payload_n, uniform.sampler2DU.value.uuid, uniform.sampler2DU.value.id);
+
+						exportFile = true;
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				break;
+			}
+			}
+			ImGui::PopItemWidth();
+
+			if (exportFile)
+			{
+				// Export the existing file
+				std::string outputFile;
+				ResourceMaterial::ExportFile(material->GetData(), material->GetSpecificData(), outputFile, true);
 			}
 
-			break;
-		}
-		}
-		ImGui::PopItemWidth();
-
-		if (exportFile)
-		{
-			// Export the existing file
-			std::string outputFile;
-			ResourceMaterial::ExportFile(material->GetData(), material->GetSpecificData(), outputFile, true);
+		hereWeGo:;
 		}
 	}
 }

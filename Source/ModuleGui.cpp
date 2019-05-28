@@ -37,7 +37,7 @@
 #include "imgui\imgui_impl_opengl3.h"
 #include "imgui\imgui_internal.h"
 
-#include "Brofiler\Brofiler.h"
+#include "Optick/include/optick.h"
 #include "ImGuizmo\ImGuizmo.h"
 
 ModuleGui::ModuleGui(bool start_enabled) : Module(start_enabled)
@@ -120,7 +120,7 @@ bool ModuleGui::Start()
 update_status ModuleGui::PreUpdate() 
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleGUI_PreUpdate", Optick::Category::UI);
 #endif // !GAMEMODE
 	// Start the frame
 	ImGui_ImplOpenGL3_NewFrame();
@@ -138,7 +138,7 @@ update_status ModuleGui::PreUpdate()
 update_status ModuleGui::Update()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleGUI_Update", Optick::Category::UI);
 #endif
 
 #ifdef _DEBUG
@@ -247,7 +247,7 @@ update_status ModuleGui::Update()
 update_status ModuleGui::PostUpdate()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleGUI_PostUpdate", Optick::Category::UI);
 #endif // !GAMEMODE
 	// End dock space
 	ImGui::End();

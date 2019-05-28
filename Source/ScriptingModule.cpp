@@ -13,6 +13,7 @@
 #include "ComponentImage.h"
 #include "ComponentLabel.h"
 #include "ComponentSlider.h"
+#include "ComponentUIAnimation.h"
 #include "ComponentAudioSource.h"
 #include "ComponentAudioListener.h"
 #include "ComponentRigidDynamic.h"
@@ -51,9 +52,10 @@
 #include "ModuleWindow.h"
 
 #include "MathGeoLib/include/MathGeoLib.h"
-#include "Brofiler/Brofiler.h"
-
+#include "Optick/include/optick.h"
 #include "parson/parson.h"
+
+#include <mono/metadata/mono-gc.h>
 
 bool exec(const char* cmd, std::string& error)
 {
@@ -132,7 +134,7 @@ update_status ScriptingModule::PreUpdate()
 update_status ScriptingModule::Update()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ScriptingModule_Update", Optick::Category::Script);
 #endif
 
 	std::vector<Resource*> res = App->res->GetResourcesByType(ResourceTypes::NoResourceType);
@@ -148,7 +150,7 @@ update_status ScriptingModule::Update()
 update_status ScriptingModule::PostUpdate()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ScriptingModule_PostUpdate", Optick::Category::Script);
 #endif // !GAMEMODE
 	if (someScriptModified || engineOpened)
 	{
@@ -577,6 +579,11 @@ MonoObject* ScriptingModule::MonoComponentFrom(Component* component, bool create
 		case ComponentTypes::SliderComponent:
 		{
 			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine.UI", "Slider"));
+			break;
+		}
+		case ComponentTypes::UIAnimationComponent:
+		{
+			monoComponent = mono_object_new(App->scripting->domain, mono_class_from_name(App->scripting->internalImage, "JellyBitEngine.UI", "AnimationUI"));
 			break;
 		}
 		case ComponentTypes::RigidDynamicComponent:
@@ -1359,6 +1366,16 @@ void InputSetCursorTextureUUID(uint uuid)
 	App->input->SetCursorTexture(uuid);
 }
 
+float InputGetCursorSize()
+{
+	return App->input->cursorSize;
+}
+
+void InputSetCursorSize(float size)
+{
+	App->input->cursorSize = size;
+}
+
 MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, MonoArray* rotation)
 {
 	if (!templateMO)
@@ -2067,6 +2084,20 @@ MonoObject* GetComponentByType(MonoObject* monoObject, MonoReflectionType* type)
 		return App->scripting->MonoComponentFrom(comp);
 	}
 
+	else if (className == "AnimationUI")
+	{
+		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
+		if (!gameObject)
+			return nullptr;
+
+		Component* comp = gameObject->GetComponent(ComponentTypes::UIAnimationComponent);
+
+		if (!comp)
+			return nullptr;
+
+		return App->scripting->MonoComponentFrom(comp);
+	}
+
 	else if (className == "Rigidbody")
 	{
 		GameObject* gameObject = App->scripting->GameObjectFrom(monoObject);
@@ -2509,16 +2540,17 @@ bool NavAgentGetPath(MonoObject* monoAgent, MonoArray* position, MonoArray* dest
 	return false;
 }
 
-bool NavigationGetPath(MonoArray* origin, MonoArray* destination, MonoArray** out_path)
+bool NavigationGetPath(MonoArray* origin, MonoArray* destination, MonoArray** out_path, MonoArray* extents)
 {
-	if (!origin || !destination)
+	if (!origin || !destination || !extents)
 		return false;
 
 	math::float3 originCPP(mono_array_get(origin, float, 0), mono_array_get(origin, float, 1), mono_array_get(origin, float, 2));
 	math::float3 destinationCPP(mono_array_get(destination, float, 0), mono_array_get(destination, float, 1), mono_array_get(destination, float, 2));
+	math::float3 extentsCPP(mono_array_get(extents, float, 0), mono_array_get(extents, float, 1), mono_array_get(extents, float, 2));
 
 	std::vector<math::float3> finalPath;
-	if (App->navigation->FindPath(originCPP.ptr(), destinationCPP.ptr(), finalPath))
+	if (App->navigation->FindPath(originCPP.ptr(), destinationCPP.ptr(), finalPath, extentsCPP))
 	{
 		MonoClass* vector3Class = mono_class_from_name(App->scripting->internalImage, "JellyBitEngine", "Vector3");
 		*out_path = mono_array_new(App->scripting->domain, vector3Class, finalPath.size());
@@ -3218,6 +3250,62 @@ void SliderSetValue(MonoObject* monoSlider, float value)
 	if (slider)
 	{
 		slider->SetPercentage(value);
+	}
+}
+
+void AnimationUIPlay(MonoObject* monoAnimationUI)
+{
+	ComponentUIAnimation* animation = (ComponentUIAnimation*)App->scripting->ComponentFrom(monoAnimationUI);
+	if (animation)
+	{
+		animation->Play();
+	}
+}
+
+void AnimationUIStop(MonoObject* monoAnimationUI)
+{
+	ComponentUIAnimation* animation = (ComponentUIAnimation*)App->scripting->ComponentFrom(monoAnimationUI);
+	if (animation)
+	{
+		animation->Stop();
+	}
+}
+
+bool AnimationUIIsFinished(MonoObject* monoAnimationUI)
+{
+	ComponentUIAnimation* animation = (ComponentUIAnimation*)App->scripting->ComponentFrom(monoAnimationUI);
+	if (animation)
+	{
+		return animation->IsFinished();
+	}
+	return false;
+}
+
+bool AnimationUIGetLoop(MonoObject* monoAnimationUI)
+{
+	ComponentUIAnimation* animation = (ComponentUIAnimation*)App->scripting->ComponentFrom(monoAnimationUI);
+	if (animation)
+	{
+		return animation->GetLoop();
+	}
+	return false;
+}
+
+void AnimationUISetLoop(MonoObject* monoAnimationUI, bool loop)
+{
+	ComponentUIAnimation* animation = (ComponentUIAnimation*)App->scripting->ComponentFrom(monoAnimationUI);
+	if (animation)
+	{
+		animation->SetLoop(loop);
+	}
+}
+
+void AnimationUIRewind(MonoObject* monoAnimationUI)
+{
+	ComponentUIAnimation* animation = (ComponentUIAnimation*)App->scripting->ComponentFrom(monoAnimationUI);
+	if (animation)
+	{
+		animation->Rewind();
 	}
 }
 
@@ -4204,12 +4292,13 @@ void ScriptingModule::CreateDomain()
 	//CONSOLE_LOG(LogTypes::Error, "mono domain set");
 
 	if (!mono_domain_set(domain, false))
-		return;
+		CONSOLE_LOG(LogTypes::Error, "Domain couldn't be set");
 		
 	if (domainToUnload != nullptr)
 	{
 		//CONSOLE_LOG(LogTypes::Error, "mono unload previous domain");
 		mono_domain_unload(domainToUnload);
+		mono_gc_collect(mono_gc_max_generation());
 	}
 
 	//CONSOLE_LOG(LogTypes::Error, "mono other stuff");
@@ -4246,6 +4335,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Input::GetCursorTexture", (const void*)&InputGetCursorTexture);
 	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture(string)", (const void*)&InputSetCursorTextureName);
 	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture(uint)", (const void*)&InputSetCursorTextureUUID);
+	mono_add_internal_call("JellyBitEngine.Input::GetCursorSize", (const void*)&InputGetCursorSize);
+	mono_add_internal_call("JellyBitEngine.Input::SetCursorSize", (const void*)&InputSetCursorSize);
 
 	//Object
 	mono_add_internal_call("JellyBitEngine.Object::Destroy", (const void*)&DestroyObj);
@@ -4289,6 +4380,7 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Time::GetTimeScale", (const void*)&TimeGetTimeScale);
 	mono_add_internal_call("JellyBitEngine.Time::SetTimeScale", (const void*)&TimeSetTimeScale);
 
+	//Transform
 	mono_add_internal_call("JellyBitEngine.Transform::getLocalPosition", (const void*)&GetLocalPosition);
 	mono_add_internal_call("JellyBitEngine.Transform::setLocalPosition", (const void*)&SetLocalPosition);
 	mono_add_internal_call("JellyBitEngine.Transform::getLocalRotation", (const void*)&GetLocalRotation);
@@ -4301,8 +4393,11 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Transform::setGlobalPos", (const void*)&SetGlobalPos);
 	mono_add_internal_call("JellyBitEngine.Transform::setGlobalRotation", (const void*)&SetGlobalRot);
 	mono_add_internal_call("JellyBitEngine.Transform::setGlobalScale", (const void*)&SetGlobalScale);
+
+	//Camera
 	mono_add_internal_call("JellyBitEngine.Camera::getMainCamera", (const void*)&GetGameCamera);
-	mono_add_internal_call("JellyBitEngine.Physics::_ScreenToRay", (const void*)&ScreenToRay);
+
+	//LayerMask
 	mono_add_internal_call("JellyBitEngine.LayerMask::GetMaskBit", (const void*)&LayerToBit);
 
 	//Animator
@@ -4340,6 +4435,7 @@ void ScriptingModule::CreateDomain()
 	//Physics
 	mono_add_internal_call("JellyBitEngine.Physics::_OverlapSphere", (const void*)&OverlapSphere);
 	mono_add_internal_call("JellyBitEngine.Physics::_Raycast", (const void*)&Raycast);
+	mono_add_internal_call("JellyBitEngine.Physics::_ScreenToRay", (const void*)&ScreenToRay);
 
 	//Rigidbody
 	mono_add_internal_call("JellyBitEngine.Rigidbody::_AddForce", (const void*)&RigidbodyAddForce);
@@ -4390,6 +4486,12 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetResource", (const void*)&LabelGetResource);
 	mono_add_internal_call("JellyBitEngine.UI.Slider::GetValue", (const void*)&SliderGetValue);
 	mono_add_internal_call("JellyBitEngine.UI.Slider::SetValue", (const void*)&SliderSetValue);
+	mono_add_internal_call("JellyBitEngine.UI.AnimationUI::Play", (const void*)&AnimationUIPlay);
+	mono_add_internal_call("JellyBitEngine.UI.AnimationUI::Stop", (const void*)&AnimationUIStop);
+	mono_add_internal_call("JellyBitEngine.UI.AnimationUI::IsFinished", (const void*)&AnimationUIIsFinished);
+	mono_add_internal_call("JellyBitEngine.UI.AnimationUI::GetLoop", (const void*)&AnimationUIGetLoop);
+	mono_add_internal_call("JellyBitEngine.UI.AnimationUI::SetLoop", (const void*)&AnimationUISetLoop);
+	mono_add_internal_call("JellyBitEngine.UI.AnimationUI::Rewind", (const void*)&AnimationUIRewind);
 
 	//PlayerPrefs
 	mono_add_internal_call("JellyBitEngine.PlayerPrefs::Save", (const void*)&PlayerPrefsSave);

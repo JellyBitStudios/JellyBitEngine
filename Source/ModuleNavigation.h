@@ -29,9 +29,9 @@ public:
 	void AddComponent(class ComponentNavAgent*);
 	void EraseComponent(class ComponentNavAgent*);
 	void SetInputGeom(class NMInputGeom& inputGeom);
-	bool FindPath(float* start, float* end, std::vector<math::float3>& finalPath) const;
-	bool ProjectPoint(float* point, math::float3& projectedPoint, math::float3 extents = math::float3(1.2f, 0.9f, 1.2f)) const;
-	bool ProjectPointPolyBoundary(float* point, math::float3& projectedPoint, math::float3 extents = math::float3(1.2f, 0.9f, 1.2f)) const;
+	bool FindPath(float* start, float* end, std::vector<math::float3>& finalPath, const math::float3& extents = math::float3(1.2f, 0.9f, 1.2f)) const;
+	bool ProjectPoint(float* point, math::float3& projectedPoint, const math::float3& extents = math::float3(1.2f, 0.9f, 1.2f)) const;
+	bool ProjectPointPolyBoundary(float* point, math::float3& projectedPoint, const math::float3& extents = math::float3(1.2f, 0.9f, 1.2f)) const;
 	int  AddAgent(const float* p, float radius, float height, float maxAcc, float maxSpeed,
 				  float collQueryRange, float pathOptimRange, unsigned char updateFlags,
 				  unsigned char obstacleAvoidanceType, float stopAtLength) const;

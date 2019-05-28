@@ -256,6 +256,9 @@
     <Filter Include="Sources\3rd Party\Wwise\AK\WIN32">
       <UniqueIdentifier>{db3586af-7116-4c80-ae7b-3eeb6ec57c34}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sources\3rd Party\Optick">
+      <UniqueIdentifier>{ebc7d8f3-ac4b-4bb0-b27b-d04113c530d0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Module.h">
@@ -2138,6 +2141,12 @@
     </ClInclude>
     <ClInclude Include="PanelUIAnimation.h">
       <Filter>Sources\Modules\Panels</Filter>
+    </ClInclude>
+    <ClInclude Include="Optick\include\optick.config.h">
+      <Filter>Sources\3rd Party\Optick</Filter>
+    </ClInclude>
+    <ClInclude Include="Optick\include\optick.h">
+      <Filter>Sources\3rd Party\Optick</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

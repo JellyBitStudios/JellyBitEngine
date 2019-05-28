@@ -1,7 +1,7 @@
 #include "ResourceMaterial.h"
 #include "ModuleInterpolation.h"
 
-#include "Brofiler/Brofiler.h"
+#include "Optick/include/optick.h"
 
 
 ModuleInterpolation::ModuleInterpolation(bool start_enabled) : Module(start_enabled)
@@ -15,7 +15,7 @@ ModuleInterpolation::~ModuleInterpolation()
 update_status ModuleInterpolation::Update()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModuleInterpolation_Update", Optick::Category::Animation);
 #endif // !GAMEMODE
 
 	for (std::list<ComponentInterpolation*>::iterator inter = interpolations.begin(); inter != interpolations.end(); ++inter)

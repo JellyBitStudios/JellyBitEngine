@@ -13,7 +13,6 @@
 
 #include "physfs\include\physfs.h"
 #include "libzip/include/zip.h"
-#include "Brofiler\Brofiler.h"
 
 #include <assert.h>
 

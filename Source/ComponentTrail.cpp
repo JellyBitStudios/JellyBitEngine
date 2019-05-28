@@ -9,7 +9,7 @@
 #include "ComponentTransform.h"
 #include "ModuleTrails.h"
 
-#include "Brofiler/Brofiler.h"
+#include "Optick/include/optick.h"
 
 #include "imgui\imgui.h"
 
@@ -83,7 +83,7 @@ ComponentTrail::~ComponentTrail()
 void ComponentTrail::Update() 
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("TrailUpdate", Optick::Category::VFX);
 #endif // !GAMEMODE
 
 	if (create)

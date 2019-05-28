@@ -21,9 +21,12 @@ enum ShaderProgramTypes
 
 struct ResourceShaderProgramData
 {
-	std::vector<uint> shaderObjectsUuids;
 	ShaderProgramTypes shaderProgramType = ShaderProgramTypes::Standard;
+
+	std::vector<uint> shaderObjectsUuids;
 	uint format = 0;
+
+	std::vector<const char*> ignoreUniforms; // not save&load (because it is not necessary)
 };
 
 class ResourceShaderProgram : public Resource
@@ -64,7 +67,9 @@ public:
 	ShaderProgramTypes GetShaderProgramType() const;
 	void SetShaderObjects(const std::vector<uint>& shaderObjectsUuids);
 	void GetShaderObjects(std::vector<uint>& shaderObjectsUuids, ShaderObjectTypes shaderType = ShaderObjectTypes::NoShaderObjectType) const;
+	
 	void GetUniforms(std::vector<Uniform>& uniforms);
+	void GetIgnoreUniforms(std::vector<const char*>& ignoreUniforms);
 
 private:
 	

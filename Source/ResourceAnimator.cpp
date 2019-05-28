@@ -3,7 +3,7 @@
 #include "ModuleScene.h"
 #include "ModuleFileSystem.h"
 #include "Application.h"
-#include "Brofiler/Brofiler.h"
+#include "Optick/include/optick.h"
 #include "ModuleTimeManager.h"
 #include "Application.h"
 #include "ResourceAvatar.h"
@@ -511,7 +511,7 @@ void ResourceAnimator::InitAnimator()
 bool ResourceAnimator::Update()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ResourceAnimator_Update", Optick::Category::Animation);
 #endif // GAMEMODE
 
 	//if (App->GetEngineState() != engine_states::ENGINE_PLAY)
@@ -523,8 +523,8 @@ bool ResourceAnimator::Update()
 		return update_status::UPDATE_CONTINUE;
 
 	float dt = App->timeManager->GetDt();
-	float thing = dt + current_anim->anim_timer;
-	if (thing >= current_anim->duration && current_anim->duration > 0.0f)
+	float predicted_time = dt + current_anim->anim_timer;
+	if (predicted_time >= current_anim->duration && current_anim->duration > 0.0f)
 	{
 		current_anim->finished = true;
 

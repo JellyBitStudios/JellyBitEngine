@@ -13,7 +13,7 @@
 struct ResourceMaterialData
 {
 	uint shaderUuid = 0;
-	uint shaderProgram = 0;
+	uint shader = 0;
 	std::vector<Uniform> uniforms;
 
 	//math::float4x4 matrix = math::float4x4::identity;
@@ -46,7 +46,8 @@ public:
 	inline ResourceMaterialData& GetSpecificData() { return materialData; }
 
 	void SetResourceShader(uint shaderUuid);
-	void UpdateResourceShader();
+	bool UpdateResourceShader();
+
 	uint GetShaderUuid() const;
 
 	void SetResourceTexture(uint textureUuid, uint& textureUuidUniform, uint& textureIdUniform);
@@ -54,17 +55,18 @@ public:
 	std::vector<Uniform>& GetUniforms();
 	void FillUniforms();
 	void ClearUniforms();
+	void GetIgnoreUniforms(std::vector<const char*>& ignoreUniforms);
 
 private:
 
 	void InitResources();
-	void DeinitResources() const;
+	void DeinitResources();
 
 	void SetUniformsAsUsed();
 	void SetUniformsAsUnused() const;
 
-	void UpdateUniformsLocations();
-	void UpdateUniforms();
+	bool UpdateUniformsLocations();
+	bool UpdateUniforms();
 
 	void EditTextureMatrix(uint textureUuid);
 

@@ -45,7 +45,7 @@
 #include <assert.h>
 
 #include "MathGeoLib\include\Math\float2.h"
-#include "Brofiler/Brofiler.h"
+#include "Optick/include/optick.h"
 
 
 #ifdef _DEBUG
@@ -202,7 +202,7 @@ update_status ModulePhysics::PreUpdate()
 update_status ModulePhysics::Update()
 {
 #ifndef GAMEMODE
-	BROFILER_CATEGORY(__FUNCTION__, Profiler::Color::PapayaWhip);
+	OPTICK_CATEGORY("ModulePhysics_Update", Optick::Category::Physics);
 #endif // !GAMEMODE
 	update_status updateStatus = update_status::UPDATE_CONTINUE;
 

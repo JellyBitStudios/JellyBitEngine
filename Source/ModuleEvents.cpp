@@ -78,8 +78,9 @@ void ModuleEvents::OnSystemEvent(System_Event event)
 #ifdef GAMEMODE
 		if (App->GetEngineState() != engine_states::ENGINE_PLAY)
 		{
-			event.type = System_Event_Type::Play;
-			App->PushSystemEvent(event);
+			System_Event newEvent;
+			newEvent.type = System_Event_Type::Play;
+			App->PushSystemEvent(newEvent);
 		}
 #endif
 		// Mesh updated: recalculate bounding boxes
