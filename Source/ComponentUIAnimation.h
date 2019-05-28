@@ -158,6 +158,9 @@ public:
 	//For scripting, needed to discurss to add more options. Needed.
 	void Play();
 	void Stop();
+	bool IsFinished()const;
+	void SetLoop(bool loopable);
+	void Rewind();
 
 private:
 	//versions
@@ -180,6 +183,10 @@ private:
 	void DrawCurrent();
 
 private:
+	// script
+	bool loop = false;
+	bool is_finished = false;
+
 	//version
 	versionSerialization version = v1; //always defined as last.
 

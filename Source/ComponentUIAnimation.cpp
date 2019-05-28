@@ -139,20 +139,29 @@ void ComponentUIAnimation::Update()
 			if (animation_timer >= current_key->global_time) { //if time surpass the time of key, chenge to the next
 				if (current_key->next_key != nullptr) {
 					current_key = current_key->next_key;
+					is_finished = false;
 				}
 				else
 				{
 					//if not next, pause the animation. And if engine editor return to the init position (Stop)
 					animation_state = UIAnimationState::PAUSED;
 
+					is_finished = true;
+
+					if (!loop)
+						animation_state = UIAnimationState::STOPPED;
+					else
+						animation_timer = 0.0f;
+
 					if (App->GetEngineState() == engine_states::ENGINE_EDITOR && !repeat)
 						Stop();
+
 					break;
 				}
 			}
 
-			animation_timer += dt;
 			Interpolate(animation_timer);
+			animation_timer += dt;
 		}
 		break;
 
@@ -598,6 +607,20 @@ void ComponentUIAnimation::Stop()
 	animation_state = UIAnimationState::STOPPED;
 	current_key = keys.at(0);
 	DrawInit();
+}
+
+bool ComponentUIAnimation::IsFinished() const
+{
+	return is_finished;
+}
+
+void ComponentUIAnimation::SetLoop(bool loopable)
+{
+	loop = loopable;
+}
+
+void ComponentUIAnimation::Rewind()
+{
 }
 
 void ComponentUIAnimation::SetInitAlpha(float alpha) //called from cmp image
