@@ -27,7 +27,7 @@
 #include "MathGeoLib\include\Math\float4x4.h"
 #include "MathGeoLib/include/Geometry/Frustum.h"
 
-#define ZSEPARATOR 0.005f
+#define ZSEPARATOR 0.01f
 
 ComponentCanvas::ComponentCanvas(GameObject * parent, ComponentTypes componentType, bool includeComponents) : Component(parent, ComponentTypes::CanvasComponent)
 {
