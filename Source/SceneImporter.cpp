@@ -32,7 +32,11 @@
 
 #include <assert.h>
 
+#ifdef _DEBUG
 #pragma comment (lib, "Assimp\\libx86\\assimp-vc140-mt.lib")
+#else
+#pragma comment (lib, "Assimp\\libx86\\rls\\assimp-vc140-mt.lib")
+#endif
 
 #define T_PRE_ROT "PreRotation"
 #define T_ROT "Rotation"
