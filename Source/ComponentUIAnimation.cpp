@@ -38,7 +38,7 @@ ComponentUIAnimation::ComponentUIAnimation(const ComponentUIAnimation & componen
 	Component(parent, ComponentTypes::UIAnimationComponent)
 {
 	animation_time = component_ui_anim.animation_time;
-	repeat = component_ui_anim.repeat;
+	loop = component_ui_anim.loop;
 
 	uint key_size = component_ui_anim.keys.size();
 	if (key_size > 0u) {
@@ -126,7 +126,7 @@ void ComponentUIAnimation::Update()
 	}
 
 	// Interpolate
-	if (keys.size() >= 1)
+	if (keys.size() <= 1)
 		return; //exits when keys is 1 or empty
 
 	//when is in engine mode use app dt on gamemode of time mamager
@@ -139,29 +139,52 @@ void ComponentUIAnimation::Update()
 			if (animation_timer >= current_key->global_time) { //if time surpass the time of key, chenge to the next
 				if (current_key->next_key != nullptr) {
 					current_key = current_key->next_key;
-					is_finished = false;
 				}
 				else
 				{
 					//if not next, pause the animation. And if engine editor return to the init position (Stop)
-					animation_state = UIAnimationState::PAUSED;
-
 					is_finished = true;
 
-					if (!loop)
-						animation_state = UIAnimationState::STOPPED;
-					else
-						animation_timer = 0.0f;
+					(!loop) ? animation_state = UIAnimationState::STOPPED : Play();
 
-					if (App->GetEngineState() == engine_states::ENGINE_EDITOR && !repeat)
+					if (App->GetEngineState() == engine_states::ENGINE_EDITOR && !loop)
 						Stop();
 
 					break;
 				}
 			}
+			else
+				is_finished = false;
 
 			Interpolate(animation_timer);
 			animation_timer += dt;
+		}
+		break;
+
+		case UIAnimationState::REWIND:
+		{
+			if (animation_timer <= 0.0f) { //if time surpass the time of key, chenge to the next
+				if (current_key->back_key != nullptr) {
+					current_key = current_key->back_key;
+				}
+				else
+				{
+					//if not next, pause the animation. And if engine editor return to the init position (Stop)
+					is_finished = true;
+
+					(!loop) ? animation_state = UIAnimationState::STOPPED : Rewind();
+
+					if (App->GetEngineState() == engine_states::ENGINE_EDITOR && !loop)
+						Stop();
+
+					break;
+				}
+			}
+			else
+				is_finished = false;
+
+			Interpolate(animation_timer);
+			animation_timer -= dt;
 		}
 		break;
 
@@ -221,7 +244,7 @@ void ComponentUIAnimation::OnInternalSave(char *& cursor)
 	cursor += bytes;
 
 	bytes = sizeof(bool);
-	memcpy(cursor, &repeat, bytes);
+	memcpy(cursor, &loop, bytes);
 	cursor += bytes;
 
 	bytes = sizeof(uint);
@@ -252,7 +275,7 @@ void ComponentUIAnimation::OnInternalLoad(char *& cursor)
 		cursor += bytes;
 
 		bytes = sizeof(bool);
-		memcpy(&repeat, cursor, bytes);
+		memcpy(&loop, cursor, bytes);
 		cursor += bytes;
 
 		bytes = sizeof(uint);
@@ -311,6 +334,7 @@ void ComponentUIAnimation::OnUniqueEditor()
 			case UIAnimationState::PAUSED:
 					ImGui::Text("Paused");
 				break;
+				case UIAnimationState::REWIND:
 				case UIAnimationState::PLAYING:
 					ImGui::Text("Playing");
 				break;
@@ -389,6 +413,11 @@ void ComponentUIAnimation::OnUniqueEditor()
 			}
 			ImGui::SameLine();
 
+			if (ImGui::Button("Rewind")) {
+				Rewind();
+			}
+			ImGui::SameLine();
+
 			if (ImGui::Button("Pause"))
 				animation_state = UIAnimationState::PAUSED;
 
@@ -399,6 +428,8 @@ void ComponentUIAnimation::OnUniqueEditor()
 			}
 
 			ImGui::SameLine();
+			ImGui::Checkbox((loop) ? "Quit Loop" : "Enable Loop", &loop);
+
 			//change keys when on play or current
 			if (ImGui::Button("Next Key")) {
 				if (current_key->next_key != nullptr)
@@ -621,6 +652,17 @@ void ComponentUIAnimation::SetLoop(bool loopable)
 
 void ComponentUIAnimation::Rewind()
 {
+	if (keys.size() > 1) //needed to be more than one key to play
+	{
+		animation_state = UIAnimationState::REWIND;
+		current_key = keys.at(keys.size() - 1);
+		animation_timer = animation_time;
+		DrawCurrent();
+	}
+	else
+	{
+		CONSOLE_LOG(LogTypes::Warning, "You can't rewind with one key.");
+	}
 }
 
 void ComponentUIAnimation::SetInitAlpha(float alpha) //called from cmp image
