@@ -579,6 +579,7 @@ bool ResourceMaterial::UpdateUniformsLocations()
 			{
 				materialData.uniforms[j].common.location = uni[i].common.location;
 				ret = true;
+				break;
 			}
 		}
 	}

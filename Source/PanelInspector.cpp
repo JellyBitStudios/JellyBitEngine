@@ -1047,6 +1047,8 @@ void PanelInspector::ShowMaterialInspector() const
 
 			ignoreUniforms.push_back("dot");
 			ignoreUniforms.push_back("screenSize");
+
+			ignoreUniforms.push_back("Time");
 		}
 		else
 			material->GetIgnoreUniforms(ignoreUniforms);

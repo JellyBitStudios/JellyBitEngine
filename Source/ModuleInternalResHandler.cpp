@@ -303,6 +303,8 @@ void ModuleInternalResHandler::CreateDefaultShaderProgram(const char* vShader, c
 		programShaderData.ignoreUniforms.push_back("dot");
 		programShaderData.ignoreUniforms.push_back("screenSize");
 
+		programShaderData.ignoreUniforms.push_back("Time");
+
 		// -----
 
 		prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DEFAULT_SHADER_PROGRAM_UUID);
@@ -453,6 +455,8 @@ uint ModuleInternalResHandler::CreateDecalShaderProgram() const
 
 	programShaderData.ignoreUniforms.push_back("alphaMultiplier");
 
+	programShaderData.ignoreUniforms.push_back("Time");
+
 	// -----
 
 	ResourceShaderProgram* prog = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, shaderData, &programShaderData, DECAL_SHADER_PROGRAM_UUID);
@@ -516,6 +520,8 @@ uint ModuleInternalResHandler::CreateCartoonShaderProgram() const
 
 	programShaderData.ignoreUniforms.push_back("color");
 	programShaderData.ignoreUniforms.push_back("pct");
+
+	programShaderData.ignoreUniforms.push_back("Time");
 	
 	// -----
 
