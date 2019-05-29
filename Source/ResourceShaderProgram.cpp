@@ -646,6 +646,9 @@ void ResourceShaderProgram::GetUniforms(std::vector<Uniform>& uniforms)
 			uniform.sampler2DU.location = glGetUniformLocation(shaderProgram, uniform.common.name);
 			uniforms.push_back(uniform);
 			break;
+		default:
+			continue;
+			break;
 		}
 
 	hereWeGo:;
