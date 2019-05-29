@@ -78,6 +78,8 @@ public:
 
 public:
 	float cursorSize = 17.5f;
+	bool anyKBKeyDown = false;
+	bool anyMouseButtonDown = false;
 
 private:
 

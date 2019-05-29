@@ -53,6 +53,9 @@ bool ModuleInput::Init(JSON_Object* jObject)
 
 update_status ModuleInput::PreUpdate()
 {
+	anyMouseButtonDown = false;
+	anyKBKeyDown = false;
+
 	SDL_PumpEvents();
 
 	const Uint8* keys = SDL_GetKeyboardState(NULL);
@@ -64,6 +67,7 @@ update_status ModuleInput::PreUpdate()
 			if (keyboard[i] == KEY_IDLE)
 			{
 				keyboard[i] = KEY_DOWN;
+				anyKBKeyDown = true;
 #ifndef GAMEMODE
 				App->gui->AddInput(i, KEY_DOWN);
 #endif
@@ -104,6 +108,7 @@ update_status ModuleInput::PreUpdate()
 			if (mouse_buttons[i] == KEY_IDLE)
 			{
 				mouse_buttons[i] = KEY_DOWN;
+				anyMouseButtonDown = true;
 #ifndef GAMEMODE
 				App->gui->AddInput(i, KEY_DOWN);
 #endif
