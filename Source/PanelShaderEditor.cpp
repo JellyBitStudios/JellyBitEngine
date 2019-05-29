@@ -196,11 +196,10 @@ bool PanelShaderEditor::Draw()
 							shaderProgram->SetName(shaderProgramName);
 							shaderProgram->SetShaderProgramType(ShaderProgramTypes::Custom);
 							shaderProgram->SetShaderObjects(shaderObjectsUuids);
+							shaderProgram->Link();
 
 							// Export the existing file
-							App->res->ExportFile(ResourceTypes::ShaderProgramResource, shaderProgram->GetData(), &shaderProgram->GetSpecificData(), outputFile, true, false);
-							
-							shaderProgram->Link();
+							App->res->ExportFile(ResourceTypes::ShaderProgramResource, shaderProgram->GetData(), &shaderProgram->GetSpecificData(), outputFile, true, false);						
 						}
 						else
 						{
@@ -213,8 +212,7 @@ bool PanelShaderEditor::Draw()
 							shaderProgramData.shaderObjectsUuids = shaderObjectsUuids;
 
 							// Export the new file
-							shaderProgram = (ResourceShaderProgram*)App->res->ExportFile(ResourceTypes::ShaderProgramResource, data, &shaderProgramData, outputFile);
-							
+							shaderProgram = (ResourceShaderProgram*)App->res->ExportFile(ResourceTypes::ShaderProgramResource, data, &shaderProgramData, outputFile);						
 							shaderProgramUuid = shaderProgram->GetUuid();
 						}
 					}

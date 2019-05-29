@@ -935,6 +935,8 @@ void ModuleRenderer3D::DrawMesh(ComponentMesh* toDraw, bool drawLast) const
 
 		ignoreUniforms.push_back("dot");
 		ignoreUniforms.push_back("screenSize");
+
+		ignoreUniforms.push_back("Time");
 	}
 	else
 		resourceMaterial->GetIgnoreUniforms(ignoreUniforms);

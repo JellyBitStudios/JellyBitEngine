@@ -56,10 +56,6 @@ public:
 	ModuleResourceManager(bool start_enabled = true);
 	~ModuleResourceManager();
 	bool Start();
-	
-	//Im here only to set breakpoints in GameMode :D
-	update_status Update();
-
 	bool CleanUp();
 
 	void OnSystemEvent(System_Event event);
