@@ -1376,6 +1376,16 @@ void InputSetCursorSize(float size)
 	App->input->cursorSize = size;
 }
 
+bool InputAnyKeyDown()
+{
+	return App->input->anyKBKeyDown;
+}
+
+bool InputAnyMouseButtonDown()
+{
+	return App->input->anyMouseButtonDown;
+}
+
 MonoObject* InstantiateGameObject(MonoObject* templateMO, MonoArray* position, MonoArray* rotation)
 {
 	if (!templateMO)
@@ -4337,6 +4347,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.Input::SetCursorTexture(uint)", (const void*)&InputSetCursorTextureUUID);
 	mono_add_internal_call("JellyBitEngine.Input::GetCursorSize", (const void*)&InputGetCursorSize);
 	mono_add_internal_call("JellyBitEngine.Input::SetCursorSize", (const void*)&InputSetCursorSize);
+	mono_add_internal_call("JellyBitEngine.Input::AnyKeyDown", (const void*)&InputAnyKeyDown);
+	mono_add_internal_call("JellyBitEngine.Input::AnyMouseButtonDown", (const void*)&InputAnyMouseButtonDown);
 
 	//Object
 	mono_add_internal_call("JellyBitEngine.Object::Destroy", (const void*)&DestroyObj);
