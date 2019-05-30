@@ -48,7 +48,6 @@ private:
 
 	uint ubo_viewProj;
 
-	uint ui_shader;
 	//UI in one buffer - Shader Storage Buffer Object
 	uint countImages = 0;
 	uint countLabels = 0;

@@ -76,7 +76,7 @@ bool ModuleUI::Init(JSON_Object * jObject)
 bool ModuleUI::Start()
 {
 	//Shader
-	ui_shader = App->resHandler->UIShaderProgram;
+	ui_shader = App->resHandler->UIStaticShaderProgram;
 	use(ui_shader);
 	setUnsignedInt(ui_shader, "image", 0);
 	use(0);

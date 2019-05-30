@@ -441,7 +441,7 @@
 
 #pragma region ShaderUI
 //UI
-#define uivShader 																		\
+#define uivShaderDYNAMIC 																		\
 "#version 330 core\n" 																	\
 "//#extension GL_ARB_shader_storage_buffer_object : require\n" 							\
 "layout(location = 0) in vec2 vertex; // <vec2 position, vec2 texCoords>\n" 			\
@@ -566,7 +566,7 @@
 "		VertexImage();" 																\
 "}\n"																						
 
-#define uivShaderNVIDIA 																\
+#define uivShaderSTATIC 																\
 "#version 430 core\n" 																	\
 "#extension GL_ARB_shader_storage_buffer_object : require\n" 							\
 "layout(location = 0) in vec2 vertex; // <vec2 position, vec2 texCoords>\n" 			\
