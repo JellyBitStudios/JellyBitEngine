@@ -441,9 +441,8 @@
 
 #pragma region ShaderUI
 //UI
-#define uivShaderDYNAMIC 																		\
+#define uivShaderDYNAMIC 																\
 "#version 330 core\n" 																	\
-"//#extension GL_ARB_shader_storage_buffer_object : require\n" 							\
 "layout(location = 0) in vec2 vertex; // <vec2 position, vec2 texCoords>\n" 			\
 "layout(location = 1) in vec2 texture_coords; // <vec2 position, vec2 texCoords>\n" 	\
 "out vec2 TexCoords;"																	\

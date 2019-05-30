@@ -72,7 +72,8 @@ public:
 	uint billboardShaderProgram;
 	uint particleShaderProgram;
 	uint trailShaderProgram;
-	uint UIVertexShaderObject;
+	uint UIVertexStaticShaderObject;
+	uint UIVertexDynamicShaderObject;
 	uint UIFragmentShaderObject;
 	uint UIStaticShaderProgram;
 	uint UIDynamicShaderProgram;

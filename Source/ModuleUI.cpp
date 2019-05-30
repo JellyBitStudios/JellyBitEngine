@@ -76,6 +76,7 @@ bool ModuleUI::Start()
 #else
 
 	WorldHolder = new GameObject("UIHolder", nullptr);
+	WorldHolder->SetIsStatic(true);
 	WorldHolder->AddComponent(ComponentTypes::TransformComponent);
 	WorldHolder->transform->SetPosition({ 8.0f, 4.5f, 0.0f });
 	WorldHolder->transform->SetScale({ 16.0f, 9.0f, 1.0f });
@@ -366,7 +367,7 @@ void ModuleUI::DrawWorldCanvas(std::vector<ComponentCanvasRenderer*>& sDraws, st
 				switch (rend->GetType())
 				{
 				case ComponentCanvasRenderer::RenderTypes::IMAGE:
-					DrawStaticUIImage(rend->GetIndex(), render->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
+					DrawStaticUIImage(rend->GetIndex(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 					break;
 				case ComponentCanvasRenderer::RenderTypes::LABEL:
 					DrawStaticUILabel(rend->GetIndex(), rend->GetWord(), rend->GetColor());
@@ -375,8 +376,8 @@ void ModuleUI::DrawWorldCanvas(std::vector<ComponentCanvasRenderer*>& sDraws, st
 				{
 					math::float3* corners = render->GetParent()->cmp_slider->GetCorners();
 					math::float2 null(-1.0f, -1.0f);
-					DrawStaticUIImage(render->GetParent()->cmp_slider->GetBackBufferIndex(), corners, rend->GetColor(), render->GetParent()->cmp_slider->GetBackTexture(), null);
-					DrawStaticUIImage(render->GetParent()->cmp_slider->GetFrontBufferIndex(), &corners[4], rend->GetColor(), render->GetParent()->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
+					DrawStaticUIImage(render->GetParent()->cmp_slider->GetBackBufferIndex(), rend->GetColor(), render->GetParent()->cmp_slider->GetBackTexture(), null);
+					DrawStaticUIImage(render->GetParent()->cmp_slider->GetFrontBufferIndex(), rend->GetColor(), render->GetParent()->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
 					break;
 				}
 				}
@@ -401,17 +402,17 @@ void ModuleUI::DrawWorldCanvas(std::vector<ComponentCanvasRenderer*>& sDraws, st
 				switch (rend->GetType())
 				{
 				case ComponentCanvasRenderer::RenderTypes::IMAGE:
-					DrawStaticUIImage(rend->GetIndex(), render->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
+					DrawDynamicUIImage(render->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 					break;
 				case ComponentCanvasRenderer::RenderTypes::LABEL:
-					DrawStaticUILabel(rend->GetIndex(), rend->GetWord(), rend->GetColor());
+					DrawDynamicUILabel(rend->GetWord(), rend->GetColor());
 					break;
 				case ComponentCanvasRenderer::RenderTypes::SLIDER:
 				{
 					math::float3* corners = render->GetParent()->cmp_slider->GetCorners();
 					math::float2 null(-1.0f, -1.0f);
-					DrawStaticUIImage(render->GetParent()->cmp_slider->GetBackBufferIndex(), corners, rend->GetColor(), render->GetParent()->cmp_slider->GetBackTexture(), null);
-					DrawStaticUIImage(render->GetParent()->cmp_slider->GetFrontBufferIndex(), &corners[4], rend->GetColor(), render->GetParent()->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
+					DrawDynamicUIImage(corners, rend->GetColor(), render->GetParent()->cmp_slider->GetBackTexture(), null);
+					DrawDynamicUIImage(&corners[4], rend->GetColor(), render->GetParent()->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
 					break;
 				}
 				}
@@ -445,7 +446,7 @@ void ModuleUI::DrawScreenCanvas(std::vector<ComponentCanvasRenderer*>& sDraws, s
 				switch (rend->GetType())
 				{
 				case ComponentCanvasRenderer::RenderTypes::IMAGE:
-					DrawStaticUIImage(rend->GetIndex(), render->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
+					DrawStaticUIImage(rend->GetIndex(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 					break;
 				case ComponentCanvasRenderer::RenderTypes::LABEL:
 					DrawStaticUILabel(rend->GetIndex(), rend->GetWord(), rend->GetColor());
@@ -454,8 +455,8 @@ void ModuleUI::DrawScreenCanvas(std::vector<ComponentCanvasRenderer*>& sDraws, s
 				{
 					math::float3* corners = render->GetParent()->cmp_slider->GetCorners();
 					math::float2 null(-1.0f, -1.0f);
-					DrawStaticUIImage(render->GetParent()->cmp_slider->GetBackBufferIndex(), corners, rend->GetColor(), render->GetParent()->cmp_slider->GetBackTexture(), null);
-					DrawStaticUIImage(render->GetParent()->cmp_slider->GetFrontBufferIndex(), &corners[4], rend->GetColor(), render->GetParent()->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
+					DrawStaticUIImage(render->GetParent()->cmp_slider->GetBackBufferIndex(), rend->GetColor(), render->GetParent()->cmp_slider->GetBackTexture(), null);
+					DrawStaticUIImage(render->GetParent()->cmp_slider->GetFrontBufferIndex(), rend->GetColor(), render->GetParent()->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
 					break;
 				}
 				}
@@ -479,17 +480,17 @@ void ModuleUI::DrawScreenCanvas(std::vector<ComponentCanvasRenderer*>& sDraws, s
 				switch (rend->GetType())
 				{
 				case ComponentCanvasRenderer::RenderTypes::IMAGE:
-					DrawStaticUIImage(rend->GetIndex(), render->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
+					DrawDynamicUIImage(render->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 					break;
 				case ComponentCanvasRenderer::RenderTypes::LABEL:
-					DrawStaticUILabel(rend->GetIndex(), rend->GetWord(), rend->GetColor());
+					DrawDynamicUILabel(rend->GetWord(), rend->GetColor());
 					break;
 				case ComponentCanvasRenderer::RenderTypes::SLIDER:
 				{
 					math::float3* corners = render->GetParent()->cmp_slider->GetCorners();
 					math::float2 null(-1.0f, -1.0f);
-					DrawStaticUIImage(render->GetParent()->cmp_slider->GetBackBufferIndex(), corners, rend->GetColor(), render->GetParent()->cmp_slider->GetBackTexture(), null);
-					DrawStaticUIImage(render->GetParent()->cmp_slider->GetFrontBufferIndex(), &corners[4], rend->GetColor(), render->GetParent()->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
+					DrawDynamicUIImage(corners, rend->GetColor(), render->GetParent()->cmp_slider->GetBackTexture(), null);
+					DrawDynamicUIImage(&corners[4], rend->GetColor(), render->GetParent()->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
 					break;
 				}
 				}
@@ -504,7 +505,7 @@ void ModuleUI::DrawScreenCanvas(std::vector<ComponentCanvasRenderer*>& sDraws, s
 	if (!blend) glDisable(GL_BLEND);
 }
 
-void ModuleUI::DrawStaticUIImage(int index, math::float3 corners[4], math::float4& color, uint texture, math::float2& mask)
+void ModuleUI::DrawStaticUIImage(int index, math::float4& color, uint texture, math::float2& mask)
 {
 	setFloat(uiStatic_shader, "indexCorner", float(index));
 
@@ -544,7 +545,7 @@ void ModuleUI::DrawStaticUILabel(int index, std::vector<LabelLetter*>* word, mat
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void ModuleUI::DrawDynamicUIImage(int index, math::float3 corners[4], math::float4 & color, uint texture, math::float2 & mask)
+void ModuleUI::DrawDynamicUIImage(math::float3 corners[4], math::float4 & color, uint texture, math::float2 & mask)
 {
 	setFloat(uiDynamic_shader, "topLeft", { corners[ComponentRectTransform::Rect::RTOPLEFT], 1.0f });
 	setFloat(uiDynamic_shader, "topRight", { corners[ComponentRectTransform::Rect::RTOPRIGHT], 1.0f });
@@ -570,7 +571,7 @@ void ModuleUI::DrawDynamicUIImage(int index, math::float3 corners[4], math::floa
 	if (texture > 0) glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void ModuleUI::DrawDynamicUILabel(int index, std::vector<LabelLetter*>* word, math::float4 & color)
+void ModuleUI::DrawDynamicUILabel(std::vector<LabelLetter*>* word, math::float4 & color)
 {
 	setBool(uiDynamic_shader, "isLabel", true);
 	setBool(uiDynamic_shader, "using_texture", true);

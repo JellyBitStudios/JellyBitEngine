@@ -81,6 +81,9 @@ void ComponentSlider::OnSystemEvent(System_Event event)
 		CalculateFrontSizeByPercentage();
 		needed_fillBuffer = true;
 		break;
+	case System_Event_Type::OnGOStatic:
+		needed_fillBuffer = true;
+		break;
 	}
 }
 
@@ -107,7 +110,7 @@ void ComponentSlider::Update()
 		if (needed_fillBuffer)
 		{
 			CalculateCorners();
-			if (App->glCache->isShaderStorage())
+			if (App->glCache->isShaderStorage() && parent->IsStatic())
 				FillBuffers();
 			needed_fillBuffer = false;
 		}

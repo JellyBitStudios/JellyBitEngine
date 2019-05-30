@@ -93,10 +93,10 @@ private:
 	void DrawWorldCanvas(std::vector<ComponentCanvasRenderer*>& sDraws, std::vector<ComponentCanvasRenderer*>& dDraws);
 	void DrawScreenCanvas(std::vector<ComponentCanvasRenderer*>& sDraws, std::vector<ComponentCanvasRenderer*>& dDraws);
 
-	void DrawStaticUIImage(int index, math::float3 corners[4], math::float4& color, uint texture, math::float2& mask);
+	void DrawStaticUIImage(int index, math::float4& color, uint texture, math::float2& mask);
 	void DrawStaticUILabel(int index, std::vector<LabelLetter*>* word, math::float4& color);
-	void DrawDynamicUIImage(int index, math::float3 corners[4], math::float4& color, uint texture, math::float2& mask);
-	void DrawDynamicUILabel(int index, std::vector<LabelLetter*>* word, math::float4& color);
+	void DrawDynamicUIImage(math::float3 corners[4], math::float4& color, uint texture, math::float2& mask);
+	void DrawDynamicUILabel(std::vector<LabelLetter*>* word, math::float4& color);
 
 	void UpdateRenderStates();
 

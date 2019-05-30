@@ -30,6 +30,8 @@ void GLCache::Init()
 		}
 	}
 
+	App->resHandler->CreateUIShaderProgram(); //UI shaders needed to know the isShaderStorage_variable
+
 	if (isShaderStorage_variable)
 	{
 		uint uiStatic_shader = App->resHandler->UIStaticShaderProgram;

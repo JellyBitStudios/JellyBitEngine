@@ -33,7 +33,6 @@ bool ModuleInternalResHandler::Start()
 
 	CreateDeferredShaderProgram();
 	CreateBillboardShaderProgram();
-	CreateUIShaderProgram();
 	decalShaderProgram = CreateDecalShaderProgram();
 	cartoonShaderProgram = CreateCartoonShaderProgram();
 
@@ -534,16 +533,20 @@ uint ModuleInternalResHandler::CreateCartoonShaderProgram() const
 
 void ModuleInternalResHandler::CreateUIShaderProgram()
 {
-	ResourceData svertexData;
-	ResourceShaderObjectData svertexShaderData;
-	svertexData.name = "UI static vertex object";
-	svertexData.internal = true;
-	svertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
-	svertexShaderData.SetSource(uivShaderSTATIC, strlen(uivShaderSTATIC));
-	ResourceShaderObject* svObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, svertexData, &svertexShaderData);
-	if (!svObj->Compile())
-		svObj->isValid = false;
-	UIVertexShaderObject = svObj->shaderObject;
+	ResourceShaderObject* svObj = nullptr;
+	if (App->glCache->isShaderStorage())
+	{
+		ResourceData svertexData;
+		ResourceShaderObjectData svertexShaderData;
+		svertexData.name = "UI static vertex object";
+		svertexData.internal = true;
+		svertexShaderData.shaderObjectType = ShaderObjectTypes::VertexType;
+		svertexShaderData.SetSource(uivShaderSTATIC, strlen(uivShaderSTATIC));
+		svObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, svertexData, &svertexShaderData);
+		if (!svObj->Compile())
+			svObj->isValid = false;
+		UIVertexStaticShaderObject = svObj->shaderObject;
+	}
 
 	ResourceData dvertexData;
 	ResourceShaderObjectData dvertexShaderData;
@@ -554,7 +557,7 @@ void ModuleInternalResHandler::CreateUIShaderProgram()
 	ResourceShaderObject* dvObj = (ResourceShaderObject*)App->res->CreateResource(ResourceTypes::ShaderObjectResource, dvertexData, &dvertexShaderData);
 	if (!dvObj->Compile())
 		dvObj->isValid = false;
-	UIVertexShaderObject = dvObj->shaderObject;
+	UIVertexDynamicShaderObject = dvObj->shaderObject;
 
 	ResourceData fragmentData;
 	ResourceShaderObjectData fragmentShaderData;
@@ -566,24 +569,27 @@ void ModuleInternalResHandler::CreateUIShaderProgram()
 	if (!fObj->Compile())
 		fObj->isValid = false;
 	UIFragmentShaderObject = fObj->shaderObject;
-
-	ResourceData st_shaderData;
-	ResourceShaderProgramData st_programShaderData;
-	st_shaderData.name = "UI Static shader program";
-	st_shaderData.internal = true;
-	st_programShaderData.shaderObjectsUuids.push_back(svObj->GetUuid());
-	st_programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
-	st_programShaderData.shaderProgramType = ShaderProgramTypes::UI;
-	ResourceShaderProgram* st_pShader = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, st_shaderData, &st_programShaderData, DEFAULT_SHADER_PROGRAM_STATICUI_UUID);
-	if (!st_pShader->Link())
-		st_pShader->isValid = false;
-	UIStaticShaderProgram = st_pShader->shaderProgram;
+	
+	if (App->glCache->isShaderStorage())
+	{
+		ResourceData st_shaderData;
+		ResourceShaderProgramData st_programShaderData;
+		st_shaderData.name = "UI Static shader program";
+		st_shaderData.internal = true;
+		st_programShaderData.shaderObjectsUuids.push_back(svObj->GetUuid());
+		st_programShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
+		st_programShaderData.shaderProgramType = ShaderProgramTypes::UI;
+		ResourceShaderProgram* st_pShader = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, st_shaderData, &st_programShaderData, DEFAULT_SHADER_PROGRAM_STATICUI_UUID);
+		if (!st_pShader->Link())
+			st_pShader->isValid = false;
+		UIStaticShaderProgram = st_pShader->shaderProgram;
+	}
 
 	ResourceData dshaderData;
 	ResourceShaderProgramData dprogramShaderData;
 	dshaderData.name = "UI Dynamic shader program";
 	dshaderData.internal = true;
-	dprogramShaderData.shaderObjectsUuids.push_back(svObj->GetUuid());
+	dprogramShaderData.shaderObjectsUuids.push_back(dvObj->GetUuid());
 	dprogramShaderData.shaderObjectsUuids.push_back(fObj->GetUuid());
 	dprogramShaderData.shaderProgramType = ShaderProgramTypes::UI;
 	ResourceShaderProgram* dpShader = (ResourceShaderProgram*)App->res->CreateResource(ResourceTypes::ShaderProgramResource, dshaderData, &dprogramShaderData, DEFAULT_SHADER_PROGRAM_DYNAMICUI_UUID);

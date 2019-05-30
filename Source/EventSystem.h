@@ -38,7 +38,8 @@ enum System_Event_Type
 	RectTransformUpdatedFromAnimation,
 	WRectTransformUpdated,
 	UpdateBillboard,
-	ScreenChanged
+	ScreenChanged,
+	OnGOStatic
 };
 
 class GameObject;
