@@ -157,12 +157,12 @@ public:
 	void ImGuiKeys();
 	
 	//For scripting, needed to discurss to add more options. Needed.
-	void Play();
+	void Play(bool fromLoop = false);
 	void Stop();
 	bool IsFinished()const;
 	inline bool GetLoop() const { return loop; }
 	void SetLoop(bool loopable);
-	void Rewind();
+	void Rewind(bool fromLoop = false);
 
 private:
 	//versions

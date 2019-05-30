@@ -145,7 +145,14 @@ void ComponentUIAnimation::Update()
 					//if not next, pause the animation. And if engine editor return to the init position (Stop)
 					is_finished = true;
 
-					(!loop) ? animation_state = UIAnimationState::STOPPED : Play();
+					if (!loop)
+					{
+						animation_state = UIAnimationState::STOPPED;
+						if (!parent->IsStatic())
+							parent->ToggleChildrenAndThisStatic(true);
+					}
+					else
+						Play(true);
 
 					if (App->GetEngineState() == engine_states::ENGINE_EDITOR && !loop)
 						Stop();
@@ -172,7 +179,14 @@ void ComponentUIAnimation::Update()
 					//if not next, pause the animation. And if engine editor return to the init position (Stop)
 					is_finished = true;
 
-					(!loop) ? animation_state = UIAnimationState::STOPPED : Rewind();
+					if (!loop)
+					{
+						animation_state = UIAnimationState::STOPPED;
+						if (!parent->IsStatic())
+							parent->ToggleChildrenAndThisStatic(true);
+					}
+					else
+						Rewind(true);
 
 					if (App->GetEngineState() == engine_states::ENGINE_EDITOR && !loop)
 						Stop();
@@ -618,7 +632,7 @@ void ComponentUIAnimation::ImGuiKeys() //Call from panel for draw all  keys
 #endif
 }
 
-void ComponentUIAnimation::Play()
+void ComponentUIAnimation::Play(bool fromLoop)
 {
 	if (keys.size() > 1) //needed to be more than one key to play
 	{
@@ -626,6 +640,9 @@ void ComponentUIAnimation::Play()
 		current_key = keys.at(0);
 		animation_timer = keys.at(0)->global_time;
 		DrawCurrent();
+
+		if (parent->IsStatic() && !fromLoop)
+			parent->ToggleChildrenAndThisStatic(false);
 	}
 	else
 	{
@@ -638,6 +655,9 @@ void ComponentUIAnimation::Stop()
 	animation_state = UIAnimationState::STOPPED;
 	current_key = keys.at(0);
 	DrawInit();
+
+	if (!parent->IsStatic())
+		parent->ToggleChildrenAndThisStatic(true);
 }
 
 bool ComponentUIAnimation::IsFinished() const
@@ -650,7 +670,7 @@ void ComponentUIAnimation::SetLoop(bool loopable)
 	loop = loopable;
 }
 
-void ComponentUIAnimation::Rewind()
+void ComponentUIAnimation::Rewind(bool fromLoop)
 {
 	if (keys.size() > 1) //needed to be more than one key to play
 	{
@@ -658,6 +678,9 @@ void ComponentUIAnimation::Rewind()
 		current_key = keys.at(keys.size() - 1);
 		animation_timer = animation_time;
 		DrawCurrent();
+
+		if (parent->IsStatic() && !fromLoop)
+			parent->ToggleChildrenAndThisStatic(false);
 	}
 	else
 	{
