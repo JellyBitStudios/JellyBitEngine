@@ -35,6 +35,7 @@ class ResourceTexture;
 class ComponentImage;
 class ComponentLabel;
 class ComponentButton;
+class ComponentCanvasRenderer;
 
 enum ComponentTypes;
 
@@ -89,17 +90,19 @@ private:
 	void OnSystemEvent(System_Event event);
 
 	void initRenderData();
-	void DrawScreenCanvas();
-	void DrawWorldCanvas();
-	void DrawUIImage(int index, math::float3 corners[4], math::float4& color, uint texture, math::float2& mask);
-	void DrawUILabel(int index, std::vector<LabelLetter*>* workd, math::float4& color);
+	void DrawWorldCanvas(std::vector<ComponentCanvasRenderer*>& sDraws, std::vector<ComponentCanvasRenderer*>& dDraws);
+	void DrawScreenCanvas(std::vector<ComponentCanvasRenderer*>& sDraws, std::vector<ComponentCanvasRenderer*>& dDraws);
+
+	void DrawStaticUIImage(int index, math::float3 corners[4], math::float4& color, uint texture, math::float2& mask);
+	void DrawStaticUILabel(int index, std::vector<LabelLetter*>* word, math::float4& color);
+	void DrawDynamicUIImage(int index, math::float3 corners[4], math::float4& color, uint texture, math::float2& mask);
+	void DrawDynamicUILabel(int index, std::vector<LabelLetter*>* word, math::float4& color);
 
 	void UpdateRenderStates();
 
 public:
 	std::list<GameObject*> canvas;
 	std::list<GameObject*> canvas_screen;
-	std::list<GameObject*> canvas_worldScreen;
 	std::list<GameObject*> canvas_world;
 	std::vector<ComponentButton*> buttons_ui;
 	FT_Library library;
@@ -109,7 +112,8 @@ private:
 	int uiSizeEditor[4];
 	uint reference_vertex;
 
-	uint ui_shader = 0;
+	uint uiStatic_shader = 0;
+	uint uiDynamic_shader = 0;
 
 	bool uiMode = true;
 	bool screenInWorld = true;

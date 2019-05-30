@@ -139,9 +139,7 @@ void ComponentCanvasRenderer::OnUniqueEditor()
 			destroyed = true;
 		}
 	}
-	
-	ImGui::PopItemWidth();
-#endif
+	#endif
 }
 
 //Rend Queue Struct

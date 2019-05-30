@@ -36,7 +36,6 @@ ComponentRectTransform::ComponentRectTransform(GameObject * parent, ComponentTyp
 					case ComponentCanvas::CanvasType::SCREEN:
 						rFrom = RectFrom::RECT;
 						break;
-					case ComponentCanvas::CanvasType::WORLD_SCREEN:
 					case ComponentCanvas::CanvasType::WORLD:
 						if (canvas == parent->cmp_canvas)
 							rFrom = RectFrom::WORLD;
@@ -315,7 +314,6 @@ void ComponentRectTransform::CanvasChanged()
 					rectTransform_modified = true;
 					break;
 				}
-				case ComponentCanvas::CanvasType::WORLD_SCREEN:
 				case ComponentCanvas::CanvasType::WORLD:
 				{
 					rFrom = RectFrom::WORLD;

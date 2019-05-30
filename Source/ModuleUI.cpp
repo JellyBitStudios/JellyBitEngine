@@ -46,27 +46,6 @@ ModuleUI::~ModuleUI()
 {
 }
 
-void ModuleUI::DrawUI()
-{
-#ifndef GAMEMODE
-	OPTICK_CATEGORY("ModuleUI_DrawUI", Optick::Category::UI);
-#endif
-	if (!uiMode)
-		return;
-	use(ui_shader);
-	math::float4x4 view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
-	math::float4x4 projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();
-	math::float4x4 mvp = view * projection;
-	setFloat4x4(ui_shader, "mvp_matrix", mvp.ptr());
-	glBindVertexArray(reference_vertex);
-	glActiveTexture(GL_TEXTURE0);
-	UpdateRenderStates();
-	DrawWorldCanvas();
-	DrawScreenCanvas();
-	glBindVertexArray(0);
-	use(0);
-}
-
 bool ModuleUI::Init(JSON_Object * jObject)
 {
 
@@ -76,9 +55,12 @@ bool ModuleUI::Init(JSON_Object * jObject)
 bool ModuleUI::Start()
 {
 	//Shader
-	ui_shader = App->resHandler->UIStaticShaderProgram;
-	use(ui_shader);
-	setUnsignedInt(ui_shader, "image", 0);
+	uiStatic_shader = App->resHandler->UIStaticShaderProgram;
+	uiDynamic_shader = App->resHandler->UIDynamicShaderProgram;
+	use(uiStatic_shader);
+	setUnsignedInt(uiStatic_shader, "image", 0);
+	use(uiDynamic_shader);
+	setUnsignedInt(uiDynamic_shader, "image", 0);
 	use(0);
 
 	initRenderData();
@@ -109,7 +91,6 @@ bool ModuleUI::Start()
 	uiSizeEditor[Screen::Y] = 0;
 	uiSizeEditor[Screen::WIDTH] = 1600;
 	uiSizeEditor[Screen::HEIGHT] = 900;
-
 
 #endif // GAMEMODE
 
@@ -221,7 +202,6 @@ void ModuleUI::OnSystemEvent(System_Event event)
 	{
 		canvas.clear();
 		canvas_screen.clear();
-		canvas_worldScreen.clear();
 		canvas_world.clear();
 		buttons_ui.clear();
 		break;
@@ -239,9 +219,6 @@ void ModuleUI::OnSystemEvent(System_Event event)
 			{
 			case ComponentCanvas::CanvasType::SCREEN:
 				canvas_screen.remove(parentC);
-				break;
-			case ComponentCanvas::CanvasType::WORLD_SCREEN:
-				canvas_worldScreen.remove(parentC);
 				break;
 			case ComponentCanvas::CanvasType::WORLD:
 				canvas_world.remove(parentC);
@@ -291,49 +268,232 @@ void ModuleUI::initRenderData()
 	glBindVertexArray(0);
 }
 
-void ModuleUI::DrawScreenCanvas()
+void ModuleUI::DrawUI()
+{
+#ifndef GAMEMODE
+	OPTICK_CATEGORY("ModuleUI_DrawUI", Optick::Category::UI);
+#endif
+	if (!uiMode)
+		return;
+
+	math::float4x4 view = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLViewMatrix();
+	math::float4x4 projection = ((ComponentCamera*)App->renderer3D->GetCurrentCamera())->GetOpenGLProjectionMatrix();
+	math::float4x4 mvp = view * projection;
+
+	if (App->glCache->isShaderStorage())
+	{
+		use(uiStatic_shader);
+		setFloat4x4(uiStatic_shader, "mvp_matrix", mvp.ptr());
+	}
+
+	use(uiDynamic_shader);
+	setFloat4x4(uiDynamic_shader, "mvp_matrix", mvp.ptr());
+	use(0);
+
+#ifndef GAMEMODE
+	OPTICK_CATEGORY("ModuleUI_PreProcess-Selection", Optick::Category::UI);
+#endif
+	//Pre-Process Getting UI Dynamic/Static GOs
+	std::vector<ComponentCanvasRenderer*> staticScreenDraw;
+	std::vector<ComponentCanvasRenderer*> dynamicScreenDraw;
+	std::vector<ComponentCanvasRenderer*> staticWorldDraw;
+	std::vector<ComponentCanvasRenderer*> dynamicWorldDraw;
+
+	//Screen Canvas
+	for (GameObject* Scanvas : canvas_screen)
+	{
+		std::vector<GameObject*> screenDraw;
+		Scanvas->GetChildrenAndThisVectorFromLeaf(screenDraw);
+
+		for (std::vector<GameObject*>::reverse_iterator sDraw = screenDraw.rbegin(); sDraw != screenDraw.rend(); ++sDraw)
+			if ((*sDraw)->cmp_canvasRenderer)
+			{
+				if ((*sDraw)->IsStatic() && App->glCache->isShaderStorage()) staticScreenDraw.push_back((*sDraw)->cmp_canvasRenderer);
+				else dynamicScreenDraw.push_back((*sDraw)->cmp_canvasRenderer);
+			}
+	}
+	//World Canvas
+	for (GameObject* Wcanvas : canvas_world)
+	{
+		std::vector<GameObject*> worldDraw;
+		Wcanvas->GetChildrenAndThisVectorFromLeaf(worldDraw);
+
+		for (std::vector<GameObject*>::reverse_iterator wDraw = worldDraw.rbegin(); wDraw != worldDraw.rend(); ++wDraw)
+			if ((*wDraw)->cmp_canvasRenderer)
+			{
+				if ((*wDraw)->IsStatic() && App->glCache->isShaderStorage()) staticWorldDraw.push_back((*wDraw)->cmp_canvasRenderer);
+				else dynamicWorldDraw.push_back((*wDraw)->cmp_canvasRenderer);
+			}
+	}
+	
+	//Blind the uniqueMesh and textureBind
+	glBindVertexArray(reference_vertex);
+	glActiveTexture(GL_TEXTURE0);
+	UpdateRenderStates();
+
+	//World Draw
+#ifndef GAMEMODE
+	OPTICK_CATEGORY("ModuleUI_WorldDraw", Optick::Category::UI);
+#endif
+	DrawWorldCanvas(staticWorldDraw, dynamicWorldDraw);
+#ifndef GAMEMODE
+	OPTICK_CATEGORY("ModuleUI_ScreenDraw", Optick::Category::UI);
+#endif
+	DrawScreenCanvas(staticScreenDraw, dynamicScreenDraw);
+
+	glBindVertexArray(0);
+	use(0);
+}
+
+void ModuleUI::DrawWorldCanvas(std::vector<ComponentCanvasRenderer*>& sDraws, std::vector<ComponentCanvasRenderer*>& dDraws)
+{
+	if (!blend) glEnable(GL_BLEND);
+	if (lighting) glDisable(GL_LIGHTING);
+
+#ifndef GAMEMODE
+	OPTICK_CATEGORY("ModuleUI_StaticWorldDraw", Optick::Category::UI);
+#endif
+	if (!sDraws.empty())
+	{
+		use(uiStatic_shader);
+		setBool(uiStatic_shader, "isScreen", 0);
+
+		for (ComponentCanvasRenderer* render : sDraws)
+		{
+			ComponentCanvasRenderer::ToUIRend* rend = render->GetDrawAvaiable();
+			while (rend != nullptr)
+			{
+				switch (rend->GetType())
+				{
+				case ComponentCanvasRenderer::RenderTypes::IMAGE:
+					DrawStaticUIImage(rend->GetIndex(), render->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
+					break;
+				case ComponentCanvasRenderer::RenderTypes::LABEL:
+					DrawStaticUILabel(rend->GetIndex(), rend->GetWord(), rend->GetColor());
+					break;
+				case ComponentCanvasRenderer::RenderTypes::SLIDER:
+				{
+					math::float3* corners = render->GetParent()->cmp_slider->GetCorners();
+					math::float2 null(-1.0f, -1.0f);
+					DrawStaticUIImage(render->GetParent()->cmp_slider->GetBackBufferIndex(), corners, rend->GetColor(), render->GetParent()->cmp_slider->GetBackTexture(), null);
+					DrawStaticUIImage(render->GetParent()->cmp_slider->GetFrontBufferIndex(), &corners[4], rend->GetColor(), render->GetParent()->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
+					break;
+				}
+				}
+				rend = render->GetDrawAvaiable();
+			}
+		}
+	}
+
+#ifndef GAMEMODE
+	OPTICK_CATEGORY("ModuleUI_DynamicWorldDraw", Optick::Category::UI);
+#endif
+	if (!dDraws.empty())
+	{
+		use(uiDynamic_shader);
+		setBool(uiDynamic_shader, "isScreen", 0);
+
+		for (ComponentCanvasRenderer* render : dDraws)
+		{
+			ComponentCanvasRenderer::ToUIRend* rend = render->GetDrawAvaiable();
+			while (rend != nullptr)
+			{
+				switch (rend->GetType())
+				{
+				case ComponentCanvasRenderer::RenderTypes::IMAGE:
+					DrawStaticUIImage(rend->GetIndex(), render->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
+					break;
+				case ComponentCanvasRenderer::RenderTypes::LABEL:
+					DrawStaticUILabel(rend->GetIndex(), rend->GetWord(), rend->GetColor());
+					break;
+				case ComponentCanvasRenderer::RenderTypes::SLIDER:
+				{
+					math::float3* corners = render->GetParent()->cmp_slider->GetCorners();
+					math::float2 null(-1.0f, -1.0f);
+					DrawStaticUIImage(render->GetParent()->cmp_slider->GetBackBufferIndex(), corners, rend->GetColor(), render->GetParent()->cmp_slider->GetBackTexture(), null);
+					DrawStaticUIImage(render->GetParent()->cmp_slider->GetFrontBufferIndex(), &corners[4], rend->GetColor(), render->GetParent()->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
+					break;
+				}
+				}
+				rend = render->GetDrawAvaiable();
+			}
+		}
+	}
+
+	if (lighting) glEnable(GL_LIGHTING);
+}
+
+void ModuleUI::DrawScreenCanvas(std::vector<ComponentCanvasRenderer*>& sDraws, std::vector<ComponentCanvasRenderer*>& dDraws)
 {
 	if (depthTest) glDisable(GL_DEPTH_TEST);
 	if (cullFace)  glDisable(GL_CULL_FACE);
 	if (lighting) glDisable(GL_LIGHTING);
 
-	if (!canvas_screen.empty())
+#ifndef GAMEMODE
+	OPTICK_CATEGORY("ModuleUI_StaticScreenDraw", Optick::Category::UI);
+#endif
+	if (!sDraws.empty())
 	{
-		setBool(ui_shader, "isScreen", !screenInWorld);
+		use(uiStatic_shader);
+		setBool(uiStatic_shader, "isScreen", !screenInWorld);
 
-		for (GameObject* canvas : canvas_screen)
+		for (ComponentCanvasRenderer* render : sDraws)
 		{
-			std::vector<GameObject*> renderers;
-			canvas->GetChildrenAndThisVectorFromLeaf(renderers);
-			for (std::vector<GameObject*>::reverse_iterator render = renderers.rbegin(); render != renderers.rend(); ++render)
+			ComponentCanvasRenderer::ToUIRend* rend = render->GetDrawAvaiable();
+			while (rend != nullptr)
 			{
-				ComponentCanvasRenderer* renderer = (*render)->cmp_canvasRenderer;
-				if (renderer)
+				switch (rend->GetType())
 				{
-					ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
-					while (rend != nullptr)
-					{
-						switch (rend->GetType())
-						{
-						case ComponentCanvasRenderer::RenderTypes::IMAGE:
-							DrawUIImage(rend->GetIndex(), renderer->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
-							break;
-						case ComponentCanvasRenderer::RenderTypes::LABEL:
-							DrawUILabel(rend->GetIndex(), rend->GetWord(), rend->GetColor());
-							break;
-						case ComponentCanvasRenderer::RenderTypes::SLIDER:
-						{
-							math::float3* corners = (*render)->cmp_slider->GetCorners();
-							math::float2 null(-1.0f, -1.0f);
-							DrawUIImage((*render)->cmp_slider->GetBackBufferIndex(), corners, rend->GetColor(), (*render)->cmp_slider->GetBackTexture(), null);
-							DrawUIImage((*render)->cmp_slider->GetFrontBufferIndex(), &corners[4], rend->GetColor(), (*render)->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
-							break;
-						}
-						}
-
-						rend = renderer->GetDrawAvaiable();
-					}
+				case ComponentCanvasRenderer::RenderTypes::IMAGE:
+					DrawStaticUIImage(rend->GetIndex(), render->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
+					break;
+				case ComponentCanvasRenderer::RenderTypes::LABEL:
+					DrawStaticUILabel(rend->GetIndex(), rend->GetWord(), rend->GetColor());
+					break;
+				case ComponentCanvasRenderer::RenderTypes::SLIDER:
+				{
+					math::float3* corners = render->GetParent()->cmp_slider->GetCorners();
+					math::float2 null(-1.0f, -1.0f);
+					DrawStaticUIImage(render->GetParent()->cmp_slider->GetBackBufferIndex(), corners, rend->GetColor(), render->GetParent()->cmp_slider->GetBackTexture(), null);
+					DrawStaticUIImage(render->GetParent()->cmp_slider->GetFrontBufferIndex(), &corners[4], rend->GetColor(), render->GetParent()->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
+					break;
 				}
+				}
+				rend = render->GetDrawAvaiable();
+			}
+		}
+	}
+#ifndef GAMEMODE
+	OPTICK_CATEGORY("ModuleUI_DynamicScreenDraw", Optick::Category::UI);
+#endif
+	if (!dDraws.empty())
+	{
+		use(uiDynamic_shader);
+		setBool(uiDynamic_shader, "isScreen", !screenInWorld);
+
+		for (ComponentCanvasRenderer* render : dDraws)
+		{
+			ComponentCanvasRenderer::ToUIRend* rend = render->GetDrawAvaiable();
+			while (rend != nullptr)
+			{
+				switch (rend->GetType())
+				{
+				case ComponentCanvasRenderer::RenderTypes::IMAGE:
+					DrawStaticUIImage(rend->GetIndex(), render->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
+					break;
+				case ComponentCanvasRenderer::RenderTypes::LABEL:
+					DrawStaticUILabel(rend->GetIndex(), rend->GetWord(), rend->GetColor());
+					break;
+				case ComponentCanvasRenderer::RenderTypes::SLIDER:
+				{
+					math::float3* corners = render->GetParent()->cmp_slider->GetCorners();
+					math::float2 null(-1.0f, -1.0f);
+					DrawStaticUIImage(render->GetParent()->cmp_slider->GetBackBufferIndex(), corners, rend->GetColor(), render->GetParent()->cmp_slider->GetBackTexture(), null);
+					DrawStaticUIImage(render->GetParent()->cmp_slider->GetFrontBufferIndex(), &corners[4], rend->GetColor(), render->GetParent()->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
+					break;
+				}
+				}
+				rend = render->GetDrawAvaiable();
 			}
 		}
 	}
@@ -344,106 +504,86 @@ void ModuleUI::DrawScreenCanvas()
 	if (!blend) glDisable(GL_BLEND);
 }
 
-void ModuleUI::DrawWorldCanvas()
+void ModuleUI::DrawStaticUIImage(int index, math::float3 corners[4], math::float4& color, uint texture, math::float2& mask)
 {
-	if (!blend) glEnable(GL_BLEND);
-	if (lighting) glDisable(GL_LIGHTING);
-
-	if (!canvas_world.empty())
-	{
-		setBool(ui_shader, "isScreen", 0);
-		for (GameObject* canvas : canvas_world)
-		{
-			std::vector<GameObject*> renderers;
-			canvas->GetChildrenAndThisVectorFromLeaf(renderers);
-			for (std::vector<GameObject*>::reverse_iterator render = renderers.rbegin(); render != renderers.rend(); ++render)
-			{
-				ComponentCanvasRenderer* renderer = (*render)->cmp_canvasRenderer;
-				if (renderer)
-				{
-					ComponentCanvasRenderer::ToUIRend* rend = renderer->GetDrawAvaiable();
-					while (rend != nullptr)
-					{
-						switch (rend->GetType())
-						{
-						case ComponentCanvasRenderer::RenderTypes::IMAGE:
-							DrawUIImage(rend->GetIndex(), renderer->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
-							break;
-						case ComponentCanvasRenderer::RenderTypes::LABEL:
-							DrawUILabel(rend->GetIndex(), rend->GetWord(), rend->GetColor());
-							break;
-						case ComponentCanvasRenderer::RenderTypes::SLIDER:
-						{
-							math::float3* corners = (*render)->cmp_slider->GetCorners();
-							math::float2 null(-1.0f, -1.0f);
-							DrawUIImage((*render)->cmp_slider->GetBackBufferIndex(), corners, rend->GetColor(), (*render)->cmp_slider->GetBackTexture(), null);
-							DrawUIImage((*render)->cmp_slider->GetFrontBufferIndex(), &corners[4], rend->GetColor(), (*render)->cmp_slider->GetFrontTexture(), rend->GetMaskValues());
-							break;
-						}
-					}
-						rend = renderer->GetDrawAvaiable();
-					}
-				}
-			}
-		}
-	}
-
-	if (lighting) glEnable(GL_LIGHTING);
-}
-
-void ModuleUI::DrawUIImage(int index, math::float3 corners[4], math::float4& color, uint texture, math::float2& mask)
-{
-	if (App->glCache->isShaderStorage())
-	{
-		setFloat(ui_shader, "indexCorner", float(index));
-	}
-	else
-	{
-		setFloat(ui_shader, "topLeft", { corners[ComponentRectTransform::Rect::RTOPLEFT], 1.0f });
-		setFloat(ui_shader, "topRight", { corners[ComponentRectTransform::Rect::RTOPRIGHT], 1.0f });
-		setFloat(ui_shader, "bottomLeft", { corners[ComponentRectTransform::Rect::RBOTTOMLEFT], 1.0f });
-		setFloat(ui_shader, "bottomRight", { corners[ComponentRectTransform::Rect::RBOTTOMRIGHT], 1.0f });
-	}
+	setFloat(uiStatic_shader, "indexCorner", float(index));
 
 	bool useMask = (mask.x < 0) ? false : true;
-	setBool(ui_shader, "useMask", useMask);
+	setBool(uiStatic_shader, "useMask", useMask);
 	if (useMask)
-		setFloat(ui_shader, "coordsMask", mask.x, mask.y);
+		setFloat(uiStatic_shader, "coordsMask", mask.x, mask.y);
 
-	setBool(ui_shader, "isLabel", false);
-	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
+	setBool(uiStatic_shader, "isLabel", false);
+	setFloat(uiStatic_shader, "spriteColor", color.x, color.y, color.z, color.w);
 	if (texture > 0)
 	{
-		setBool(ui_shader, "using_texture", true);
+		setBool(uiStatic_shader, "using_texture", true);
 		glBindTexture(GL_TEXTURE_2D, texture);
 	}
 	else
-		setBool(ui_shader, "using_texture", false);
+		setBool(uiStatic_shader, "using_texture", false);
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	if (texture > 0) glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void ModuleUI::DrawUILabel(int index, std::vector<LabelLetter*>* word, math::float4& color)
+void ModuleUI::DrawStaticUILabel(int index, std::vector<LabelLetter*>* word, math::float4& color)
 {
-	setBool(ui_shader, "isLabel", true);
-	setBool(ui_shader, "using_texture", true);
-	setFloat(ui_shader, "spriteColor", color.x, color.y, color.z, color.w);
+	setBool(uiStatic_shader, "isLabel", true);
+	setBool(uiStatic_shader, "using_texture", true);
+	setFloat(uiStatic_shader, "spriteColor", color.x, color.y, color.z, color.w);
 
 	uint wordSize = word->size();
 	for (uint i = 0; i < wordSize; i++)
 	{
-		if (App->glCache->isShaderStorage())
-		{
-			setFloat(ui_shader, "indexCorner", float(index + (4.0f * (float)i)));
-		}
-		else
-		{
-			setFloat(ui_shader, "topLeft",{ word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RTOPLEFT], 1.0f });
-			setFloat(ui_shader, "topRight",{ word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RTOPRIGHT], 1.0f });
-			setFloat(ui_shader, "bottomLeft",{ word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RBOTTOMLEFT], 1.0f });
-			setFloat(ui_shader, "bottomRight",{ word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RBOTTOMRIGHT], 1.0f });
-		}
+		setFloat(uiStatic_shader, "indexCorner", float(index + (4.0f * (float)i)));
+
+		glBindTexture(GL_TEXTURE_2D, word->at(i)->textureID);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+	}
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void ModuleUI::DrawDynamicUIImage(int index, math::float3 corners[4], math::float4 & color, uint texture, math::float2 & mask)
+{
+	setFloat(uiDynamic_shader, "topLeft", { corners[ComponentRectTransform::Rect::RTOPLEFT], 1.0f });
+	setFloat(uiDynamic_shader, "topRight", { corners[ComponentRectTransform::Rect::RTOPRIGHT], 1.0f });
+	setFloat(uiDynamic_shader, "bottomLeft", { corners[ComponentRectTransform::Rect::RBOTTOMLEFT], 1.0f });
+	setFloat(uiDynamic_shader, "bottomRight", { corners[ComponentRectTransform::Rect::RBOTTOMRIGHT], 1.0f });
+
+	bool useMask = (mask.x < 0) ? false : true;
+	setBool(uiDynamic_shader, "useMask", useMask);
+	if (useMask)
+		setFloat(uiDynamic_shader, "coordsMask", mask.x, mask.y);
+
+	setBool(uiDynamic_shader, "isLabel", false);
+	setFloat(uiDynamic_shader, "spriteColor", color.x, color.y, color.z, color.w);
+	if (texture > 0)
+	{
+		setBool(uiDynamic_shader, "using_texture", true);
+		glBindTexture(GL_TEXTURE_2D, texture);
+	}
+	else
+		setBool(uiDynamic_shader, "using_texture", false);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	if (texture > 0) glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void ModuleUI::DrawDynamicUILabel(int index, std::vector<LabelLetter*>* word, math::float4 & color)
+{
+	setBool(uiDynamic_shader, "isLabel", true);
+	setBool(uiDynamic_shader, "using_texture", true);
+	setFloat(uiDynamic_shader, "spriteColor", color.x, color.y, color.z, color.w);
+
+	uint wordSize = word->size();
+	for (uint i = 0; i < wordSize; i++)
+	{
+		setFloat(uiDynamic_shader, "topLeft", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RTOPLEFT], 1.0f });
+		setFloat(uiDynamic_shader, "topRight", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RTOPRIGHT], 1.0f });
+		setFloat(uiDynamic_shader, "bottomLeft", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RBOTTOMLEFT], 1.0f });
+		setFloat(uiDynamic_shader, "bottomRight", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RBOTTOMRIGHT], 1.0f });
+
 		glBindTexture(GL_TEXTURE_2D, word->at(i)->textureID);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 	}
