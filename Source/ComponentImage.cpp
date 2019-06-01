@@ -83,9 +83,8 @@ void ComponentImage::Update()
 				mask_values[1] = ((rect_initValues[1] - (float)rect[ComponentRectTransform::Rect::YDIST]) / rect_initValues[1]);
 			}
 		}
-		if(App->glCache->isShaderStorage())
-			if (index != -1)
-				FillBuffer();
+		if(App->glCache->isShaderStorage() && parent->IsStatic() && index != -1)
+			FillBuffer();
 
 		needed_recalculate = false;
 	}
@@ -199,6 +198,7 @@ void ComponentImage::OnSystemEvent(System_Event event)
 	case System_Event_Type::CanvasChanged:
 	case System_Event_Type::RectTransformUpdatedFromAnimation:
 	case System_Event_Type::RectTransformUpdated:
+	case System_Event_Type::OnGOStatic:
 	{
 		needed_recalculate = true;
 		break;

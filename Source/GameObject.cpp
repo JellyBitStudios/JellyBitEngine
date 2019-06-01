@@ -376,6 +376,13 @@ void GameObject::SetIsStatic(bool staticGO)
 {
 	isStatic = staticGO;
 	App->GOs->RecalculateVector(this);
+
+	if (staticGO && (cmp_image || cmp_label || cmp_slider))
+	{
+		System_Event newEvent;
+		newEvent.type = System_Event_Type::OnGOStatic;
+		OnSystemEvent(newEvent);
+	}
 }
 
 void GameObject::ToggleChildrenAndThisStatic(bool toStatic)
@@ -387,6 +394,13 @@ void GameObject::ToggleChildrenAndThisStatic(bool toStatic)
 	{
 		go->isStatic = toStatic;
 		App->GOs->RecalculateVector(go, false);
+
+		if (toStatic && (go->cmp_image || go->cmp_label || go->cmp_slider))
+		{
+			System_Event newEvent;
+			newEvent.type = System_Event_Type::OnGOStatic;
+			go->OnSystemEvent(newEvent);
+		}
 	}
 
 	System_Event newEvent;
@@ -525,6 +539,7 @@ void GameObject::OnSystemEvent(System_Event event)
 		}
 		break;
 	}
+	case System_Event_Type::OnGOStatic:
 	case System_Event_Type::ScreenChanged:
 	case System_Event_Type::RectTransformUpdated:
 	case System_Event_Type::CanvasChanged:

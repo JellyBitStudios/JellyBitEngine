@@ -17,7 +17,7 @@
 #include "ComponentUIAnimation.h"
 #include "Panel.h"
 
-#define CANVAS_TYPE_STR "Screen\0World Screen (Work In Progress)\0World"
+#define CANVAS_TYPE_STR "Screen\0World"
 
 #ifndef GAMEMDOE
 #include "imgui\imgui.h"
@@ -52,11 +52,6 @@ ComponentCanvas::ComponentCanvas(const ComponentCanvas & componentCanvas, GameOb
 
 ComponentCanvas::~ComponentCanvas()
 {
-	if (transform)
-		RELEASE(transform);
-	if (fakeGo)
-		RELEASE(fakeGo);
-
 	parent->cmp_canvas = nullptr;
 }
 
@@ -91,26 +86,11 @@ void ComponentCanvas::Update()
 {
 	if (needed_change)
 	{
-		if (transform)
-			RELEASE(transform);
-		if (fakeGo)
-			RELEASE(fakeGo);
-
-
 		for (GameObject* go : App->ui->canvas_screen)
 		{
 			if (go == parent)
 			{
 				App->ui->canvas_screen.remove(parent);
-				break;
-			}
-		}
-
-		for (GameObject* go : App->ui->canvas_worldScreen)
-		{
-			if (go == parent)
-			{
-				App->ui->canvas_worldScreen.remove(parent);
 				break;
 			}
 		}
@@ -129,31 +109,10 @@ void ComponentCanvas::Update()
 		case CanvasType::SCREEN:
 			App->ui->canvas_screen.push_back(parent);
 			break;
-		case CanvasType::WORLD_SCREEN:
-			App->ui->canvas_worldScreen.push_back(parent);
-
-			if (!transform)
-				transform = new ComponentTransform(nullptr);
-			if (!fakeGo)
-				fakeGo = new GameObject("", nullptr, true);
-			fakeGo->transform = transform;
-			if (App->renderer3D->GetCurrentCamera()->GetParent())
-			{
-				fakeGo->SetParent(App->renderer3D->GetCurrentCamera()->GetParent());
-				fakeGo->transform->UpdateGlobal();
-			}
-			else
-			{
-				//math::float4x4 matrix = math::float4x4(App->renderer3D->GetCurrentCamera()->frustum.WorldMatrix());
-				//transform->SetMatrixFromGlobal(matrix);
-			}
-			break;
 		case CanvasType::WORLD:
 			App->ui->canvas_world.push_back(parent);
 			break;
 		}
-
-
 
 		if (!first_iterate)
 		{
@@ -191,40 +150,31 @@ void ComponentCanvas::OnEditor()
 #ifndef GAMEMODE
 	if (ImGui::CollapsingHeader("Canvas", ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		int current_type = int(type);
+		int current_type = (int(type) == 2) ? 1 : 0;
 		if (ImGui::Combo("Using", &current_type, CANVAS_TYPE_STR))
 		{
-			if ((CanvasType)current_type != type)
+			int translatedCurrent = (current_type == 1) ? 2 : 0;
+			if ((CanvasType)translatedCurrent != type)
 			{
 				switch (type)
 				{
 				case ComponentCanvas::SCREEN:
 					App->ui->canvas_screen.remove(parent);
 					break;
-				case ComponentCanvas::WORLD_SCREEN:
-					App->ui->canvas_worldScreen.remove(parent);
-					break;
 				case ComponentCanvas::WORLD:
 					App->ui->canvas_world.remove(parent);
 					break;
 				}
-				type = (CanvasType)current_type;
+				type = (CanvasType)translatedCurrent;
 				needed_change = true;
 			}
 		}
 		if (!needed_change)
 			if (parent->transform && type != CanvasType::SCREEN)
-				if (type == CanvasType::WORLD_SCREEN)
-				{
-					if (fakeGo->GetParent())
-						App->scene->OnGizmos(fakeGo);
-					transform->OnUniqueEditor();
-				}
-				else
-				{
-					App->scene->OnGizmos(parent);
-					parent->transform->OnUniqueEditor();
-				}
+			{
+				App->scene->OnGizmos(parent);
+				parent->transform->OnUniqueEditor();
+			}
 	}
 #endif
 }
@@ -263,9 +213,6 @@ void ComponentCanvas::Change(CanvasType to)
 		case ComponentCanvas::SCREEN:
 			App->ui->canvas_screen.remove(parent);
 			break;
-		case ComponentCanvas::WORLD_SCREEN:
-			App->ui->canvas_worldScreen.remove(parent);
-			break;
 		case ComponentCanvas::WORLD:
 			App->ui->canvas_world.remove(parent);
 			break;
@@ -286,9 +233,6 @@ math::float4x4 ComponentCanvas::GetGlobal() const
 
 	switch (type)
 	{
-	case ComponentCanvas::WORLD_SCREEN:
-		ret = transform->GetGlobalMatrix();
-		break;
 	case ComponentCanvas::WORLD:
 		ret = parent->transform->GetGlobalMatrix();
 		break;

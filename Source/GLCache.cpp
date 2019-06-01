@@ -30,16 +30,18 @@ void GLCache::Init()
 		}
 	}
 
+	App->resHandler->CreateUIShaderProgram(); //UI shaders needed to know the isShaderStorage_variable
+
 	if (isShaderStorage_variable)
 	{
-		ui_shader = App->resHandler->UIShaderProgram;
+		uint uiStatic_shader = App->resHandler->UIStaticShaderProgram;
 		//--- One Buffer UI - Shader Storage Buffer Object ----
 		glGenBuffers(1, &ssboUI);
 		glBindBufferRange(GL_SHADER_STORAGE_BUFFER, UI_BIND_INDEX, ssboUI, 0, UI_BUFFER_SIZE);
 		glBufferData(GL_SHADER_STORAGE_BUFFER, UI_BUFFER_SIZE, nullptr, GL_DYNAMIC_DRAW);
 		// Bind UBO to shader Interface Block
-		GLuint uloc = glGetProgramResourceIndex(ui_shader, GL_SHADER_STORAGE_BLOCK, "UICorners");
-		glShaderStorageBlockBinding(ui_shader, uloc, UI_BIND_INDEX);
+		GLuint uloc = glGetProgramResourceIndex(uiStatic_shader, GL_SHADER_STORAGE_BLOCK, "UICorners");
+		glShaderStorageBlockBinding(uiStatic_shader, uloc, UI_BIND_INDEX);
 		glBufferStorage(GL_SHADER_STORAGE_BUFFER, UI_BUFFER_SIZE, nullptr, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		//-------------
 	}

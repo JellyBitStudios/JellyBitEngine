@@ -682,14 +682,14 @@ void ResourceAnimator::PauseAnimation()
 {
 	anim_state = AnimationState::PAUSED;
 	ResourceAvatar* ava = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
-	ava->SetIsAnimated(false);
+	//ava->SetIsAnimated(false);
 }
 
 void ResourceAnimator::StopAnimation()
 {
 	anim_state = AnimationState::STOPPED;
 	ResourceAvatar* ava = (ResourceAvatar*)App->res->GetResource(this->animator_data.avatar_uuid);
-	ava->SetIsAnimated(false);
+	//ava->SetIsAnimated(false);
 }
 
 void ResourceAnimator::StepBackwards()

@@ -120,6 +120,9 @@ void ComponentLabel::OnSystemEvent(System_Event event)
 	case System_Event_Type::RectTransformUpdatedFromAnimation:
 		new_word = true;
 			break;
+	case System_Event_Type::OnGOStatic:
+		needed_recalculateWord = true;
+		break;
 	}
 }
 
@@ -246,7 +249,7 @@ void ComponentLabel::Update()
 		for (LabelLetter* letter : labelWord)
 			letter->rect->Update();
 	
-		if (App->glCache->isShaderStorage() && index != -1)
+		if (App->glCache->isShaderStorage() && parent->IsStatic() && index != -1)
 			FillBuffer();
 
 		needed_recalculateWord = false;

@@ -579,6 +579,15 @@ void ResourceShaderProgram::GetUniforms(std::vector<Uniform>& uniforms)
 				goto hereWeGo;
 		}
 
+		if (strcmp(name, "animate") == 0
+			|| strcmp(name, "fog.color") == 0
+			|| strcmp(name, "fog.density") == 0
+			|| strcmp(name, "gInfoTexture") == 0
+			|| strcmp(name, "dot") == 0
+			|| strcmp(name, "screenSize") == 0
+			|| strcmp(name, "Time") == 0)
+			continue;
+
 		Uniform uniform;
 		memset(&uniform, 0, sizeof(Uniform));
 		switch (type)
@@ -636,6 +645,9 @@ void ResourceShaderProgram::GetUniforms(std::vector<Uniform>& uniforms)
 			uniform.sampler2DU.type = type;
 			uniform.sampler2DU.location = glGetUniformLocation(shaderProgram, uniform.common.name);
 			uniforms.push_back(uniform);
+			break;
+		default:
+			continue;
 			break;
 		}
 

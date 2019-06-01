@@ -12,8 +12,7 @@ public:
 	{
 		CNULL = -1,
 		SCREEN,
-		WORLD_SCREEN,
-		WORLD,
+		WORLD = 2,
 	};
 
 public:
@@ -43,8 +42,6 @@ private:
 	CanvasType type = CanvasType::SCREEN;
 	bool needed_change = false;
 	bool first_iterate = true;
-	class GameObject* fakeGo = nullptr;
-	class ComponentTransform* transform = nullptr;
 };
 
 #endif
