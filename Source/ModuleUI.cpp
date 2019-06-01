@@ -580,11 +580,20 @@ void ModuleUI::DrawDynamicUILabel(std::vector<LabelLetter*>* word, math::float4 
 	uint wordSize = word->size();
 	for (uint i = 0; i < wordSize; i++)
 	{
-		setFloat(uiDynamic_shader, "topLeft", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RBOTTOMLEFT], 1.0f });
-		setFloat(uiDynamic_shader, "topRight", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RBOTTOMRIGHT], 1.0f });
-		setFloat(uiDynamic_shader, "bottomLeft", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RTOPLEFT], 1.0f });
-		setFloat(uiDynamic_shader, "bottomRight", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RTOPRIGHT], 1.0f });
-
+		if(screenInWorld)
+		{
+			setFloat(uiDynamic_shader, "topLeft", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RTOPLEFT], 1.0f });
+			setFloat(uiDynamic_shader, "topRight", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RTOPRIGHT], 1.0f });
+			setFloat(uiDynamic_shader, "bottomLeft", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RBOTTOMLEFT], 1.0f });
+			setFloat(uiDynamic_shader, "bottomRight", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RBOTTOMRIGHT], 1.0f });
+		}
+		else
+		{
+			setFloat(uiDynamic_shader, "topLeft", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RBOTTOMLEFT], 1.0f });
+			setFloat(uiDynamic_shader, "topRight", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RBOTTOMRIGHT], 1.0f });
+			setFloat(uiDynamic_shader, "bottomLeft", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RTOPLEFT], 1.0f });
+			setFloat(uiDynamic_shader, "bottomRight", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RTOPRIGHT], 1.0f });
+		}
 		glBindTexture(GL_TEXTURE_2D, word->at(i)->textureID);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 	}
