@@ -57,6 +57,8 @@ ComponentProjector::ComponentProjector(const ComponentProjector& componentProjec
 	else
 		SetMeshRes(App->resHandler->cube);
 
+	layer = componentProjector.layer;
+
 	// Init frustum
 	frustum.type = componentProjector.frustum.type;
 
