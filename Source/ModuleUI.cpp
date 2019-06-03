@@ -67,7 +67,6 @@ bool ModuleUI::Start()
 #else
 
 	WorldHolder = new GameObject("UIHolder", nullptr);
-	WorldHolder->SetIsStatic(true);
 	WorldHolder->AddComponent(ComponentTypes::TransformComponent);
 	WorldHolder->transform->SetPosition({ 8.0f, 4.5f, 0.0f });
 	WorldHolder->transform->SetScale({ 16.0f, 9.0f, 1.0f });
@@ -140,8 +139,6 @@ void ModuleUI::OnSystemEvent(System_Event event)
 		if (App->GetEngineState() == engine_states::ENGINE_EDITOR)
 		{
 			screenInWorld = true;
-			canvas.push_front(WorldHolder);
-			canvas_world.push_front(WorldHolder);
 
 			System_Event updateCornersToScreen;
 			updateCornersToScreen.type = System_Event_Type::RectTransformUpdated;
@@ -163,10 +160,10 @@ void ModuleUI::OnSystemEvent(System_Event event)
 		{
 			canvas_world.remove(WorldHolder);
 			canvas.remove(WorldHolder);
+			screenInWorld = false;
 		}
 #endif // GAMEMODE
 
-		screenInWorld = false;
 		System_Event updateCornersToScreen;
 		updateCornersToScreen.type = System_Event_Type::RectTransformUpdated;
 		for (GameObject* goScreenCanvas : canvas_screen)
@@ -184,11 +181,8 @@ void ModuleUI::OnSystemEvent(System_Event event)
 		App->glCache->ResetUIBufferValues();
 
 #ifndef GAMEMODE
-		if (App->GetEngineState() == engine_states::ENGINE_EDITOR)
-		{
-			uint temp; int tm;
-			App->glCache->RegisterBufferIndex(&temp, &tm, ComponentTypes::ImageComponent, WorldHolder->cmp_image);
-		}
+		canvas.push_back(WorldHolder);
+		canvas_world.push_back(WorldHolder);
 #endif
 	}
 	case System_Event_Type::Stop:
@@ -397,7 +391,7 @@ void ModuleUI::DrawWorldCanvas(std::vector<ComponentCanvasRenderer*>& sDraws, st
 					DrawDynamicUIImage(render->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 					break;
 				case ComponentCanvasRenderer::RenderTypes::LABEL:
-					DrawDynamicUILabel(rend->GetWord(), rend->GetColor());
+					DrawDynamicUILabel(rend->GetWord(), rend->GetColor(), true);
 					break;
 				case ComponentCanvasRenderer::RenderTypes::SLIDER:
 				{
@@ -475,7 +469,7 @@ void ModuleUI::DrawScreenCanvas(std::vector<ComponentCanvasRenderer*>& sDraws, s
 					DrawDynamicUIImage(render->GetParent()->cmp_rectTransform->GetCorners(), rend->GetColor(), rend->GetTexture(), rend->GetMaskValues());
 					break;
 				case ComponentCanvasRenderer::RenderTypes::LABEL:
-					DrawDynamicUILabel(rend->GetWord(), rend->GetColor());
+					DrawDynamicUILabel(rend->GetWord(), rend->GetColor(), screenInWorld);
 					break;
 				case ComponentCanvasRenderer::RenderTypes::SLIDER:
 				{
@@ -563,7 +557,7 @@ void ModuleUI::DrawDynamicUIImage(math::float3 corners[4], math::float4 & color,
 	if (texture > 0) glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void ModuleUI::DrawDynamicUILabel(std::vector<LabelLetter*>* word, math::float4 & color)
+void ModuleUI::DrawDynamicUILabel(std::vector<LabelLetter*>* word, math::float4 & color, bool worldDraw)
 {
 	setBool(uiDynamic_shader, "isLabel", true);
 	setBool(uiDynamic_shader, "using_texture", true);
@@ -572,7 +566,7 @@ void ModuleUI::DrawDynamicUILabel(std::vector<LabelLetter*>* word, math::float4 
 	uint wordSize = word->size();
 	for (uint i = 0; i < wordSize; i++)
 	{
-		if(screenInWorld)
+		if(worldDraw)
 		{
 			setFloat(uiDynamic_shader, "topLeft", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RTOPLEFT], 1.0f });
 			setFloat(uiDynamic_shader, "topRight", { word->at(i)->rect->GetCorners()[ComponentRectTransform::Rect::RTOPRIGHT], 1.0f });

@@ -100,7 +100,7 @@ private:
 	void DrawStaticUIImage(int index, math::float4& color, uint texture, math::float2& mask);
 	void DrawStaticUILabel(int index, std::vector<LabelLetter*>* word, math::float4& color);
 	void DrawDynamicUIImage(math::float3 corners[4], math::float4& color, uint texture, math::float2& mask);
-	void DrawDynamicUILabel(std::vector<LabelLetter*>* word, math::float4& color);
+	void DrawDynamicUILabel(std::vector<LabelLetter*>* word, math::float4& color, bool worldDraw = false);
 
 	void UpdateRenderStates();
 

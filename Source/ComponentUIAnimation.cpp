@@ -535,17 +535,20 @@ void ComponentUIAnimation::OnSystemEvent(System_Event event)
 	case System_Event_Type::ScreenChanged:
 	case System_Event_Type::CanvasChanged:
 	case System_Event_Type::RectTransformUpdated:
-		if (modifying_key) // cheks event of rect for modify current key if not change init rect and recalculate all elements
+		if (is_finished)
 		{
-			memcpy(current_key->globalRect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
+			if (modifying_key) // cheks event of rect for modify current key if not change init rect and recalculate all elements
+			{
+				memcpy(current_key->globalRect, parent->cmp_rectTransform->GetRect(), sizeof(int) * 4);
 
-			current_key->diffRect[0] = current_key->globalRect[0] - ((current_key->back_key) ? current_key->back_key->globalRect[0] : init_rect[0]);
-			current_key->diffRect[1] = current_key->globalRect[1] - ((current_key->back_key) ? current_key->back_key->globalRect[1] : init_rect[1]);
-			current_key->diffRect[2] = current_key->globalRect[2] - ((current_key->back_key) ? current_key->back_key->globalRect[2] : init_rect[2]);
-			current_key->diffRect[3] = current_key->globalRect[3] - ((current_key->back_key) ? current_key->back_key->globalRect[3] : init_rect[3]);
+				current_key->diffRect[0] = current_key->globalRect[0] - ((current_key->back_key) ? current_key->back_key->globalRect[0] : init_rect[0]);
+				current_key->diffRect[1] = current_key->globalRect[1] - ((current_key->back_key) ? current_key->back_key->globalRect[1] : init_rect[1]);
+				current_key->diffRect[2] = current_key->globalRect[2] - ((current_key->back_key) ? current_key->back_key->globalRect[2] : init_rect[2]);
+				current_key->diffRect[3] = current_key->globalRect[3] - ((current_key->back_key) ? current_key->back_key->globalRect[3] : init_rect[3]);
+			}
+			else
+				change_origin_rect = true;
 		}
-		else
-			change_origin_rect = true;
 		break;
 	}
 }
