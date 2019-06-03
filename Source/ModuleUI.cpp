@@ -28,15 +28,6 @@
 
 #include "MathGeoLib/include/Geometry/Frustum.h"
 
-#define glError() { \
-    GLenum err = glGetError(); \
-    while (err != GL_NO_ERROR) { \
-    CONSOLE_LOG(LogTypes::Normal, "glError: %s", \
-           (char*)gluErrorString(err)); \
-    err = glGetError(); \
-    } \
-    }
-
 ModuleUI::ModuleUI(bool start_enabled) : Module(start_enabled)
 {
 	//math::Frustum::ViewportToScreenSpace();
@@ -189,6 +180,7 @@ void ModuleUI::OnSystemEvent(System_Event event)
 	}
 	case System_Event_Type::LoadScene:
 	{
+		currentSlider = nullptr;
 		App->glCache->ResetUIBufferValues();
 
 #ifndef GAMEMODE
@@ -638,6 +630,16 @@ GameObject * ModuleUI::FindCanvas(GameObject * from, uint& count)
 		}
 	}
 	return (ret) ? ret : nullptr;
+}
+
+void ModuleUI::SetCurrentSlider(ComponentSlider * slider)
+{
+	currentSlider = slider;
+}
+
+bool ModuleUI::IsSliderCurrent() const
+{
+	return (currentSlider != nullptr);
 }
 
 #ifndef GAMEMODE

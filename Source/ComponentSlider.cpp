@@ -91,7 +91,7 @@ void ComponentSlider::Update()
 {
 	if (IsTreeActive())
 	{
-		if (App->GetEngineState() == engine_states::ENGINE_PLAY && parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
+		if (!ignoreMouse && App->GetEngineState() == engine_states::ENGINE_PLAY && parent->cmp_rectTransform->GetFrom() == ComponentRectTransform::RectFrom::RECT)
 		{
 			int* rect = parent->cmp_rectTransform->GetRect();
 
@@ -100,9 +100,28 @@ void ComponentSlider::Update()
 				if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_DOWN ||
 					App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_REPEAT)
 				{
+					if (!App->ui->IsSliderCurrent())
+					{
+						App->ui->SetCurrentSlider(this);
+						currentOnClick = true;
+					}
+				}
+			}
+
+			if (currentOnClick)
+			{
+				if (App->input->GetMouseButton(SDL_BUTTON_LEFT) == KEY_REPEAT)
+				{
 					actualSize = App->input->GetMouseX() - rect[ComponentRectTransform::Rect::X];
+					if (actualSize < 0) actualSize = 0;
+					if (actualSize > referenceSize) actualSize = referenceSize;
 					CalculatePercentageByFrontSize();
 					needed_fillBuffer = true;
+				}
+				else
+				{
+					App->ui->SetCurrentSlider(nullptr);
+					currentOnClick = false;
 				}
 			}
 		}
@@ -155,6 +174,16 @@ void ComponentSlider::SetPercentage(float i)
 	percentage = i;
 	CalculateFrontSizeByPercentage();
 	needed_fillBuffer = true;
+}
+
+void ComponentSlider::SetIgnoreMouse(bool ignore)
+{
+	ignoreMouse = ignore;
+}
+
+bool ComponentSlider::GetIgnoreMouse() const
+{
+	return ignoreMouse;
 }
 
 int ComponentSlider::GetBackBufferIndex() const
@@ -232,7 +261,7 @@ void ComponentSlider::SetFromInvadilateResource(uint uuid)
 
 uint ComponentSlider::GetInternalSerializationBytes()
 {
-	return sizeof(SliderType) + sizeof(float) + sizeof(uint) * 4;
+	return sizeof(SliderType) + sizeof(float) + sizeof(uint) * 2 + sizeof(int) * 2;
 }
 
 void ComponentSlider::OnInternalSave(char *& cursor)
@@ -245,7 +274,7 @@ void ComponentSlider::OnInternalSave(char *& cursor)
 	memcpy(cursor, &percentage, bytes);
 	cursor += bytes;
 
-	bytes = sizeof(uint);
+	bytes = sizeof(uint); //same as int
 	memcpy(cursor, &actualSize, bytes);
 	cursor += bytes;
 
@@ -282,8 +311,12 @@ void ComponentSlider::OnInternalLoad(char *& cursor)
 	memcpy(&frontTexture, cursor, bytes);
 	cursor += bytes;
 
-	if(backTexture > 0) App->res->SetAsUsed(backTexture);
-	if(frontTexture > 0) App->res->SetAsUsed(frontTexture);
+	if (parent->includeModuleComponent)
+	{
+		if (backTexture > 0) App->res->SetAsUsed(backTexture);
+		if (frontTexture > 0) App->res->SetAsUsed(frontTexture);
+		SetPercentage(percentage);
+	}
 }
 
 void ComponentSlider::OnUniqueEditor()

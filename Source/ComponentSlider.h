@@ -45,6 +45,10 @@ public:
 	float GetPercentage()const;
 	void SetPercentage(float i);
 
+	//ignoreMouse
+	void SetIgnoreMouse(bool ignore);
+	bool GetIgnoreMouse()const;
+
 private:
 	virtual uint GetInternalSerializationBytes();
 	virtual void OnInternalSave(char*& cursor);
@@ -60,9 +64,13 @@ private:
 	SliderType sType = SliderType::BarMask;
 	//calcs
 	float percentage = 1;
-	uint actualSize = 0;
-	uint referenceSize = 0;
+	int actualSize = 0;
+	int referenceSize = 0;
 	math::float3 corners[8];
+
+	//Booleans
+	bool ignoreMouse = false;
+	bool currentOnClick = false;
 
 	//Textures
 	uint backTexture = 0u;

@@ -36,6 +36,7 @@ class ComponentImage;
 class ComponentLabel;
 class ComponentButton;
 class ComponentCanvasRenderer;
+class ComponentSlider;
 
 enum ComponentTypes;
 
@@ -68,6 +69,9 @@ public:
 
 	bool IsUIHovered();
 	static GameObject* FindCanvas(GameObject* from, uint& count);
+
+	void SetCurrentSlider(ComponentSlider* slider);
+	bool IsSliderCurrent() const;
 
 #ifndef GAMEMODE
 	//Engine world
@@ -120,6 +124,8 @@ private:
 	bool anyItemIsHovered = false;
 
 	bool depthTest, cullFace, lighting, blend;
+
+	ComponentSlider* currentSlider = nullptr;
 
 #ifndef GAMEMODE
 	//UI like Unity
