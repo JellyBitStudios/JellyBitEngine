@@ -3254,6 +3254,28 @@ float SliderGetValue(MonoObject* monoSlider)
 	return -1.0f;
 }
 
+bool SliderGetIgnoreMouse(MonoObject* monoSlider)
+{
+	ComponentSlider* slider = (ComponentSlider*)App->scripting->ComponentFrom(monoSlider);
+
+	if (slider)
+	{
+		return slider->GetIgnoreMouse();
+	}
+	
+	return false;
+}
+
+void SliderSetIgnoreMouse(MonoObject* monoSlider, bool value)
+{
+	ComponentSlider* slider = (ComponentSlider*)App->scripting->ComponentFrom(monoSlider);
+
+	if (slider)
+	{
+		slider->SetIgnoreMouse(value);
+	}
+}
+
 void SliderSetValue(MonoObject* monoSlider, float value)
 {
 	ComponentSlider* slider = (ComponentSlider*)App->scripting->ComponentFrom(monoSlider);
@@ -4498,6 +4520,8 @@ void ScriptingModule::CreateDomain()
 	mono_add_internal_call("JellyBitEngine.UI.Label::GetResource", (const void*)&LabelGetResource);
 	mono_add_internal_call("JellyBitEngine.UI.Slider::GetValue", (const void*)&SliderGetValue);
 	mono_add_internal_call("JellyBitEngine.UI.Slider::SetValue", (const void*)&SliderSetValue);
+	mono_add_internal_call("JellyBitEngine.UI.Slider::GetIgnoreMouse", (const void*)&SliderGetIgnoreMouse);
+	mono_add_internal_call("JellyBitEngine.UI.Slider::SetIgnoreMouse", (const void*)&SliderSetIgnoreMouse);
 	mono_add_internal_call("JellyBitEngine.UI.AnimationUI::Play", (const void*)&AnimationUIPlay);
 	mono_add_internal_call("JellyBitEngine.UI.AnimationUI::Stop", (const void*)&AnimationUIStop);
 	mono_add_internal_call("JellyBitEngine.UI.AnimationUI::IsFinished", (const void*)&AnimationUIIsFinished);
