@@ -58,7 +58,8 @@ void ComponentCanvasRenderer::Update()
 			{
 				if (rend->isRendered())
 				{
-					rend->Set(RenderTypes::IMAGE, cmp_image);
+					if(cmp_image->GetAlpha() > 0.0f)
+						rend->Set(RenderTypes::IMAGE, cmp_image);
 					break;
 				}
 			}

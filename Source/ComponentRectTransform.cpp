@@ -145,6 +145,13 @@ void ComponentRectTransform::Update()
 	{
 		RecalculateRectByPercentage();
 		CalculateScreenCorners();
+
+		if (parent->cmp_uiAnimation)
+		{
+			System_Event e;
+			e.type = System_Event_Type::ScreenChanged;
+			parent->cmp_uiAnimation->OnSystemEvent(e);
+		}
 		
 		recalculate_byPercentage = false;
 	}
