@@ -707,8 +707,10 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 			newComponent = cmp_canvasRenderer;
 		break;
 	case ComponentTypes::ImageComponent:
-		assert(cmp_image == nullptr);
-		newComponent = cmp_image = new ComponentImage(this, ComponentTypes::ImageComponent, includeInModules);
+		if (cmp_image == nullptr)
+			newComponent = cmp_image = new ComponentImage(this, ComponentTypes::ImageComponent, includeInModules);
+		else
+			newComponent = cmp_image;
 		break;
 	case ComponentTypes::ButtonComponent:
 		assert(cmp_button == nullptr);
