@@ -203,6 +203,7 @@ private:
 	float animation_timer = 0.0f; //Internal timer
 	bool loop = false;
 	bool is_finished = false;
+	bool wasStatic = false;
 
 	//Origin values
 	int init_rect[4] = {0,0,100,100};

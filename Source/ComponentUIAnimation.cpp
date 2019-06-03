@@ -148,8 +148,11 @@ void ComponentUIAnimation::Update()
 					if (!loop)
 					{
 						animation_state = UIAnimationState::STOPPED;
-						if (!parent->IsStatic())
+						if (wasStatic)
+						{
 							parent->ToggleChildrenAndThisStatic(true);
+							wasStatic = false;
+						}
 					}
 					else
 						Play(true);
@@ -182,8 +185,11 @@ void ComponentUIAnimation::Update()
 					if (!loop)
 					{
 						animation_state = UIAnimationState::STOPPED;
-						if (!parent->IsStatic())
+						if (wasStatic)
+						{
 							parent->ToggleChildrenAndThisStatic(true);
+							wasStatic = false;
+						}
 					}
 					else
 						Rewind(true);
@@ -642,7 +648,11 @@ void ComponentUIAnimation::Play(bool fromLoop)
 		DrawCurrent();
 
 		if (parent->IsStatic() && !fromLoop)
+		{
 			parent->ToggleChildrenAndThisStatic(false);
+			wasStatic = true;
+		}
+
 	}
 	else
 	{
@@ -680,7 +690,10 @@ void ComponentUIAnimation::Rewind(bool fromLoop)
 		DrawCurrent();
 
 		if (parent->IsStatic() && !fromLoop)
+		{
 			parent->ToggleChildrenAndThisStatic(false);
+			wasStatic = true;
+		}
 	}
 	else
 	{
