@@ -1,7 +1,7 @@
 {
     "Application": {
         "Title": "JellyBitEngine",
-	"Version": "v0.9",
+	"Version": "v0.9.1",
         "Organization": "JellyBitStudios",
         "Cap Frames": true,
         "Max FPS": 101
@@ -37,6 +37,14 @@
         },
         "Layer 9": {
             "Name": "NPC",
+            "Filter mask": 4294967295
+        },
+        "Layer 10": {
+            "Name": "Chest",
+            "Filter mask": 4294967295
+        },
+        "Layer 11": {
+            "Name": "UIQuestLog",
             "Filter mask": 4294967295
         }
     },
