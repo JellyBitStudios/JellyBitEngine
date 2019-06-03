@@ -701,8 +701,10 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		newComponent = cmp_rectTransform = new ComponentRectTransform(this, ComponentTypes::RectTransformComponent, includeInModules);
 		break;
 	case ComponentTypes::CanvasRendererComponent:
-		assert(cmp_canvasRenderer == nullptr);
-		newComponent = cmp_canvasRenderer = new ComponentCanvasRenderer(this, ComponentTypes::CanvasRendererComponent, includeInModules);
+		if (cmp_canvasRenderer == nullptr)
+			newComponent = cmp_canvasRenderer = new ComponentCanvasRenderer(this, ComponentTypes::CanvasRendererComponent, includeInModules);
+		else
+			newComponent = cmp_canvasRenderer;
 		break;
 	case ComponentTypes::ImageComponent:
 		assert(cmp_image == nullptr);
