@@ -660,6 +660,7 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 {
 	Component* newComponent = nullptr;
 	Component* newMaterial = 0;
+	bool wasAdded = false;
 
 	switch (componentType)
 	{
@@ -704,13 +705,19 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		if (cmp_canvasRenderer == nullptr)
 			newComponent = cmp_canvasRenderer = new ComponentCanvasRenderer(this, ComponentTypes::CanvasRendererComponent, includeInModules);
 		else
+		{
 			newComponent = cmp_canvasRenderer;
+			wasAdded = true;
+		}
 		break;
 	case ComponentTypes::ImageComponent:
 		if (cmp_image == nullptr)
 			newComponent = cmp_image = new ComponentImage(this, ComponentTypes::ImageComponent, includeInModules);
 		else
+		{
 			newComponent = cmp_image;
+			wasAdded = true;
+		}
 		break;
 	case ComponentTypes::ButtonComponent:
 		assert(cmp_button == nullptr);
@@ -789,7 +796,8 @@ Component* GameObject::AddComponent(ComponentTypes componentType, bool createDep
 		break;
 	}
 
-	components.push_back(newComponent);
+	if(!wasAdded)
+		components.push_back(newComponent);
 
 	if (newMaterial)
 		components.push_back(newMaterial);
