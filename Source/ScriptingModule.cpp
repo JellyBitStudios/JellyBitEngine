@@ -2942,11 +2942,11 @@ MonoArray* TrailGetColor(MonoObject* monoTrail)
 	return nullptr;
 }
 
-void InterpolationStartInterpolation(MonoObject* monoInterpoaltion, MonoString* name, bool goBack, float time)
+void InterpolationStartInterpolation(MonoObject* monoInterpolation, MonoString* name, bool goBack, float time)
 {
 	if (!name) return;
 
-	ComponentInterpolation* interpolation = (ComponentInterpolation*)App->scripting->ComponentFrom(monoInterpoaltion);
+	ComponentInterpolation* interpolation = (ComponentInterpolation*)App->scripting->ComponentFrom(monoInterpolation);
 	if (interpolation)
 	{
 		char* namecpp = mono_string_to_utf8(name);
@@ -2957,13 +2957,23 @@ void InterpolationStartInterpolation(MonoObject* monoInterpoaltion, MonoString* 
 	}
 }
 
-void InterpolationGoBack(MonoObject* monoInterpoaltion)
+void InterpolationGoBack(MonoObject* monoInterpolation)
 {
-	ComponentInterpolation* interpolation = (ComponentInterpolation*)App->scripting->ComponentFrom(monoInterpoaltion);
+	ComponentInterpolation* interpolation = (ComponentInterpolation*)App->scripting->ComponentFrom(monoInterpolation);
 	if (interpolation)
 	{
 		interpolation->GoBack();
 	}
+}
+
+bool InterpolationGetFinished(MonoObject* monoInterpolation)
+{
+	ComponentInterpolation* interpolation = (ComponentInterpolation*)App->scripting->ComponentFrom(monoInterpolation);
+	if (interpolation)
+	{
+		return interpolation->GetFinished();
+	}
+	return false;
 }
 
 bool UIHovered()
@@ -4465,6 +4475,7 @@ void ScriptingModule::CreateDomain()
 	//Interpolation
 	mono_add_internal_call("JellyBitEngine.Interpolation::StartInterpolation", (const void*)&InterpolationStartInterpolation);
 	mono_add_internal_call("JellyBitEngine.Interpolation::GoBack", (const void*)&InterpolationGoBack);
+	mono_add_internal_call("JellyBitEngine.Interpolation::GetFinished", (const void*)&InterpolationGetFinished);
 
 	//Physics
 	mono_add_internal_call("JellyBitEngine.Physics::_OverlapSphere", (const void*)&OverlapSphere);

@@ -119,6 +119,8 @@ public:
 	virtual void OnInternalSave(char*& cursor);
 	virtual void OnInternalLoad(char*& cursor);
 
+	inline bool GetFinished() const { return finished; }
+
 public:
 
 	std::list<TransNode*> nodes;
