@@ -259,30 +259,9 @@ void ComponentAnimator::Update()
 	if (res != 0) {
 		ResourceAnimator* anim_res = (ResourceAnimator*)App->res->GetResource(res);
 		ResourceAvatar* avatar_res = (ResourceAvatar*)App->res->GetResource(res_avatar);
-		if (!avatar_res)
-			return;
-		uint rootUuid = avatar_res->GetRootUuid();
-		GameObject* rootGameObject = App->GOs->GetGameObjectByUID(rootUuid);
-		if (!rootGameObject)
-			return;
-
-		if (!go_with_mesh) {
-			std::vector<GameObject*>children;
-			rootGameObject->GetChildrenVector(children, false);
-
-			for (uint i = 0u; i < children.size(); i++)
-			{
-				if (children[i]->cmp_mesh != nullptr)
-					go_with_mesh = children[i];
-			}
-		}
-
-		if (go_with_mesh  && go_with_mesh->seenLastFrame) {
+		if (anim_res && avatar_res) {
 			avatar_res->SetIsAnimated(true);
 			anim_res->Update();
-		}
-		else {
-			avatar_res->SetIsAnimated(false);
 		}
 	}
 }
