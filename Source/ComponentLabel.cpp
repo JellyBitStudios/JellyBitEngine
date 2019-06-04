@@ -707,6 +707,13 @@ const char * ComponentLabel::GetFinalText() const
 	return finalText.data();
 }
 
+void ComponentLabel::SetAlpha(float alpha)
+{
+	if (alpha > 1.0f) alpha = 1.0f;
+	if (alpha < 0) alpha = 0.0f;
+	color.w = alpha;
+}
+
 void ComponentLabel::SetColor(math::float4 newColor)
 {
 	color = newColor;

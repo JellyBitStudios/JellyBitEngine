@@ -71,6 +71,7 @@ public:
 	void SetFinalText(const char* newText);
 	const char* GetFinalText() const;
 
+	void SetAlpha(float alpha);
 	void SetColor(math::float4 newColor);
 	math::float4 GetColor() const;
 	char* GetBuffer();

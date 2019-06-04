@@ -9,6 +9,7 @@
 #include "GameObject.h"
 #include "ComponentRectTransform.h"
 #include "ComponentImage.h"
+#include "ComponentLabel.h"
 
 #ifndef GAMEMODE
 #include "imgui\imgui.h"
@@ -238,6 +239,7 @@ void ComponentUIAnimation::Interpolate(float time)
 	
 	parent->cmp_rectTransform->SetRect(next_rect, true);
 	if (parent->cmp_image) parent->cmp_image->SetAlpha(next_alpha, true);
+	if (parent->cmp_label) parent->cmp_label->SetAlpha(next_alpha);
 }
 
 //cheks if recording for rectTransform
@@ -645,6 +647,7 @@ void ComponentUIAnimation::Play(bool fromLoop)
 {
 	if (keys.size() > 1) //needed to be more than one key to play
 	{
+		is_finished = false;
 		animation_state = UIAnimationState::PLAYING;
 		current_key = keys.at(0);
 		animation_timer = keys.at(0)->global_time;
@@ -687,6 +690,7 @@ void ComponentUIAnimation::Rewind(bool fromLoop)
 {
 	if (keys.size() > 1) //needed to be more than one key to play
 	{
+		is_finished = false;
 		animation_state = UIAnimationState::REWIND;
 		current_key = keys.at(keys.size() - 1);
 		animation_timer = animation_time;
@@ -764,11 +768,13 @@ void ComponentUIAnimation::DrawInit()
 {
 	parent->cmp_rectTransform->SetRect(init_rect, true);
 	if (parent->cmp_image) parent->cmp_image->SetAlpha(init_alpha, true);
+	if (parent->cmp_label) parent->cmp_label->SetAlpha(init_alpha);
 }
 void ComponentUIAnimation::DrawCurrent()
 {
 	parent->cmp_rectTransform->SetRect(current_key->globalRect, true);
 	if (parent->cmp_image) parent->cmp_image->SetAlpha(current_key->alpha, true);
+	if (parent->cmp_label) parent->cmp_label->SetAlpha(current_key->alpha);
 }
 // -----
 // -- Copy all keys from another game object that contains keys
