@@ -536,8 +536,6 @@ void ComponentUIAnimation::OnSystemEvent(System_Event event)
 	{
 	case System_Event_Type::ScreenChanged:
 	case System_Event_Type::CanvasChanged:
-		change_origin_rect = true;
-		break;
 	case System_Event_Type::RectTransformUpdated:
 		if (animation_state != UIAnimationState::PLAYING && animation_state != UIAnimationState::REWIND)
 		{
