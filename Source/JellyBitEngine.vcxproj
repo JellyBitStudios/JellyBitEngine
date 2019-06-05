@@ -405,6 +405,7 @@
     <ClInclude Include="PanelUI.h" />
     <ClInclude Include="PanelUIAnimation.h" />
     <ClInclude Include="PhysicsConstants.h" />
+    <ClInclude Include="resource1.h" />
     <ClInclude Include="ResourceAnimator.h" />
     <ClInclude Include="ResourceFont.h" />
     <ClInclude Include="ResourceAvatar.h" />
@@ -1013,6 +1014,12 @@
     <None Include="MathGeoLib\include\Math\Matrix.inl" />
     <None Include="NMBuildContext.h" />
     <None Include="Uniforms.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="JellyBitEngine.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="C:\Users\JONY6\Downloads\exe_icon_sprite.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

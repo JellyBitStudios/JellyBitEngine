@@ -2148,6 +2148,7 @@
     <ClInclude Include="Optick\include\optick.h">
       <Filter>Sources\3rd Party\Optick</Filter>
     </ClInclude>
+    <ClInclude Include="resource1.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ModuleInput.cpp">
@@ -2794,5 +2795,11 @@
     <None Include="AK\Win32\AkFilePackageLowLevelIO.inl">
       <Filter>Sources\3rd Party\Wwise\AK\WIN32</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="JellyBitEngine.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="C:\Users\JONY6\Downloads\exe_icon_sprite.ico" />
   </ItemGroup>
 </Project>
