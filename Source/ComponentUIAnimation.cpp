@@ -537,7 +537,7 @@ void ComponentUIAnimation::OnSystemEvent(System_Event event)
 	case System_Event_Type::ScreenChanged:
 	case System_Event_Type::CanvasChanged:
 	case System_Event_Type::RectTransformUpdated:
-		if (animation_state != UIAnimationState::PLAYING && animation_state != UIAnimationState::REWIND)
+		if (animation_state != UIAnimationState::PLAYING || animation_state != UIAnimationState::REWIND)
 		{
 			if (modifying_key) // cheks event of rect for modify current key if not change init rect and recalculate all elements
 			{
