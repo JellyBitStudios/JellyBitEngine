@@ -77,9 +77,7 @@ void ComponentSlider::OnSystemEvent(System_Event event)
 	case System_Event_Type::CanvasChanged:
 	case System_Event_Type::RectTransformUpdated:
 	case System_Event_Type::RectTransformUpdatedFromAnimation:
-		referenceSize = parent->cmp_rectTransform->GetRect()[ComponentRectTransform::Rect::XDIST];
-		CalculateFrontSizeByPercentage();
-		needed_fillBuffer = true;
+		needed_recalcuate = true;
 		break;
 	case System_Event_Type::OnGOStatic:
 		needed_fillBuffer = true;
@@ -124,6 +122,15 @@ void ComponentSlider::Update()
 					currentOnClick = false;
 				}
 			}
+		}
+
+		if (needed_recalcuate)
+		{
+			referenceSize = parent->cmp_rectTransform->GetRect()[ComponentRectTransform::Rect::XDIST];
+			CalculateFrontSizeByPercentage();
+
+			needed_recalcuate = false;
+			needed_fillBuffer = true;
 		}
 
 		if (needed_fillBuffer)

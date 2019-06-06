@@ -69,6 +69,7 @@ private:
 	math::float3 corners[8];
 
 	//Booleans
+	bool needed_recalcuate = false;
 	bool ignoreMouse = false;
 	bool currentOnClick = false;
 
