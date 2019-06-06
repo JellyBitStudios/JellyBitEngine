@@ -843,7 +843,7 @@ void ComponentRectTransform::OnUniqueEditor()
 			needed_recalculate = true;
 		
 		if (needed_recalculate)
-			SetRect(rectToModify, (parent->cmp_uiAnimation && (parent->cmp_uiAnimation->IsRecording() || !parent->cmp_uiAnimation->IsFinished())) ? true : false);
+			SetRect(rectToModify, (parent->cmp_uiAnimation && parent->cmp_uiAnimation->IsRecording()) ? true : false);
 
 		if(ImGui::Checkbox("Use Pivot", &usePivot))
 			if (!usePivot)
@@ -1064,7 +1064,7 @@ void ComponentRectTransform::OnUniqueEditor()
 		if (!needed_recalculate && recalculate4Pivot)
 		{
 			System_Event rectChanged;
-			rectChanged.type = (parent->cmp_uiAnimation && (parent->cmp_uiAnimation->IsRecording() || !parent->cmp_uiAnimation->IsFinished())) ? System_Event_Type::RectTransformUpdatedFromAnimation : System_Event_Type::RectTransformUpdated;
+			rectChanged.type = (parent->cmp_uiAnimation && parent->cmp_uiAnimation->IsRecording()) ? System_Event_Type::RectTransformUpdatedFromAnimation : System_Event_Type::RectTransformUpdated;
 
 			std::vector<GameObject*> rectChilds;
 			parent->GetChildrenAndThisVectorFromLeaf(rectChilds);
